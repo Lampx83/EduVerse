@@ -15,7 +15,11 @@ const HOST = process.env.HOST || '0.0.0.0';
 // e.g. https://limio.vn/ps/* → set BASE_PATH=/ps so all routes work under /ps.
 const BASE_PATH = (process.env.BASE_PATH || '').replace(/\/$/, '');
 
-const VALID_VERSIONS = new Set(['2d-arcade', '3d-shelf', 'quiz', 'metaverse', 'time-attack', 'race']);
+const VALID_VERSIONS = new Set([
+  '2d-arcade', '3d-shelf', 'quiz', 'metaverse', 'time-attack', 'race',
+  'sac-ky-2d', 'sac-ky-3d', 'sac-ky-vr-web', 'sac-ky-quiz', 'sac-ky-meta',
+  'compounding-lab',
+]);
 
 // Badge definitions used by both backend (auto-unlock) and frontend (display)
 const BADGES = [
@@ -26,6 +30,12 @@ const BADGES = [
   { id: 'all-modes',      icon: '🏆', label: 'Bậc thầy đa mode',     desc: 'Chơi đủ cả 4 mode chính' },
   { id: 'hard-perfect',   icon: '👑', label: 'Vua khó nhằn',         desc: 'Perfect ở chế độ Khó (8 loại)' },
   { id: 'metaverse-host', icon: '🌐', label: 'Cư dân Metaverse',     desc: 'Tham gia phòng metaverse' },
+  // Sắc ký TLC badges
+  { id: 'tlc-first',      icon: '🧪', label: 'Nhà phân tích TLC',    desc: 'Hoàn thành lượt sắc ký đầu tiên' },
+  { id: 'tlc-perfect-rf', icon: '🎯', label: 'Rf hoàn hảo',          desc: 'Đo cả 3 Rf chính xác trong ±0.05' },
+  { id: 'tlc-speed',      icon: '⚡', label: 'Tốc độ sắc ký',         desc: 'Hoàn thành TLC dưới 60 giây' },
+  { id: 'tlc-all-modes',  icon: '🏅', label: 'Đa nền tảng TLC',      desc: 'Chơi đủ 5 phiên bản web Sắc ký' },
+  { id: 'tlc-meta-host',  icon: '🌐', label: 'Học viên Meta-Sắc-ký', desc: 'Tham gia phòng Metaverse Sắc ký' },
 ];
 
 function checkAndUnlockBadges(playerName, attempt) {
@@ -51,6 +61,33 @@ function checkAndUnlockBadges(playerName, attempt) {
   `).get(playerName);
   if ((distinct?.c ?? 0) >= 4) tryUnlock('all-modes');
   if (attempt.version === 'metaverse') tryUnlock('metaverse-host');
+
+  // === Sắc ký TLC badges ===
+  const SACKY_VERSIONS = ['sac-ky-2d', 'sac-ky-3d', 'sac-ky-vr-web', 'sac-ky-quiz', 'sac-ky-meta'];
+  if (SACKY_VERSIONS.includes(attempt.version)) {
+    tryUnlock('tlc-first');
+    if (attempt.version === 'sac-ky-meta') tryUnlock('tlc-meta-host');
+    // Perfect Rf: parse details — at least 3 measurements within ±0.05
+    try {
+      const lastRow = db.prepare(`SELECT details FROM attempts WHERE id = last_insert_rowid()`).get();
+      if (lastRow?.details) {
+        const d = JSON.parse(lastRow.details);
+        if (Array.isArray(d.samples)) {
+          const allClose = d.samples.length >= 3 && d.samples.every(s =>
+            s.measuredRf != null && Math.abs(s.measuredRf - s.trueRf) <= 0.05
+          );
+          if (allClose) tryUnlock('tlc-perfect-rf');
+        }
+      }
+    } catch {}
+    if (attempt.durationMs && attempt.durationMs < 60000) tryUnlock('tlc-speed');
+    // All 5 sắc ký versions
+    const sackyDistinct = db.prepare(`
+      SELECT COUNT(DISTINCT version) AS c FROM attempts
+      WHERE player_name = ? AND version IN ('sac-ky-2d', 'sac-ky-3d', 'sac-ky-vr-web', 'sac-ky-quiz', 'sac-ky-meta')
+    `).get(playerName);
+    if ((sackyDistinct?.c ?? 0) >= 5) tryUnlock('tlc-all-modes');
+  }
   return newly;
 }
 

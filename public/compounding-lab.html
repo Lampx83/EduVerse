@@ -1,0 +1,3193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<meta name="theme-color" content="#dde6e1" />
+<title>PharmacySIM · Phòng bào chế</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(180deg, #e8efe9 0%, #c9d5cc 100%); font-family: system-ui, sans-serif; touch-action: none; -webkit-tap-highlight-color: transparent; color: #1f2937; }
+  canvas { display: block; touch-action: none; }
+  a { color: inherit; }
+
+  #topbar {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(8px);
+    padding: 8px 14px; border-radius: 14px; font-size: 13px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12); max-width: calc(100vw - 360px);
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  #topbar .pill {
+    background: linear-gradient(135deg, #14b8a6, #0f766e); color: #fff;
+    padding: 4px 10px; border-radius: 14px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;
+  }
+  #topbar .lvl-pill {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #3e2723;
+    padding: 4px 10px; border-radius: 14px; font-weight: 700; font-size: 11px;
+  }
+  #topbar button {
+    background: rgba(0,0,0,0.06); color: #1f2937; border: 1px solid rgba(0,0,0,0.08);
+    padding: 4px 12px; border-radius: 10px; font-size: 12px; cursor: pointer; font-family: inherit;
+  }
+  #topbar button:hover { background: rgba(0,0,0,0.10); }
+
+  a.back {
+    position: absolute; top: 12px; left: 12px; z-index: 10;
+    background: rgba(255,255,255,0.85); color: #1f2937; padding: 6px 12px; border-radius: 8px;
+    text-decoration: none; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  /* ===== Recipe panel (clipboard style) ===== */
+  #recipe {
+    position: absolute; top: 60px; left: 12px; z-index: 10;
+    width: 270px;
+    background:
+      repeating-linear-gradient(180deg, #fffef5 0px, #fffef5 27px, #f0e8c8 28px),
+      linear-gradient(180deg, #fffdf0, #f7eecc);
+    border-radius: 4px 4px 8px 8px;
+    box-shadow:
+      0 8px 28px rgba(0,0,0,0.22),
+      inset 0 1px 0 rgba(255,255,255,0.7);
+    border: 1px solid #c9b780;
+    color: #2c1d0a;
+    font-size: 13px; line-height: 1.5;
+  }
+  #recipe::before {
+    content: ''; position: absolute; left: 50%; top: -14px; transform: translateX(-50%);
+    width: 70px; height: 18px;
+    background: linear-gradient(180deg, #b0b0b0, #777);
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  #recipe::after {
+    content: ''; position: absolute; left: 50%; top: -22px; transform: translateX(-50%);
+    width: 26px; height: 14px;
+    background: #888; border-radius: 4px 4px 0 0;
+  }
+  #recipe-head {
+    background: linear-gradient(180deg, #e1d29f, #ccb878);
+    padding: 24px 14px 8px;
+    border-radius: 4px 4px 0 0;
+    font-weight: 800; font-size: 14px; color: #2c1d0a;
+    text-align: center;
+    border-bottom: 1px solid #b39c5e;
+  }
+  #recipe-body { padding: 10px 14px 12px; }
+  #recipe-body .lbl { font-size: 10px; opacity: 0.65; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 8px; font-weight: 700; }
+  #recipe-body ul { list-style: none; padding: 0; margin: 4px 0 8px; }
+  #recipe-body ul li { display: flex; justify-content: space-between; padding: 2px 0; font-family: 'SF Mono', Consolas, monospace; font-size: 12px; }
+  #recipe-body .ix { background: linear-gradient(90deg, transparent 90%, rgba(0,0,0,0.04) 100%); padding-left: 6px; }
+  #recipe-body .totals { border-top: 1px dashed #a38f4e; padding-top: 6px; font-weight: 700; }
+
+  /* ===== Step instructions ===== */
+  #step {
+    position: absolute; top: 12px; right: 12px; z-index: 10;
+    width: 320px;
+    background: rgba(255,255,255,0.96);
+    border-radius: 12px;
+    padding: 14px 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  #step .stepnum {
+    display: inline-block;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #3e2723;
+    padding: 2px 10px; border-radius: 10px; font-weight: 800; font-size: 11px;
+    letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  #step .title { font-size: 16px; font-weight: 800; color: #14532d; margin-bottom: 4px; }
+  #step .body { font-size: 13px; line-height: 1.5; color: #374151; }
+  #step .meter { background: #e5e7eb; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+  #step .meter > div { background: linear-gradient(90deg, #10b981, #14b8a6); height: 100%; width: 0; transition: width 0.3s; }
+  #step .targets { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.7; margin-top: 4px; font-family: 'SF Mono', Consolas, monospace; }
+
+  /* ===== Toast ===== */
+  #toast {
+    position: absolute; top: 60%; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.88); color: white; padding: 12px 22px;
+    border-radius: 22px; font-size: 14px; z-index: 20; display: none;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.3);
+  }
+  #toast.ok { background: linear-gradient(135deg, #16a34a, #15803d); }
+  #toast.err { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+
+  /* ===== Bottom buttons ===== */
+  #ctrl-bar {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; gap: 10px;
+  }
+  #ctrl-bar button {
+    padding: 10px 18px; font-size: 14px; font-weight: 700;
+    border: none; border-radius: 10px; cursor: pointer;
+    background: rgba(255,255,255,0.94); color: #1f2937;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-family: inherit;
+    transition: transform .1s, filter .15s;
+  }
+  #ctrl-bar button:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  #ctrl-bar button.primary { background: linear-gradient(135deg, #14b8a6, #0f766e); color: #fff; }
+  #ctrl-bar button.danger  { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; }
+  #ctrl-bar button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ===== Hover label ===== */
+  #hover-label {
+    position: absolute; left: 0; top: 0; pointer-events: none;
+    background: rgba(255,255,255,0.97); border-radius: 12px;
+    padding: 8px 14px 10px; font-size: 13px; color: #1f2937;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.28); transform: translate(-50%, calc(-100% - 14px));
+    white-space: nowrap; opacity: 0; transition: opacity .15s;
+    z-index: 12; border: 1.5px solid rgba(0,0,0,0.08);
+  }
+  #hover-label.shown { opacity: 1; }
+  #hover-label .ht { font-weight: 800; font-size: 14px; }
+  #hover-label .hs { font-size: 11px; opacity: 0.62; margin-top: 1px; }
+  #hover-label .hc {
+    display: inline-block; margin-top: 5px; padding: 2px 10px;
+    border-radius: 10px; font-size: 11px; color: #fff; font-weight: 700;
+    background: var(--cat-color, #43a047);
+  }
+  #hover-label::after {
+    content: ''; position: absolute; bottom: -7px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-top: 8px solid rgba(255,255,255,0.97);
+  }
+  /* Unity-style "Press to interact" floating prompt */
+  #hover-press {
+    position: absolute; left: 0; top: 0; pointer-events: none;
+    background: rgba(0,0,0,0.82); color: #fff;
+    border-radius: 16px;
+    padding: 4px 10px 4px 6px;
+    font-family: system-ui, sans-serif; font-size: 12px;
+    display: inline-flex; align-items: center; gap: 5px;
+    transform: translate(-50%, calc(100% + 8px));
+    z-index: 12; opacity: 0; transition: opacity .12s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    white-space: nowrap;
+  }
+  #hover-press.shown { opacity: 1; }
+  #hover-press .kb {
+    display: inline-block; background: #fff; color: #222;
+    padding: 1px 6px; border-radius: 4px; font-weight: 700; font-size: 10px;
+    box-shadow: 0 1px 0 #888;
+    font-family: 'SF Mono', monospace;
+  }
+  #hover-press .icon { font-size: 14px; }
+
+  /* ===== Result modal ===== */
+  #result-modal, #level-modal {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.78);
+    display: none; align-items: center; justify-content: center; z-index: 30;
+    backdrop-filter: blur(4px);
+  }
+  #result-modal .card { background: #fff; border-radius: 16px; padding: 26px 30px; width: min(480px, 90vw); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  #result-modal .score-big { font-size: 44px; font-weight: 800; text-align: center; }
+  #result-modal .verdict { font-size: 14px; text-align: center; opacity: 0.75; }
+  #result-modal ul { list-style: none; padding: 0; margin: 12px 0; font-size: 13px; line-height: 1.7; }
+  #result-modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+  #result-modal button, #result-modal a {
+    padding: 9px 18px; border-radius: 8px; border: 1px solid #d1d5db; cursor: pointer;
+    background: #f3f4f6; color: #1f2937; font-weight: 600; text-decoration: none; font-family: inherit;
+  }
+  #result-modal button.primary { background: linear-gradient(135deg, #14b8a6, #0f766e); color: #fff; border: none; }
+
+  /* ===== Level select modal ===== */
+  #level-modal .lm-card {
+    background: linear-gradient(180deg, #ffffff, #f3f4f6);
+    border-radius: 18px; padding: 24px 28px;
+    width: min(820px, 96vw); max-height: 92vh; overflow: auto;
+    box-shadow: 0 28px 80px rgba(0,0,0,0.5);
+  }
+  #level-modal h2 { margin: 0 0 4px; font-size: 22px; color: #14532d; }
+  #level-modal .lm-sub { font-size: 13px; opacity: 0.72; margin-bottom: 16px; }
+  #level-modal .lm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  #level-modal .lm-card-mini {
+    background: #fff; border: 2px solid #e5e7eb; border-radius: 14px; padding: 14px;
+    cursor: pointer; transition: transform .12s, border-color .12s, box-shadow .12s;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  #level-modal .lm-card-mini:hover { border-color: #14b8a6; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20,184,166,0.15); }
+  #level-modal .lm-icon { font-size: 32px; }
+  #level-modal .lm-name { font-weight: 800; font-size: 15px; color: #14532d; }
+  #level-modal .lm-short { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.4px; }
+  #level-modal .lm-desc { font-size: 12px; line-height: 1.4; color: #374151; margin-top: 4px; }
+  #level-modal .lm-meta { font-size: 11px; color: #047857; margin-top: 6px; font-family: 'SF Mono', Consolas, monospace; }
+  #level-modal .lm-badge { display: inline-block; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #3e2723; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; margin-top: 4px; align-self: flex-start; }
+  #level-modal .lm-foot { display: flex; gap: 8px; margin-top: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  #level-modal .lm-mp { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  #level-modal .lm-mp input[type=checkbox] { width: 16px; height: 16px; accent-color: #14b8a6; }
+  #level-modal .lm-mp input[type=text] { padding: 6px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 13px; font-family: inherit; }
+
+  /* ===== Multiplayer panel ===== */
+  #mp-panel {
+    position: absolute; top: 152px; right: 12px; z-index: 9;
+    width: 320px; background: rgba(255,255,255,0.94);
+    border-radius: 12px; padding: 10px 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 12px; display: none; border: 1px solid rgba(0,0,0,0.06);
+  }
+  #mp-panel.shown { display: block; }
+  #mp-panel h5 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+  #mp-panel .pl-row { display: flex; align-items: center; gap: 7px; padding: 3px 0; }
+  #mp-panel .pl-dot { width: 10px; height: 10px; border-radius: 50%; }
+  #mp-panel .pl-prog { margin-left: auto; font-family: 'SF Mono', Consolas, monospace; font-size: 11px; color: #047857; }
+  #mp-panel .pl-me { font-weight: 700; }
+  #mp-chat-log { max-height: 110px; overflow-y: auto; margin-top: 6px; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 6px; font-size: 12px; }
+  #mp-chat-log .chat-row { padding: 1px 0; line-height: 1.4; }
+  #mp-chat-input {
+    width: 100%; box-sizing: border-box; margin-top: 4px;
+    padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d5db;
+    font-size: 12px; font-family: inherit;
+  }
+  #mp-action {
+    position: absolute; top: 12px; right: 340px; z-index: 11;
+    background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  #walk-btn, #hand-btn {
+    position: absolute; right: 340px; z-index: 11;
+    background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  #walk-btn { top: 52px; }
+  #hand-btn { top: 92px; }
+  #walk-btn.active, #hand-btn.active { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #3e2723; border-color: transparent; }
+  #cam-preview {
+    position: absolute; bottom: 70px; right: 12px; z-index: 9;
+    border-radius: 8px; background: #000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transform: scaleX(-1); display: none;
+  }
+  #cam-preview.shown { display: block; }
+  #crosshair {
+    position: absolute; top: 50%; left: 50%; margin: -8px 0 0 -8px;
+    width: 16px; height: 16px; border: 2px solid #fff;
+    border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.55);
+    pointer-events: none; z-index: 9; display: none;
+  }
+  #crosshair.shown { display: block; }
+  #walk-hint {
+    position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.75); color: white; padding: 7px 16px;
+    border-radius: 16px; font-size: 12px; z-index: 9;
+    display: none;
+  }
+  #walk-hint.shown { display: block; }
+
+  @media (max-width: 720px) {
+    #recipe { width: 220px; font-size: 12px; }
+    #step { width: 240px; padding: 10px 14px; }
+    #step .title { font-size: 14px; }
+    #ctrl-bar button { padding: 8px 14px; font-size: 13px; min-height: 44px; }
+    #topbar { font-size: 11px; padding: 6px 10px; max-width: calc(100vw - 24px); }
+    #mp-panel { width: 200px; }
+    #mp-action { display: none; }
+    a.back { font-size: 12px; padding: 5px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="./">← Trang chính</a>
+<div id="topbar">
+  <span class="pill">🧪 BÀO CHẾ</span>
+  <span class="lvl-pill" id="lvl-pill">LV 1</span>
+  <span id="topbar-recipe">Siro Paracetamol</span>
+  <button id="change-level">↻ Đổi bài</button>
+</div>
+<button id="mp-action">👥 Tham gia phòng chung</button>
+<button id="walk-btn" title="Phím V — vào chế độ đi quanh phòng">🚶 Đi quanh phòng (V)</button>
+<button id="hand-btn" title="MediaPipe hand tracking — pinch ngón cái + trỏ qua webcam">🖐️ Bật điều khiển tay</button>
+<canvas id="cam-preview" width="200" height="150"></canvas>
+<div id="crosshair"></div>
+<div id="walk-hint">🚶 WASD đi · chuột nhìn · Click thao tác · <kbd>Esc</kbd> thoát</div>
+
+<div id="recipe">
+  <div id="recipe-head">📋 ĐƠN PHA CHẾ</div>
+  <div id="recipe-body"></div>
+</div>
+
+<div id="step">
+  <span class="stepnum" id="step-num">BƯỚC 1 / 6</span>
+  <div class="title" id="step-title">Đặt cốc lên cân</div>
+  <div class="body" id="step-body"></div>
+  <div class="meter"><div id="meter-bar"></div></div>
+  <div class="targets"><span id="meter-cur">0.000 g</span><span id="meter-tgt">đích: 0.000 g</span></div>
+</div>
+
+<div id="mp-panel">
+  <h5>👥 Trong phòng chung</h5>
+  <div id="mp-players"></div>
+  <div id="mp-chat-log"></div>
+  <input id="mp-chat-input" placeholder="Nhắn (Enter để gửi)" maxlength="140" />
+</div>
+
+<div id="toast"></div>
+<div id="hover-label"><div class="ht"></div><div class="hs"></div><div class="hc"></div></div>
+<div id="hover-press"><span class="icon">🖱️</span><span class="kb">CLICK</span><span>để cầm</span></div>
+
+<div id="ctrl-bar">
+  <button id="restart-btn">🔄 Làm lại</button>
+  <button id="skip-step-btn">⏭️ Bỏ qua bước</button>
+  <button id="submit-btn" class="primary" disabled>📝 Hoàn thành & Nộp</button>
+</div>
+
+<div id="result-modal"><div class="card" id="result-card"></div></div>
+
+<div id="level-modal">
+  <div class="lm-card">
+    <h2>🧪 Chọn bài pha chế</h2>
+    <p class="lm-sub">Mỗi bài là một đơn pha chế thật từ sách giáo trình Bào chế Dược. Càng cao càng nhiều thành phần.</p>
+    <div class="lm-grid" id="lm-grid"></div>
+    <div class="lm-foot">
+      <label class="lm-mp">
+        <input type="checkbox" id="lm-mp-toggle" />
+        <span>Vào phòng chung (multiplayer) — nhìn thấy bạn cùng lớp pha chế cùng lúc</span>
+      </label>
+      <input type="text" id="lm-name" placeholder="Tên / mã SV (cho phòng chung)" maxlength="32" />
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { submitAttempt, getPlayerName, ensurePlayerName } from './js/api.js';
+import { sfx } from './js/sfx.js';
+import { showWelcomeCard } from './js/welcome-card.js';
+import { RECIPES, REAGENTS, getRecipeById, getRecipeFromUrl } from './js/lab-recipes.js';
+
+const sessionStartedAt = Date.now();
+
+showWelcomeCard({
+  icon: '🧪',
+  title: 'Phòng bào chế thuốc — Hướng dẫn',
+  intro: 'Thực hiện đơn pha chế theo đúng quy trình GMP rút gọn. 5 bài từ dễ đến khó.',
+  bullets: [
+    'Đọc đơn pha chế (clipboard bên trái) trước khi thao tác.',
+    'Bước nào — chọn dụng cụ tương ứng, click vào reagent rồi click vào dụng cụ (cốc/ống đong).',
+    'Cân hoạt chất đúng khối lượng (±tolerance) hoặc đong đúng thể tích.',
+    'Có thể vào phòng chung để pha chế cùng các SV khác — thấy cursor + tiến độ realtime.',
+    'Hoàn thành cả 6-9 bước rồi bấm "Hoàn thành & Nộp" để lưu điểm.',
+  ],
+  controls: { keys: ['W','A','S','D'], mouse: 'left' },
+  tip: 'Kéo chuột để xoay · cuộn để zoom · click dụng cụ + reagent đúng theo bước.',
+  persistKey: 'pharmacysim:welcome:compounding-lab',
+  dismissLabel: 'Bắt đầu pha chế',
+});
+
+// ============================================================
+// LEVEL/RECIPE SELECTION (modal before scene init)
+// ============================================================
+const lmGrid = document.getElementById('lm-grid');
+const lmModal = document.getElementById('level-modal');
+const lmMpToggle = document.getElementById('lm-mp-toggle');
+const lmName = document.getElementById('lm-name');
+let currentRecipe = getRecipeFromUrl();
+let multiplayerOn = false;
+let myName = getPlayerName() || ('Học viên ' + Math.floor(Math.random() * 900 + 100));
+lmName.value = myName;
+
+function renderLevelModal() {
+  lmGrid.innerHTML = RECIPES.map(r => `
+    <div class="lm-card-mini" data-id="${r.id}">
+      <div class="lm-icon">${r.icon}</div>
+      <div class="lm-short">Cấp ${r.level} · ${r.short}</div>
+      <div class="lm-name">${r.name}</div>
+      <div class="lm-desc">${r.desc}</div>
+      <div class="lm-meta">Thể tích cuối: ${r.finalVolume} ${r.finalUnit} · ${r.steps.length} bước</div>
+      ${r.level === 5 ? '<span class="lm-badge">BÀI THI</span>' : ''}
+    </div>
+  `).join('');
+  lmGrid.querySelectorAll('.lm-card-mini').forEach(card => {
+    card.addEventListener('click', () => {
+      currentRecipe = getRecipeById(card.dataset.id);
+      multiplayerOn = lmMpToggle.checked;
+      myName = lmName.value.trim() || myName;
+      lmModal.style.display = 'none';
+      startGame();
+    });
+  });
+}
+
+// Initial recipe selection — modal opens / URL-direct start happens at end of script
+// (deferred so all scene init + helper functions exist by the time we call startGame).
+document.getElementById('change-level').addEventListener('click', () => {
+  renderLevelModal();
+  lmModal.style.display = 'flex';
+});
+
+// Function declared below — definitions live globally after this block.
+let startGameImpl = () => console.warn('startGame called before scene ready');
+function startGame() { startGameImpl(); }
+
+// ============================================================
+// SCENE SETUP
+// ============================================================
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeef2ee);
+scene.fog = new THREE.Fog(0xeef2ee, 14, 38);
+
+const camera = new THREE.PerspectiveCamera(44, innerWidth/innerHeight, 0.05, 100);
+camera.position.set(0, 1.72, 2.35);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.appendChild(renderer.domElement);
+
+// PBR environment for glass + metal reflections
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 1.25, -0.25);
+controls.minDistance = 1.2;
+controls.maxDistance = 5;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minPolarAngle = Math.PI * 0.18;
+
+// ===== Lighting =====
+scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+sun.position.set(2.2, 4.2, 2.4);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -3.5; sun.shadow.camera.right = 3.5;
+sun.shadow.camera.top = 3.5; sun.shadow.camera.bottom = -2;
+sun.shadow.camera.near = 0.1; sun.shadow.camera.far = 12;
+sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0xc8e1ff, 0.28);
+fill.position.set(-2, 3, -1);
+scene.add(fill);
+
+// Ceiling spotlights — soft cones over counter
+function ceilingSpot(x) {
+  const sp = new THREE.SpotLight(0xfff5e0, 0.7, 8, Math.PI/5.5, 0.4, 1.3);
+  sp.position.set(x, 2.85, 0.1);
+  sp.target.position.set(x, 0.95, 0.15);
+  sp.castShadow = false;
+  scene.add(sp); scene.add(sp.target);
+  // visible housing
+  const housing = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.09, 0.08, 0.05, 24),
+    new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.55, roughness: 0.35 })
+  );
+  housing.position.set(x, 2.97, 0.1);
+  scene.add(housing);
+  const bulb = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.07, 0.07, 0.01, 24),
+    new THREE.MeshBasicMaterial({ color: 0xfff8e0 })
+  );
+  bulb.position.set(x, 2.94, 0.1);
+  scene.add(bulb);
+}
+ceilingSpot(-1.2); ceilingSpot(0); ceilingSpot(1.2);
+
+// ============================================================
+// ROOM
+// ============================================================
+function makeMarbleTex(w = 512, h = 512) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, '#fafaf7'); g.addColorStop(0.5, '#efeee9'); g.addColorStop(1, '#e3e2dc');
+  x.fillStyle = g; x.fillRect(0, 0, w, h);
+  x.strokeStyle = 'rgba(120,120,130,0.18)';
+  for (let i = 0; i < 14; i++) {
+    x.beginPath(); x.lineWidth = 0.4 + Math.random() * 1.6;
+    x.moveTo(Math.random() * w, 0);
+    let py = 0, px = Math.random() * w;
+    while (py < h) {
+      px += (Math.random() - 0.5) * 50; py += 8 + Math.random() * 16;
+      x.lineTo(px, py);
+    }
+    x.stroke();
+  }
+  for (let i = 0; i < 1200; i++) {
+    x.fillStyle = `rgba(80,80,90,${Math.random() * 0.04})`;
+    x.fillRect(Math.random() * w, Math.random() * h, 1, 1);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  return t;
+}
+
+function makeTileTex() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  const x = c.getContext('2d');
+  x.fillStyle = '#dde6e1'; x.fillRect(0, 0, 512, 512);
+  x.strokeStyle = '#a8b5af'; x.lineWidth = 3;
+  for (let i = 0; i <= 4; i++) {
+    x.beginPath(); x.moveTo(i * 128, 0); x.lineTo(i * 128, 512); x.stroke();
+    x.beginPath(); x.moveTo(0, i * 128); x.lineTo(512, i * 128); x.stroke();
+  }
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+    const g = x.createLinearGradient(i*128, j*128, (i+1)*128, (j+1)*128);
+    g.addColorStop(0, 'rgba(255,255,255,0.08)'); g.addColorStop(1, 'rgba(0,0,0,0.05)');
+    x.fillStyle = g; x.fillRect(i*128, j*128, 128, 128);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(3, 1.5);
+  return t;
+}
+
+// Red brick / terracotta tile floor (matches Unity chemistry-lab reference)
+function makeBrickFloorTex() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 1024;
+  const x = c.getContext('2d');
+  // Base grout (greyish concrete)
+  x.fillStyle = '#9b8e7b'; x.fillRect(0, 0, 1024, 1024);
+  // Tiles: 4 cols × 4 rows of 256x256 brick tiles
+  const tileSize = 256, gap = 6;
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      // Vary tile color a bit
+      const hue = 12 + Math.random() * 8;
+      const sat = 55 + Math.random() * 15;
+      const lig = 38 + Math.random() * 8;
+      const px = i * tileSize + gap;
+      const py = j * tileSize + gap;
+      const w = tileSize - gap*2, h = tileSize - gap*2;
+      const g = x.createLinearGradient(px, py, px + w, py + h);
+      g.addColorStop(0, `hsl(${hue}, ${sat}%, ${lig + 4}%)`);
+      g.addColorStop(0.5, `hsl(${hue}, ${sat}%, ${lig}%)`);
+      g.addColorStop(1, `hsl(${hue - 2}, ${sat - 5}%, ${lig - 4}%)`);
+      x.fillStyle = g;
+      // Slight rounded corners
+      x.beginPath();
+      const r = 4;
+      x.moveTo(px + r, py);
+      x.lineTo(px + w - r, py); x.quadraticCurveTo(px + w, py, px + w, py + r);
+      x.lineTo(px + w, py + h - r); x.quadraticCurveTo(px + w, py + h, px + w - r, py + h);
+      x.lineTo(px + r, py + h); x.quadraticCurveTo(px, py + h, px, py + h - r);
+      x.lineTo(px, py + r); x.quadraticCurveTo(px, py, px + r, py);
+      x.closePath(); x.fill();
+      // Tile speckles for texture
+      for (let k = 0; k < 80; k++) {
+        x.fillStyle = `rgba(${30 + Math.random() * 30}, ${10 + Math.random() * 15}, ${5 + Math.random() * 10}, ${0.04 + Math.random() * 0.08})`;
+        x.fillRect(px + Math.random() * w, py + Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2);
+      }
+      // Subtle inner highlight
+      x.strokeStyle = 'rgba(255,255,255,0.06)';
+      x.lineWidth = 1;
+      x.beginPath();
+      x.moveTo(px + 3, py + 3); x.lineTo(px + w - 3, py + 3);
+      x.stroke();
+    }
+  }
+  // Grout dirt
+  for (let i = 0; i < 600; i++) {
+    x.fillStyle = `rgba(40,30,20,${0.05 + Math.random() * 0.15})`;
+    x.fillRect(Math.random() * 1024, Math.random() * 1024, 1, 1);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  return t;
+}
+
+const ROOM_W = 10, ROOM_D = 7, ROOM_H = 3;
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(ROOM_W, ROOM_D),
+  new THREE.MeshStandardMaterial({ map: makeBrickFloorTex(), roughness: 0.85, metalness: 0.04 })
+);
+floor.rotation.x = -Math.PI/2; floor.receiveShadow = true;
+floor.material.map.repeat.set(3, 2);
+scene.add(floor);
+
+const wallMat = new THREE.MeshStandardMaterial({ map: makeTileTex(), roughness: 0.82 });
+function addWall(w, h, x, y, z, ry) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat);
+  m.position.set(x, y, z); m.rotation.y = ry; m.receiveShadow = true;
+  scene.add(m);
+}
+addWall(ROOM_W, ROOM_H, 0, ROOM_H/2, -ROOM_D/2, 0);
+addWall(ROOM_D, ROOM_H, -ROOM_W/2, ROOM_H/2, 0, Math.PI/2);
+addWall(ROOM_D, ROOM_H,  ROOM_W/2, ROOM_H/2, 0, -Math.PI/2);
+
+const ceil = new THREE.Mesh(
+  new THREE.PlaneGeometry(ROOM_W, ROOM_D),
+  new THREE.MeshStandardMaterial({ color: 0xf7f8f6, roughness: 0.92 })
+);
+ceil.position.y = ROOM_H; ceil.rotation.x = Math.PI/2; scene.add(ceil);
+
+// Window on right wall — bright blue rectangle with frame
+const windowFrame = new THREE.Mesh(
+  new THREE.PlaneGeometry(2, 1.2),
+  new THREE.MeshStandardMaterial({ color: 0xb3dffa, emissive: 0x70b8e0, emissiveIntensity: 0.32, roughness: 0.4 })
+);
+windowFrame.position.set(ROOM_W/2 - 0.02, 1.85, -1);
+windowFrame.rotation.y = -Math.PI/2;
+scene.add(windowFrame);
+
+// ===== Counter + cabinet =====
+const counter = new THREE.Mesh(
+  new THREE.BoxGeometry(3.8, 0.08, 1.5),
+  new THREE.MeshStandardMaterial({ map: makeMarbleTex(1024, 512), roughness: 0.3, metalness: 0.08 })
+);
+counter.position.set(0, 0.9, 0);
+counter.castShadow = true; counter.receiveShadow = true;
+scene.add(counter);
+const cabinet = new THREE.Mesh(
+  new THREE.BoxGeometry(3.8, 0.88, 0.78),
+  new THREE.MeshStandardMaterial({ color: 0xeeeae3, roughness: 0.7 })
+);
+cabinet.position.set(0, 0.44, -0.05);
+cabinet.castShadow = true; cabinet.receiveShadow = true;
+scene.add(cabinet);
+for (let i = -1; i <= 1; i++) {
+  const drawer = new THREE.Mesh(
+    new THREE.BoxGeometry(1.1, 0.26, 0.02),
+    new THREE.MeshStandardMaterial({ color: 0xd9d3c8, roughness: 0.65 })
+  );
+  drawer.position.set(i * 1.2, 0.5, 0.35);
+  scene.add(drawer);
+  const handle = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 0.025, 0.02),
+    new THREE.MeshStandardMaterial({ color: 0x4a4a4a, metalness: 0.7, roughness: 0.35 })
+  );
+  handle.position.set(i * 1.2, 0.5, 0.36);
+  scene.add(handle);
+}
+
+// ===== Shelf + back wall sign =====
+const shelfMat = new THREE.MeshStandardMaterial({ color: 0xa1887f, roughness: 0.85 });
+const shelf = new THREE.Group();
+shelf.position.set(0, 1.65, -0.62);
+scene.add(shelf);
+const shelfBoard = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.04, 0.32), shelfMat);
+shelfBoard.castShadow = true; shelfBoard.receiveShadow = true;
+shelf.add(shelfBoard);
+const shelfBoard2 = shelfBoard.clone();
+shelfBoard2.position.y = 0.55;
+shelf.add(shelfBoard2);
+[-1.7, 1.7].forEach(x => {
+  const bk = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.65, 0.32), shelfMat);
+  bk.position.set(x, 0.28, 0);
+  shelf.add(bk);
+});
+
+// ============================================================
+// Potted plants + books on TOP of the upper shelf (giống Unity reference)
+// ============================================================
+// Plant: terracotta pot + small leaves
+function makePlant(x, z, scale = 1) {
+  const grp = new THREE.Group();
+  grp.position.set(x, 0.575, z);   // shelf.position.y (1.65) + 0.575 = 2.225
+  grp.scale.setScalar(scale);
+  shelf.add(grp);
+  // Pot
+  const pot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.04, 0.07, 16),
+    new THREE.MeshStandardMaterial({ color: 0xc97e4d, roughness: 0.85 })
+  );
+  pot.position.y = 0.035; pot.castShadow = true;
+  grp.add(pot);
+  // Pot rim
+  const rim = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.055, 0.05, 0.012, 16),
+    new THREE.MeshStandardMaterial({ color: 0xa86238, roughness: 0.85 })
+  );
+  rim.position.y = 0.072; grp.add(rim);
+  // Soil
+  const soil = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.044, 0.044, 0.008, 16),
+    new THREE.MeshStandardMaterial({ color: 0x3f2c14, roughness: 1.0 })
+  );
+  soil.position.y = 0.076; grp.add(soil);
+  // Leaves — 6-8 angled planes with green texture
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.7, side: THREE.DoubleSide });
+  const leafMatDark = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.7, side: THREE.DoubleSide });
+  for (let i = 0; i < 7; i++) {
+    const ang = (i / 7) * Math.PI * 2;
+    const tilt = 0.5 + Math.random() * 0.6;
+    const leaf = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.04, 0.10),
+      i % 2 === 0 ? leafMat : leafMatDark
+    );
+    leaf.position.set(Math.cos(ang) * 0.015, 0.13, Math.sin(ang) * 0.015);
+    leaf.rotation.y = ang;
+    leaf.rotation.x = -tilt;
+    leaf.rotation.z = (Math.random() - 0.5) * 0.3;
+    grp.add(leaf);
+  }
+  // Central tall leaf
+  const tall = new THREE.Mesh(new THREE.PlaneGeometry(0.045, 0.13), leafMat);
+  tall.position.y = 0.16; tall.rotation.y = Math.random() * Math.PI;
+  grp.add(tall);
+  return grp;
+}
+makePlant(-1.4, -0.04, 1.0);
+makePlant(-1.05, -0.04, 0.85);
+makePlant(1.5, -0.04, 0.9);
+
+// Book stack — pharma textbooks with colored spines
+function makeBook(x, y, z, w, h, d, color, title = '') {
+  const grp = new THREE.Group();
+  grp.position.set(x, y, z); shelf.add(grp);
+  // Pages (off-white box)
+  const pages = new THREE.Mesh(
+    new THREE.BoxGeometry(w * 0.94, h * 0.96, d * 0.98),
+    new THREE.MeshStandardMaterial({ color: 0xfefefe, roughness: 0.95 })
+  );
+  pages.position.y = h/2;
+  grp.add(pages);
+  // Cover (colored hardback)
+  const cover = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.65 })
+  );
+  cover.position.y = h/2;
+  cover.castShadow = true; cover.receiveShadow = true;
+  grp.add(cover);
+  // Spine title
+  if (title) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 32;
+    const x_ = c.getContext('2d');
+    x_.fillStyle = `#${color.toString(16).padStart(6, '0')}`; x_.fillRect(0, 0, 256, 32);
+    x_.fillStyle = '#fbbf24'; x_.font = 'bold 14px serif'; x_.textAlign = 'center'; x_.textBaseline = 'middle';
+    x_.fillText(title, 128, 16);
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const t = new THREE.Mesh(
+      new THREE.PlaneGeometry(h * 0.85, d * 0.6),
+      new THREE.MeshBasicMaterial({ map: tex })
+    );
+    t.position.set(w/2 + 0.001, h/2, 0);
+    t.rotation.y = Math.PI/2; t.rotation.z = -Math.PI/2;
+    grp.add(t);
+  }
+  return grp;
+}
+// Stack at left of shelf top
+makeBook( 0.55, 0.555, 0.0, 0.05, 0.18, 0.13, 0x7f1d1d, 'BÀO CHẾ DƯỢC');
+makeBook( 0.61, 0.555, 0.0, 0.05, 0.16, 0.13, 0x1e3a8a, 'DƯỢC LIỆU');
+makeBook( 0.67, 0.555, 0.0, 0.05, 0.20, 0.13, 0x065f46, 'HÓA DƯỢC II');
+makeBook( 0.73, 0.555, 0.0, 0.05, 0.17, 0.13, 0x92400e, 'GMP-WHO');
+makeBook( 0.79, 0.555, 0.0, 0.05, 0.19, 0.13, 0x6b21a8, 'DƯỢC LÝ');
+// Horizontal book lying on top
+makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
+
+// Wall sign "PHÒNG BÀO CHẾ"
+{
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#0f766e'; x.fillRect(0, 0, 1024, 256);
+  x.strokeStyle = '#fde68a'; x.lineWidth = 8; x.strokeRect(8, 8, 1008, 240);
+  x.fillStyle = '#fff'; x.font = 'bold 92px system-ui';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('💊 PHÒNG BÀO CHẾ', 512, 100);
+  x.font = '36px system-ui'; x.fillStyle = '#fde68a';
+  x.fillText('Compounding Pharmacy Lab · NEU', 512, 180);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const sign = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.4, 0.6),
+    new THREE.MeshBasicMaterial({ map: tex })
+  );
+  sign.position.set(0, 2.55, -0.69);
+  scene.add(sign);
+}
+
+// GMP rule poster on left wall
+{
+  const c = document.createElement('canvas'); c.width = 512; c.height = 768;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fefce8'; x.fillRect(0, 0, 512, 768);
+  x.strokeStyle = '#a16207'; x.lineWidth = 4; x.strokeRect(8, 8, 496, 752);
+  x.fillStyle = '#a16207'; x.font = 'bold 38px system-ui'; x.textAlign = 'center';
+  x.fillText('📋 QUY TẮC GMP', 256, 70);
+  x.fillStyle = '#3f2c0a'; x.font = '22px system-ui'; x.textAlign = 'left';
+  const rules = [
+    '1. Đeo găng tay + kính bảo hộ',
+    '2. Cân hoạt chất chính xác',
+    '3. Đong dung môi đúng vạch',
+    '4. q.s. tới đúng thể tích cuối',
+    '5. Lắc đều khi pha hỗn dịch',
+    '6. Dán nhãn rõ ràng',
+    '7. Vệ sinh dụng cụ sau khi xong',
+    '8. Lưu sổ theo dõi pha chế',
+  ];
+  rules.forEach((t, i) => x.fillText(t, 40, 150 + i * 64));
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const poster = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.7, 1.05),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8 })
+  );
+  poster.position.set(-ROOM_W/2 + 0.01, 1.9, 1);
+  poster.rotation.y = Math.PI/2;
+  scene.add(poster);
+}
+
+// Hazard sign on right wall (small)
+{
+  const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fef08a'; x.fillRect(0, 0, 256, 256);
+  x.strokeStyle = '#000'; x.lineWidth = 4; x.strokeRect(4, 4, 248, 248);
+  x.fillStyle = '#000'; x.beginPath();
+  x.moveTo(128, 32); x.lineTo(224, 200); x.lineTo(32, 200); x.closePath(); x.fill();
+  x.fillStyle = '#fef08a';
+  x.font = 'bold 100px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('!', 128, 150);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const sign = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.4, 0.4),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })
+  );
+  sign.position.set(ROOM_W/2 - 0.02, 2.5, 1.5);
+  sign.rotation.y = -Math.PI/2;
+  scene.add(sign);
+}
+
+// Periodic table mini-poster (left wall, below GMP)
+{
+  const c = document.createElement('canvas'); c.width = 768; c.height = 432;
+  const x = c.getContext('2d');
+  x.fillStyle = '#0c4a6e'; x.fillRect(0, 0, 768, 432);
+  x.fillStyle = '#bae6fd'; x.font = 'bold 26px system-ui'; x.textAlign = 'center';
+  x.fillText('BẢNG TUẦN HOÀN — KHOA DƯỢC NEU', 384, 36);
+  // Mini periodic table: 18 columns × 7 rows of colored boxes with symbols
+  const ELEM_ROWS = [
+    'H                                                  He',
+    'Li Be                                  B  C  N  O  F  Ne',
+    'Na Mg                                  Al Si P  S  Cl Ar',
+    'K  Ca Sc Ti V  Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr',
+  ];
+  // Color groups for fun
+  const colorOf = (sym) => {
+    const a = 'H,Li,Na,K'.split(','); const b = 'Be,Mg,Ca'.split(',');
+    const m = 'Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn'.split(',');
+    const halo = 'F,Cl,Br'.split(','); const noble = 'He,Ne,Ar,Kr'.split(',');
+    if (a.includes(sym)) return '#dc2626';
+    if (b.includes(sym)) return '#f59e0b';
+    if (m.includes(sym)) return '#eab308';
+    if (halo.includes(sym)) return '#3b82f6';
+    if (noble.includes(sym)) return '#8b5cf6';
+    return '#14b8a6';
+  };
+  ELEM_ROWS.forEach((row, ri) => {
+    const cells = row.match(/\S+|\s\s/g) || [];
+    let col = 0;
+    for (let k = 0; k < row.length; k += 3) {
+      const sym = row.slice(k, k + 3).trim();
+      const px = 30 + (k / 3) * 38;
+      const py = 80 + ri * 60;
+      if (sym) {
+        x.fillStyle = colorOf(sym);
+        x.fillRect(px, py, 36, 50);
+        x.fillStyle = '#fff'; x.font = 'bold 18px system-ui';
+        x.fillText(sym, px + 18, py + 30);
+      }
+    }
+  });
+  x.fillStyle = '#bae6fd'; x.font = '14px system-ui';
+  x.fillText('Đại học Kinh tế Quốc dân · Khoa CNTT × Khoa Dược', 384, 410);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const poster = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.95, 0.54),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })
+  );
+  poster.position.set(-ROOM_W/2 + 0.01, 1.0, -0.3);
+  poster.rotation.y = Math.PI/2;
+  scene.add(poster);
+}
+
+// Drug classes chart (right wall, above hazard)
+{
+  const c = document.createElement('canvas'); c.width = 512; c.height = 640;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fef3c7'; x.fillRect(0, 0, 512, 640);
+  x.strokeStyle = '#92400e'; x.lineWidth = 5; x.strokeRect(8, 8, 496, 624);
+  x.fillStyle = '#92400e'; x.font = 'bold 28px system-ui'; x.textAlign = 'center';
+  x.fillText('📊 PHÂN LOẠI THUỐC', 256, 50);
+  x.font = '16px system-ui'; x.fillText('(Hệ thống ATC — WHO)', 256, 76);
+  const drugs = [
+    ['A', 'Tiêu hóa & chuyển hóa', '#10b981'],
+    ['B', 'Máu & cơ quan tạo máu', '#dc2626'],
+    ['C', 'Tim mạch',              '#f59e0b'],
+    ['D', 'Da liễu',               '#a855f7'],
+    ['G', 'Sinh dục & tiết niệu',  '#ec4899'],
+    ['H', 'Hormone hệ thống',      '#06b6d4'],
+    ['J', 'Kháng sinh hệ thống',   '#0ea5e9'],
+    ['L', 'Ức chế miễn dịch',      '#7c3aed'],
+    ['M', 'Cơ-xương khớp',         '#65a30d'],
+    ['N', 'Thần kinh trung ương',  '#4f46e5'],
+    ['R', 'Hô hấp',                '#0284c7'],
+    ['V', 'Đa năng / Khác',        '#525252'],
+  ];
+  x.font = 'bold 18px system-ui'; x.textAlign = 'left';
+  drugs.forEach((d, i) => {
+    const py = 110 + i * 40;
+    x.fillStyle = d[2]; x.fillRect(30, py - 18, 30, 30);
+    x.fillStyle = '#fff'; x.font = 'bold 18px system-ui'; x.textAlign = 'center';
+    x.fillText(d[0], 45, py - 1);
+    x.fillStyle = '#3f2c0a'; x.font = '16px system-ui'; x.textAlign = 'left';
+    x.fillText(d[1], 75, py - 1);
+  });
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const poster = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.55, 0.7),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })
+  );
+  poster.position.set(ROOM_W/2 - 0.02, 1.55, -1.2);
+  poster.rotation.y = -Math.PI/2;
+  scene.add(poster);
+}
+
+// Calendar + clock (left wall, near GMP)
+{
+  const cc = document.createElement('canvas'); cc.width = 256; cc.height = 256;
+  const x = cc.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 256, 256);
+  x.strokeStyle = '#1f2937'; x.lineWidth = 4; x.strokeRect(4, 4, 248, 248);
+  // Clock face
+  x.fillStyle = '#1f2937'; x.beginPath(); x.arc(128, 110, 84, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#fff'; x.beginPath(); x.arc(128, 110, 80, 0, Math.PI * 2); x.fill();
+  // hour marks
+  x.fillStyle = '#1f2937';
+  for (let h = 0; h < 12; h++) {
+    const a = h * Math.PI / 6 - Math.PI/2;
+    const r1 = 70, r2 = 78;
+    x.beginPath();
+    x.moveTo(128 + r1 * Math.cos(a), 110 + r1 * Math.sin(a));
+    x.lineTo(128 + r2 * Math.cos(a), 110 + r2 * Math.sin(a));
+    x.lineWidth = 3; x.strokeStyle = '#1f2937'; x.stroke();
+  }
+  // hour & minute hands (8:30)
+  x.lineCap = 'round'; x.strokeStyle = '#1f2937';
+  x.lineWidth = 6;
+  const ha = 8.5 * Math.PI / 6 - Math.PI/2;
+  x.beginPath(); x.moveTo(128, 110); x.lineTo(128 + 38 * Math.cos(ha), 110 + 38 * Math.sin(ha)); x.stroke();
+  x.lineWidth = 4; x.strokeStyle = '#0f766e';
+  const ma = 30 * Math.PI / 30 - Math.PI/2;
+  x.beginPath(); x.moveTo(128, 110); x.lineTo(128 + 60 * Math.cos(ma), 110 + 60 * Math.sin(ma)); x.stroke();
+  // center dot
+  x.fillStyle = '#dc2626'; x.beginPath(); x.arc(128, 110, 5, 0, Math.PI * 2); x.fill();
+  // Bottom: date
+  x.fillStyle = '#1f2937'; x.font = 'bold 22px system-ui'; x.textAlign = 'center';
+  x.fillText('Thứ Hai · 26/5', 128, 220);
+  x.font = '14px system-ui'; x.fillStyle = '#6b7280';
+  x.fillText('Phòng bào chế · Ca sáng', 128, 240);
+  const tex = new THREE.CanvasTexture(cc); tex.colorSpace = THREE.SRGBColorSpace;
+  const clock = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.36, 0.36),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })
+  );
+  clock.position.set(-ROOM_W/2 + 0.01, 2.4, -1.8);
+  clock.rotation.y = Math.PI/2;
+  scene.add(clock);
+}
+
+// NEU logo on back wall (small, below main sign)
+{
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#7f1d1d'; x.fillRect(0, 0, 512, 256);
+  // Inner gold frame
+  x.strokeStyle = '#fbbf24'; x.lineWidth = 5; x.strokeRect(10, 10, 492, 236);
+  x.fillStyle = '#fbbf24'; x.font = 'bold 38px serif'; x.textAlign = 'center';
+  x.fillText('NEU · ĐẠI HỌC KINH TẾ QUỐC DÂN', 256, 60);
+  x.font = 'italic 20px serif'; x.fillStyle = '#fde68a';
+  x.fillText('Khoa Công nghệ Thông tin × Khoa Dược', 256, 95);
+  // Faux shield
+  x.fillStyle = '#fbbf24';
+  x.beginPath();
+  x.moveTo(256, 120); x.lineTo(312, 150); x.lineTo(290, 220);
+  x.lineTo(222, 220); x.lineTo(200, 150); x.closePath(); x.fill();
+  x.fillStyle = '#7f1d1d'; x.font = 'bold 28px serif';
+  x.fillText('NEU', 256, 178);
+  x.fillStyle = '#fbbf24'; x.font = 'bold 12px system-ui';
+  x.fillText('PharmacySIM · Compounding Pharmacy Lab', 256, 248);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const logo = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.4, 0.7),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })
+  );
+  logo.position.set(0, 1.92, -0.69);
+  scene.add(logo);
+}
+
+// ============================================================
+// LAB DECOR — extra realism objects
+// ============================================================
+
+// Fume hood (back-right) — open frame with glass
+{
+  const hood = new THREE.Group();
+  hood.position.set(2.2, 0.9, -0.4);
+  scene.add(hood);
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0xeaeaea, roughness: 0.5, metalness: 0.3 });
+  // Two side panels
+  const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.1, 0.5), frameMat);
+  sideL.position.set(-0.4, 0.55, 0); hood.add(sideL);
+  const sideR = sideL.clone(); sideR.position.x = 0.4; hood.add(sideR);
+  // Top
+  const top = new THREE.Mesh(new THREE.BoxGeometry(0.83, 0.05, 0.5), frameMat);
+  top.position.set(0, 1.1, 0); hood.add(top);
+  // Glass sash front
+  const sashMat = new THREE.MeshPhysicalMaterial({
+    color: 0xeaf6ff, metalness: 0, roughness: 0.05, transmission: 0.95,
+    thickness: 0.4, ior: 1.5, transparent: true, opacity: 0.4, side: THREE.DoubleSide,
+  });
+  const sash = new THREE.Mesh(new THREE.PlaneGeometry(0.83, 0.7), sashMat);
+  sash.position.set(0, 0.7, 0.245);
+  hood.add(sash);
+  // Inside back wall (darker)
+  const back = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.83, 1.1),
+    new THREE.MeshStandardMaterial({ color: 0xc5cdc8, roughness: 0.85 })
+  );
+  back.position.set(0, 0.55, -0.245);
+  hood.add(back);
+  // Hood label
+  const lc = document.createElement('canvas'); lc.width = 256; lc.height = 64;
+  const lx = lc.getContext('2d');
+  lx.fillStyle = '#0f766e'; lx.fillRect(0, 0, 256, 64);
+  lx.fillStyle = '#fff'; lx.font = 'bold 28px system-ui'; lx.textAlign = 'center'; lx.textBaseline = 'middle';
+  lx.fillText('FUME HOOD', 128, 32);
+  const lTex = new THREE.CanvasTexture(lc); lTex.colorSpace = THREE.SRGBColorSpace;
+  const lab = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.1), new THREE.MeshBasicMaterial({ map: lTex }));
+  lab.position.set(0, 1.18, 0.252); hood.add(lab);
+}
+
+// Sink + faucet (counter-right edge)
+{
+  const sinkGrp = new THREE.Group();
+  sinkGrp.position.set(1.55, 0.94, 0.1);
+  scene.add(sinkGrp);
+  const sinkBowl = new THREE.Mesh(
+    new THREE.BoxGeometry(0.36, 0.08, 0.3),
+    new THREE.MeshStandardMaterial({ color: 0xb8b8b8, metalness: 0.7, roughness: 0.3 })
+  );
+  sinkBowl.position.y = 0.0;
+  sinkGrp.add(sinkBowl);
+  const sinkHole = new THREE.Mesh(
+    new THREE.BoxGeometry(0.32, 0.005, 0.26),
+    new THREE.MeshStandardMaterial({ color: 0x202020, roughness: 0.4 })
+  );
+  sinkHole.position.y = 0.005;
+  sinkGrp.add(sinkHole);
+  // Faucet vertical pipe
+  const faucetMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.85, roughness: 0.15 });
+  const fpipe = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.25, 12), faucetMat);
+  fpipe.position.set(0, 0.13, -0.13);
+  sinkGrp.add(fpipe);
+  // Faucet horizontal arm
+  const farm = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 12), faucetMat);
+  farm.rotation.z = Math.PI/2;
+  farm.position.set(0.0, 0.25, -0.13);
+  sinkGrp.add(farm);
+  // Spout
+  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, 0.08, 12), faucetMat);
+  spout.position.set(0.0, 0.21, -0.07);
+  sinkGrp.add(spout);
+  // Knob
+  const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.012, 16), faucetMat);
+  knob.position.set(0.0, 0.27, -0.13);
+  sinkGrp.add(knob);
+}
+
+// Pipette stand (counter-left, behind balance)
+{
+  const ps = new THREE.Group();
+  ps.position.set(-1.7, 0.94, -0.25);
+  scene.add(ps);
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(0.16, 0.02, 0.1),
+    new THREE.MeshStandardMaterial({ color: 0x6d4c41, roughness: 0.85 })
+  );
+  base.position.y = 0.01; ps.add(base);
+  const post = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.008, 0.32, 12),
+    new THREE.MeshStandardMaterial({ color: 0xb0b0b0, metalness: 0.7, roughness: 0.3 })
+  );
+  post.position.set(-0.06, 0.18, 0); ps.add(post);
+  for (let i = 0; i < 4; i++) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.005, 0.005), new THREE.MeshStandardMaterial({ color: 0x9a9a9a, metalness: 0.6 }));
+    arm.position.set(-0.03, 0.06 + i * 0.07, 0); ps.add(arm);
+    // pipette
+    const pip = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.005, 0.005, 0.22, 12),
+      new THREE.MeshPhysicalMaterial({ color: 0xddeefa, transmission: 0.85, thickness: 0.2, opacity: 0.6, transparent: true })
+    );
+    pip.position.set(0.0, 0.17 - i * 0.005, 0);
+    ps.add(pip);
+    // bulb top
+    const bulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.015, 12, 12),
+      new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.5 })
+    );
+    bulb.position.set(0.0, 0.29 - i * 0.005, 0);
+    ps.add(bulb);
+  }
+}
+
+// Gloves box (counter-right)
+{
+  const gb = new THREE.Group();
+  gb.position.set(1.0, 0.94, -0.4);
+  scene.add(gb);
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(0.22, 0.12, 0.14),
+    new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.5 })
+  );
+  box.position.y = 0.06;
+  box.castShadow = true; box.receiveShadow = true;
+  gb.add(box);
+  // Label
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const x = c.getContext('2d');
+  x.fillStyle = '#2563eb'; x.fillRect(0, 0, 256, 128);
+  x.fillStyle = '#fff'; x.font = 'bold 32px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('🧤 NITRILE', 128, 50);
+  x.font = '20px system-ui';
+  x.fillText('Găng tay xét nghiệm', 128, 88);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const lab = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.10), new THREE.MeshBasicMaterial({ map: tex }));
+  lab.position.set(0, 0.06, 0.072); gb.add(lab);
+  // Glove sticking out
+  const finger = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.04, 0.02),
+    new THREE.MeshStandardMaterial({ color: 0x4dc4ff, roughness: 0.6 })
+  );
+  finger.position.set(-0.04, 0.135, 0);
+  gb.add(finger);
+}
+
+// Tissue box (counter-right, next to gloves)
+{
+  const tb = new THREE.Group();
+  tb.position.set(1.3, 0.94, -0.4);
+  scene.add(tb);
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 0.08, 0.1),
+    new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.55 })
+  );
+  box.position.y = 0.04;
+  box.castShadow = true; box.receiveShadow = true;
+  tb.add(box);
+  // tissue popping out
+  const tissue = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.06, 0.06),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, side: THREE.DoubleSide })
+  );
+  tissue.position.set(0, 0.10, 0);
+  tissue.rotation.x = -0.4;
+  tb.add(tissue);
+  const c = document.createElement('canvas'); c.width = 256; c.height = 96;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fafafa'; x.fillRect(0, 0, 256, 96);
+  x.strokeStyle = '#9ca3af'; x.lineWidth = 2; x.strokeRect(4, 4, 248, 88);
+  x.fillStyle = '#4b5563'; x.font = 'bold 24px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('🧻 Khăn giấy', 128, 48);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const lab = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.06), new THREE.MeshBasicMaterial({ map: tex }));
+  lab.position.set(0, 0.04, 0.052); tb.add(lab);
+}
+
+// ============================================================
+// Lab stools with chrome wheeled base + teal cushion (giống Unity reference)
+// ============================================================
+function makeStool(x, z, rotY = 0) {
+  const stool = new THREE.Group();
+  stool.position.set(x, 0, z);
+  stool.rotation.y = rotY;
+  scene.add(stool);
+  const chromeMat = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, metalness: 0.85, roughness: 0.18 });
+  const blackMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4 });
+  // 5-spoke base (legs)
+  for (let i = 0; i < 5; i++) {
+    const ang = (i / 5) * Math.PI * 2;
+    const leg = new THREE.Mesh(
+      new THREE.BoxGeometry(0.32, 0.025, 0.04),
+      chromeMat
+    );
+    leg.position.set(Math.cos(ang) * 0.14, 0.025, Math.sin(ang) * 0.14);
+    leg.rotation.y = -ang;
+    leg.castShadow = true; leg.receiveShadow = true;
+    stool.add(leg);
+    // Wheel at end of each leg
+    const wheel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.022, 0.025, 12),
+      blackMat
+    );
+    wheel.rotation.z = Math.PI/2;
+    wheel.position.set(Math.cos(ang) * 0.28, 0.022, Math.sin(ang) * 0.28);
+    wheel.castShadow = true;
+    stool.add(wheel);
+  }
+  // Central hub
+  const hub = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.03, 16),
+    chromeMat
+  );
+  hub.position.y = 0.04; stool.add(hub);
+  // Gas-lift post
+  const post = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.025, 0.03, 0.45, 16),
+    chromeMat
+  );
+  post.position.y = 0.28; post.castShadow = true;
+  stool.add(post);
+  // Seat (teal padded cushion)
+  const seat = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 0.07, 32),
+    new THREE.MeshStandardMaterial({ color: 0x14b8a6, roughness: 0.7 })
+  );
+  seat.position.y = 0.55; seat.castShadow = true; seat.receiveShadow = true;
+  stool.add(seat);
+  // Seat top edge highlight
+  const seatTop = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.175, 0.175, 0.008, 32),
+    new THREE.MeshStandardMaterial({ color: 0x0f766e, roughness: 0.6 })
+  );
+  seatTop.position.y = 0.589; stool.add(seatTop);
+  return stool;
+}
+// Tuck 2 stools partly under counter front edge
+makeStool(-1.0, 1.0, 0.3);
+makeStool(1.0, 1.0, -0.4);
+
+// ============================================================
+// Test tube rack with 4 colored samples (giống Unity reference)
+// ============================================================
+{
+  const rack = new THREE.Group();
+  rack.position.set(-1.55, 0.94, 0.4);
+  rack.rotation.y = 0.18;
+  rack.userData = { kind: 'tool', id: 'test-tube-rack', name: 'Giá ống nghiệm — Mẫu QC chuẩn', label: 'Reference standards' };
+  scene.add(rack);
+  // Wooden U-shaped frame
+  const woodMat = new THREE.MeshStandardMaterial({ color: 0xc77e4d, roughness: 0.7 });
+  const woodMatDark = new THREE.MeshStandardMaterial({ color: 0x9c5a30, roughness: 0.75 });
+  // Bottom plank with 4 holes (boxes around holes)
+  const baseW = 0.22, baseD = 0.07, baseT = 0.025;
+  const bottom = new THREE.Mesh(new THREE.BoxGeometry(baseW, baseT, baseD), woodMatDark);
+  bottom.position.y = 0.012; bottom.castShadow = true; bottom.receiveShadow = true;
+  rack.add(bottom);
+  // Vertical side posts
+  for (const sx of [-baseW/2 + 0.012, baseW/2 - 0.012]) {
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.12, baseD), woodMat);
+    post.position.set(sx, 0.06, 0); post.castShadow = true;
+    rack.add(post);
+  }
+  // Top plank with 4 round holes
+  const top = new THREE.Mesh(new THREE.BoxGeometry(baseW, 0.014, baseD), woodMat);
+  top.position.y = 0.12;
+  rack.add(top);
+  // 4 test tubes with colored liquid
+  const tubeColors = [
+    { liquid: 0x1d4ed8, label: 'Cu²⁺' },     // blue copper sulfate
+    { liquid: 0xeab308, label: 'Fe³⁺' },     // yellow iron
+    { liquid: 0x10b981, label: 'Mg²⁺' },     // greenish magnesium
+    { liquid: 0xdc2626, label: 'phenol' },   // red phenolphthalein
+  ];
+  const tubeGlass = new THREE.MeshPhysicalMaterial({
+    color: 0xeaf6ff, metalness: 0, roughness: 0.04,
+    transmission: 0.97, thickness: 0.3, ior: 1.5,
+    clearcoat: 1, opacity: 0.5, transparent: true, side: THREE.DoubleSide,
+    envMapIntensity: 1.4,
+  });
+  for (let i = 0; i < 4; i++) {
+    const xOff = -baseW/2 + 0.035 + i * 0.05;
+    // Glass tube (open at top — rounded bottom)
+    const tube = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.011, 0.011, 0.13, 24, 1, true),
+      tubeGlass
+    );
+    tube.position.set(xOff, 0.10, 0); rack.add(tube);
+    // Tube rounded bottom (small hemisphere)
+    const tubeBot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.011, 16, 12, 0, Math.PI*2, Math.PI/2, Math.PI/2),
+      tubeGlass
+    );
+    tubeBot.position.set(xOff, 0.035, 0); rack.add(tubeBot);
+    // Liquid inside (60-90% full)
+    const fillH = 0.07 + Math.random() * 0.03;
+    const liquid = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.0095, 0.0095, fillH, 24),
+      new THREE.MeshPhysicalMaterial({
+        color: tubeColors[i].liquid, roughness: 0.25,
+        transparent: true, opacity: 0.88, transmission: 0.3,
+      })
+    );
+    liquid.position.set(xOff, 0.04 + fillH/2, 0); rack.add(liquid);
+    // Small white label sticker on tube
+    const lc = document.createElement('canvas'); lc.width = 64; lc.height = 32;
+    const lx = lc.getContext('2d');
+    lx.fillStyle = '#fff'; lx.fillRect(0, 0, 64, 32);
+    lx.strokeStyle = '#000'; lx.lineWidth = 1; lx.strokeRect(1, 1, 62, 30);
+    lx.fillStyle = '#000'; lx.font = 'bold 16px system-ui'; lx.textAlign = 'center'; lx.textBaseline = 'middle';
+    lx.fillText(tubeColors[i].label, 32, 16);
+    const lTex = new THREE.CanvasTexture(lc); lTex.colorSpace = THREE.SRGBColorSpace;
+    const stickerLab = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.018, 0.011),
+      new THREE.MeshBasicMaterial({ map: lTex })
+    );
+    stickerLab.position.set(xOff, 0.07, 0.012); rack.add(stickerLab);
+  }
+}
+
+// Metal sample tray under the test tube rack (small chunks of Cu/Fe/Mg metal samples)
+{
+  const tray = new THREE.Group();
+  tray.position.set(-1.55, 0.94, 0.62);
+  scene.add(tray);
+  const trayMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(0.22, 0.008, 0.12),
+    new THREE.MeshStandardMaterial({ color: 0xb0b0b0, metalness: 0.85, roughness: 0.25 })
+  );
+  trayMesh.position.y = 0.004;
+  trayMesh.castShadow = true; trayMesh.receiveShadow = true;
+  tray.add(trayMesh);
+  // Lip
+  for (const [w, d, dx, dz] of [[0.22, 0.003, 0, 0.06], [0.22, 0.003, 0, -0.06], [0.003, 0.12, 0.11, 0], [0.003, 0.12, -0.11, 0]]) {
+    const lip = new THREE.Mesh(
+      new THREE.BoxGeometry(w, 0.012, d),
+      new THREE.MeshStandardMaterial({ color: 0xa0a0a0, metalness: 0.85, roughness: 0.3 })
+    );
+    lip.position.set(dx, 0.014, dz); tray.add(lip);
+  }
+  // Metal sample chunks
+  const samples = [
+    { color: 0xb87333, x: -0.07, label: 'Cu' },   // copper
+    { color: 0x666666, x: -0.02, label: 'Fe' },   // iron
+    { color: 0xe5e7eb, x: 0.03,  label: 'Mg' },   // magnesium
+    { color: 0xddc070, x: 0.08,  label: 'Zn' },   // zinc
+  ];
+  for (const s of samples) {
+    const chunk = new THREE.Mesh(
+      new THREE.BoxGeometry(0.018, 0.012, 0.018),
+      new THREE.MeshStandardMaterial({ color: s.color, metalness: 0.6, roughness: 0.45 })
+    );
+    chunk.position.set(s.x, 0.018, 0);
+    chunk.rotation.y = Math.random() * Math.PI;
+    tray.add(chunk);
+  }
+}
+
+// Safety goggles on counter (placeholder simple)
+{
+  const g = new THREE.Group();
+  g.position.set(-0.55, 0.94, 0.45);
+  g.rotation.y = -0.4;
+  scene.add(g);
+  const strap = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.005, 8, 24), new THREE.MeshStandardMaterial({ color: 0x111827 }));
+  strap.rotation.x = Math.PI/2;
+  strap.position.y = 0.02; g.add(strap);
+  const lens = new THREE.Mesh(
+    new THREE.BoxGeometry(0.13, 0.04, 0.04),
+    new THREE.MeshPhysicalMaterial({ color: 0xddeefa, transmission: 0.9, roughness: 0.05, opacity: 0.55, transparent: true })
+  );
+  lens.position.y = 0.02; g.add(lens);
+}
+
+// ============================================================
+// Microscope (counter-right, behind/near fume hood)
+// ============================================================
+{
+  const m = new THREE.Group();
+  m.position.set(1.85, 0.94, 0.35);
+  m.rotation.y = -0.5;
+  scene.add(m);
+  const black = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.5, metalness: 0.35 });
+  const grey = new THREE.MeshStandardMaterial({ color: 0x6b7280, roughness: 0.5, metalness: 0.55 });
+  const chrome = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.2, metalness: 0.85 });
+  // U-shaped base
+  const base = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.025, 0.14), black);
+  base.position.y = 0.012; base.castShadow = true; base.receiveShadow = true;
+  m.add(base);
+  // Vertical arm
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.22, 0.08), black);
+  arm.position.set(0.04, 0.13, -0.02); m.add(arm);
+  // Stage (sample platform)
+  const stage = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.012, 0.10), grey);
+  stage.position.set(-0.025, 0.085, 0.02); m.add(stage);
+  // Stage clip
+  const clip = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.005, 0.02), chrome);
+  clip.position.set(-0.025, 0.092, 0.04); m.add(clip);
+  // Objective turret (cylindrical)
+  const turret = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.018, 16), black);
+  turret.position.set(-0.025, 0.15, 0.02); m.add(turret);
+  // 3 objective lenses
+  for (let i = 0; i < 3; i++) {
+    const ang = i * Math.PI * 2 / 3;
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.025, 12), chrome);
+    lens.position.set(-0.025 + Math.cos(ang) * 0.012, 0.133, 0.02 + Math.sin(ang) * 0.012);
+    m.add(lens);
+  }
+  // Body tube
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.10, 16), black);
+  tube.position.set(-0.025, 0.215, 0.02); m.add(tube);
+  // Eyepiece (angled)
+  const eyepiece = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.012, 0.06, 16), black);
+  eyepiece.position.set(-0.025, 0.28, 0.05);
+  eyepiece.rotation.x = -0.4;
+  m.add(eyepiece);
+  // Focus knob (large round black)
+  const focus = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.018, 16), grey);
+  focus.position.set(0.075, 0.12, -0.02); focus.rotation.z = Math.PI/2;
+  m.add(focus);
+  // Brand decal on side
+  const bc = document.createElement('canvas'); bc.width = 128; bc.height = 32;
+  const bx = bc.getContext('2d');
+  bx.fillStyle = '#1f2937'; bx.fillRect(0, 0, 128, 32);
+  bx.fillStyle = '#fbbf24'; bx.font = 'bold 16px serif'; bx.textAlign = 'center'; bx.textBaseline = 'middle';
+  bx.fillText('PharmaScope', 64, 16);
+  const bTex = new THREE.CanvasTexture(bc); bTex.colorSpace = THREE.SRGBColorSpace;
+  const brand = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.015), new THREE.MeshBasicMaterial({ map: bTex }));
+  brand.position.set(0.062, 0.13, 0); brand.rotation.y = Math.PI/2;
+  m.add(brand);
+}
+
+// ============================================================
+// Open lab notebook (3D plane with sketched formula notes)
+// ============================================================
+{
+  const nb = new THREE.Group();
+  nb.position.set(-1.5, 0.94, 0.6);
+  nb.rotation.y = 0.4;
+  scene.add(nb);
+  // Spine + 2 page panels
+  const spine = new THREE.Mesh(
+    new THREE.BoxGeometry(0.012, 0.005, 0.20),
+    new THREE.MeshStandardMaterial({ color: 0x6b3318, roughness: 0.8 })
+  );
+  spine.position.y = 0.005; nb.add(spine);
+  // Page texture (lined notebook with handwritten notes)
+  function makePageTex(side) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 768;
+    const x = c.getContext('2d');
+    x.fillStyle = '#fffef5'; x.fillRect(0, 0, 512, 768);
+    // ruled lines
+    x.strokeStyle = '#a3b5d4'; x.lineWidth = 1;
+    for (let i = 60; i < 760; i += 28) {
+      x.beginPath(); x.moveTo(20, i); x.lineTo(490, i); x.stroke();
+    }
+    // red margin
+    x.strokeStyle = '#dc2626'; x.lineWidth = 1.5;
+    x.beginPath(); x.moveTo(60, 20); x.lineTo(60, 740); x.stroke();
+    if (side === 'left') {
+      x.fillStyle = '#1d4ed8'; x.font = 'bold 26px "Comic Sans MS", cursive'; x.textAlign = 'left';
+      x.fillText('Ngày: 26/05  Ca sáng', 80, 88);
+      x.fillStyle = '#1f2937'; x.font = '20px "Comic Sans MS", cursive';
+      const lines = [
+        'Bài: Siro Paracetamol 24mg/mL',
+        '— Tính toán liều cho 100 mL —',
+        '',
+        'Paracetamol: 24 × 100 = 2400 mg',
+        '            = 2.4 g  ✓',
+        'Syrup base: 80 mL (đệm vị)',
+        'Nước cất: q.s. → 100 mL',
+        '',
+        'pH theo dược điển: 4-6',
+        'Bảo quản: < 30°C, kín',
+        'Hạn dùng: 24 tháng',
+      ];
+      lines.forEach((l, i) => x.fillText(l, 80, 130 + i * 30));
+    } else {
+      x.fillStyle = '#15803d'; x.font = 'bold 24px "Comic Sans MS", cursive';
+      x.fillText('Quy trình:', 80, 88);
+      x.fillStyle = '#1f2937'; x.font = '18px "Comic Sans MS", cursive';
+      const proc = [
+        '1) Cân Paracetamol 2.4 g ± 0.05',
+        '2) Đặt vào beaker 250 mL',
+        '3) Đong 80 mL Syrup → đổ vào',
+        '4) Khuấy đều bằng đũa',
+        '5) q.s. nước cất đến vạch',
+        '6) Lọc qua giấy lọc',
+        '7) Đóng chai 100 mL',
+        '8) Dán nhãn → kiểm tra',
+        '',
+        'Lưu ý: tránh ánh sáng,',
+        'lắc đều trước khi dùng',
+      ];
+      proc.forEach((l, i) => x.fillText(l, 80, 130 + i * 30));
+      // Doodle: little pill
+      x.fillStyle = '#dc2626';
+      x.beginPath(); x.arc(380, 600, 30, Math.PI/2, -Math.PI/2, false); x.fill();
+      x.fillStyle = '#fbbf24';
+      x.beginPath(); x.arc(380, 600, 30, -Math.PI/2, Math.PI/2, false); x.fill();
+      x.strokeStyle = '#1f2937'; x.lineWidth = 2;
+      x.beginPath(); x.arc(380, 600, 30, 0, Math.PI * 2); x.stroke();
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+  const pageMat = new THREE.MeshStandardMaterial({ map: makePageTex('left'), roughness: 0.95 });
+  const pageMatR = new THREE.MeshStandardMaterial({ map: makePageTex('right'), roughness: 0.95 });
+  const pageL = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.20), pageMat);
+  pageL.rotation.x = -Math.PI/2;
+  pageL.position.set(-0.072, 0.01, 0);
+  nb.add(pageL);
+  const pageR = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.20), pageMatR);
+  pageR.rotation.x = -Math.PI/2;
+  pageR.position.set(0.072, 0.01, 0);
+  nb.add(pageR);
+  // Pencil
+  const pencil = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.004, 0.004, 0.12, 8),
+    new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.6 })
+  );
+  pencil.position.set(0.13, 0.012, -0.07);
+  pencil.rotation.z = Math.PI/2; pencil.rotation.y = -0.3;
+  nb.add(pencil);
+}
+
+// ============================================================
+// Lab coat hanging on a wall hook (left wall)
+// ============================================================
+{
+  const coat = new THREE.Group();
+  coat.position.set(-ROOM_W/2 + 0.02, 1.55, -1.7);
+  coat.rotation.y = Math.PI/2;
+  scene.add(coat);
+  // Hook
+  const hook = new THREE.Mesh(
+    new THREE.TorusGeometry(0.018, 0.004, 8, 16, Math.PI),
+    new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.85, roughness: 0.25 })
+  );
+  hook.position.y = 0.4; hook.rotation.x = -Math.PI/2;
+  coat.add(hook);
+  // Coat body (single plane with texture)
+  const cc = document.createElement('canvas'); cc.width = 256; cc.height = 384;
+  const x = cc.getContext('2d');
+  // White coat
+  x.fillStyle = '#fefefe'; x.fillRect(0, 0, 256, 384);
+  // Shading on edges
+  x.fillStyle = '#e5e7eb';
+  x.fillRect(0, 0, 30, 384); x.fillRect(226, 0, 30, 384);
+  // Collar
+  x.fillStyle = '#f3f4f6';
+  x.beginPath();
+  x.moveTo(80, 0); x.lineTo(128, 50); x.lineTo(176, 0);
+  x.closePath(); x.fill();
+  // Buttons
+  x.fillStyle = '#525252';
+  for (let i = 0; i < 4; i++) {
+    x.beginPath(); x.arc(128, 100 + i * 50, 4, 0, Math.PI * 2); x.fill();
+  }
+  // Pocket
+  x.strokeStyle = '#d1d5db'; x.lineWidth = 1.5;
+  x.strokeRect(180, 200, 40, 50);
+  // Name tag
+  x.fillStyle = '#1e3a8a'; x.fillRect(50, 60, 50, 18);
+  x.fillStyle = '#fff'; x.font = 'bold 10px system-ui'; x.textAlign = 'center';
+  x.fillText('DS. ANH', 75, 73);
+  const tex = new THREE.CanvasTexture(cc); tex.colorSpace = THREE.SRGBColorSpace;
+  const body = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.45, 0.7),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, side: THREE.DoubleSide })
+  );
+  body.position.y = 0;
+  coat.add(body);
+}
+
+// ============================================================
+// Trash bin (biohazard yellow, corner)
+// ============================================================
+{
+  const bin = new THREE.Group();
+  bin.position.set(ROOM_W/2 - 0.5, 0, 1.8);
+  scene.add(bin);
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.13, 0.5, 24),
+    new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 })
+  );
+  body.position.y = 0.25; body.castShadow = true; body.receiveShadow = true;
+  bin.add(body);
+  // Lid
+  const lid = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.16, 0.16, 0.025, 24),
+    new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.5 })
+  );
+  lid.position.y = 0.51; bin.add(lid);
+  // Biohazard label
+  const bc2 = document.createElement('canvas'); bc2.width = 128; bc2.height = 128;
+  const x2 = bc2.getContext('2d');
+  x2.fillStyle = '#facc15'; x2.fillRect(0, 0, 128, 128);
+  x2.fillStyle = '#000'; x2.font = 'bold 14px system-ui'; x2.textAlign = 'center';
+  x2.fillText('☣ BIOHAZARD', 64, 110);
+  // Trefoil
+  x2.fillStyle = '#000';
+  x2.beginPath(); x2.arc(64, 50, 28, 0, Math.PI*2); x2.fill();
+  x2.fillStyle = '#facc15';
+  x2.beginPath(); x2.arc(64, 50, 18, 0, Math.PI*2); x2.fill();
+  x2.fillStyle = '#000';
+  for (let i = 0; i < 3; i++) {
+    const a = i * Math.PI * 2 / 3 - Math.PI/2;
+    x2.beginPath(); x2.arc(64 + Math.cos(a) * 30, 50 + Math.sin(a) * 30, 14, 0, Math.PI*2); x2.fill();
+  }
+  const tex2 = new THREE.CanvasTexture(bc2); tex2.colorSpace = THREE.SRGBColorSpace;
+  const label = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.18, 0.18),
+    new THREE.MeshBasicMaterial({ map: tex2, transparent: true })
+  );
+  label.position.set(0, 0.25, 0.16); bin.add(label);
+}
+
+// ============================================================
+// Lab cup of coffee (small atmospheric detail)
+// ============================================================
+{
+  const cup = new THREE.Group();
+  cup.position.set(1.3, 0.94, 0.55);
+  scene.add(cup);
+  const ceramic = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.030, 0.07, 24), ceramic);
+  body.position.y = 0.035; body.castShadow = true; body.receiveShadow = true;
+  cup.add(body);
+  // Coffee surface
+  const coffee = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.032, 0.032, 0.005, 24),
+    new THREE.MeshStandardMaterial({ color: 0x4a2c14, roughness: 0.4 })
+  );
+  coffee.position.y = 0.065; cup.add(coffee);
+  // Handle (small torus partial)
+  const handle = new THREE.Mesh(
+    new THREE.TorusGeometry(0.02, 0.006, 8, 16, Math.PI),
+    ceramic
+  );
+  handle.position.set(0.04, 0.04, 0); handle.rotation.y = Math.PI/2;
+  cup.add(handle);
+  // Logo decal
+  const cc3 = document.createElement('canvas'); cc3.width = 64; cc3.height = 32;
+  const x3 = cc3.getContext('2d');
+  x3.fillStyle = '#fff'; x3.fillRect(0, 0, 64, 32);
+  x3.fillStyle = '#0f766e'; x3.font = 'bold 16px serif'; x3.textAlign = 'center'; x3.textBaseline = 'middle';
+  x3.fillText('Rx ♥', 32, 16);
+  const tex3 = new THREE.CanvasTexture(cc3); tex3.colorSpace = THREE.SRGBColorSpace;
+  const decal = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 0.02), new THREE.MeshBasicMaterial({ map: tex3 }));
+  decal.position.set(0, 0.035, 0.036); cup.add(decal);
+}
+
+// ============================================================
+// REAGENT BOTTLES (dynamic from recipe)
+// ============================================================
+const reagents = [];
+
+// Lathe profile for a reagent bottle: radius vs height (in meters)
+function bottleProfile() {
+  // smooth curve from bottom → shoulder → neck → lip
+  return [
+    [0.0,    0.000],
+    [0.072,  0.000],
+    [0.078,  0.015],
+    [0.078,  0.190],
+    [0.075,  0.205],
+    [0.063,  0.222],
+    [0.050,  0.237],
+    [0.038,  0.252],
+    [0.030,  0.268],
+    [0.028,  0.285],
+    [0.028,  0.310],
+    [0.034,  0.312],   // outer lip
+  ].map(([r, y]) => new THREE.Vector2(r, y));
+}
+
+function makeBottle({ x, y, z, name, color, liquidColor, isPowder = false, idTag }) {
+  const grp = new THREE.Group();
+  grp.position.set(x, y, z);
+  grp.userData = { type: 'bottle', name, color, liquidColor, isPowder };
+  const bodyMat = new THREE.MeshPhysicalMaterial({
+    color, metalness: 0, roughness: 0.08,
+    transmission: isPowder ? 0.0 : 0.75, thickness: 0.5, ior: 1.5,
+    clearcoat: 1, clearcoatRoughness: 0.08,
+    transparent: !isPowder, opacity: isPowder ? 1.0 : 0.78,
+    envMapIntensity: 1.4, side: THREE.DoubleSide,
+  });
+  // Lathe-based bottle body (one mesh — smooth curves)
+  const body = new THREE.Mesh(
+    new THREE.LatheGeometry(bottleProfile(), 48),
+    bodyMat
+  );
+  body.castShadow = true; body.receiveShadow = true;
+  grp.add(body);
+  // Cap on top
+  const cap = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.035, 0.034, 0.042, 32),
+    new THREE.MeshStandardMaterial({ color: 0x2c2c2c, roughness: 0.4, metalness: 0.25 })
+  );
+  cap.position.y = 0.336; cap.castShadow = true;
+  grp.add(cap);
+  // Cap ridges (decorative)
+  for (let i = 0; i < 8; i++) {
+    const ridge = new THREE.Mesh(
+      new THREE.BoxGeometry(0.002, 0.038, 0.008),
+      new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5 })
+    );
+    const ang = (i / 8) * Math.PI * 2;
+    ridge.position.set(Math.cos(ang) * 0.034, 0.336, Math.sin(ang) * 0.034);
+    ridge.rotation.y = -ang;
+    grp.add(ridge);
+  }
+  // Liquid/powder fill inside (also a lathe with slight meniscus dip)
+  const fillProfile = [
+    [0.0,    0.005],
+    [0.070,  0.005],
+    [0.075,  0.020],
+    [0.075,  0.165],
+    [0.072,  0.175],   // meniscus: slight inward curve at the surface
+  ].map(([r, y]) => new THREE.Vector2(r, y));
+  const fill = new THREE.Mesh(
+    new THREE.LatheGeometry(fillProfile, 36),
+    new THREE.MeshPhysicalMaterial({
+      color: liquidColor, roughness: isPowder ? 1.0 : 0.28, metalness: 0,
+      transmission: isPowder ? 0 : 0.25, opacity: isPowder ? 1.0 : 0.92,
+      transparent: !isPowder,
+    })
+  );
+  grp.add(fill);
+  // Label (front)
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const x_ = c.getContext('2d');
+  x_.fillStyle = '#fefefe'; x_.fillRect(0, 0, 256, 128);
+  x_.strokeStyle = '#94a3b8'; x_.lineWidth = 4; x_.strokeRect(4, 4, 248, 120);
+  x_.fillStyle = '#1f2937'; x_.font = 'bold 22px system-ui'; x_.textAlign = 'center'; x_.textBaseline = 'middle';
+  const words = name.split(' ');
+  let line = '', lines = [];
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (x_.measureText(test).width > 200 && line) { lines.push(line); line = w; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  lines.slice(0, 3).forEach((l, i) => x_.fillText(l, 128, 50 + i * 28));
+  // small icon
+  x_.fillStyle = isPowder ? '#92400e' : '#1d4ed8';
+  x_.font = 'bold 14px system-ui';
+  x_.fillText(isPowder ? '⬛ POWDER' : '💧 LIQUID', 128, 110);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const lab = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.1), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 }));
+  lab.position.set(0, 0.13, 0.078); grp.add(lab);
+  return grp;
+}
+
+function clearReagents() {
+  for (const b of reagents) scene.remove(b);
+  reagents.length = 0;
+}
+
+function setupReagents(recipe) {
+  clearReagents();
+  // Set of reagents needed by this recipe (excluding 'beaker' which isn't a reagent)
+  const needed = new Set();
+  for (const s of recipe.steps) {
+    if (s.reagentId && s.reagentId !== 'beaker' && s.action !== 'transfer' && s.action !== 'bottle' && s.action !== 'place-on-balance') {
+      needed.add(s.reagentId);
+    }
+  }
+  const ids = [...needed, ...(recipe.distractors || [])];
+  const N = ids.length;
+  const xStart = -1.3, xStep = 2.5 / Math.max(N - 1, 1);
+  ids.forEach((id, i) => {
+    const r = REAGENTS[id];
+    if (!r) return;
+    const b = makeBottle({
+      x: xStart + i * xStep, y: 1.69, z: -0.55,
+      name: r.name, color: r.color, liquidColor: r.liquid, isPowder: r.isPowder,
+    });
+    b.userData.id = id;
+    b.userData.kind = 'reagent';
+    b.userData.label = r.category;
+    scene.add(b);
+    reagents.push(b);
+  });
+}
+
+// ============================================================
+// LAB TOOLS — balance, beaker, cylinder, mortar, final bottle
+// ============================================================
+
+const balance = new THREE.Group();
+balance.position.set(-0.95, 0.94, 0.05);
+balance.userData = { kind: 'tool', id: 'balance', name: 'Cân điện tử PrecisionLab', label: 'AB-220 · 0.001 g' };
+scene.add(balance);
+const balBase = new THREE.Mesh(
+  new THREE.BoxGeometry(0.45, 0.06, 0.35),
+  new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.35, metalness: 0.4 })
+);
+balBase.castShadow = true; balBase.receiveShadow = true;
+balance.add(balBase);
+const balPan = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.12, 0.12, 0.012, 32),
+  new THREE.MeshStandardMaterial({ color: 0xb8b8b8, roughness: 0.25, metalness: 0.85 })
+);
+balPan.position.set(0.03, 0.05, 0);
+balPan.castShadow = true;
+balance.add(balPan);
+// underside pillar
+const balPillar = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.025, 0.03, 0.02, 16),
+  new THREE.MeshStandardMaterial({ color: 0x9a9a9a, metalness: 0.7, roughness: 0.4 })
+);
+balPillar.position.set(0.03, 0.035, 0);
+balance.add(balPillar);
+const balScreenBack = new THREE.Mesh(
+  new THREE.BoxGeometry(0.2, 0.08, 0.008),
+  new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.6 })
+);
+balScreenBack.position.set(-0.16, 0.085, 0.1); balScreenBack.rotation.x = -0.28;
+balance.add(balScreenBack);
+const balScreenCanvas = document.createElement('canvas');
+balScreenCanvas.width = 320; balScreenCanvas.height = 110;
+const balScreenCtx = balScreenCanvas.getContext('2d');
+function drawBalScreen(weight, status = 'STABLE') {
+  const x = balScreenCtx, c = balScreenCanvas;
+  x.fillStyle = '#0a2010'; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = '#5fff6c'; x.font = 'bold 72px "Courier New", monospace';
+  x.textAlign = 'right'; x.textBaseline = 'middle';
+  x.shadowColor = '#5fff6c'; x.shadowBlur = 10;
+  const text = (weight >= 0 ? '+' : '') + weight.toFixed(3).padStart(7, ' ');
+  x.fillText(text + ' g', c.width - 16, c.height/2 - 5);
+  x.shadowBlur = 0;
+  x.fillStyle = '#5fff6c'; x.font = '14px "Courier New", monospace';
+  x.textAlign = 'left';
+  x.fillText('▸ ' + status, 14, c.height - 14);
+  // tare hint
+  x.textAlign = 'right';
+  x.fillText('TARE', c.width - 16, c.height - 14);
+}
+const balScreenTex = new THREE.CanvasTexture(balScreenCanvas);
+balScreenTex.colorSpace = THREE.SRGBColorSpace;
+const balScreenFace = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.19, 0.075),
+  new THREE.MeshBasicMaterial({ map: balScreenTex })
+);
+balScreenFace.position.copy(balScreenBack.position);
+balScreenFace.position.z += 0.005; balScreenFace.rotation.x = -0.28;
+balance.add(balScreenFace);
+drawBalScreen(0, 'READY');
+// Brand decal on top
+{
+  const c = document.createElement('canvas'); c.width = 256; c.height = 48;
+  const x = c.getContext('2d');
+  x.fillStyle = '#1f2937'; x.fillRect(0, 0, 256, 48);
+  x.fillStyle = '#fbbf24'; x.font = 'bold 26px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('PrecisionLab AB-220', 128, 24);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const brand = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.038), new THREE.MeshBasicMaterial({ map: tex }));
+  brand.position.set(0.05, 0.035, 0.176); brand.rotation.x = -Math.PI/2;
+  balance.add(brand);
+}
+// 3 buttons (tare, mode, zero)
+const btnMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.4, metalness: 0.2 });
+[-0.05, 0.05, 0.15].forEach((dx, i) => {
+  const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.006, 16), btnMat);
+  btn.position.set(dx, 0.036, 0.13); btn.rotation.x = Math.PI/2;
+  balance.add(btn);
+});
+
+// Beaker
+function makeBeaker(capacity = 250) {
+  const grp = new THREE.Group();
+  grp.userData = { kind: 'tool', id: 'beaker', name: 'Cốc thủy tinh 250 mL', label: 'Borosil glass', capacity };
+  const h = 0.14, r = 0.045;
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xeaf6ff, metalness: 0, roughness: 0.03,
+    transmission: 0.97, thickness: 0.5, ior: 1.5,
+    clearcoat: 1, clearcoatRoughness: 0.03,
+    transparent: true, opacity: 0.5, side: THREE.DoubleSide,
+    envMapIntensity: 1.4,
+  });
+  const outer = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 36, 1, true), glassMat);
+  outer.position.y = h/2; grp.add(outer);
+  const bot = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.005, 36), glassMat);
+  bot.position.y = 0.0025; grp.add(bot);
+  // Rim
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.002, 8, 36), glassMat);
+  rim.position.y = h; rim.rotation.x = Math.PI/2; grp.add(rim);
+  // Pour spout (small triangular lip on +Z side of rim)
+  const spoutShape = new THREE.Shape();
+  spoutShape.moveTo(-0.015, 0);
+  spoutShape.lineTo(0.015, 0);
+  spoutShape.lineTo(0, 0.012);
+  spoutShape.closePath();
+  const spout = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(spoutShape, { depth: 0.008, bevelEnabled: false }),
+    glassMat
+  );
+  spout.position.set(0, h - 0.001, r);
+  spout.rotation.x = Math.PI / 2;
+  grp.add(spout);
+  // Measurement marks
+  const mc = document.createElement('canvas'); mc.width = 128; mc.height = 256;
+  const mcx = mc.getContext('2d');
+  mcx.strokeStyle = '#1d4ed8'; mcx.lineWidth = 1; mcx.fillStyle = '#1d4ed8'; mcx.font = '11px monospace';
+  for (let i = 50; i <= 250; i += 50) {
+    const y = mc.height - i / 250 * (mc.height - 20) - 10;
+    mcx.beginPath(); mcx.moveTo(20, y); mcx.lineTo(36, y); mcx.stroke();
+    mcx.fillText(i + 'mL', 40, y + 4);
+  }
+  mcx.font = 'bold 14px system-ui';
+  mcx.fillText('250 mL', 12, 18);
+  const mTex = new THREE.CanvasTexture(mc); mTex.colorSpace = THREE.SRGBColorSpace;
+  const marks = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.045, 0.12),
+    new THREE.MeshBasicMaterial({ map: mTex, transparent: true })
+  );
+  marks.position.set(r, h/2, 0.001); marks.rotation.y = Math.PI/2;
+  grp.add(marks);
+  const liquid = new THREE.Mesh(
+    new THREE.CylinderGeometry(r - 0.002, r - 0.002, 0.01, 36),
+    new THREE.MeshPhysicalMaterial({ color: 0xa1d99b, roughness: 0.25, transparent: true, opacity: 0.88, transmission: 0.3 })
+  );
+  liquid.position.y = 0.006; liquid.visible = false;
+  grp.add(liquid);
+  grp.userData.liquid = liquid;
+  grp.userData.maxH = h - 0.01;
+  return grp;
+}
+const beaker = makeBeaker();
+beaker.position.set(-0.3, 0.94, 0.15);
+scene.add(beaker);
+
+// Graduated cylinder
+function makeCylinder(capacity = 100) {
+  const grp = new THREE.Group();
+  grp.userData = { kind: 'tool', id: 'cylinder', name: 'Ống đong 100 mL', label: 'Class A graduated cylinder', capacity };
+  const h = 0.2, r = 0.022;
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xeaf6ff, metalness: 0, roughness: 0.04,
+    transmission: 0.97, thickness: 0.4, ior: 1.5,
+    clearcoat: 1, clearcoatRoughness: 0.05,
+    transparent: true, opacity: 0.55, side: THREE.DoubleSide,
+    envMapIntensity: 1.3,
+  });
+  const outer = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 32, 1, true), glassMat);
+  outer.position.y = h/2; grp.add(outer);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.012, 32), glassMat);
+  base.position.y = 0.006; grp.add(base);
+  const bot = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.003, 32), glassMat);
+  bot.position.y = 0.0015; grp.add(bot);
+  // markings
+  const mc = document.createElement('canvas'); mc.width = 64; mc.height = 256;
+  const mcx = mc.getContext('2d');
+  mcx.strokeStyle = '#111'; mcx.lineWidth = 1; mcx.fillStyle = '#111'; mcx.font = '9px monospace';
+  for (let i = 10; i <= 100; i += 10) {
+    const y = mc.height - i / 100 * (mc.height - 10) - 5;
+    mcx.beginPath(); mcx.moveTo(10, y); mcx.lineTo(20, y); mcx.stroke();
+    mcx.fillText(i + '', 24, y + 4);
+  }
+  mcx.font = 'bold 11px system-ui';
+  mcx.fillText('mL', 24, 16);
+  const mTex = new THREE.CanvasTexture(mc); mTex.colorSpace = THREE.SRGBColorSpace;
+  const marks = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.022, 0.18),
+    new THREE.MeshBasicMaterial({ map: mTex, transparent: true })
+  );
+  marks.position.set(r + 0.0005, h/2, 0); marks.rotation.y = Math.PI/2;
+  grp.add(marks);
+  const liquid = new THREE.Mesh(
+    new THREE.CylinderGeometry(r - 0.002, r - 0.002, 0.01, 32),
+    new THREE.MeshPhysicalMaterial({ color: 0xb45309, roughness: 0.3, transparent: true, opacity: 0.9 })
+  );
+  liquid.position.y = 0.006; liquid.visible = false;
+  grp.add(liquid);
+  grp.userData.liquid = liquid;
+  grp.userData.maxH = h - 0.01;
+  return grp;
+}
+const cylinder = makeCylinder();
+cylinder.position.set(0, 0.94, 0.15);
+scene.add(cylinder);
+
+// Final bottle (with dynamic label per recipe)
+const finalBottle = new THREE.Group();
+finalBottle.position.set(0.35, 0.94, 0.15);
+finalBottle.userData = { kind: 'tool', id: 'final-bottle', name: 'Chai thành phẩm', label: 'Empty bottle' };
+scene.add(finalBottle);
+const fbBodyMat = new THREE.MeshPhysicalMaterial({
+  color: 0xfff5d6, metalness: 0, roughness: 0.1,
+  transmission: 0.7, thickness: 0.4, ior: 1.5, clearcoat: 1,
+  transparent: true, opacity: 0.7, envMapIntensity: 1.2,
+});
+// Lathe-based final bottle (single smooth body)
+const fbBody = new THREE.Mesh(new THREE.LatheGeometry(bottleProfile(), 48), fbBodyMat);
+fbBody.castShadow = true; fbBody.receiveShadow = true;
+finalBottle.add(fbBody);
+const fbCap = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.035, 0.034, 0.042, 32),
+  new THREE.MeshStandardMaterial({ color: 0x2c2c2c, roughness: 0.4, metalness: 0.25 })
+);
+fbCap.position.y = 0.336; fbCap.castShadow = true;
+finalBottle.add(fbCap);
+const fbFillProfile = [
+  [0.0,    0.005],
+  [0.070,  0.005],
+  [0.075,  0.020],
+  [0.075,  0.165],
+  [0.072,  0.175],
+].map(([r, y]) => new THREE.Vector2(r, y));
+const fbFill = new THREE.Mesh(
+  new THREE.LatheGeometry(fbFillProfile, 36),
+  new THREE.MeshPhysicalMaterial({ color: 0xc16e1c, roughness: 0.3, transmission: 0.25, opacity: 0.92, transparent: true })
+);
+fbFill.visible = false;
+finalBottle.add(fbFill);
+finalBottle.userData.fill = fbFill;
+// Dynamic label
+const fbLabelTex = new THREE.CanvasTexture(document.createElement('canvas'));
+const fbLabel = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.14, 0.1),
+  new THREE.MeshStandardMaterial({ map: fbLabelTex, roughness: 0.85 })
+);
+fbLabel.position.set(0, 0.13, 0.078);
+finalBottle.add(fbLabel);
+finalBottle.userData.labelTex = fbLabelTex;
+
+function setFinalLabel(text) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 192;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fefefe'; x.fillRect(0, 0, 256, 192);
+  x.strokeStyle = '#94a3b8'; x.lineWidth = 4; x.strokeRect(4, 4, 248, 184);
+  x.fillStyle = '#0f766e'; x.font = 'bold 20px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  const lines = text.split('\n');
+  lines.forEach((l, i) => x.fillText(l, 128, 70 + i * 28));
+  x.fillStyle = '#7c2d12'; x.font = '14px system-ui';
+  x.fillText('Rx — Pharmacy', 128, 160);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  fbLabel.material.map = tex; fbLabel.material.needsUpdate = true;
+}
+
+// Mortar + pestle
+const mortar = new THREE.Group();
+mortar.position.set(0.85, 0.94, 0.15);
+mortar.userData = { kind: 'tool', id: 'mortar', name: 'Cối + chày', label: 'Sứ ceramic — nghiền dược liệu' };
+scene.add(mortar);
+const mBody = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.08, 0.06, 0.08, 32),
+  new THREE.MeshStandardMaterial({ color: 0xefe7d5, roughness: 0.8 })
+);
+mBody.position.y = 0.04; mBody.castShadow = true; mBody.receiveShadow = true;
+mortar.add(mBody);
+const mInner = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.065, 0.04, 0.045, 32, 1, true),
+  new THREE.MeshStandardMaterial({ color: 0xb8a880, roughness: 0.93, side: THREE.BackSide })
+);
+mInner.position.y = 0.052; mortar.add(mInner);
+const pestle = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.012, 0.018, 0.13, 16),
+  new THREE.MeshStandardMaterial({ color: 0xefe7d5, roughness: 0.8 })
+);
+pestle.position.set(0.06, 0.067, 0); pestle.rotation.z = 0.8;
+pestle.castShadow = true; mortar.add(pestle);
+
+// ============================================================
+// POUR ANIMATION — particle stream + bottle tilt
+// ============================================================
+const PARTICLE_COUNT = 24;
+const particles = [];
+const particleGeom = new THREE.SphereGeometry(0.006, 8, 6);
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  const m = new THREE.Mesh(
+    particleGeom,
+    new THREE.MeshStandardMaterial({ color: 0xc16e1c, transparent: true, opacity: 0.95, roughness: 0.4, metalness: 0 })
+  );
+  m.visible = false;
+  scene.add(m);
+  particles.push({ mesh: m, vx: 0, vy: 0, vz: 0, x: 0, y: 0, z: 0, ttl: 0, isPowder: false });
+}
+
+// Tilt-bottle state
+const tiltState = { obj: null, baseRot: null, startedAt: 0, duration: 0, axis: null, angle: 0, peakHoldUntil: 0 };
+
+function tiltBottleTowards(obj, targetWorldPos, duration = 800, peakAngle = 1.2) {
+  if (tiltState.obj && tiltState.obj !== obj) restoreTiltedBottle();
+  const fromWorld = new THREE.Vector3(); obj.getWorldPosition(fromWorld);
+  const dx = targetWorldPos.x - fromWorld.x;
+  const dz = targetWorldPos.z - fromWorld.z;
+  // axis perpendicular to the direction, lying in horizontal plane
+  const axis = new THREE.Vector3(-dz, 0, dx).normalize();
+  tiltState.obj = obj;
+  tiltState.baseRot = obj.quaternion.clone();
+  tiltState.startedAt = performance.now();
+  tiltState.duration = duration;
+  tiltState.axis = axis;
+  tiltState.angle = peakAngle;
+  tiltState.peakHoldUntil = performance.now() + duration * 0.55;
+}
+
+function restoreTiltedBottle() {
+  if (!tiltState.obj) return;
+  tiltState.obj.quaternion.copy(tiltState.baseRot);
+  tiltState.obj = null;
+}
+
+function updateTilt() {
+  if (!tiltState.obj) return;
+  const t = (performance.now() - tiltState.startedAt) / tiltState.duration;
+  let curAng;
+  if (t < 0.25) curAng = tiltState.angle * (t / 0.25);                  // ease in to peak
+  else if (t < 0.75) curAng = tiltState.angle;                          // hold
+  else if (t < 1.0) curAng = tiltState.angle * ((1 - t) / 0.25);        // ease out
+  else { restoreTiltedBottle(); return; }
+  const q = new THREE.Quaternion().setFromAxisAngle(tiltState.axis, curAng);
+  tiltState.obj.quaternion.copy(tiltState.baseRot).multiply(q);
+}
+
+// Spawn particles from `fromPos` toward `toPos` over `duration` ms
+function showStream(fromPos, toPos, color, duration = 800, isPowder = false) {
+  const N = isPowder ? 18 : 14;
+  const dt = duration / N;
+  for (let i = 0; i < N; i++) {
+    const p = particles[i % PARTICLE_COUNT];
+    setTimeout(() => spawnParticle(p, fromPos, toPos, color, isPowder), i * dt * 0.5);
+  }
+}
+
+function spawnParticle(p, fromPos, toPos, color, isPowder) {
+  p.mesh.visible = true;
+  p.mesh.material.color.setHex(color);
+  p.mesh.material.opacity = 0.95;
+  p.isPowder = isPowder;
+  p.x = fromPos.x + (Math.random() - 0.5) * 0.012;
+  p.y = fromPos.y;
+  p.z = fromPos.z + (Math.random() - 0.5) * 0.012;
+  // velocity: aim at toPos, gravity will arc
+  const dx = toPos.x - fromPos.x;
+  const dz = toPos.z - fromPos.z;
+  const time = 0.45 + Math.random() * 0.1;  // seconds to land
+  p.vx = dx / time + (Math.random() - 0.5) * 0.05;
+  p.vz = dz / time + (Math.random() - 0.5) * 0.05;
+  // Vy chosen so y reaches toPos.y after `time` with gravity 1.8
+  const g = isPowder ? 2.4 : 1.8;
+  p.vy = (toPos.y - fromPos.y + 0.5 * g * time * time) / time;
+  p.ttl = time + 0.15;
+  p.gravity = g;
+  p.mesh.position.set(p.x, p.y, p.z);
+  // Scale slightly bigger for liquid drops
+  p.mesh.scale.setScalar(isPowder ? 0.7 + Math.random() * 0.5 : 1.0 + Math.random() * 0.4);
+}
+
+function updateStream(dt) {
+  for (const p of particles) {
+    if (!p.mesh.visible) continue;
+    p.ttl -= dt;
+    if (p.ttl <= 0) { p.mesh.visible = false; continue; }
+    p.vy -= p.gravity * dt;
+    p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+    p.mesh.position.set(p.x, p.y, p.z);
+    if (p.ttl < 0.15) p.mesh.material.opacity = (p.ttl / 0.15) * 0.95;
+  }
+}
+
+// ============================================================
+// REMOTE PLAYERS (multiplayer)
+// ============================================================
+const remotePlayers = new Map();
+function makeRemoteAvatar(id, name, color) {
+  const grp = new THREE.Group();
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05, 16, 16),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 })
+  );
+  grp.add(sphere);
+  // name label
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+  const x = c.getContext('2d');
+  x.fillStyle = color; x.globalAlpha = 0.85; x.fillRect(0, 0, 256, 64); x.globalAlpha = 1;
+  x.fillStyle = '#fff'; x.font = 'bold 24px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(name, 128, 32);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
+  label.scale.set(0.3, 0.075, 1);
+  label.position.y = 0.15;
+  grp.add(label);
+  scene.add(grp);
+  return { grp, sphere, label, name, color };
+}
+
+function ensureRemote(p) {
+  if (remotePlayers.has(p.id)) return;
+  const av = makeRemoteAvatar(p.id, p.name, p.color);
+  if (p.cursor) av.grp.position.set(p.cursor.x, p.cursor.y, p.cursor.z);
+  remotePlayers.set(p.id, av);
+  refreshMpPanel();
+}
+
+// ============================================================
+// GAMEPLAY STATE
+// ============================================================
+const stepNumEl = document.getElementById('step-num');
+const stepTitleEl = document.getElementById('step-title');
+const stepBodyEl = document.getElementById('step-body');
+const meterBar = document.getElementById('meter-bar');
+const meterCur = document.getElementById('meter-cur');
+const meterTgt = document.getElementById('meter-tgt');
+const submitBtn = document.getElementById('submit-btn');
+const restartBtn = document.getElementById('restart-btn');
+const skipBtn = document.getElementById('skip-step-btn');
+const toastEl = document.getElementById('toast');
+const recipeBodyEl = document.getElementById('recipe-body');
+const topbarRecipeEl = document.getElementById('topbar-recipe');
+const lvlPillEl = document.getElementById('lvl-pill');
+
+let state = null;
+
+function showToast(msg, ms = 2200, type = '') {
+  toastEl.textContent = msg;
+  toastEl.className = ''; if (type) toastEl.classList.add(type);
+  toastEl.style.display = 'block';
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.style.display = 'none', ms);
+}
+
+function renderRecipePanel(recipe) {
+  let html = `<div style="font-weight:700;font-size:14px">${recipe.icon} ${recipe.name}</div>`;
+  html += `<div style="font-size:11px;opacity:0.7">${recipe.short} · Cấp ${recipe.level}</div>`;
+  html += `<div class="lbl">Công thức</div><ul>`;
+  for (const s of recipe.steps) {
+    if (s.action === 'pour' && s.reagentId !== 'water') {
+      const r = REAGENTS[s.reagentId];
+      html += `<li class="ix"><span>${r?.name || s.reagentId}</span><span><b>${s.target} ${s.unit}</b></span></li>`;
+    } else if (s.action === 'pour' && s.reagentId === 'water') {
+      html += `<li class="ix"><span>Nước cất q.s.</span><span><b>→ ${s.target} ${s.unit}</b></span></li>`;
+    }
+  }
+  html += `</ul>`;
+  html += `<div class="lbl">Chỉ định</div><div style="font-size:11px">${recipe.indication}</div>`;
+  html += `<div class="totals" style="margin-top:8px">Thể tích cuối: <span style="float:right">${recipe.finalVolume} ${recipe.finalUnit}</span></div>`;
+  recipeBodyEl.innerHTML = html;
+}
+
+function renderStep() {
+  if (!state || !state.recipe) return;
+  const recipe = state.recipe;
+  const i = state.stepIdx;
+  if (i >= recipe.steps.length) {
+    stepNumEl.textContent = 'HOÀN TẤT';
+    stepTitleEl.textContent = '🎉 Bạn đã hoàn thành quy trình!';
+    stepBodyEl.innerHTML = 'Bấm <b>Hoàn thành & Nộp</b> để lưu kết quả.';
+    meterBar.style.width = '100%';
+    meterCur.textContent = ''; meterTgt.textContent = '';
+    submitBtn.disabled = false;
+    return;
+  }
+  const s = recipe.steps[i];
+  stepNumEl.textContent = `BƯỚC ${i+1} / ${recipe.steps.length}`;
+  stepTitleEl.textContent = s.label;
+
+  let bodyHtml = '';
+  if (s.action === 'place-on-balance') {
+    bodyHtml = 'Click vào <b>cốc thủy tinh</b>, sau đó click vào <b>cân điện tử</b>. Cân tự tare về 0.';
+  } else if (s.action === 'pour') {
+    const r = REAGENTS[s.reagentId];
+    const target = s.target, unit = s.unit, tol = s.tolerance;
+    const cont = s.container === 'cylinder' ? 'ống đong' : (s.container === 'beaker' ? 'cốc' : 'cốc');
+    bodyHtml = `Click vào chai <b>${r?.name || s.reagentId}</b>, rồi click vào <b>${cont}</b>. Đong đến <b>${target} ${unit}</b> (±${tol}).`;
+  } else if (s.action === 'transfer') {
+    bodyHtml = 'Click vào <b>ống đong</b> (đã có dung dịch), rồi click vào <b>cốc</b> để chuyển.';
+  } else if (s.action === 'bottle') {
+    bodyHtml = 'Click vào <b>cốc</b>, rồi click vào <b>chai thành phẩm</b> để đóng chai.';
+  }
+  stepBodyEl.innerHTML = bodyHtml;
+
+  // Meter
+  let cur = 0, tgt = 1, label = '', unit = 'mL';
+  if (s.action === 'place-on-balance') {
+    cur = state.beakerOnBalance ? 1 : 0; tgt = 1; label = 'chờ thao tác'; unit = '';
+  } else if (s.action === 'pour') {
+    if (s.container === 'cylinder') {
+      cur = state.cylinderMl; tgt = s.target; label = `đích: ${s.target} ${s.unit}`; unit = s.unit;
+    } else if (s.container === 'beaker') {
+      if (s.unit === 'g') {
+        // weight step — current weight of THIS reagent step (track per step)
+        cur = state.stepProgress[i] ?? 0; tgt = s.target; label = `đích: ${s.target} g`; unit = 'g';
+      } else {
+        cur = state.beakerVol; tgt = s.target; label = `đích: ${s.target} ${s.unit}`; unit = 'mL';
+      }
+    }
+  } else if (s.action === 'transfer') {
+    cur = state.transferDone ? 1 : 0; tgt = 1; label = 'sẵn sàng đổ'; unit = '';
+  } else if (s.action === 'bottle') {
+    cur = state.bottled ? 1 : 0; tgt = 1; label = 'đóng chai'; unit = '';
+  }
+  const pct = Math.min(100, tgt ? (cur / tgt) * 100 : 0);
+  meterBar.style.width = pct + '%';
+  meterCur.textContent = (typeof cur === 'number' ? cur : 0).toFixed(unit === 'g' ? 3 : 1) + ' ' + unit;
+  meterTgt.textContent = label;
+  submitBtn.disabled = true;
+}
+
+function advanceStep(success = true) {
+  if (success) sfx.correct();
+  state.stepIdx++;
+  state.transferDone = false;
+  // reset cylinder for next 'cylinder' step (but keep beaker volume across steps)
+  if (state.recipe.steps[state.stepIdx]?.container === 'cylinder' && state.recipe.steps[state.stepIdx]?.action !== 'transfer') {
+    state.cylinderMl = 0;
+    updateCylinderLiquid(0, 0xc16e1c);
+  }
+  renderStep();
+  sendProgress();
+}
+
+function logError(msg) {
+  state.errors.push(msg);
+  showToast('❌ ' + msg, 2500, 'err');
+  sfx.wrong();
+}
+
+function updateBeakerLiquid(volMl, color) {
+  const liq = beaker.userData.liquid;
+  if (volMl < 0.001) { liq.visible = false; return; }
+  liq.visible = true;
+  const maxVol = 250;
+  const h = Math.min(beaker.userData.maxH, volMl / maxVol * beaker.userData.maxH);
+  liq.geometry.dispose();
+  liq.geometry = new THREE.CylinderGeometry(0.043, 0.043, h, 32);
+  liq.position.y = h / 2 + 0.003;
+  if (color !== undefined) liq.material.color.setHex(color);
+}
+
+function updateCylinderLiquid(volMl, color) {
+  const liq = cylinder.userData.liquid;
+  if (volMl < 0.001) { liq.visible = false; return; }
+  liq.visible = true;
+  const h = volMl / 100 * cylinder.userData.maxH;
+  liq.geometry.dispose();
+  liq.geometry = new THREE.CylinderGeometry(0.02, 0.02, h, 32);
+  liq.position.y = h / 2 + 0.003;
+  if (color !== undefined) liq.material.color.setHex(color);
+}
+
+// ============================================================
+// WALK MODE — first-person WASD + pointer-lock mouse-look
+// ============================================================
+const walk = { active: false, keys: {}, yaw: 0, pitch: -0.1 };
+const walkBtn = document.getElementById('walk-btn');
+const crosshairEl = document.getElementById('crosshair');
+const walkHintEl = document.getElementById('walk-hint');
+const _walkForward = new THREE.Vector3();
+const _walkRight = new THREE.Vector3();
+
+function enterWalkMode() {
+  walk.active = true;
+  controls.enabled = false;
+  // Start near the front of the counter, eye height
+  camera.position.set(0, 1.6, 1.6);
+  walk.yaw = 0; walk.pitch = -0.15;
+  renderer.domElement.requestPointerLock?.();
+  walkBtn.classList.add('active');
+  walkBtn.textContent = '🛑 Thoát đi quanh (Esc)';
+  crosshairEl.classList.add('shown');
+  walkHintEl.classList.add('shown');
+}
+function exitWalkMode() {
+  walk.active = false;
+  controls.enabled = true;
+  document.exitPointerLock?.();
+  walkBtn.classList.remove('active');
+  walkBtn.textContent = '🚶 Đi quanh phòng (V)';
+  crosshairEl.classList.remove('shown');
+  walkHintEl.classList.remove('shown');
+}
+walkBtn.addEventListener('click', () => walk.active ? exitWalkMode() : enterWalkMode());
+
+document.addEventListener('keydown', e => {
+  // Ignore typing in chat input
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  if (e.key === 'v' || e.key === 'V') { walk.active ? exitWalkMode() : enterWalkMode(); return; }
+  if (e.key === 'Escape' && walk.active) { exitWalkMode(); return; }
+  walk.keys[e.key.toLowerCase()] = true;
+});
+document.addEventListener('keyup', e => { walk.keys[e.key.toLowerCase()] = false; });
+
+document.addEventListener('pointerlockchange', () => {
+  if (document.pointerLockElement !== renderer.domElement && walk.active) exitWalkMode();
+});
+
+document.addEventListener('mousemove', e => {
+  if (!walk.active || document.pointerLockElement !== renderer.domElement) return;
+  walk.yaw   -= e.movementX * 0.0025;
+  walk.pitch -= e.movementY * 0.0025;
+  walk.pitch = Math.max(-1.3, Math.min(1.3, walk.pitch));
+});
+
+function updateWalk(dt) {
+  if (!walk.active) return;
+  const eu = new THREE.Euler(walk.pitch, walk.yaw, 0, 'YXZ');
+  camera.quaternion.setFromEuler(eu);
+  const speed = (walk.keys['shift'] ? 2.8 : 1.5) * dt;
+  camera.getWorldDirection(_walkForward); _walkForward.y = 0; _walkForward.normalize();
+  _walkRight.crossVectors(_walkForward, camera.up).normalize();
+  if (walk.keys['w']) camera.position.addScaledVector(_walkForward,  speed);
+  if (walk.keys['s']) camera.position.addScaledVector(_walkForward, -speed);
+  if (walk.keys['d']) camera.position.addScaledVector(_walkRight,    speed);
+  if (walk.keys['a']) camera.position.addScaledVector(_walkRight,   -speed);
+  if (walk.keys[' ']) camera.position.y += speed;
+  if (walk.keys['c']) camera.position.y -= speed;
+  camera.position.y = Math.max(1.0, Math.min(2.5, camera.position.y));
+  // Clamp to room bounds with margin
+  const margin = 0.7;
+  camera.position.x = Math.max(-ROOM_W/2 + margin, Math.min(ROOM_W/2 - margin, camera.position.x));
+  camera.position.z = Math.max(-ROOM_D/2 + margin + 0.6, Math.min(ROOM_D/2 - margin, camera.position.z));
+}
+
+// ============================================================
+// MEDIAPIPE HAND TRACKING — pinch to grab, release to drop
+// ============================================================
+const handState = {
+  running: false, landmarker: null, video: null, lastVideoTime: -1,
+  pinching: false, pinchTriggered: false,
+};
+const handBtn = document.getElementById('hand-btn');
+const camPreviewEl = document.getElementById('cam-preview');
+const camCtx = camPreviewEl.getContext('2d');
+// Cursor sphere in 3D
+const handCursor = new THREE.Mesh(
+  new THREE.SphereGeometry(0.018, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0x00ddff, transparent: true, opacity: 0.9, depthTest: false })
+);
+handCursor.renderOrder = 999;
+handCursor.visible = false;
+scene.add(handCursor);
+
+const SECURE_FOR_CAMERA = window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+if (!SECURE_FOR_CAMERA) {
+  handBtn.textContent = '🖱️ Webcam cần HTTPS';
+  handBtn.style.background = '#6b7280';
+  handBtn.style.color = '#fff';
+  handBtn.style.cursor = 'help';
+  handBtn.addEventListener('click', () => showToast('⚠️ Webcam cần HTTPS hoặc localhost', 2200));
+} else {
+  handBtn.addEventListener('click', () => handState.running ? stopHandTracking() : initHandTracking());
+}
+
+async function initHandTracking() {
+  handBtn.disabled = true; handBtn.textContent = '⏳ Đang tải MediaPipe...';
+  try {
+    const { HandLandmarker, FilesetResolver } = await import('./vendor/mediapipe/vision_bundle.mjs');
+    const fileset = await FilesetResolver.forVisionTasks('./vendor/mediapipe/wasm');
+    handState.landmarker = await HandLandmarker.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: './models/hand_landmarker.task', delegate: 'GPU' },
+      runningMode: 'VIDEO', numHands: 1,
+    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 }, audio: false });
+    handState.video = document.createElement('video');
+    handState.video.srcObject = stream;
+    handState.video.autoplay = true; handState.video.muted = true; handState.video.playsInline = true;
+    await new Promise(r => (handState.video.onloadedmetadata = r));
+    await handState.video.play();
+    handState.running = true;
+    handBtn.classList.add('active');
+    handBtn.textContent = '✋ Tắt hand tracking';
+    handBtn.disabled = false;
+    camPreviewEl.classList.add('shown');
+    handCursor.visible = true;
+    showToast('🖐️ Chụm ngón cái + trỏ để chọn dụng cụ / reagent', 3000, 'ok');
+  } catch (err) {
+    handBtn.disabled = false; handBtn.textContent = '🖐️ Bật điều khiển tay';
+    showToast('❌ Hand tracking lỗi: ' + (err.message || err.name), 3000, 'err');
+  }
+}
+
+function stopHandTracking() {
+  handState.running = false;
+  handState.video?.srcObject?.getTracks().forEach(t => t.stop());
+  handState.video = null;
+  handBtn.classList.remove('active');
+  handBtn.textContent = '🖐️ Bật điều khiển tay';
+  camPreviewEl.classList.remove('shown');
+  handCursor.visible = false;
+  handState.pinching = false; handState.pinchTriggered = false;
+}
+
+const _handPlaneN = new THREE.Vector3();
+const _handHit = new THREE.Vector3();
+function updateHand(time) {
+  if (!handState.running || !handState.landmarker || !handState.video) return;
+  if (handState.video.currentTime === handState.lastVideoTime) return;
+  handState.lastVideoTime = handState.video.currentTime;
+  const result = handState.landmarker.detectForVideo(handState.video, time);
+  camCtx.drawImage(handState.video, 0, 0, camPreviewEl.width, camPreviewEl.height);
+  if (!result.landmarks || !result.landmarks.length) {
+    if (handState.pinching) { handState.pinching = false; handState.pinchTriggered = false; }
+    return;
+  }
+  const lm = result.landmarks[0];
+  const t = lm[4], idx = lm[8];
+  // Draw landmarks
+  camCtx.fillStyle = '#00ddff';
+  for (const p of lm) { camCtx.beginPath(); camCtx.arc(p.x * camPreviewEl.width, p.y * camPreviewEl.height, 3, 0, Math.PI*2); camCtx.fill(); }
+  camCtx.strokeStyle = handState.pinching ? '#ff5722' : '#fff';
+  camCtx.lineWidth = 2;
+  camCtx.beginPath();
+  camCtx.moveTo(t.x * camPreviewEl.width, t.y * camPreviewEl.height);
+  camCtx.lineTo(idx.x * camPreviewEl.width, idx.y * camPreviewEl.height);
+  camCtx.stroke();
+  // Convert to NDC (mirror x)
+  const px = (t.x + idx.x) / 2, py = (t.y + idx.y) / 2;
+  mouse.x = (1 - px) * 2 - 1;
+  mouse.y = -(py * 2 - 1);
+  raycaster.setFromCamera(mouse, camera);
+  // Project to a plane at counter height for cursor visualization
+  camera.getWorldDirection(_handPlaneN);
+  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(_handPlaneN, new THREE.Vector3(0, 1.0, 0));
+  if (raycaster.ray.intersectPlane(plane, _handHit)) {
+    handCursor.position.copy(_handHit);
+  }
+  // Pinch detection
+  const pinchDist = Math.hypot(t.x - idx.x, t.y - idx.y);
+  const wasPinching = handState.pinching;
+  if (!handState.pinching && pinchDist < 0.05) handState.pinching = true;
+  else if (handState.pinching && pinchDist > 0.08) handState.pinching = false;
+  handCursor.material.color.setHex(handState.pinching ? 0xff5722 : 0x00ddff);
+  // On pinch START → simulate click on hovered object
+  if (handState.pinching && !wasPinching) {
+    const hits = raycaster.intersectObjects(getClickable(), true);
+    if (hits.length) {
+      const grp = pickTopGroup(hits[0].object);
+      if (grp) handleClickOn(grp);
+    }
+  }
+  // Send cursor to multiplayer
+  if (ws && ws.readyState === 1) sendCursor(_handHit.x, _handHit.y, _handHit.z);
+}
+
+// ===== Pointer interaction =====
+let selectedTool = null;
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function ndcFromEvent(e) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+}
+
+function getClickable() {
+  return [beaker, cylinder, finalBottle, balance, mortar, ...reagents];
+}
+
+function pickTopGroup(object) {
+  let g = object;
+  while (g.parent && !g.userData?.kind) g = g.parent;
+  return g.userData?.kind ? g : null;
+}
+
+function setSelectedTool(t) {
+  if (selectedTool === t) return;
+  if (selectedTool) selectedTool.traverse(o => { if (o.material?.emissive) o.material.emissive.setHex(0x000000); });
+  selectedTool = t;
+  if (selectedTool) {
+    selectedTool.traverse(o => { if (o.material?.emissive) o.material.emissive.setHex(0x114b2a); });
+    showToast('✋ Đang cầm: ' + (selectedTool.userData?.name || selectedTool.userData?.id), 1300);
+    sfx.grab();
+  }
+}
+
+function handleClickOn(target) {
+  if (!target) { setSelectedTool(null); return; }
+  if (state.stepIdx >= state.recipe.steps.length) return;
+  const tu = target.userData;
+  const cur = state.recipe.steps[state.stepIdx];
+
+  if (cur.action === 'place-on-balance') {
+    if (!selectedTool && tu.id === 'beaker') { setSelectedTool(target); return; }
+    if (selectedTool === beaker && tu.id === 'balance') {
+      beaker.position.set(balance.position.x + 0.03, balance.position.y + 0.06, balance.position.z);
+      state.beakerOnBalance = true;
+      drawBalScreen(0, 'TARE OK');
+      sendAction('place-beaker-on-balance');
+      advanceStep();
+      setSelectedTool(null);
+      return;
+    }
+    logError('Hãy đặt CỐC lên CÂN trước.');
+    setSelectedTool(null); return;
+  }
+
+  if (cur.action === 'pour') {
+    // reagent selection
+    if (!selectedTool && tu.kind === 'reagent') {
+      if (tu.id === cur.reagentId) { setSelectedTool(target); return; }
+      logError(`Đơn yêu cầu ${REAGENTS[cur.reagentId]?.name} — bạn vừa chọn ${tu.name}`);
+      setSelectedTool(null); return;
+    }
+    if (selectedTool && tu.kind === 'reagent') {
+      // switching selection
+      if (tu.id === cur.reagentId) { setSelectedTool(target); return; }
+      logError(`Sai reagent — quay lại chọn ${REAGENTS[cur.reagentId]?.name}`);
+      setSelectedTool(null); return;
+    }
+    // dispenser
+    if (cur.container === 'cylinder' && selectedTool && tu.id === 'cylinder') {
+      doPour('cylinder', selectedTool, cur);
+      return;
+    }
+    if (cur.container === 'beaker' && selectedTool && tu.id === 'beaker') {
+      doPour('beaker', selectedTool, cur);
+      return;
+    }
+    const want = cur.container === 'cylinder' ? 'ống đong' : 'cốc';
+    logError(`Click vào ${want} để rót.`);
+    setSelectedTool(null); return;
+  }
+
+  if (cur.action === 'transfer') {
+    if (!selectedTool && tu.id === 'cylinder') { setSelectedTool(target); return; }
+    if (selectedTool === cylinder && tu.id === 'beaker') {
+      const vol = state.cylinderMl;
+      state.beakerVol += vol;
+      state.cylinderMl = 0;
+      // animate cylinder tilt + stream
+      const tp = new THREE.Vector3(); beaker.getWorldPosition(tp); tp.y += 0.05;
+      tiltBottleTowards(cylinder, tp, 1000, 1.4);
+      const fp = new THREE.Vector3(); cylinder.getWorldPosition(fp); fp.y += 0.22;
+      const dirH = new THREE.Vector3(tp.x - fp.x, 0, tp.z - fp.z).normalize().multiplyScalar(0.04);
+      fp.add(dirH);
+      showStream(fp, tp, cylinder.userData.liquid.material.color.getHex(), 900);
+      sfx.correct();
+      setTimeout(() => {
+        updateCylinderLiquid(0, 0);
+        updateBeakerLiquid(state.beakerVol, state.beakerColor);
+        showToast(`✅ Đã chuyển ${vol.toFixed(1)} mL vào cốc`, 1500, 'ok');
+        sendAction('transfer-to-beaker');
+        state.transferDone = true;
+        advanceStep();
+        setSelectedTool(null);
+      }, 700);
+      return;
+    }
+    logError('Click ống đong rồi click cốc.');
+    setSelectedTool(null); return;
+  }
+
+  if (cur.action === 'bottle') {
+    if (!selectedTool && tu.id === 'beaker') { setSelectedTool(target); return; }
+    if (selectedTool === beaker && tu.id === 'final-bottle') {
+      const tp = new THREE.Vector3(); finalBottle.getWorldPosition(tp); tp.y += 0.2;
+      tiltBottleTowards(beaker, tp, 1100, 1.4);
+      const fp = new THREE.Vector3(); beaker.getWorldPosition(fp); fp.y += 0.14;
+      const dirH = new THREE.Vector3(tp.x - fp.x, 0, tp.z - fp.z).normalize().multiplyScalar(0.05);
+      fp.add(dirH);
+      showStream(fp, tp, state.beakerColor || 0xa67c2a, 1000);
+      sfx.perfect();
+      setTimeout(() => {
+        state.bottled = true;
+        finalBottle.userData.fill.visible = true;
+        finalBottle.userData.fill.material.color.setHex(state.recipe.finalColor);
+        updateBeakerLiquid(0, 0);
+        state.beakerVol = 0;
+        showToast('🎉 Đã đóng chai! Bấm "Hoàn thành & Nộp".', 3500, 'ok');
+        sendAction('bottled');
+        advanceStep();
+        setSelectedTool(null);
+      }, 900);
+      return;
+    }
+    logError('Click cốc rồi click chai thành phẩm.');
+    setSelectedTool(null); return;
+  }
+}
+
+function doPour(containerKind, reagentGrp, step) {
+  // Tilt the reagent bottle toward the target so the spout points at it
+  const toPos = new THREE.Vector3();
+  if (containerKind === 'beaker') beaker.getWorldPosition(toPos); else cylinder.getWorldPosition(toPos);
+  toPos.y += 0.1;
+  const reagentInfo = REAGENTS[step.reagentId];
+  tiltBottleTowards(reagentGrp, toPos, 900, 1.3);
+  // Compute "spout" position: top of tilted bottle ≈ bottle position + offset toward target
+  const fromPos = new THREE.Vector3(); reagentGrp.getWorldPosition(fromPos);
+  fromPos.y += 0.30;
+  const dirH = new THREE.Vector3(toPos.x - fromPos.x, 0, toPos.z - fromPos.z).normalize().multiplyScalar(0.05);
+  fromPos.add(dirH);
+  showStream(fromPos, toPos, reagentInfo?.liquid || 0x88ccee, 800, !!reagentInfo?.isPowder);
+
+  const i = state.stepIdx;
+  state.stepProgress[i] = state.stepProgress[i] ?? 0;
+
+  let chunk;
+  if (step.unit === 'g') chunk = step.target * (0.18 + Math.random() * 0.2);
+  else chunk = step.target * (0.12 + Math.random() * 0.18);
+  // Snap final increment so target is reachable in a clean step
+  if (state.stepProgress[i] + chunk > step.target * 0.92 && state.stepProgress[i] + chunk < step.target + step.tolerance) {
+    chunk = Math.min(step.target - state.stepProgress[i] + (Math.random() - 0.3) * step.tolerance * 0.4, chunk);
+  }
+
+  state.stepProgress[i] += chunk;
+  const cur = state.stepProgress[i];
+
+  if (containerKind === 'beaker') {
+    if (step.unit === 'g') {
+      state.beakerWeight = cur;
+      drawBalScreen(cur, 'STABLE');
+      // Visualize powder accumulation in beaker
+      state.beakerVol = Math.max(state.beakerVol, cur * 3);   // visual proxy
+      state.beakerColor = REAGENTS[step.reagentId]?.liquid || 0xfafafa;
+      updateBeakerLiquid(state.beakerVol, state.beakerColor);
+    } else {
+      // 'water' q.s. — current = total volume target progression
+      state.beakerVol = cur;
+      state.beakerColor = blendColor(state.beakerColor || REAGENTS[step.reagentId]?.liquid, REAGENTS[step.reagentId]?.liquid || 0xddeefa, 0.4);
+      updateBeakerLiquid(state.beakerVol, state.beakerColor);
+    }
+  } else {
+    state.cylinderMl = cur;
+    updateCylinderLiquid(cur, REAGENTS[step.reagentId]?.liquid || 0xc16e1c);
+  }
+
+  renderStep();
+  sendProgress();
+
+  if (Math.abs(cur - step.target) <= step.tolerance) {
+    showToast(`✅ Đạt ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit}`, 1700, 'ok');
+    sendAction(`pour-${step.reagentId}-done`);
+    setTimeout(() => { advanceStep(); setSelectedTool(null); }, 400);
+  } else if (cur > step.target + step.tolerance) {
+    logError(`Quá tay: ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} (đích ${step.target}). Bị trừ điểm.`);
+    setTimeout(() => { advanceStep(false); setSelectedTool(null); }, 400);
+  } else {
+    showToast(`+${chunk.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} · còn ${(step.target - cur).toFixed(step.unit === 'g' ? 3 : 1)}`, 1100);
+  }
+}
+
+function blendColor(a, b, t) {
+  const ar = (a >> 16) & 0xff, ag = (a >> 8) & 0xff, ab = a & 0xff;
+  const br = (b >> 16) & 0xff, bg = (b >> 8) & 0xff, bb = b & 0xff;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return (r << 16) | (g << 8) | bl;
+}
+
+// ============================================================
+// MULTIPLAYER CLIENT
+// ============================================================
+let ws = null;
+let myId = null;
+let myColor = '#14b8a6';
+const mpPanelEl = document.getElementById('mp-panel');
+const mpPlayersEl = document.getElementById('mp-players');
+const mpChatLogEl = document.getElementById('mp-chat-log');
+const mpChatInput = document.getElementById('mp-chat-input');
+const mpActionBtn = document.getElementById('mp-action');
+
+function connectMultiplayer() {
+  if (ws) return;
+  const url = new URL('ws-lab', document.baseURI).href.replace(/^http/, 'ws');
+  ws = new WebSocket(url);
+  ws.addEventListener('open', () => {
+    ws.send(JSON.stringify({ type: 'join', name: myName, recipeId: state.recipe.id }));
+    mpPanelEl.classList.add('shown');
+    mpActionBtn.textContent = '👥 Đang trong phòng';
+    mpActionBtn.style.background = 'linear-gradient(135deg, #14b8a6, #0f766e)';
+    mpActionBtn.style.color = '#fff';
+  });
+  ws.addEventListener('message', ev => {
+    let msg; try { msg = JSON.parse(ev.data); } catch { return; }
+    switch (msg.type) {
+      case 'welcome':
+        myId = msg.id; myColor = msg.color;
+        for (const p of msg.snapshot.players) if (p.id !== myId) ensureRemote(p);
+        refreshMpPanel();
+        break;
+      case 'join':
+        ensureRemote(msg.player);
+        addChatLog(`<b>${msg.player.name}</b> đã vào phòng`, '#16a34a');
+        break;
+      case 'leave': {
+        const r = remotePlayers.get(msg.id);
+        if (r) { scene.remove(r.grp); remotePlayers.delete(msg.id); }
+        refreshMpPanel();
+        break;
+      }
+      case 'cursor': {
+        const r = remotePlayers.get(msg.id);
+        if (r) r.grp.position.set(msg.x, msg.y, msg.z);
+        break;
+      }
+      case 'progress': {
+        const r = remotePlayers.get(msg.id);
+        if (r) { r.step = msg.step; r.weight = msg.weight; r.beakerVol = msg.beakerVol; r.recipeId = msg.recipeId; refreshMpPanel(); }
+        break;
+      }
+      case 'action':
+        addChatLog(`<i style="opacity:0.7">${remotePlayers.get(msg.id)?.name || '?'} → ${msg.name}</i>`);
+        break;
+      case 'chat':
+        addChatLog(`<b style="color:${msg.color}">${msg.name}:</b> ${escapeHtml(msg.text)}`);
+        break;
+    }
+  });
+  ws.addEventListener('close', () => {
+    ws = null;
+    mpPanelEl.classList.remove('shown');
+    mpActionBtn.textContent = '👥 Tham gia phòng chung';
+    mpActionBtn.style.background = '';
+    mpActionBtn.style.color = '';
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function addChatLog(html, color) {
+  const row = document.createElement('div');
+  row.className = 'chat-row';
+  if (color) row.style.color = color;
+  row.innerHTML = html;
+  mpChatLogEl.appendChild(row);
+  mpChatLogEl.scrollTop = mpChatLogEl.scrollHeight;
+  while (mpChatLogEl.children.length > 30) mpChatLogEl.removeChild(mpChatLogEl.firstChild);
+}
+
+function refreshMpPanel() {
+  const items = [`<div class="pl-row pl-me"><span class="pl-dot" style="background:${myColor}"></span>${escapeHtml(myName)} (bạn) <span class="pl-prog">B${state?.stepIdx + 1 || 1}</span></div>`];
+  for (const [id, r] of remotePlayers) {
+    items.push(`<div class="pl-row"><span class="pl-dot" style="background:${r.color}"></span>${escapeHtml(r.name)} <span class="pl-prog">B${r.step || 1}</span></div>`);
+  }
+  mpPlayersEl.innerHTML = items.join('');
+}
+
+let lastCursorSent = 0;
+function sendCursor(x, y, z) {
+  if (!ws || ws.readyState !== 1) return;
+  const now = performance.now();
+  if (now - lastCursorSent < 50) return;
+  lastCursorSent = now;
+  ws.send(JSON.stringify({ type: 'cursor', x, y, z }));
+}
+
+function sendProgress() {
+  if (!ws || ws.readyState !== 1 || !state) return;
+  ws.send(JSON.stringify({
+    type: 'progress',
+    step: state.stepIdx + 1,
+    weight: state.beakerWeight || 0,
+    beakerVol: state.beakerVol || 0,
+    recipeId: state.recipe.id,
+  }));
+  refreshMpPanel();
+}
+
+function sendAction(name, reagent = '') {
+  if (!ws || ws.readyState !== 1) return;
+  ws.send(JSON.stringify({ type: 'action', name, reagent }));
+}
+
+mpActionBtn.addEventListener('click', () => {
+  if (ws) { ws.close(); return; }
+  connectMultiplayer();
+});
+
+mpChatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const t = mpChatInput.value.trim();
+    if (t && ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'chat', text: t }));
+    mpChatInput.value = '';
+  }
+});
+
+// ============================================================
+// START GAME (called after level selected)
+// ============================================================
+startGameImpl = function () {
+  // Setup reagents for this recipe
+  setupReagents(currentRecipe);
+  setFinalLabel(currentRecipe.finalBottleLabel);
+
+  // Reset scene state
+  beaker.position.set(-0.3, 0.94, 0.15);
+  state = {
+    recipe: currentRecipe,
+    stepIdx: 0,
+    beakerOnBalance: false,
+    beakerWeight: 0,
+    beakerVol: 0,
+    beakerColor: 0xa1d99b,
+    cylinderMl: 0,
+    bottled: false,
+    transferDone: false,
+    stepProgress: {},
+    errors: [],
+  };
+  updateBeakerLiquid(0, 0);
+  updateCylinderLiquid(0, 0);
+  finalBottle.userData.fill.visible = false;
+  drawBalScreen(0, 'READY');
+  setSelectedTool(null);
+
+  // UI
+  lvlPillEl.textContent = `LV ${currentRecipe.level}`;
+  topbarRecipeEl.textContent = currentRecipe.name;
+  renderRecipePanel(currentRecipe);
+  renderStep();
+
+  if (multiplayerOn && !ws) connectMultiplayer();
+};
+
+// ===== Event handlers =====
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (walk.active) {
+    // Walk-mode click: raycast from screen center (crosshair)
+    if (document.pointerLockElement !== renderer.domElement) {
+      renderer.domElement.requestPointerLock?.();
+      return;
+    }
+    mouse.set(0, 0);
+    raycaster.setFromCamera(mouse, camera);
+  } else {
+    ndcFromEvent(e);
+    raycaster.setFromCamera(mouse, camera);
+  }
+  const hits = raycaster.intersectObjects(getClickable(), true);
+  if (hits.length) {
+    const grp = pickTopGroup(hits[0].object);
+    if (grp) handleClickOn(grp);
+  } else {
+    setSelectedTool(null);
+  }
+});
+
+const hoverLabelEl = document.getElementById('hover-label');
+const hoverPressEl = document.getElementById('hover-press');
+let hoverTarget = null;
+const _hoverProj = new THREE.Vector3();
+const _hoverWorld = new THREE.Vector3();
+const _cursorWorld = new THREE.Vector3();
+const _cursorPlane = new THREE.Plane();
+const _cursorDir = new THREE.Vector3();
+const _cursorHit = new THREE.Vector3();
+
+// Glowing outline ring (Unity-style halo) — pulses opacity when hovering
+const outlineRing = new THREE.Mesh(
+  new THREE.TorusGeometry(0.085, 0.005, 12, 36),
+  new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0, depthTest: false })
+);
+outlineRing.renderOrder = 998;
+outlineRing.rotation.x = Math.PI/2;
+outlineRing.visible = false;
+scene.add(outlineRing);
+
+// Track emissive boost for current hover target
+let _emissiveBoostObjs = [];
+function applyEmissiveBoost(grp, on) {
+  if (on) {
+    _emissiveBoostObjs.length = 0;
+    grp.traverse(o => {
+      if (o.material?.emissive) {
+        _emissiveBoostObjs.push({ obj: o, prev: o.material.emissive.getHex(), prevI: o.material.emissiveIntensity ?? 1 });
+        o.material.emissive.setHex(0x14532d);
+        o.material.emissiveIntensity = 0.6;
+      }
+    });
+  } else {
+    for (const e of _emissiveBoostObjs) {
+      e.obj.material.emissive.setHex(e.prev);
+      e.obj.material.emissiveIntensity = e.prevI;
+    }
+    _emissiveBoostObjs.length = 0;
+  }
+}
+
+function setHoverTarget(grp) {
+  if (grp === hoverTarget) return;
+  // Clear previous boost (but DON'T clear if selectedTool — selection emissive should win)
+  if (hoverTarget && hoverTarget !== selectedTool) applyEmissiveBoost(hoverTarget, false);
+  hoverTarget = grp;
+  outlineRing.visible = !!grp;
+  if (!grp) {
+    hoverLabelEl.classList.remove('shown');
+    hoverPressEl.classList.remove('shown');
+    return;
+  }
+  // Apply emissive boost (skip if already the selected tool)
+  if (grp !== selectedTool) applyEmissiveBoost(grp, true);
+  // Resize outline ring to match group bounds
+  const bb = new THREE.Box3().setFromObject(grp);
+  const sz = bb.getSize(new THREE.Vector3());
+  const r = Math.max(sz.x, sz.z) * 0.55 + 0.015;
+  outlineRing.geometry.dispose();
+  outlineRing.geometry = new THREE.TorusGeometry(r, 0.005, 12, 48);
+
+  const u = grp.userData;
+  hoverLabelEl.style.setProperty('--cat-color', u.kind === 'reagent' ? '#0ea5e9' : '#14b8a6');
+  hoverLabelEl.querySelector('.ht').textContent = u.name || u.id;
+  hoverLabelEl.querySelector('.hs').textContent = u.label || (u.kind === 'reagent' ? 'Hoạt chất / Tá dược' : 'Dụng cụ phòng lab');
+  hoverLabelEl.querySelector('.hc').textContent = u.kind === 'reagent' ? 'Reagent' : 'Tool';
+  hoverLabelEl.classList.add('shown');
+  // Show press prompt only when not actively dragging
+  if (!selectedTool || selectedTool !== grp) hoverPressEl.classList.add('shown');
+}
+
+renderer.domElement.addEventListener('pointermove', (e) => {
+  ndcFromEvent(e);
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(getClickable(), true);
+  if (hits.length) setHoverTarget(pickTopGroup(hits[0].object));
+  else setHoverTarget(null);
+  // Multiplayer cursor — project onto counter plane (y=0.94)
+  if (ws && ws.readyState === 1) {
+    camera.getWorldDirection(_cursorDir);
+    _cursorPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 1.1, 0));
+    if (raycaster.ray.intersectPlane(_cursorPlane, _cursorHit)) {
+      sendCursor(_cursorHit.x, _cursorHit.y, _cursorHit.z);
+    }
+  }
+});
+renderer.domElement.addEventListener('pointerleave', () => setHoverTarget(null));
+
+// ===== UI buttons =====
+restartBtn.addEventListener('click', () => location.reload());
+skipBtn.addEventListener('click', () => {
+  if (state && state.stepIdx < state.recipe.steps.length) {
+    state.errors.push(`Bỏ qua bước ${state.stepIdx + 1}`);
+    advanceStep(false);
+  }
+});
+
+submitBtn.addEventListener('click', async () => {
+  if (!state || state.stepIdx < state.recipe.steps.length) return;
+  // Score = base 100 - penalties
+  let score = 100;
+  const breakdown = [];
+  // Weight/volume accuracy across pour steps
+  for (let i = 0; i < state.recipe.steps.length; i++) {
+    const s = state.recipe.steps[i];
+    if (s.action !== 'pour') continue;
+    const got = state.stepProgress[i] ?? 0;
+    const diff = Math.abs(got - s.target);
+    const pct = diff / s.target * 100;
+    const pen = Math.min(20, Math.round(pct * 0.6));
+    score -= pen;
+    breakdown.push(`${REAGENTS[s.reagentId]?.name || s.reagentId}: ${got.toFixed(s.unit === 'g' ? 3 : 1)} ${s.unit} (đích ${s.target}, −${pen})`);
+  }
+  const errPenalty = state.errors.length * 5;
+  score -= errPenalty;
+  if (state.errors.length) breakdown.push(`Lỗi thao tác: ${state.errors.length} (−${errPenalty})`);
+  score = Math.max(0, score);
+
+  const verdict = score >= 90 ? '🎉 Xuất sắc — đạt GMP!'
+                : score >= 70 ? '👍 Khá — vẫn còn sai số nhỏ.'
+                : score >= 50 ? '🙂 Trung bình — cần luyện thêm.'
+                : '📚 Cần làm lại — nhiều sai sót.';
+
+  document.getElementById('result-card').innerHTML = `
+    <div class="verdict">${verdict}</div>
+    <div class="score-big" style="color:${score>=70?'#15803d':score>=50?'#0369a1':'#b91c1c'}">${score} / 100</div>
+    <div style="text-align:center;font-size:13px;opacity:0.7">${state.recipe.icon} ${state.recipe.name}</div>
+    <ul>${breakdown.map(b => `<li>· ${b}</li>`).join('')}</ul>
+    <div class="actions">
+      <a href="./">← Trang chính</a>
+      <button id="result-retry">🔄 Bài khác</button>
+      <button class="primary" id="result-close">Đóng</button>
+    </div>
+  `;
+  document.getElementById('result-modal').style.display = 'flex';
+  document.getElementById('result-retry').onclick = () => {
+    document.getElementById('result-modal').style.display = 'none';
+    renderLevelModal();
+    lmModal.style.display = 'flex';
+  };
+  document.getElementById('result-close').onclick = () => document.getElementById('result-modal').style.display = 'none';
+
+  if (myName && myName !== 'Ẩn danh') {
+    try { ensurePlayerName(myName); } catch {}
+  }
+  await submitAttempt({
+    version: 'compounding-lab',
+    score,
+    correct: state.recipe.steps.length,
+    total: state.recipe.steps.length,
+    durationMs: Date.now() - sessionStartedAt,
+    level: state.recipe.level,
+    details: {
+      recipe: state.recipe.id,
+      stepProgress: state.stepProgress,
+      errors: state.errors,
+    },
+  });
+});
+
+// ===== Render loop =====
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+const clock = new THREE.Clock();
+// Kick off: either go straight into recipe (URL param) or show modal
+if (currentRecipe) {
+  startGame();
+} else {
+  renderLevelModal();
+  lmModal.style.display = 'flex';
+}
+
+renderer.setAnimationLoop((time) => {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (!walk.active) controls.update();
+  updateWalk(dt);
+  updateStream(dt);
+  updateTilt();
+  updateHand(time ?? performance.now());
+
+  // hover label position
+  if (hoverTarget) {
+    hoverTarget.getWorldPosition(_hoverWorld);
+    _hoverProj.copy(_hoverWorld).project(camera);
+    if (_hoverProj.z > 1 || _hoverProj.z < -1) {
+      hoverLabelEl.classList.remove('shown');
+      hoverPressEl.classList.remove('shown');
+    } else {
+      const top = _hoverWorld.clone(); top.y += 0.22;
+      top.project(camera);
+      const sx = (_hoverProj.x * 0.5 + 0.5) * innerWidth;
+      const sy = (-top.y * 0.5 + 0.5) * innerHeight;
+      hoverLabelEl.style.left = sx + 'px';
+      hoverLabelEl.style.top  = Math.max(60, sy) + 'px';
+      // press prompt right below the object center
+      const cy = (-_hoverProj.y * 0.5 + 0.5) * innerHeight;
+      hoverPressEl.style.left = sx + 'px';
+      hoverPressEl.style.top = cy + 'px';
+    }
+    // Animate outline ring (position at base of object + pulse opacity)
+    outlineRing.position.copy(_hoverWorld);
+    outlineRing.position.y = Math.max(_hoverWorld.y - 0.06, 0.945);
+    outlineRing.material.opacity = 0.55 + 0.4 * Math.sin(performance.now() * 0.006);
+  }
+
+  // remote labels orient to camera (sprites auto-orient)
+  // (no per-frame update needed for sprites)
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+// Catalog of compounding recipes used by the Pharmacy Compounding Lab.
+// Each recipe is a sequence of ingredient steps the student must execute in order.
+//
+// Each ingredient step:
+//   { reagentId, displayName, targetAmount, unit ('g'|'mL'), tolerance, container ('beaker'|'cylinder'|'beaker-from-cylinder') }
+//
+// `container` semantics:
+//   - 'beaker'                 → pour reagent directly into beaker (which sits on the balance for weight steps)
+//   - 'cylinder'               → pour reagent into the graduated cylinder, no balance needed
+//   - 'beaker-from-cylinder'   → transfer cylinder contents into beaker (no reagent picked)
+//
+// reagentId 'water' is special — for water q.s. (sufficient quantity) we top up beaker to a target volume.
+
+export const REAGENTS = {
+  paracetamol: { name: 'Paracetamol bột',   color: 0xfafafa, liquid: 0xffffff, isPowder: true,  category: 'Giảm đau / Hạ sốt' },
+  'vitamin-c': { name: 'Vitamin C bột',     color: 0xfff9c4, liquid: 0xfff59d, isPowder: true,  category: 'Vitamin' },
+  aspirin:     { name: 'Aspirin bột',       color: 0xfff8e1, liquid: 0xfafafa, isPowder: true,  category: 'Tim mạch / NSAID' },
+  cellulose:   { name: 'Cellulose (tá dược)', color: 0xfafaf9, liquid: 0xffffff, isPowder: true,  category: 'Tá dược' },
+  zinc:        { name: 'Kẽm oxid',          color: 0xf5f5f5, liquid: 0xffffff, isPowder: true,  category: 'Bột rắc' },
+  smecta:      { name: 'Diosmectit bột',    color: 0xe5e7eb, liquid: 0xf3f4f6, isPowder: true,  category: 'Tiêu hóa' },
+  iod:         { name: 'Iod tinh thể',      color: 0x3a2018, liquid: 0x3a2018, isPowder: true,  category: 'Sát khuẩn' },
+  ki:          { name: 'Kali iodid',        color: 0xf0eee5, liquid: 0xffffff, isPowder: true,  category: 'Tá dược tan' },
+  syrup:       { name: 'Syrup base',        color: 0xb45309, liquid: 0xc16e1c, isPowder: false, category: 'Tá dược lỏng' },
+  water:       { name: 'Nước cất',          color: 0xd1f5ff, liquid: 0xe0f2ff, isPowder: false, category: 'Dung môi' },
+  ethanol:     { name: 'Ethanol 96°',       color: 0xfafafa, liquid: 0xe6e6fa, isPowder: false, category: 'Dung môi cồn' },
+  glycerin:    { name: 'Glycerin',          color: 0xffffff, liquid: 0xfff7d6, isPowder: false, category: 'Tá dược lỏng' },
+  honey:       { name: 'Mật ong',           color: 0xa57820, liquid: 0xc1801e, isPowder: false, category: 'Tá dược thiên nhiên' },
+  ginger:      { name: 'Cao gừng',          color: 0x6b3e10, liquid: 0x7b4a18, isPowder: false, category: 'Cao thảo dược' },
+  // v2 extras for new recipes
+  calamine:    { name: 'Calamine bột',      color: 0xf6cfb5, liquid: 0xf7cfb5, isPowder: true,  category: 'Mỹ phẩm da' },
+  zinc_ox:     { name: 'Kẽm oxit ZnO',      color: 0xf5f5f5, liquid: 0xffffff, isPowder: true,  category: 'Bột rắc làm dịu' },
+  paraffin:    { name: 'Paraffin lỏng',     color: 0xeeeeee, liquid: 0xf6f6f6, isPowder: false, category: 'Tá dược dầu' },
+  ascorbic:    { name: 'Acid Ascorbic',     color: 0xfff9c4, liquid: 0xfff59d, isPowder: true,  category: 'Vitamin' },
+  lactose:     { name: 'Lactose',           color: 0xffffff, liquid: 0xffffff, isPowder: true,  category: 'Tá dược nén' },
+  saccarose:   { name: 'Saccarose',         color: 0xffffff, liquid: 0xffffff, isPowder: true,  category: 'Đường vị' },
+  magstearate: { name: 'Magnesium stearat', color: 0xfafafa, liquid: 0xffffff, isPowder: true,  category: 'Chất bôi trơn' },
+  natri_clorid:{ name: 'NaCl tinh khiết',   color: 0xffffff, liquid: 0xffffff, isPowder: true,  category: 'Điện giải' },
+  acid_boric:  { name: 'Acid Boric',        color: 0xfafafa, liquid: 0xffffff, isPowder: true,  category: 'Đệm pH' },
+};
+
+export const RECIPES = [
+  {
+    id: 'siro-paracetamol',
+    name: 'Siro Paracetamol 24mg/mL',
+    short: 'Siro hạ sốt trẻ em',
+    icon: '🍯',
+    level: 1,
+    desc: 'Pha 100 mL dung dịch uống chứa paracetamol 24mg/mL. Bài tập cơ bản nhất — 3 thành phần.',
+    finalVolume: 100,
+    finalUnit: 'mL',
+    finalBottleLabel: 'Siro Paracetamol\n24 mg/mL · 100 mL',
+    finalColor: 0xa67c2a,
+    indication: 'Trẻ em sốt > 38.5°C — uống 1 muỗng / lần',
+    steps: [
+      { reagentId: 'beaker',      action: 'place-on-balance', label: 'Đặt cốc lên cân điện tử để tare 0' },
+      { reagentId: 'paracetamol', action: 'pour',  target: 2.4, unit: 'g',  tolerance: 0.05, container: 'beaker',   label: 'Cân Paracetamol 2.4 g vào cốc' },
+      { reagentId: 'syrup',       action: 'pour',  target: 80,  unit: 'mL', tolerance: 1.5,  container: 'cylinder', label: 'Đong 80 mL Syrup vào ống đong' },
+      { reagentId: 'syrup',       action: 'transfer', container: 'beaker-from-cylinder',                            label: 'Đổ Syrup từ ống đong vào cốc' },
+      { reagentId: 'water',       action: 'pour',  target: 100, unit: 'mL', tolerance: 1.5,  container: 'beaker',   label: 'Thêm nước cất đến vạch 100 mL (q.s.)' },
+      { reagentId: 'beaker',      action: 'bottle',                                                                  label: 'Đổ thành phẩm vào chai 100 mL' },
+    ],
+    distractors: ['vitamin-c', 'aspirin', 'cellulose'],
+  },
+  {
+    id: 'dung-dich-vitc',
+    name: 'Dung dịch Vitamin C 100mg/mL',
+    short: 'Dung dịch uống VitC',
+    icon: '🍋',
+    level: 2,
+    desc: 'Pha 50 mL Vitamin C đậm đặc — cần cân chính xác 5 g hoạt chất.',
+    finalVolume: 50,
+    finalUnit: 'mL',
+    finalBottleLabel: 'Vitamin C 100mg/mL\n50 mL',
+    finalColor: 0xeab308,
+    indication: 'Bổ sung Vitamin C — 5 mL/ngày',
+    steps: [
+      { reagentId: 'beaker',      action: 'place-on-balance', label: 'Đặt cốc lên cân, tare 0' },
+      { reagentId: 'vitamin-c',   action: 'pour', target: 5.0,  unit: 'g',  tolerance: 0.08, container: 'beaker',   label: 'Cân Vitamin C 5.0 g' },
+      { reagentId: 'water',       action: 'pour', target: 30,   unit: 'mL', tolerance: 1.0,  container: 'cylinder', label: 'Đong 30 mL nước cất' },
+      { reagentId: 'water',       action: 'transfer', container: 'beaker-from-cylinder',                            label: 'Đổ nước vào cốc, khuấy tan' },
+      { reagentId: 'water',       action: 'pour', target: 50,   unit: 'mL', tolerance: 1.0,  container: 'beaker',   label: 'q.s. nước đến đủ 50 mL' },
+      { reagentId: 'beaker',      action: 'bottle',                                                                  label: 'Đóng chai 50 mL' },
+    ],
+    distractors: ['paracetamol', 'cellulose', 'glycerin'],
+  },
+  {
+    id: 'hon-dich-smecta',
+    name: 'Hỗn dịch Diosmectit 3g/15mL',
+    short: 'Hỗn dịch Smecta',
+    icon: '🥛',
+    level: 3,
+    desc: 'Hỗn dịch chống tiêu chảy — cần lắc đều trước dùng. 6 thành phần.',
+    finalVolume: 75,
+    finalUnit: 'mL',
+    finalBottleLabel: 'Smecta hỗn dịch\n3g/15mL · 75 mL',
+    finalColor: 0xe5e7eb,
+    indication: 'Tiêu chảy cấp — 1 gói/15mL × 3 lần',
+    steps: [
+      { reagentId: 'beaker',      action: 'place-on-balance', label: 'Đặt cốc lên cân' },
+      { reagentId: 'smecta',      action: 'pour', target: 15.0, unit: 'g',  tolerance: 0.15, container: 'beaker',   label: 'Cân Diosmectit 15 g' },
+      { reagentId: 'cellulose',   action: 'pour', target: 0.5,  unit: 'g',  tolerance: 0.05, container: 'beaker',   label: 'Thêm chất bảo quản (cellulose 0.5 g)' },
+      { reagentId: 'glycerin',    action: 'pour', target: 5,    unit: 'mL', tolerance: 0.5,  container: 'cylinder', label: 'Đong 5 mL Glycerin' },
+      { reagentId: 'glycerin',    action: 'transfer', container: 'beaker-from-cylinder',                            label: 'Đổ Glycerin vào hỗn dịch' },
+      { reagentId: 'water',       action: 'pour', target: 75,   unit: 'mL', tolerance: 1.5,  container: 'beaker',   label: 'q.s. nước đến 75 mL, lắc đều' },
+      { reagentId: 'beaker',      action: 'bottle',                                                                  label: 'Đóng chai 75 mL — dán nhãn "Lắc đều"' },
+    ],
+    distractors: ['paracetamol', 'vitamin-c', 'honey'],
+  },
+  {
+    id: 'con-iod-povidone',
+    name: 'Cồn Iod 5%',
+    short: 'Cồn sát khuẩn',
+    icon: '🩹',
+    level: 4,
+    desc: 'Dung dịch sát khuẩn ngoài da — Iod 5% trong cồn-nước. Cẩn thận với iod!',
+    finalVolume: 100,
+    finalUnit: 'mL',
+    finalBottleLabel: 'Cồn Iod 5%\n100 mL · Ngoài da',
+    finalColor: 0x6b3318,
+    indication: 'Sát khuẩn vết thương ngoài da',
+    steps: [
+      { reagentId: 'beaker',      action: 'place-on-balance', label: 'Đặt cốc lên cân' },
+      { reagentId: 'iod',         action: 'pour', target: 5.0,  unit: 'g',  tolerance: 0.05, container: 'beaker',   label: 'Cân Iod tinh thể 5.0 g (CẨN THẬN)' },
+      { reagentId: 'ki',          action: 'pour', target: 2.5,  unit: 'g',  tolerance: 0.05, container: 'beaker',   label: 'Thêm Kali iodid 2.5 g (tăng tan iod)' },
+      { reagentId: 'ethanol',     action: 'pour', target: 50,   unit: 'mL', tolerance: 1.0,  container: 'cylinder', label: 'Đong 50 mL Ethanol 96°' },
+      { reagentId: 'ethanol',     action: 'transfer', container: 'beaker-from-cylinder',                            label: 'Đổ Ethanol vào cốc, khuấy hòa tan iod' },
+      { reagentId: 'water',       action: 'pour', target: 100,  unit: 'mL', tolerance: 1.5,  container: 'beaker',   label: 'q.s. nước cất đến 100 mL' },
+      { reagentId: 'beaker',      action: 'bottle',                                                                  label: 'Đóng chai tối màu 100 mL' },
+    ],
+    distractors: ['paracetamol', 'vitamin-c', 'syrup'],
+  },
+  {
+    id: 'siro-ho-thao-duoc',
+    name: 'Siro ho thảo dược',
+    short: 'Siro ho gừng + mật ong',
+    icon: '🌿',
+    level: 5,
+    desc: 'BÀI THI — Siro ho phức hợp: cao gừng + mật ong + paracetamol vi lượng + nước. 8 bước.',
+    finalVolume: 120,
+    finalUnit: 'mL',
+    finalBottleLabel: 'Siro ho thảo dược\n120 mL · Lắc đều',
+    finalColor: 0x8b5a2b,
+    indication: 'Ho khan, ho có đờm — 1 muỗng × 3 lần/ngày',
+    steps: [
+      { reagentId: 'beaker',      action: 'place-on-balance', label: 'Đặt cốc lên cân, tare 0' },
+      { reagentId: 'paracetamol', action: 'pour', target: 1.2,  unit: 'g',  tolerance: 0.05, container: 'beaker',   label: 'Cân Paracetamol 1.2 g (giảm sốt)' },
+      { reagentId: 'ginger',      action: 'pour', target: 8,    unit: 'mL', tolerance: 0.5,  container: 'cylinder', label: 'Đong 8 mL Cao gừng' },
+      { reagentId: 'ginger',      action: 'transfer', container: 'beaker-from-cylinder',                            label: 'Đổ Cao gừng vào cốc' },
+      { reagentId: 'honey',       action: 'pour', target: 30,   unit: 'mL', tolerance: 1.0,  container: 'cylinder', label: 'Đong 30 mL Mật ong' },
+      { reagentId: 'honey',       action: 'transfer', container: 'beaker-from-cylinder',                            label: 'Đổ Mật ong vào hỗn hợp' },
+      { reagentId: 'syrup',       action: 'pour', target: 60,   unit: 'mL', tolerance: 1.5,  container: 'beaker',   label: 'Thêm Syrup base 60 mL' },
+      { reagentId: 'water',       action: 'pour', target: 120,  unit: 'mL', tolerance: 2.0,  container: 'beaker',   label: 'q.s. nước cất đến 120 mL' },
+      { reagentId: 'beaker',      action: 'bottle',                                                                  label: 'Đóng chai 120 mL — Dán nhãn "Lắc đều"' },
+    ],
+    distractors: ['vitamin-c', 'aspirin', 'iod'],
+  },
+  {
+    id: 'kem-calamine',
+    name: 'Kem Calamine 8%',
+    short: 'Kem làm dịu da',
+    icon: '🧴',
+    level: 6,
+    desc: 'Kem bôi ngoài da làm dịu kích ứng, ngứa do dị ứng — Calamine + Kẽm oxit + paraffin lỏng.',
+    finalVolume: 50,
+    finalUnit: 'g',
+    finalBottleLabel: 'Kem Calamine 8%\n50 g · Bôi ngoài da',
+    finalColor: 0xf6cfb5,
+    indication: 'Ngứa do dị ứng, côn trùng cắn, viêm da tiếp xúc',
+    steps: [
+      { reagentId: 'beaker',      action: 'place-on-balance', label: 'Đặt cốc lên cân để tare' },
+      { reagentId: 'calamine',    action: 'pour', target: 4.0,  unit: 'g',  tolerance: 0.05, container: 'beaker',   label: 'Cân Calamine bột 4.0 g (8%)' },
+      { reagentId: 'zinc_ox',     action: 'pour', target: 4.0,  unit: 'g',  tolerance: 0.05, container: 'beaker',   label: 'Cân Kẽm oxit 4.0 g (8%)' },
+      { reagentId: 'paraffin',    action: 'pour', target: 20,   unit: 'mL', tolerance: 1.0,  container: 'cylinder', label: 'Đong 20 mL Paraffin lỏng' },
+      { reagentId: 'paraffin',    action: 'transfer', container: 'beaker-from-cylinder',                            label: 'Đổ paraffin vào cốc, trộn đều' },
+      { reagentId: 'water',       action: 'pour', target: 50,   unit: 'mL', tolerance: 1.5,  container: 'beaker',   label: 'q.s. nước cất đến 50 g cuối' },
+      { reagentId: 'beaker',      action: 'bottle',                                                                  label: 'Đổ vào hũ kem 50 g' },
+    ],
+    distractors: ['paracetamol', 'aspirin', 'honey'],
+  },
+  {
+    id: 'vien-ngam-vitc',
+    name: 'Viên ngậm Vitamin C 500mg',
+    short: 'Viên ngậm bổ sung',
+    icon: '🍬',
+    level: 7,
+    desc: 'Viên ngậm — trộn hoạt chất + tá dược nén + đường vị, sau đó dập viên. 20 viên / mẻ.',
+    finalVolume: 20,
+    finalUnit: 'viên',
+    finalBottleLabel: 'Viên ngậm Vit C\n500mg · 20 viên',
+    finalColor: 0xfacc15,
+    indication: 'Bổ sung Vitamin C — 1 viên/lần khi cần',
+    steps: [
+      { reagentId: 'beaker',      action: 'place-on-balance', label: 'Đặt cối lên cân (làm cốc)' },
+      { reagentId: 'ascorbic',    action: 'pour', target: 10.0, unit: 'g',  tolerance: 0.1,  container: 'beaker',   label: 'Cân Acid Ascorbic 10.0 g (500mg × 20)' },
+      { reagentId: 'lactose',     action: 'pour', target: 6.0,  unit: 'g',  tolerance: 0.1,  container: 'beaker',   label: 'Cân Lactose 6.0 g (tá dược độn)' },
+      { reagentId: 'saccarose',   action: 'pour', target: 4.0,  unit: 'g',  tolerance: 0.1,  container: 'beaker',   label: 'Cân Saccarose 4.0 g (đường vị)' },
+      { reagentId: 'magstearate', action: 'pour', target: 0.2,  unit: 'g',  tolerance: 0.02, container: 'beaker',   label: 'Cân Mg stearat 0.2 g (chất bôi trơn)' },
+      { reagentId: 'beaker',      action: 'bottle',                                                                  label: 'Trộn đều → dập viên → đóng lọ 20 viên' },
+    ],
+    distractors: ['paracetamol', 'cellulose', 'iod'],
+  },
+  {
+    id: 'nho-mat-nacl',
+    name: 'Dung dịch nhỏ mắt NaCl 0.9%',
+    short: 'Nước muối sinh lý',
+    icon: '👁️',
+    level: 8,
+    desc: 'Sản phẩm vô trùng — yêu cầu cân & đong cực chính xác (±0.02g, ±0.5mL). Bài khó nhất!',
+    finalVolume: 10,
+    finalUnit: 'mL',
+    finalBottleLabel: 'NaCl 0.9% nhỏ mắt\n10 mL · Vô trùng',
+    finalColor: 0xe0f2ff,
+    indication: 'Rửa mắt, làm ẩm — nhỏ 1-2 giọt/lần khi cần',
+    steps: [
+      { reagentId: 'beaker',       action: 'place-on-balance', label: 'Đặt cốc trên cân, tare cực kỳ chính xác' },
+      { reagentId: 'natri_clorid', action: 'pour', target: 0.090, unit: 'g',  tolerance: 0.005, container: 'beaker', label: 'Cân NaCl 0.090 g (±0.005 g) — CHÍNH XÁC TUYỆT ĐỐI' },
+      { reagentId: 'acid_boric',   action: 'pour', target: 0.020, unit: 'g',  tolerance: 0.003, container: 'beaker', label: 'Cân Acid boric 0.020 g (đệm pH 7.4)' },
+      { reagentId: 'water',        action: 'pour', target: 8,     unit: 'mL', tolerance: 0.5,   container: 'cylinder', label: 'Đong 8 mL nước cất tiệt trùng' },
+      { reagentId: 'water',        action: 'transfer', container: 'beaker-from-cylinder',                              label: 'Đổ nước vào cốc, khuấy tan' },
+      { reagentId: 'water',        action: 'pour', target: 10,    unit: 'mL', tolerance: 0.5,   container: 'beaker',   label: 'q.s. nước cất đến đúng 10 mL' },
+      { reagentId: 'beaker',       action: 'bottle',                                                                    label: 'Đóng lọ vô trùng 10 mL — dán nhãn "Vô trùng"' },
+    ],
+    distractors: ['paracetamol', 'vitamin-c', 'honey'],
+  },
+];
+
+export function getRecipeById(id) {
+  return RECIPES.find(r => r.id === id) || RECIPES[0];
+}
+
+export function getRecipeFromUrl() {
+  const p = new URLSearchParams(location.search);
+  const id = p.get('recipe');
+  if (id) return getRecipeById(id);
+  return null;
+}

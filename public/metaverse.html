@@ -34,6 +34,37 @@
   #status { position: absolute; bottom: 14px; right: 12px; background: rgba(0,0,0,0.5); color: white; padding: 4px 10px; border-radius: 8px; font-size: 11px; z-index: 5; }
   a.back { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); color: white; text-decoration: none; font-size: 13px; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 6px; z-index: 5; }
   #toast { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 18px; border-radius: 20px; font-size: 14px; z-index: 6; display: none; }
+  /* ====== Object hover tooltip ====== */
+  #hover-label {
+    position: absolute; left: 0; top: 0;
+    pointer-events: none;
+    background: rgba(255,255,255,0.97);
+    border-radius: 12px;
+    padding: 8px 14px 10px;
+    font-family: system-ui, sans-serif;
+    font-size: 13px; color: #1f2937;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.32), 0 1px 0 #fff inset;
+    transform: translate(-50%, calc(-100% - 14px));
+    white-space: nowrap;
+    opacity: 0; transition: opacity .15s ease-out;
+    z-index: 12; border: 1.5px solid rgba(0,0,0,0.08);
+  }
+  #hover-label.shown { opacity: 1; }
+  #hover-label .ht { font-weight: 800; font-size: 14px; }
+  #hover-label .hs { font-size: 11px; opacity: 0.62; }
+  #hover-label .hc {
+    display: inline-block; margin-top: 5px;
+    padding: 2px 10px; border-radius: 10px;
+    font-size: 11px; color: #fff; font-weight: 700;
+    background: var(--cat-color, #43a047);
+  }
+  #hover-label::after {
+    content: ''; position: absolute; bottom: -7px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-top: 8px solid rgba(255,255,255,0.97);
+  }
 </style>
 </head>
 <body>
@@ -43,6 +74,7 @@
 <canvas id="cam-preview" width="180" height="135"></canvas>
 <div id="status">⌛ Đang kết nối WS...</div>
 <div id="toast"></div>
+<div id="hover-label"><div class="ht"></div><div class="hs"></div><div class="hc"></div></div>
 <div class="btn-bar">
   <button id="hand-toggle" class="primary">🖐️ Bật webcam</button>
   <button id="reset-btn">🔄 Reset phòng</button>
@@ -63,6 +95,23 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { submitAttempt, ensurePlayerName, getPlayerName } from './js/api.js';
 import { sfx } from './js/sfx.js';
+import { showWelcomeCard } from './js/welcome-card.js';
+
+showWelcomeCard({
+  icon: '🌐',
+  title: 'Metaverse — Phòng dược chung',
+  intro: 'Phòng 3D realtime, mỗi người là một avatar — cùng xếp thuốc lên kệ.',
+  bullets: [
+    'Pinch ngón cái + trỏ (hoặc click) trên hộp thuốc để cầm.',
+    'Kéo lên kệ — ô đúng nhóm glow xanh, sai glow đỏ.',
+    'Cursor + avatar của người khác sẽ hiện realtime qua WebSocket.',
+    'Bấm "🔄 Reset phòng" để bắt đầu lại cho tất cả.',
+  ],
+  controls: { keys: ['W','A','S','D'], mouse: 'left' },
+  tip: 'Cần webcam HTTPS để pinch. LAN HTTP chỉ chơi được bằng chuột.',
+  persistKey: 'pharmacysim:welcome:metaverse',
+  dismissLabel: 'Vào phòng',
+});
 
 const sessionStart = Date.now();
 
@@ -508,11 +557,40 @@ function projectCursor() {
   }
 }
 
+// ====== Hover label (Unity-style) ======
+const hoverLabelEl = document.getElementById('hover-label');
+let hoverTarget = null;
+const _hoverProj = new THREE.Vector3();
+const _hoverWorld = new THREE.Vector3();
+
+function setHoverTarget(entry) {
+  if (entry === hoverTarget) return;
+  hoverTarget = entry;
+  if (!entry) { hoverLabelEl.classList.remove('shown'); return; }
+  const d = entry.data;
+  hoverLabelEl.style.setProperty('--cat-color', d.color);
+  hoverLabelEl.querySelector('.ht').textContent = d.name;
+  hoverLabelEl.querySelector('.hs').textContent = `${d.dose ?? ''}${d.form ? ' · ' + d.form : ''}`.trim();
+  hoverLabelEl.querySelector('.hc').textContent = d.category;
+  hoverLabelEl.classList.add('shown');
+}
+
 renderer.domElement.addEventListener('pointermove', (e) => {
   ndcFromEvent(e);
   projectCursor();
   sendCursor();
+  // Hover detection — only when not dragging an object
+  if (!grabbedMed) {
+    raycaster.setFromCamera(mouseNDC, camera);
+    const meshes = [...medMeshes.values()].map(m => m.mesh);
+    const hits = raycaster.intersectObjects(meshes, false);
+    if (hits.length) {
+      const entry = [...medMeshes.values()].find(m => m.mesh === hits[0].object);
+      setHoverTarget(entry || null);
+    } else setHoverTarget(null);
+  } else setHoverTarget(null);
 });
+renderer.domElement.addEventListener('pointerleave', () => setHoverTarget(null));
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
   ndcFromEvent(e);
@@ -663,6 +741,20 @@ function tick(time) {
   if (grabbedMed) {
     grabbedMed.mesh.position.copy(localCursor.position);
     send({ type: 'move', medId: grabbedMed.data.id, x: localCursor.position.x, y: localCursor.position.y, z: localCursor.position.z });
+  }
+
+  // Update hover-label position
+  if (hoverTarget) {
+    hoverTarget.mesh.getWorldPosition(_hoverWorld);
+    _hoverProj.copy(_hoverWorld).project(camera);
+    if (_hoverProj.z > 1 || _hoverProj.z < -1) hoverLabelEl.classList.remove('shown');
+    else {
+      hoverLabelEl.classList.add('shown');
+      const top = _hoverWorld.clone(); top.y += 0.32;
+      top.project(camera);
+      hoverLabelEl.style.left = ((_hoverProj.x * 0.5 + 0.5) * innerWidth) + 'px';
+      hoverLabelEl.style.top  = Math.max(60, (-top.y * 0.5 + 0.5) * innerHeight) + 'px';
+    }
   }
 
   // Hover halo for grabbed medicine

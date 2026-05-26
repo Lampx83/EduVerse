@@ -22,6 +22,62 @@
     /* Submit + Reset buttons (bottom-right) and hand toggle (top-right) */
     button { min-height: 44px; }
   }
+
+  /* ====== Object hover tooltip (Unity-style "Press E" label) ====== */
+  #hover-label {
+    position: absolute; left: 0; top: 0;
+    pointer-events: none;
+    background: rgba(255,255,255,0.97);
+    border-radius: 12px;
+    padding: 8px 14px 10px;
+    font-family: system-ui, sans-serif;
+    font-size: 13px; color: #1f2937;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.28), 0 1px 0 #fff inset;
+    transform: translate(-50%, calc(-100% - 14px));
+    white-space: nowrap;
+    opacity: 0; transition: opacity .15s ease-out, transform .12s ease-out;
+    z-index: 12;
+    border: 1.5px solid rgba(0,0,0,0.08);
+  }
+  #hover-label.shown { opacity: 1; }
+  #hover-label .ht { font-weight: 800; font-size: 14px; letter-spacing: .2px; }
+  #hover-label .hs { font-size: 11px; opacity: 0.62; margin-top: 1px; }
+  #hover-label .hc {
+    display: inline-block; margin-top: 5px;
+    padding: 2px 10px; border-radius: 10px;
+    font-size: 11px; color: #fff; font-weight: 700;
+    background: var(--cat-color, #43a047);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.15) inset;
+  }
+  #hover-label::after {
+    content: ''; position: absolute; bottom: -7px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-top: 8px solid rgba(255,255,255,0.97);
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+  }
+  #hover-press {
+    position: absolute; left: 0; top: 0;
+    pointer-events: none;
+    background: rgba(0,0,0,0.78);
+    color: #fff;
+    border-radius: 18px;
+    padding: 4px 12px 4px 8px;
+    font-family: system-ui, sans-serif;
+    font-size: 12px;
+    display: inline-flex; align-items: center; gap: 6px;
+    transform: translate(-50%, calc(100% + 12px));
+    z-index: 12;
+    opacity: 0; transition: opacity .15s ease-out;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  #hover-press.shown { opacity: 1; }
+  #hover-press .kb {
+    display: inline-block; background: #fff; color: #222;
+    padding: 1px 6px; border-radius: 4px; font-weight: 700; font-size: 11px;
+    box-shadow: 0 1px 0 #888;
+  }
 </style>
 </head>
 <body>
@@ -45,6 +101,27 @@ import { submitAttempt } from './js/api.js';
 import { pickRoundMedicines, getDifficulty } from './js/medicines.js';
 import { sfx } from './js/sfx.js';
 import { XRHandModelFactory } from 'three/addons/webxr/XRHandModelFactory.js';
+import { showWelcomeCard } from './js/welcome-card.js';
+
+showWelcomeCard({
+  icon: '🥽',
+  title: 'Phòng dược 3D — Hướng dẫn',
+  intro: 'Mô phỏng kệ thuốc thật bằng Three.js, hỗ trợ pinch tay & VR.',
+  bullets: [
+    'Pinch ngón cái + trỏ (hoặc click) vào thùng carton để mở.',
+    'Cầm từng hộp thuốc và kéo lên kệ — ô đúng nhóm sẽ glow xanh.',
+    'Sai ô sẽ glow đỏ. Nhả ra gần ô đúng để snap.',
+    'Bấm "Nộp bài" để lưu điểm, "Làm lại" để chơi lại.',
+  ],
+  controls: { keys: ['W','A','S','D'], mouse: 'left', extras: [
+    { key: 'V', desc: 'vào chế độ VR-Preview (đi quanh phòng)' },
+    { key: '🥽', desc: 'ENTER VR nếu có kính (góc dưới)' },
+  ] },
+  tip: 'Di chuột để xoay · cuộn để zoom · pinch hoặc click trên thùng để mở.',
+  persistKey: 'pharmacysim:welcome:3d-shelf',
+  dismissLabel: 'Bắt đầu xếp thuốc',
+});
+
 const sessionStartedAt = Date.now();
 const ROUND_DIFFICULTY = getDifficulty();
 const ROUND_MEDICINES = pickRoundMedicines(ROUND_DIFFICULTY.count);
@@ -1733,6 +1810,106 @@ resetBtn.addEventListener('click', () => {
 // Cập nhật hint khởi đầu cho phù hợp MVP đào tạo
 setHint('🖐️ Bật điều khiển tay rồi pinch vào thùng để mở');
 
+// ============================================================
+// HOVER LABEL — DOM tooltip projecting medicine info while mouse/hand hovers
+// (inspired by Unity chemistry-lab "Press E to interact" overlay)
+// ============================================================
+const hoverLabel = document.createElement('div');
+hoverLabel.id = 'hover-label';
+hoverLabel.innerHTML = '<div class="ht"></div><div class="hs"></div><div class="hc"></div>';
+document.body.appendChild(hoverLabel);
+
+const hoverPress = document.createElement('div');
+hoverPress.id = 'hover-press';
+hoverPress.innerHTML = 'Pinch hoặc <span class="kb">click</span> để cầm';
+document.body.appendChild(hoverPress);
+
+let hoverTarget = null;          // current medicine being hovered (renderer-loop projects its world pos)
+const _hoverWorld = new THREE.Vector3();
+const _hoverProj = new THREE.Vector3();
+let lastHoverNDC = { x: 0, y: 0, valid: false };
+
+function setHoverTarget(med) {
+  if (med === hoverTarget) return;
+  hoverTarget = med;
+  if (!med) {
+    hoverLabel.classList.remove('shown');
+    hoverPress.classList.remove('shown');
+    return;
+  }
+  hoverLabel.style.setProperty('--cat-color', med.color);
+  hoverLabel.querySelector('.ht').textContent = med.name;
+  hoverLabel.querySelector('.hs').textContent = `${med.dose ?? ''} · ${med.form ?? ''}`.replace(/^\s·\s|·\s$/g, '');
+  hoverLabel.querySelector('.hc').textContent = med.category;
+  hoverLabel.classList.add('shown');
+  // Show "Pinch/click to grab" hint only if user hasn't grabbed yet AND box not placed in slot
+  if (!handState.grabbed && !mouseDragMed && !med.slotId) hoverPress.classList.add('shown');
+  else hoverPress.classList.remove('shown');
+}
+
+function pickHoverFromNDC(x, y) {
+  if (trainingCartonState !== 'open') return null;
+  mouse.set(x, y);
+  raycaster.setFromCamera(mouse, camera);
+  const visMeshes = medicineBoxes.filter(m => m.mesh.visible).map(m => m.mesh);
+  const hits = raycaster.intersectObjects(visMeshes, false);
+  if (!hits.length) return null;
+  return medicineBoxes.find(m => m.mesh === hits[0].object) || null;
+}
+
+// Cập nhật hover từ chuột (chỉ khi không đang kéo)
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (mouseDragMed) { lastHoverNDC.valid = false; return; }
+  const rect = renderer.domElement.getBoundingClientRect();
+  lastHoverNDC.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  lastHoverNDC.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+  lastHoverNDC.valid = true;
+  setHoverTarget(pickHoverFromNDC(lastHoverNDC.x, lastHoverNDC.y));
+});
+renderer.domElement.addEventListener('pointerleave', () => {
+  lastHoverNDC.valid = false;
+  setHoverTarget(null);
+});
+
+// Hand-tracking hover: when MediaPipe hand cursor is near a medicine, highlight that box.
+// We expose a function the hand tracking loop can call after updating handCursor.
+function updateHoverFromHandCursor() {
+  if (!handState.running || handState.grabbed || trainingCartonState !== 'open') return;
+  let best = null, bestDist = Infinity;
+  // handCursor.position is in world space — convert each medicine to world
+  for (const med of medicineBoxes) {
+    if (!med.mesh.visible) continue;
+    med.mesh.getWorldPosition(_hoverWorld);
+    const d = handCursor.position.distanceTo(_hoverWorld);
+    if (d < bestDist) { bestDist = d; best = med; }
+  }
+  // ~25cm in vrWorld scale ≈ 0.25 * 0.06 = 0.015 world units. Use a generous radius.
+  if (best && bestDist < 0.08) setHoverTarget(best); else if (!lastHoverNDC.valid) setHoverTarget(null);
+}
+
+// Per-frame: project hovered box → screen → position label
+function updateHoverLabelPosition() {
+  if (!hoverTarget) return;
+  hoverTarget.mesh.getWorldPosition(_hoverWorld);
+  _hoverProj.copy(_hoverWorld).project(camera);
+  if (_hoverProj.z > 1 || _hoverProj.z < -1) {
+    hoverLabel.classList.remove('shown');
+    hoverPress.classList.remove('shown');
+    return;
+  }
+  const x = (_hoverProj.x * 0.5 + 0.5) * innerWidth;
+  const y = (-_hoverProj.y * 0.5 + 0.5) * innerHeight;
+  // Approximate object top by offsetting by ~half its height in screen space:
+  // We project a second point at the top of the box to anchor the arrow above the object.
+  const top = _hoverWorld.clone();
+  top.y += MED_H / 2 * vrWorld.scale.y;     // top of the medicine mesh in world space
+  top.project(camera);
+  const topY = (-top.y * 0.5 + 0.5) * innerHeight;
+  hoverLabel.style.left = x + 'px';
+  hoverLabel.style.top = Math.max(topY, 60) + 'px';
+  hoverPress.style.left = x + 'px';
+  hoverPress.style.top = y + 'px';
+}
 
 // ============================================================
 // Animation tick
@@ -1751,6 +1928,14 @@ renderer.setAnimationLoop(function tick(time) {
   const dt = clock.getDelta();
   updateHandTracking(time ?? performance.now());
   updateXRHands();
+  updateHoverFromHandCursor();
+  updateHoverLabelPosition();
+  // Re-pick hover when camera moved (orbit) so label sticks to the right box.
+  // Only do this if the cursor stayed on screen but the camera scrolled.
+  if (lastHoverNDC.valid && !hoverTarget && trainingCartonState === 'open' && !mouseDragMed) {
+    setHoverTarget(pickHoverFromNDC(lastHoverNDC.x, lastHoverNDC.y));
+  }
+  if (hoverTarget && (mouseDragMed || handState.grabbed)) setHoverTarget(null);
 
   // Training carton flap animation (visual only — state transition handled
   // by setTimeout fallback in openTrainingCarton để chịu được throttle iframe)

@@ -5,10 +5,10 @@
 import { WebSocketServer } from 'ws';
 
 const ROOM_MEDICINES = [
-  { id: 'amox', name: 'AMOXICILLIN', category: 'Kháng sinh', color: '#43a047' },
-  { id: 'asp',  name: 'ASPIRIN',     category: 'Tim mạch',   color: '#e53935' },
-  { id: 'sme',  name: 'SMECTA',      category: 'Tiêu hóa',   color: '#fb8c00' },
-  { id: 'par',  name: 'PARACETAMOL', category: 'Giảm đau',   color: '#1e88e5' },
+  { id: 'amox', name: 'AMOXICILLIN', category: 'Kháng sinh', color: '#43a047', dose: '500mg', form: 'Viên nang' },
+  { id: 'asp',  name: 'ASPIRIN',     category: 'Tim mạch',   color: '#e53935', dose: '81mg',  form: 'Viên nén' },
+  { id: 'sme',  name: 'SMECTA',      category: 'Tiêu hóa',   color: '#fb8c00', dose: '3g',    form: 'Bột pha' },
+  { id: 'par',  name: 'PARACETAMOL', category: 'Giảm đau',   color: '#1e88e5', dose: '500mg', form: 'Viên nén' },
 ];
 
 const ROOM_SLOTS = ROOM_MEDICINES.map((m, i) => ({
@@ -136,8 +136,194 @@ function attachRaceWS(httpServer, basePath = '') {
   return wss;
 }
 
+// ============================================================
+// SẮC KÝ METAVERSE — shared lab room, each player has own bench
+// ============================================================
+function attachSackyMetaWS(httpServer, basePath = '') {
+  const wss = new WebSocketServer({ noServer: true });
+  const players = new Map(); // id → { id, ws, name, color, avatar }
+  let nextSId = 1;
+
+  function snapshot() {
+    return {
+      players: [...players.values()].map(p => ({
+        id: p.id, name: p.name, color: p.color, avatar: p.avatar, step: p.step, score: p.score,
+      })),
+    };
+  }
+  function send(p, msg) { if (p.ws.readyState === 1) p.ws.send(JSON.stringify(msg)); }
+  function broadcast(msg, exceptId = null) {
+    const data = JSON.stringify(msg);
+    for (const p of players.values()) {
+      if (p.id === exceptId) continue;
+      if (p.ws.readyState === 1) p.ws.send(data);
+    }
+  }
+
+  wss.on('connection', (ws) => {
+    const id = nextSId++;
+    const color = PLAYER_COLORS[(id - 1) % PLAYER_COLORS.length];
+    const player = {
+      id, ws, color,
+      name: 'Học viên ' + id,
+      avatar: { x: 0, y: 1.5, z: 0, rx: 0, ry: 0 },
+      step: 1, score: 0,
+    };
+    players.set(id, player);
+
+    ws.on('message', (raw) => {
+      let msg; try { msg = JSON.parse(raw); } catch { return; }
+      switch (msg.type) {
+        case 'join': {
+          if (typeof msg.name === 'string' && msg.name.trim()) {
+            player.name = msg.name.trim().slice(0, 32);
+          }
+          send(player, { type: 'welcome', id, color, snapshot: snapshot() });
+          broadcast({ type: 'join', player: { id, name: player.name, color, avatar: player.avatar, step: 1, score: 0 } }, id);
+          break;
+        }
+        case 'avatar': {
+          player.avatar = {
+            x: +msg.x || 0, y: +msg.y || 0, z: +msg.z || 0,
+            rx: +msg.rx || 0, ry: +msg.ry || 0,
+          };
+          broadcast({ type: 'avatar', id, ...player.avatar }, id);
+          break;
+        }
+        case 'progress': {
+          player.step = +msg.step || 1;
+          player.score = +msg.score || 0;
+          broadcast({ type: 'progress', id, step: player.step, score: player.score }, id);
+          break;
+        }
+        case 'action': {
+          broadcast({ type: 'action', id, name: String(msg.name || '').slice(0, 30) }, id);
+          break;
+        }
+        case 'chat': {
+          const text = String(msg.text || '').slice(0, 140);
+          if (text) broadcast({ type: 'chat', id, name: player.name, color: player.color, text });
+          break;
+        }
+      }
+    });
+
+    ws.on('close', () => {
+      players.delete(id);
+      broadcast({ type: 'leave', id });
+    });
+  });
+
+  setInterval(() => {
+    for (const p of players.values()) {
+      if (p.ws.readyState !== 1) {
+        players.delete(p.id);
+        broadcast({ type: 'leave', id: p.id });
+      }
+    }
+  }, 15000);
+
+  return wss;
+}
+
+// ============================================================
+// COMPOUNDING LAB METAVERSE — shared pharmacy lab, each player has own bench
+// ============================================================
+function attachLabWS(httpServer, basePath = '') {
+  const wss = new WebSocketServer({ noServer: true });
+  const players = new Map(); // id → { id, ws, name, color, cursor, recipeId, step, weight, beakerVol }
+  let nextLId = 1;
+
+  function snapshot() {
+    return {
+      players: [...players.values()].map(p => ({
+        id: p.id, name: p.name, color: p.color,
+        cursor: p.cursor, recipeId: p.recipeId, step: p.step,
+        weight: p.weight, beakerVol: p.beakerVol,
+      })),
+    };
+  }
+  function send(p, msg) { if (p.ws.readyState === 1) p.ws.send(JSON.stringify(msg)); }
+  function broadcast(msg, exceptId = null) {
+    const data = JSON.stringify(msg);
+    for (const p of players.values()) {
+      if (p.id === exceptId) continue;
+      if (p.ws.readyState === 1) p.ws.send(data);
+    }
+  }
+
+  wss.on('connection', (ws) => {
+    const id = nextLId++;
+    const color = PLAYER_COLORS[(id - 1) % PLAYER_COLORS.length];
+    const player = {
+      id, ws, color,
+      name: 'Học viên ' + id,
+      cursor: { x: 0, y: 1.1, z: 0.5 },
+      recipeId: 'siro-paracetamol',
+      step: 1, weight: 0, beakerVol: 0,
+    };
+    players.set(id, player);
+
+    ws.on('message', (raw) => {
+      let msg; try { msg = JSON.parse(raw); } catch { return; }
+      switch (msg.type) {
+        case 'join': {
+          if (typeof msg.name === 'string' && msg.name.trim()) player.name = msg.name.trim().slice(0, 32);
+          if (typeof msg.recipeId === 'string') player.recipeId = msg.recipeId.slice(0, 40);
+          send(player, { type: 'welcome', id, color, snapshot: snapshot() });
+          broadcast({ type: 'join', player: {
+            id, name: player.name, color, cursor: player.cursor,
+            recipeId: player.recipeId, step: 1, weight: 0, beakerVol: 0,
+          } }, id);
+          break;
+        }
+        case 'cursor': {
+          player.cursor = { x: +msg.x || 0, y: +msg.y || 0, z: +msg.z || 0 };
+          broadcast({ type: 'cursor', id, ...player.cursor }, id);
+          break;
+        }
+        case 'progress': {
+          player.step = +msg.step || 1;
+          player.weight = +msg.weight || 0;
+          player.beakerVol = +msg.beakerVol || 0;
+          if (typeof msg.recipeId === 'string') player.recipeId = msg.recipeId.slice(0, 40);
+          broadcast({ type: 'progress', id, step: player.step, weight: player.weight, beakerVol: player.beakerVol, recipeId: player.recipeId }, id);
+          break;
+        }
+        case 'action': {
+          broadcast({ type: 'action', id, name: String(msg.name || '').slice(0, 40), reagent: String(msg.reagent || '').slice(0, 40) }, id);
+          break;
+        }
+        case 'chat': {
+          const text = String(msg.text || '').slice(0, 140);
+          if (text) broadcast({ type: 'chat', id, name: player.name, color: player.color, text });
+          break;
+        }
+      }
+    });
+
+    ws.on('close', () => {
+      players.delete(id);
+      broadcast({ type: 'leave', id });
+    });
+  });
+
+  setInterval(() => {
+    for (const p of players.values()) {
+      if (p.ws.readyState !== 1) {
+        players.delete(p.id);
+        broadcast({ type: 'leave', id: p.id });
+      }
+    }
+  }, 15000);
+
+  return wss;
+}
+
 export function attachRoom(httpServer, basePath = '') {
   const raceWss = attachRaceWS(httpServer, basePath);
+  const sackyWss = attachSackyMetaWS(httpServer, basePath);
+  const labWss = attachLabWS(httpServer, basePath);
   const wss = new WebSocketServer({ noServer: true });
   const players = new Map();   // id → { id, ws, name, color, cursor }
   let state = freshState();
@@ -270,12 +456,18 @@ export function attachRoom(httpServer, basePath = '') {
   // Single upgrade listener routes to the right WS server by path.
   const ROOM_PATH = basePath + '/ws';
   const RACE_PATH = basePath + '/ws-race';
+  const SACKY_PATH = basePath + '/ws-sacky';
+  const LAB_PATH = basePath + '/ws-lab';
   httpServer.on('upgrade', (req, socket, head) => {
     const pathname = (req.url || '').split('?')[0];
     if (pathname === ROOM_PATH) {
       wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
     } else if (pathname === RACE_PATH) {
       raceWss.handleUpgrade(req, socket, head, (ws) => raceWss.emit('connection', ws, req));
+    } else if (pathname === SACKY_PATH) {
+      sackyWss.handleUpgrade(req, socket, head, (ws) => sackyWss.emit('connection', ws, req));
+    } else if (pathname === LAB_PATH) {
+      labWss.handleUpgrade(req, socket, head, (ws) => labWss.emit('connection', ws, req));
     } else {
       socket.destroy();
     }

@@ -10,8 +10,9 @@ vào SQLite và xuất analytics cho giảng viên.
 | Phiên bản | URL | Mô tả |
 |---|---|---|
 | **2D Arcade** | `/2d-arcade.html` | Canvas 2D side-view, mở thùng → thuốc spring out → kéo lên kệ. Score + combo + timer + particle + SFX. MediaPipe hoặc chuột. |
-| **3D Realistic** | `/3d-shelf.html` | Three.js scene 3D, thùng carton mở được, snap-to-slot, hover-halo xanh/đỏ + SFX. Hỗ trợ **WebXR hand tracking native** (Quest/Vision Pro), MediaPipe, chuột. |
-| **🌐 Metaverse** | `/metaverse.html` | Phòng dược 3D **realtime multiplayer** (WebSocket). Bạn thấy avatar người khác chuyển động, cùng xếp thuốc lên kệ. Hand tracking hoặc mouse. |
+| **3D Realistic** | `/3d-shelf.html` | Three.js scene 3D, thùng carton mở được, snap-to-slot, hover-halo xanh/đỏ + SFX. Hỗ trợ **WebXR hand tracking native** (Quest/Vision Pro), MediaPipe, chuột. Có welcome-card kiểu Unity + hover label hiện tên/dose/category khi rê chuột vào hộp thuốc. |
+| **🌐 Metaverse** | `/metaverse.html` | Phòng dược 3D **realtime multiplayer** (WebSocket). Bạn thấy avatar người khác chuyển động, cùng xếp thuốc lên kệ. Hand tracking hoặc mouse. Có welcome-card + hover label. |
+| **🧪 Phòng bào chế** | `/compounding-lab.html` | Mô phỏng pha chế **5 đơn thuốc** (Siro Paracetamol, Dung dịch VitC, Hỗn dịch Smecta, Cồn Iod, Siro ho thảo dược). PBR lighting + glass refraction, cân điện tử LCD số thật, fume hood, pipette stand, gloves box, sink+faucet, GMP poster. Pour stream animation. **Multiplayer realtime** (WebSocket `/ws-lab`): thấy cursor + tiến độ của bạn cùng lớp, có chat. |
 | **🧠 Quiz nhanh** | `/quiz.html` | 10 câu multiple-choice, 15s/câu, streak bonus. Không cần webcam. |
 | **📊 Dashboard Giảng viên** | `/dashboard.html` | Stats + histogram + top 10 + ma trận nhầm lẫn + export CSV (cho cả 4 mode) |
 | Landing | `/` | Set tên SV, chọn độ khó, xem huy hiệu đã mở khóa, leaderboard nhanh |
@@ -165,8 +166,9 @@ PharmacySIM/
 | `GET`  | `/api/badges` | Danh sách tất cả huy hiệu (icon + label + desc) |
 | `GET`  | `/api/achievements?player=` | Huy hiệu đã mở khóa của 1 SV |
 | `WS`   | `/ws` | WebSocket multiplayer cho Metaverse |
+| `WS`   | `/ws-lab` | WebSocket multiplayer cho Phòng bào chế (cursor + step progress + chat) |
 
-`version` hợp lệ: `2d-arcade`, `3d-shelf`, `metaverse`, `quiz`, `time-attack`.
+`version` hợp lệ: `2d-arcade`, `3d-shelf`, `metaverse`, `quiz`, `time-attack`, `compounding-lab`.
 
 ### WebSocket protocol (`/ws`)
 Client → Server: `{type:'join'|'cursor'|'grab'|'move'|'release'|'snap'|'reset'|'open-carton', ...}`<br>
