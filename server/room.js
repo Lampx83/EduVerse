@@ -63,7 +63,9 @@ function raceBroadcast(room, msg, exceptId = null) {
 }
 
 function attachRaceWS(httpServer, basePath = '') {
-  const wss = new WebSocketServer({ server: httpServer, path: basePath + '/ws-race', noServer: false });
+  // noServer: true → caller routes upgrade events manually (so multiple WS
+  // servers on same httpServer don't fight each other on shouldHandle().
+  const wss = new WebSocketServer({ noServer: true });
 
   wss.on('connection', (ws) => {
     const player = { id: racePlayerId++, ws, name: 'Khách', score: 0, correct: 0, total: 0, finished: false, room: null };
@@ -131,11 +133,12 @@ function attachRaceWS(httpServer, basePath = '') {
   });
 
   console.log(`[race] WebSocket server attached at ${basePath || ''}/ws-race`);
+  return wss;
 }
 
 export function attachRoom(httpServer, basePath = '') {
-  attachRaceWS(httpServer, basePath);
-  const wss = new WebSocketServer({ server: httpServer, path: basePath + '/ws' });
+  const raceWss = attachRaceWS(httpServer, basePath);
+  const wss = new WebSocketServer({ noServer: true });
   const players = new Map();   // id → { id, ws, name, color, cursor }
   let state = freshState();
 
@@ -263,6 +266,20 @@ export function attachRoom(httpServer, basePath = '') {
       }
     }
   }, 15000);
+
+  // Single upgrade listener routes to the right WS server by path.
+  const ROOM_PATH = basePath + '/ws';
+  const RACE_PATH = basePath + '/ws-race';
+  httpServer.on('upgrade', (req, socket, head) => {
+    const pathname = (req.url || '').split('?')[0];
+    if (pathname === ROOM_PATH) {
+      wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
+    } else if (pathname === RACE_PATH) {
+      raceWss.handleUpgrade(req, socket, head, (ws) => raceWss.emit('connection', ws, req));
+    } else {
+      socket.destroy();
+    }
+  });
 
   console.log(`[room] WebSocket server attached at ${basePath || ''}/ws`);
 }
