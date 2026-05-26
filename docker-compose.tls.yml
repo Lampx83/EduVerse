@@ -1,0 +1,41 @@
+# Optional HTTPS deployment via Caddy reverse proxy
+# Use this when you need HTTPS (e.g. for webcam access on LAN/public).
+#
+# Usage on a public domain (recommended for class deployment):
+#   1. Point your domain DNS A record → server's public IP
+#   2. Set DOMAIN env var (or edit Caddyfile directly)
+#   3. docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d
+#   → Caddy auto-issues a Let's Encrypt cert on first request
+#
+# For LAN-only with self-signed cert:
+#   1. Edit ./Caddyfile to use ":443 { tls internal ... }"
+#   2. Each client device must trust the Caddy root CA
+#      (see docker logs caddy → look for CA root location)
+#
+# Ports:
+#   80 → Caddy (HTTP → HTTPS redirect)
+#   443 → Caddy (HTTPS, terminates TLS, proxies to pharmacysim:8041)
+#   8041 → still exposed for direct access if needed
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: pharmacysim-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      DOMAIN: ${DOMAIN:-pharmacysim.local}
+      EMAIL:  ${ACME_EMAIL:-admin@example.com}
+    depends_on:
+      - pharmacysim
+
+volumes:
+  caddy-data:
+  caddy-config:

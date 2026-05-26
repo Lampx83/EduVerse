@@ -97,8 +97,29 @@ Dữ liệu SQLite lưu trong named volume `pharmacysim-data` (mount tại `/dat
 Mở `http://<host>:8041` sau khi container UP.
 
 ### Lưu ý production
-- **HTTPS**: MediaPipe `getUserMedia` cần HTTPS khi truy cập từ máy khác → đặt sau
-  Traefik/Caddy/Nginx có cert Let's Encrypt.
+- **HTTPS BẮT BUỘC nếu cần webcam**: MediaPipe `getUserMedia` **chỉ chạy trên HTTPS hoặc localhost**.
+  Truy cập qua HTTP IP LAN (vd `http://192.168.x.x:8041`) sẽ tự fallback sang **chế độ chuột/touch**.
+  3 cách bật HTTPS:
+
+  **(a) Cloudflare Tunnel** — đơn giản nhất, public HTTPS URL miễn phí:
+  ```bash
+  sudo dpkg -i cloudflared.deb                            # Ubuntu/Debian
+  cloudflared tunnel --url http://localhost:8041          # in ra https://xxx.trycloudflare.com
+  ```
+
+  **(b) Caddy + Let's Encrypt** (cần domain trỏ về server):
+  ```bash
+  DOMAIN=sim.example.com ACME_EMAIL=you@email.com \
+    docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d
+  ```
+
+  **(c) Caddy + mkcert** (LAN nội bộ, mỗi máy SV phải trust root CA):
+  ```bash
+  sudo apt install -y libnss3-tools mkcert caddy
+  mkcert -install
+  mkcert 192.168.1.50 localhost
+  # sửa Caddyfile dùng các cert vừa tạo, rồi caddy run
+  ```
 - **Backup volume**: 
   ```bash
   docker run --rm -v pharmacysim_pharmacysim-data:/data -v $PWD:/backup alpine \

@@ -1,0 +1,35 @@
+# Default config — works on a public domain with Let's Encrypt.
+# Set DOMAIN env var before `docker compose up` to use your real domain.
+#
+# For LAN-only with self-signed cert, replace this entire block with:
+#   :443 {
+#     tls internal
+#     reverse_proxy pharmacysim:8041
+#   }
+
+{$DOMAIN} {
+	# Auto-issues a Let's Encrypt cert on first request.
+	# Comment this line + add `tls internal` for self-signed LAN-only mode.
+	tls {$EMAIL}
+
+	# Proxy everything to the pharmacysim Node container.
+	reverse_proxy pharmacysim:8041 {
+		# WebSocket upgrade headers — critical for /ws and /ws-race
+		header_up Connection {http.request.header.Connection}
+		header_up Upgrade {http.request.header.Upgrade}
+	}
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(self), microphone=()"
+	}
+
+	encode zstd gzip
+	log {
+		output stdout
+		format console
+	}
+}
