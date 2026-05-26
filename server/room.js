@@ -43,7 +43,98 @@ function freshState() {
   };
 }
 
+// ============================================================
+// RACE MODE — pairs 2 players, broadcasts each other's score
+// ============================================================
+const raceQueue = [];          // waiting players
+const raceRooms = new Map();   // roomId → { players: [{ws,id,name}, ...], startedAt }
+let raceRoomId = 1;
+let racePlayerId = 1;
+
+function raceSend(p, msg) {
+  if (p.ws.readyState === 1) p.ws.send(JSON.stringify(msg));
+}
+function raceBroadcast(room, msg, exceptId = null) {
+  const data = JSON.stringify(msg);
+  for (const p of room.players) {
+    if (p.id === exceptId) continue;
+    if (p.ws.readyState === 1) p.ws.send(data);
+  }
+}
+
+function attachRaceWS(httpServer) {
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws-race', noServer: false });
+
+  wss.on('connection', (ws) => {
+    const player = { id: racePlayerId++, ws, name: 'Khách', score: 0, correct: 0, total: 0, finished: false, room: null };
+
+    ws.on('message', (raw) => {
+      let msg; try { msg = JSON.parse(raw); } catch { return; }
+
+      if (msg.type === 'join') {
+        player.name = String(msg.name || '').trim().slice(0, 32) || ('Khách ' + player.id);
+        // Try to pair with someone in queue
+        if (raceQueue.length > 0) {
+          const opponent = raceQueue.shift();
+          if (opponent.ws.readyState !== 1) {
+            raceQueue.push(player); return raceSend(player, { type: 'waiting' });
+          }
+          const room = { id: raceRoomId++, players: [opponent, player], startedAt: Date.now() };
+          opponent.room = player.room = room;
+          raceRooms.set(room.id, room);
+          // Notify both
+          raceSend(opponent, { type: 'matched', opponentName: player.name, opponentId: player.id, youId: opponent.id, roomId: room.id });
+          raceSend(player,   { type: 'matched', opponentName: opponent.name, opponentId: opponent.id, youId: player.id, roomId: room.id });
+        } else {
+          raceQueue.push(player);
+          raceSend(player, { type: 'waiting' });
+        }
+      } else if (msg.type === 'progress' && player.room) {
+        player.score = +msg.score || 0;
+        player.correct = +msg.correct || 0;
+        player.total = +msg.total || 0;
+        raceBroadcast(player.room, {
+          type: 'opponent', id: player.id, score: player.score, correct: player.correct, total: player.total,
+        }, player.id);
+      } else if (msg.type === 'finish' && player.room) {
+        player.finished = true;
+        player.score = +msg.score || player.score;
+        player.correct = +msg.correct || player.correct;
+        player.total = +msg.total || player.total;
+        raceBroadcast(player.room, { type: 'opponent-finished', id: player.id, score: player.score });
+        // Determine winner once both finish OR opponent timed out
+        const allFinished = player.room.players.every(p => p.finished);
+        if (allFinished) {
+          const sorted = [...player.room.players].sort((a, b) =>
+            (b.correct / b.total) - (a.correct / a.total) || b.score - a.score
+          );
+          const winnerId = sorted[0].id;
+          for (const p of player.room.players) {
+            raceSend(p, { type: 'race-over', winnerId, results: sorted.map(s => ({ id: s.id, name: s.name, score: s.score, correct: s.correct, total: s.total })) });
+          }
+          raceRooms.delete(player.room.id);
+        }
+      }
+    });
+
+    ws.on('close', () => {
+      // Remove from queue
+      const qi = raceQueue.indexOf(player);
+      if (qi >= 0) raceQueue.splice(qi, 1);
+      // Notify opponent if in a room
+      if (player.room) {
+        raceBroadcast(player.room, { type: 'opponent-left', id: player.id }, player.id);
+        // Remove room — the lone player will get notified to bail out
+        raceRooms.delete(player.room.id);
+      }
+    });
+  });
+
+  console.log('[race] WebSocket server attached at /ws-race');
+}
+
 export function attachRoom(httpServer) {
+  attachRaceWS(httpServer);
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   const players = new Map();   // id → { id, ws, name, color, cursor }
   let state = freshState();

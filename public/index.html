@@ -221,14 +221,15 @@
 <div class="top-bar">
   <div>
     <label>👤</label>
-    <input id="player-input" placeholder="Họ tên / mã SV — sẽ hiện trên bảng xếp hạng" maxlength="40" />
-    <button id="player-save">Lưu tên</button>
+    <input id="player-input" placeholder="Họ tên / mã SV" maxlength="40" />
+    <button id="player-save">Lưu</button>
     <span class="saved" id="player-saved"></span>
   </div>
   <div>
-    <a href="/devices.html" style="color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;width:100%;justify-content:center">
-      📱 Xem thiết bị hỗ trợ →
-    </a>
+    <label>🎓</label>
+    <input id="class-input" placeholder="Mã lớp (6 ký tự)" maxlength="12" style="text-transform:uppercase;font-family:monospace;font-weight:700" />
+    <button id="class-join" style="background:#0ea5e9">Vào lớp</button>
+    <span class="saved" id="class-saved"></span>
   </div>
 </div>
 
@@ -304,13 +305,44 @@
       <a class="btn dark" href="dashboard.html">📊 Mở dashboard</a>
     </div>
 
+    <div class="mode" style="--mode-color: #f97316">
+      <div class="mode-head">
+        <div class="mode-icon">⚡</div>
+        <div class="mode-info"><h3>Time Attack</h3><span class="tag" style="background:#f97316">🆕 Mới</span></div>
+      </div>
+      <div class="chips"><span>Survival</span><span>Escalating</span><span>Sai -5s</span><span>Wave</span></div>
+      <p class="desc">Sống được càng nhiều wave càng tốt — mỗi wave thêm 1 thuốc, time giảm dần, sai sẽ trừ thời gian!</p>
+      <div class="leaderboard" data-version="time-attack"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
+      <a class="btn dark" href="time-attack.html">⚡ Bắt đầu</a>
+    </div>
+
+    <div class="mode" style="--mode-color: #c026d3">
+      <div class="mode-head">
+        <div class="mode-icon">👨‍🏫</div>
+        <div class="mode-info"><h3>Quản lý lớp · Giảng viên</h3><span class="tag" style="background:#c026d3">🆕 Mới</span></div>
+      </div>
+      <div class="chips"><span>Tạo lớp</span><span>Mã mời</span><span>Roster</span><span>CSV theo lớp</span></div>
+      <p class="desc">Giảng viên tạo lớp → phát mã 6 ký tự cho SV → theo dõi tiến độ từng SV, export CSV theo lớp.</p>
+      <a class="btn dark" href="teacher.html">👨‍🏫 Mở quản lý lớp</a>
+    </div>
+
+    <div class="mode" style="--mode-color: #ef4444">
+      <div class="mode-head">
+        <div class="mode-icon">🏁</div>
+        <div class="mode-info"><h3>Race 1v1</h3><span class="tag future">Sắp có</span></div>
+      </div>
+      <div class="chips"><span>WebSocket</span><span>1v1</span><span>Auto-match</span><span>Live opponent</span></div>
+      <p class="desc">Bắt cặp 2 người ngẫu nhiên qua WebSocket, cùng chơi 1 level, ai xong trước thắng. Backend đã sẵn sàng.</p>
+      <a class="btn disabled" href="#">🏁 Sắp ra mắt</a>
+    </div>
+
     <div class="mode" style="--mode-color: #6b7280">
       <div class="mode-head">
         <div class="mode-icon">📱</div>
         <div class="mode-info"><h3>Thiết bị hỗ trợ</h3><span class="tag" style="background:#6b7280">Info</span></div>
       </div>
       <div class="chips"><span>Quest</span><span>Vision Pro</span><span>Android XR</span><span>Phone/tablet</span></div>
-      <p class="desc">Phát hiện capability thiết bị hiện tại + danh sách thiết bị hỗ trợ (Meta Quest, Apple Vision Pro, Android XR, Ray-Ban Meta...).</p>
+      <p class="desc">Phát hiện capability thiết bị hiện tại + danh sách 8 loại thiết bị (Meta Quest, Apple Vision Pro, Android XR, Ray-Ban Meta...).</p>
       <a class="btn dark" href="devices.html">📱 Xem chi tiết</a>
     </div>
 
@@ -331,8 +363,46 @@
 </footer>
 
 <script type="module">
-import { getPlayerName, setPlayerName, getLeaderboard, getStats, getBadges, getMyAchievements } from './js/api.js';
+import { getPlayerName, setPlayerName, getLeaderboard, getStats, getBadges, getMyAchievements, getClassCode, setClassCode, joinClassByCode } from './js/api.js';
 import { LEVELS, getCurrentLevel, setCurrentLevel, getProgress, isLevelUnlocked } from './js/medicines.js';
+
+// Auto-join from URL ?class=XXXX
+const urlClass = new URLSearchParams(location.search).get('class');
+if (urlClass) {
+  joinClassByCode(urlClass).then(cls => {
+    if (cls) refreshClassUI();
+    history.replaceState(null, '', location.pathname);
+  });
+}
+
+const classInput = document.getElementById('class-input');
+const classSavedEl = document.getElementById('class-saved');
+const classJoinBtn = document.getElementById('class-join');
+async function refreshClassUI() {
+  const code = getClassCode();
+  classInput.value = code;
+  if (code) {
+    const r = await fetch('/api/classes/' + code);
+    if (r.ok) {
+      const cls = await r.json();
+      classSavedEl.innerHTML = `✓ <b>${cls.name}</b>`;
+    } else {
+      classSavedEl.textContent = '⚠️ mã không hợp lệ';
+    }
+  } else {
+    classSavedEl.textContent = '';
+  }
+}
+classJoinBtn.addEventListener('click', async () => {
+  const code = classInput.value.trim().toUpperCase();
+  if (!code) { setClassCode(''); refreshClassUI(); return; }
+  classSavedEl.textContent = 'đang kiểm tra...';
+  const cls = await joinClassByCode(code);
+  if (cls) { classSavedEl.innerHTML = `✓ <b>${cls.name}</b>`; }
+  else { classSavedEl.textContent = '⚠️ mã không hợp lệ'; }
+});
+classInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') classJoinBtn.click(); });
+refreshClassUI();
 
 // --- Player name ---
 const input = document.getElementById('player-input');

@@ -2,7 +2,7 @@ import express from 'express';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts } from './db.js';
 import { attachRoom } from './room.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -12,7 +12,7 @@ const MEDIAPIPE_DIR = path.resolve(ROOT_DIR, 'node_modules', '@mediapipe', 'task
 const PORT = Number(process.env.PORT) || 8041;
 const HOST = process.env.HOST || '0.0.0.0';
 
-const VALID_VERSIONS = new Set(['2d-arcade', '3d-shelf', 'quiz', 'metaverse', 'time-attack']);
+const VALID_VERSIONS = new Set(['2d-arcade', '3d-shelf', 'quiz', 'metaverse', 'time-attack', 'race']);
 
 // Badge definitions used by both backend (auto-unlock) and frontend (display)
 const BADGES = [
@@ -78,6 +78,9 @@ app.post('/api/attempts', (req, res) => {
     : 'Ẩn danh';
   const durationMs = Number.isFinite(b.durationMs) ? Math.floor(b.durationMs) : null;
   const details = b.details != null ? JSON.stringify(b.details).slice(0, 4000) : null;
+  const classCode = (typeof b.classCode === 'string' && b.classCode.trim())
+    ? b.classCode.trim().slice(0, 16) : null;
+  const levelN = Number.isFinite(b.level) ? Math.floor(b.level) : null;
 
   const result = insertAttempt({
     version,
@@ -86,6 +89,8 @@ app.post('/api/attempts', (req, res) => {
     duration_ms: durationMs,
     details,
     created_at: Date.now(),
+    class_code: classCode,
+    level_n: levelN,
   });
   // Auto-unlock badges based on the attempt
   const newBadges = checkAndUnlockBadges(playerName, { version, score, correct, total, durationMs });
@@ -128,6 +133,74 @@ app.get('/api/confusion', (req, res) => {
 
 app.get('/api/badges', (_req, res) => {
   res.json(BADGES);
+});
+
+// ============================================================
+// CLASS MANAGEMENT
+// ============================================================
+function genCode(len = 6) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no easily confused chars
+  let s = '';
+  for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+app.post('/api/classes', (req, res) => {
+  const name = String(req.body?.name || '').trim().slice(0, 60);
+  const teacherName = String(req.body?.teacherName || 'GV').trim().slice(0, 40);
+  if (!name) return res.status(400).json({ error: 'name required' });
+  // Try a few codes in case of collision
+  let code = null;
+  for (let i = 0; i < 8; i++) {
+    const c = genCode(6);
+    if (!getClassByCode(c)) { code = c; break; }
+  }
+  if (!code) return res.status(500).json({ error: 'could not generate code' });
+  const result = createClass({ code, name, teacher_name: teacherName });
+  res.json({ id: result.id, code, name, teacherName });
+});
+
+app.get('/api/classes', (_req, res) => {
+  res.json(listClasses());
+});
+
+app.get('/api/classes/:code', (req, res) => {
+  const cls = getClassByCode(req.params.code);
+  if (!cls) return res.status(404).json({ error: 'class not found' });
+  res.json(cls);
+});
+
+app.get('/api/classes/:code/members', (req, res) => {
+  const cls = getClassByCode(req.params.code);
+  if (!cls) return res.status(404).json({ error: 'class not found' });
+  res.json(getClassMembers(req.params.code));
+});
+
+app.get('/api/classes/:code/attempts', (req, res) => {
+  const cls = getClassByCode(req.params.code);
+  if (!cls) return res.status(404).json({ error: 'class not found' });
+  const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
+  res.json(getClassAttempts(req.params.code, limit));
+});
+
+app.get('/api/classes/:code/export.csv', (req, res) => {
+  const cls = getClassByCode(req.params.code);
+  if (!cls) return res.status(404).send('class not found');
+  const rows = getClassAttempts(req.params.code, 5000);
+  const esc = v => v == null ? '' : (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g,'""')}"` : String(v));
+  const lines = ['id,version,level,player_name,score,correct,total,duration_ms,created_at_iso'];
+  for (const r of rows) {
+    lines.push([r.id, r.version, r.level_n ?? '', esc(r.player_name), r.score, r.correct, r.total, r.duration_ms ?? '', new Date(r.created_at).toISOString()].join(','));
+  }
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="class-${cls.code}-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send('﻿' + lines.join('\n'));
+});
+
+// Per-player drill-down for dashboard
+app.get('/api/players/:name/attempts', (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+  res.json(getPlayerAttempts(req.params.name, limit));
 });
 
 app.get('/api/achievements', (req, res) => {

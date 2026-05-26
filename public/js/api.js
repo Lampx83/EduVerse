@@ -1,6 +1,29 @@
 // Shared API client + player name management for both games.
 
 const PLAYER_KEY = 'pharmacysim:playerName';
+const CLASS_KEY = 'pharmacysim:classCode';
+
+export function getClassCode() {
+  return localStorage.getItem(CLASS_KEY) || '';
+}
+export function setClassCode(code) {
+  const c = String(code || '').trim().toUpperCase().slice(0, 12);
+  if (c) localStorage.setItem(CLASS_KEY, c);
+  else localStorage.removeItem(CLASS_KEY);
+  return c;
+}
+
+export async function joinClassByCode(code) {
+  const c = String(code || '').trim().toUpperCase();
+  if (!c) return null;
+  try {
+    const r = await fetch('/api/classes/' + encodeURIComponent(c));
+    if (!r.ok) return null;
+    const cls = await r.json();
+    setClassCode(cls.code);
+    return cls;
+  } catch { return null; }
+}
 
 export function getPlayerName() {
   return localStorage.getItem(PLAYER_KEY) || '';
@@ -23,10 +46,11 @@ export async function ensurePlayerName() {
 export async function submitAttempt(payload) {
   try {
     const playerName = getPlayerName() || 'Ẩn danh';
+    const classCode = getClassCode() || undefined;
     const res = await fetch('/api/attempts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, playerName }),
+      body: JSON.stringify({ ...payload, playerName, classCode }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const result = await res.json();
