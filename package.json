@@ -1,0 +1,18 @@
+{
+  "name": "pharmacysim",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hệ thống mô phỏng đào tạo dược sĩ — xếp thuốc lên kệ bằng MediaPipe hand tracking",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.5.0",
+    "express": "^4.21.1"
+  }
+}

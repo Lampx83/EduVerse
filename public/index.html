@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>PharmacySIM · Chọn phiên bản</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; }
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; padding: 48px 20px 32px;
+  }
+  header { text-align: center; max-width: 800px; margin: 0 auto 28px; }
+  h1 { font-size: 44px; margin: 0 0 12px; text-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .subtitle { font-size: 17px; opacity: 0.9; line-height: 1.5; margin: 0; }
+  .player-bar {
+    max-width: 1200px; margin: 0 auto 28px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; padding: 12px 18px;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .player-bar label { font-size: 14px; opacity: 0.85; }
+  .player-bar input {
+    flex: 1; min-width: 180px; max-width: 360px;
+    padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.95); color: #333; font-size: 14px;
+    font-family: inherit;
+  }
+  .player-bar button {
+    padding: 8px 16px; border-radius: 8px; border: none;
+    background: #43a047; color: white; font-weight: 600; cursor: pointer;
+    font-family: inherit; font-size: 14px;
+  }
+  .player-bar button:hover { background: #66bb6a; }
+  .player-bar .saved { font-size: 12px; opacity: 0.7; }
+  .grid {
+    max-width: 1200px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 16px; padding: 24px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: transform 0.2s, background 0.2s;
+    display: flex; flex-direction: column;
+  }
+  .card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.18); }
+  .card .icon { font-size: 36px; margin-bottom: 8px; }
+  .card h2 { margin: 0 0 6px; font-size: 22px; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; margin-bottom: 10px;
+    letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  .b-ready { background: #43a047; }
+  .b-future { background: #757575; opacity: 0.85; }
+  .card p.desc { margin: 0 0 12px; font-size: 14px; opacity: 0.9; line-height: 1.5; }
+  .features { list-style: none; padding: 0; margin: 0 0 12px; font-size: 13px; line-height: 1.7; opacity: 0.85; }
+  .features li::before { content: '▸ '; color: rgba(255,255,255,0.6); }
+  .leaderboard {
+    margin: 12px 0; font-size: 12px; min-height: 84px;
+    background: rgba(0,0,0,0.18); border-radius: 8px; padding: 10px 12px;
+  }
+  .leaderboard h4 { margin: 0 0 6px; font-size: 11px; font-weight: 700; opacity: 0.75; letter-spacing: 0.5px; text-transform: uppercase; }
+  .lb-row { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 0; gap: 8px; }
+  .lb-row .rank { font-weight: 700; opacity: 0.6; min-width: 18px; }
+  .lb-row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-row .score { font-weight: 700; color: #ffd54f; }
+  .lb-empty { opacity: 0.5; font-style: italic; }
+  .stats-row { display: flex; gap: 8px; font-size: 11px; opacity: 0.8; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .btn-row { margin-top: auto; }
+  .btn {
+    display: inline-block; padding: 10px 20px;
+    background: white; color: #5e35b1;
+    border-radius: 8px; text-decoration: none;
+    font-weight: 700; font-size: 14px;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .btn:hover { background: #ffe082; transform: translateY(-1px); }
+  .btn-disabled {
+    background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.5);
+    cursor: not-allowed;
+  }
+  .btn-disabled:hover { background: rgba(255,255,255,0.18); transform: none; }
+  .stack { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .chip {
+    font-size: 11px; padding: 3px 8px; border-radius: 10px;
+    background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.85);
+  }
+  footer {
+    text-align: center; opacity: 0.65; font-size: 13px;
+    margin-top: 48px; line-height: 1.6;
+  }
+  code {
+    background: rgba(0,0,0,0.25); padding: 1px 6px;
+    border-radius: 4px; font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>💊 PharmacySIM</h1>
+  <p class="subtitle">Hệ thống mô phỏng đào tạo kỹ năng <b>xếp thuốc theo phân loại</b><br>cho sinh viên ngành Dược · MediaPipe Hand Tracking · Lưu điểm trên bảng xếp hạng</p>
+</header>
+
+<div class="player-bar">
+  <label for="player-input">👤 Tên người chơi:</label>
+  <input id="player-input" placeholder="Họ tên / mã SV — sẽ hiện trên bảng xếp hạng" maxlength="40" />
+  <button id="player-save">Lưu</button>
+  <span class="saved" id="player-saved"></span>
+</div>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="icon">🎮</div>
+    <span class="badge b-ready">✓ Sẵn sàng</span>
+    <h2>2D Arcade</h2>
+    <div class="stack">
+      <span class="chip">Canvas 2D</span>
+      <span class="chip">MediaPipe</span>
+      <span class="chip">Gamification</span>
+    </div>
+    <p class="desc">Game-style side-view. Pinch để mở thùng, thuốc bay ra, kéo lên kệ. Score + combo + timer + particle.</p>
+    <ul class="features">
+      <li>Mở thùng → thuốc spring out</li>
+      <li>Score · Combo · Timer 60s</li>
+      <li>Phù hợp: tự học, gameify</li>
+    </ul>
+    <div class="leaderboard" data-version="2d-arcade">
+      <h4>🏆 Top điểm</h4>
+      <div class="lb-list"><div class="lb-empty">Đang tải...</div></div>
+      <div class="stats-row"></div>
+    </div>
+    <div class="btn-row"><a class="btn" href="2d-arcade.html">▶️ Chơi</a></div>
+  </div>
+
+  <div class="card">
+    <div class="icon">🥽</div>
+    <span class="badge b-ready">✓ Sẵn sàng</span>
+    <h2>3D Realistic</h2>
+    <div class="stack">
+      <span class="chip">Three.js</span>
+      <span class="chip">MediaPipe</span>
+      <span class="chip">WebXR</span>
+    </div>
+    <p class="desc">Scene 3D thật, kệ thuốc + bàn + 4 hộp. Pinch cầm hộp, snap-to-slot, chấm điểm chi tiết.</p>
+    <ul class="features">
+      <li>3D đầy đủ + đổ bóng</li>
+      <li>Snap-to-slot + chấm điểm từng hộp</li>
+      <li>Phù hợp: đào tạo sát thực tế</li>
+    </ul>
+    <div class="leaderboard" data-version="3d-shelf">
+      <h4>🏆 Top điểm</h4>
+      <div class="lb-list"><div class="lb-empty">Đang tải...</div></div>
+      <div class="stats-row"></div>
+    </div>
+    <div class="btn-row"><a class="btn" href="3d-shelf.html">▶️ Chơi</a></div>
+  </div>
+
+  <div class="card">
+    <div class="icon">🤝</div>
+    <span class="badge b-future">📅 Sắp có</span>
+    <h2>VR Hand Tracking</h2>
+    <div class="stack">
+      <span class="chip">WebXR Native</span>
+      <span class="chip">Quest / Vision Pro</span>
+    </div>
+    <p class="desc">Bỏ webcam — dùng hand tracking native của headset VR. Tương tác hai tay, đầy đủ ngón, không độ trễ.</p>
+    <ul class="features">
+      <li>WebXR Hand Tracking API</li>
+      <li>Room-scale walk-around</li>
+    </ul>
+    <div class="btn-row"><span class="btn btn-disabled">Chưa có</span></div>
+  </div>
+
+  <div class="card">
+    <div class="icon">🖱️</div>
+    <span class="badge b-future">📅 Sắp có</span>
+    <h2>2D Mouse / Touch</h2>
+    <div class="stack">
+      <span class="chip">No Webcam</span>
+      <span class="chip">Tablet OK</span>
+    </div>
+    <p class="desc">Không cần webcam — kéo thả bằng chuột hoặc chạm. Cho lớp học, máy không có camera, iPad.</p>
+    <ul class="features">
+      <li>Mouse + Touch drag-drop</li>
+      <li>Quiz mode kèm giải thích</li>
+    </ul>
+    <div class="btn-row"><span class="btn btn-disabled">Chưa có</span></div>
+  </div>
+
+  <div class="card">
+    <div class="icon">📊</div>
+    <span class="badge b-future">📅 Sắp có</span>
+    <h2>Dashboard Giảng viên</h2>
+    <div class="stack">
+      <span class="chip">Analytics</span>
+      <span class="chip">Class Report</span>
+    </div>
+    <p class="desc">Theo dõi tiến độ cả lớp: ai làm bao nhiêu lần, sai nhóm nào nhiều nhất, thời gian trung bình.</p>
+    <ul class="features">
+      <li>Biểu đồ lỗi theo nhóm thuốc</li>
+      <li>Export CSV cho điểm danh</li>
+    </ul>
+    <div class="btn-row"><span class="btn btn-disabled">Chưa có</span></div>
+  </div>
+
+  <div class="card">
+    <div class="icon">🏃</div>
+    <span class="badge b-future">📅 Sắp có</span>
+    <h2>Multiplayer Race</h2>
+    <div class="stack">
+      <span class="chip">2 Players</span>
+      <span class="chip">Realtime</span>
+    </div>
+    <p class="desc">2 sinh viên cùng xếp một bộ thuốc — ai nhanh + chính xác hơn thì thắng. Tạo không khí thi đua.</p>
+    <ul class="features">
+      <li>Split-screen cùng webcam</li>
+      <li>Leaderboard theo round</li>
+    </ul>
+    <div class="btn-row"><span class="btn btn-disabled">Chưa có</span></div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Backend: Node.js + Express + SQLite trên cổng <code>8041</code> · Chạy local: <code>npm install &amp;&amp; npm start</code><br>
+  Deploy: Docker / Portainer (xem README) · Tương thích Chrome/Edge · Hand tracking cần webcam</p>
+</footer>
+
+<script type="module">
+import { getPlayerName, setPlayerName, getLeaderboard, getStats } from './js/api.js';
+
+// --- Player name bar ---
+const input = document.getElementById('player-input');
+const saveBtn = document.getElementById('player-save');
+const savedEl = document.getElementById('player-saved');
+input.value = getPlayerName();
+if (input.value) savedEl.textContent = '✓ Đã lưu — sẽ hiện trên bảng xếp hạng';
+
+saveBtn.addEventListener('click', () => {
+  const v = setPlayerName(input.value);
+  input.value = v;
+  savedEl.textContent = v ? '✓ Đã lưu' : '';
+  setTimeout(() => { if (savedEl.textContent === '✓ Đã lưu') savedEl.textContent = ''; }, 2500);
+});
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveBtn.click(); });
+
+// --- Leaderboards ---
+function fmtTime(ms) {
+  const d = new Date(ms);
+  return `${d.getDate()}/${d.getMonth()+1}`;
+}
+
+async function loadLeaderboard(card) {
+  const version = card.dataset.version;
+  const [rows, stats] = await Promise.all([
+    getLeaderboard(version, 5),
+    getStats(version),
+  ]);
+  const list = card.querySelector('.lb-list');
+  if (!rows.length) {
+    list.innerHTML = '<div class="lb-empty">Chưa có ai chơi — hãy là người đầu tiên!</div>';
+  } else {
+    list.innerHTML = rows.map((r, i) => `
+      <div class="lb-row">
+        <span class="rank">${i + 1}.</span>
+        <span class="name">${escapeHtml(r.player_name)}</span>
+        <span class="score">${r.score}</span>
+      </div>
+    `).join('');
+  }
+  const sr = card.querySelector('.stats-row');
+  if (stats && stats.total_attempts > 0) {
+    sr.innerHTML = `📈 ${stats.total_attempts} lượt · TB ${stats.avg_score ?? 0} · 🎯 ${stats.perfect_count} perfect`;
+  } else {
+    sr.innerHTML = '';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+document.querySelectorAll('.leaderboard').forEach(loadLeaderboard);
+</script>
+</body>
+</html>

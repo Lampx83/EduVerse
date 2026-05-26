@@ -1,0 +1,19 @@
+services:
+  pharmacysim:
+    build: .
+    image: pharmacysim:latest
+    container_name: pharmacysim
+    restart: unless-stopped
+    ports:
+      - "8041:8041"
+    environment:
+      NODE_ENV: production
+      PORT: 8041
+      HOST: 0.0.0.0
+      DATA_DIR: /data
+    volumes:
+      - pharmacysim-data:/data
+
+volumes:
+  pharmacysim-data:
+    driver: local
