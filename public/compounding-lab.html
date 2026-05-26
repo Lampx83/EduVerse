@@ -2682,8 +2682,21 @@ function handleClickOn(target) {
   const tu = target.userData;
   const cur = state.recipe.steps[state.stepIdx];
 
+  // ============================================================
+  // FREE-SELECTION MODEL: any first click on a tool/reagent picks it up
+  // (badge appears immediately). The second click validates against the
+  // current step — wrong combo errors out, right combo executes.
+  // ============================================================
+  const isPickup = !selectedTool || (tu.kind === 'reagent' && selectedTool.userData?.kind === 'reagent');
+
   if (cur.action === 'place-on-balance') {
-    if (!selectedTool && tu.id === 'beaker') { setSelectedTool(target); return; }
+    // First click: pick up (badge appears). Show hint if it's not the beaker
+    if (isPickup) {
+      setSelectedTool(target);
+      if (tu.id !== 'beaker') showToast('💡 Bước này cần CỐC THỦY TINH — click vào cốc', 2400);
+      return;
+    }
+    // Second click: validate
     if (selectedTool === beaker && tu.id === 'balance') {
       beaker.position.set(balance.position.x + 0.03, balance.position.y + 0.06, balance.position.z);
       state.beakerOnBalance = true;
@@ -2693,39 +2706,52 @@ function handleClickOn(target) {
       setSelectedTool(null);
       return;
     }
-    logError('Hãy đặt CỐC lên CÂN trước.');
+    if (selectedTool !== beaker) logError(`Cần CỐC — bạn đang cầm ${selectedTool.userData?.name}. Click cốc trước.`);
+    else logError('Cần click vào CÂN ĐIỆN TỬ để đặt cốc lên.');
     setSelectedTool(null); return;
   }
 
   if (cur.action === 'pour') {
-    // reagent selection
-    if (!selectedTool && tu.kind === 'reagent') {
-      if (tu.id === cur.reagentId) { setSelectedTool(target); return; }
-      logError(`Đơn yêu cầu ${REAGENTS[cur.reagentId]?.name} — bạn vừa chọn ${tu.name}`);
-      setSelectedTool(null); return;
-    }
-    if (selectedTool && tu.kind === 'reagent') {
-      // switching selection
-      if (tu.id === cur.reagentId) { setSelectedTool(target); return; }
-      logError(`Sai reagent — quay lại chọn ${REAGENTS[cur.reagentId]?.name}`);
-      setSelectedTool(null); return;
-    }
-    // dispenser
-    if (cur.container === 'cylinder' && selectedTool && tu.id === 'cylinder') {
-      doPour('cylinder', selectedTool, cur);
+    const wantReagent = REAGENTS[cur.reagentId];
+    const wantContainer = cur.container === 'cylinder' ? 'ống đong' : 'cốc';
+    const containerId = cur.container === 'cylinder' ? 'cylinder' : 'beaker';
+
+    // First click: any tool/reagent → pick up
+    if (isPickup) {
+      setSelectedTool(target);
+      if (tu.kind === 'reagent' && tu.id !== cur.reagentId) {
+        showToast(`💡 Bước này cần ${wantReagent?.name} — click chai đúng`, 2400);
+      } else if (tu.kind === 'tool' && tu.id !== cur.reagentId) {
+        showToast(`💡 Bước này cần ${wantReagent?.name} (chai trên kệ)`, 2400);
+      }
       return;
     }
-    if (cur.container === 'beaker' && selectedTool && tu.id === 'beaker') {
-      doPour('beaker', selectedTool, cur);
+    // Second click: validate
+    // — Selected = correct reagent + Target = correct container
+    if (selectedTool.userData.id === cur.reagentId && tu.id === containerId) {
+      doPour(containerId, selectedTool, cur);
       return;
     }
-    const want = cur.container === 'cylinder' ? 'ống đong' : 'cốc';
-    logError(`Click vào ${want} để rót.`);
+    // — Selected reagent wrong
+    if (selectedTool.userData.kind === 'reagent' && selectedTool.userData.id !== cur.reagentId) {
+      logError(`Sai reagent — cần ${wantReagent?.name}, bạn đang cầm ${selectedTool.userData.name}`);
+      setSelectedTool(null); return;
+    }
+    // — Container wrong (clicked something other than the expected container)
+    if (selectedTool.userData.id === cur.reagentId && tu.id !== containerId) {
+      logError(`Click vào ${wantContainer} để rót (không phải ${tu.name}).`);
+      return;   // keep selection so user can try again
+    }
+    logError(`Click chai ${wantReagent?.name} rồi click ${wantContainer}.`);
     setSelectedTool(null); return;
   }
 
   if (cur.action === 'transfer') {
-    if (!selectedTool && tu.id === 'cylinder') { setSelectedTool(target); return; }
+    if (isPickup) {
+      setSelectedTool(target);
+      if (tu.id !== 'cylinder') showToast('💡 Bước này cần ỐNG ĐONG — click ống đong (đã có dung dịch)', 2400);
+      return;
+    }
     if (selectedTool === cylinder && tu.id === 'beaker') {
       const vol = state.cylinderMl;
       state.beakerVol += vol;
@@ -2754,7 +2780,11 @@ function handleClickOn(target) {
   }
 
   if (cur.action === 'bottle') {
-    if (!selectedTool && tu.id === 'beaker') { setSelectedTool(target); return; }
+    if (isPickup) {
+      setSelectedTool(target);
+      if (tu.id !== 'beaker') showToast('💡 Bước này cần CỐC — click cốc (đã có dung dịch pha)', 2400);
+      return;
+    }
     if (selectedTool === beaker && tu.id === 'final-bottle') {
       const tp = new THREE.Vector3(); finalBottle.getWorldPosition(tp); tp.y += 0.2;
       tiltBottleTowards(beaker, tp, 1100, 1.4);
@@ -3021,6 +3051,12 @@ startGameImpl = function () {
 
 // ===== Event handlers =====
 renderer.domElement.addEventListener('pointerdown', (e) => {
+  // Position the hold-badge at the click point BEFORE handleClickOn fires —
+  // otherwise the badge appears at (0,0) until the user moves the mouse.
+  if (!walk.active && e.clientX !== undefined) {
+    holdBadgeEl.style.left = e.clientX + 'px';
+    holdBadgeEl.style.top = e.clientY + 'px';
+  }
   if (walk.active) {
     // Walk-mode click: raycast from screen center (crosshair)
     if (document.pointerLockElement !== renderer.domElement) {
