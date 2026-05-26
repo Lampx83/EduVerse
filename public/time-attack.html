@@ -41,7 +41,7 @@
 </head>
 <body>
 <canvas id="game"></canvas>
-<a class="back" href="/">← Trang chính</a>
+<a class="back" href="./">← Trang chính</a>
 <div id="start-overlay">
   <h1>⚡ TIME ATTACK</h1>
   <p>Sống được càng nhiều wave càng tốt!<br>Mỗi wave thêm 1 thuốc · time giảm dần · sai = -5s.</p>
@@ -205,7 +205,7 @@ function gameOver() {
     <div class="score">${game.score}</div>
     <div style="font-size:13px;color:#666;margin-bottom:14px">${Math.round(dur/1000)}s tổng</div>
     <button id="again">⚡ Chơi lại</button>
-    <button class="secondary" onclick="location.href='/'">← Trang chính</button>
+    <button class="secondary" onclick="location.href='./'">← Trang chính</button>
   `;
   modal.style.display = 'block';
   document.getElementById('again').onclick = () => { modal.style.display = 'none'; setupGame(); };

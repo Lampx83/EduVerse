@@ -81,7 +81,7 @@
   <h1>🧠 Quiz nhanh</h1>
   <span class="sub">Nhìn tên thuốc → chọn đúng nhóm điều trị · 10 câu / lượt</span>
   <span style="flex:1"></span>
-  <a class="back" href="/">← Trang chính</a>
+  <a class="back" href="./">← Trang chính</a>
 </header>
 
 <div class="hud">
@@ -226,7 +226,7 @@ async function finish() {
     ${newBadges.length ? `<div style="font-size:13px;color:#374151">🎁 Mở khóa huy hiệu mới:</div><div class="badges">${newBadges.map(b => `<span class="badge">${b.icon} ${b.label}</span>`).join('')}</div>` : ''}
     <div style="margin-top:18px">
       <button id="again">🔄 Chơi lại</button>
-      <button class="secondary" onclick="location.href='/'">← Về trang chính</button>
+      <button class="secondary" onclick="location.href='./'">← Về trang chính</button>
     </div>
   `;
   modal.style.display = 'block';

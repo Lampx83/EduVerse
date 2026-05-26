@@ -66,7 +66,7 @@
 <body>
 <canvas id="game"></canvas>
 <canvas id="cam-preview" width="200" height="150"></canvas>
-<a href="/" class="back">← Trang chính</a>
+<a href="./" class="back">← Trang chính</a>
 <div id="start-overlay">
   <h1>💊 PharmacySIM · 2D Arcade</h1>
   <p>Mở thùng thuốc, cầm từng hộp, xếp lên kệ đúng <b>nhóm điều trị</b></p>
@@ -407,12 +407,12 @@ function endRound(success, timeBonus = 0, comboBonus = 0) {
     <div class="sub">Đúng ${correctCount}/${total} (${pct}%) ${success ? `· bonus +${timeBonus + comboBonus}` : ''}</div>
     ${hasNext ? `<button id="next-level" style="background:#f59e0b">▶️ Level ${nextLevel.n} — ${nextLevel.label}</button>` : ''}
     <button id="play-again">🔄 Chơi lại</button>
-    <button class="secondary" onclick="location.href='/'">← Trang chính</button>
+    <button class="secondary" onclick="location.href='./'">← Trang chính</button>
   `;
   modal.style.display = 'block';
   if (hasNext) {
     document.getElementById('next-level').onclick = () => {
-      location.href = '/2d-arcade.html?level=' + nextLevel.n;
+      location.href = '2d-arcade.html?level=' + nextLevel.n;
     };
   }
   document.getElementById('play-again').onclick = () => {
