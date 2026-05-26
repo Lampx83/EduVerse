@@ -1543,9 +1543,21 @@ function snapMedicineOnRelease(med) {
   setHint('🖐️ Chụm ngón cái + trỏ để cầm hộp · Nộp bài khi xong');
 }
 
-handBtn.addEventListener('click', () => {
-  handState.running ? stopHandTracking() : initHandTracking();
-});
+// Detect insecure context: webcam yêu cầu HTTPS hoặc localhost
+const SECURE_FOR_CAMERA = window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+if (!SECURE_FOR_CAMERA) {
+  handBtn.textContent = '🖱️ Chỉ có chuột (webcam cần HTTPS)';
+  handBtn.style.background = '#6b7280';
+  handBtn.style.cursor = 'help';
+  handBtn.title = `Webcam chỉ chạy trên HTTPS hoặc localhost. Bạn đang ở: ${location.host}\nChrome chặn camera trên HTTP IP LAN. Dùng chuột để chơi.`;
+  handBtn.addEventListener('click', () => {
+    setHint('⚠️ Webcam cần HTTPS. Đang ở ' + location.host + ' — chỉ chơi được bằng chuột');
+  });
+} else {
+  handBtn.addEventListener('click', () => {
+    handState.running ? stopHandTracking() : initHandTracking();
+  });
+}
 
 const _handNDC = new THREE.Vector2();
 const _grabPlane = new THREE.Plane();

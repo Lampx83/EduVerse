@@ -810,6 +810,23 @@ function launchGame() {
   requestAnimationFrame(tick);
 }
 
+// Webcam yêu cầu secure context (HTTPS hoặc localhost). Trên LAN IP qua HTTP,
+// navigator.mediaDevices undefined → ẩn nút webcam, gợi ý chơi bằng chuột.
+const SECURE_FOR_CAMERA = window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+if (!SECURE_FOR_CAMERA) {
+  const overlay = document.getElementById('start-overlay');
+  const note = document.createElement('div');
+  note.style.cssText = 'background:rgba(251,191,36,0.15);border:1px solid #fbbf24;padding:10px 16px;border-radius:8px;font-size:13px;color:#fde68a;max-width:520px;line-height:1.5;margin:4px 0';
+  note.innerHTML = `⚠️ <b>Webcam chỉ chạy qua HTTPS hoặc localhost.</b><br>
+    Bạn đang truy cập <code style="background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px">${location.host}</code> qua HTTP — Chrome chặn camera ở chế độ này.<br>
+    👉 Chơi bằng chuột/touch (không cần webcam) phía dưới.`;
+  overlay.insertBefore(note, document.getElementById('start-btn'));
+  document.getElementById('start-btn').style.display = 'none';
+  const mouseLink = document.getElementById('mouse-only');
+  mouseLink.style.cssText = 'background:linear-gradient(135deg,#fbbf24,#f97316);color:#3e2723;padding:14px 28px;border-radius:12px;font-weight:700;font-size:17px;text-decoration:none;display:inline-block;margin-top:8px';
+  mouseLink.textContent = '🖱️ Chơi bằng chuột';
+}
+
 document.getElementById('start-btn').addEventListener('click', async () => {
   const btn = document.getElementById('start-btn');
   btn.disabled = true;
@@ -819,11 +836,14 @@ document.getElementById('start-btn').addEventListener('click', async () => {
     launchGame();
   } catch (err) {
     btn.disabled = false;
-    btn.textContent = '▶️ Thử lại';
-    const msg = (err.name === 'NotAllowedError' || err.name === 'NotFoundError')
-      ? 'Cần cấp quyền camera (mở qua http://localhost, không file://)'
-      : err.message;
-    alert('Không khởi động được webcam:\n' + msg);
+    btn.textContent = '▶️ Thử webcam lại';
+    const insecure = /undefined.*getUserMedia/i.test(err.message) || !window.isSecureContext;
+    const msg = insecure
+      ? `⚠️ Webcam chỉ chạy trên HTTPS hoặc localhost.\nBạn đang ở: ${location.host}\n\n→ Bấm "Chơi bằng chuột" để chơi không cần camera.`
+      : (err.name === 'NotAllowedError' || err.name === 'NotFoundError')
+        ? '⚠️ Cần cấp quyền camera trong trình duyệt.'
+        : '⚠️ ' + err.message;
+    alert('Không khởi động được webcam:\n\n' + msg);
   }
 });
 

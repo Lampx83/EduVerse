@@ -564,7 +564,17 @@ const camPreview = document.getElementById('cam-preview');
 const camCtx = camPreview.getContext('2d');
 const handState = { running: false, landmarker: null, video: null, lastT: -1 };
 
-document.getElementById('hand-toggle').addEventListener('click', async () => {
+// Webcam yêu cầu HTTPS hoặc localhost
+const SECURE_FOR_CAMERA = window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
+const handToggleBtn = document.getElementById('hand-toggle');
+if (!SECURE_FOR_CAMERA) {
+  handToggleBtn.textContent = '🖱️ Chỉ chuột (webcam cần HTTPS)';
+  handToggleBtn.style.background = '#6b7280';
+  handToggleBtn.title = `Webcam cần HTTPS hoặc localhost. Bạn đang ở ${location.host} — Chrome chặn camera. Dùng chuột để chơi.`;
+  handToggleBtn.addEventListener('click', () => {
+    showToast('⚠️ Webcam cần HTTPS. Đang chơi bằng chuột');
+  });
+} else handToggleBtn.addEventListener('click', async () => {
   const btn = document.getElementById('hand-toggle');
   if (handState.running) {
     handState.running = false;
