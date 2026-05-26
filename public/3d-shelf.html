@@ -981,20 +981,144 @@ for (let i = 0; i < MEDICINES_DATA.length; i++) {
   });
 }
 
-// ---- Table: nơi 4 hộp thuốc bắt đầu ----
-const table = new THREE.Mesh(
-  new THREE.BoxGeometry(13, 0.5, 4),
-  new THREE.MeshStandardMaterial({ color: 0x6d4c41, roughness: 0.9 })
-);
-table.position.set(0, 0.25, 3);
-table.castShadow = true; table.receiveShadow = true;
-vrWorld.add(table);
-
-// ---- 4 hộp thuốc trên bàn ----
+// ---- Training carton: SV phải pinch vào thùng để mở trước khi lấy thuốc ----
 const MED_W = 1.6, MED_H = 2.4, MED_D = 1.1;
-const medGeom = new THREE.BoxGeometry(MED_W, MED_H, MED_D);
+const T_WALL = 0.08;
+const T_CW = 4 * MED_W + 3 * 0.18 + 2 * (T_WALL + 0.18);   // ~7.42 wide, fits 4 meds in 1 row
+const T_CH = MED_H + 0.25;                                   // 2.65 — thấp hơn để camera nhìn xuống thấy thuốc khi mở
+const T_CD = MED_D + 2 * (T_WALL + 0.2);                     // ~1.66
+const TRAINING_CARTON_Z = 3;
 
-// Shuffle thứ tự bắt đầu để SV không đoán theo vị trí
+const cardboardMatNew = new THREE.MeshStandardMaterial({ color: 0xa1887f, roughness: 0.92 });
+function tMesh(g) {
+  const m = new THREE.Mesh(g, cardboardMatNew);
+  m.castShadow = true; m.receiveShadow = true;
+  return m;
+}
+
+const trainingCarton = new THREE.Group();
+trainingCarton.position.set(0, T_CH/2, TRAINING_CARTON_Z);
+vrWorld.add(trainingCarton);
+
+const tBottom    = tMesh(new THREE.BoxGeometry(T_CW, T_WALL, T_CD));
+tBottom.position.y = -T_CH/2 + T_WALL/2;
+trainingCarton.add(tBottom);
+const tWallFront = tMesh(new THREE.BoxGeometry(T_CW, T_CH, T_WALL));
+tWallFront.position.z = T_CD/2 - T_WALL/2;
+trainingCarton.add(tWallFront);
+const tWallBack  = tMesh(new THREE.BoxGeometry(T_CW, T_CH, T_WALL));
+tWallBack.position.z = -T_CD/2 + T_WALL/2;
+trainingCarton.add(tWallBack);
+const tWallLeft  = tMesh(new THREE.BoxGeometry(T_WALL, T_CH, T_CD - 2*T_WALL));
+tWallLeft.position.x = -T_CW/2 + T_WALL/2;
+trainingCarton.add(tWallLeft);
+const tWallRight = tMesh(new THREE.BoxGeometry(T_WALL, T_CH, T_CD - 2*T_WALL));
+tWallRight.position.x = T_CW/2 - T_WALL/2;
+trainingCarton.add(tWallRight);
+
+// 4 nắp đậy (hinged trên đỉnh, mở ra ngoài như thùng thật)
+function makeTFlap(w, d, yAngle) {
+  const outer = new THREE.Object3D();
+  outer.rotation.y = yAngle;
+  const inner = new THREE.Object3D();
+  outer.add(inner);
+  const m = tMesh(new THREE.BoxGeometry(w, T_WALL, d));
+  m.position.set(0, 0, -d/2);
+  inner.add(m);
+  outer.userData = { inner, mesh: m };
+  return outer;
+}
+const tFlapFront = makeTFlap(T_CW, T_CD/2 - T_WALL, 0);
+tFlapFront.position.set(0, T_CH/2, T_CD/2 - T_WALL/2);
+trainingCarton.add(tFlapFront);
+const tFlapBack = makeTFlap(T_CW, T_CD/2 - T_WALL, Math.PI);
+tFlapBack.position.set(0, T_CH/2, -T_CD/2 + T_WALL/2);
+trainingCarton.add(tFlapBack);
+const tFlapLeft = makeTFlap(T_CD - 2*T_WALL, T_CW/2 - T_WALL, -Math.PI/2);
+tFlapLeft.position.set(-T_CW/2 + T_WALL/2, T_CH/2, 0);
+trainingCarton.add(tFlapLeft);
+const tFlapRight = makeTFlap(T_CD - 2*T_WALL, T_CW/2 - T_WALL, Math.PI/2);
+tFlapRight.position.set(T_CW/2 - T_WALL/2, T_CH/2, 0);
+trainingCarton.add(tFlapRight);
+
+const trainingFlaps = [tFlapFront, tFlapBack, tFlapLeft, tFlapRight];
+function setTrainingFlapAngle(a) { trainingFlaps.forEach(f => f.userData.inner.rotation.x = a); }
+setTrainingFlapAngle(0);
+
+// Nhãn "Pinch để mở" — to, đứng trên mặt trước carton, luôn thấy
+const openLabel = new THREE.Mesh(
+  new THREE.PlaneGeometry(T_CW * 0.7, 0.8),
+  new THREE.MeshBasicMaterial({ map: makeSlotLabelTexture('👆 Pinch để mở'), transparent: true })
+);
+openLabel.position.set(0, 0, T_CD/2 + T_WALL/2 + 0.01);
+trainingCarton.add(openLabel);
+
+// State machine cho training carton
+let trainingCartonState = 'closed';    // 'closed' | 'opening' | 'open'
+let trainingCartonAnimT = 0;
+const TRAINING_FLAP_DUR = 0.7;
+const TRAINING_FLAP_OPEN_ANGLE = Math.PI * 0.62;
+
+const trainingCartonHits = [
+  tBottom, tWallFront, tWallBack, tWallLeft, tWallRight,
+  tFlapFront.userData.mesh, tFlapBack.userData.mesh,
+  tFlapLeft.userData.mesh, tFlapRight.userData.mesh,
+  openLabel,
+];
+
+// Vị trí "rest" cho hộp sau khi carton mở — nhô lên trên carton để nhìn rõ
+const MED_REVEAL_Y = T_CH + MED_H/2 + 0.15;
+
+function liftMedicine(med, dur = 360) {
+  const fromY = med.mesh.position.y;
+  const toY = MED_REVEAL_Y;
+  const start = performance.now();
+  const step = () => {
+    const t = Math.min(1, (performance.now() - start) / dur);
+    const k = 1 - Math.pow(1 - t, 3);
+    med.mesh.position.y = fromY + (toY - fromY) * k;
+    if (t < 1) requestAnimationFrame(step);
+  };
+  step();
+}
+
+function openTrainingCarton() {
+  if (trainingCartonState !== 'closed') return;
+  trainingCartonState = 'opening';
+  trainingCartonAnimT = 0;
+  openLabel.visible = false;
+  setHint('✨ Đang mở thùng...');
+  // Safety fallback: nếu rAF tick bị throttle thì vẫn promote sang 'open' + reveal sau 1s
+  setTimeout(() => {
+    if (trainingCartonState === 'opening') {
+      trainingCartonState = 'open';
+      trainingCartonAnimT = 1;
+      setTrainingFlapAngle(TRAINING_FLAP_OPEN_ANGLE);
+    }
+    medicineBoxes.forEach((m, i) => {
+      setTimeout(() => {
+        m.mesh.visible = true;
+        liftMedicine(m);   // hộp nhô lên trên carton để dễ thấy + dễ pinch
+      }, i * 120);
+    });
+    setHint('✋ Pinch hộp thuốc rồi kéo đến đúng ô kệ');
+  }, TRAINING_FLAP_DUR * 1000 + 100);
+}
+
+function resetTrainingCarton() {
+  trainingCartonState = 'closed';
+  trainingCartonAnimT = 0;
+  setTrainingFlapAngle(0);
+  openLabel.visible = true;
+  for (const med of medicineBoxes) {
+    med.mesh.position.copy(med.initialPos);
+    med.mesh.visible = false;
+    med.slotId = null;
+  }
+}
+
+// ---- 4 hộp thuốc xếp bên trong carton (visible=false đến khi pinch mở) ----
+const medGeom = new THREE.BoxGeometry(MED_W, MED_H, MED_D);
 const shuffledData = [...MEDICINES_DATA];
 for (let i = shuffledData.length - 1; i > 0; i--) {
   const j = Math.floor(Math.random() * (i + 1));
@@ -1002,6 +1126,8 @@ for (let i = shuffledData.length - 1; i > 0; i--) {
 }
 
 const medicineBoxes = [];
+const MED_INNER_W = T_CW - 2 * (T_WALL + 0.18);
+const MED_STEP = MED_INNER_W / 4;
 shuffledData.forEach((data, i) => {
   const frontTex = makeMedTexture(data.name, data.category, data.color, true);
   const sideTex  = makeMedTexture(data.name, data.category, data.color, false);
@@ -1015,14 +1141,15 @@ shuffledData.forEach((data, i) => {
   ];
   const mesh = new THREE.Mesh(medGeom, mats);
   mesh.castShadow = true; mesh.receiveShadow = true;
-  const px = -4.5 + i * 3;
-  const py = 0.5 + MED_H/2;
-  const pz = 3;
+  // Carton ở vrWorld(0, T_CH/2, TRAINING_CARTON_Z) — đặt 4 hộp đứng trên sàn carton
+  const px = -T_CW/2 + T_WALL + 0.18 + MED_STEP/2 + i * MED_STEP;
+  const py = T_WALL + MED_H/2;
+  const pz = TRAINING_CARTON_Z;
   mesh.position.set(px, py, pz);
+  mesh.visible = false;          // ẩn cho đến khi carton mở
   vrWorld.add(mesh);
   medicineBoxes.push({
-    ...data,
-    mesh,
+    ...data, mesh,
     initialPos: new THREE.Vector3(px, py, pz),
     slotId: null,
   });
@@ -1033,7 +1160,7 @@ vrWorld.updateMatrixWorld(true);
 const trainingCenterLocal = new THREE.Vector3(0, 1.5, 0);
 const trainingCenterWorld = trainingCenterLocal.clone().applyMatrix4(vrWorld.matrixWorld);
 controls.target.copy(trainingCenterWorld);
-camera.position.set(trainingCenterWorld.x, trainingCenterWorld.y + 0.35, trainingCenterWorld.z + 1.5);
+camera.position.set(trainingCenterWorld.x, trainingCenterWorld.y + 1.25, trainingCenterWorld.z + 1.3);
 worldCartonCenter.copy(trainingCenterWorld);   // updateHandTracking projects cursor onto a plane through this point
 controls.minDistance = 0.4;
 controls.maxDistance = 5;
@@ -1135,7 +1262,14 @@ document.addEventListener('pointerlockchange', () => {
 
 // Shared click handler — raycaster.ray must already be set by the caller
 function handleClick() {
-  // Carton bị ẩn trong MVP đào tạo — bỏ qua click vào vùng vô hình của nó
+  // Mouse-click cũng có thể mở training carton (cho ai không bật điều khiển tay)
+  if (trainingCartonState === 'closed') {
+    if (raycaster.intersectObjects(trainingCartonHits, false).length) {
+      openTrainingCarton();
+      return;
+    }
+  }
+  // Carton 48 hộp cũ (đang ẩn) — bỏ qua nếu không visible
   if (!carton.visible) return;
   if (cartonState === 'closed') {
     const cartonHits = [bottom, wallFront, wallBack, wallLeft, wallRight,
@@ -1270,10 +1404,10 @@ function snapMedicineOnRelease(med) {
     setHint(`📦 Đặt "${med.name}" vào ô "${best.category}"`);
     return;
   }
-  // Không snap → đậu xuống bàn ở vị trí xz hiện tại (clamp vào lòng bàn)
-  med.mesh.position.x = Math.max(-5.8, Math.min(5.8, med.mesh.position.x));
-  med.mesh.position.z = Math.max(2, Math.min(4, med.mesh.position.z));
-  med.mesh.position.y = 0.5 + MED_H/2;
+  // Không snap → đặt lại trên đỉnh carton ở vị trí xz hiện tại (clamp vào lòng carton)
+  med.mesh.position.x = Math.max(-T_CW/2 + MED_W/2, Math.min(T_CW/2 - MED_W/2, med.mesh.position.x));
+  med.mesh.position.z = Math.max(TRAINING_CARTON_Z - 0.3, Math.min(TRAINING_CARTON_Z + 0.3, med.mesh.position.z));
+  med.mesh.position.y = MED_REVEAL_Y;
   setHint('🖐️ Chụm ngón cái + trỏ để cầm hộp · Nộp bài khi xong');
 }
 
@@ -1341,18 +1475,26 @@ function updateHandTracking(time) {
   if (!handState.pinching && pinchDist < 0.05) handState.pinching = true;
   else if (handState.pinching && pinchDist > 0.08) handState.pinching = false;
 
-  // Pinch start → bắt hộp nếu raycaster trúng
+  // Pinch start
   if (handState.pinching && !wasPinching) {
-    const hits = raycaster.intersectObjects(medicineBoxes.map(m => m.mesh), false);
-    if (hits.length) {
-      handState.grabbed = medicineBoxes.find(m => m.mesh === hits[0].object);
-      // Nếu hộp đang ở slot → giải phóng slot
-      if (handState.grabbed.slotId) {
-        const s = slots.find(x => x.id === handState.grabbed.slotId);
-        if (s) s.placedBoxId = null;
-        handState.grabbed.slotId = null;
+    // 1) Carton còn đóng → pinch vào thùng để mở
+    if (trainingCartonState === 'closed') {
+      if (raycaster.intersectObjects(trainingCartonHits, false).length) {
+        openTrainingCarton();
       }
-      setHint('✊ Đang cầm — thả gần ô đúng để snap');
+    } else if (trainingCartonState === 'open') {
+      // 2) Carton đã mở → cố bắt một hộp đang hiển thị
+      const visibleMeshes = medicineBoxes.filter(m => m.mesh.visible).map(m => m.mesh);
+      const hits = raycaster.intersectObjects(visibleMeshes, false);
+      if (hits.length) {
+        handState.grabbed = medicineBoxes.find(m => m.mesh === hits[0].object);
+        if (handState.grabbed.slotId) {
+          const s = slots.find(x => x.id === handState.grabbed.slotId);
+          if (s) s.placedBoxId = null;
+          handState.grabbed.slotId = null;
+        }
+        setHint('✊ Đang cầm — thả gần ô đúng để snap');
+      }
     }
   }
 
@@ -1438,17 +1580,15 @@ submitBtn.addEventListener('click', () => {
 });
 
 resetBtn.addEventListener('click', () => {
-  for (const med of medicineBoxes) {
-    med.mesh.position.copy(med.initialPos);
-    med.slotId = null;
-  }
   for (const s of slots) s.placedBoxId = null;
+  resetTrainingCarton();   // đóng carton + ẩn 4 hộp về vị trí ban đầu
   resultPanel.style.display = 'none';
-  setHint('🖐️ Bật điều khiển tay rồi pinch để xếp thuốc lên kệ');
+  setHint('🖐️ Bật điều khiển tay rồi pinch vào thùng để mở');
 });
 
 // Cập nhật hint khởi đầu cho phù hợp MVP đào tạo
-setHint('🖐️ Bật điều khiển tay rồi pinch để xếp thuốc lên kệ');
+setHint('🖐️ Bật điều khiển tay rồi pinch vào thùng để mở');
+
 
 // ============================================================
 // Animation tick
@@ -1466,6 +1606,13 @@ addEventListener('resize', () => {
 renderer.setAnimationLoop(function tick(time) {
   const dt = clock.getDelta();
   updateHandTracking(time ?? performance.now());
+
+  // Training carton flap animation (visual only — state transition handled
+  // by setTimeout fallback in openTrainingCarton để chịu được throttle iframe)
+  if (trainingCartonState === 'opening') {
+    trainingCartonAnimT = Math.min(1, trainingCartonAnimT + dt / TRAINING_FLAP_DUR);
+    setTrainingFlapAngle(lerp(0, TRAINING_FLAP_OPEN_ANGLE, easeOutCubic(trainingCartonAnimT)));
+  }
 
   // Carton flap animation
   if (cartonState === 'opening') {
