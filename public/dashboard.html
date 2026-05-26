@@ -99,7 +99,7 @@
   <span class="sub">PharmacySIM · phân tích lượt chơi của sinh viên</span>
   <span style="flex:1"></span>
   <button class="refresh-btn" id="refresh">🔄 Tải lại</button>
-  <a class="csv" href="/api/export.csv" download>⬇️ Export CSV</a>
+  <a class="csv" href="api/export.csv" download>⬇️ Export CSV</a>
   <a class="back" href="/">← Trang chính</a>
 </header>
 
@@ -145,10 +145,10 @@ function fmtDuration(ms) {
 
 async function loadVersionCard(v) {
   const [lb, stats, hist, conf] = await Promise.all([
-    fetch(`/api/leaderboard?version=${v.id}&limit=10`).then(r => r.json()),
-    fetch(`/api/stats?version=${v.id}`).then(r => r.json()),
-    fetch(`/api/histogram?version=${v.id}`).then(r => r.json()),
-    fetch(`/api/confusion?version=${v.id}`).then(r => r.json()),
+    fetch(`api/leaderboard?version=${v.id}&limit=10`).then(r => r.json()),
+    fetch(`api/stats?version=${v.id}`).then(r => r.json()),
+    fetch(`api/histogram?version=${v.id}`).then(r => r.json()),
+    fetch(`api/confusion?version=${v.id}`).then(r => r.json()),
   ]);
   return { v, lb, stats, hist, conf };
 }
@@ -217,7 +217,7 @@ function renderVersionCard({ v, lb, stats, hist, conf }) {
 }
 
 async function loadRecent() {
-  const rows = await fetch('/api/recent?limit=50').then(r => r.json());
+  const rows = await fetch('api/recent?limit=50').then(r => r.json());
   const tbody = document.querySelector('#recent-table tbody');
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty">Chưa có lượt chơi nào</td></tr>';

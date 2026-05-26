@@ -17,7 +17,7 @@ export async function joinClassByCode(code) {
   const c = String(code || '').trim().toUpperCase();
   if (!c) return null;
   try {
-    const r = await fetch('/api/classes/' + encodeURIComponent(c));
+    const r = await fetch('api/classes/' + encodeURIComponent(c));
     if (!r.ok) return null;
     const cls = await r.json();
     setClassCode(cls.code);
@@ -47,7 +47,7 @@ export async function submitAttempt(payload) {
   try {
     const playerName = getPlayerName() || 'Ẩn danh';
     const classCode = getClassCode() || undefined;
-    const res = await fetch('/api/attempts', {
+    const res = await fetch('api/attempts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...payload, playerName, classCode }),
@@ -63,7 +63,7 @@ export async function submitAttempt(payload) {
 }
 
 export async function getBadges() {
-  try { const r = await fetch('/api/badges'); return r.ok ? await r.json() : []; }
+  try { const r = await fetch('api/badges'); return r.ok ? await r.json() : []; }
   catch { return []; }
 }
 
@@ -71,7 +71,7 @@ export async function getMyAchievements() {
   const player = getPlayerName();
   if (!player) return [];
   try {
-    const r = await fetch('/api/achievements?player=' + encodeURIComponent(player));
+    const r = await fetch('api/achievements?player=' + encodeURIComponent(player));
     return r.ok ? await r.json() : [];
   } catch { return []; }
 }
@@ -99,7 +99,7 @@ function showBadgePopup(badges) {
 
 export async function getLeaderboard(version, limit = 10) {
   try {
-    const res = await fetch(`/api/leaderboard?version=${encodeURIComponent(version)}&limit=${limit}`);
+    const res = await fetch(`api/leaderboard?version=${encodeURIComponent(version)}&limit=${limit}`);
     if (!res.ok) return [];
     return await res.json();
   } catch {
@@ -109,7 +109,7 @@ export async function getLeaderboard(version, limit = 10) {
 
 export async function getStats(version) {
   try {
-    const res = await fetch(`/api/stats?version=${encodeURIComponent(version)}`);
+    const res = await fetch(`api/stats?version=${encodeURIComponent(version)}`);
     if (!res.ok) return null;
     return await res.json();
   } catch {

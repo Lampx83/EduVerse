@@ -62,8 +62,8 @@ function raceBroadcast(room, msg, exceptId = null) {
   }
 }
 
-function attachRaceWS(httpServer) {
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws-race', noServer: false });
+function attachRaceWS(httpServer, basePath = '') {
+  const wss = new WebSocketServer({ server: httpServer, path: basePath + '/ws-race', noServer: false });
 
   wss.on('connection', (ws) => {
     const player = { id: racePlayerId++, ws, name: 'Khách', score: 0, correct: 0, total: 0, finished: false, room: null };
@@ -130,12 +130,12 @@ function attachRaceWS(httpServer) {
     });
   });
 
-  console.log('[race] WebSocket server attached at /ws-race');
+  console.log(`[race] WebSocket server attached at ${basePath || ''}/ws-race`);
 }
 
-export function attachRoom(httpServer) {
-  attachRaceWS(httpServer);
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+export function attachRoom(httpServer, basePath = '') {
+  attachRaceWS(httpServer, basePath);
+  const wss = new WebSocketServer({ server: httpServer, path: basePath + '/ws' });
   const players = new Map();   // id → { id, ws, name, color, cursor }
   let state = freshState();
 
@@ -264,5 +264,5 @@ export function attachRoom(httpServer) {
     }
   }, 15000);
 
-  console.log('[room] WebSocket server attached at /ws');
+  console.log(`[room] WebSocket server attached at ${basePath || ''}/ws`);
 }

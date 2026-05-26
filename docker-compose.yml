@@ -11,6 +11,9 @@ services:
       PORT: 8041
       HOST: 0.0.0.0
       DATA_DIR: /data
+      # Optional path prefix when deployed behind a reverse proxy at a sub-path.
+      # Set to "/ps" for limio.vn/ps, leave empty for root or subdomain.
+      BASE_PATH: ${BASE_PATH:-}
     volumes:
       - pharmacysim-data:/data
 

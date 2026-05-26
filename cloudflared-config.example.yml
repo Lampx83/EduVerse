@@ -1,0 +1,47 @@
+# Cloudflare Tunnel ingress config for PharmacySIM
+# Copy to ~/.cloudflared/config.yml and adjust UUID + hostname.
+#
+# Steps to set up a named tunnel (one-time):
+#
+#   cloudflared tunnel login                          # opens browser, picks limio.vn zone
+#   cloudflared tunnel create pharmacysim             # outputs UUID
+#   cloudflared tunnel route dns pharmacysim ps.limio.vn   # creates DNS CNAME
+#
+# Then copy this file → ~/.cloudflared/config.yml
+# (replace UUID-HERE with the UUID from `create`)
+# Then run as a service:
+#
+#   cloudflared service install
+#   sudo systemctl enable --now cloudflared
+#
+# Or run in foreground:
+#
+#   cloudflared tunnel run pharmacysim
+
+tunnel: pharmacysim
+credentials-file: /home/codelab/.cloudflared/UUID-HERE.json
+
+# ============================================================
+# Pattern A — Subdomain ps.limio.vn (recommended, zero app config)
+# ============================================================
+ingress:
+  - hostname: ps.limio.vn
+    service: http://localhost:8041
+
+  # Optional fallback for any other host
+  - service: http_status:404
+
+# ============================================================
+# Pattern B — Path-based limio.vn/ps (requires BASE_PATH=/ps on app)
+# ============================================================
+# Cloudflared does NOT strip path — paths arrive at backend as-is.
+# So the app MUST be started with BASE_PATH=/ps env var so its routes
+# match /ps/* requests.
+#
+# Uncomment this and remove Pattern A above to use:
+#
+# ingress:
+#   - hostname: limio.vn
+#     path: ^/ps(/.*)?$
+#     service: http://localhost:8041
+#   - service: http_status:404

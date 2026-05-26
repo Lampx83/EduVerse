@@ -179,6 +179,35 @@ Server → Client: `{type:'welcome'|'join'|'leave'|'cursor'|'grab'|'medpos'|'rel
 | `PORT` | `8041` | Cổng HTTP |
 | `HOST` | `0.0.0.0` | Bind address |
 | `DATA_DIR` | `./data` (host) hoặc `/data` (Docker) | Thư mục chứa SQLite |
+| `BASE_PATH` | `` (rỗng) | Path prefix khi deploy dưới sub-path (vd `/ps` cho `limio.vn/ps`). Tất cả routes + WebSocket được mount dưới prefix này. |
+
+## 🌐 Deploy dưới sub-path (vd `https://limio.vn/ps`)
+
+Hai cách:
+
+### A. Cloudflare Tunnel + Subdomain (đơn giản, không cần `BASE_PATH`)
+
+Trỏ `ps.limio.vn` → server qua Cloudflare Named Tunnel. Xem [cloudflared-config.example.yml](cloudflared-config.example.yml).
+
+### B. Path-based `limio.vn/ps` (cần `BASE_PATH=/ps`)
+
+**Với Cloudflare Tunnel** (không strip path):
+```yaml
+# ~/.cloudflared/config.yml
+ingress:
+  - hostname: limio.vn
+    path: ^/ps(/.*)?$
+    service: http://localhost:8041
+  - service: http_status:404
+```
+Đồng thời chạy app với `BASE_PATH=/ps`:
+```bash
+BASE_PATH=/ps docker compose up -d
+```
+
+**Với Caddy** (auto Let's Encrypt, có strip path option):
+- Xem [Caddyfile](Caddyfile) Pattern 2
+- Hoặc dùng `handle_path /ps/*` để strip prefix (không cần BASE_PATH)
 
 ## 📊 Truy vấn dữ liệu trực tiếp
 

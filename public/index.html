@@ -394,7 +394,7 @@ async function refreshClassUI() {
   const code = getClassCode();
   classInput.value = code;
   if (code) {
-    const r = await fetch('/api/classes/' + code);
+    const r = await fetch('api/classes/' + code);
     if (r.ok) {
       const cls = await r.json();
       classSavedEl.innerHTML = `✓ <b>${cls.name}</b>`;

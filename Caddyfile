@@ -1,35 +1,55 @@
-# Default config — works on a public domain with Let's Encrypt.
-# Set DOMAIN env var before `docker compose up` to use your real domain.
+# Caddy reverse-proxy config for PharmacySIM
 #
-# For LAN-only with self-signed cert, replace this entire block with:
-#   :443 {
-#     tls internal
-#     reverse_proxy pharmacysim:8041
-#   }
+# Two common patterns supported:
+#
+#   1. SUBDOMAIN (easiest, no app config needed):
+#      Domain: ps.limio.vn  →  reverse_proxy pharmacysim:8041
+#      Run app with BASE_PATH unset (default).
+#
+#   2. PATH (limio.vn/ps/*):
+#      Domain: limio.vn   →  handle /ps/* {…}
+#      Caddy passes /ps/* through without stripping; app must run with
+#      BASE_PATH=/ps so its routes match.
+#
+# Toggle by uncommenting the block you want. Set DOMAIN env var when launching:
+#   DOMAIN=ps.limio.vn ACME_EMAIL=you@email.com \
+#     docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d
 
+# ============================================================
+# Pattern 1 — Subdomain (recommended)
+# ============================================================
 {$DOMAIN} {
-	# Auto-issues a Let's Encrypt cert on first request.
-	# Comment this line + add `tls internal` for self-signed LAN-only mode.
 	tls {$EMAIL}
 
-	# Proxy everything to the pharmacysim Node container.
 	reverse_proxy pharmacysim:8041 {
-		# WebSocket upgrade headers — critical for /ws and /ws-race
+		# WebSocket upgrade headers — required for /ws and /ws-race
 		header_up Connection {http.request.header.Connection}
 		header_up Upgrade {http.request.header.Upgrade}
 	}
 
-	# Security headers
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 		Permissions-Policy "camera=(self), microphone=()"
 	}
-
 	encode zstd gzip
-	log {
-		output stdout
-		format console
-	}
+	log { output stdout }
 }
+
+# ============================================================
+# Pattern 2 — Path-based (uncomment + set BASE_PATH=/ps env in compose)
+# ============================================================
+# limio.vn {
+# 	tls {$EMAIL}
+#
+# 	handle /ps/* {
+# 		reverse_proxy pharmacysim:8041 {
+# 			header_up Connection {http.request.header.Connection}
+# 			header_up Upgrade {http.request.header.Upgrade}
+# 		}
+# 	}
+# 	handle / {
+# 		respond "limio.vn — apps: /ps" 200
+# 	}
+# }

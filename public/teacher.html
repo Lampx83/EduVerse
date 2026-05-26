@@ -76,7 +76,7 @@
   <h1>👨‍🏫 Quản lý lớp</h1>
   <span class="sub">Tạo lớp · phát mã mời cho SV · theo dõi tiến độ</span>
   <span class="right">
-    <a class="lnk" href="/dashboard.html">📊 Dashboard tổng</a>
+    <a class="lnk" href="dashboard.html">📊 Dashboard tổng</a>
     <a class="lnk" href="/">← Trang chính</a>
   </span>
 </header>
@@ -111,7 +111,7 @@ function fmt(ms) {
 }
 
 async function loadClasses() {
-  const r = await fetch('/api/classes');
+  const r = await fetch('api/classes');
   const cls = await r.json();
   if (!cls.length) {
     list.innerHTML = '<div class="empty" style="padding:14px;font-size:12px">Chưa có lớp — tạo lớp đầu tiên!</div>';
@@ -138,8 +138,8 @@ async function loadDetail(code) {
   await loadClasses();
   detail.innerHTML = '<div class="empty">đang tải...</div>';
   const [info, members] = await Promise.all([
-    fetch('/api/classes/' + code).then(r => r.json()),
-    fetch('/api/classes/' + code + '/members').then(r => r.json()),
+    fetch('api/classes/' + code).then(r => r.json()),
+    fetch('api/classes/' + code + '/members').then(r => r.json()),
   ]);
 
   const totalAttempts = members.reduce((s, m) => s + m.attempts, 0);
@@ -170,7 +170,7 @@ async function loadDetail(code) {
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
       <h3 style="margin:0;font-size:14px">📋 Roster (${members.length} SV)</h3>
       <span style="flex:1"></span>
-      <a class="csv-btn" href="/api/classes/${code}/export.csv" download>⬇️ Export CSV lớp</a>
+      <a class="csv-btn" href="api/classes/${code}/export.csv" download>⬇️ Export CSV lớp</a>
     </div>
 
     ${members.length === 0 ? '<div class="empty">Chưa có SV nào tham gia.<br><small>Chia sẻ link mời ở trên cho SV vào.</small></div>' : `
@@ -209,7 +209,7 @@ async function loadPlayerDetail(playerName) {
   const pd = document.getElementById('player-detail');
   pd.style.display = 'block';
   pd.innerHTML = `<h3>📈 Chi tiết: ${escapeHtml(playerName)}</h3><div class="empty">đang tải...</div>`;
-  const r = await fetch('/api/players/' + encodeURIComponent(playerName) + '/attempts?limit=30');
+  const r = await fetch('api/players/' + encodeURIComponent(playerName) + '/attempts?limit=30');
   const atts = await r.json();
   if (!atts.length) {
     pd.innerHTML = `<h3>📈 ${escapeHtml(playerName)}</h3><div class="empty">Chưa có lượt nào</div>`;
@@ -230,7 +230,7 @@ document.getElementById('create-btn').addEventListener('click', async () => {
   const name = document.getElementById('new-name').value.trim();
   const teacherName = document.getElementById('new-teacher').value.trim();
   if (!name) { alert('Nhập tên lớp'); return; }
-  const r = await fetch('/api/classes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, teacherName }) });
+  const r = await fetch('api/classes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, teacherName }) });
   const data = await r.json();
   if (data.code) {
     document.getElementById('new-name').value = '';
