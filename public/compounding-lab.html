@@ -809,7 +809,7 @@ makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
   x.textAlign = 'center'; x.textBaseline = 'middle';
   x.fillText('💊 PHÒNG BÀO CHẾ', 512, 100);
   x.font = '36px system-ui'; x.fillStyle = '#fde68a';
-  x.fillText('Compounding Pharmacy Lab · NEU', 512, 180);
+  x.fillText('Compounding Pharmacy Lab', 512, 180);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const sign = new THREE.Mesh(
     new THREE.PlaneGeometry(2.4, 0.6),
@@ -876,7 +876,7 @@ makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
   const x = c.getContext('2d');
   x.fillStyle = '#0c4a6e'; x.fillRect(0, 0, 768, 432);
   x.fillStyle = '#bae6fd'; x.font = 'bold 26px system-ui'; x.textAlign = 'center';
-  x.fillText('BẢNG TUẦN HOÀN — KHOA DƯỢC NEU', 384, 36);
+  x.fillText('BẢNG TUẦN HOÀN — KHOA DƯỢC', 384, 36);
   // Mini periodic table: 18 columns × 7 rows of colored boxes with symbols
   const ELEM_ROWS = [
     'H                                                  He',
@@ -912,7 +912,7 @@ makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
     }
   });
   x.fillStyle = '#bae6fd'; x.font = '14px system-ui';
-  x.fillText('Đại học Kinh tế Quốc dân · Khoa CNTT × Khoa Dược', 384, 410);
+  x.fillText('PharmacySIM · Compounding Pharmacy Lab', 384, 410);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const poster = new THREE.Mesh(
     new THREE.PlaneGeometry(0.95, 0.54),
@@ -1007,35 +1007,6 @@ makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
   clock.position.set(-ROOM_W/2 + 0.01, 2.4, -1.8);
   clock.rotation.y = Math.PI/2;
   scene.add(clock);
-}
-
-// NEU logo on back wall (small, below main sign)
-{
-  const c = document.createElement('canvas'); c.width = 512; c.height = 256;
-  const x = c.getContext('2d');
-  x.fillStyle = '#7f1d1d'; x.fillRect(0, 0, 512, 256);
-  // Inner gold frame
-  x.strokeStyle = '#fbbf24'; x.lineWidth = 5; x.strokeRect(10, 10, 492, 236);
-  x.fillStyle = '#fbbf24'; x.font = 'bold 38px serif'; x.textAlign = 'center';
-  x.fillText('NEU · ĐẠI HỌC KINH TẾ QUỐC DÂN', 256, 60);
-  x.font = 'italic 20px serif'; x.fillStyle = '#fde68a';
-  x.fillText('Khoa Công nghệ Thông tin × Khoa Dược', 256, 95);
-  // Faux shield
-  x.fillStyle = '#fbbf24';
-  x.beginPath();
-  x.moveTo(256, 120); x.lineTo(312, 150); x.lineTo(290, 220);
-  x.lineTo(222, 220); x.lineTo(200, 150); x.closePath(); x.fill();
-  x.fillStyle = '#7f1d1d'; x.font = 'bold 28px serif';
-  x.fillText('NEU', 256, 178);
-  x.fillStyle = '#fbbf24'; x.font = 'bold 12px system-ui';
-  x.fillText('PharmacySIM · Compounding Pharmacy Lab', 256, 248);
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-  const logo = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.4, 0.7),
-    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })
-  );
-  logo.position.set(0, 1.92, -0.69);
-  scene.add(logo);
 }
 
 // ============================================================
