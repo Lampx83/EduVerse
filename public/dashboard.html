@@ -2,10 +2,25 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#1e3a8a" />
 <title>PharmacySIM · Dashboard giảng viên</title>
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; }
+  body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  button, a { touch-action: manipulation; }
+  @media (max-width: 720px) {
+    body { padding: 20px 12px !important; }
+    h1 { font-size: 22px !important; }
+    .row { grid-template-columns: 1fr !important; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .stat .v { font-size: 18px !important; }
+    .recent-wrap { overflow-x: auto; }
+    table { font-size: 12px; }
+    .confusion { font-size: 10px; }
+    .histogram { height: 60px !important; }
+  }
   body {
     background: linear-gradient(135deg, #1e3a8a 0%, #5b21b6 100%);
     color: white; padding: 28px 20px;

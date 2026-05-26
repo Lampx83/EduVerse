@@ -21,7 +21,23 @@
     --border: rgba(255,255,255,0.12);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; }
+  html, body { margin: 0; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  button, a, input { touch-action: manipulation; }
+  @media (max-width: 720px) {
+    body { padding: 20px 14px !important; }
+    .hero .logo { font-size: 52px !important; }
+    .hero h1 { font-size: 34px !important; }
+    .hero .tagline { font-size: 14px !important; }
+    .pill { font-size: 11px !important; padding: 5px 10px !important; }
+    .section-title h2 { font-size: 18px !important; }
+    .lvl { min-height: 76px !important; padding: 6px !important; }
+    .lvl .num { font-size: 20px !important; }
+    .lvl .name { font-size: 9px !important; }
+    .lvl .stars { font-size: 10px !important; }
+    .mode-icon { font-size: 28px !important; }
+    .mode-info h3 { font-size: 16px !important; }
+    .mode .btn { min-height: 44px; padding: 12px 16px !important; font-size: 13px !important; }
+  }
   body {
     color: white;
     background:

@@ -2,11 +2,21 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<meta name="theme-color" content="#1a1a2e" />
 <title>PharmacySIM · 2D Arcade</title>
 <style>
   html, body {
     margin: 0; height: 100%; overflow: hidden;
     background: #1a1a2e; font-family: system-ui, sans-serif; user-select: none;
+    touch-action: none; -webkit-tap-highlight-color: transparent;
+  }
+  @media (max-width: 640px) {
+    #start-overlay h1 { font-size: 28px !important; }
+    #start-overlay p { font-size: 14px !important; }
+    #start-btn { font-size: 16px !important; padding: 12px 24px !important; }
+    a.back { font-size: 11px !important; padding: 4px 8px !important; }
+    #cam-preview { width: 130px !important; height: 100px !important; }
   }
   canvas#game {
     display: block; position: absolute; top: 0; left: 0;

@@ -2,17 +2,26 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
-<title>Hộp VIPHA Bona 3D</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<meta name="theme-color" content="#d8d8d8" />
+<title>PharmacySIM · 3D Realistic</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(135deg, #d8d8d8 0%, #f0f0f0 100%); font-family: system-ui, sans-serif; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(135deg, #d8d8d8 0%, #f0f0f0 100%); font-family: system-ui, sans-serif; touch-action: none; -webkit-tap-highlight-color: transparent; }
   #info {
     position: absolute; top: 12px; left: 12px;
     background: rgba(255,255,255,0.85); padding: 8px 12px;
     border-radius: 8px; font-size: 13px; color: #333;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    z-index: 10;
+    z-index: 10; max-width: calc(100vw - 24px);
   }
-  canvas { display: block; }
+  canvas { display: block; touch-action: none; }
+  @media (max-width: 720px) {
+    #info { font-size: 10px; padding: 6px 10px; }
+    /* Help panel (WebXR chrome help) inserted via JS — collapse to small icon on mobile */
+    body > div[style*="top:54px"][style*="left:12px"] { font-size: 10px !important; max-width: 220px !important; padding: 6px 10px !important; }
+    /* Submit + Reset buttons (bottom-right) and hand toggle (top-right) */
+    button { min-height: 44px; }
+  }
 </style>
 </head>
 <body>

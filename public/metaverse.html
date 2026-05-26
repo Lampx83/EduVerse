@@ -2,10 +2,19 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<meta name="theme-color" content="#0b0b1f" />
 <title>PharmacySIM · Metaverse</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0b1f; font-family: system-ui, sans-serif; }
-  canvas { display: block; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0b1f; font-family: system-ui, sans-serif; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  canvas { display: block; touch-action: none; }
+  @media (max-width: 640px) {
+    #info { font-size: 11px !important; padding: 6px 9px !important; max-width: calc(100vw - 24px); }
+    #players { font-size: 11px !important; padding: 8px 10px !important; min-width: auto !important; max-width: 180px; }
+    a.back { font-size: 11px !important; padding: 4px 8px !important; }
+    .btn-bar button { padding: 8px 10px !important; font-size: 11px !important; min-height: 44px; }
+    #cam-preview { width: 120px !important; height: 90px !important; bottom: 70px !important; }
+  }
   #info { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.5); color: white; padding: 8px 12px; border-radius: 8px; font-size: 13px; z-index: 5; }
   #players { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); color: white; padding: 10px 14px; border-radius: 8px; font-size: 13px; z-index: 5; min-width: 200px; }
   #players h4 { margin: 0 0 6px; font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
