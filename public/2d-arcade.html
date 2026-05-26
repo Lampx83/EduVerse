@@ -69,21 +69,21 @@
 
 <script type="module">
 import { submitAttempt } from './js/api.js';
-import { pickRoundMedicines, getDifficulty } from './js/medicines.js';
+import { pickRoundMedicines, getActiveLevel, scoreToStars, saveLevelResult, LEVELS } from './js/medicines.js';
 import { sfx } from './js/sfx.js';
 // ============================================================
 // CONFIG
 // ============================================================
 const W = 1280, H = 720;
-const ROUND_DIFFICULTY = getDifficulty();
-const MEDICINES = pickRoundMedicines(ROUND_DIFFICULTY.count);
+const ROUND_LEVEL = getActiveLevel();
+const MEDICINES = pickRoundMedicines(ROUND_LEVEL.count);
 const N_MEDS = MEDICINES.length;
 
-const ROUND_TIME = 60 + (N_MEDS - 4) * 15;   // 60s for 4 meds, 90s for 6, 120s for 8
-const MED_W = 80, MED_H = 110;
-const SLOT_W = N_MEDS >= 8 ? 90 : 110;
-const SLOT_H = 150;
-const SHELF_GAP = 14;
+const ROUND_TIME = ROUND_LEVEL.time;
+const MED_W = N_MEDS >= 10 ? 70 : 80, MED_H = N_MEDS >= 10 ? 96 : 110;
+const SLOT_W = N_MEDS >= 10 ? 86 : (N_MEDS >= 8 ? 96 : 110);
+const SLOT_H = N_MEDS >= 10 ? 130 : 150;
+const SHELF_GAP = N_MEDS >= 10 ? 10 : 14;
 const SNAP_DIST = 90;
 
 // Shelf canh phải, carton bên trái — chừa khoảng cho 4-8 ô
@@ -197,11 +197,13 @@ function updateHandTracking(time) {
 // Game logic
 // ============================================================
 function setupRound() {
-  // Slots: 4 ô, category shuffled so order doesn't match carton spawn order
   const cats = MEDICINES.map(m => m.category);
-  for (let i = cats.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cats[i], cats[j]] = [cats[j], cats[i]];
+  // Only shuffle slot order if this level says so
+  if (ROUND_LEVEL.shuffleSlots) {
+    for (let i = cats.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cats[i], cats[j]] = [cats[j], cats[i]];
+    }
   }
   game.slots = cats.map((cat, i) => ({
     id: 'slot-' + i,
@@ -360,6 +362,9 @@ function endRound(success, timeBonus = 0, comboBonus = 0) {
     const s = game.slots.find(s => s.id === m.slotId);
     return s && s.category === m.category;
   }).length;
+  const pct = total ? Math.round(correctCount / total * 100) : 0;
+  const stars = scoreToStars(pct);
+  saveLevelResult(ROUND_LEVEL.n, { stars, score: game.score });
   const durationMs = game.startedAt ? Date.now() - game.startedAt : null;
 
   submitAttempt({
@@ -369,7 +374,8 @@ function endRound(success, timeBonus = 0, comboBonus = 0) {
     total,
     durationMs,
     details: {
-      success, timeBonus, comboBonus,
+      success, timeBonus, comboBonus, stars,
+      level: ROUND_LEVEL.n,
       bestCombo: game.bestCombo,
       medicines: game.medicines.map(m => ({
         id: m.id, name: m.name, category: m.category,
@@ -378,19 +384,27 @@ function endRound(success, timeBonus = 0, comboBonus = 0) {
     },
   });
 
+  const starsHtml = '⭐'.repeat(stars) + '<span style="opacity:0.25">' + '⭐'.repeat(3 - stars) + '</span>';
+  const nextLevel = LEVELS.find(l => l.n === ROUND_LEVEL.n + 1);
+  const hasNext = nextLevel && stars >= 1;
   const modal = document.getElementById('result-modal');
   const title = success ? '🏆 Hoàn thành!' : '⏱️ Hết giờ';
-  const sub = success
-    ? `Thưởng thời gian +${timeBonus} · Thưởng combo +${comboBonus}`
-    : `Đúng ${correctCount}/${total} · Cố lên lần sau!`;
   modal.innerHTML = `
+    <div style="font-size:12px;opacity:0.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Level ${ROUND_LEVEL.n} · ${ROUND_LEVEL.label}</div>
     <h2>${title}</h2>
+    <div style="font-size:32px;margin:8px 0">${starsHtml}</div>
     <div class="score">${game.score}</div>
-    <div class="sub">${sub}</div>
+    <div class="sub">Đúng ${correctCount}/${total} (${pct}%) ${success ? `· bonus +${timeBonus + comboBonus}` : ''}</div>
+    ${hasNext ? `<button id="next-level" style="background:#f59e0b">▶️ Level ${nextLevel.n} — ${nextLevel.label}</button>` : ''}
     <button id="play-again">🔄 Chơi lại</button>
     <button class="secondary" onclick="location.href='/'">← Trang chính</button>
   `;
   modal.style.display = 'block';
+  if (hasNext) {
+    document.getElementById('next-level').onclick = () => {
+      location.href = '/2d-arcade.html?level=' + nextLevel.n;
+    };
+  }
   document.getElementById('play-again').onclick = () => {
     modal.style.display = 'none';
     setupRound();
@@ -710,7 +724,7 @@ function drawHUD() {
   ctx.fillStyle = '#37474f';
   ctx.font = '600 16px system-ui';
   ctx.textAlign = 'center';
-  ctx.fillText('💊 PharmacySIM · 2D Arcade', W/2, 30);
+  ctx.fillText(`💊 Level ${ROUND_LEVEL.n} · ${ROUND_LEVEL.label}`, W/2, 30);
 
   // Timer
   const lowTime = game.timeLeft < 10;
