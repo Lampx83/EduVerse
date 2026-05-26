@@ -12,6 +12,7 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.21",
     "better-sqlite3": "^11.5.0",
     "express": "^4.21.1"
   }

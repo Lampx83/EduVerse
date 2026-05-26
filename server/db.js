@@ -63,6 +63,22 @@ const recentStmt = db.prepare(`
   LIMIT @limit
 `);
 
+const allAttemptsStmt = db.prepare(`
+  SELECT id, version, player_name, score, correct, total, duration_ms, details, created_at
+  FROM attempts
+  ORDER BY created_at DESC
+`);
+
+const histogramStmt = db.prepare(`
+  SELECT
+    CAST((score / 10) AS INTEGER) * 10 AS bucket,
+    COUNT(*) AS n
+  FROM attempts
+  WHERE version = @version
+  GROUP BY bucket
+  ORDER BY bucket
+`);
+
 export function insertAttempt(row) {
   const info = insertAttemptStmt.run(row);
   return { id: info.lastInsertRowid, createdAt: row.created_at };
@@ -78,6 +94,38 @@ export function getStats(version) {
 
 export function getRecent(limit = 20) {
   return recentStmt.all({ limit });
+}
+
+export function getAllAttempts() {
+  return allAttemptsStmt.all();
+}
+
+export function getHistogram(version) {
+  return histogramStmt.all({ version });
+}
+
+// Confusion matrix: parses attempt.details.breakdown / details.medicines
+// → returns { categories: [...], matrix: { actualCat: { placedCat: count } } }
+export function getConfusion(version) {
+  const rows = db.prepare(`SELECT details FROM attempts WHERE version = ? AND details IS NOT NULL`).all(version);
+  const matrix = {};
+  const categories = new Set();
+  for (const r of rows) {
+    let d;
+    try { d = JSON.parse(r.details); } catch { continue; }
+    const items = d.medicines || d.breakdown || [];
+    for (const it of items) {
+      const actual = it.category;
+      const placed = it.placedIn;
+      if (!actual) continue;
+      categories.add(actual);
+      if (placed) categories.add(placed);
+      matrix[actual] ??= {};
+      const key = placed || '__unplaced__';
+      matrix[actual][key] = (matrix[actual][key] || 0) + 1;
+    }
+  }
+  return { categories: [...categories].sort(), matrix };
 }
 
 console.log(`[db] SQLite open at ${dbPath}`);

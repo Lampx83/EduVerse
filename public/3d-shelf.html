@@ -33,7 +33,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
 import { submitAttempt } from './js/api.js';
+import { pickRoundMedicines, getDifficulty } from './js/medicines.js';
 const sessionStartedAt = Date.now();
+const ROUND_DIFFICULTY = getDifficulty();
+const ROUND_MEDICINES = pickRoundMedicines(ROUND_DIFFICULTY.count);
+const ROUND_N = ROUND_MEDICINES.length;
 
 // ============================================================
 // COLORS — sampled from the photo
@@ -861,13 +865,8 @@ controls.maxDistance = 3;
 carton.visible = false;
 boxes.forEach(b => b.mesh.visible = false);
 
-// 4 loại thuốc — mỗi loại có texture riêng + nhãn phân loại
-const MEDICINES_DATA = [
-  { id: 'med-amox', name: 'AMOXICILLIN', category: 'Kháng sinh', color: '#4caf50' },
-  { id: 'med-asp',  name: 'ASPIRIN',     category: 'Tim mạch',   color: '#e53935' },
-  { id: 'med-sme',  name: 'SMECTA',      category: 'Tiêu hóa',   color: '#ffb300' },
-  { id: 'med-par',  name: 'PARACETAMOL', category: 'Giảm đau',   color: '#1e88e5' },
-];
+// 4-8 loại thuốc — chọn ngẫu nhiên từ catalog dùng chung dựa vào độ khó
+const MEDICINES_DATA = ROUND_MEDICINES;
 
 function makeMedTexture(name, category, bgColor, isFront) {
   const c = document.createElement('canvas');
@@ -973,10 +972,21 @@ for (let i = 0; i < MEDICINES_DATA.length; i++) {
   );
   label.position.set(slotXLocal, SLOT_H/2 + 0.45, -SLOT_D/2 + 0.02);
   shelf.add(label);
+
+  // Halo glow box bên trong ô — visible khi đang grab + nearest slot trong SNAP_DIST
+  const halo = new THREE.Mesh(
+    new THREE.BoxGeometry(SLOT_W * 0.92, SLOT_H * 0.92, SLOT_D * 0.85),
+    new THREE.MeshBasicMaterial({ color: 0x43a047, transparent: true, opacity: 0, depthWrite: false })
+  );
+  halo.position.set(slotXLocal, 0, 0);
+  halo.renderOrder = -1;
+  shelf.add(halo);
+
   slots.push({
     id: 'slot-' + i,
     category: med.category,
     localCenter: new THREE.Vector3(slotXLocal, SHELF_Y, SHELF_Z),
+    halo,
     placedBoxId: null,
   });
 }
@@ -984,7 +994,7 @@ for (let i = 0; i < MEDICINES_DATA.length; i++) {
 // ---- Training carton: SV phải pinch vào thùng để mở trước khi lấy thuốc ----
 const MED_W = 1.6, MED_H = 2.4, MED_D = 1.1;
 const T_WALL = 0.08;
-const T_CW = 4 * MED_W + 3 * 0.18 + 2 * (T_WALL + 0.18);   // ~7.42 wide, fits 4 meds in 1 row
+const T_CW = ROUND_N * MED_W + (ROUND_N - 1) * 0.18 + 2 * (T_WALL + 0.18);  // scale theo số thuốc
 const T_CH = MED_H + 0.25;                                   // 2.65 — thấp hơn để camera nhìn xuống thấy thuốc khi mở
 const T_CD = MED_D + 2 * (T_WALL + 0.2);                     // ~1.66
 const TRAINING_CARTON_Z = 3;
@@ -1127,7 +1137,7 @@ for (let i = shuffledData.length - 1; i > 0; i--) {
 
 const medicineBoxes = [];
 const MED_INNER_W = T_CW - 2 * (T_WALL + 0.18);
-const MED_STEP = MED_INNER_W / 4;
+const MED_STEP = MED_INNER_W / ROUND_N;
 shuffledData.forEach((data, i) => {
   const frontTex = makeMedTexture(data.name, data.category, data.color, true);
   const sideTex  = makeMedTexture(data.name, data.category, data.color, false);
@@ -1228,11 +1238,61 @@ function setHint(msg) { hint.textContent = msg; hint.style.opacity = msg ? '1' :
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let dragStart = null;
+let mouseDragMed = null;
+const _mouseRayDir = new THREE.Vector3();
+const _mouseHit = new THREE.Vector3();
+const _mouseInvVrWorld = new THREE.Matrix4();
+
+function ndcFromEvent(e) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+}
 
 renderer.domElement.addEventListener('pointerdown', (e) => {
   dragStart = { x: e.clientX, y: e.clientY };
+  // Mouse fallback grab — chỉ khi carton đã mở và chưa cầm bằng tay
+  if (trainingCartonState === 'open' && !handState.grabbed) {
+    ndcFromEvent(e);
+    raycaster.setFromCamera(mouse, camera);
+    const visMeshes = medicineBoxes.filter(m => m.mesh.visible).map(m => m.mesh);
+    const hits = raycaster.intersectObjects(visMeshes, false);
+    if (hits.length) {
+      mouseDragMed = medicineBoxes.find(m => m.mesh === hits[0].object);
+      controls.enabled = false;
+      if (mouseDragMed.slotId) {
+        const sl = slots.find(x => x.id === mouseDragMed.slotId);
+        if (sl) sl.placedBoxId = null;
+        mouseDragMed.slotId = null;
+      }
+      handState.grabbed = mouseDragMed;   // reuse grab state cho hover halo
+      setHint('🖱️ Kéo đến đúng ô rồi nhả chuột');
+      renderer.domElement.setPointerCapture?.(e.pointerId);
+      dragStart = null;
+    }
+  }
 });
+
+renderer.domElement.addEventListener('pointermove', (e) => {
+  if (!mouseDragMed) return;
+  ndcFromEvent(e);
+  raycaster.setFromCamera(mouse, camera);
+  camera.getWorldDirection(_mouseRayDir);
+  _grabPlane.setFromNormalAndCoplanarPoint(_mouseRayDir, worldCartonCenter);
+  if (raycaster.ray.intersectPlane(_grabPlane, _mouseHit)) {
+    _mouseInvVrWorld.copy(vrWorld.matrixWorld).invert();
+    mouseDragMed.mesh.position.copy(_mouseHit).applyMatrix4(_mouseInvVrWorld);
+  }
+});
+
 renderer.domElement.addEventListener('pointerup', (e) => {
+  if (mouseDragMed) {
+    snapMedicineOnRelease(mouseDragMed);
+    mouseDragMed = null;
+    handState.grabbed = null;
+    controls.enabled = true;
+    return;
+  }
   // VR-Preview (pointer-locked): raycast from screen center
   if (vrPreview.active && document.pointerLockElement === renderer.domElement) {
     mouse.set(0, 0);
@@ -1244,10 +1304,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   const dx = e.clientX - dragStart.x, dy = e.clientY - dragStart.y;
   dragStart = null;
   if (Math.hypot(dx, dy) > 5) return;   // drag, not a click
-
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
-  mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+  ndcFromEvent(e);
   raycaster.setFromCamera(mouse, camera);
   handleClick();
 });
@@ -1326,16 +1383,11 @@ async function initHandTracking() {
   handBtn.disabled = true;
   handBtn.textContent = '⏳ Đang tải MediaPipe…';
   try {
-    const { HandLandmarker, FilesetResolver } = await import(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs'
-    );
-    const fileset = await FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
-    );
+    const { HandLandmarker, FilesetResolver } = await import('/vendor/mediapipe/vision_bundle.mjs');
+    const fileset = await FilesetResolver.forVisionTasks('/vendor/mediapipe/wasm');
     handState.landmarker = await HandLandmarker.createFromOptions(fileset, {
       baseOptions: {
-        modelAssetPath:
-          'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+        modelAssetPath: '/models/hand_landmarker.task',
         delegate: 'GPU',
       },
       runningMode: 'VIDEO',
@@ -1612,6 +1664,21 @@ renderer.setAnimationLoop(function tick(time) {
   if (trainingCartonState === 'opening') {
     trainingCartonAnimT = Math.min(1, trainingCartonAnimT + dt / TRAINING_FLAP_DUR);
     setTrainingFlapAngle(lerp(0, TRAINING_FLAP_OPEN_ANGLE, easeOutCubic(trainingCartonAnimT)));
+  }
+
+  // Hover-slot highlight: khi đang cầm hộp, ô gần nhất glow xanh (đúng nhóm) hoặc đỏ (sai)
+  for (const s of slots) s.halo.material.opacity = 0;
+  if (handState.grabbed) {
+    let best = null, bestDist = Infinity;
+    for (const s of slots) {
+      const d = handState.grabbed.mesh.position.distanceTo(s.localCenter);
+      if (d < bestDist) { bestDist = d; best = s; }
+    }
+    if (best && bestDist < SNAP_DIST) {
+      const correct = best.category === handState.grabbed.category;
+      best.halo.material.color.setHex(correct ? 0x43a047 : 0xe53935);
+      best.halo.material.opacity = 0.35;
+    }
   }
 
   // Carton flap animation

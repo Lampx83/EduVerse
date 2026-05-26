@@ -34,6 +34,22 @@
   }
   .player-bar button:hover { background: #66bb6a; }
   .player-bar .saved { font-size: 12px; opacity: 0.7; }
+  .diff-bar {
+    max-width: 1200px; margin: 0 auto 28px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; padding: 12px 18px;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .diff-bar label { font-size: 14px; opacity: 0.85; }
+  .diff-btn {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08); color: white; cursor: pointer; font-family: inherit;
+    font-size: 13px; font-weight: 600; transition: all 0.15s;
+  }
+  .diff-btn:hover { background: rgba(255,255,255,0.18); }
+  .diff-btn.active { background: white; color: #5e35b1; border-color: white; }
+  .diff-btn small { display: block; font-weight: 400; opacity: 0.7; font-size: 10px; margin-top: 2px; }
   .grid {
     max-width: 1200px; margin: 0 auto;
     display: grid;
@@ -115,6 +131,14 @@
   <span class="saved" id="player-saved"></span>
 </div>
 
+<div class="diff-bar">
+  <label>🎯 Độ khó:</label>
+  <button class="diff-btn" data-diff="easy">Dễ <small>4 loại thuốc</small></button>
+  <button class="diff-btn" data-diff="med">Vừa <small>6 loại thuốc</small></button>
+  <button class="diff-btn" data-diff="hard">Khó <small>8 loại thuốc</small></button>
+  <span class="saved" id="diff-info"></span>
+</div>
+
 <div class="grid">
 
   <div class="card">
@@ -124,9 +148,10 @@
     <div class="stack">
       <span class="chip">Canvas 2D</span>
       <span class="chip">MediaPipe</span>
+      <span class="chip">+ Chuột</span>
       <span class="chip">Gamification</span>
     </div>
-    <p class="desc">Game-style side-view. Pinch để mở thùng, thuốc bay ra, kéo lên kệ. Score + combo + timer + particle.</p>
+    <p class="desc">Game-style side-view. Pinch để mở thùng, thuốc bay ra, kéo lên kệ. Score + combo + timer + particle. Có thể chơi bằng <b>webcam</b> hoặc <b>chuột</b>.</p>
     <ul class="features">
       <li>Mở thùng → thuốc spring out</li>
       <li>Score · Combo · Timer 60s</li>
@@ -147,9 +172,10 @@
     <div class="stack">
       <span class="chip">Three.js</span>
       <span class="chip">MediaPipe</span>
+      <span class="chip">+ Chuột</span>
       <span class="chip">WebXR</span>
     </div>
-    <p class="desc">Scene 3D thật, kệ thuốc + bàn + 4 hộp. Pinch cầm hộp, snap-to-slot, chấm điểm chi tiết.</p>
+    <p class="desc">Scene 3D, kệ thuốc + thùng carton mở được. Pinch (hoặc chuột) cầm hộp, snap-to-slot, ô đúng glow xanh / sai glow đỏ.</p>
     <ul class="features">
       <li>3D đầy đủ + đổ bóng</li>
       <li>Snap-to-slot + chấm điểm từng hộp</li>
@@ -197,18 +223,20 @@
 
   <div class="card">
     <div class="icon">📊</div>
-    <span class="badge b-future">📅 Sắp có</span>
+    <span class="badge b-ready">✓ Sẵn sàng</span>
     <h2>Dashboard Giảng viên</h2>
     <div class="stack">
       <span class="chip">Analytics</span>
-      <span class="chip">Class Report</span>
+      <span class="chip">CSV Export</span>
+      <span class="chip">Confusion Matrix</span>
     </div>
-    <p class="desc">Theo dõi tiến độ cả lớp: ai làm bao nhiêu lần, sai nhóm nào nhiều nhất, thời gian trung bình.</p>
+    <p class="desc">Theo dõi tiến độ cả lớp: tổng lượt, phổ điểm, top 10, ma trận nhầm lẫn nhóm thuốc, export CSV.</p>
     <ul class="features">
-      <li>Biểu đồ lỗi theo nhóm thuốc</li>
-      <li>Export CSV cho điểm danh</li>
+      <li>Biểu đồ phổ điểm theo bucket 10đ</li>
+      <li>Ma trận: nhóm thực ↔ nhóm SV đặt</li>
+      <li>Export CSV (Excel-compatible UTF-8)</li>
     </ul>
-    <div class="btn-row"><span class="btn btn-disabled">Chưa có</span></div>
+    <div class="btn-row"><a class="btn" href="dashboard.html">📊 Mở dashboard</a></div>
   </div>
 
   <div class="card">
@@ -236,6 +264,22 @@
 
 <script type="module">
 import { getPlayerName, setPlayerName, getLeaderboard, getStats } from './js/api.js';
+import { getDifficulty, setDifficulty, DIFFICULTIES } from './js/medicines.js';
+
+// --- Difficulty bar ---
+const diffInfo = document.getElementById('diff-info');
+function refreshDiffButtons() {
+  const cur = getDifficulty();
+  document.querySelectorAll('.diff-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.diff === cur.id);
+  });
+  diffInfo.textContent = `${cur.label} · ${cur.count} loại thuốc`;
+}
+document.querySelectorAll('.diff-btn').forEach(b => {
+  b.addEventListener('click', () => { setDifficulty(b.dataset.diff); refreshDiffButtons(); });
+});
+refreshDiffButtons();
+
 
 // --- Player name bar ---
 const input = document.getElementById('player-input');

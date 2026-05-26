@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>PharmacySIM · Dashboard giảng viên</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; }
+  body {
+    background: linear-gradient(135deg, #1e3a8a 0%, #5b21b6 100%);
+    color: white; padding: 28px 20px;
+  }
+  header { max-width: 1200px; margin: 0 auto 24px; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+  h1 { font-size: 28px; margin: 0; }
+  .sub { opacity: 0.75; font-size: 14px; }
+  a.back, a.csv {
+    color: white; text-decoration: none; font-size: 13px;
+    background: rgba(255,255,255,0.15); padding: 6px 12px;
+    border-radius: 6px; transition: background 0.15s;
+  }
+  a.back:hover, a.csv:hover { background: rgba(255,255,255,0.25); }
+  a.csv { background: #f59e0b; }
+  a.csv:hover { background: #fbbf24; }
+
+  .grid { max-width: 1200px; margin: 0 auto; display: grid; gap: 24px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 24px; }
+  .card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; padding: 20px;
+  }
+  .card h2 { margin: 0 0 14px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .ver { font-size: 11px; opacity: 0.6; font-weight: normal; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .stat {
+    background: rgba(0,0,0,0.2); padding: 10px 12px; border-radius: 8px;
+    text-align: center;
+  }
+  .stat .v { font-size: 22px; font-weight: 700; color: #fbbf24; }
+  .stat .l { font-size: 11px; opacity: 0.75; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  .histogram { display: flex; align-items: flex-end; gap: 4px; height: 80px; margin: 12px 0 4px; padding: 0 4px; border-bottom: 1px solid rgba(255,255,255,0.2); }
+  .bar { flex: 1; background: linear-gradient(180deg, #60a5fa, #2563eb); min-height: 2px; border-radius: 4px 4px 0 0; position: relative; }
+  .bar:hover { background: linear-gradient(180deg, #93c5fd, #60a5fa); }
+  .bar .lbl { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-size: 10px; opacity: 0.7; white-space: nowrap; }
+  .bar .n { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; }
+  .hist-wrap { padding: 16px 0 22px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  th { font-weight: 600; opacity: 0.75; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+  td.r, th.r { text-align: right; }
+  td.c, th.c { text-align: center; }
+
+  .confusion { font-size: 11px; }
+  .confusion td { padding: 4px 6px; }
+  .confusion th { font-size: 10px; }
+  .confusion .diag { background: rgba(67, 160, 71, 0.35); font-weight: 700; }
+  .confusion .err { background: rgba(229, 57, 53, 0.25); }
+  .confusion .zero { opacity: 0.3; }
+  .confusion .actual { background: rgba(255,255,255,0.06); font-weight: 600; }
+
+  .empty { padding: 24px; text-align: center; opacity: 0.5; font-style: italic; }
+  .recent-wrap { max-height: 380px; overflow-y: auto; }
+  .badge-v {
+    display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px;
+    font-weight: 700; letter-spacing: 0.3px;
+  }
+  .badge-2d { background: #43a047; color: white; }
+  .badge-3d { background: #5e35b1; color: white; }
+  .refresh-btn {
+    background: rgba(255,255,255,0.18); color: white; border: none; padding: 6px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  .refresh-btn:hover { background: rgba(255,255,255,0.28); }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Dashboard giảng viên</h1>
+  <span class="sub">PharmacySIM · phân tích lượt chơi của sinh viên</span>
+  <span style="flex:1"></span>
+  <button class="refresh-btn" id="refresh">🔄 Tải lại</button>
+  <a class="csv" href="/api/export.csv" download>⬇️ Export CSV</a>
+  <a class="back" href="/">← Trang chính</a>
+</header>
+
+<div class="grid">
+  <div class="row" id="versions-row"></div>
+
+  <div class="card">
+    <h2>🕒 Lượt chơi gần nhất</h2>
+    <div class="recent-wrap">
+      <table id="recent-table">
+        <thead><tr>
+          <th>#</th><th>Sinh viên</th><th>Phiên bản</th>
+          <th class="r">Điểm</th><th class="r">Đúng/Tổng</th><th class="r">Thời gian</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+const VERSIONS = [
+  { id: '2d-arcade', label: '2D Arcade',    badge: 'badge-2d' },
+  { id: '3d-shelf',  label: '3D Realistic', badge: 'badge-3d' },
+];
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function fmtTime(ms) {
+  const d = new Date(ms);
+  return d.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function fmtDuration(ms) {
+  if (!ms) return '—';
+  const s = Math.round(ms / 1000);
+  return s < 60 ? `${s}s` : `${Math.floor(s/60)}m${(s%60).toString().padStart(2,'0')}`;
+}
+
+async function loadVersionCard(v) {
+  const [lb, stats, hist, conf] = await Promise.all([
+    fetch(`/api/leaderboard?version=${v.id}&limit=10`).then(r => r.json()),
+    fetch(`/api/stats?version=${v.id}`).then(r => r.json()),
+    fetch(`/api/histogram?version=${v.id}`).then(r => r.json()),
+    fetch(`/api/confusion?version=${v.id}`).then(r => r.json()),
+  ]);
+  return { v, lb, stats, hist, conf };
+}
+
+function renderHistogram(hist) {
+  if (!hist.length) return '<div class="empty" style="padding:8px">Chưa có dữ liệu</div>';
+  const max = Math.max(...hist.map(b => b.n), 1);
+  return `<div class="hist-wrap"><div class="histogram">${hist.map(b => {
+    const pct = (b.n / max) * 100;
+    return `<div class="bar" style="height:${pct}%"><span class="n">${b.n}</span><span class="lbl">${b.bucket}-${b.bucket+9}</span></div>`;
+  }).join('')}</div></div>`;
+}
+
+function renderLeaderboard(lb) {
+  if (!lb.length) return '<div class="empty">Chưa có lượt chơi nào</div>';
+  return `<table><thead><tr>
+    <th>#</th><th>Sinh viên</th><th class="r">Điểm</th><th class="r">Đúng</th><th class="r">Lúc</th>
+  </tr></thead><tbody>${lb.map((r, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${escapeHtml(r.player_name)}</td>
+      <td class="r" style="color:#fbbf24;font-weight:700">${r.score}</td>
+      <td class="r">${r.correct}/${r.total}</td>
+      <td class="r" style="opacity:0.65;font-size:11px">${fmtTime(r.created_at)}</td>
+    </tr>
+  `).join('')}</tbody></table>`;
+}
+
+function renderConfusion(conf) {
+  const cats = conf.categories;
+  if (!cats.length) return '<div class="empty">Chưa đủ dữ liệu</div>';
+  const has = cat => conf.matrix[cat] != null;
+  const cell = (actual, placed) => (conf.matrix[actual]?.[placed]) ?? 0;
+  return `<div style="font-size:12px;opacity:0.7;margin-bottom:6px">Hàng = nhóm thực · Cột = nhóm SV đặt vào (chéo = đúng)</div>
+  <table class="confusion"><thead><tr>
+    <th></th>${cats.map(c => `<th class="c">${c}</th>`).join('')}
+  </tr></thead><tbody>${cats.filter(has).map(actual => `
+    <tr>
+      <td class="actual">${actual}</td>
+      ${cats.map(placed => {
+        const n = cell(actual, placed);
+        const cls = n === 0 ? 'zero' : actual === placed ? 'diag' : 'err';
+        return `<td class="c ${cls}">${n || ''}</td>`;
+      }).join('')}
+    </tr>
+  `).join('')}</tbody></table>`;
+}
+
+function renderVersionCard({ v, lb, stats, hist, conf }) {
+  const s = stats || {};
+  return `<div class="card">
+    <h2>${v.label} <span class="ver">/${v.id}</span></h2>
+    <div class="stat-grid">
+      <div class="stat"><div class="v">${s.total_attempts ?? 0}</div><div class="l">Tổng lượt</div></div>
+      <div class="stat"><div class="v">${s.avg_score ?? 0}</div><div class="l">Điểm TB</div></div>
+      <div class="stat"><div class="v">${s.best_score ?? 0}</div><div class="l">Điểm cao</div></div>
+      <div class="stat"><div class="v">${s.perfect_count ?? 0}</div><div class="l">Perfect 🎯</div></div>
+    </div>
+    <div style="font-weight:600;font-size:12px;opacity:0.7;margin-top:8px">📈 Phổ điểm (theo bucket 10đ)</div>
+    ${renderHistogram(hist)}
+    <div style="font-weight:600;font-size:12px;opacity:0.7;margin-top:14px">🏆 Top 10</div>
+    ${renderLeaderboard(lb)}
+    <div style="font-weight:600;font-size:12px;opacity:0.7;margin-top:14px">🎯 Ma trận nhầm lẫn</div>
+    ${renderConfusion(conf)}
+  </div>`;
+}
+
+async function loadRecent() {
+  const rows = await fetch('/api/recent?limit=50').then(r => r.json());
+  const tbody = document.querySelector('#recent-table tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Chưa có lượt chơi nào</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const v = VERSIONS.find(v => v.id === r.version);
+    return `<tr>
+      <td style="opacity:0.5">#${r.id}</td>
+      <td>${escapeHtml(r.player_name)}</td>
+      <td><span class="badge-v ${v?.badge ?? ''}">${v?.label ?? r.version}</span></td>
+      <td class="r" style="color:#fbbf24;font-weight:700">${r.score}</td>
+      <td class="r">${r.correct}/${r.total}</td>
+      <td class="r" style="opacity:0.65;font-size:11px">${fmtTime(r.created_at)}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadAll() {
+  const row = document.getElementById('versions-row');
+  row.innerHTML = '<div class="card empty">Đang tải...</div>';
+  const cards = await Promise.all(VERSIONS.map(loadVersionCard));
+  row.innerHTML = cards.map(renderVersionCard).join('');
+  await loadRecent();
+}
+
+document.getElementById('refresh').addEventListener('click', loadAll);
+loadAll();
+</script>
+</body>
+</html>

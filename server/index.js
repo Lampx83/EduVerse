@@ -1,10 +1,12 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { insertAttempt, getLeaderboard, getStats, getRecent } from './db.js';
+import { insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
+const ROOT_DIR = path.resolve(__dirname, '..');
+const PUBLIC_DIR = path.resolve(ROOT_DIR, 'public');
+const MEDIAPIPE_DIR = path.resolve(ROOT_DIR, 'node_modules', '@mediapipe', 'tasks-vision');
 const PORT = Number(process.env.PORT) || 8041;
 const HOST = process.env.HOST || '0.0.0.0';
 
@@ -68,6 +70,46 @@ app.get('/api/recent', (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
   res.json(getRecent(limit));
 });
+
+app.get('/api/histogram', (req, res) => {
+  const version = String(req.query.version || '');
+  if (!VALID_VERSIONS.has(version)) return res.status(400).json({ error: 'invalid version' });
+  res.json(getHistogram(version));
+});
+
+app.get('/api/confusion', (req, res) => {
+  const version = String(req.query.version || '');
+  if (!VALID_VERSIONS.has(version)) return res.status(400).json({ error: 'invalid version' });
+  res.json(getConfusion(version));
+});
+
+app.get('/api/export.csv', (_req, res) => {
+  const rows = getAllAttempts();
+  const esc = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = ['id,version,player_name,score,correct,total,duration_ms,created_at_iso,details'];
+  for (const r of rows) {
+    lines.push([
+      r.id, r.version, esc(r.player_name), r.score, r.correct, r.total,
+      r.duration_ms ?? '', new Date(r.created_at).toISOString(), esc(r.details),
+    ].join(','));
+  }
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="pharmacysim-attempts-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send('﻿' + lines.join('\n'));   // BOM for Excel UTF-8
+});
+
+// Vendored MediaPipe — served locally so app không phụ thuộc jsdelivr/unpkg
+app.use('/vendor/mediapipe', express.static(MEDIAPIPE_DIR, {
+  maxAge: '7d',
+  setHeaders: (res, p) => {
+    if (p.endsWith('.wasm')) res.setHeader('Content-Type', 'application/wasm');
+    if (p.endsWith('.mjs'))  res.setHeader('Content-Type', 'application/javascript');
+  },
+}));
 
 // Static frontend (public/) — served last so /api/* wins on conflicts
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));

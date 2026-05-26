@@ -60,32 +60,36 @@
 <div id="start-overlay">
   <h1>💊 PharmacySIM · 2D Arcade</h1>
   <p>Mở thùng thuốc, cầm từng hộp, xếp lên kệ đúng <b>nhóm điều trị</b></p>
-  <p>👉 Chụm ngón cái + trỏ trước webcam để <b>pinch</b></p>
-  <p class="tip">Yêu cầu: webcam · mở qua <code>http://localhost</code> (không phải <code>file://</code>)</p>
-  <button id="start-btn">▶️ Bắt đầu</button>
+  <p>👉 Chụm ngón cái + trỏ trước webcam để <b>pinch</b> — hoặc dùng chuột để kéo</p>
+  <p class="tip">Webcam cần mở qua <code>http://localhost</code> (không phải <code>file://</code>)</p>
+  <button id="start-btn">▶️ Bắt đầu (webcam)</button>
+  <a href="#" id="mouse-only" style="color:#fbbf24;text-decoration:none;font-size:14px;margin-top:4px">🖱️ Chơi bằng chuột (không cần webcam)</a>
 </div>
 <div id="result-modal"></div>
 
 <script type="module">
 import { submitAttempt } from './js/api.js';
+import { pickRoundMedicines, getDifficulty } from './js/medicines.js';
 // ============================================================
 // CONFIG
 // ============================================================
 const W = 1280, H = 720;
-const MEDICINES = [
-  { id: 'amox', name: 'AMOXICILLIN', short: 'AMOX', category: 'Kháng sinh', color: '#43a047' },
-  { id: 'asp',  name: 'ASPIRIN',     short: 'ASP',  category: 'Tim mạch',   color: '#e53935' },
-  { id: 'sme',  name: 'SMECTA',      short: 'SME',  category: 'Tiêu hóa',   color: '#fb8c00' },
-  { id: 'par',  name: 'PARACETAMOL', short: 'PARA', category: 'Giảm đau',   color: '#1e88e5' },
-];
+const ROUND_DIFFICULTY = getDifficulty();
+const MEDICINES = pickRoundMedicines(ROUND_DIFFICULTY.count);
+const N_MEDS = MEDICINES.length;
 
-const ROUND_TIME = 60;
+const ROUND_TIME = 60 + (N_MEDS - 4) * 15;   // 60s for 4 meds, 90s for 6, 120s for 8
 const MED_W = 80, MED_H = 110;
-const SLOT_W = 110, SLOT_H = 150;
+const SLOT_W = N_MEDS >= 8 ? 90 : 110;
+const SLOT_H = 150;
+const SHELF_GAP = 14;
 const SNAP_DIST = 90;
 
-const SHELF_X = 720, SHELF_Y = 200, SHELF_GAP = 18;
-const CARTON_X = 180, CARTON_Y = 340, CARTON_W = 280, CARTON_H = 200;
+// Shelf canh phải, carton bên trái — chừa khoảng cho 4-8 ô
+const SHELF_TOTAL_W = N_MEDS * SLOT_W + (N_MEDS - 1) * SHELF_GAP;
+const SHELF_X = W - SHELF_TOTAL_W - 40;       // 40px margin phải
+const SHELF_Y = 200;
+const CARTON_X = 40, CARTON_Y = 340, CARTON_W = 260, CARTON_H = 200;
 const TABLE_Y = 610;
 
 // ============================================================
@@ -115,15 +119,11 @@ const camCtx = camPreview.getContext('2d');
 // MediaPipe HandLandmarker
 // ============================================================
 async function initHandTracking() {
-  const { HandLandmarker, FilesetResolver } = await import(
-    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs'
-  );
-  const fileset = await FilesetResolver.forVisionTasks(
-    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
-  );
+  const { HandLandmarker, FilesetResolver } = await import('/vendor/mediapipe/vision_bundle.mjs');
+  const fileset = await FilesetResolver.forVisionTasks('/vendor/mediapipe/wasm');
   handState.landmarker = await HandLandmarker.createFromOptions(fileset, {
     baseOptions: {
-      modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+      modelAssetPath: '/models/hand_landmarker.task',
       delegate: 'GPU',
     },
     runningMode: 'VIDEO',
@@ -239,13 +239,13 @@ function openCarton() {
     }
     shuffled.forEach((m, i) => {
       const cx = game.carton.x + CARTON_W/2;
-      const spread = -120 + i * 80;
+      const spread = -160 + (i + 0.5) * (320 / N_MEDS);   // 4–8 hộp đều spring ra
       game.medicines.push({
         ...m,
-        x: cx + spread * 0.3,
+        x: cx + spread * 0.25,
         y: game.carton.y - 10,
-        vx: spread * 1.5,
-        vy: -340 - Math.random() * 60,
+        vx: spread * 1.4 + (Math.random() - 0.5) * 60,
+        vy: -340 - Math.random() * 80,
         slotId: null, dragging: false,
       });
     });
@@ -490,7 +490,7 @@ function draw() {
 }
 
 function drawShelf() {
-  const totalW = 4 * SLOT_W + 3 * SHELF_GAP;
+  const totalW = SHELF_TOTAL_W;
   // Back panel
   ctx.fillStyle = '#4e342e';
   ctx.fillRect(SHELF_X - 16, SHELF_Y - 24, totalW + 32, SLOT_H + 48);
@@ -503,7 +503,7 @@ function drawShelf() {
   ctx.fillStyle = '#6d4c41';
   ctx.fillRect(SHELF_X - 24, SHELF_Y + SLOT_H + 14, totalW + 48, 14);
   // Slot interior bg
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < N_MEDS; i++) {
     const x = SHELF_X + i * (SLOT_W + SHELF_GAP);
     const g = ctx.createLinearGradient(x, SHELF_Y, x, SHELF_Y + SLOT_H);
     g.addColorStop(0, '#fafafa');
@@ -772,17 +772,21 @@ resize();
 // ============================================================
 // Start
 // ============================================================
+function launchGame() {
+  document.getElementById('start-overlay').style.display = 'none';
+  setupRound();
+  game.state = 'playing';
+  lastTime = performance.now();
+  requestAnimationFrame(tick);
+}
+
 document.getElementById('start-btn').addEventListener('click', async () => {
   const btn = document.getElementById('start-btn');
   btn.disabled = true;
   btn.textContent = '⏳ Đang tải MediaPipe…';
   try {
     await initHandTracking();
-    document.getElementById('start-overlay').style.display = 'none';
-    setupRound();
-    game.state = 'playing';
-    lastTime = performance.now();
-    requestAnimationFrame(tick);
+    launchGame();
   } catch (err) {
     btn.disabled = false;
     btn.textContent = '▶️ Thử lại';
@@ -791,6 +795,41 @@ document.getElementById('start-btn').addEventListener('click', async () => {
       : err.message;
     alert('Không khởi động được webcam:\n' + msg);
   }
+});
+
+document.getElementById('mouse-only').addEventListener('click', (e) => {
+  e.preventDefault();
+  launchGame();
+});
+
+// Mouse / touch fallback — works whether MediaPipe enabled or not
+canvas.addEventListener('pointerdown', (e) => {
+  if (game.state !== 'playing') return;
+  const rect = canvas.getBoundingClientRect();
+  game.cursor.x = ((e.clientX - rect.left) / rect.width) * W;
+  game.cursor.y = ((e.clientY - rect.top) / rect.height) * H;
+  game.cursor.visible = true;
+  game.cursor.wasPinching = game.cursor.pinching;
+  game.cursor.pinching = true;
+  onPinchStart();
+  e.preventDefault();
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (game.state !== 'playing') return;
+  if (!game.cursor.pinching && !game.grabbed) return;
+  const rect = canvas.getBoundingClientRect();
+  game.cursor.x = ((e.clientX - rect.left) / rect.width) * W;
+  game.cursor.y = ((e.clientY - rect.top) / rect.height) * H;
+});
+canvas.addEventListener('pointerup', () => {
+  if (game.state !== 'playing') return;
+  if (!game.cursor.pinching) return;
+  game.cursor.wasPinching = true;
+  game.cursor.pinching = false;
+  onPinchRelease();
+});
+canvas.addEventListener('pointercancel', () => {
+  if (game.cursor.pinching) { game.cursor.pinching = false; onPinchRelease(); }
 });
 </script>
 </body>
