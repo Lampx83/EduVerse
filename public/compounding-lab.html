@@ -278,6 +278,64 @@
   }
   #walk-hint.shown { display: block; }
 
+  /* ===== "How to play" persistent help card ===== */
+  #help-card {
+    position: absolute; bottom: 72px; left: 12px; z-index: 9;
+    background: rgba(255,255,255,0.96);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px; padding: 12px 14px;
+    font-size: 12px; line-height: 1.55;
+    width: 248px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    transition: transform 0.18s ease;
+  }
+  #help-card h5 {
+    margin: 0 0 6px; font-size: 11px;
+    color: #0f766e; letter-spacing: 0.5px;
+    text-transform: uppercase; font-weight: 800;
+    display: flex; align-items: center; gap: 6px;
+  }
+  #help-card h5 .toggle {
+    margin-left: auto; cursor: pointer; user-select: none;
+    background: rgba(0,0,0,0.05); border-radius: 6px;
+    padding: 0 7px; font-weight: 700; color: #0f766e;
+  }
+  #help-card .row { display: flex; align-items: center; gap: 7px; padding: 2px 0; }
+  #help-card .kbd {
+    display: inline-block; min-width: 22px; padding: 1px 6px;
+    border-radius: 5px; background: linear-gradient(180deg, #fff, #e5e7eb);
+    border: 1px solid #9ca3af; box-shadow: 0 1px 0 #6b7280;
+    font-family: 'SF Mono', monospace; font-weight: 700; font-size: 10.5px;
+    color: #1f2937; text-align: center;
+  }
+  #help-card .row .desc { flex: 1; color: #1f2937; }
+  #help-card.collapsed .body { display: none; }
+  #help-card.collapsed { width: auto; }
+
+  /* ===== "Đang cầm" badge — follows cursor in mouse mode, pinned in walk mode ===== */
+  #hold-badge {
+    position: absolute; pointer-events: none; z-index: 13;
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+    color: #fff; padding: 5px 12px 5px 8px;
+    border-radius: 16px; font-size: 12px; font-weight: 700;
+    box-shadow: 0 4px 12px rgba(20,184,166,0.45), 0 0 0 2px rgba(255,255,255,0.4);
+    display: none; align-items: center; gap: 6px;
+    transform: translate(14px, 18px);
+    white-space: nowrap; max-width: 240px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  #hold-badge.shown { display: inline-flex; }
+  #hold-badge .ic { font-size: 14px; }
+  #hold-badge .clear {
+    background: rgba(255,255,255,0.3); color: #fff;
+    padding: 1px 6px; border-radius: 6px; font-size: 10px;
+    pointer-events: auto; cursor: pointer; margin-left: 4px;
+  }
+  #hold-badge.walk-mode {
+    top: auto !important; left: 50% !important;
+    bottom: 110px; transform: translateX(-50%);
+  }
+
   @media (max-width: 720px) {
     #recipe { width: 220px; font-size: 12px; }
     #step { width: 240px; padding: 10px 14px; }
@@ -329,6 +387,24 @@
 <div id="toast"></div>
 <div id="hover-label"><div class="ht"></div><div class="hs"></div><div class="hc"></div></div>
 <div id="hover-press"><span class="icon">🖱️</span><span class="kb">CLICK</span><span>để cầm</span></div>
+
+<div id="help-card">
+  <h5>🎮 Cách thao tác <span class="toggle" id="help-toggle">▾</span></h5>
+  <div class="body">
+    <div class="row"><span class="kbd">🖱️</span><span class="desc"><b>Click chai/dụng cụ</b> để cầm — vật được viền xanh + hiện badge "Đang cầm"</span></div>
+    <div class="row"><span class="kbd">🖱️</span><span class="desc"><b>Click lần 2</b> vào cốc/ống đong/cân để <b>rót / đặt</b></span></div>
+    <div class="row"><span class="kbd">Esc</span><span class="desc">Bỏ chọn vật đang cầm</span></div>
+    <div class="row"><span class="kbd">V</span><span class="desc">Vào chế độ <b>đi quanh phòng</b> (WASD + chuột)</span></div>
+    <div class="row"><span class="kbd">✋</span><span class="desc"><b>Pinch ngón cái + trỏ</b> qua webcam (nút "Bật điều khiển tay")</span></div>
+    <div class="row" style="margin-top:5px;border-top:1px dashed rgba(0,0,0,0.1);padding-top:5px"><span style="font-size:11px;opacity:0.75">💡 Theo bước ở khung phải — đúng thứ tự sẽ tự nhảy bước tiếp theo.</span></div>
+  </div>
+</div>
+
+<div id="hold-badge">
+  <span class="ic">✋</span>
+  <span id="hold-name">Đang cầm</span>
+  <span class="clear" id="hold-clear">Esc</span>
+</div>
 
 <div id="ctrl-bar">
   <button id="restart-btn">🔄 Làm lại</button>
@@ -2569,14 +2645,34 @@ function pickTopGroup(object) {
   return g.userData?.kind ? g : null;
 }
 
+const holdBadgeEl = document.getElementById('hold-badge');
+const holdNameEl = document.getElementById('hold-name');
+
 function setSelectedTool(t) {
   if (selectedTool === t) return;
   if (selectedTool) selectedTool.traverse(o => { if (o.material?.emissive) o.material.emissive.setHex(0x000000); });
   selectedTool = t;
   if (selectedTool) {
     selectedTool.traverse(o => { if (o.material?.emissive) o.material.emissive.setHex(0x114b2a); });
-    showToast('✋ Đang cầm: ' + (selectedTool.userData?.name || selectedTool.userData?.id), 1300);
+    const n = selectedTool.userData?.name || selectedTool.userData?.id;
+    showToast('✋ Đang cầm: ' + n + ' — click vào dụng cụ để đặt/rót', 1800, 'ok');
+    holdNameEl.textContent = 'Đang cầm: ' + n;
+    holdBadgeEl.classList.add('shown');
+    if (walk.active) holdBadgeEl.classList.add('walk-mode');
+    else holdBadgeEl.classList.remove('walk-mode');
     sfx.grab();
+  } else {
+    holdBadgeEl.classList.remove('shown');
+  }
+  updateHoverPressText();
+}
+
+function updateHoverPressText() {
+  if (!hoverPressEl) return;
+  if (selectedTool) {
+    hoverPressEl.innerHTML = '<span class="icon">🖱️</span><span class="kb">CLICK</span><span>để rót/đặt vào đây</span>';
+  } else {
+    hoverPressEl.innerHTML = '<span class="icon">🖱️</span><span class="kb">CLICK</span><span>để cầm</span>';
   }
 }
 
@@ -3033,6 +3129,31 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   }
 });
 renderer.domElement.addEventListener('pointerleave', () => setHoverTarget(null));
+
+// ===== Hold badge follows cursor (mouse mode), pinned in walk mode =====
+document.addEventListener('pointermove', (e) => {
+  if (!selectedTool || walk.active) return;
+  holdBadgeEl.style.left = e.clientX + 'px';
+  holdBadgeEl.style.top = e.clientY + 'px';
+});
+
+// ===== Esc clears selection =====
+document.addEventListener('keydown', (e) => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  if (e.key === 'Escape' && selectedTool && !walk.active) {
+    setSelectedTool(null);
+    showToast('↩️ Đã bỏ chọn', 1000);
+  }
+});
+document.getElementById('hold-clear').addEventListener('click', () => setSelectedTool(null));
+
+// ===== Help card collapse =====
+const helpCard = document.getElementById('help-card');
+const helpToggle = document.getElementById('help-toggle');
+helpToggle.addEventListener('click', () => {
+  const collapsed = helpCard.classList.toggle('collapsed');
+  helpToggle.textContent = collapsed ? '▸' : '▾';
+});
 
 // ===== UI buttons =====
 restartBtn.addEventListener('click', () => location.reload());
