@@ -1,7 +1,9 @@
 import express from 'express';
+import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement } from './db.js';
+import { attachRoom } from './room.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -10,7 +12,46 @@ const MEDIAPIPE_DIR = path.resolve(ROOT_DIR, 'node_modules', '@mediapipe', 'task
 const PORT = Number(process.env.PORT) || 8041;
 const HOST = process.env.HOST || '0.0.0.0';
 
-const VALID_VERSIONS = new Set(['2d-arcade', '3d-shelf']);
+const VALID_VERSIONS = new Set(['2d-arcade', '3d-shelf', 'quiz', 'metaverse', 'time-attack']);
+
+// Badge definitions used by both backend (auto-unlock) and frontend (display)
+const BADGES = [
+  { id: 'first-play',     icon: '🎮', label: 'Lần đầu chơi',         desc: 'Hoàn thành lượt đầu tiên' },
+  { id: 'perfect-1',      icon: '🎯', label: 'Perfect đầu tay',      desc: 'Đạt 100% lần đầu' },
+  { id: 'perfect-5',      icon: '⭐', label: '5 lần Perfect',         desc: 'Đạt 100% năm lần' },
+  { id: 'speed-demon',    icon: '⚡', label: 'Tốc độ ánh sáng',       desc: 'Hoàn thành < 20 giây' },
+  { id: 'all-modes',      icon: '🏆', label: 'Bậc thầy đa mode',     desc: 'Chơi đủ cả 4 mode chính' },
+  { id: 'hard-perfect',   icon: '👑', label: 'Vua khó nhằn',         desc: 'Perfect ở chế độ Khó (8 loại)' },
+  { id: 'metaverse-host', icon: '🌐', label: 'Cư dân Metaverse',     desc: 'Tham gia phòng metaverse' },
+];
+
+function checkAndUnlockBadges(playerName, attempt) {
+  const newly = [];
+  const tryUnlock = (badgeId) => {
+    if (unlockAchievement(playerName, badgeId)) {
+      newly.push(BADGES.find(b => b.id === badgeId));
+    }
+  };
+  tryUnlock('first-play');
+  if (attempt.correct === attempt.total && attempt.total > 0) {
+    tryUnlock('perfect-1');
+    // Check 5-perfect
+    const allPerfect = db.prepare(`
+      SELECT COUNT(*) AS c FROM attempts
+      WHERE player_name = ? AND correct = total AND total > 0
+    `).get(playerName);
+    if ((allPerfect?.c ?? 0) >= 5) tryUnlock('perfect-5');
+    if (attempt.total >= 8) tryUnlock('hard-perfect');
+  }
+  if (attempt.durationMs && attempt.durationMs < 20000) tryUnlock('speed-demon');
+  // all-modes
+  const distinct = db.prepare(`
+    SELECT COUNT(DISTINCT version) AS c FROM attempts WHERE player_name = ?
+  `).get(playerName);
+  if ((distinct?.c ?? 0) >= 4) tryUnlock('all-modes');
+  if (attempt.version === 'metaverse') tryUnlock('metaverse-host');
+  return newly;
+}
 
 const app = express();
 app.disable('x-powered-by');
@@ -46,7 +87,9 @@ app.post('/api/attempts', (req, res) => {
     details,
     created_at: Date.now(),
   });
-  res.json(result);
+  // Auto-unlock badges based on the attempt
+  const newBadges = checkAndUnlockBadges(playerName, { version, score, correct, total, durationMs });
+  res.json({ ...result, newBadges });
 });
 
 app.get('/api/leaderboard', (req, res) => {
@@ -81,6 +124,17 @@ app.get('/api/confusion', (req, res) => {
   const version = String(req.query.version || '');
   if (!VALID_VERSIONS.has(version)) return res.status(400).json({ error: 'invalid version' });
   res.json(getConfusion(version));
+});
+
+app.get('/api/badges', (_req, res) => {
+  res.json(BADGES);
+});
+
+app.get('/api/achievements', (req, res) => {
+  const player = String(req.query.player || '').trim();
+  if (!player) return res.status(400).json({ error: 'player required' });
+  const rows = getAchievements(player);
+  res.json(rows.map(r => ({ ...r, badge: BADGES.find(b => b.id === r.badge_id) })));
 });
 
 app.get('/api/export.csv', (_req, res) => {
@@ -118,6 +172,8 @@ app.use((_req, res) => {
   res.status(404).sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
-app.listen(PORT, HOST, () => {
+const httpServer = http.createServer(app);
+attachRoom(httpServer);
+httpServer.listen(PORT, HOST, () => {
   console.log(`[pharmacysim] listening on http://${HOST}:${PORT}`);
 });

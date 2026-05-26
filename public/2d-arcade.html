@@ -70,6 +70,7 @@
 <script type="module">
 import { submitAttempt } from './js/api.js';
 import { pickRoundMedicines, getDifficulty } from './js/medicines.js';
+import { sfx } from './js/sfx.js';
 // ============================================================
 // CONFIG
 // ============================================================
@@ -228,6 +229,7 @@ function openCarton() {
   if (game.carton.isOpen || game.carton.animating) return;
   game.carton.animating = true;
   game.carton.shake = 0.3;
+  sfx.open();
   spawnParticles(game.carton.x + CARTON_W/2, game.carton.y, '#ffd54f', 12);
 
   // After flap animation finishes, spring medicines out
@@ -268,6 +270,7 @@ function onPinchStart() {
     if (pointInRect(x, y, m.x - MED_W/2, m.y - MED_H/2, MED_W, MED_H)) {
       game.grabbed = m;
       m.dragging = true;
+      sfx.grab();
       if (m.slotId) {
         const s = game.slots.find(s => s.id === m.slotId);
         if (s) s.placedId = null;
@@ -309,12 +312,14 @@ function onPinchRelease() {
       game.bestCombo = Math.max(game.bestCombo, game.combo);
       const bonus = 10 + Math.min(game.combo - 1, 5) * 5;
       game.score += bonus;
+      sfx.correct();
       spawnParticles(med.x, med.y, '#43a047', 18);
       spawnFloatText(med.x, med.y - 30, '+' + bonus, '#2e7d32');
       game.message = `✅ Đúng! +${bonus}${game.combo > 1 ? ` · 🔥 Combo x${game.combo}` : ''}`;
     } else {
       game.combo = 0;
       game.score = Math.max(0, game.score - 5);
+      sfx.wrong();
       spawnParticles(med.x, med.y, '#e53935', 14);
       spawnFloatText(med.x, med.y - 30, '-5', '#c62828');
       game.message = `❌ Sai! "${med.name}" thuộc nhóm "${med.category}"`;
@@ -339,6 +344,7 @@ function checkRoundComplete() {
     const timeBonus = Math.floor(game.timeLeft) * 3;
     const comboBonus = game.bestCombo * 5;
     game.score += timeBonus + comboBonus;
+    sfx.perfect();
     spawnParticles(W/2, H/2, '#ffd54f', 40);
     spawnFloatText(W/2, H/2 - 40, '🎉 PERFECT!', '#f57c00');
     setTimeout(() => endRound(true, timeBonus, comboBonus), 900);

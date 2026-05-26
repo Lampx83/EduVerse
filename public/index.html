@@ -8,155 +8,172 @@
   html, body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; }
   body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white; padding: 48px 20px 32px;
+    color: white; padding: 36px 20px 32px;
   }
-  header { text-align: center; max-width: 800px; margin: 0 auto 28px; }
+  header { text-align: center; max-width: 900px; margin: 0 auto 24px; }
   h1 { font-size: 44px; margin: 0 0 12px; text-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-  .subtitle { font-size: 17px; opacity: 0.9; line-height: 1.5; margin: 0; }
-  .player-bar {
-    max-width: 1200px; margin: 0 auto 28px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.15);
+  .subtitle { font-size: 16px; opacity: 0.9; line-height: 1.5; margin: 0; }
+  .tagline { display: inline-flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .tagline .t { background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+
+  .top-bar { max-width: 1200px; margin: 0 auto 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .top-bar > div {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
     border-radius: 12px; padding: 12px 18px;
     display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
   }
-  .player-bar label { font-size: 14px; opacity: 0.85; }
-  .player-bar input {
-    flex: 1; min-width: 180px; max-width: 360px;
+  .top-bar label { font-size: 14px; opacity: 0.85; }
+  .top-bar input {
+    flex: 1; min-width: 140px;
     padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.95); color: #333; font-size: 14px;
-    font-family: inherit;
+    background: rgba(255,255,255,0.95); color: #333; font-size: 14px; font-family: inherit;
   }
-  .player-bar button {
+  .top-bar button {
     padding: 8px 16px; border-radius: 8px; border: none;
     background: #43a047; color: white; font-weight: 600; cursor: pointer;
     font-family: inherit; font-size: 14px;
   }
-  .player-bar button:hover { background: #66bb6a; }
-  .player-bar .saved { font-size: 12px; opacity: 0.7; }
-  .diff-bar {
-    max-width: 1200px; margin: 0 auto 28px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 12px; padding: 12px 18px;
-    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
-  }
-  .diff-bar label { font-size: 14px; opacity: 0.85; }
+  .top-bar button:hover { background: #66bb6a; }
+  .saved { font-size: 12px; opacity: 0.7; }
+
   .diff-btn {
-    padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.25);
+    padding: 8px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.25);
     background: rgba(255,255,255,0.08); color: white; cursor: pointer; font-family: inherit;
     font-size: 13px; font-weight: 600; transition: all 0.15s;
   }
   .diff-btn:hover { background: rgba(255,255,255,0.18); }
   .diff-btn.active { background: white; color: #5e35b1; border-color: white; }
-  .diff-btn small { display: block; font-weight: 400; opacity: 0.7; font-size: 10px; margin-top: 2px; }
+  .diff-btn small { display: block; font-weight: 400; opacity: 0.7; font-size: 10px; margin-top: 1px; }
+
+  .badges-row {
+    max-width: 1200px; margin: 0 auto 28px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 12px 18px;
+  }
+  .badges-row h3 { margin: 0 0 8px; font-size: 13px; opacity: 0.85; font-weight: 600; }
+  .badges-list { display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge-chip {
+    background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px;
+    font-size: 12px; display: flex; gap: 6px; align-items: center; opacity: 0.45;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .badge-chip.unlocked { background: linear-gradient(135deg,#fbbf24,#f59e0b); color: #3e2723; opacity: 1; border-color: #f59e0b; font-weight: 700; }
+
   .grid {
     max-width: 1200px; margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
+    gap: 22px;
   }
   .card {
     background: rgba(255,255,255,0.12);
     border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 16px; padding: 24px;
+    border-radius: 16px; padding: 22px;
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     transition: transform 0.2s, background 0.2s;
     display: flex; flex-direction: column;
   }
   .card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.18); }
-  .card .icon { font-size: 36px; margin-bottom: 8px; }
-  .card h2 { margin: 0 0 6px; font-size: 22px; }
-  .badge {
+  .card .icon { font-size: 32px; margin-bottom: 6px; }
+  .card h2 { margin: 0 0 6px; font-size: 20px; }
+  .badge-tag {
     display: inline-block; padding: 3px 10px; border-radius: 12px;
-    font-size: 11px; font-weight: 700; margin-bottom: 10px;
+    font-size: 11px; font-weight: 700; margin-bottom: 8px;
     letter-spacing: 0.3px; text-transform: uppercase;
   }
   .b-ready { background: #43a047; }
+  .b-new   { background: #f97316; }
   .b-future { background: #757575; opacity: 0.85; }
-  .card p.desc { margin: 0 0 12px; font-size: 14px; opacity: 0.9; line-height: 1.5; }
-  .features { list-style: none; padding: 0; margin: 0 0 12px; font-size: 13px; line-height: 1.7; opacity: 0.85; }
+  .card p.desc { margin: 0 0 10px; font-size: 13px; opacity: 0.9; line-height: 1.5; }
+  .features { list-style: none; padding: 0; margin: 0 0 12px; font-size: 12px; line-height: 1.7; opacity: 0.85; }
   .features li::before { content: '▸ '; color: rgba(255,255,255,0.6); }
   .leaderboard {
-    margin: 12px 0; font-size: 12px; min-height: 84px;
-    background: rgba(0,0,0,0.18); border-radius: 8px; padding: 10px 12px;
+    margin: 8px 0; font-size: 12px; min-height: 70px;
+    background: rgba(0,0,0,0.18); border-radius: 8px; padding: 8px 12px;
   }
-  .leaderboard h4 { margin: 0 0 6px; font-size: 11px; font-weight: 700; opacity: 0.75; letter-spacing: 0.5px; text-transform: uppercase; }
-  .lb-row { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 0; gap: 8px; }
-  .lb-row .rank { font-weight: 700; opacity: 0.6; min-width: 18px; }
+  .leaderboard h4 { margin: 0 0 6px; font-size: 10px; font-weight: 700; opacity: 0.7; letter-spacing: 0.5px; text-transform: uppercase; }
+  .lb-row { display: flex; justify-content: space-between; align-items: baseline; padding: 1px 0; gap: 8px; }
+  .lb-row .rank { font-weight: 700; opacity: 0.6; min-width: 16px; }
   .lb-row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lb-row .score { font-weight: 700; color: #ffd54f; }
   .lb-empty { opacity: 0.5; font-style: italic; }
-  .stats-row { display: flex; gap: 8px; font-size: 11px; opacity: 0.8; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); }
-  .btn-row { margin-top: auto; }
+  .stats-row { display: flex; gap: 6px; font-size: 10px; opacity: 0.75; margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .btn-row { margin-top: auto; padding-top: 8px; }
   .btn {
-    display: inline-block; padding: 10px 20px;
+    display: inline-block; padding: 9px 18px;
     background: white; color: #5e35b1;
     border-radius: 8px; text-decoration: none;
-    font-weight: 700; font-size: 14px;
+    font-weight: 700; font-size: 13px;
     transition: background 0.15s, transform 0.15s;
   }
   .btn:hover { background: #ffe082; transform: translateY(-1px); }
   .btn-disabled {
-    background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.5);
-    cursor: not-allowed;
+    background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.5); cursor: not-allowed;
   }
   .btn-disabled:hover { background: rgba(255,255,255,0.18); transform: none; }
-  .stack { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .stack { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
   .chip {
-    font-size: 11px; padding: 3px 8px; border-radius: 10px;
+    font-size: 10px; padding: 2px 7px; border-radius: 10px;
     background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.85);
   }
   footer {
-    text-align: center; opacity: 0.65; font-size: 13px;
-    margin-top: 48px; line-height: 1.6;
+    text-align: center; opacity: 0.65; font-size: 12px;
+    margin-top: 36px; line-height: 1.6;
   }
   code {
     background: rgba(0,0,0,0.25); padding: 1px 6px;
-    border-radius: 4px; font-size: 12px;
+    border-radius: 4px; font-size: 11px;
   }
 </style>
 </head>
 <body>
 <header>
   <h1>💊 PharmacySIM</h1>
-  <p class="subtitle">Hệ thống mô phỏng đào tạo kỹ năng <b>xếp thuốc theo phân loại</b><br>cho sinh viên ngành Dược · MediaPipe Hand Tracking · Lưu điểm trên bảng xếp hạng</p>
+  <p class="subtitle">Hệ thống mô phỏng đào tạo kỹ năng <b>xếp thuốc theo phân loại</b> cho sinh viên Dược</p>
+  <div class="tagline">
+    <span class="t">🖐️ MediaPipe</span>
+    <span class="t">🖱️ Mouse</span>
+    <span class="t">🥽 WebXR + Hand</span>
+    <span class="t">🌐 Metaverse</span>
+    <span class="t">🔊 Sound FX</span>
+    <span class="t">🎁 Achievements</span>
+    <span class="t">📊 Analytics</span>
+  </div>
 </header>
 
-<div class="player-bar">
-  <label for="player-input">👤 Tên người chơi:</label>
-  <input id="player-input" placeholder="Họ tên / mã SV — sẽ hiện trên bảng xếp hạng" maxlength="40" />
-  <button id="player-save">Lưu</button>
-  <span class="saved" id="player-saved"></span>
+<div class="top-bar">
+  <div>
+    <label for="player-input">👤</label>
+    <input id="player-input" placeholder="Họ tên / mã SV — sẽ hiện trên bảng xếp hạng" maxlength="40" />
+    <button id="player-save">Lưu</button>
+    <span class="saved" id="player-saved"></span>
+  </div>
+  <div>
+    <label>🎯 Độ khó:</label>
+    <button class="diff-btn" data-diff="easy">Dễ <small>4 thuốc</small></button>
+    <button class="diff-btn" data-diff="med">Vừa <small>6 thuốc</small></button>
+    <button class="diff-btn" data-diff="hard">Khó <small>8 thuốc</small></button>
+  </div>
 </div>
 
-<div class="diff-bar">
-  <label>🎯 Độ khó:</label>
-  <button class="diff-btn" data-diff="easy">Dễ <small>4 loại thuốc</small></button>
-  <button class="diff-btn" data-diff="med">Vừa <small>6 loại thuốc</small></button>
-  <button class="diff-btn" data-diff="hard">Khó <small>8 loại thuốc</small></button>
-  <span class="saved" id="diff-info"></span>
+<div class="badges-row">
+  <h3>🎁 Huy hiệu của bạn <span id="badges-count" style="opacity:0.6;font-weight:400">(0)</span></h3>
+  <div class="badges-list" id="badges-list">đang tải...</div>
 </div>
 
 <div class="grid">
 
   <div class="card">
     <div class="icon">🎮</div>
-    <span class="badge b-ready">✓ Sẵn sàng</span>
+    <span class="badge-tag b-ready">✓ Sẵn sàng</span>
     <h2>2D Arcade</h2>
     <div class="stack">
       <span class="chip">Canvas 2D</span>
       <span class="chip">MediaPipe</span>
       <span class="chip">+ Chuột</span>
-      <span class="chip">Gamification</span>
+      <span class="chip">🔊 SFX</span>
     </div>
-    <p class="desc">Game-style side-view. Pinch để mở thùng, thuốc bay ra, kéo lên kệ. Score + combo + timer + particle. Có thể chơi bằng <b>webcam</b> hoặc <b>chuột</b>.</p>
-    <ul class="features">
-      <li>Mở thùng → thuốc spring out</li>
-      <li>Score · Combo · Timer 60s</li>
-      <li>Phù hợp: tự học, gameify</li>
-    </ul>
+    <p class="desc">Game-style side-view. Mở thùng → thuốc spring out → kéo lên kệ. Score + combo + timer + particle.</p>
     <div class="leaderboard" data-version="2d-arcade">
       <h4>🏆 Top điểm</h4>
       <div class="lb-list"><div class="lb-empty">Đang tải...</div></div>
@@ -167,20 +184,15 @@
 
   <div class="card">
     <div class="icon">🥽</div>
-    <span class="badge b-ready">✓ Sẵn sàng</span>
+    <span class="badge-tag b-ready">✓ Sẵn sàng</span>
     <h2>3D Realistic</h2>
     <div class="stack">
       <span class="chip">Three.js</span>
       <span class="chip">MediaPipe</span>
       <span class="chip">+ Chuột</span>
-      <span class="chip">WebXR</span>
+      <span class="chip">WebXR + Hand</span>
     </div>
-    <p class="desc">Scene 3D, kệ thuốc + thùng carton mở được. Pinch (hoặc chuột) cầm hộp, snap-to-slot, ô đúng glow xanh / sai glow đỏ.</p>
-    <ul class="features">
-      <li>3D đầy đủ + đổ bóng</li>
-      <li>Snap-to-slot + chấm điểm từng hộp</li>
-      <li>Phù hợp: đào tạo sát thực tế</li>
-    </ul>
+    <p class="desc">Scene 3D, thùng carton mở được, snap-to-slot, hover-halo xanh/đỏ. <b>WebXR hand tracking</b> native cho Quest/Vision Pro.</p>
     <div class="leaderboard" data-version="3d-shelf">
       <h4>🏆 Top điểm</h4>
       <div class="lb-list"><div class="lb-empty">Đang tải...</div></div>
@@ -190,67 +202,74 @@
   </div>
 
   <div class="card">
-    <div class="icon">🤝</div>
-    <span class="badge b-future">📅 Sắp có</span>
-    <h2>VR Hand Tracking</h2>
+    <div class="icon">🌐</div>
+    <span class="badge-tag b-new">🆕 Mới</span>
+    <h2>Metaverse</h2>
     <div class="stack">
-      <span class="chip">WebXR Native</span>
-      <span class="chip">Quest / Vision Pro</span>
+      <span class="chip">WebSocket</span>
+      <span class="chip">Realtime</span>
+      <span class="chip">Multi-user</span>
+      <span class="chip">Pharmacy Room</span>
     </div>
-    <p class="desc">Bỏ webcam — dùng hand tracking native của headset VR. Tương tác hai tay, đầy đủ ngón, không độ trễ.</p>
-    <ul class="features">
-      <li>WebXR Hand Tracking API</li>
-      <li>Room-scale walk-around</li>
-    </ul>
-    <div class="btn-row"><span class="btn btn-disabled">Chưa có</span></div>
+    <p class="desc">Phòng dược 3D chung — bạn thấy avatar người khác chuyển động real-time, cùng xếp thuốc lên kệ. Hand tracking hoặc mouse.</p>
+    <div class="leaderboard" data-version="metaverse">
+      <h4>🏆 Top điểm</h4>
+      <div class="lb-list"><div class="lb-empty">Đang tải...</div></div>
+      <div class="stats-row"></div>
+    </div>
+    <div class="btn-row"><a class="btn" href="metaverse.html">🌐 Vào phòng</a></div>
   </div>
 
   <div class="card">
-    <div class="icon">🖱️</div>
-    <span class="badge b-future">📅 Sắp có</span>
-    <h2>2D Mouse / Touch</h2>
+    <div class="icon">🧠</div>
+    <span class="badge-tag b-new">🆕 Mới</span>
+    <h2>Quiz nhanh</h2>
     <div class="stack">
-      <span class="chip">No Webcam</span>
-      <span class="chip">Tablet OK</span>
+      <span class="chip">Multi-choice</span>
+      <span class="chip">10 câu</span>
+      <span class="chip">15s/câu</span>
+      <span class="chip">🔥 Streak</span>
     </div>
-    <p class="desc">Không cần webcam — kéo thả bằng chuột hoặc chạm. Cho lớp học, máy không có camera, iPad.</p>
-    <ul class="features">
-      <li>Mouse + Touch drag-drop</li>
-      <li>Quiz mode kèm giải thích</li>
-    </ul>
-    <div class="btn-row"><span class="btn btn-disabled">Chưa có</span></div>
+    <p class="desc">Nhìn tên thuốc → chọn đúng nhóm điều trị trong 4 đáp án. Thưởng theo tốc độ, streak liên tiếp. Không cần webcam.</p>
+    <div class="leaderboard" data-version="quiz">
+      <h4>🏆 Top điểm</h4>
+      <div class="lb-list"><div class="lb-empty">Đang tải...</div></div>
+      <div class="stats-row"></div>
+    </div>
+    <div class="btn-row"><a class="btn" href="quiz.html">🧠 Bắt đầu</a></div>
   </div>
 
   <div class="card">
     <div class="icon">📊</div>
-    <span class="badge b-ready">✓ Sẵn sàng</span>
+    <span class="badge-tag b-ready">✓ Sẵn sàng</span>
     <h2>Dashboard Giảng viên</h2>
     <div class="stack">
       <span class="chip">Analytics</span>
       <span class="chip">CSV Export</span>
       <span class="chip">Confusion Matrix</span>
+      <span class="chip">Histogram</span>
     </div>
-    <p class="desc">Theo dõi tiến độ cả lớp: tổng lượt, phổ điểm, top 10, ma trận nhầm lẫn nhóm thuốc, export CSV.</p>
+    <p class="desc">Theo dõi cả lớp: stats, phổ điểm, top 10, ma trận nhầm lẫn (nhóm thực ↔ nhóm SV đặt vào), export CSV.</p>
     <ul class="features">
       <li>Biểu đồ phổ điểm theo bucket 10đ</li>
       <li>Ma trận: nhóm thực ↔ nhóm SV đặt</li>
-      <li>Export CSV (Excel-compatible UTF-8)</li>
+      <li>Export CSV (Excel UTF-8)</li>
     </ul>
     <div class="btn-row"><a class="btn" href="dashboard.html">📊 Mở dashboard</a></div>
   </div>
 
   <div class="card">
-    <div class="icon">🏃</div>
-    <span class="badge b-future">📅 Sắp có</span>
-    <h2>Multiplayer Race</h2>
+    <div class="icon">⚡</div>
+    <span class="badge-tag b-future">📅 Sắp có</span>
+    <h2>Time Attack</h2>
     <div class="stack">
-      <span class="chip">2 Players</span>
-      <span class="chip">Realtime</span>
+      <span class="chip">Escalating</span>
+      <span class="chip">Survival</span>
     </div>
-    <p class="desc">2 sinh viên cùng xếp một bộ thuốc — ai nhanh + chính xác hơn thì thắng. Tạo không khí thi đua.</p>
+    <p class="desc">Như 2D arcade nhưng vô tận — mỗi wave thêm 1 thuốc và timer ngắn lại. Sống được wave nào hay wave đó.</p>
     <ul class="features">
-      <li>Split-screen cùng webcam</li>
-      <li>Leaderboard theo round</li>
+      <li>Tăng độ khó theo wave</li>
+      <li>Leaderboard riêng cho survival mode</li>
     </ul>
     <div class="btn-row"><span class="btn btn-disabled">Chưa có</span></div>
   </div>
@@ -258,80 +277,69 @@
 </div>
 
 <footer>
-  <p>Backend: Node.js + Express + SQLite trên cổng <code>8041</code> · Chạy local: <code>npm install &amp;&amp; npm start</code><br>
-  Deploy: Docker / Portainer (xem README) · Tương thích Chrome/Edge · Hand tracking cần webcam</p>
+  <p>
+    Backend: Node.js + Express + SQLite + WebSocket trên cổng <code>8041</code><br>
+    Chạy local: <code>npm install &amp;&amp; npm start</code> · Deploy: Docker / Portainer (xem README)<br>
+    Tương thích Chrome/Edge · Hand tracking cần webcam (hoặc dùng chuột)
+  </p>
 </footer>
 
 <script type="module">
-import { getPlayerName, setPlayerName, getLeaderboard, getStats } from './js/api.js';
-import { getDifficulty, setDifficulty, DIFFICULTIES } from './js/medicines.js';
+import { getPlayerName, setPlayerName, getLeaderboard, getStats, getBadges, getMyAchievements } from './js/api.js';
+import { getDifficulty, setDifficulty } from './js/medicines.js';
 
-// --- Difficulty bar ---
-const diffInfo = document.getElementById('diff-info');
-function refreshDiffButtons() {
-  const cur = getDifficulty();
-  document.querySelectorAll('.diff-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.diff === cur.id);
-  });
-  diffInfo.textContent = `${cur.label} · ${cur.count} loại thuốc`;
-}
-document.querySelectorAll('.diff-btn').forEach(b => {
-  b.addEventListener('click', () => { setDifficulty(b.dataset.diff); refreshDiffButtons(); });
-});
-refreshDiffButtons();
-
-
-// --- Player name bar ---
+// --- Player name ---
 const input = document.getElementById('player-input');
 const saveBtn = document.getElementById('player-save');
 const savedEl = document.getElementById('player-saved');
 input.value = getPlayerName();
-if (input.value) savedEl.textContent = '✓ Đã lưu — sẽ hiện trên bảng xếp hạng';
-
+if (input.value) savedEl.textContent = '✓ Đã lưu';
 saveBtn.addEventListener('click', () => {
   const v = setPlayerName(input.value);
   input.value = v;
   savedEl.textContent = v ? '✓ Đã lưu' : '';
-  setTimeout(() => { if (savedEl.textContent === '✓ Đã lưu') savedEl.textContent = ''; }, 2500);
+  loadBadges();
 });
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveBtn.click(); });
 
-// --- Leaderboards ---
-function fmtTime(ms) {
-  const d = new Date(ms);
-  return `${d.getDate()}/${d.getMonth()+1}`;
+// --- Difficulty ---
+function refreshDiff() {
+  const cur = getDifficulty();
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.toggle('active', b.dataset.diff === cur.id));
 }
+document.querySelectorAll('.diff-btn').forEach(b => {
+  b.addEventListener('click', () => { setDifficulty(b.dataset.diff); refreshDiff(); });
+});
+refreshDiff();
+
+// --- Badges ---
+async function loadBadges() {
+  const [all, mine] = await Promise.all([getBadges(), getMyAchievements()]);
+  const unlocked = new Set(mine.map(a => a.badge_id));
+  const list = document.getElementById('badges-list');
+  document.getElementById('badges-count').textContent = `(${unlocked.size}/${all.length})`;
+  if (!all.length) { list.innerHTML = '<div class="lb-empty">Chưa có dữ liệu</div>'; return; }
+  list.innerHTML = all.map(b => `
+    <div class="badge-chip ${unlocked.has(b.id) ? 'unlocked' : ''}" title="${b.desc}">
+      <span style="font-size:16px">${b.icon}</span>${b.label}
+    </div>
+  `).join('');
+}
+loadBadges();
+
+// --- Leaderboards ---
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
 async function loadLeaderboard(card) {
   const version = card.dataset.version;
-  const [rows, stats] = await Promise.all([
-    getLeaderboard(version, 5),
-    getStats(version),
-  ]);
+  const [rows, stats] = await Promise.all([getLeaderboard(version, 5), getStats(version)]);
   const list = card.querySelector('.lb-list');
-  if (!rows.length) {
-    list.innerHTML = '<div class="lb-empty">Chưa có ai chơi — hãy là người đầu tiên!</div>';
-  } else {
-    list.innerHTML = rows.map((r, i) => `
-      <div class="lb-row">
-        <span class="rank">${i + 1}.</span>
-        <span class="name">${escapeHtml(r.player_name)}</span>
-        <span class="score">${r.score}</span>
-      </div>
-    `).join('');
-  }
+  if (!rows.length) list.innerHTML = '<div class="lb-empty">Chưa có ai chơi — là người đầu tiên!</div>';
+  else list.innerHTML = rows.map((r, i) => `<div class="lb-row"><span class="rank">${i+1}.</span><span class="name">${escapeHtml(r.player_name)}</span><span class="score">${r.score}</span></div>`).join('');
   const sr = card.querySelector('.stats-row');
-  if (stats && stats.total_attempts > 0) {
-    sr.innerHTML = `📈 ${stats.total_attempts} lượt · TB ${stats.avg_score ?? 0} · 🎯 ${stats.perfect_count} perfect`;
-  } else {
-    sr.innerHTML = '';
-  }
+  if (stats && stats.total_attempts > 0) sr.innerHTML = `📈 ${stats.total_attempts} lượt · TB ${stats.avg_score ?? 0} · 🎯 ${stats.perfect_count}`;
+  else sr.innerHTML = '';
 }
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
 document.querySelectorAll('.leaderboard').forEach(loadLeaderboard);
 </script>
 </body>

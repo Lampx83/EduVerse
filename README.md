@@ -9,10 +9,12 @@ vào SQLite và xuất analytics cho giảng viên.
 
 | Phiên bản | URL | Mô tả |
 |---|---|---|
-| **2D Arcade** | `/2d-arcade.html` | Canvas 2D side-view, mở thùng → thuốc spring out → kéo lên kệ. Score + combo + timer + particle effects. Hỗ trợ webcam (MediaPipe) hoặc chuột. |
-| **3D Realistic** | `/3d-shelf.html` | Three.js scene 3D, thùng carton mở được, snap-to-slot, ô đúng glow xanh / sai glow đỏ. Hỗ trợ webcam, chuột, và WebXR. |
-| **Dashboard Giảng viên** | `/dashboard.html` | Stats + histogram + leaderboard + ma trận nhầm lẫn + export CSV |
-| Landing | `/` | Trang chính: chọn version, set tên SV, chọn độ khó, xem leaderboard nhanh |
+| **2D Arcade** | `/2d-arcade.html` | Canvas 2D side-view, mở thùng → thuốc spring out → kéo lên kệ. Score + combo + timer + particle + SFX. MediaPipe hoặc chuột. |
+| **3D Realistic** | `/3d-shelf.html` | Three.js scene 3D, thùng carton mở được, snap-to-slot, hover-halo xanh/đỏ + SFX. Hỗ trợ **WebXR hand tracking native** (Quest/Vision Pro), MediaPipe, chuột. |
+| **🌐 Metaverse** | `/metaverse.html` | Phòng dược 3D **realtime multiplayer** (WebSocket). Bạn thấy avatar người khác chuyển động, cùng xếp thuốc lên kệ. Hand tracking hoặc mouse. |
+| **🧠 Quiz nhanh** | `/quiz.html` | 10 câu multiple-choice, 15s/câu, streak bonus. Không cần webcam. |
+| **📊 Dashboard Giảng viên** | `/dashboard.html` | Stats + histogram + top 10 + ma trận nhầm lẫn + export CSV (cho cả 4 mode) |
+| Landing | `/` | Set tên SV, chọn độ khó, xem huy hiệu đã mở khóa, leaderboard nhanh |
 
 ## 🎯 Độ khó (chọn ở trang chính)
 
@@ -49,6 +51,13 @@ Omeprazol (Dạ dày). Mỗi round random N loại từ catalog.
 - ✅ Model `hand_landmarker.task` self-hosted ở `public/models/`
 - ✅ Three.js từ unpkg CDN (vẫn cần internet — TODO bundle local)
 - ✅ Không phụ thuộc jsdelivr/googleapis lúc runtime
+
+### Multiplayer + công nghệ mới
+- 🌐 **WebSocket** (ws) — Metaverse phòng chung, sync cursor 20Hz + medicine state
+- 🥽 **WebXR Hand Tracking API** — Quest 2/3, Vision Pro có hand tracking native
+- 🔊 **WebAudio API** — sound effects synth (beep/ding/buzzer/perfect arpeggio)
+- 🎁 **Achievements / Badges** — 7 huy hiệu auto-unlock theo milestone
+  (first-play, perfect-1, perfect-5, speed-demon, all-modes, hard-perfect, metaverse-host)
 
 ## 🚀 Chạy local
 
@@ -132,8 +141,15 @@ PharmacySIM/
 | `GET`  | `/api/confusion?version=` | Ma trận nhóm thực → nhóm SV đặt |
 | `GET`  | `/api/recent?limit=20` | Lượt chơi gần nhất |
 | `GET`  | `/api/export.csv` | Tải toàn bộ lượt chơi dạng CSV (UTF-8 BOM) |
+| `GET`  | `/api/badges` | Danh sách tất cả huy hiệu (icon + label + desc) |
+| `GET`  | `/api/achievements?player=` | Huy hiệu đã mở khóa của 1 SV |
+| `WS`   | `/ws` | WebSocket multiplayer cho Metaverse |
 
-`version` hợp lệ: `2d-arcade`, `3d-shelf`.
+`version` hợp lệ: `2d-arcade`, `3d-shelf`, `metaverse`, `quiz`, `time-attack`.
+
+### WebSocket protocol (`/ws`)
+Client → Server: `{type:'join'|'cursor'|'grab'|'move'|'release'|'snap'|'reset'|'open-carton', ...}`<br>
+Server → Client: `{type:'welcome'|'join'|'leave'|'cursor'|'grab'|'medpos'|'release'|'snap'|'reset', ...}`
 
 ## ⚙️ Biến môi trường
 
@@ -157,8 +173,13 @@ curl -O http://localhost:8041/api/export.csv
 
 ## 📅 Roadmap
 
-- [ ] VR Hand Tracking native (WebXR cho Quest / Vision Pro)
-- [ ] Multiplayer Race (2 SV thi đua realtime qua WebSocket)
-- [ ] Sound effects (beep on grab, ding on correct, fail buzzer)
-- [ ] Bundle Three.js + WebXR local (giảm phụ thuộc unpkg)
+- [x] ~~VR Hand Tracking native~~ ✅ (3D shelf)
+- [x] ~~Multiplayer realtime~~ ✅ (Metaverse via WebSocket)
+- [x] ~~Sound effects~~ ✅ (WebAudio synth)
+- [x] ~~Quiz mode~~ ✅
+- [x] ~~Achievements~~ ✅
+- [ ] Time Attack — escalating survival mode
+- [ ] Voice control (Web Speech API)
+- [ ] Bundle Three.js + WebXR local
 - [ ] Auth + class/group management (SV ↔ giảng viên)
+- [ ] AR mode (WebXR `immersive-ar` cho điện thoại)

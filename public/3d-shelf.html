@@ -34,6 +34,8 @@ import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
 import { submitAttempt } from './js/api.js';
 import { pickRoundMedicines, getDifficulty } from './js/medicines.js';
+import { sfx } from './js/sfx.js';
+import { XRHandModelFactory } from 'three/addons/webxr/XRHandModelFactory.js';
 const sessionStartedAt = Date.now();
 const ROUND_DIFFICULTY = getDifficulty();
 const ROUND_MEDICINES = pickRoundMedicines(ROUND_DIFFICULTY.count);
@@ -523,7 +525,7 @@ renderer.xr.enabled = true;                  // <— enable WebXR
 document.body.appendChild(renderer.domElement);
 
 // VR entry button (appears bottom-center)
-const vrBtn = VRButton.createButton(renderer);
+const vrBtn = VRButton.createButton(renderer, { optionalFeatures: ['hand-tracking'] });
 vrBtn.style.bottom = '60px';
 document.body.appendChild(vrBtn);
 
@@ -1097,6 +1099,7 @@ function openTrainingCarton() {
   trainingCartonState = 'opening';
   trainingCartonAnimT = 0;
   openLabel.visible = false;
+  sfx.open();
   setHint('✨ Đang mở thùng...');
   // Safety fallback: nếu rAF tick bị throttle thì vẫn promote sang 'open' + reveal sau 1s
   setTimeout(() => {
@@ -1203,6 +1206,73 @@ for (let i = 0; i < 2; i++) {
   const grip = renderer.xr.getControllerGrip(i);
   grip.add(controllerModelFactory.createControllerModel(grip));
   scene.add(grip);
+}
+
+// ----- VR native hand tracking (Quest 2/3, Vision Pro) -----
+const handModelFactory = new XRHandModelFactory();
+const xrHands = [];
+for (let i = 0; i < 2; i++) {
+  const hand = renderer.xr.getHand(i);
+  hand.add(handModelFactory.createHandModel(hand, 'mesh'));
+  hand.userData.pinching = false;
+  hand.userData.grabbed = null;
+  scene.add(hand);
+  xrHands.push(hand);
+}
+
+const _xrPinchMid = new THREE.Vector3();
+const _xrGrabPlane = new THREE.Plane();
+const _xrInv = new THREE.Matrix4();
+function updateXRHands() {
+  if (!renderer.xr.isPresenting) return;
+  for (const hand of xrHands) {
+    const thumb = hand.joints?.['thumb-tip'];
+    const index = hand.joints?.['index-finger-tip'];
+    if (!thumb || !index) continue;
+    const tw = new THREE.Vector3(); thumb.getWorldPosition(tw);
+    const iw = new THREE.Vector3(); index.getWorldPosition(iw);
+    const dist = tw.distanceTo(iw);
+    _xrPinchMid.copy(tw).lerp(iw, 0.5);
+
+    const wasPinching = hand.userData.pinching;
+    if (!wasPinching && dist < 0.025) hand.userData.pinching = true;
+    else if (wasPinching && dist > 0.04) hand.userData.pinching = false;
+
+    // Pinch START → grab nearest visible medicine
+    if (hand.userData.pinching && !wasPinching && !hand.userData.grabbed) {
+      let best = null, bestDist = Infinity;
+      for (const med of medicineBoxes) {
+        if (!med.mesh.visible) continue;
+        const mw = new THREE.Vector3();
+        med.mesh.getWorldPosition(mw);
+        const d = _xrPinchMid.distanceTo(mw);
+        if (d < bestDist) { bestDist = d; best = med; }
+      }
+      // Allow grab if hand is within ~12cm of a medicine
+      if (best && bestDist < 0.12) {
+        hand.userData.grabbed = best;
+        if (best.slotId) {
+          const sl = slots.find(s => s.id === best.slotId);
+          if (sl) sl.placedBoxId = null;
+          best.slotId = null;
+        }
+        handState.grabbed = best;  // share with halo highlight
+        sfx.grab();
+      }
+    }
+    // While pinching → drag medicine to pinch midpoint
+    if (hand.userData.pinching && hand.userData.grabbed) {
+      _xrInv.copy(vrWorld.matrixWorld).invert();
+      const local = _xrPinchMid.clone().applyMatrix4(_xrInv);
+      hand.userData.grabbed.mesh.position.copy(local);
+    }
+    // Pinch END → snap or release
+    if (!hand.userData.pinching && wasPinching && hand.userData.grabbed) {
+      snapMedicineOnRelease(hand.userData.grabbed);
+      hand.userData.grabbed = null;
+      handState.grabbed = null;
+    }
+  }
 }
 
 const _tmpMat = new THREE.Matrix4();
@@ -1453,6 +1523,7 @@ function snapMedicineOnRelease(med) {
     med.mesh.position.copy(best.localCenter);
     best.placedBoxId = med.id;
     med.slotId = best.id;
+    if (best.category === med.category) sfx.correct(); else sfx.wrong();
     setHint(`📦 Đặt "${med.name}" vào ô "${best.category}"`);
     return;
   }
@@ -1658,6 +1729,7 @@ addEventListener('resize', () => {
 renderer.setAnimationLoop(function tick(time) {
   const dt = clock.getDelta();
   updateHandTracking(time ?? performance.now());
+  updateXRHands();
 
   // Training carton flap animation (visual only — state transition handled
   // by setTimeout fallback in openTrainingCarton để chịu được throttle iframe)

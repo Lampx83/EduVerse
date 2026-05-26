@@ -31,6 +31,15 @@ db.exec(`
     ON attempts(version, score DESC, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_attempts_recent
     ON attempts(created_at DESC);
+
+  CREATE TABLE IF NOT EXISTS achievements (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_name  TEXT    NOT NULL,
+    badge_id     TEXT    NOT NULL,
+    unlocked_at  INTEGER NOT NULL,
+    UNIQUE(player_name, badge_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_ach_player ON achievements(player_name);
 `);
 
 const insertAttemptStmt = db.prepare(`
@@ -102,6 +111,29 @@ export function getAllAttempts() {
 
 export function getHistogram(version) {
   return histogramStmt.all({ version });
+}
+
+const achievementsForStmt = db.prepare(`
+  SELECT badge_id, unlocked_at FROM achievements
+  WHERE player_name = @player ORDER BY unlocked_at DESC
+`);
+const allAchievementsStmt = db.prepare(`
+  SELECT player_name, badge_id, unlocked_at FROM achievements
+  ORDER BY unlocked_at DESC LIMIT 50
+`);
+const unlockAchievementStmt = db.prepare(`
+  INSERT OR IGNORE INTO achievements (player_name, badge_id, unlocked_at)
+  VALUES (@player, @badge, @t)
+`);
+export function getAchievements(player) {
+  return achievementsForStmt.all({ player });
+}
+export function getAllRecentAchievements() {
+  return allAchievementsStmt.all();
+}
+export function unlockAchievement(player, badge) {
+  const info = unlockAchievementStmt.run({ player, badge, t: Date.now() });
+  return info.changes > 0;
 }
 
 // Confusion matrix: parses attempt.details.breakdown / details.medicines
