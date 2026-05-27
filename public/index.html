@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PharmacySIM · Mô phỏng đào tạo dược</title>
+<title>PharmaSIM · Mô phỏng đào tạo dược</title>
 <style>
   :root {
     --bg-1: #0f172a;
@@ -232,10 +232,10 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
 <div class="hero">
   <div class="logo">💊</div>
-  <h1>PharmacySIM</h1>
-  <p class="tagline">Hệ thống mô phỏng đào tạo kỹ năng <b>xếp thuốc theo nhóm điều trị</b> cho sinh viên ngành Dược · 10 cấp độ, 12 loại thuốc, đa thiết bị</p>
+  <h1>PharmaSIM</h1>
+  <p class="tagline">Hệ thống mô phỏng đào tạo dược · <b>3 nhiệm vụ</b> Sắp xếp thuốc · Bào chế GMP · Sắc ký TLC · mỗi nhiệm vụ có 6 phiên bản công nghệ từ 2D đến VR Metaverse</p>
   <div class="pills">
-    <span class="pill featured">🆕 10 levels mới</span>
+    <span class="pill featured">🆕 3 nhiệm vụ song song</span>
     <span class="pill">🥽 WebXR Hand Tracking</span>
     <span class="pill">🌐 Metaverse multiplayer</span>
     <span class="pill">📱 Đa thiết bị · Quest · Vision Pro · phone</span>
@@ -260,139 +260,244 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   </div>
 </div>
 
-<!-- ============ NHÓM 1 · SẮP XẾP THUỐC (level select nằm bên trong) ============ -->
+<!-- ============ MODULE NỔI BẬT — 12 thẻ chéo các cụm ============ -->
 <div class="section">
   <div class="section-title">
-    <h2>💊 Demo 1 · Sắp xếp thuốc</h2>
-    <span class="hint">Phân loại thuốc vào đúng kệ theo nhóm điều trị — 6 cách chơi</span>
+    <h2>⭐ Module nổi bật</h2>
+    <span class="hint">12 trải nghiệm tiêu biểu — từ 3D lab đến AI patient, từ năm 1 đến OSCE tốt nghiệp</span>
+    <span class="actions"><a href="#campus">Xem toàn bộ 102 module →</a></span>
   </div>
-  <div class="level-select-inline">
-    <div class="level-select-head">
-      <h3>🎯 Chọn cấp độ</h3>
-      <span class="hint" id="level-current-hint">Level 1 đang mở</span>
-      <span class="actions"><a id="reset-progress" href="#">↺ Reset tiến độ</a></span>
-    </div>
-    <div class="levels" id="levels"></div>
-  </div>
-  <div class="modes">
-
-    <div class="mode" style="--mode-color: #fb923c">
-      <div class="mode-head">
-        <div class="mode-icon">🎮</div>
-        <div class="mode-info"><h3>2D Arcade</h3><span class="tag">Sẵn sàng</span></div>
-      </div>
-      <div class="chips"><span>Canvas 2D</span><span>MediaPipe</span><span>+ Chuột</span><span>🔊 SFX</span></div>
-      <p class="desc">Game-style side-view. Pinch mở thùng → thuốc bay ra → kéo vào kệ đúng nhóm. Có level system 1-10.</p>
-      <div class="leaderboard" data-version="2d-arcade"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
-      <a class="btn" id="play-2d" href="2d-arcade.html">▶️ Chơi Level <span id="lvl-2d">1</span></a>
-    </div>
-
-    <div class="mode" style="--mode-color: #8b5cf6">
-      <div class="mode-head">
-        <div class="mode-icon">🥽</div>
-        <div class="mode-info"><h3>3D Realistic</h3><span class="tag">Sẵn sàng</span></div>
-      </div>
-      <div class="chips"><span>Three.js</span><span>MediaPipe</span><span>WebXR + Hand</span><span>VR Native</span></div>
-      <p class="desc">Three.js 3D scene, carton mở được, snap-to-slot, hover halo. <b>WebXR hand tracking</b> cho Quest/Vision Pro.</p>
-      <div class="leaderboard" data-version="3d-shelf"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
-      <a class="btn dark" href="3d-shelf.html">🥽 Vào 3D</a>
-    </div>
-
-    <div class="mode" style="--mode-color: #0ea5e9">
-      <div class="mode-head">
-        <div class="mode-icon">🌐</div>
-        <div class="mode-info"><h3>Metaverse</h3><span class="tag" style="background:#0ea5e9">🆕 Mới</span></div>
-      </div>
-      <div class="chips"><span>WebSocket</span><span>Realtime</span><span>Multi-user</span><span>Pharmacy Room</span></div>
-      <p class="desc">Phòng dược 3D chung — bạn thấy avatar người khác chuyển động real-time, cùng xếp thuốc.</p>
-      <div class="leaderboard" data-version="metaverse"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
-      <a class="btn dark" href="metaverse.html">🌐 Vào phòng</a>
-    </div>
-
-    <div class="mode" style="--mode-color: #14b8a6">
-      <div class="mode-head">
-        <div class="mode-icon">🧠</div>
-        <div class="mode-info"><h3>Quiz nhanh</h3><span class="tag" style="background:#14b8a6">🆕 Mới</span></div>
-      </div>
-      <div class="chips"><span>10 câu</span><span>15s/câu</span><span>🔥 Streak</span><span>Không webcam</span></div>
-      <p class="desc">Nhìn tên thuốc → chọn đúng nhóm điều trị trong 4 đáp án. Phù hợp tablet, máy không có webcam.</p>
-      <div class="leaderboard" data-version="quiz"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
-      <a class="btn dark" href="quiz.html">🧠 Bắt đầu</a>
-    </div>
-
-    <div class="mode" style="--mode-color: #f97316">
-      <div class="mode-head">
-        <div class="mode-icon">⚡</div>
-        <div class="mode-info"><h3>Time Attack</h3><span class="tag" style="background:#f97316">🆕 Mới</span></div>
-      </div>
-      <div class="chips"><span>Survival</span><span>Escalating</span><span>Sai -5s</span><span>Wave</span></div>
-      <p class="desc">Sống được càng nhiều wave càng tốt — mỗi wave thêm 1 thuốc, time giảm dần, sai sẽ trừ thời gian!</p>
-      <div class="leaderboard" data-version="time-attack"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
-      <a class="btn dark" href="time-attack.html">⚡ Bắt đầu</a>
-    </div>
-
-    <div class="mode" style="--mode-color: #ef4444">
-      <div class="mode-head">
-        <div class="mode-icon">🏁</div>
-        <div class="mode-info"><h3>Race 1v1</h3><span class="tag future">Sắp có</span></div>
-      </div>
-      <div class="chips"><span>WebSocket</span><span>1v1</span><span>Auto-match</span><span>Live opponent</span></div>
-      <p class="desc">Bắt cặp 2 người ngẫu nhiên qua WebSocket, cùng chơi 1 level, ai xong trước thắng. Backend đã sẵn sàng.</p>
-      <a class="btn disabled" href="#">🏁 Sắp ra mắt</a>
-    </div>
-
+  <style>
+    .feat-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    .feat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 16px; color: white; text-decoration: none;
+      transition: all 0.18s; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .feat-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: var(--fc-color, var(--accent));
+    }
+    .feat-card:hover { transform: translateY(-2px); background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
+    .feat-card .fc-head { display: flex; align-items: center; gap: 10px; }
+    .feat-card .fc-icon { font-size: 28px; }
+    .feat-card .fc-id { font-size: 11px; opacity: 0.7; font-weight: 700; letter-spacing: 0.5px; }
+    .feat-card .fc-tag { background: var(--fc-color, var(--accent)); color: #1f2937; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+    .feat-card .fc-title { font-size: 15px; font-weight: 700; line-height: 1.3; }
+    .feat-card .fc-desc { font-size: 12px; opacity: 0.78; line-height: 1.45; flex: 1; }
+    .feat-card .fc-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .feat-card .fc-chip { font-size: 10px; background: rgba(255,255,255,0.08); padding: 2px 7px; border-radius: 8px; }
+  </style>
+  <div class="feat-grid">
+    <a class="feat-card" style="--fc-color:#fbbf24" href="2d-arcade.html">
+      <div class="fc-head"><div class="fc-icon">💊</div><div class="fc-id">L3.1 · NĂM 3</div><span class="fc-tag">2D Game</span></div>
+      <div class="fc-title">Sắp xếp thuốc theo ATC</div>
+      <div class="fc-desc">Phân loại 16 thuốc theo nhóm điều trị · 10 cấp độ · Time Attack + Race 1v1</div>
+      <div class="fc-chips"><span class="fc-chip">5 phiên bản</span><span class="fc-chip">Dược lý</span><span class="fc-chip">🔊 SFX</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#0ea5e9" href="L2-1-titration.html">
+      <div class="fc-head"><div class="fc-icon">🧪</div><div class="fc-id">L2.1 · NĂM 2</div><span class="fc-tag">3D · Three.js</span></div>
+      <div class="fc-title">Chuẩn độ Acid–Base 3D</div>
+      <div class="fc-desc">Buret + Erlenmeyer + máy khuấy từ · pH curve real-time · phenolphthalein endpoint</div>
+      <div class="fc-chips"><span class="fc-chip">Hoá phân tích</span><span class="fc-chip">Chemistry chuẩn</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#14b8a6" href="compounding-lab.html">
+      <div class="fc-head"><div class="fc-icon">🧬</div><div class="fc-id">L3.6 · NĂM 3</div><span class="fc-tag">3D Lab</span></div>
+      <div class="fc-title">Phòng Bào chế GMP</div>
+      <div class="fc-desc">Pha 8 đơn thuốc — cân hoạt chất, đong dung môi, q.s., đóng chai · 2-tay MediaPipe</div>
+      <div class="fc-chips"><span class="fc-chip">8 recipes</span><span class="fc-chip">Hand tracking</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#a78bfa" href="sac-ky-vr.html">
+      <div class="fc-head"><div class="fc-icon">🔬</div><div class="fc-id">L2.6 · NĂM 2</div><span class="fc-tag">VR + Unity</span></div>
+      <div class="fc-title">Sắc ký lớp mỏng TLC</div>
+      <div class="fc-desc">6 bước TLC · chấm mẫu, triển khai, UV inspection, đo R<sub>f</sub> · 6 phiên bản (cả Quest native)</div>
+      <div class="fc-chips"><span class="fc-chip">6/6 phiên bản</span><span class="fc-chip">Kiểm nghiệm</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#f97316" href="L3-3-tuong-tac.html">
+      <div class="fc-head"><div class="fc-icon">🔗</div><div class="fc-id">L3.3 · NĂM 3</div><span class="fc-tag">Engine v2</span></div>
+      <div class="fc-title">Tương tác thuốc CYP450</div>
+      <div class="fc-desc">5 câu MCQ + drag-match · warfarin × macrolide, statin × CYP3A4, clopidogrel × PPI</div>
+      <div class="fc-chips"><span class="fc-chip">Dược lý</span><span class="fc-chip">CYP450</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#ef4444" href="PS01-er.html">
+      <div class="fc-head"><div class="fc-icon">🚨</div><div class="fc-id">PS01 · CƠ SỞ TH</div><span class="fc-tag">🆕 3D ER</span></div>
+      <div class="fc-title">Cấp cứu phản vệ</div>
+      <div class="fc-desc">Mô phỏng ER · BN sốc phản vệ amoxicillin · ADRENALIN 0.5mg IM · monitor sinh hiệu động</div>
+      <div class="fc-chips"><span class="fc-chip">Năm 5</span><span class="fc-chip">BYT 51/2017</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#22c55e" href="PS15-gmp-factory.html">
+      <div class="fc-head"><div class="fc-icon">🏭</div><div class="fc-id">PS15 · CƠ SỞ TH</div><span class="fc-tag">🆕 3D Tour</span></div>
+      <div class="fc-title">Nhà máy GMP — 4 Cleanroom</div>
+      <div class="fc-desc">Tour 3D 4 phòng ISO 5/7/8/9 · V-mixer, tablet press, coating pan, isolator · 12 challenges</div>
+      <div class="fc-chips"><span class="fc-chip">EU GMP Annex 1</span><span class="fc-chip">ICH Q7</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#ec4899" href="module.html?module=SC02">
+      <div class="fc-head"><div class="fc-icon">🤖</div><div class="fc-id">SC02 · KỸ NĂNG</div><span class="fc-tag">AI Patient</span></div>
+      <div class="fc-title">10 BN ảo — Role-play</div>
+      <div class="fc-desc">Phỏng vấn BN do AI Ollama đóng · 10 tình huống · chấm theo rubric SOAP/SAMPLE</div>
+      <div class="fc-chips"><span class="fc-chip">Năm 5</span><span class="fc-chip">Tư vấn</span><span class="fc-chip">qwen2.5</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#10b981" href="module.html?module=PS11">
+      <div class="fc-head"><div class="fc-icon">🏪</div><div class="fc-id">PS11 · CƠ SỞ TH</div><span class="fc-tag">🏆 Cert</span></div>
+      <div class="fc-title">Nhà thuốc GPP đầy đủ</div>
+      <div class="fc-desc">5 workflow GPP · tiếp đơn, tra cứu, tư vấn OTC/Rx/gây nghiện · TT 02/2018</div>
+      <div class="fc-chips"><span class="fc-chip">Năm 5</span><span class="fc-chip">Cộng đồng</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#8b5cf6" href="module.html?module=L5.6">
+      <div class="fc-head"><div class="fc-icon">📊</div><div class="fc-id">L5.6 · NĂM 5</div><span class="fc-tag">Khoá luận</span></div>
+      <div class="fc-title">Thống kê y học</div>
+      <div class="fc-desc">10 câu về p-value, RR/OR/HR, NNT, ANOVA, meta-analysis · viết khoá luận cuối khoá</div>
+      <div class="fc-chips"><span class="fc-chip">Research</span><span class="fc-chip">EBM</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#6366f1" href="module.html?module=L4.3">
+      <div class="fc-head"><div class="fc-icon">🩸</div><div class="fc-id">L4.3 · NĂM 4</div><span class="fc-tag">TDM</span></div>
+      <div class="fc-title">Theo dõi nồng độ thuốc</div>
+      <div class="fc-desc">Vancomycin AUC24, gentamicin peak/trough, digoxin, phenytoin · calculator + 8 câu quiz</div>
+      <div class="fc-chips"><span class="fc-chip">DLS</span><span class="fc-chip">ASHP/IDSA 2020</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#0284c7" href="metaverse.html">
+      <div class="fc-head"><div class="fc-icon">🌐</div><div class="fc-id">GC08 · GAME</div><span class="fc-tag">Multi-player</span></div>
+      <div class="fc-title">Metaverse — Phòng học chung</div>
+      <div class="fc-desc">WebXR multiplayer · học cùng nhau qua avatar · WebSocket sync · Quest + Vision Pro</div>
+      <div class="fc-chips"><span class="fc-chip">XR</span><span class="fc-chip">Real-time</span></div>
+    </a>
+    <a class="feat-card" style="--fc-color:#dc2626" href="GC07-osce-championship.html">
+      <div class="fc-head"><div class="fc-icon">🎯</div><div class="fc-id">GC07 · OSCE</div><span class="fc-tag">🆕 🏆 Capstone</span></div>
+      <div class="fc-title">Thi tốt nghiệp OSCE 10 trạm</div>
+      <div class="fc-desc">Composite 10 station × 5-10 phút · timer + scoring + chứng chỉ in được · pass ≥ 60đ</div>
+      <div class="fc-chips"><span class="fc-chip">Capstone</span><span class="fc-chip">Cert</span></div>
+    </a>
   </div>
 </div>
 
-<!-- ============ NHÓM 2 · BÀO CHẾ ============ -->
+<!-- ============ Stats banner ============ -->
 <div class="section">
-  <div class="section-title">
-    <h2>🧪 Demo 2 · Bào chế GMP</h2>
-    <span class="hint">Mô phỏng pha chế theo đơn — cân, đong, hòa tan, đóng chai</span>
-  </div>
-  <div class="modes">
-
-    <div class="mode" style="--mode-color: #14b8a6">
-      <div class="mode-head">
-        <div class="mode-icon">🧪</div>
-        <div class="mode-info"><h3>Phòng bào chế · 8 đơn</h3><span class="tag" style="background:#14b8a6">🆕 Mới</span></div>
-      </div>
-      <div class="chips"><span>Cân điện tử</span><span>Ống đong</span><span>Cốc thủy tinh</span><span>GMP</span><span>🤲 2 tay (MediaPipe)</span></div>
-      <p class="desc">Mô phỏng pha chế đầy đủ Siro Paracetamol, Vitamin C, Diosmectit, Cồn iod, Calamine 8% … Cân hoạt chất, đong dung môi, q.s. nước cất, đóng chai. <b>Free-form</b> — thao tác tự do, lỗi quy trình tổng kết cuối bài. <b>2 tay phối hợp</b> rót ổn định hơn (bonus điểm).</p>
-      <div class="leaderboard" data-version="compounding-lab"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
-      <a class="btn dark" href="compounding-lab.html">🧪 Vào phòng lab</a>
+  <div style="padding:14px 18px;background:linear-gradient(135deg, rgba(251,146,60,0.15), rgba(139,92,246,0.15));border:1px solid rgba(251,146,60,0.3);border-radius:14px;font-size:14px;line-height:1.6">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;text-align:center">
+      <div><div style="font-size:24px;font-weight:800;color:#fbbf24">102</div><div style="opacity:0.8;font-size:12px">Nhiệm vụ</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:#10b981">81</div><div style="opacity:0.8;font-size:12px">Thuốc</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:#22c55e">30</div><div style="opacity:0.8;font-size:12px">Dược liệu</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:#ef4444">10</div><div style="opacity:0.8;font-size:12px">Ca lâm sàng</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:#ec4899">85+</div><div style="opacity:0.8;font-size:12px">Scenarios</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:#0ea5e9">5</div><div style="opacity:0.8;font-size:12px">Năm học</div></div>
     </div>
-
+    <div style="margin-top:12px;text-align:center;font-size:12px;opacity:0.75">
+      Engine v2 · Ollama qwen2.5:14b (AI tutor nội bộ) · Sát chương trình ĐH Dược HN + CĐ Dược · Theo Dược điển VN V + giáo trình Mai Tất Tố, Lê Quan Nghiệm, Đỗ Tất Lợi, Hoàng Thị Kim Huyền
+    </div>
   </div>
 </div>
 
-<!-- ============ NHÓM 3 · SẮC KÝ ============ -->
-<div class="section">
+<!-- ============ TRƯỜNG DƯỢC ẢO — CAMPUS MAP ============ -->
+<div class="section" id="campus">
   <div class="section-title">
-    <h2>🧬 Demo 3 · Sắc ký TLC</h2>
-    <span class="hint">Sắc ký lớp mỏng — 6 phiên bản công nghệ từ 2D đến Metaverse</span>
+    <h2>🏛️ Trường Dược ảo — Sơ đồ campus</h2>
+    <span class="hint">115+ nhiệm vụ tổ chức thành 6 cụm · Click ô để vào · ✓ = có nội dung · ⏳ = đang phát triển</span>
   </div>
-  <div class="modes">
+  <style>
+    .yr-block { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; }
+    .yr-block h3 { margin: 0 0 6px; font-size: 17px; }
+    .yr-block .yr-desc { font-size: 12px; opacity: 0.7; margin-bottom: 12px; }
+    .mod-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .mod-tile { background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 10px; text-decoration: none; color: white; transition: all 0.15s; border: 1px solid transparent; font-size: 13px; }
+    .mod-tile:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+    .mod-tile.has-content { border-color: rgba(16,185,129,0.45); }
+    .mod-tile.cert::after { content: '🏆'; margin-left: 4px; font-size: 11px; }
+    .mod-tile .mid { font-weight: 700; font-size: 11px; opacity: 0.8; letter-spacing: 0.4px; }
+    .mod-tile .mtitle { display: block; margin-top: 2px; line-height: 1.35; }
+    .mod-tile .mstatus { display: inline-block; margin-left: 4px; font-size: 11px; }
+    .cluster-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .cluster-tab {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      padding: 10px 14px; border-radius: 12px; cursor: pointer; transition: all 0.15s;
+      font-size: 13px; display: inline-flex; align-items: center; gap: 6px; color: white;
+    }
+    .cluster-tab:hover { background: rgba(255,255,255,0.12); }
+    .cluster-tab.active { background: rgba(251,191,36,0.18); border-color: rgba(251,191,36,0.6); }
+    .cluster-tab .ct-count { opacity: 0.7; font-size: 11px; }
+    .cluster-summary {
+      background: rgba(255,255,255,0.03); border-left: 3px solid var(--accent);
+      padding: 10px 14px; border-radius: 0 10px 10px 0; margin-bottom: 14px;
+      font-size: 13px; line-height: 1.5;
+    }
+  </style>
+  <div id="cluster-tabs" class="cluster-tabs"></div>
+  <div id="cluster-summary" class="cluster-summary"></div>
+  <div id="campus-host">Đang dựng…</div>
+  <script type="module">
+    import { MODULES, CATEGORIES } from './js/engine/learning-path.js';
+    import { listModulesWithContentSync } from './js/scenarios/index.js';
+    const hasContent = new Set(await listModulesWithContentSync());
 
-    <div class="mode" style="--mode-color: #a78bfa">
-      <div class="mode-head">
-        <div class="mode-icon">🧪</div>
-        <div class="mode-info"><h3>Sắc ký TLC · 6 phiên bản</h3><span class="tag" style="background:#a78bfa">🆕 Mới</span></div>
-      </div>
-      <div class="chips"><span>Canvas 2D</span><span>Three.js</span><span>A-Frame WebXR</span><span>Quiz</span><span>🌐 Metaverse</span><span>Unity Quest</span></div>
-      <p class="desc">Mô phỏng <b>Sắc ký lớp mỏng (TLC)</b> với 6 phiên bản công nghệ — từ 2D Canvas nhẹ tênh đến phòng lab 3D <b>Metaverse multiplayer</b> (thấy avatar các SV khác cùng làm). Đầy đủ phòng lab thật với tường, kệ thuốc, posters.</p>
-      <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px 11px;margin-bottom:12px;font-size:11px;line-height:1.7;opacity:0.9">
-        <h5 style="margin:0 0 4px;font-size:10px;opacity:0.6;text-transform:uppercase;letter-spacing:0.4px">🎮 Truy cập nhanh</h5>
-        <a href="sac-ky-2d.html" style="color:#fbbf24;text-decoration:none">🎨 2D</a> ·
-        <a href="sac-ky-3d.html" style="color:#a78bfa;text-decoration:none">🥽 3D</a> ·
-        <a href="sac-ky-vr-web.html" style="color:#ec4899;text-decoration:none">🕹️ VR Web</a> ·
-        <a href="sac-ky-quiz.html" style="color:#14b8a6;text-decoration:none">🧠 Quiz</a> ·
-        <a href="sac-ky-meta.html" style="color:#f97316;text-decoration:none">🌐 Metaverse</a>
-      </div>
-      <a class="btn dark" href="sac-ky-vr.html">🧪 Vào Hub Sắc ký</a>
-    </div>
+    const tabs = document.getElementById('cluster-tabs');
+    const summary = document.getElementById('cluster-summary');
+    const host = document.getElementById('campus-host');
 
-  </div>
+    const categories = Object.entries(CATEGORIES);
+    let current = 'curriculum';
+
+    function renderTabs() {
+      tabs.innerHTML = '';
+      for (const [key, meta] of categories) {
+        const count = MODULES.filter(m => m.category === key).length;
+        const okCount = MODULES.filter(m => m.category === key && hasContent.has(m.id)).length;
+        const btn = document.createElement('div');
+        btn.className = 'cluster-tab' + (key === current ? ' active' : '');
+        btn.style.borderLeft = `4px solid ${meta.color}`;
+        btn.innerHTML = `<span>${meta.icon}</span><b>${meta.label}</b><span class="ct-count">(${okCount}/${count})</span>`;
+        btn.addEventListener('click', () => { current = key; renderTabs(); renderCluster(); });
+        tabs.appendChild(btn);
+      }
+    }
+
+    function renderCluster() {
+      const meta = CATEGORIES[current];
+      summary.textContent = meta.desc;
+      summary.style.borderLeftColor = meta.color;
+      host.innerHTML = '';
+
+      const mods = MODULES.filter(m => m.category === current);
+
+      if (current === 'curriculum') {
+        // Group by year for curriculum
+        const yearLabels = { 1: 'Năm 1 — Nền tảng', 2: 'Năm 2 — Tiền lâm sàng', 3: 'Năm 3 — Chuyên ngành', 4: 'Năm 4 — Lâm sàng cơ sở', 5: 'Năm 5 — Hành nghề' };
+        const byYear = {};
+        for (const m of mods) (byYear[m.yearLevel] ??= []).push(m);
+        for (const y of [1,2,3,4,5]) {
+          const block = document.createElement('div');
+          block.className = 'yr-block';
+          const yrModsList = byYear[y] || [];
+          const okN = yrModsList.filter(m => hasContent.has(m.id)).length;
+          block.innerHTML = `<h3>${yearLabels[y]} <span style="opacity:0.5;font-size:13px;font-weight:400">— ${okN}/${yrModsList.length} có nội dung</span></h3><div class="mod-grid"></div>`;
+          const grid = block.querySelector('.mod-grid');
+          for (const m of yrModsList) appendTile(grid, m);
+          host.appendChild(block);
+        }
+      } else {
+        // Single block for non-curriculum
+        const block = document.createElement('div');
+        block.className = 'yr-block';
+        const okN = mods.filter(m => hasContent.has(m.id)).length;
+        block.innerHTML = `<h3>${meta.icon} ${meta.label} <span style="opacity:0.5;font-size:13px;font-weight:400">— ${okN}/${mods.length} có nội dung</span></h3><div class="mod-grid"></div>`;
+        const grid = block.querySelector('.mod-grid');
+        for (const m of mods) appendTile(grid, m);
+        host.appendChild(block);
+      }
+    }
+
+    function appendTile(grid, m) {
+      const ok = hasContent.has(m.id);
+      const a = document.createElement('a');
+      a.className = 'mod-tile' + (ok ? ' has-content' : '') + (m.hasCertificate ? ' cert' : '');
+      a.href = `module.html?module=${m.id}`;
+      a.title = m.hasCertificate ? 'Có cấp chứng chỉ kỹ năng' : '';
+      a.innerHTML = `<span class="mid">${m.id}</span><span class="mstatus">${ok ? '✓' : '⏳'}</span><span class="mtitle">${m.title}</span>`;
+      grid.appendChild(a);
+    }
+
+    renderTabs();
+    renderCluster();
+  </script>
 </div>
 
 <!-- ============ CÔNG CỤ CHUNG ============ -->
@@ -450,8 +555,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 </footer>
 
 <script type="module">
-import { getPlayerName, setPlayerName, getLeaderboard, getStats, getBadges, getMyAchievements, getClassCode, setClassCode, joinClassByCode } from './js/api.js';
-import { LEVELS, getCurrentLevel, setCurrentLevel, getProgress, isLevelUnlocked } from './js/medicines.js';
+import { getPlayerName, setPlayerName, getBadges, getMyAchievements, getClassCode, setClassCode, joinClassByCode } from './js/api.js';
 
 // Auto-join from URL ?class=XXXX
 const urlClass = new URLSearchParams(location.search).get('class');
@@ -505,45 +609,6 @@ saveBtn.addEventListener('click', () => {
 });
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveBtn.click(); });
 
-// --- Level grid ---
-function renderLevels() {
-  const progress = getProgress();
-  const cur = getCurrentLevel();
-  document.getElementById('level-current-hint').textContent = `Đang chọn: Level ${cur.n} · ${cur.label}`;
-  document.getElementById('lvl-2d').textContent = cur.n;
-  const grid = document.getElementById('levels');
-  grid.innerHTML = LEVELS.map(l => {
-    const unlocked = isLevelUnlocked(l.n);
-    const stars = progress[l.n]?.stars ?? 0;
-    const isCurrent = cur.n === l.n;
-    const starsHtml = `<span class="filled">${'★'.repeat(stars)}</span><span class="empty">${'★'.repeat(3 - stars)}</span>`;
-    return `<a href="#" data-level="${l.n}" class="lvl ${unlocked ? '' : 'locked'} ${isCurrent ? 'current' : ''}" title="${l.label} — ${l.desc}">
-      ${l.n === 10 ? '<span class="badge-new">BOSS</span>' : ''}
-      <div class="num">${l.n}</div>
-      <div class="name">${l.label}</div>
-      <div class="stars">${starsHtml}</div>
-    </a>`;
-  }).join('');
-  grid.querySelectorAll('.lvl').forEach(a => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (a.classList.contains('locked')) return;
-      const n = parseInt(a.dataset.level, 10);
-      setCurrentLevel(n);
-      renderLevels();
-    });
-  });
-}
-renderLevels();
-
-document.getElementById('reset-progress').addEventListener('click', (e) => {
-  e.preventDefault();
-  if (!confirm('Xoá toàn bộ tiến độ + sao đã đạt?')) return;
-  localStorage.removeItem('pharmacysim:progress');
-  localStorage.removeItem('pharmacysim:level');
-  renderLevels();
-});
-
 // --- Badges ---
 async function loadBadges() {
   const [all, mine] = await Promise.all([getBadges(), getMyAchievements()]);
@@ -558,20 +623,6 @@ async function loadBadges() {
   `).join('');
 }
 loadBadges();
-
-// --- Leaderboards ---
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-async function loadLeaderboard(card) {
-  const version = card.dataset.version;
-  const [rows, stats] = await Promise.all([getLeaderboard(version, 4), getStats(version)]);
-  const list = card.querySelector('.lb-list');
-  if (!rows.length) list.innerHTML = '<div class="lb-empty">Là người đầu tiên!</div>';
-  else list.innerHTML = rows.map((r, i) => `<div class="lb-row"><span class="name">${i+1}. ${escapeHtml(r.player_name)}</span><span class="score">${r.score}</span></div>`).join('');
-  const sr = card.querySelector('.lb-stats');
-  if (stats?.total_attempts > 0) sr.innerHTML = `📈 ${stats.total_attempts} lượt · TB ${stats.avg_score ?? 0} · 🎯 ${stats.perfect_count}`;
-  else sr.innerHTML = '';
-}
-document.querySelectorAll('.leaderboard').forEach(loadLeaderboard);
 </script>
 </body>
 </html>

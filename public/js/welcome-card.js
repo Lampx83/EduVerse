@@ -227,7 +227,7 @@ export function showWelcomeCard(opts = {}) {
   injectStyle();
   const {
     icon = '💊',
-    title = 'PharmacySIM',
+    title = 'PharmaSIM',
     intro = '',
     bullets = [],
     controls = {},

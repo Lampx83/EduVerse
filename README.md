@@ -1,4 +1,4 @@
-# 💊 PharmacySIM
+# 💊 PharmaSIM
 
 Hệ thống mô phỏng đào tạo kỹ năng **xếp thuốc theo nhóm điều trị** cho sinh viên Dược.
 Hỗ trợ **MediaPipe Hand Tracking** (pinch ngón tay qua webcam) hoặc **chuột/touch** —
@@ -88,7 +88,7 @@ Dữ liệu SQLite lưu trong named volume `pharmacysim-data` (mount tại `/dat
 1. Portainer → **Stacks** → **+ Add stack** → name: `pharmacysim`
 2. Build method: **Repository**
 3. Điền:
-   - **Repository URL**: `https://github.com/Lampx83/PharmacySIM.git`
+   - **Repository URL**: `https://github.com/Lampx83/PharmaSIM.git`
    - **Repository reference**: `refs/heads/main`
    - **Compose path**: `docker-compose.yml`
    - **Authentication**: bật + điền GitHub PAT (scope `repo`) nếu private
@@ -132,7 +132,7 @@ Mở `http://<host>:8041` sau khi container UP.
 ## 🧬 Cấu trúc
 
 ```
-PharmacySIM/
+PharmaSIM/
 ├── package.json
 ├── Dockerfile               # multi-stage node:20-alpine, builds better-sqlite3
 ├── docker-compose.yml       # exposes 8041 + named volume cho /data

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts } from './db.js';
 import { attachRoom } from './room.js';
+import { attachAi } from './ai.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -20,6 +21,13 @@ const VALID_VERSIONS = new Set([
   'sac-ky-2d', 'sac-ky-3d', 'sac-ky-vr-web', 'sac-ky-quiz', 'sac-ky-meta',
   'compounding-lab',
 ]);
+
+// Module L1–L5 scenario IDs từ engine (format "L<year>.<idx>-<slug>") đều hợp lệ.
+// Cho phép qua bằng regex để khỏi phải liệt kê 38 module.
+const SCENARIO_ID_PATTERN = /^L[1-5]\.\d+(-[a-z0-9-]+)?$/;
+function isValidVersion(v) {
+  return VALID_VERSIONS.has(v) || SCENARIO_ID_PATTERN.test(v);
+}
 
 // Badge definitions used by both backend (auto-unlock) and frontend (display)
 const BADGES = [
@@ -107,7 +115,7 @@ r.get('/api/health', (_req, res) => {
 r.post('/api/attempts', (req, res) => {
   const b = req.body ?? {};
   const version = String(b.version || '');
-  if (!VALID_VERSIONS.has(version)) {
+  if (!isValidVersion(version)) {
     return res.status(400).json({ error: `version must be one of ${[...VALID_VERSIONS].join(', ')}` });
   }
   const score   = Number.isFinite(b.score)   ? Math.floor(b.score)   : null;
@@ -134,14 +142,14 @@ r.post('/api/attempts', (req, res) => {
 
 r.get('/api/leaderboard', (req, res) => {
   const version = String(req.query.version || '');
-  if (!VALID_VERSIONS.has(version)) return res.status(400).json({ error: 'invalid version' });
+  if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
   res.json(getLeaderboard(version, limit));
 });
 
 r.get('/api/stats', (req, res) => {
   const version = String(req.query.version || '');
-  if (!VALID_VERSIONS.has(version)) return res.status(400).json({ error: 'invalid version' });
+  if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
   res.json(getStats(version));
 });
 
@@ -152,17 +160,22 @@ r.get('/api/recent', (req, res) => {
 
 r.get('/api/histogram', (req, res) => {
   const version = String(req.query.version || '');
-  if (!VALID_VERSIONS.has(version)) return res.status(400).json({ error: 'invalid version' });
+  if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
   res.json(getHistogram(version));
 });
 
 r.get('/api/confusion', (req, res) => {
   const version = String(req.query.version || '');
-  if (!VALID_VERSIONS.has(version)) return res.status(400).json({ error: 'invalid version' });
+  if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
   res.json(getConfusion(version));
 });
 
 r.get('/api/badges', (_req, res) => res.json(BADGES));
+
+// ============================================================
+// AI TUTOR — Claude API endpoints (grade-soap, patient-turn, evaluate-roleplay)
+// ============================================================
+attachAi(r);
 
 // ============================================================
 // CLASS MANAGEMENT

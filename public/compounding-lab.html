@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 <meta name="theme-color" content="#dde6e1" />
-<title>PharmacySIM · Phòng bào chế</title>
+<title>PharmaSIM · Phòng bào chế</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(180deg, #e8efe9 0%, #c9d5cc 100%); font-family: system-ui, sans-serif; touch-action: none; -webkit-tap-highlight-color: transparent; color: #1f2937; }
   canvas { display: block; touch-action: none; }
@@ -15,9 +15,20 @@
     z-index: 10; display: flex; gap: 10px; align-items: center;
     background: rgba(255,255,255,0.94); backdrop-filter: blur(8px);
     padding: 8px 14px; border-radius: 14px; font-size: 13px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.12); max-width: calc(100vw - 360px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    max-width: calc(100vw - 80px); width: max-content;
     border: 1px solid rgba(0,0,0,0.06);
+    flex-wrap: nowrap; white-space: nowrap;
   }
+  #topbar .topbar-divider {
+    width: 1px; height: 22px; background: rgba(0,0,0,0.1); margin: 0 2px;
+  }
+  #topbar button.primary {
+    background: linear-gradient(135deg, #14b8a6, #0f766e); color: #fff;
+    border-color: transparent;
+  }
+  #topbar button.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  #topbar button.primary:not(:disabled):hover { filter: brightness(1.05); }
   #topbar .pill {
     background: linear-gradient(135deg, #14b8a6, #0f766e); color: #fff;
     padding: 4px 10px; border-radius: 14px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;
@@ -38,8 +49,9 @@
     text-decoration: none; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
 
-  /* ===== Recipe panel (clipboard style) ===== */
+  /* ===== Recipe panel (clipboard style) — hidden by default, opens via FAB ===== */
   #recipe {
+    display: none;
     position: absolute; top: 60px; left: 12px; z-index: 10;
     width: 270px;
     background:
@@ -79,10 +91,12 @@
   #recipe-body ul li { display: flex; justify-content: space-between; padding: 2px 0; font-family: 'SF Mono', Consolas, monospace; font-size: 12px; }
   #recipe-body .ix { background: linear-gradient(90deg, transparent 90%, rgba(0,0,0,0.04) 100%); padding-left: 6px; }
   #recipe-body .totals { border-top: 1px dashed #a38f4e; padding-top: 6px; font-weight: 700; }
+  #recipe.open { display: block; }
 
-  /* ===== Step instructions ===== */
+  /* ===== Step instructions — hidden by default, opens via FAB ===== */
   #step {
-    position: absolute; top: 12px; right: 12px; z-index: 10;
+    display: none;
+    position: absolute; top: 60px; right: 12px; z-index: 10;
     width: 320px;
     background: rgba(255,255,255,0.96);
     border-radius: 12px;
@@ -101,6 +115,26 @@
   #step .meter { background: #e5e7eb; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden; }
   #step .meter > div { background: linear-gradient(90deg, #10b981, #14b8a6); height: 100%; width: 0; transition: width 0.3s; }
   #step .targets { display: flex; justify-content: space-between; font-size: 11px; opacity: 0.7; margin-top: 4px; font-family: 'SF Mono', Consolas, monospace; }
+  #step.open { display: block; }
+
+  /* ===== Side FABs (recipe, step at top-right; mp at bottom-right) ===== */
+  #recipe-fab, #step-fab, #mp-fab {
+    position: absolute; z-index: 11;
+    width: 44px; height: 44px; border-radius: 50%;
+    color: #fff; border: 1px solid rgba(0,0,0,0.12);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+    font-size: 20px; font-weight: 800; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  #recipe-fab:hover, #step-fab:hover, #mp-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.28); }
+  #recipe-fab { top: 56px; left: 12px; background: linear-gradient(135deg, #b08948, #8a6a2e); }
+  #step-fab { top: 12px; right: 12px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #3e2723; }
+  #step-fab .step-frac { font-size: 11px; font-weight: 800; letter-spacing: 0; }
+  #mp-fab { bottom: 22px; right: 76px; background: linear-gradient(135deg, #14b8a6, #0f766e); display: none; }
+  #mp-fab.active { display: flex; }
+  #recipe-fab.open, #step-fab.open, #mp-fab.open { filter: brightness(0.85); }
 
   /* ===== Toast ===== */
   #toast {
@@ -112,8 +146,9 @@
   #toast.ok { background: linear-gradient(135deg, #16a34a, #15803d); }
   #toast.err { background: linear-gradient(135deg, #dc2626, #b91c1c); }
 
-  /* ===== Bottom buttons ===== */
-  #ctrl-bar {
+  /* ===== Bottom buttons (legacy — buttons now live inside #topbar) ===== */
+  #ctrl-bar { display: none; }
+  #ctrl-bar-legacy {
     position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
     z-index: 10; display: flex; gap: 10px;
   }
@@ -238,15 +273,15 @@
   #level-modal .lm-mp input[type=checkbox] { width: 16px; height: 16px; accent-color: #14b8a6; }
   #level-modal .lm-mp input[type=text] { padding: 6px 10px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 13px; font-family: inherit; }
 
-  /* ===== Multiplayer panel ===== */
+  /* ===== Multiplayer panel — hidden by default, opens via bottom-right FAB ===== */
   #mp-panel {
-    position: absolute; top: 152px; right: 12px; z-index: 9;
-    width: 320px; background: rgba(255,255,255,0.94);
+    position: absolute; bottom: 76px; right: 22px; z-index: 10;
+    width: 320px; background: rgba(255,255,255,0.97);
     border-radius: 12px; padding: 10px 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
     font-size: 12px; display: none; border: 1px solid rgba(0,0,0,0.06);
   }
-  #mp-panel.shown { display: block; }
+  #mp-panel.open { display: block; }
   #mp-panel h5 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
   #mp-panel .pl-row { display: flex; align-items: center; gap: 7px; padding: 3px 0; }
   #mp-panel .pl-dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -259,20 +294,33 @@
     padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d5db;
     font-size: 12px; font-family: inherit;
   }
-  #mp-action {
-    position: absolute; top: 12px; right: 340px; z-index: 11;
-    background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 10px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  /* ===== Action menu — popup behind the bottom-right gear FAB ===== */
+  #action-fab {
+    position: absolute; bottom: 22px; right: 22px; z-index: 11;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #475569, #334155); color: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+    font-size: 20px; font-weight: 800; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-  #walk-btn, #hand-btn {
-    position: absolute; right: 340px; z-index: 11;
-    background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.08);
-    border-radius: 10px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  #action-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.28); }
+  #action-fab.open { background: linear-gradient(135deg, #1f2937, #0f172a); }
+  #action-menu {
+    position: absolute; bottom: 76px; right: 22px; z-index: 10;
+    display: none; flex-direction: column; gap: 8px; align-items: flex-end;
   }
-  #walk-btn { top: 52px; }
-  #hand-btn { top: 92px; }
+  #action-menu.open { display: flex; }
+  #action-menu button {
+    background: rgba(255,255,255,0.97); color: #1f2937;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px; padding: 8px 14px; font-size: 12px;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  #action-menu button:hover { transform: translateY(-1px); }
   #walk-btn.active, #hand-btn.active { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #3e2723; border-color: transparent; }
   #cam-preview {
     position: absolute; bottom: 70px; right: 12px; z-index: 9;
@@ -296,17 +344,31 @@
   }
   #walk-hint.shown { display: block; }
 
-  /* ===== "How to play" persistent help card ===== */
+  /* ===== "How to play" help — collapsed by default, opens from a FAB ===== */
+  #help-fab {
+    position: absolute; bottom: 22px; left: 22px; z-index: 11;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, #0f766e, #14b8a6); color: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+    font-size: 20px; font-weight: 800; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  #help-fab:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.28); }
+  #help-fab.open { background: linear-gradient(135deg, #475569, #334155); }
   #help-card {
-    position: absolute; bottom: 72px; left: 12px; z-index: 9;
-    background: rgba(255,255,255,0.96);
+    position: absolute; bottom: 76px; left: 22px; z-index: 10;
+    background: rgba(255,255,255,0.97);
     border: 1px solid rgba(0,0,0,0.08);
     border-radius: 12px; padding: 12px 14px;
     font-size: 12px; line-height: 1.55;
     width: 248px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-    transition: transform 0.18s ease;
+    display: none;
   }
+  #help-card.open { display: block; }
   #help-card h5 {
     margin: 0 0 6px; font-size: 11px;
     color: #0f766e; letter-spacing: 0.5px;
@@ -327,8 +389,6 @@
     color: #1f2937; text-align: center;
   }
   #help-card .row .desc { flex: 1; color: #1f2937; }
-  #help-card.collapsed .body { display: none; }
-  #help-card.collapsed { width: auto; }
 
   /* ===== "Đang cầm" badge — follows cursor in mouse mode, pinned in walk mode ===== */
   #hold-badge {
@@ -358,10 +418,8 @@
     #recipe { width: 220px; font-size: 12px; }
     #step { width: 240px; padding: 10px 14px; }
     #step .title { font-size: 14px; }
-    #ctrl-bar button { padding: 8px 14px; font-size: 13px; min-height: 44px; }
     #topbar { font-size: 11px; padding: 6px 10px; max-width: calc(100vw - 24px); }
     #mp-panel { width: 200px; }
-    #mp-action { display: none; }
     a.back { font-size: 12px; padding: 5px 10px; }
   }
 </style>
@@ -374,13 +432,25 @@
   <span class="lvl-pill" id="lvl-pill">LV 1</span>
   <span id="topbar-recipe">Siro Paracetamol</span>
   <button id="change-level">↻ Đổi bài</button>
+  <span class="topbar-divider"></span>
+  <button id="restart-btn" title="Làm lại từ đầu">🔄 Làm lại</button>
+  <button id="skip-step-btn" title="Bỏ qua bước hiện tại">⏭️ Bỏ qua</button>
+  <button id="submit-btn" class="primary" disabled title="Hoàn thành & nộp bài">📝 Nộp bài</button>
 </div>
-<button id="mp-action">👥 Tham gia phòng chung</button>
-<button id="walk-btn" title="Phím V — vào chế độ đi quanh phòng">🚶 Đi quanh phòng (V)</button>
-<button id="hand-btn" title="MediaPipe hand tracking — pinch ngón cái + trỏ qua webcam">🖐️ Bật điều khiển tay</button>
+
+<div id="action-menu">
+  <button id="mp-action">👥 Tham gia phòng chung</button>
+  <button id="walk-btn" title="Phím V — vào chế độ đi quanh phòng">🚶 Đi quanh phòng (V)</button>
+  <button id="hand-btn" title="MediaPipe hand tracking — pinch ngón cái + trỏ qua webcam">🖐️ Bật điều khiển tay</button>
+</div>
+<div id="action-fab" title="Cài đặt nhanh">⚙️</div>
 <canvas id="cam-preview" width="200" height="150"></canvas>
 <div id="crosshair"></div>
 <div id="walk-hint">🚶 WASD đi · chuột nhìn · Click thao tác · <kbd>Esc</kbd> thoát</div>
+
+<div id="recipe-fab" title="Đơn pha chế">📋</div>
+<div id="step-fab" title="Bước hiện tại"><span class="step-frac" id="step-fab-frac">1/6</span></div>
+<div id="mp-fab" title="Trong phòng chung">👥</div>
 
 <div id="recipe">
   <div id="recipe-head">📋 ĐƠN PHA CHẾ</div>
@@ -406,8 +476,9 @@
 <div id="hover-label"><div class="ht"></div><div class="hs"></div><div class="hc"></div></div>
 <div id="hover-press"><span class="icon">🖱️</span><span class="kb">CLICK</span><span>để cầm</span></div>
 
+<div id="help-fab" title="Hướng dẫn thao tác">?</div>
 <div id="help-card">
-  <h5>🎮 Cách thao tác <span class="toggle" id="help-toggle">▾</span></h5>
+  <h5>🎮 Cách thao tác <span class="toggle" id="help-toggle">×</span></h5>
   <div class="body">
     <div class="row"><span class="kbd">🖱️</span><span class="desc"><b>Click chai/dụng cụ</b> để cầm — vật được viền xanh + hiện badge "Đang cầm"</span></div>
     <div class="row"><span class="kbd">🖱️</span><span class="desc"><b>Click lần 2</b> vào cốc/ống đong/cân để <b>rót / đặt</b></span></div>
@@ -438,12 +509,6 @@
   <button data-focus="periodic">🔬 Bảng tuần hoàn</button>
   <button data-focus="drugclasses">📊 Phân loại thuốc</button>
   <button data-focus="finalbottle">🧴 Chai thành phẩm</button>
-</div>
-
-<div id="ctrl-bar">
-  <button id="restart-btn">🔄 Làm lại</button>
-  <button id="skip-step-btn">⏭️ Bỏ qua bước</button>
-  <button id="submit-btn" class="primary" disabled>📝 Hoàn thành & Nộp</button>
 </div>
 
 <div id="result-modal"><div class="card" id="result-card"></div></div>
@@ -1073,7 +1138,7 @@ makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
     }
   });
   x.fillStyle = '#bae6fd'; x.font = '14px system-ui';
-  x.fillText('PharmacySIM · Compounding Pharmacy Lab', 384, 410);
+  x.fillText('PharmaSIM · Compounding Pharmacy Lab', 384, 410);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const poster = new THREE.Mesh(
     new THREE.PlaneGeometry(0.95, 0.54),
@@ -1784,11 +1849,15 @@ makeStool(1.0, 1.0, -0.4);
     x2.beginPath(); x2.arc(64 + Math.cos(a) * 30, 50 + Math.sin(a) * 30, 14, 0, Math.PI*2); x2.fill();
   }
   const tex2 = new THREE.CanvasTexture(bc2); tex2.colorSpace = THREE.SRGBColorSpace;
+  // Curved label that wraps around the bin's cylindrical body (instead of a
+  // flat plane floating in front of it). Arc length ≈ label height so the
+  // square biohazard texture stays roughly square when wrapped.
+  const labelArc = Math.PI / 2.5;        // ~72°, centred on +Z (front of bin)
   const label = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.18, 0.18),
-    new THREE.MeshBasicMaterial({ map: tex2, transparent: true })
+    new THREE.CylinderGeometry(0.151, 0.143, 0.18, 32, 1, true, -labelArc / 2, labelArc),
+    new THREE.MeshStandardMaterial({ map: tex2, transparent: true, roughness: 0.6, side: THREE.DoubleSide })
   );
-  label.position.set(0, 0.25, 0.16); bin.add(label);
+  label.position.set(0, 0.25, 0); bin.add(label);
 }
 
 // ============================================================
@@ -1868,24 +1937,28 @@ function makeBottle({ x, y, z, name, color, liquidColor, isPowder = false, idTag
   );
   body.castShadow = true; body.receiveShadow = true;
   grp.add(body);
-  // Cap on top
+  // Cap on top — wrapped in a subgroup so the pour anim can lift it off.
+  const capGrp = new THREE.Group();
+  capGrp.position.y = 0.336;
   const cap = new THREE.Mesh(
     new THREE.CylinderGeometry(0.035, 0.034, 0.042, 32),
     new THREE.MeshStandardMaterial({ color: 0x2c2c2c, roughness: 0.4, metalness: 0.25 })
   );
-  cap.position.y = 0.336; cap.castShadow = true;
-  grp.add(cap);
-  // Cap ridges (decorative)
+  cap.castShadow = true;
+  capGrp.add(cap);
   for (let i = 0; i < 8; i++) {
     const ridge = new THREE.Mesh(
       new THREE.BoxGeometry(0.002, 0.038, 0.008),
       new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5 })
     );
     const ang = (i / 8) * Math.PI * 2;
-    ridge.position.set(Math.cos(ang) * 0.034, 0.336, Math.sin(ang) * 0.034);
+    ridge.position.set(Math.cos(ang) * 0.034, 0, Math.sin(ang) * 0.034);
     ridge.rotation.y = -ang;
-    grp.add(ridge);
+    capGrp.add(ridge);
   }
+  grp.add(capGrp);
+  grp.userData.capGroup = capGrp;
+  grp.userData.capBaseY = 0.336;
   // Liquid/powder fill inside (also a lathe with slight meniscus dip)
   const fillProfile = [
     [0.0,    0.005],
@@ -2430,6 +2503,8 @@ const pourAnimState = {
 // DEBUG hooks (used by automated tests) — exposes pour anim state + a
 // utility to read each tool's mouth-marker world position.
 window.__pourAnimState = pourAnimState;
+window.__scene = scene; window.__camera = camera; window.__renderer = renderer;
+window.__controls = controls; window.__focusCamera = focusCamera;
 window.__getMouthWorld = function (grp) {
   const m = grp?.userData?._mouthMarker;
   if (!m) return null;
@@ -2498,7 +2573,13 @@ function startPourAnim(srcGrp, dstGrp, opts = {}) {
   if (pourAnimState.obj && pourAnimState.obj !== srcGrp) {
     pourAnimState.obj.position.copy(pourAnimState.origin);
     pourAnimState.obj.quaternion.copy(pourAnimState.baseRot);
+    if (pourAnimState.capGrp) {
+      pourAnimState.obj.attach(pourAnimState.capGrp);
+      pourAnimState.capGrp.position.set(0, pourAnimState.capBaseY, 0);
+      pourAnimState.capGrp.rotation.set(0, 0, pourAnimState.capBaseRot);
+    }
     pourAnimState.obj = null;
+    pourAnimState.capGrp = null;
     pourAnimState.phase = 'idle';
   }
 
@@ -2536,8 +2617,13 @@ function startPourAnim(srcGrp, dstGrp, opts = {}) {
     pourAnimState.origin.z
   );
 
-  // Target mouth position (rim of receiver).
+  // Target mouth position (rim of receiver). Lift it slightly so the bottle's
+  // lip floats a few cm ABOVE the rim rather than touching it — looks more
+  // natural and matches how someone would actually pour from a real bottle.
+  const POUR_LIFT_Y = opts.liftY ?? 0.045;
+  pourAnimState.pourLiftY = POUR_LIFT_Y;
   const tp = getTargetMouthWorld(dstGrp);
+  tp.y += POUR_LIFT_Y;
 
   // Tilt direction = horizontal vector from gripStart toward target.
   const toTarget = new THREE.Vector3().subVectors(tp, pourAnimState.gripStart);
@@ -2567,6 +2653,31 @@ function startPourAnim(srcGrp, dstGrp, opts = {}) {
   pourAnimState.onPourActive = opts.onPourActive || null;
   pourAnimState.onComplete = opts.onComplete || null;
   if (opts.pourDur) pourAnimState.durations.pour = opts.pourDur;
+
+  // Cap-off setup: a real pour starts by unscrewing the cap and holding it
+  // in the OTHER (left) hand. Reparent the cap to the scene so its motion is
+  // independent of the bottle, and animate it to a left-hand world slot.
+  const capGrp = srcGrp.userData?.capGroup || null;
+  pourAnimState.capGrp = capGrp;
+  if (capGrp) {
+    pourAnimState.capBaseY = srcGrp.userData?.capBaseY ?? 0.336;
+    pourAnimState.capBaseRot = capGrp.rotation.z;
+    // Capture cap's current world position BEFORE reparenting.
+    const _capStart = new THREE.Vector3();
+    capGrp.getWorldPosition(_capStart);
+    pourAnimState.capStartWorld = _capStart;
+    // Left-hand world slot: 28 cm to the LEFT of the pour grip, at roughly
+    // the same height, slightly forward toward the camera. Anchored to
+    // gripPour so the cap stays close to the user's left hand at the
+    // workbench (not the shelf where the bottle came from).
+    pourAnimState.capAsideWorld = new THREE.Vector3(
+      pourAnimState.gripPour.x - 0.28,
+      pourAnimState.gripPour.y - 0.02,
+      pourAnimState.gripPour.z + 0.08
+    );
+    // Reparent to scene; preserves world transform so the cap doesn't jump.
+    scene.attach(capGrp);
+  }
 }
 
 // Helper: apply a rotation R (quaternion-from-axis-angle ang) plus a grip-
@@ -2597,13 +2708,17 @@ function updatePourAnim() {
   const D = ps.durations;
 
   // Phase 1 — TRANSLATE UPRIGHT: bottle moves from hand-slot to the rim
-  // position while STAYING UPRIGHT (no tilt yet). This is the natural
-  // motion: carry the bottle over the target first, then tilt to pour.
+  // position while STAYING UPRIGHT (no tilt yet). The cap simultaneously
+  // flies from the bottle's neck to the LEFT-HAND aside slot in world space.
   if (ps.phase === 'translate-upright') {
     const t = Math.min(1, elapsed / D.translate);
     const e = 1 - Math.pow(1 - t, 3);
     _pourGripNow.lerpVectors(ps.gripStart, ps.gripPour, e);
     applyGripPose(obj, _pourGripNow, ps.tiltAxis, 0, ps.baseRot, ps.gripLocalY);
+    if (ps.capGrp) {
+      ps.capGrp.position.lerpVectors(ps.capStartWorld, ps.capAsideWorld, e);
+      ps.capGrp.rotation.set(0, 0, ps.capBaseRot + 0.45 * e);
+    }
     if (t >= 1) { ps.phase = 'tilt-at-rim'; ps.startedAt = performance.now(); }
     return;
   }
@@ -2625,7 +2740,8 @@ function updatePourAnim() {
     if (!ps.streamSpawned) {
       ps.streamSpawned = true;
       const tp = getTargetMouthWorld(ps.targetGrp);
-      const fp = new THREE.Vector3(tp.x, tp.y, tp.z);
+      const lift = ps.pourLiftY ?? 0.045;
+      const fp = new THREE.Vector3(tp.x, tp.y + lift, tp.z);
       const intoTp = new THREE.Vector3(tp.x, tp.y - 0.04, tp.z);
       showStream(fp, intoTp, ps.streamColor, D.pour, ps.streamIsPowder);
       if (ps.onPourActive) ps.onPourActive();
@@ -2646,16 +2762,30 @@ function updatePourAnim() {
   }
 
   // Phase 5 — RETURN: upright bottle slides from gripPour back to gripStart.
+  // The cap flies from the aside slot back onto the bottle's neck, then
+  // reparents to the bottle so it follows it again.
   if (ps.phase === 'return-to-hand') {
     const t = Math.min(1, elapsed / D.returnBack);
     const e = 1 - Math.pow(1 - t, 3);
     _pourGripNow.lerpVectors(ps.gripPour, ps.gripStart, e);
     applyGripPose(obj, _pourGripNow, ps.tiltAxis, 0, ps.baseRot, ps.gripLocalY);
+    if (ps.capGrp) {
+      // Target = bottle's neck position in world (bottle is upright here).
+      _pourTmpV.set(obj.position.x, obj.position.y + ps.capBaseY, obj.position.z);
+      ps.capGrp.position.lerpVectors(ps.capAsideWorld, _pourTmpV, e);
+      ps.capGrp.rotation.set(0, 0, ps.capBaseRot + 0.45 * (1 - e));
+    }
     if (t >= 1) {
       obj.position.copy(ps.origin);
       obj.quaternion.copy(ps.baseRot);
+      if (ps.capGrp) {
+        obj.attach(ps.capGrp);             // reparent, preserving world
+        ps.capGrp.position.set(0, ps.capBaseY, 0);
+        ps.capGrp.rotation.set(0, 0, ps.capBaseRot);
+      }
       const cb = ps.onComplete;
       ps.obj = null;
+      ps.capGrp = null;
       ps.targetGrp = null;
       ps.phase = 'idle';
       if (cb) cb();
@@ -2987,6 +3117,7 @@ function renderStep() {
   if (!state || !state.recipe) return;
   const recipe = state.recipe;
   const i = state.stepIdx;
+  const stepFabFrac = document.getElementById('step-fab-frac');
   if (i >= recipe.steps.length) {
     stepNumEl.textContent = 'HOÀN TẤT';
     stepTitleEl.textContent = '🎉 Bạn đã hoàn thành quy trình!';
@@ -2994,10 +3125,12 @@ function renderStep() {
     meterBar.style.width = '100%';
     meterCur.textContent = ''; meterTgt.textContent = '';
     submitBtn.disabled = false;
+    if (stepFabFrac) stepFabFrac.textContent = '✓';
     return;
   }
   const s = recipe.steps[i];
   stepNumEl.textContent = `BƯỚC ${i+1} / ${recipe.steps.length}`;
+  if (stepFabFrac) stepFabFrac.textContent = `${i+1}/${recipe.steps.length}`;
   stepTitleEl.textContent = s.label;
 
   let bodyHtml = '';
@@ -3827,7 +3960,7 @@ function connectMultiplayer() {
   ws = new WebSocket(url);
   ws.addEventListener('open', () => {
     ws.send(JSON.stringify({ type: 'join', name: myName, recipeId: state.recipe.id }));
-    mpPanelEl.classList.add('shown');
+    document.getElementById('mp-fab')?.classList.add('active');
     mpActionBtn.textContent = '👥 Đang trong phòng';
     mpActionBtn.style.background = 'linear-gradient(135deg, #14b8a6, #0f766e)';
     mpActionBtn.style.color = '#fff';
@@ -3870,7 +4003,8 @@ function connectMultiplayer() {
   });
   ws.addEventListener('close', () => {
     ws = null;
-    mpPanelEl.classList.remove('shown');
+    document.getElementById('mp-fab')?.classList.remove('active');
+    mpPanelEl.classList.remove('open');
     mpActionBtn.textContent = '👥 Tham gia phòng chung';
     mpActionBtn.style.background = '';
     mpActionBtn.style.color = '';
@@ -4154,13 +4288,34 @@ document.addEventListener('keydown', (e) => {
 });
 document.getElementById('hold-clear').addEventListener('click', () => setSelectedTool(null));
 
-// ===== Help card collapse =====
+// ===== Help card — hidden by default; FAB at bottom-left toggles it =====
 const helpCard = document.getElementById('help-card');
+const helpFab = document.getElementById('help-fab');
 const helpToggle = document.getElementById('help-toggle');
-helpToggle.addEventListener('click', () => {
-  const collapsed = helpCard.classList.toggle('collapsed');
-  helpToggle.textContent = collapsed ? '▸' : '▾';
-});
+function setHelpOpen(open) {
+  helpCard.classList.toggle('open', open);
+  helpFab.classList.toggle('open', open);
+  helpFab.textContent = open ? '×' : '?';
+}
+helpFab.addEventListener('click', () => setHelpOpen(!helpCard.classList.contains('open')));
+helpToggle.addEventListener('click', () => setHelpOpen(false));
+
+// ===== Recipe / Step / MP panels — each toggled by its own FAB =====
+function makePanelToggle(panelId, fabId) {
+  const panel = document.getElementById(panelId);
+  const fab = document.getElementById(fabId);
+  if (!panel || !fab) return () => {};
+  const set = (open) => {
+    panel.classList.toggle('open', open);
+    fab.classList.toggle('open', open);
+  };
+  fab.addEventListener('click', () => set(!panel.classList.contains('open')));
+  return set;
+}
+const setRecipeOpen = makePanelToggle('recipe', 'recipe-fab');
+const setStepOpen = makePanelToggle('step', 'step-fab');
+const setMpOpen = makePanelToggle('mp-panel', 'mp-fab');
+const setActionOpen = makePanelToggle('action-menu', 'action-fab');
 
 // ===== UI buttons =====
 restartBtn.addEventListener('click', () => location.reload());

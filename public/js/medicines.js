@@ -1,27 +1,17 @@
-// Catalog 12 loại thuốc thông dụng trong nhà thuốc Việt Nam.
-// Mỗi loại có category (nhóm điều trị) + dose + dạng bào chế cho thật hơn.
+// ============================================================
+// medicines.js — Legacy entry point cho 7 game cũ
+// ============================================================
+// MEDICINES + ALL_CATEGORIES giờ được tái xuất từ engine (drug-db.js),
+// nên cập nhật / mở rộng catalog thuốc chỉ làm Ở ENGINE thôi.
+//
+// LEVELS, DIFFICULTIES và các helper localStorage thì là logic riêng
+// của game "Sắp xếp thuốc" — giữ nguyên ở đây.
+// ============================================================
 
-export const MEDICINES = [
-  { id: 'amox', name: 'AMOXICILLIN',   dose: '500mg',  form: 'Viên nang',  short: 'AMOX', category: 'Kháng sinh',    color: '#43a047', atc: 'J01CA04', indication: 'Nhiễm khuẩn đường hô hấp, tiết niệu' },
-  { id: 'asp',  name: 'ASPIRIN',       dose: '81mg',   form: 'Viên nén',   short: 'ASP',  category: 'Tim mạch',      color: '#e53935', atc: 'B01AC06', indication: 'Phòng nhồi máu cơ tim, chống kết tập tiểu cầu' },
-  { id: 'sme',  name: 'SMECTA',        dose: '3g',     form: 'Bột pha',    short: 'SME',  category: 'Tiêu hóa',      color: '#fb8c00', atc: 'A07BC05', indication: 'Tiêu chảy cấp, đau dạ dày' },
-  { id: 'par',  name: 'PARACETAMOL',   dose: '500mg',  form: 'Viên nén',   short: 'PARA', category: 'Giảm đau',      color: '#1e88e5', atc: 'N02BE01', indication: 'Đau đầu, hạ sốt, đau nhức' },
-  { id: 'vitc', name: 'VITAMIN C',     dose: '1000mg', form: 'Viên sủi',   short: 'VITC', category: 'Vitamin',       color: '#ffb300', atc: 'A11GA01', indication: 'Bổ sung vitamin C, tăng đề kháng' },
-  { id: 'lora', name: 'LORATADIN',     dose: '10mg',   form: 'Viên nén',   short: 'LORA', category: 'Chống dị ứng',  color: '#8e24aa', atc: 'R06AX13', indication: 'Viêm mũi dị ứng, mày đay' },
-  { id: 'vent', name: 'VENTOLIN',      dose: '100mcg', form: 'Bình xịt',   short: 'VENT', category: 'Hô hấp',        color: '#00897b', atc: 'R03AC02', indication: 'Hen suyễn, COPD — giãn phế quản' },
-  { id: 'omep', name: 'OMEPRAZOL',     dose: '20mg',   form: 'Viên nang',  short: 'OMEP', category: 'Dạ dày',        color: '#5e35b1', atc: 'A02BC01', indication: 'Loét dạ dày, trào ngược dạ dày-thực quản' },
-  { id: 'glib', name: 'GLIBENCLAMID',  dose: '5mg',    form: 'Viên nén',   short: 'GLIB', category: 'Tiểu đường',    color: '#d97706', atc: 'A10BB01', indication: 'Tiểu đường type 2 (sulfonylurea)' },
-  { id: 'ator', name: 'ATORVASTATIN',  dose: '20mg',   form: 'Viên nén',   short: 'ATOR', category: 'Mỡ máu',        color: '#0891b2', atc: 'C10AA05', indication: 'Hạ cholesterol, phòng tim mạch' },
-  { id: 'amlo', name: 'AMLODIPIN',     dose: '5mg',    form: 'Viên nén',   short: 'AMLO', category: 'Huyết áp',      color: '#be185d', atc: 'C08CA01', indication: 'Cao huyết áp, đau thắt ngực' },
-  { id: 'diaz', name: 'DIAZEPAM',      dose: '5mg',    form: 'Viên nén',   short: 'DIAZ', category: 'Tâm thần',      color: '#4338ca', atc: 'N05BA01', indication: 'Lo âu, mất ngủ (kê đơn đặc biệt)' },
-  // 4 thuốc mới (v5) — tăng độ đa dạng
-  { id: 'levo', name: 'LEVOTHYROXIN',  dose: '50mcg',  form: 'Viên nén',   short: 'LEVO', category: 'Tuyến giáp',    color: '#9333ea', atc: 'H03AA01', indication: 'Suy giáp, bổ sung hormone tuyến giáp' },
-  { id: 'metf', name: 'METFORMIN',     dose: '500mg',  form: 'Viên nén',   short: 'METF', category: 'Tiểu đường',    color: '#ea580c', atc: 'A10BA02', indication: 'Tiểu đường type 2 (biguanide) — lựa chọn đầu tay' },
-  { id: 'ibup', name: 'IBUPROFEN',     dose: '400mg',  form: 'Viên nén',   short: 'IBUP', category: 'Chống viêm',    color: '#65a30d', atc: 'M01AE01', indication: 'Đau, viêm, hạ sốt (NSAID)' },
-  { id: 'salb', name: 'SALBUTAMOL',    dose: '2mg',    form: 'Siro',       short: 'SALB', category: 'Hô hấp',        color: '#0284c7', atc: 'R03CC02', indication: 'Cơn hen cấp, giãn phế quản đường uống' },
-];
+// Re-export catalog thuốc + danh sách nhóm điều trị từ engine
+export { MEDICINES, ALL_CATEGORIES } from './engine/drug-db.js';
 
-export const ALL_CATEGORIES = [...new Set(MEDICINES.map(m => m.category))];
+import { MEDICINES } from './engine/drug-db.js';
 
 // 10 LEVELS — escalating difficulty.
 // count = số thuốc/slot · time = thời gian (s) · shuffleSlots = đảo thứ tự ô kệ (khó hơn)
