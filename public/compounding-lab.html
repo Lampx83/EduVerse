@@ -588,8 +588,9 @@ const CAMERA_PRESETS = {
   counter:     { pos: new THREE.Vector3(0,    1.40, 1.50), target: new THREE.Vector3(0,    0.95,  0.15) },
   shelf:       { pos: new THREE.Vector3(0,    1.75, 0.80), target: new THREE.Vector3(0,    1.75, -0.55) },
   balance:     { pos: new THREE.Vector3(-1.0, 1.20, 0.95), target: new THREE.Vector3(-0.95, 1.00, 0.05) },
-  periodic:    { pos: new THREE.Vector3(-3.4, 1.20, -0.30), target: new THREE.Vector3(-ROOM_W/2, 1.00, -0.30) },
-  drugclasses: { pos: new THREE.Vector3( 3.4, 1.55, -1.20), target: new THREE.Vector3( ROOM_W/2, 1.55, -1.20) },
+  // hardcoded ±5 = ROOM_W/2 (declared later — avoid TDZ ReferenceError)
+  periodic:    { pos: new THREE.Vector3(-3.4, 1.20, -0.30), target: new THREE.Vector3(-5, 1.00, -0.30) },
+  drugclasses: { pos: new THREE.Vector3( 3.4, 1.55, -1.20), target: new THREE.Vector3( 5, 1.55, -1.20) },
   finalbottle: { pos: new THREE.Vector3(0.35, 1.30, 1.05), target: new THREE.Vector3(0.35, 1.10,  0.15) },
 };
 const camFocus = {
