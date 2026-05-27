@@ -395,8 +395,9 @@
     <div class="row"><span class="kbd">🖱️</span><span class="desc"><b>Click lần 2</b> vào cốc/ống đong/cân để <b>rót / đặt</b></span></div>
     <div class="row"><span class="kbd">Esc</span><span class="desc">Bỏ chọn vật đang cầm</span></div>
     <div class="row"><span class="kbd">V</span><span class="desc">Vào chế độ <b>đi quanh phòng</b> (WASD + chuột)</span></div>
-    <div class="row"><span class="kbd">✋</span><span class="desc"><b>Pinch ngón cái + trỏ</b> qua webcam (nút "Bật điều khiển tay")</span></div>
-    <div class="row" style="margin-top:5px;border-top:1px dashed rgba(0,0,0,0.1);padding-top:5px"><span style="font-size:11px;opacity:0.75">💡 Theo bước ở khung phải — đúng thứ tự sẽ tự nhảy bước tiếp theo.</span></div>
+    <div class="row"><span class="kbd">✋</span><span class="desc"><b>Pinch ngón cái + trỏ</b> qua webcam (nút "Bật điều khiển tay") — hỗ trợ <b>2 tay</b></span></div>
+    <div class="row"><span class="kbd">🤲</span><span class="desc"><b>Hai tay đồng thời pinch</b> (cầm chai + chụm vào cốc) → <b>rót ổn định</b>, ít quá tay</span></div>
+    <div class="row" style="margin-top:5px;border-top:1px dashed rgba(0,0,0,0.1);padding-top:5px"><span style="font-size:11px;opacity:0.75">💡 Thao tác tự do — sai quy trình sẽ được tổng kết cuối bài.</span></div>
   </div>
 </div>
 
@@ -2204,6 +2205,132 @@ function updateTilt() {
   tiltState.obj.quaternion.copy(tiltState.baseRot).multiply(q);
 }
 
+// ============================================================
+// HOLD-LIFT — khi vật được chọn, nó được nhấc lên khỏi mặt
+// bàn/kệ ~18cm với chuyển động đu đưa nhẹ. Khi thả, hạ xuống
+// mượt về vị trí nghỉ. Quaternion (tilt) hoạt động độc lập.
+// ============================================================
+// ============================================================
+// "Cầm trên tay" — object flies to a camera-right "hand" slot when
+// picked up (giống Unity demo). Released → eases back to rest pos.
+// ============================================================
+const LIFT_MS = 320;     // duration of lift-to-hand & lower-to-rest animations
+const LIFT_BOB_AMP = 0.006;
+const liftState = {
+  obj: null,
+  restPos: new THREE.Vector3(),         // world position to return to
+  restRot: new THREE.Euler(),
+  fromPos: new THREE.Vector3(),         // position at start of current phase
+  fromRot: new THREE.Euler(),
+  startedAt: 0,
+  phase: 'idle',                         // 'lifting' | 'held' | 'lowering'
+};
+
+const _liftFwd = new THREE.Vector3();
+const _liftRight = new THREE.Vector3();
+const _liftUp = new THREE.Vector3(0, 1, 0);
+const _liftHand = new THREE.Vector3();
+
+// World-space target position for an object held "in hand" — front-right
+// of the camera, slightly below eye level. Scales down a bit for big
+// objects to keep them comfortably in frame.
+function computeHandSlot(obj) {
+  camera.getWorldDirection(_liftFwd);
+  _liftRight.crossVectors(_liftFwd, _liftUp).normalize();
+  // Distance scales by object footprint so big objects don't clip
+  const bb = new THREE.Box3().setFromObject(obj);
+  const size = bb.getSize(new THREE.Vector3());
+  const objR = Math.max(size.x, size.z) * 0.5;
+  const dist = 0.52 + objR * 0.6;       // 52cm + offset for big things
+  const side = 0.20;                     // 20cm to the right
+  const down = -0.18;                    // 18cm below eye line
+  _liftHand.copy(camera.position)
+    .addScaledVector(_liftFwd, dist)
+    .addScaledVector(_liftRight, side)
+    .addScaledVector(_liftUp, down);
+  // Compensate so the visual centre (not the geometry pivot) sits in
+  // the slot — most lab objects pivot at their base.
+  _liftHand.y -= size.y * 0.5;
+  _liftHand.y += Math.sin(performance.now() * 0.0024) * LIFT_BOB_AMP;
+  return _liftHand;
+}
+
+function startLift(obj) {
+  if (!obj) return;
+  // If another object is already lifted, drop it instantly back to rest
+  if (liftState.obj && liftState.obj !== obj) {
+    liftState.obj.position.copy(liftState.restPos);
+    liftState.obj.rotation.copy(liftState.restRot);
+    liftState.obj.renderOrder = 0;
+  }
+  liftState.obj = obj;
+  liftState.restPos.copy(obj.position);
+  liftState.restRot.copy(obj.rotation);
+  liftState.fromPos.copy(obj.position);
+  liftState.fromRot.copy(obj.rotation);
+  liftState.startedAt = performance.now();
+  liftState.phase = 'lifting';
+  obj.renderOrder = 500;
+}
+
+function endLift() {
+  if (!liftState.obj) return;
+  liftState.fromPos.copy(liftState.obj.position);
+  liftState.fromRot.copy(liftState.obj.rotation);
+  liftState.startedAt = performance.now();
+  liftState.phase = 'lowering';
+}
+
+// Tell the lift system: this object now has a NEW resting position.
+// Lowering will animate back to that new pos instead of the original.
+function commitNewRestForHeld(newPos) {
+  if (!liftState.obj) return;
+  liftState.restPos.copy(newPos);
+}
+
+function resetLift() {
+  if (liftState.obj) {
+    liftState.obj.position.copy(liftState.restPos);
+    liftState.obj.rotation.copy(liftState.restRot);
+    liftState.obj.renderOrder = 0;
+  }
+  liftState.obj = null;
+  liftState.phase = 'idle';
+}
+
+function updateLift() {
+  if (!liftState.obj) return;
+  const obj = liftState.obj;
+  const elapsed = performance.now() - liftState.startedAt;
+  if (liftState.phase === 'lifting') {
+    const t = Math.min(1, elapsed / LIFT_MS);
+    const e = 1 - Math.pow(1 - t, 3);   // easeOutCubic
+    const target = computeHandSlot(obj);
+    obj.position.lerpVectors(liftState.fromPos, target, e);
+    if (t >= 1) liftState.phase = 'held';
+  } else if (liftState.phase === 'held') {
+    // Chase the camera-relative target every frame + idle rotate + tilt
+    const target = computeHandSlot(obj);
+    obj.position.lerp(target, 0.22);
+    obj.rotation.y += 0.006;
+    obj.rotation.z = Math.sin(performance.now() * 0.0018) * 0.08;
+  } else if (liftState.phase === 'lowering') {
+    const t = Math.min(1, elapsed / LIFT_MS);
+    const e = 1 - Math.pow(1 - t, 3);
+    obj.position.lerpVectors(liftState.fromPos, liftState.restPos, e);
+    obj.rotation.x = liftState.fromRot.x + (liftState.restRot.x - liftState.fromRot.x) * e;
+    obj.rotation.y = liftState.fromRot.y + (liftState.restRot.y - liftState.fromRot.y) * e;
+    obj.rotation.z = liftState.fromRot.z * (1 - e);
+    if (t >= 1) {
+      obj.position.copy(liftState.restPos);
+      obj.rotation.copy(liftState.restRot);
+      obj.renderOrder = 0;
+      liftState.obj = null;
+      liftState.phase = 'idle';
+    }
+  }
+}
+
 // Spawn particles from `fromPos` toward `toPos` over `duration` ms
 function showStream(fromPos, toPos, color, duration = 800, isPowder = false) {
   const N = isPowder ? 18 : 14;
@@ -2388,12 +2515,22 @@ function renderStep() {
   submitBtn.disabled = true;
 }
 
-function advanceStep(success = true) {
-  if (success) sfx.correct();
-  state.stepIdx++;
+function recomputeStepIdx() {
+  let i = 0;
+  while (i < state.recipe.steps.length && state.completedSteps.has(i)) i++;
+  state.stepIdx = i;
+}
+
+function markStepCompleted(stepIdx) {
+  if (stepIdx < 0 || stepIdx >= state.recipe.steps.length) return;
+  if (state.completedSteps.has(stepIdx)) return;
+  state.completedSteps.add(stepIdx);
+  state.actionLog.push({ t: Date.now(), kind: 'step-done', stepIdx, label: state.recipe.steps[stepIdx].label });
+  sfx.correct();
+  recomputeStepIdx();
   state.transferDone = false;
-  // reset cylinder for next 'cylinder' step (but keep beaker volume across steps)
-  if (state.recipe.steps[state.stepIdx]?.container === 'cylinder' && state.recipe.steps[state.stepIdx]?.action !== 'transfer') {
+  const next = state.recipe.steps[state.stepIdx];
+  if (next?.container === 'cylinder' && next?.action !== 'transfer') {
     state.cylinderMl = 0;
     updateCylinderLiquid(0, 0xc16e1c);
   }
@@ -2401,10 +2538,18 @@ function advanceStep(success = true) {
   sendProgress();
 }
 
+// Legacy advanceStep kept for skip-button compatibility — marks the current
+// step completed with an error log entry.
+function advanceStep(success = true) {
+  if (state.stepIdx < state.recipe.steps.length) markStepCompleted(state.stepIdx);
+}
+
+// Free-form error logging: silent (no blocking toast / no wrong sound), just
+// pushes to the errors list and shows a small non-intrusive hint.
 function logError(msg) {
   state.errors.push(msg);
-  showToast('❌ ' + msg, 2500, 'err');
-  sfx.wrong();
+  state.actionLog.push({ t: Date.now(), kind: 'error', msg });
+  showToast('⚠ ' + msg, 1400, 'warn');
 }
 
 function updateBeakerLiquid(volMl, color) {
@@ -2504,23 +2649,41 @@ function updateWalk(dt) {
 }
 
 // ============================================================
-// MEDIAPIPE HAND TRACKING — pinch to grab, release to drop
+// MEDIAPIPE HAND TRACKING — two hands: each pinch acts as a click.
+// When BOTH hands pinch on a valid pour/transfer/bottle combo at the
+// same moment, a "two-hand bonus" is applied: smaller chunk variance
+// (steadier pour, less overshoot). Mortar grinding gesture: both
+// hands pinching near the mortar with circular motion in the right
+// hand → animate grinding particles.
 // ============================================================
 const handState = {
   running: false, landmarker: null, video: null, lastVideoTime: -1,
-  pinching: false, pinchTriggered: false,
+  // Per-hand state — slot 0 = left hand, slot 1 = right hand. Slots
+  // are assigned from MediaPipe handedness when available.
+  hands: [
+    { active: false, x: 0, y: 0, pinching: false, label: 'Left',  color: 0x38bdf8, ringHex: '#38bdf8' },
+    { active: false, x: 0, y: 0, pinching: false, label: 'Right', color: 0xfb923c, ringHex: '#fb923c' },
+  ],
+  bothPinchAt: 0,           // timestamp the most recent both-pinch combo was detected
 };
 const handBtn = document.getElementById('hand-btn');
 const camPreviewEl = document.getElementById('cam-preview');
 const camCtx = camPreviewEl.getContext('2d');
-// Cursor sphere in 3D
-const handCursor = new THREE.Mesh(
-  new THREE.SphereGeometry(0.018, 16, 16),
-  new THREE.MeshBasicMaterial({ color: 0x00ddff, transparent: true, opacity: 0.9, depthTest: false })
-);
-handCursor.renderOrder = 999;
-handCursor.visible = false;
-scene.add(handCursor);
+// Two cursor spheres in 3D — one per hand.
+const handCursors = [
+  new THREE.Mesh(new THREE.SphereGeometry(0.020, 16, 16), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92, depthTest: false })),
+  new THREE.Mesh(new THREE.SphereGeometry(0.020, 16, 16), new THREE.MeshBasicMaterial({ color: 0xfb923c, transparent: true, opacity: 0.92, depthTest: false })),
+];
+for (const c of handCursors) { c.renderOrder = 999; c.visible = false; scene.add(c); }
+
+// Floating "two-hand combo" badge in the DOM
+const twoHandBadgeEl = document.createElement('div');
+twoHandBadgeEl.style.cssText = 'position:absolute;top:118px;right:12px;z-index:11;background:linear-gradient(135deg,#38bdf8,#fb923c);color:#fff;padding:6px 12px;border-radius:14px;font-size:12px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.18);display:none;animation:pulse 0.8s ease-in-out infinite';
+twoHandBadgeEl.textContent = '🙌 Hai tay phối hợp · rót ổn định';
+document.body.appendChild(twoHandBadgeEl);
+const _pulseStyle = document.createElement('style');
+_pulseStyle.textContent = '@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }';
+document.head.appendChild(_pulseStyle);
 
 const SECURE_FOR_CAMERA = window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
 if (!SECURE_FOR_CAMERA) {
@@ -2540,7 +2703,7 @@ async function initHandTracking() {
     const fileset = await FilesetResolver.forVisionTasks('./vendor/mediapipe/wasm');
     handState.landmarker = await HandLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: './models/hand_landmarker.task', delegate: 'GPU' },
-      runningMode: 'VIDEO', numHands: 1,
+      runningMode: 'VIDEO', numHands: 2,
     });
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 }, audio: false });
     handState.video = document.createElement('video');
@@ -2550,11 +2713,11 @@ async function initHandTracking() {
     await handState.video.play();
     handState.running = true;
     handBtn.classList.add('active');
-    handBtn.textContent = '✋ Tắt hand tracking';
+    handBtn.textContent = '✋ Tắt hand tracking (2 tay)';
     handBtn.disabled = false;
     camPreviewEl.classList.add('shown');
-    handCursor.visible = true;
-    showToast('🖐️ Chụm ngón cái + trỏ để chọn dụng cụ / reagent', 3000, 'ok');
+    for (const c of handCursors) c.visible = true;
+    showToast('🤲 Hai tay: chụm cái+trỏ để cầm/đặt. Cầm chai + chụm tay kia vào cốc để rót ổn định.', 4500, 'ok');
   } catch (err) {
     handBtn.disabled = false; handBtn.textContent = '🖐️ Bật điều khiển tay';
     showToast('❌ Hand tracking lỗi: ' + (err.message || err.name), 3000, 'err');
@@ -2568,60 +2731,111 @@ function stopHandTracking() {
   handBtn.classList.remove('active');
   handBtn.textContent = '🖐️ Bật điều khiển tay';
   camPreviewEl.classList.remove('shown');
-  handCursor.visible = false;
-  handState.pinching = false; handState.pinchTriggered = false;
+  for (const c of handCursors) c.visible = false;
+  for (const h of handState.hands) { h.active = false; h.pinching = false; }
+  twoHandBadgeEl.style.display = 'none';
 }
 
 const _handPlaneN = new THREE.Vector3();
 const _handHit = new THREE.Vector3();
+const _handRay = new THREE.Vector2();
 function updateHand(time) {
   if (!handState.running || !handState.landmarker || !handState.video) return;
   if (handState.video.currentTime === handState.lastVideoTime) return;
   handState.lastVideoTime = handState.video.currentTime;
   const result = handState.landmarker.detectForVideo(handState.video, time);
   camCtx.drawImage(handState.video, 0, 0, camPreviewEl.width, camPreviewEl.height);
+
+  // Reset active flags; will be re-set per hand from result.
+  for (const h of handState.hands) h.active = false;
+
   if (!result.landmarks || !result.landmarks.length) {
-    if (handState.pinching) { handState.pinching = false; handState.pinchTriggered = false; }
+    // No hands → clear pinches & hide cursors
+    for (let i = 0; i < handState.hands.length; i++) {
+      handState.hands[i].pinching = false;
+      handCursors[i].visible = false;
+    }
+    twoHandBadgeEl.style.display = 'none';
     return;
   }
-  const lm = result.landmarks[0];
-  const t = lm[4], idx = lm[8];
-  // Draw landmarks
-  camCtx.fillStyle = '#00ddff';
-  for (const p of lm) { camCtx.beginPath(); camCtx.arc(p.x * camPreviewEl.width, p.y * camPreviewEl.height, 3, 0, Math.PI*2); camCtx.fill(); }
-  camCtx.strokeStyle = handState.pinching ? '#ff5722' : '#fff';
-  camCtx.lineWidth = 2;
-  camCtx.beginPath();
-  camCtx.moveTo(t.x * camPreviewEl.width, t.y * camPreviewEl.height);
-  camCtx.lineTo(idx.x * camPreviewEl.width, idx.y * camPreviewEl.height);
-  camCtx.stroke();
-  // Convert to NDC (mirror x)
-  const px = (t.x + idx.x) / 2, py = (t.y + idx.y) / 2;
-  mouse.x = (1 - px) * 2 - 1;
-  mouse.y = -(py * 2 - 1);
-  raycaster.setFromCamera(mouse, camera);
-  // Project to a plane at counter height for cursor visualization
-  camera.getWorldDirection(_handPlaneN);
-  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(_handPlaneN, new THREE.Vector3(0, 1.0, 0));
-  if (raycaster.ray.intersectPlane(plane, _handHit)) {
-    handCursor.position.copy(_handHit);
-  }
-  // Pinch detection
-  const pinchDist = Math.hypot(t.x - idx.x, t.y - idx.y);
-  const wasPinching = handState.pinching;
-  if (!handState.pinching && pinchDist < 0.05) handState.pinching = true;
-  else if (handState.pinching && pinchDist > 0.08) handState.pinching = false;
-  handCursor.material.color.setHex(handState.pinching ? 0xff5722 : 0x00ddff);
-  // On pinch START → simulate click on hovered object
-  if (handState.pinching && !wasPinching) {
-    const hits = raycaster.intersectObjects(getClickable(), true);
-    if (hits.length) {
-      const grp = pickTopGroup(hits[0].object);
-      if (grp) handleClickOn(grp);
+
+  // Assign each detected hand to slot 0 (left) or 1 (right) using MediaPipe
+  // handedness. The webcam image is mirrored, so MediaPipe's "Left" really
+  // is the user's right hand on screen — we honor the on-screen mapping by
+  // using the raw label (because we already mirror NDC x below).
+  const slotsUsed = [false, false];
+  for (let li = 0; li < result.landmarks.length; li++) {
+    const lm = result.landmarks[li];
+    const handed = result.handednesses?.[li]?.[0]?.categoryName || (li === 0 ? 'Left' : 'Right');
+    let slot = handed === 'Left' ? 0 : 1;
+    if (slotsUsed[slot]) slot = 1 - slot;          // collision → take other slot
+    if (slotsUsed[slot]) continue;                 // both taken (rare) → skip extra hand
+    slotsUsed[slot] = true;
+    const hand = handState.hands[slot];
+    hand.active = true;
+
+    const t = lm[4], idx = lm[8];
+    // Draw landmarks for this hand
+    const drawColor = hand.ringHex;
+    camCtx.fillStyle = drawColor;
+    for (const p of lm) { camCtx.beginPath(); camCtx.arc(p.x * camPreviewEl.width, p.y * camPreviewEl.height, 3, 0, Math.PI*2); camCtx.fill(); }
+    camCtx.strokeStyle = hand.pinching ? '#ef4444' : drawColor;
+    camCtx.lineWidth = 2;
+    camCtx.beginPath();
+    camCtx.moveTo(t.x * camPreviewEl.width, t.y * camPreviewEl.height);
+    camCtx.lineTo(idx.x * camPreviewEl.width, idx.y * camPreviewEl.height);
+    camCtx.stroke();
+    // NDC (mirror x)
+    const px = (t.x + idx.x) / 2, py = (t.y + idx.y) / 2;
+    _handRay.x = (1 - px) * 2 - 1;
+    _handRay.y = -(py * 2 - 1);
+    hand.x = _handRay.x; hand.y = _handRay.y;
+    raycaster.setFromCamera(_handRay, camera);
+    camera.getWorldDirection(_handPlaneN);
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(_handPlaneN, new THREE.Vector3(0, 1.0, 0));
+    if (raycaster.ray.intersectPlane(plane, _handHit)) {
+      handCursors[slot].position.copy(_handHit);
+      handCursors[slot].visible = true;
     }
+    // Pinch detection (hysteresis)
+    const pinchDist = Math.hypot(t.x - idx.x, t.y - idx.y);
+    const wasPinching = hand.pinching;
+    if (!hand.pinching && pinchDist < 0.05) hand.pinching = true;
+    else if (hand.pinching && pinchDist > 0.08) hand.pinching = false;
+    handCursors[slot].material.color.setHex(hand.pinching ? 0xef4444 : hand.color);
+    handCursors[slot].scale.setScalar(hand.pinching ? 1.25 : 1.0);
+    // On pinch START → click on hovered object (per-hand click).
+    if (hand.pinching && !wasPinching) {
+      const hits = raycaster.intersectObjects(getClickable(), true);
+      if (hits.length) {
+        const grp = pickTopGroup(hits[0].object);
+        if (grp) {
+          // Flag two-hand bonus if the OTHER hand is also pinching.
+          const otherIdx = 1 - slot;
+          const other = handState.hands[otherIdx];
+          if (other.active && other.pinching) {
+            state.twoHandBonus = true;
+            handState.bothPinchAt = performance.now();
+            sfx.grab();
+          }
+          handleClickOn(grp);
+          state.twoHandBonus = false;     // consume the flag immediately
+        }
+      }
+    }
+    // Send cursor to multiplayer (using whichever hand is more "active")
+    if (slot === 1 && ws && ws.readyState === 1) sendCursor(_handHit.x, _handHit.y, _handHit.z);
   }
-  // Send cursor to multiplayer
-  if (ws && ws.readyState === 1) sendCursor(_handHit.x, _handHit.y, _handHit.z);
+
+  // Hide any unused cursors this frame.
+  for (let i = 0; i < handState.hands.length; i++) {
+    if (!handState.hands[i].active) { handCursors[i].visible = false; handState.hands[i].pinching = false; }
+  }
+
+  // Show two-hand combo badge while both hands are pinching.
+  const bothPinching = handState.hands[0].active && handState.hands[1].active
+                    && handState.hands[0].pinching && handState.hands[1].pinching;
+  twoHandBadgeEl.style.display = bothPinching ? 'block' : 'none';
 }
 
 // ===== Pointer interaction =====
@@ -2661,8 +2875,10 @@ function setSelectedTool(t) {
     if (walk.active) holdBadgeEl.classList.add('walk-mode');
     else holdBadgeEl.classList.remove('walk-mode');
     sfx.grab();
+    startLift(selectedTool);
   } else {
     holdBadgeEl.classList.remove('shown');
+    endLift();
   }
   updateHoverPressText();
 }
@@ -2676,161 +2892,157 @@ function updateHoverPressText() {
   }
 }
 
+// Find first uncompleted recipe step that matches the (action, held, target) tuple.
+function findMatchingStepIdx(action, su, tu) {
+  for (let i = 0; i < state.recipe.steps.length; i++) {
+    if (state.completedSteps.has(i)) continue;
+    const s = state.recipe.steps[i];
+    if (s.action !== action) continue;
+    if (action === 'place-on-balance' && su.id === 'beaker' && tu.id === 'balance') return i;
+    if (action === 'pour' && su.id === s.reagentId) {
+      const cId = s.container === 'cylinder' ? 'cylinder' : 'beaker';
+      if (tu.id === cId) return i;
+    }
+    if (action === 'transfer' && su.id === 'cylinder' && tu.id === 'beaker') return i;
+    if (action === 'bottle' && su.id === 'beaker' && tu.id === 'final-bottle') return i;
+  }
+  return -1;
+}
+
+// ============================================================
+// FREE-FORM INTERACTION — any physically sensible combo executes;
+// matching steps are marked done in any order; mismatches are logged
+// silently and reviewed at submission time.
+// ============================================================
 function handleClickOn(target) {
   if (!target) { setSelectedTool(null); return; }
-  if (state.stepIdx >= state.recipe.steps.length) return;
   const tu = target.userData;
-  const cur = state.recipe.steps[state.stepIdx];
 
-  // ============================================================
-  // FREE-SELECTION MODEL: any first click on a tool/reagent picks it up
-  // (badge appears immediately). The second click validates against the
-  // current step — wrong combo errors out, right combo executes.
-  // ============================================================
+  // FIRST CLICK: pick up any tool / reagent.
   const isPickup = !selectedTool || (tu.kind === 'reagent' && selectedTool.userData?.kind === 'reagent');
+  if (isPickup) { setSelectedTool(target); return; }
 
-  if (cur.action === 'place-on-balance') {
-    // First click: pick up (badge appears). Show hint if it's not the beaker
-    if (isPickup) {
-      setSelectedTool(target);
-      if (tu.id !== 'beaker') showToast('💡 Bước này cần CỐC THỦY TINH — click vào cốc', 2400);
-      return;
+  const su = selectedTool.userData;
+
+  // ----- 1. PLACE-ON-BALANCE: beaker → balance -----
+  if (su.id === 'beaker' && tu.id === 'balance') {
+    commitNewRestForHeld(new THREE.Vector3(balance.position.x + 0.03, balance.position.y + 0.06, balance.position.z));
+    state.beakerOnBalance = true;
+    drawBalScreen(0, 'TARE OK');
+    sendAction('place-beaker-on-balance');
+    const idx = findMatchingStepIdx('place-on-balance', su, tu);
+    if (idx >= 0) markStepCompleted(idx);
+    else logError('Đặt cốc lên cân — không nằm trong quy trình');
+    setSelectedTool(null);
+    return;
+  }
+
+  // ----- 2. POUR: reagent → beaker | cylinder -----
+  if (su.kind === 'reagent' && (tu.id === 'beaker' || tu.id === 'cylinder')) {
+    const idx = findMatchingStepIdx('pour', su, tu);
+    if (idx >= 0) {
+      doPour(tu.id, selectedTool, state.recipe.steps[idx], idx);
+    } else {
+      doFreePour(tu.id, selectedTool);
+      logError(`Rót ${su.name} vào ${tu.id === 'beaker' ? 'cốc' : 'ống đong'} — không có trong đơn`);
+      setTimeout(() => setSelectedTool(null), 500);
     }
-    // Second click: validate
-    if (selectedTool === beaker && tu.id === 'balance') {
-      beaker.position.set(balance.position.x + 0.03, balance.position.y + 0.06, balance.position.z);
-      state.beakerOnBalance = true;
-      drawBalScreen(0, 'TARE OK');
-      sendAction('place-beaker-on-balance');
-      advanceStep();
+    return;
+  }
+
+  // ----- 3. TRANSFER: cylinder → beaker -----
+  if (su.id === 'cylinder' && tu.id === 'beaker') {
+    const idx = findMatchingStepIdx('transfer', su, tu);
+    const vol = state.cylinderMl;
+    if (vol < 0.01) {
+      logError('Ống đong rỗng — không có gì để đổ');
       setSelectedTool(null);
       return;
     }
-    if (selectedTool !== beaker) logError(`Cần CỐC — bạn đang cầm ${selectedTool.userData?.name}. Click cốc trước.`);
-    else logError('Cần click vào CÂN ĐIỆN TỬ để đặt cốc lên.');
-    setSelectedTool(null); return;
+    state.beakerVol += vol;
+    state.cylinderMl = 0;
+    const tp = new THREE.Vector3(); beaker.getWorldPosition(tp); tp.y += 0.05;
+    tiltBottleTowards(cylinder, tp, 1000, 1.4);
+    const fp = new THREE.Vector3(); cylinder.getWorldPosition(fp); fp.y += 0.22;
+    const dirH = new THREE.Vector3(tp.x - fp.x, 0, tp.z - fp.z).normalize().multiplyScalar(0.04);
+    fp.add(dirH);
+    showStream(fp, tp, cylinder.userData.liquid.material.color.getHex(), 900);
+    setTimeout(() => {
+      updateCylinderLiquid(0, 0);
+      updateBeakerLiquid(state.beakerVol, state.beakerColor);
+      showToast(`Đã chuyển ${vol.toFixed(1)} mL vào cốc`, 1500);
+      sendAction('transfer-to-beaker');
+      state.transferDone = true;
+      if (idx >= 0) markStepCompleted(idx);
+      else logError('Chuyển ống đong → cốc — không khớp bước nào');
+      setSelectedTool(null);
+    }, 700);
+    return;
   }
 
-  if (cur.action === 'pour') {
-    const wantReagent = REAGENTS[cur.reagentId];
-    const wantContainer = cur.container === 'cylinder' ? 'ống đong' : 'cốc';
-    const containerId = cur.container === 'cylinder' ? 'cylinder' : 'beaker';
-
-    // First click: any tool/reagent → pick up
-    if (isPickup) {
-      setSelectedTool(target);
-      if (tu.kind === 'reagent' && tu.id !== cur.reagentId) {
-        showToast(`💡 Bước này cần ${wantReagent?.name} — click chai đúng`, 2400);
-      } else if (tu.kind === 'tool' && tu.id !== cur.reagentId) {
-        showToast(`💡 Bước này cần ${wantReagent?.name} (chai trên kệ)`, 2400);
-      }
+  // ----- 4. BOTTLE: beaker → final-bottle -----
+  if (su.id === 'beaker' && tu.id === 'final-bottle') {
+    if (state.beakerVol < 0.01) {
+      logError('Cốc rỗng — không có gì để đóng chai');
+      setSelectedTool(null);
       return;
     }
-    // Second click: validate
-    // — Selected = correct reagent + Target = correct container
-    if (selectedTool.userData.id === cur.reagentId && tu.id === containerId) {
-      doPour(containerId, selectedTool, cur);
-      return;
-    }
-    // — Selected reagent wrong
-    if (selectedTool.userData.kind === 'reagent' && selectedTool.userData.id !== cur.reagentId) {
-      logError(`Sai reagent — cần ${wantReagent?.name}, bạn đang cầm ${selectedTool.userData.name}`);
-      setSelectedTool(null); return;
-    }
-    // — Container wrong (clicked something other than the expected container)
-    if (selectedTool.userData.id === cur.reagentId && tu.id !== containerId) {
-      logError(`Click vào ${wantContainer} để rót (không phải ${tu.name}).`);
-      return;   // keep selection so user can try again
-    }
-    logError(`Click chai ${wantReagent?.name} rồi click ${wantContainer}.`);
-    setSelectedTool(null); return;
+    const idx = findMatchingStepIdx('bottle', su, tu);
+    const tp = new THREE.Vector3(); finalBottle.getWorldPosition(tp); tp.y += 0.2;
+    tiltBottleTowards(beaker, tp, 1100, 1.4);
+    const fp = new THREE.Vector3(); beaker.getWorldPosition(fp); fp.y += 0.14;
+    const dirH = new THREE.Vector3(tp.x - fp.x, 0, tp.z - fp.z).normalize().multiplyScalar(0.05);
+    fp.add(dirH);
+    showStream(fp, tp, state.beakerColor || 0xa67c2a, 1000);
+    setTimeout(() => {
+      state.bottled = true;
+      finalBottle.userData.fill.visible = true;
+      finalBottle.userData.fill.material.color.setHex(state.recipe.finalColor);
+      updateBeakerLiquid(0, 0);
+      state.beakerVol = 0;
+      sendAction('bottled');
+      if (idx >= 0) { sfx.perfect(); markStepCompleted(idx); showToast('🎉 Đã đóng chai!', 2500, 'ok'); }
+      else logError('Đóng chai — không khớp bước nào');
+      setSelectedTool(null);
+    }, 900);
+    return;
   }
 
-  if (cur.action === 'transfer') {
-    if (isPickup) {
-      setSelectedTool(target);
-      if (tu.id !== 'cylinder') showToast('💡 Bước này cần ỐNG ĐONG — click ống đong (đã có dung dịch)', 2400);
-      return;
-    }
-    if (selectedTool === cylinder && tu.id === 'beaker') {
-      const vol = state.cylinderMl;
-      state.beakerVol += vol;
-      state.cylinderMl = 0;
-      // animate cylinder tilt + stream
-      const tp = new THREE.Vector3(); beaker.getWorldPosition(tp); tp.y += 0.05;
-      tiltBottleTowards(cylinder, tp, 1000, 1.4);
-      const fp = new THREE.Vector3(); cylinder.getWorldPosition(fp); fp.y += 0.22;
-      const dirH = new THREE.Vector3(tp.x - fp.x, 0, tp.z - fp.z).normalize().multiplyScalar(0.04);
-      fp.add(dirH);
-      showStream(fp, tp, cylinder.userData.liquid.material.color.getHex(), 900);
-      sfx.correct();
-      setTimeout(() => {
-        updateCylinderLiquid(0, 0);
-        updateBeakerLiquid(state.beakerVol, state.beakerColor);
-        showToast(`✅ Đã chuyển ${vol.toFixed(1)} mL vào cốc`, 1500, 'ok');
-        sendAction('transfer-to-beaker');
-        state.transferDone = true;
-        advanceStep();
-        setSelectedTool(null);
-      }, 700);
-      return;
-    }
-    logError('Click ống đong rồi click cốc.');
-    setSelectedTool(null); return;
-  }
-
-  if (cur.action === 'bottle') {
-    if (isPickup) {
-      setSelectedTool(target);
-      if (tu.id !== 'beaker') showToast('💡 Bước này cần CỐC — click cốc (đã có dung dịch pha)', 2400);
-      return;
-    }
-    if (selectedTool === beaker && tu.id === 'final-bottle') {
-      const tp = new THREE.Vector3(); finalBottle.getWorldPosition(tp); tp.y += 0.2;
-      tiltBottleTowards(beaker, tp, 1100, 1.4);
-      const fp = new THREE.Vector3(); beaker.getWorldPosition(fp); fp.y += 0.14;
-      const dirH = new THREE.Vector3(tp.x - fp.x, 0, tp.z - fp.z).normalize().multiplyScalar(0.05);
-      fp.add(dirH);
-      showStream(fp, tp, state.beakerColor || 0xa67c2a, 1000);
-      sfx.perfect();
-      setTimeout(() => {
-        state.bottled = true;
-        finalBottle.userData.fill.visible = true;
-        finalBottle.userData.fill.material.color.setHex(state.recipe.finalColor);
-        updateBeakerLiquid(0, 0);
-        state.beakerVol = 0;
-        showToast('🎉 Đã đóng chai! Bấm "Hoàn thành & Nộp".', 3500, 'ok');
-        sendAction('bottled');
-        advanceStep();
-        setSelectedTool(null);
-      }, 900);
-      return;
-    }
-    logError('Click cốc rồi click chai thành phẩm.');
-    setSelectedTool(null); return;
-  }
+  // ----- Any other combo: physically not sensible -----
+  logError(`Thao tác không hợp lý: ${su.name} → ${tu.name}`);
+  setSelectedTool(null);
 }
 
-function doPour(containerKind, reagentGrp, step) {
+function doPour(containerKind, reagentGrp, step, stepIdx) {
   // Tilt the reagent bottle toward the target so the spout points at it
   const toPos = new THREE.Vector3();
   if (containerKind === 'beaker') beaker.getWorldPosition(toPos); else cylinder.getWorldPosition(toPos);
   toPos.y += 0.1;
   const reagentInfo = REAGENTS[step.reagentId];
   tiltBottleTowards(reagentGrp, toPos, 900, 1.3);
-  // Compute "spout" position: top of tilted bottle ≈ bottle position + offset toward target
   const fromPos = new THREE.Vector3(); reagentGrp.getWorldPosition(fromPos);
   fromPos.y += 0.30;
   const dirH = new THREE.Vector3(toPos.x - fromPos.x, 0, toPos.z - fromPos.z).normalize().multiplyScalar(0.05);
   fromPos.add(dirH);
   showStream(fromPos, toPos, reagentInfo?.liquid || 0x88ccee, 800, !!reagentInfo?.isPowder);
 
-  const i = state.stepIdx;
+  const i = stepIdx;
   state.stepProgress[i] = state.stepProgress[i] ?? 0;
 
+  // Two-hand bonus → tighter chunk: smaller variance, biased toward target.
+  // Without bonus → original wider variance (more risk of overshoot).
+  const bonus = state.twoHandBonus;
+  if (bonus) state.twoHandPours++;
   let chunk;
-  if (step.unit === 'g') chunk = step.target * (0.18 + Math.random() * 0.2);
-  else chunk = step.target * (0.12 + Math.random() * 0.18);
+  if (step.unit === 'g') {
+    chunk = bonus
+      ? step.target * (0.10 + Math.random() * 0.10)   // 10–20% of target per chunk
+      : step.target * (0.18 + Math.random() * 0.20);  // 18–38% (more variance)
+  } else {
+    chunk = bonus
+      ? step.target * (0.08 + Math.random() * 0.08)
+      : step.target * (0.12 + Math.random() * 0.18);
+  }
   // Snap final increment so target is reachable in a clean step
   if (state.stepProgress[i] + chunk > step.target * 0.92 && state.stepProgress[i] + chunk < step.target + step.tolerance) {
     chunk = Math.min(step.target - state.stepProgress[i] + (Math.random() - 0.3) * step.tolerance * 0.4, chunk);
@@ -2843,12 +3055,10 @@ function doPour(containerKind, reagentGrp, step) {
     if (step.unit === 'g') {
       state.beakerWeight = cur;
       drawBalScreen(cur, 'STABLE');
-      // Visualize powder accumulation in beaker
       state.beakerVol = Math.max(state.beakerVol, cur * 3);   // visual proxy
       state.beakerColor = REAGENTS[step.reagentId]?.liquid || 0xfafafa;
       updateBeakerLiquid(state.beakerVol, state.beakerColor);
     } else {
-      // 'water' q.s. — current = total volume target progression
       state.beakerVol = cur;
       state.beakerColor = blendColor(state.beakerColor || REAGENTS[step.reagentId]?.liquid, REAGENTS[step.reagentId]?.liquid || 0xddeefa, 0.4);
       updateBeakerLiquid(state.beakerVol, state.beakerColor);
@@ -2864,13 +3074,30 @@ function doPour(containerKind, reagentGrp, step) {
   if (Math.abs(cur - step.target) <= step.tolerance) {
     showToast(`✅ Đạt ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit}`, 1700, 'ok');
     sendAction(`pour-${step.reagentId}-done`);
-    setTimeout(() => { advanceStep(); setSelectedTool(null); }, 400);
+    setTimeout(() => { markStepCompleted(i); setSelectedTool(null); }, 400);
   } else if (cur > step.target + step.tolerance) {
-    logError(`Quá tay: ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} (đích ${step.target}). Bị trừ điểm.`);
-    setTimeout(() => { advanceStep(false); setSelectedTool(null); }, 400);
+    logError(`Quá tay ${reagentInfo?.name}: ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} (đích ${step.target})`);
+    setTimeout(() => { markStepCompleted(i); setSelectedTool(null); }, 400);
   } else {
     showToast(`+${chunk.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} · còn ${(step.target - cur).toFixed(step.unit === 'g' ? 3 : 1)}`, 1100);
   }
+}
+
+// Pour something the recipe doesn't ask for — visual only (tilt + stream).
+// Beaker/cylinder contents are *not* mutated, so a stray click doesn't
+// permanently contaminate the in-progress preparation.
+function doFreePour(containerKind, reagentGrp) {
+  const ru = reagentGrp.userData;
+  const info = REAGENTS[ru.id];
+  const toPos = new THREE.Vector3();
+  if (containerKind === 'beaker') beaker.getWorldPosition(toPos); else cylinder.getWorldPosition(toPos);
+  toPos.y += 0.1;
+  tiltBottleTowards(reagentGrp, toPos, 900, 1.3);
+  const fromPos = new THREE.Vector3(); reagentGrp.getWorldPosition(fromPos);
+  fromPos.y += 0.30;
+  const dirH = new THREE.Vector3(toPos.x - fromPos.x, 0, toPos.z - fromPos.z).normalize().multiplyScalar(0.05);
+  fromPos.add(dirH);
+  showStream(fromPos, toPos, info?.liquid || 0x88ccee, 700, !!info?.isPowder);
 }
 
 function blendColor(a, b, t) {
@@ -3015,6 +3242,8 @@ mpChatInput.addEventListener('keydown', e => {
 // START GAME (called after level selected)
 // ============================================================
 startGameImpl = function () {
+  // Force-clear any in-progress lift before resetting positions.
+  resetLift();
   // Setup reagents for this recipe
   setupReagents(currentRecipe);
   setFinalLabel(currentRecipe.finalBottleLabel);
@@ -3033,6 +3262,16 @@ startGameImpl = function () {
     transferDone: false,
     stepProgress: {},
     errors: [],
+    // Free-form mode: any sensible action executes; steps can be done out
+    // of order. completedSteps tracks which recipe steps have been satisfied;
+    // actionLog records every user action (matched or not) for end-of-game review.
+    completedSteps: new Set(),
+    actionLog: [],
+    // Two-hand bonus — set true transiently by hand-tracking when BOTH hands
+    // pinch at the same moment. Consumed by doPour to use smaller, steadier
+    // chunks (less variance, no overshoot). Tracked also for end-game stats.
+    twoHandBonus: false,
+    twoHandPours: 0,
   };
   updateBeakerLiquid(0, 0);
   updateCylinderLiquid(0, 0);
@@ -3216,6 +3455,25 @@ submitBtn.addEventListener('click', async () => {
     score -= pen;
     breakdown.push(`${REAGENTS[s.reagentId]?.name || s.reagentId}: ${got.toFixed(s.unit === 'g' ? 3 : 1)} ${s.unit} (đích ${s.target}, −${pen})`);
   }
+  // Order penalty: if the user did the recipe out of order, count step gaps.
+  const doneInOrder = state.actionLog
+    .filter(e => e.kind === 'step-done')
+    .map(e => e.stepIdx);
+  let outOfOrder = 0;
+  for (let k = 1; k < doneInOrder.length; k++) {
+    if (doneInOrder[k] < doneInOrder[k-1]) outOfOrder++;
+  }
+  if (outOfOrder > 0) {
+    const pen = Math.min(15, outOfOrder * 3);
+    score -= pen;
+    breakdown.push(`Sai thứ tự thao tác: ${outOfOrder} lần (−${pen})`);
+  }
+  // Two-hand bonus: +2 per stable pour, capped at +10
+  if (state.twoHandPours > 0) {
+    const bonus = Math.min(10, state.twoHandPours * 2);
+    score += bonus;
+    breakdown.push(`🤲 Rót bằng 2 tay: ${state.twoHandPours} lần (+${bonus})`);
+  }
   const errPenalty = state.errors.length * 5;
   score -= errPenalty;
   if (state.errors.length) breakdown.push(`Lỗi thao tác: ${state.errors.length} (−${errPenalty})`);
@@ -3226,11 +3484,21 @@ submitBtn.addEventListener('click', async () => {
                 : score >= 50 ? '🙂 Trung bình — cần luyện thêm.'
                 : '📚 Cần làm lại — nhiều sai sót.';
 
+  const errorsHtml = state.errors.length
+    ? `<div style="margin-top:14px;padding:10px 12px;background:rgba(220,38,38,0.08);border-left:3px solid #dc2626;border-radius:6px;text-align:left">
+         <div style="font-weight:700;color:#b91c1c;margin-bottom:4px">⚠ Lỗi quy trình (${state.errors.length})</div>
+         <ul style="margin:4px 0 0;padding-left:18px;font-size:12px;line-height:1.5;color:#7f1d1d">
+           ${state.errors.map(e => `<li>${e}</li>`).join('')}
+         </ul>
+       </div>`
+    : '<div style="margin-top:10px;font-size:12px;color:#15803d;text-align:center">✅ Không có lỗi quy trình</div>';
+
   document.getElementById('result-card').innerHTML = `
     <div class="verdict">${verdict}</div>
     <div class="score-big" style="color:${score>=70?'#15803d':score>=50?'#0369a1':'#b91c1c'}">${score} / 100</div>
     <div style="text-align:center;font-size:13px;opacity:0.7">${state.recipe.icon} ${state.recipe.name}</div>
     <ul>${breakdown.map(b => `<li>· ${b}</li>`).join('')}</ul>
+    ${errorsHtml}
     <div class="actions">
       <a href="./">← Trang chính</a>
       <button id="result-retry">🔄 Bài khác</button>
@@ -3259,6 +3527,8 @@ submitBtn.addEventListener('click', async () => {
       recipe: state.recipe.id,
       stepProgress: state.stepProgress,
       errors: state.errors,
+      actionLog: state.actionLog,
+      outOfOrder,
     },
   });
 });
@@ -3285,6 +3555,7 @@ renderer.setAnimationLoop((time) => {
   updateWalk(dt);
   updateStream(dt);
   updateTilt();
+  updateLift();
   updateHand(time ?? performance.now());
 
   // hover label position
