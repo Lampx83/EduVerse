@@ -104,6 +104,21 @@
   .section-title .actions { margin-left: auto; }
   .section-title .actions a { font-size: 12px; color: var(--accent); text-decoration: none; }
 
+  /* Inline level-select inside the "Sắp xếp thuốc" demo group */
+  .level-select-inline {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 18px 16px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(8px);
+  }
+  .level-select-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+  .level-select-head h3 { margin: 0; font-size: 16px; font-weight: 700; }
+  .level-select-head .hint { opacity: 0.6; font-size: 12px; }
+  .level-select-head .actions { margin-left: auto; }
+  .level-select-head .actions a { font-size: 12px; color: var(--accent); text-decoration: none; }
+
   /* ============ LEVEL SELECT GRID ============ */
   .levels {
     display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
@@ -245,21 +260,19 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   </div>
 </div>
 
-<!-- ============ LEVEL SELECT (chỉ áp dụng cho nhóm Sắp xếp thuốc) ============ -->
-<div class="section">
-  <div class="section-title">
-    <h2>🎯 Chọn cấp độ</h2>
-    <span class="hint" id="level-current-hint">Level 1 đang mở · áp dụng cho nhóm <b>Sắp xếp thuốc</b></span>
-    <span class="actions"><a id="reset-progress" href="#">↺ Reset tiến độ</a></span>
-  </div>
-  <div class="levels" id="levels"></div>
-</div>
-
-<!-- ============ NHÓM 1 · SẮP XẾP THUỐC ============ -->
+<!-- ============ NHÓM 1 · SẮP XẾP THUỐC (level select nằm bên trong) ============ -->
 <div class="section">
   <div class="section-title">
     <h2>💊 Demo 1 · Sắp xếp thuốc</h2>
     <span class="hint">Phân loại thuốc vào đúng kệ theo nhóm điều trị — 6 cách chơi</span>
+  </div>
+  <div class="level-select-inline">
+    <div class="level-select-head">
+      <h3>🎯 Chọn cấp độ</h3>
+      <span class="hint" id="level-current-hint">Level 1 đang mở</span>
+      <span class="actions"><a id="reset-progress" href="#">↺ Reset tiến độ</a></span>
+    </div>
+    <div class="levels" id="levels"></div>
   </div>
   <div class="modes">
 
