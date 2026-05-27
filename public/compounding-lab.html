@@ -130,6 +130,24 @@
   #ctrl-bar button.danger  { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; }
   #ctrl-bar button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+  /* ===== Camera focus bar (bottom, above ctrl-bar) ===== */
+  #cam-focus-bar {
+    position: absolute; bottom: 72px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    max-width: calc(100vw - 24px);
+  }
+  #cam-focus-bar button {
+    padding: 7px 12px; font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 999px; cursor: pointer;
+    background: rgba(255,255,255,0.92); color: #1f2937;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+    font-family: inherit;
+    transition: transform .1s, background .15s, color .15s;
+  }
+  #cam-focus-bar button:hover { transform: translateY(-1px); background: #fff; }
+  #cam-focus-bar button.active { background: linear-gradient(135deg, #14b8a6, #0f766e); color: #fff; border-color: transparent; }
+
   /* ===== Hover label ===== */
   #hover-label {
     position: absolute; left: 0; top: 0; pointer-events: none;
@@ -412,6 +430,16 @@
   <span class="clear" id="hold-clear">Esc</span>
 </div>
 
+<div id="cam-focus-bar">
+  <button data-focus="default">🏠 Toàn cảnh</button>
+  <button data-focus="counter">🧪 Bàn</button>
+  <button data-focus="shelf">📚 Kệ hóa chất</button>
+  <button data-focus="balance">⚖️ Cân</button>
+  <button data-focus="periodic">🔬 Bảng tuần hoàn</button>
+  <button data-focus="drugclasses">📊 Phân loại thuốc</button>
+  <button data-focus="finalbottle">🧴 Chai thành phẩm</button>
+</div>
+
 <div id="ctrl-bar">
   <button id="restart-btn">🔄 Làm lại</button>
   <button id="skip-step-btn">⏭️ Bỏ qua bước</button>
@@ -549,6 +577,56 @@ controls.minDistance = 1.2;
 controls.maxDistance = 5;
 controls.maxPolarAngle = Math.PI * 0.49;
 controls.minPolarAngle = Math.PI * 0.18;
+
+// ============================================================
+// Camera focus tween — preset POIs (points of interest) for the
+// bottom button bar. Each preset = {pos, target}; clicking tweens
+// the camera over ~800ms then re-enables OrbitControls.
+// ============================================================
+const CAMERA_PRESETS = {
+  default:     { pos: new THREE.Vector3(0,    1.72, 2.35), target: new THREE.Vector3(0,    1.25, -0.25) },
+  counter:     { pos: new THREE.Vector3(0,    1.40, 1.50), target: new THREE.Vector3(0,    0.95,  0.15) },
+  shelf:       { pos: new THREE.Vector3(0,    1.75, 0.80), target: new THREE.Vector3(0,    1.75, -0.55) },
+  balance:     { pos: new THREE.Vector3(-1.0, 1.20, 0.95), target: new THREE.Vector3(-0.95, 1.00, 0.05) },
+  periodic:    { pos: new THREE.Vector3(-3.4, 1.20, -0.30), target: new THREE.Vector3(-ROOM_W/2, 1.00, -0.30) },
+  drugclasses: { pos: new THREE.Vector3( 3.4, 1.55, -1.20), target: new THREE.Vector3( ROOM_W/2, 1.55, -1.20) },
+  finalbottle: { pos: new THREE.Vector3(0.35, 1.30, 1.05), target: new THREE.Vector3(0.35, 1.10,  0.15) },
+};
+const camFocus = {
+  active: false,
+  startedAt: 0,
+  duration: 850,
+  fromPos: new THREE.Vector3(),
+  toPos: new THREE.Vector3(),
+  fromTarget: new THREE.Vector3(),
+  toTarget: new THREE.Vector3(),
+  activeKey: null,
+};
+function focusCamera(key) {
+  const p = CAMERA_PRESETS[key];
+  if (!p) return;
+  camFocus.active = true;
+  camFocus.startedAt = performance.now();
+  camFocus.fromPos.copy(camera.position);
+  camFocus.toPos.copy(p.pos);
+  camFocus.fromTarget.copy(controls.target);
+  camFocus.toTarget.copy(p.target);
+  camFocus.activeKey = key;
+  controls.enabled = false;
+}
+function updateCameraFocus() {
+  if (!camFocus.active) return;
+  const t = Math.min(1, (performance.now() - camFocus.startedAt) / camFocus.duration);
+  const e = 1 - Math.pow(1 - t, 3);
+  camera.position.lerpVectors(camFocus.fromPos, camFocus.toPos, e);
+  controls.target.lerpVectors(camFocus.fromTarget, camFocus.toTarget, e);
+  camera.lookAt(controls.target);
+  if (t >= 1) {
+    camFocus.active = false;
+    controls.enabled = true;
+    controls.update();
+  }
+}
 
 // ===== Lighting =====
 scene.add(new THREE.AmbientLight(0xffffff, 0.35));
@@ -1000,8 +1078,9 @@ makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
     new THREE.PlaneGeometry(0.95, 0.54),
     new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })
   );
-  poster.position.set(-ROOM_W/2 + 0.01, 1.0, -0.3);
+  poster.position.set(-ROOM_W/2 + 0.05, 1.0, -0.3);   // 5cm gap to avoid z-fight
   poster.rotation.y = Math.PI/2;
+  poster.name = 'poi-periodic';
   scene.add(poster);
 }
 
@@ -1042,8 +1121,9 @@ makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
     new THREE.PlaneGeometry(0.55, 0.7),
     new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 })
   );
-  poster.position.set(ROOM_W/2 - 0.02, 1.55, -1.2);
+  poster.position.set(ROOM_W/2 - 0.05, 1.55, -1.2);   // 5cm gap to avoid z-fight
   poster.rotation.y = -Math.PI/2;
+  poster.name = 'poi-drugclasses';
   scene.add(poster);
 }
 
@@ -1842,8 +1922,14 @@ function makeBottle({ x, y, z, name, color, liquidColor, isPowder = false, idTag
   x_.font = 'bold 14px system-ui';
   x_.fillText(isPowder ? '⬛ POWDER' : '💧 LIQUID', 128, 110);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-  const lab = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.1), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 }));
-  lab.position.set(0, 0.13, 0.078); grp.add(lab);
+  // Curved label — partial cylinder that wraps around the front of the bottle
+  // (radius 0.080 just outside body radius 0.078). thetaStart=-π/4, length=π/2
+  // → 90° arc centered on +Z, so text reads naturally when viewed from camera.
+  const lab = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.0805, 0.0805, 0.10, 32, 1, true, -Math.PI / 4, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, side: THREE.DoubleSide })
+  );
+  lab.position.set(0, 0.13, 0); grp.add(lab);
   return grp;
 }
 
@@ -2111,13 +2197,13 @@ const fbFill = new THREE.Mesh(
 fbFill.visible = false;
 finalBottle.add(fbFill);
 finalBottle.userData.fill = fbFill;
-// Dynamic label
+// Dynamic label — curved to wrap around the bottle's front face.
 const fbLabelTex = new THREE.CanvasTexture(document.createElement('canvas'));
 const fbLabel = new THREE.Mesh(
-  new THREE.PlaneGeometry(0.14, 0.1),
-  new THREE.MeshStandardMaterial({ map: fbLabelTex, roughness: 0.85 })
+  new THREE.CylinderGeometry(0.0805, 0.0805, 0.10, 32, 1, true, -Math.PI / 4, Math.PI / 2),
+  new THREE.MeshStandardMaterial({ map: fbLabelTex, roughness: 0.85, side: THREE.DoubleSide })
 );
-fbLabel.position.set(0, 0.13, 0.078);
+fbLabel.position.set(0, 0.13, 0);
 finalBottle.add(fbLabel);
 finalBottle.userData.labelTex = fbLabelTex;
 
@@ -2387,25 +2473,11 @@ function getMouthLocalY(grp) {
   return Math.max(0.02, bbox.max.y - w.y);
 }
 
-// ===== DEBUG: mouth markers — visual check that pour anim aligns mouths =====
-// A small bright sphere is attached as a child of every clickable, sitting at
-// its mouth point in local space. Because the marker is a child, it inherits
-// the parent's rotation — so when the source bottle tilts 86° during a pour,
-// its marker swings to the cap end. If the math is right, the source's marker
-// lands on top of the target's marker → you'll see two coloured dots touch.
-function addMouthMarker(grp, mouthY, color) {
-  if (grp.userData?._mouthMarker) return;             // already added
-  const m = new THREE.Mesh(
-    new THREE.SphereGeometry(0.012, 14, 14),
-    new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.95 })
-  );
-  m.position.set(0, mouthY, 0);
-  m.renderOrder = 1100;
-  grp.add(m);
-  grp.userData._mouthMarker = m;
-  // Cache the exact mouth Y so getMouthLocalY / getTargetMouthWorld don't
-  // rely on bbox.max.y (which would include the marker sphere and add a
-  // 12 mm error to pour calculations).
+// Mouth-position cache — pour anim uses userData.mouthLocalY to align the
+// source's lip with the target's rim. Previously a visible debug sphere was
+// also attached; that's been removed for cleanliness, but the cache stays.
+function addMouthMarker(grp, mouthY, _colorIgnored) {
+  if (grp.userData?.mouthLocalY !== undefined) return;
   grp.userData.mouthLocalY = mouthY;
 }
 
@@ -4098,6 +4170,16 @@ skipBtn.addEventListener('click', () => {
   }
 });
 
+// ===== Camera focus buttons =====
+const camFocusBar = document.getElementById('cam-focus-bar');
+camFocusBar.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-focus]');
+  if (!btn) return;
+  focusCamera(btn.dataset.focus);
+  for (const b of camFocusBar.querySelectorAll('button')) b.classList.remove('active');
+  btn.classList.add('active');
+});
+
 submitBtn.addEventListener('click', async () => {
   if (!state || state.stepIdx < state.recipe.steps.length) return;
   // Score = base 100 - penalties
@@ -4210,7 +4292,8 @@ if (currentRecipe) {
 
 renderer.setAnimationLoop((time) => {
   const dt = Math.min(clock.getDelta(), 0.05);
-  if (!walk.active) controls.update();
+  updateCameraFocus();
+  if (!walk.active && !camFocus.active) controls.update();
   updateWalk(dt);
   updateStream(dt);
   updateTilt();
