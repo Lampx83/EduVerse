@@ -204,6 +204,7 @@
 
 <button class="sfx-toggle" id="sfx-toggle" title="Bật/tắt âm thanh">🔊</button>
 <button class="sfx-toggle" id="uv-toggle" style="top: 102px; display: none;" title="Bật/tắt đèn UV 365nm">🔦</button>
+<button class="sfx-toggle" id="mode-toggle" style="top: 148px; width: auto; padding: 0 12px; font-size: 12px; height: 38px;" title="Chế độ thực hành — Simple (3 bước chấm thẳng) vs Full (chuẩn Unity gốc với pre-prep)">🔬 Simple</button>
 
 <div id="hover-label">Label</div>
 
@@ -251,6 +252,7 @@ const SAMPLES = [
   { id: 'C', hex: 0x22c55e, trueRf: 0.78, name: 'Mẫu C — Paracetamol' },
 ];
 const TUTORIALS = {
+  0: { n: 0, title: 'Chuẩn bị dung dịch mẫu (Full Mode)', body: 'Theo Unity gốc: <b>(1)</b> Click <b>lọ bột Caffeine</b> → thìa tự múc bột vào cốc vàng. <b>(2)</b> Click <b>cốc vàng</b> để rót dung môi từ lọ pha động vào. <b>(3)</b> Click <b>bộ đun cách thuỷ</b> → cốc bay tới, đun có hơi nước bốc lên. Hoàn tất → chấm mẫu.', hint: '🔬 Mỗi click sẽ phát animation chuẩn Unity. Tổng ~10s pre-prep.' },
   1: { n: 1, title: 'Chuẩn bị bản mỏng', body: 'Đĩa TLC silica gel đã đặt sẵn trên bàn. Đường gốc (origin line) cách mép dưới ~1cm.', hint: 'Click vào lọ mẫu A/B/C để bắt đầu chấm.' },
   2: { n: 2, title: 'Chấm mẫu lên đường gốc', body: 'Click vào 1 lọ mẫu (A/B/C) để hút mao quản, sau đó click lên đĩa TLC.', hint: '💡 Mỗi mẫu chấm 1 lần. Vệt chấm nên nhỏ (≤3mm).' },
   3: { n: 3, title: 'Pha pha động', body: 'Click vào lọ dung môi (chai lớn 💧) để đổ vào bình triển khai.', hint: '💡 Bình kín giúp hơi dung môi bão hoà, Rf ổn định.' },
@@ -260,9 +262,10 @@ const TUTORIALS = {
 };
 
 let state;
+let fullMode = false;
 function newState() {
   state = {
-    step: 1,
+    step: fullMode ? 0 : 1,
     score: 0,
     startedAt: performance.now(),
     finishedAt: null,
@@ -277,6 +280,11 @@ function newState() {
     measurements: {},
     stepErrors: 0,
     holding: null,
+    // Pre-prep (Full Mode) state
+    cupPowder: 0,
+    cupSolvent: 0,
+    cupHeated: false,
+    prepDone: !fullMode, // simple mode skips prep
   };
 }
 newState();
@@ -1073,6 +1081,8 @@ const pjLabel = new THREE.Mesh(
 );
 pjLabel.position.set(0, 0.10, 0.101); powderJar.add(pjLabel);
 powderJar.position.set(-0.7, 0.07, 0.75);
+powderJar.userData.type = 'powder';
+addInteractable('powder', powderJar, '🫙 Lọ bột Caffeine');
 scene.add(powderJar);
 
 // "Cốc vàng" (yellow cup) — small beaker beside plate
@@ -1089,14 +1099,17 @@ const cvBot = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0xfacc15 })
 );
 cvBot.position.y = 0.003; cocVangGroup.add(cvBot);
-// Slight inner liquid (yellow)
+// Slight inner liquid (yellow) — initially empty, fills up in pre-prep
 const cvLiq = new THREE.Mesh(
   new THREE.CylinderGeometry(0.058, 0.058, 0.06, 14),
   new THREE.MeshStandardMaterial({ color: 0xfacc15, transparent: true, opacity: 0.6 })
 );
-cvLiq.position.y = 0.04; cocVangGroup.add(cvLiq);
-// Spout (small triangle)
+cvLiq.position.y = 0.04; cvLiq.scale.y = 0.01; cvLiq.visible = false;
+cocVangGroup.add(cvLiq);
 cocVangGroup.position.set(-1.2, 0.07, 0.55);
+cocVangGroup.userData.type = 'cocvang';
+cocVangGroup.userData.liquid = cvLiq;
+addInteractable('cocvang', cocVangGroup, '🥃 Cốc vàng (CocVang)');
 scene.add(cocVangGroup);
 
 // Heating plate (Bộ đun cách thuỷ) — flat hot plate beside chamber
@@ -1119,6 +1132,9 @@ const hpKnob = new THREE.Mesh(
 );
 hpKnob.position.set(0.10, 0.045, 0.12); hotPlateGroup.add(hpKnob);
 hotPlateGroup.position.set(1.05, 0.07, -0.7);
+hotPlateGroup.userData.type = 'hotplate';
+hotPlateGroup.userData.disc = hpDisc;
+addInteractable('hotplate', hotPlateGroup, '🔥 Bộ đun cách thuỷ');
 scene.add(hotPlateGroup);
 
 // =============================================================
@@ -1160,6 +1176,56 @@ class ParticleBurst {
   }
 }
 let activeBursts = [];
+
+// Steam column — vertical rising particles for đun cách thuỷ
+class SteamColumn {
+  constructor(position, intensity = 1, duration = 4) {
+    this.particles = [];
+    this.position = position.clone();
+    this.intensity = intensity;
+    this.duration = duration;
+    this.elapsed = 0;
+    this.geo = new THREE.SphereGeometry(0.05, 8, 6);
+    this.matBase = new THREE.MeshBasicMaterial({ color: 0xf0f4ff, transparent: true, opacity: 0.5 });
+  }
+  spawn() {
+    const m = new THREE.Mesh(this.geo, this.matBase.clone());
+    m.position.copy(this.position);
+    m.position.x += (Math.random() - 0.5) * 0.06;
+    m.position.z += (Math.random() - 0.5) * 0.06;
+    m.userData.vel = new THREE.Vector3(
+      (Math.random() - 0.5) * 0.15,
+      0.4 + Math.random() * 0.3,
+      (Math.random() - 0.5) * 0.15
+    );
+    m.userData.life = 1.0;
+    m.userData.maxLife = 1.6 + Math.random() * 0.6;
+    this.particles.push(m);
+    scene.add(m);
+  }
+  update(dt) {
+    this.elapsed += dt;
+    if (this.elapsed < this.duration && Math.random() < 0.5 * this.intensity) {
+      this.spawn();
+    }
+    let alive = this.elapsed < this.duration;
+    for (const m of this.particles) {
+      if (m.userData.life <= 0) continue;
+      alive = true;
+      m.position.add(m.userData.vel.clone().multiplyScalar(dt));
+      m.userData.vel.x += (Math.random() - 0.5) * dt * 0.4; // sway
+      m.userData.life -= dt / m.userData.maxLife;
+      m.material.opacity = Math.max(0, m.userData.life * 0.5);
+      m.scale.setScalar(1 + (1 - m.userData.life) * 2.5);
+      if (m.userData.life <= 0) scene.remove(m);
+    }
+    if (!alive) {
+      for (const m of this.particles) if (m.parent) scene.remove(m);
+    }
+    return alive;
+  }
+}
+let activeSteams = [];
 
 // =============================================================
 // INTERACTION (hover, click, drag)
@@ -1236,6 +1302,57 @@ let animating = false;
 function handleClick(obj) {
   if (animating) return;
   const t = obj.userData.type;
+
+  // ====== PRE-PREP (Full Mode, step 0) ======
+  if (state.step === 0) {
+    if (t === 'powder' && state.cupPowder < 3) {
+      sfx.grab();
+      toast('🥄 Múc bột bằng thìa...', 'info');
+      animateSpoonScoop(obj, () => {
+        state.cupPowder++;
+        const cv = interactables.cocvang;
+        cv.userData.liquid.visible = true;
+        cv.userData.liquid.scale.y = 0.2 + state.cupPowder * 0.15;
+        sfx.correct();
+        toast(`✓ Đổ bột vào cốc (${state.cupPowder}/3)`, 'ok');
+        if (state.cupPowder >= 3) toast('Đủ bột — Click 🥃 Cốc vàng để hoà dung môi', 'info');
+        updateUI();
+      });
+      return;
+    }
+    if (t === 'cocvang' && state.cupPowder >= 1 && state.cupSolvent < 3) {
+      sfx.grab();
+      toast('💧 Đang nhỏ dung môi vào cốc...', 'info');
+      animateDropperToCup(obj, () => {
+        state.cupSolvent++;
+        const cv = interactables.cocvang;
+        cv.userData.liquid.scale.y = 0.5 + state.cupSolvent * 0.18;
+        sfx.correct();
+        toast(`✓ Hoà dung môi (${state.cupSolvent}/3)`, 'ok');
+        if (state.cupSolvent >= 3) toast('Đủ dung môi — Click 🔥 Bộ đun cách thuỷ', 'info');
+        updateUI();
+      });
+      return;
+    }
+    if (t === 'hotplate' && state.cupSolvent >= 1 && !state.cupHeated) {
+      sfx.grab();
+      toast('🔥 Đun cách thuỷ — chờ ~4 giây...', 'info');
+      animateCupToHotPlate(() => {
+        state.cupHeated = true;
+        state.prepDone = true;
+        state.step = 1;
+        state.score += 30;
+        sfx.perfect();
+        toast('✓ Đun xong — dung dịch sẵn sàng. Bây giờ chấm mẫu lên đĩa TLC.', 'ok');
+        updateUI();
+      });
+      return;
+    }
+    toast('⚠️ Theo thứ tự: Lọ bột → Cốc vàng → Bộ đun cách thuỷ', 'err');
+    sfx.wrong();
+    return;
+  }
+
   if (state.step <= 2 && t === 'sample') {
     if (state.capillary) {
       toast('⚠️ Mao quản đã có mẫu — chấm lên đĩa TLC trước', 'err');
@@ -1423,6 +1540,152 @@ function smoothEase(t) {
 }
 
 // =============================================================
+// PRE-PREP ANIMATIONS (Full Mode)
+// =============================================================
+function animateSpoonScoop(powderObj, onDone) {
+  animating = true;
+  const startPos = spoonGroup.position.clone();
+  const startRotY = spoonGroup.rotation.y;
+  const startRotZ = spoonGroup.rotation.z;
+  const powderPos = powderObj.position.clone();
+  const cup = interactables.cocvang.position.clone();
+  const abovePowder = new THREE.Vector3(powderPos.x, 0.40, powderPos.z);
+  const dipPowder = new THREE.Vector3(powderPos.x, 0.22, powderPos.z);
+  const aboveCup = new THREE.Vector3(cup.x, 0.45, cup.z);
+  const tiltCup = new THREE.Vector3(cup.x, 0.30, cup.z);
+  const t0 = performance.now();
+  function step() {
+    const t = (performance.now() - t0) / 2400;
+    if (t < 0.20) {
+      const e = smoothEase(t / 0.20);
+      spoonGroup.position.lerpVectors(startPos, abovePowder, e);
+      spoonGroup.rotation.y = startRotY * (1 - e);
+      spoonGroup.rotation.z = 0;
+    } else if (t < 0.32) {
+      const e = (t - 0.20) / 0.12;
+      spoonGroup.position.lerpVectors(abovePowder, dipPowder, e);
+    } else if (t < 0.42) {
+      // dwell — scooping
+    } else if (t < 0.55) {
+      const e = (t - 0.42) / 0.13;
+      spoonGroup.position.lerpVectors(dipPowder, abovePowder, e);
+    } else if (t < 0.78) {
+      const e = smoothEase((t - 0.55) / 0.23);
+      spoonGroup.position.lerpVectors(abovePowder, aboveCup, e);
+    } else if (t < 0.88) {
+      const e = (t - 0.78) / 0.10;
+      // Tilt spoon to drop powder
+      spoonGroup.position.lerpVectors(aboveCup, tiltCup, e);
+      spoonGroup.rotation.z = -e * Math.PI * 0.4;
+      // particle dust
+      if (Math.random() < 0.5) {
+        activeBursts.push(new ParticleBurst(
+          new THREE.Vector3(cup.x, 0.25, cup.z), 0xfde68a, 2
+        ));
+      }
+    } else if (t < 1) {
+      const e = (t - 0.88) / 0.12;
+      spoonGroup.position.lerpVectors(tiltCup, startPos, smoothEase(e));
+      spoonGroup.rotation.z = -Math.PI * 0.4 * (1 - e) + startRotZ * e;
+      spoonGroup.rotation.y = startRotY * e;
+    } else {
+      spoonGroup.position.copy(startPos);
+      spoonGroup.rotation.y = startRotY;
+      spoonGroup.rotation.z = startRotZ;
+      animating = false;
+      onDone && onDone();
+      return;
+    }
+    requestAnimationFrame(step);
+  }
+  step();
+}
+
+function animateDropperToCup(cupObj, onDone) {
+  // Use the existing solvent bottle to drip into cup
+  animating = true;
+  const startPos = sbGroup.position.clone();
+  const startRotZ = sbGroup.rotation.z;
+  const cupPos = cupObj.position.clone();
+  const aboveCup = new THREE.Vector3(cupPos.x, 0.7, cupPos.z + 0.05);
+  const t0 = performance.now();
+  function step() {
+    const t = (performance.now() - t0) / 2000;
+    if (t < 0.28) {
+      const e = smoothEase(t / 0.28);
+      sbGroup.position.lerpVectors(startPos, aboveCup, e);
+    } else if (t < 0.4) {
+      const e = (t - 0.28) / 0.12;
+      sbGroup.rotation.z = startRotZ * (1 - e) + (-Math.PI * 0.35) * e;
+    } else if (t < 0.72) {
+      // Drip particles
+      if (Math.random() < 0.5) {
+        activeBursts.push(new ParticleBurst(
+          new THREE.Vector3(cupPos.x, 0.35, cupPos.z), 0xa78bfa, 2
+        ));
+      }
+    } else if (t < 0.84) {
+      const e = (t - 0.72) / 0.12;
+      sbGroup.rotation.z = -Math.PI * 0.35 * (1 - e) + startRotZ * e;
+    } else if (t < 1) {
+      const e = (t - 0.84) / 0.16;
+      sbGroup.position.lerpVectors(aboveCup, startPos, smoothEase(e));
+    } else {
+      sbGroup.position.copy(startPos);
+      sbGroup.rotation.z = startRotZ;
+      animating = false;
+      onDone && onDone();
+      return;
+    }
+    requestAnimationFrame(step);
+  }
+  step();
+}
+
+function animateCupToHotPlate(onDone) {
+  animating = true;
+  const cup = interactables.cocvang;
+  const startPos = cup.position.clone();
+  const hp = interactables.hotplate.position.clone();
+  const onPlate = new THREE.Vector3(hp.x, 0.14, hp.z);
+  // Increase emissive on hot disc
+  const disc = interactables.hotplate.userData.disc;
+  const t0 = performance.now();
+  let steamStarted = false;
+  function step() {
+    const t = (performance.now() - t0) / 6000;
+    if (t < 0.15) {
+      const e = smoothEase(t / 0.15);
+      cup.position.lerpVectors(startPos, onPlate, e);
+    } else if (t < 0.85) {
+      // Heating phase — steam VFX, disc glow stronger
+      if (!steamStarted) {
+        steamStarted = true;
+        activeSteams.push(new SteamColumn(
+          new THREE.Vector3(hp.x, 0.20, hp.z), 1.2, 3.6
+        ));
+        disc.material.emissiveIntensity = 0.6;
+      }
+      // Subtle bubble shake
+      cup.position.x = onPlate.x + Math.sin(performance.now() * 0.02) * 0.005;
+      cup.position.z = onPlate.z + Math.cos(performance.now() * 0.018) * 0.005;
+    } else if (t < 1) {
+      const e = (t - 0.85) / 0.15;
+      cup.position.lerpVectors(onPlate, startPos, smoothEase(e));
+      disc.material.emissiveIntensity = 0.6 * (1 - e) + 0.15 * e;
+    } else {
+      cup.position.copy(startPos);
+      disc.material.emissiveIntensity = 0.15;
+      animating = false;
+      onDone && onDone();
+      return;
+    }
+    requestAnimationFrame(step);
+  }
+  step();
+}
+
+// =============================================================
 // UV MODE (lift step 6: glow spots under UV light)
 // =============================================================
 let uvOn = false;
@@ -1570,6 +1833,30 @@ sfxToggle.textContent = isSfxEnabled() ? '🔊' : '🔇';
 // UV toggle
 document.getElementById('uv-toggle').addEventListener('click', () => setUVMode(!uvOn));
 
+// Mode toggle (Simple vs Full)
+document.getElementById('mode-toggle').addEventListener('click', () => {
+  fullMode = !fullMode;
+  document.getElementById('mode-toggle').textContent = fullMode ? '🔬 Full' : '🔬 Simple';
+  document.getElementById('mode-toggle').style.background = fullMode ? 'rgba(236,72,153,0.5)' : '';
+  toast(fullMode ? '🔬 Chuyển sang Full Mode — có pre-prep chuẩn Unity gốc' : '🔬 Simple Mode — chấm mẫu thẳng', 'info');
+  // Reset state to apply mode
+  if (uvOn) setUVMode(false);
+  newState();
+  redrawPlateTex();
+  chamberGroup.userData.solventLiquid.visible = false;
+  chamberGroup.userData.lid.visible = false;
+  plateGroup.position.set(0, 0.62, -0.2);
+  plateGroup.rotation.y = 0;
+  capTip.material.visible = false;
+  capGroup.position.y = 0.07;
+  // Reset cup
+  const cv = interactables.cocvang;
+  if (cv) { cv.userData.liquid.visible = false; cv.userData.liquid.scale.y = 0.01; }
+  btnAction.disabled = true;
+  btnAction.textContent = 'Thao tác';
+  updateUI();
+});
+
 function promptRf(sample) {
   const guess = prompt(`📏 Đo R_f của ${sample.name} (0.00 – 1.00):\n\n💡 Nhập số thập phân, ví dụ 0.50`, '0.50');
   if (guess === null) return;
@@ -1589,7 +1876,16 @@ function promptRf(sample) {
 }
 
 function displayStep() {
-  const stepMap = {
+  const totalSteps = fullMode ? 7 : 6;
+  const stepMap = fullMode ? {
+    0: { n: 1, label: 'Chuẩn bị mẫu' },
+    1: { n: 2, label: 'Chấm mẫu' },
+    2: { n: 2, label: 'Chấm mẫu' },
+    3: { n: 3, label: 'Pha pha động' },
+    4: { n: 4, label: 'Triển khai' },
+    5: { n: state.devProgress >= 1 ? 6 : 4, label: state.devProgress >= 1 ? 'Lấy đĩa ra' : 'Triển khai' },
+    6: { n: 7, label: 'Đo Rf' },
+  } : {
     1: { n: 2, label: 'Chấm mẫu' },
     2: { n: 2, label: 'Chấm mẫu' },
     3: { n: 3, label: 'Pha pha động' },
@@ -1598,7 +1894,7 @@ function displayStep() {
     6: { n: 6, label: 'Đo Rf' },
   };
   const s = stepMap[state.step] || { n: state.step, label: '' };
-  return `${s.n}/6 · ${s.label}`;
+  return `${s.n}/${totalSteps} · ${s.label}`;
 }
 function updateUI() {
   document.getElementById('step-pill').textContent = `Bước ${displayStep()}`;
@@ -1674,8 +1970,9 @@ function tick() {
     hoverLabel.style.top = pointerScreen.y + 'px';
   }
 
-  // Update particle bursts
+  // Update particle bursts + steam columns
   activeBursts = activeBursts.filter(b => b.update(dt));
+  activeSteams = activeSteams.filter(s => s.update(dt));
 
   // Development animation — 30s like Unity original (or fast-forwarded)
   if (state.plateInChamber && state.devProgress < 1 && state.devStartTime) {

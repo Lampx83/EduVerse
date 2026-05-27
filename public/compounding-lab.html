@@ -397,6 +397,11 @@
     <div class="row"><span class="kbd">V</span><span class="desc">Vào chế độ <b>đi quanh phòng</b> (WASD + chuột)</span></div>
     <div class="row"><span class="kbd">✋</span><span class="desc"><b>Pinch ngón cái + trỏ</b> qua webcam (nút "Bật điều khiển tay") — hỗ trợ <b>2 tay</b></span></div>
     <div class="row"><span class="kbd">🤲</span><span class="desc"><b>Hai tay đồng thời pinch</b> (cầm chai + chụm vào cốc) → <b>rót ổn định</b>, ít quá tay</span></div>
+    <div class="row" style="margin-top:5px;border-top:1px dashed rgba(0,0,0,0.1);padding-top:5px"><span style="font-size:11px;opacity:0.75;font-weight:700">🧰 Dụng cụ thêm</span></div>
+    <div class="row"><span class="kbd">💧</span><span class="desc"><b>Pipet 5 mL</b>: cầm → click container có dung dịch để <b>hút</b>, sau đó click container khác để <b>nhỏ</b></span></div>
+    <div class="row"><span class="kbd">🥄</span><span class="desc"><b>Đũa khuấy</b>: cầm → click vào cốc/ống đong/cối để <b>khuấy</b></span></div>
+    <div class="row"><span class="kbd">💢</span><span class="desc"><b>Chày</b>: cầm → click cối có hỗn hợp để <b>nghiền</b> (sinh bụi)</span></div>
+    <div class="row"><span class="kbd">🤝</span><span class="desc"><b>Lắc chai</b>: double-click chai thành phẩm</span></div>
     <div class="row" style="margin-top:5px;border-top:1px dashed rgba(0,0,0,0.1);padding-top:5px"><span style="font-size:11px;opacity:0.75">💡 Thao tác tự do — sai quy trình sẽ được tổng kết cuối bài.</span></div>
   </div>
 </div>
@@ -1870,6 +1875,7 @@ function setupReagents(recipe) {
     b.userData.kind = 'reagent';
     b.userData.label = r.category;
     scene.add(b);
+    addMouthMarker(b, 0.312, 0xff2020);    // RED — reagent bottle lip
     reagents.push(b);
   });
 }
@@ -2151,6 +2157,97 @@ const pestle = new THREE.Mesh(
 );
 pestle.position.set(0.06, 0.067, 0); pestle.rotation.z = 0.8;
 pestle.castShadow = true; mortar.add(pestle);
+// Mortar contents — invisible until something is poured in.
+const mortarLiquid = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.060, 0.040, 0.005, 32),
+  new THREE.MeshPhysicalMaterial({ color: 0xb8a880, roughness: 0.45, transparent: true, opacity: 0.92 })
+);
+mortarLiquid.position.y = 0.036;
+mortarLiquid.visible = false;
+mortar.add(mortarLiquid);
+mortar.userData.liquid = mortarLiquid;
+mortar.userData.maxH = 0.04;
+mortar.userData.maxVol = 200; // mL
+
+// Detach the pestle from the mortar so it can be picked up independently.
+// It now lives next to the mortar on the counter.
+mortar.remove(pestle);
+const pestleGrp = new THREE.Group();
+pestleGrp.userData = { kind: 'tool', id: 'pestle', name: 'Chày', label: 'Pestle để nghiền' };
+pestle.position.set(0, 0.066, 0); pestle.rotation.set(0, 0, Math.PI / 2);
+pestleGrp.add(pestle);
+pestleGrp.position.set(0.85, 0.94, 0.30);  // in front of the mortar
+scene.add(pestleGrp);
+
+// ============================================================
+// PIPET (graduated dropper) — small glass tube + rubber bulb. Hút thể
+// tích nhỏ từ container và nhả vào container khác. Dung tích ~5 mL.
+// ============================================================
+const pipetGrp = new THREE.Group();
+pipetGrp.userData = { kind: 'tool', id: 'pipet', name: 'Pipet 5 mL', label: 'Dụng cụ hút thể tích chính xác', capacity: 5 };
+// Glass tube
+const pipetTube = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.008, 0.005, 0.16, 16),
+  new THREE.MeshPhysicalMaterial({ color: 0xeaf6ff, metalness: 0, roughness: 0.05, transmission: 0.95, thickness: 0.2, ior: 1.5, transparent: true, opacity: 0.6 })
+);
+pipetTube.position.y = 0.08;
+pipetGrp.add(pipetTube);
+// Rubber bulb on top
+const pipetBulb = new THREE.Mesh(
+  new THREE.SphereGeometry(0.018, 16, 12),
+  new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.6 })
+);
+pipetBulb.position.y = 0.17;
+pipetGrp.add(pipetBulb);
+// Liquid inside (hidden until filled)
+const pipetLiquid = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.006, 0.0045, 0.001, 16),
+  new THREE.MeshPhysicalMaterial({ color: 0xa1d99b, roughness: 0.2, transparent: true, opacity: 0.9, transmission: 0.3 })
+);
+pipetLiquid.position.y = 0.04;
+pipetLiquid.visible = false;
+pipetGrp.add(pipetLiquid);
+pipetGrp.userData.liquid = pipetLiquid;
+pipetGrp.position.set(-0.55, 0.94, 0.30);
+scene.add(pipetGrp);
+
+// ============================================================
+// STIRRING ROD (đũa khuấy) — thin glass cylinder, used to mix
+// liquids in beaker / mortar. No quantitative effect — just animates
+// in the container and homogenizes the color.
+// ============================================================
+const stirrerGrp = new THREE.Group();
+stirrerGrp.userData = { kind: 'tool', id: 'stirrer', name: 'Đũa khuấy thủy tinh', label: 'Để khuấy đều dung dịch' };
+const stirRod = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.006, 0.006, 0.18, 16),
+  new THREE.MeshPhysicalMaterial({ color: 0xfffafa, metalness: 0, roughness: 0.05, transmission: 0.9, thickness: 0.2, transparent: true, opacity: 0.7 })
+);
+stirRod.position.y = 0.09;
+stirRod.castShadow = true;
+stirrerGrp.add(stirRod);
+stirrerGrp.position.set(0.55, 0.94, 0.30);
+scene.add(stirrerGrp);
+
+// === DEBUG mouth markers: red = bottle lip, green = container rim, ===
+// ===                       orange = final-bottle, blue = pipet tip   ===
+addMouthMarker(beaker,      0.10, 0x00ff00);
+addMouthMarker(cylinder,    0.20, 0x00ff00);
+addMouthMarker(mortar,      0.08, 0x00ff00);
+addMouthMarker(finalBottle, 0.312, 0xffaa00);
+addMouthMarker(pipetGrp,    0,     0x00aaff);
+addMouthMarker(stirrerGrp,  0.18,  0xaaaa00);
+addMouthMarker(pestleGrp,   0.13,  0xaaaa00);
+
+function updatePipetLiquid(volMl, color) {
+  const liq = pipetGrp.userData.liquid;
+  if (volMl < 0.001) { liq.visible = false; return; }
+  liq.visible = true;
+  const h = (volMl / 5) * 0.14;   // up to ~14 cm fill at 5 mL
+  liq.geometry.dispose();
+  liq.geometry = new THREE.CylinderGeometry(0.006, 0.0045, h, 16);
+  liq.position.y = h / 2 + 0.005;
+  if (color !== undefined) liq.material.color.setHex(color);
+}
 
 // ============================================================
 // POUR ANIMATION — particle stream + bottle tilt
@@ -2176,8 +2273,11 @@ function tiltBottleTowards(obj, targetWorldPos, duration = 800, peakAngle = 1.2)
   const fromWorld = new THREE.Vector3(); obj.getWorldPosition(fromWorld);
   const dx = targetWorldPos.x - fromWorld.x;
   const dz = targetWorldPos.z - fromWorld.z;
-  // axis perpendicular to the direction, lying in horizontal plane
-  const axis = new THREE.Vector3(-dz, 0, dx).normalize();
+  // Axis perpendicular to the (source → target) horizontal direction.
+  // Rotating around (dz, 0, -dx) by positive angle tips the bottle's TOP
+  // toward the target (right-hand rule).  Earlier (-dz, 0, dx) tipped it
+  // away — exactly the bug the user reported.
+  const axis = new THREE.Vector3(dz, 0, -dx).normalize();
   tiltState.obj = obj;
   tiltState.baseRot = obj.quaternion.clone();
   tiltState.startedAt = performance.now();
@@ -2206,6 +2306,292 @@ function updateTilt() {
 }
 
 // ============================================================
+// POUR ANIMATION SEQUENCE — 5-phase choreography rotating around the
+// IMAGINED HAND-GRIP point (middle of the tool), so the bottle pivots
+// "in hand" instead of swinging its cap 30 cm sideways from the base.
+//
+// Phases:
+//   1. tilt-at-hand     — rotate 0 → X°, grip stays at hand slot
+//   2. translate-to-rim — slide tilted bottle so LIP hits target rim
+//   3. pour             — hold the pose, emit liquid stream
+//   4. untilt-at-rim    — rotate X° → 0, grip stays at the rim location
+//   5. return-to-hand   — slide upright bottle back to the hand slot
+//
+// Math: at every frame, bottle.position = gripWorld − R · (0, gripLocalY, 0).
+// This keeps the grip point fixed in world while the object rotates.
+// ============================================================
+const pourAnimState = {
+  obj: null,
+  targetGrp: null,
+  phase: 'idle',
+  startedAt: 0,
+  durations: { tilt: 350, translate: 550, pour: 1300, untilt: 350, returnBack: 550 },
+  origin: new THREE.Vector3(),         // bottle.position at pour start (return target)
+  gripStart: new THREE.Vector3(),      // grip world pos at pour start
+  gripPour: new THREE.Vector3(),       // grip world pos when lip is at rim
+  baseRot: null,                       // bottle.quaternion at pour start
+  tiltAxis: null,
+  tiltAngle: 1.5,
+  mouthLocalY: 0.312,
+  gripLocalY: 0.15,
+  streamColor: 0x88ccee,
+  streamIsPowder: false,
+  streamSpawned: false,
+  onPourActive: null,
+  onComplete: null,
+};
+// DEBUG hooks (used by automated tests) — exposes pour anim state + a
+// utility to read each tool's mouth-marker world position.
+window.__pourAnimState = pourAnimState;
+window.__getMouthWorld = function (grp) {
+  const m = grp?.userData?._mouthMarker;
+  if (!m) return null;
+  const w = new THREE.Vector3();
+  m.getWorldPosition(w);
+  return { x: w.x, y: w.y, z: w.z };
+};
+// Test helper: trigger a pour directly between two named objects.
+window.__triggerPour = function (srcId, dstId) {
+  const all = [...reagents, beaker, cylinder, mortar, finalBottle, pestleGrp, pipetGrp, stirrerGrp];
+  const src = all.find(o => o.userData?.id === srcId);
+  const dst = all.find(o => o.userData?.id === dstId);
+  if (!src || !dst) return 'missing ' + (src ? dstId : srcId);
+  startPourAnim(src, dst, { color: 0x88ddff });
+  return { ok: true, src: src.userData.name, dst: dst.userData.name };
+};
+window.__probeMouth = function (id) {
+  const all = [...reagents, beaker, cylinder, mortar, finalBottle, pestleGrp, pipetGrp, stirrerGrp];
+  const o = all.find(g => g.userData?.id === id);
+  if (!o) return null;
+  return {
+    mouthLocalY: o.userData?.mouthLocalY,
+    hasMarker: !!o.userData?._mouthMarker,
+    type: o.userData?.type,
+    kind: o.userData?.kind,
+  };
+};
+
+// Local-space Y offset of each tool's POURING OUTLET (its "mouth").
+// For bottles: the LIP just under the cap (≈0.312), NOT the cap top (≈0.357).
+// For containers: the rim height stored at mesh-creation time.
+// For pipet: the tip is at base (0).
+function getMouthLocalY(grp) {
+  // Cached at addMouthMarker time — avoids bbox.max.y picking up the marker
+  // sphere or other decorative children (caused a 12 mm pour offset earlier).
+  if (grp?.userData?.mouthLocalY !== undefined) return grp.userData.mouthLocalY;
+  const id = grp.userData?.id;
+  if (id === 'pipet') return 0;
+  if (grp.userData?.type === 'bottle' || id === 'final-bottle') return 0.312;
+  const w = new THREE.Vector3(); grp.getWorldPosition(w);
+  const bbox = new THREE.Box3().setFromObject(grp);
+  return Math.max(0.02, bbox.max.y - w.y);
+}
+
+// ===== DEBUG: mouth markers — visual check that pour anim aligns mouths =====
+// A small bright sphere is attached as a child of every clickable, sitting at
+// its mouth point in local space. Because the marker is a child, it inherits
+// the parent's rotation — so when the source bottle tilts 86° during a pour,
+// its marker swings to the cap end. If the math is right, the source's marker
+// lands on top of the target's marker → you'll see two coloured dots touch.
+function addMouthMarker(grp, mouthY, color) {
+  if (grp.userData?._mouthMarker) return;             // already added
+  const m = new THREE.Mesh(
+    new THREE.SphereGeometry(0.012, 14, 14),
+    new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.95 })
+  );
+  m.position.set(0, mouthY, 0);
+  m.renderOrder = 1100;
+  grp.add(m);
+  grp.userData._mouthMarker = m;
+  // Cache the exact mouth Y so getMouthLocalY / getTargetMouthWorld don't
+  // rely on bbox.max.y (which would include the marker sphere and add a
+  // 12 mm error to pour calculations).
+  grp.userData.mouthLocalY = mouthY;
+}
+
+// World position of the receiver's MOUTH (top of container centred on origin XZ).
+function getTargetMouthWorld(grp) {
+  const w = new THREE.Vector3(); grp.getWorldPosition(w);
+  // Prefer the cached mouthLocalY (set by addMouthMarker) so we don't
+  // accidentally include decorative children in the rim height.
+  const localY = grp.userData?.mouthLocalY ?? (new THREE.Box3().setFromObject(grp).max.y - w.y);
+  return new THREE.Vector3(w.x, w.y + localY, w.z);
+}
+
+function startPourAnim(srcGrp, dstGrp, opts = {}) {
+  // Cancel any in-progress tilt for this object so the quaternion isn't fought over.
+  if (tiltState.obj === srcGrp) restoreTiltedBottle();
+  // If another anim is mid-flight, snap its previous owner back first.
+  if (pourAnimState.obj && pourAnimState.obj !== srcGrp) {
+    pourAnimState.obj.position.copy(pourAnimState.origin);
+    pourAnimState.obj.quaternion.copy(pourAnimState.baseRot);
+    pourAnimState.obj = null;
+    pourAnimState.phase = 'idle';
+  }
+
+  pourAnimState.obj = srcGrp;
+  pourAnimState.targetGrp = dstGrp;
+  pourAnimState.startedAt = performance.now();
+  // New order per user spec: move upright FIRST, then tilt at the rim.
+  pourAnimState.phase = 'translate-upright';
+  pourAnimState.origin.copy(srcGrp.position);
+  // CLEAN-SLATE rotation — the held-in-hand idle wobble adds X/Y/Z drift
+  // that breaks the gripPour math (lip lands off target by tens of mm).
+  // Reset to upright before capturing baseRot so the pour anim starts from
+  // a known-clean orientation; lift system will resume idle wobble after.
+  srcGrp.rotation.set(0, 0, 0);
+  pourAnimState.baseRot = srcGrp.quaternion.clone();
+
+  // Geometry: where the mouth (lip / tip) is, and where the hand grips.
+  // gripLocalY is the local Y where the user's hand holds the object — for
+  // bottles this is the middle (≈half mouthY). For short containers it's
+  // the middle of the body. This is the rotation pivot for the entire pour.
+  const mouthY = getMouthLocalY(srcGrp);
+  const gripY = opts.gripLocalY ?? Math.max(0.05, mouthY * 0.5);
+  pourAnimState.mouthLocalY = mouthY;
+  pourAnimState.gripLocalY = gripY;
+
+  // Tilt geometry
+  const tiltAngle = opts.tiltAngle || 1.5;     // ~86°
+  pourAnimState.tiltAngle = tiltAngle;
+
+  // Initial grip position in world — bottle.position is the group origin
+  // (BASE), so grip is one gripLocalY above.
+  pourAnimState.gripStart.set(
+    pourAnimState.origin.x,
+    pourAnimState.origin.y + gripY,
+    pourAnimState.origin.z
+  );
+
+  // Target mouth position (rim of receiver).
+  const tp = getTargetMouthWorld(dstGrp);
+
+  // Tilt direction = horizontal vector from gripStart toward target.
+  const toTarget = new THREE.Vector3().subVectors(tp, pourAnimState.gripStart);
+  toTarget.y = 0;
+  if (toTarget.length() < 0.001) toTarget.set(1, 0, 0);
+  else toTarget.normalize();
+
+  // Tilt axis perpendicular to toTarget in horizontal plane (RH rule:
+  // positive rotation around this axis swings local +Y toward toTarget).
+  pourAnimState.tiltAxis = new THREE.Vector3(toTarget.z, 0, -toTarget.x).normalize();
+
+  // Compute gripPour: when bottle is at gripPour with rotation = R_pour, its
+  // LIP lands exactly on tp.
+  //   lip_world = gripPour + R_pour · (0, mouthY − gripY, 0)
+  //   = tp  ⇒  gripPour = tp − R_pour · (0, mouthY − gripY, 0)
+  const sin = Math.sin(tiltAngle), cos = Math.cos(tiltAngle);
+  const dy = mouthY - gripY;
+  pourAnimState.gripPour.set(
+    tp.x - toTarget.x * sin * dy,
+    tp.y - cos * dy,
+    tp.z - toTarget.z * sin * dy
+  );
+
+  pourAnimState.streamColor = opts.color ?? 0x88ccee;
+  pourAnimState.streamIsPowder = !!opts.isPowder;
+  pourAnimState.streamSpawned = false;
+  pourAnimState.onPourActive = opts.onPourActive || null;
+  pourAnimState.onComplete = opts.onComplete || null;
+  if (opts.pourDur) pourAnimState.durations.pour = opts.pourDur;
+}
+
+// Helper: apply a rotation R (quaternion-from-axis-angle ang) plus a grip-
+// pivoted position. Mutates srcGrp.position and srcGrp.quaternion.
+const _pourTmpQ = new THREE.Quaternion();
+const _pourTmpV = new THREE.Vector3();
+function applyGripPose(srcGrp, gripWorld, tiltAxis, ang, baseRot, gripLocalY) {
+  // Rotation = baseRot · axisAngle(tiltAxis, ang)
+  _pourTmpQ.setFromAxisAngle(tiltAxis, ang);
+  srcGrp.quaternion.copy(baseRot).multiply(_pourTmpQ);
+  // pos = grip − R · (0, gripLocalY, 0)
+  _pourTmpV.set(0, gripLocalY, 0).applyQuaternion(srcGrp.quaternion);
+  srcGrp.position.set(gripWorld.x - _pourTmpV.x, gripWorld.y - _pourTmpV.y, gripWorld.z - _pourTmpV.z);
+}
+
+function pourAnimTotalDuration() {
+  const D = pourAnimState.durations;
+  return D.tilt + D.translate + D.pour + D.untilt + D.returnBack;
+}
+
+const _pourGripNow = new THREE.Vector3();
+function updatePourAnim() {
+  if (!pourAnimState.obj) return;
+  window.__pourTick = (window.__pourTick || 0) + 1;
+  const ps = pourAnimState;
+  const obj = ps.obj;
+  const elapsed = performance.now() - ps.startedAt;
+  const D = ps.durations;
+
+  // Phase 1 — TRANSLATE UPRIGHT: bottle moves from hand-slot to the rim
+  // position while STAYING UPRIGHT (no tilt yet). This is the natural
+  // motion: carry the bottle over the target first, then tilt to pour.
+  if (ps.phase === 'translate-upright') {
+    const t = Math.min(1, elapsed / D.translate);
+    const e = 1 - Math.pow(1 - t, 3);
+    _pourGripNow.lerpVectors(ps.gripStart, ps.gripPour, e);
+    applyGripPose(obj, _pourGripNow, ps.tiltAxis, 0, ps.baseRot, ps.gripLocalY);
+    if (t >= 1) { ps.phase = 'tilt-at-rim'; ps.startedAt = performance.now(); }
+    return;
+  }
+
+  // Phase 2 — TILT AT RIM: grip stays at gripPour, rotation 0 → tiltAngle.
+  // Lip swings down to land exactly on target_mouth (markers touch).
+  if (ps.phase === 'tilt-at-rim') {
+    const t = Math.min(1, elapsed / D.tilt);
+    const e = 1 - Math.pow(1 - t, 3);
+    const ang = ps.tiltAngle * e;
+    applyGripPose(obj, ps.gripPour, ps.tiltAxis, ang, ps.baseRot, ps.gripLocalY);
+    if (t >= 1) { ps.phase = 'pour'; ps.startedAt = performance.now(); }
+    return;
+  }
+
+  // Phase 3 — POUR: hold the touching pose, emit stream once, fire callback.
+  if (ps.phase === 'pour') {
+    applyGripPose(obj, ps.gripPour, ps.tiltAxis, ps.tiltAngle, ps.baseRot, ps.gripLocalY);
+    if (!ps.streamSpawned) {
+      ps.streamSpawned = true;
+      const tp = getTargetMouthWorld(ps.targetGrp);
+      const fp = new THREE.Vector3(tp.x, tp.y, tp.z);
+      const intoTp = new THREE.Vector3(tp.x, tp.y - 0.04, tp.z);
+      showStream(fp, intoTp, ps.streamColor, D.pour, ps.streamIsPowder);
+      if (ps.onPourActive) ps.onPourActive();
+    }
+    if (elapsed >= D.pour) { ps.phase = 'untilt-at-rim'; ps.startedAt = performance.now(); }
+    return;
+  }
+
+  // Phase 4 — UN-TILT AT RIM: grip stays at gripPour, rotation tiltAngle → 0.
+  // Lip swings up away from the target's rim while the grip stays in place.
+  if (ps.phase === 'untilt-at-rim') {
+    const t = Math.min(1, elapsed / D.untilt);
+    const e = 1 - Math.pow(1 - t, 3);
+    const ang = ps.tiltAngle * (1 - e);
+    applyGripPose(obj, ps.gripPour, ps.tiltAxis, ang, ps.baseRot, ps.gripLocalY);
+    if (t >= 1) { ps.phase = 'return-to-hand'; ps.startedAt = performance.now(); }
+    return;
+  }
+
+  // Phase 5 — RETURN: upright bottle slides from gripPour back to gripStart.
+  if (ps.phase === 'return-to-hand') {
+    const t = Math.min(1, elapsed / D.returnBack);
+    const e = 1 - Math.pow(1 - t, 3);
+    _pourGripNow.lerpVectors(ps.gripPour, ps.gripStart, e);
+    applyGripPose(obj, _pourGripNow, ps.tiltAxis, 0, ps.baseRot, ps.gripLocalY);
+    if (t >= 1) {
+      obj.position.copy(ps.origin);
+      obj.quaternion.copy(ps.baseRot);
+      const cb = ps.onComplete;
+      ps.obj = null;
+      ps.targetGrp = null;
+      ps.phase = 'idle';
+      if (cb) cb();
+    }
+    return;
+  }
+}
+
+// ============================================================
 // HOLD-LIFT — khi vật được chọn, nó được nhấc lên khỏi mặt
 // bàn/kệ ~18cm với chuyển động đu đưa nhẹ. Khi thả, hạ xuống
 // mượt về vị trí nghỉ. Quaternion (tilt) hoạt động độc lập.
@@ -2231,15 +2617,25 @@ const _liftRight = new THREE.Vector3();
 const _liftUp = new THREE.Vector3(0, 1, 0);
 const _liftHand = new THREE.Vector3();
 
-// World-space target position for an object held "in hand" — front-right
-// of the camera, slightly below eye level. Scales down a bit for big
-// objects to keep them comfortably in frame.
+// World-space target position for an object held "in hand". Default is a
+// fixed camera-relative slot at front-right (the "sáng" behaviour the
+// user liked). When MediaPipe is tracking the right hand we instead use
+// that hand cursor's 3D position so the bottle follows the hand.
 function computeHandSlot(obj) {
-  camera.getWorldDirection(_liftFwd);
-  _liftRight.crossVectors(_liftFwd, _liftUp).normalize();
-  // Distance scales by object footprint so big objects don't clip
   const bb = new THREE.Box3().setFromObject(obj);
   const size = bb.getSize(new THREE.Vector3());
+
+  // MediaPipe right-hand cursor — live tracking
+  if (handState.running && handState.hands[1].active && handCursors[1].visible) {
+    _liftHand.copy(handCursors[1].position);
+    _liftHand.y -= size.y * 0.4;
+    _liftHand.y += Math.sin(performance.now() * 0.0024) * LIFT_BOB_AMP;
+    return _liftHand;
+  }
+
+  // Default: camera-relative front-right slot (works for mouse / no-webcam).
+  camera.getWorldDirection(_liftFwd);
+  _liftRight.crossVectors(_liftFwd, _liftUp).normalize();
   const objR = Math.max(size.x, size.z) * 0.5;
   const dist = 0.52 + objR * 0.6;       // 52cm + offset for big things
   const side = 0.20;                     // 20cm to the right
@@ -2248,8 +2644,6 @@ function computeHandSlot(obj) {
     .addScaledVector(_liftFwd, dist)
     .addScaledVector(_liftRight, side)
     .addScaledVector(_liftUp, down);
-  // Compensate so the visual centre (not the geometry pivot) sits in
-  // the slot — most lab objects pivot at their base.
   _liftHand.y -= size.y * 0.5;
   _liftHand.y += Math.sin(performance.now() * 0.0024) * LIFT_BOB_AMP;
   return _liftHand;
@@ -2300,6 +2694,8 @@ function resetLift() {
 
 function updateLift() {
   if (!liftState.obj) return;
+  // Yield position control to the pour animation while it owns the same object.
+  if (pourAnimState.obj === liftState.obj) return;
   const obj = liftState.obj;
   const elapsed = performance.now() - liftState.startedAt;
   if (liftState.phase === 'lifting') {
@@ -2339,6 +2735,64 @@ function showStream(fromPos, toPos, color, duration = 800, isPowder = false) {
     const p = particles[i % PARTICLE_COUNT];
     setTimeout(() => spawnParticle(p, fromPos, toPos, color, isPowder), i * dt * 0.5);
   }
+}
+
+// Swirl particles around `centerPos` — used to visualise stirring.
+function showSwirl(centerPos, radius, color, duration = 1200) {
+  const N = 16;
+  for (let i = 0; i < N; i++) {
+    const angle = (i / N) * Math.PI * 4;
+    const px = centerPos.x + Math.cos(angle) * radius;
+    const pz = centerPos.z + Math.sin(angle) * radius;
+    const p = particles[i % PARTICLE_COUNT];
+    setTimeout(() => spawnParticle(
+      p,
+      new THREE.Vector3(px, centerPos.y + 0.08, pz),
+      new THREE.Vector3(centerPos.x, centerPos.y, centerPos.z),
+      color, false
+    ), i * (duration / N) * 0.5);
+  }
+}
+
+// Dust puff up & out from `centerPos` — used for grinding in mortar.
+function showDustPuff(centerPos, color, duration = 1100) {
+  const N = 18;
+  for (let i = 0; i < N; i++) {
+    const offsetAngle = Math.random() * Math.PI * 2;
+    const offsetR = 0.02 + Math.random() * 0.05;
+    const px = centerPos.x + Math.cos(offsetAngle) * offsetR;
+    const pz = centerPos.z + Math.sin(offsetAngle) * offsetR;
+    const p = particles[i % PARTICLE_COUNT];
+    setTimeout(() => spawnParticle(
+      p,
+      new THREE.Vector3(centerPos.x + (Math.random()-0.5)*0.02, centerPos.y + 0.03, centerPos.z + (Math.random()-0.5)*0.02),
+      new THREE.Vector3(px, centerPos.y + 0.10, pz),
+      color, true
+    ), i * (duration / N) * 0.5);
+  }
+}
+
+// Shake state — wobbles an object in X/Z while keeping Y from lift system.
+const shakeState = { obj: null, startedAt: 0, duration: 0, baseX: 0, baseZ: 0 };
+function startShake(obj, duration = 900) {
+  shakeState.obj = obj;
+  shakeState.startedAt = performance.now();
+  shakeState.duration = duration;
+  shakeState.baseX = obj.position.x;
+  shakeState.baseZ = obj.position.z;
+}
+function updateShake() {
+  if (!shakeState.obj) return;
+  const t = (performance.now() - shakeState.startedAt) / shakeState.duration;
+  if (t >= 1) {
+    shakeState.obj.position.x = shakeState.baseX;
+    shakeState.obj.position.z = shakeState.baseZ;
+    shakeState.obj = null;
+    return;
+  }
+  const amp = 0.025 * (1 - t);
+  shakeState.obj.position.x = shakeState.baseX + Math.sin(t * Math.PI * 18) * amp;
+  shakeState.obj.position.z = shakeState.baseZ + Math.cos(t * Math.PI * 15) * amp * 0.5;
 }
 
 function spawnParticle(p, fromPos, toPos, color, isPowder) {
@@ -2573,6 +3027,80 @@ function updateCylinderLiquid(volMl, color) {
   liq.geometry = new THREE.CylinderGeometry(0.02, 0.02, h, 32);
   liq.position.y = h / 2 + 0.003;
   if (color !== undefined) liq.material.color.setHex(color);
+}
+
+function updateMortarLiquid(volMl, color) {
+  const liq = mortar.userData.liquid;
+  if (volMl < 0.001) { liq.visible = false; return; }
+  liq.visible = true;
+  const h = Math.min(mortar.userData.maxH, volMl / mortar.userData.maxVol * mortar.userData.maxH);
+  liq.geometry.dispose();
+  liq.geometry = new THREE.CylinderGeometry(0.060, 0.040, h, 32);
+  liq.position.y = 0.034 + h / 2;
+  if (color !== undefined) liq.material.color.setHex(color);
+}
+
+function updateFinalBottleFill(volMl, color) {
+  const fill = finalBottle.userData.fill;
+  fill.visible = volMl > 0.001;
+  if (color !== undefined && fill.visible) fill.material.color.setHex(color);
+}
+
+// ============================================================
+// Generic container ops — used by free-form pour-between-containers
+// to read/write each container's contents uniformly.
+// ============================================================
+const containerOps = {
+  'beaker': {
+    grp: () => beaker,
+    get: () => ({ vol: state.beakerVol, color: state.beakerColor, max: 250 }),
+    set: (v, c) => { state.beakerVol = Math.max(0, v); if (c !== undefined) state.beakerColor = c; updateBeakerLiquid(state.beakerVol, state.beakerColor); },
+  },
+  'cylinder': {
+    grp: () => cylinder,
+    get: () => ({ vol: state.cylinderMl, color: cylinder.userData.liquid.material.color.getHex(), max: 100 }),
+    set: (v, c) => { state.cylinderMl = Math.max(0, v); updateCylinderLiquid(state.cylinderMl, c !== undefined ? c : cylinder.userData.liquid.material.color.getHex()); },
+  },
+  'mortar': {
+    grp: () => mortar,
+    get: () => ({ vol: state.mortarVol || 0, color: state.mortarColor || 0xb8a880, max: mortar.userData.maxVol }),
+    set: (v, c) => { state.mortarVol = Math.max(0, v); if (c !== undefined) state.mortarColor = c; updateMortarLiquid(state.mortarVol, state.mortarColor); },
+  },
+  'final-bottle': {
+    grp: () => finalBottle,
+    get: () => ({ vol: state.finalBottleVol || 0, color: state.finalBottleColor || state.recipe?.finalColor || 0xa67c2a, max: (state.recipe?.finalVolume || 100) + 50 }),
+    set: (v, c) => { state.finalBottleVol = Math.max(0, v); if (c !== undefined) state.finalBottleColor = c; updateFinalBottleFill(state.finalBottleVol, state.finalBottleColor); },
+  },
+};
+
+// Animate src carrying to dst, tilting, pouring (with stream), and
+// returning to origin. `moveVol` is transferred at the start of the
+// pour phase (with color blend). Returns the moved volume.
+function pourBetweenContainers(srcGrp, dstId, opts = {}) {
+  const srcId = srcGrp.userData.id;
+  const src = containerOps[srcId];
+  const dst = containerOps[dstId];
+  if (!src || !dst) return 0;
+  const srcS = src.get();
+  if (srcS.vol < 0.01) return 0;
+  const dstS = dst.get();
+  const space = Math.max(0, dstS.max - dstS.vol);
+  if (space < 0.01) return 0;
+  const moveVol = opts.all !== false ? Math.min(srcS.vol, space) : Math.min(srcS.vol, space, opts.amount || srcS.vol);
+
+  startPourAnim(srcGrp, dst.grp(), {
+    color: srcS.color,
+    onPourActive: () => {
+      const sNow = src.get(); const dNow = dst.get();
+      const newDstVol = dNow.vol + moveVol;
+      const blendT = newDstVol > 0 ? moveVol / newDstVol : 0;
+      const newColor = blendColor(dNow.color, srcS.color, Math.min(1, blendT));
+      dst.set(newDstVol, newColor);
+      src.set(sNow.vol - moveVol, sNow.color);
+    },
+    onComplete: opts.onComplete,
+  });
+  return moveVol;
 }
 
 // ============================================================
@@ -2850,7 +3378,7 @@ function ndcFromEvent(e) {
 }
 
 function getClickable() {
-  return [beaker, cylinder, finalBottle, balance, mortar, ...reagents];
+  return [beaker, cylinder, finalBottle, balance, mortar, pestleGrp, pipetGrp, stirrerGrp, ...reagents];
 }
 
 function pickTopGroup(object) {
@@ -2910,9 +3438,13 @@ function findMatchingStepIdx(action, su, tu) {
 }
 
 // ============================================================
-// FREE-FORM INTERACTION — any physically sensible combo executes;
-// matching steps are marked done in any order; mismatches are logged
-// silently and reviewed at submission time.
+// FREE-FORM INTERACTION — any physically sensible combo executes.
+// Held tool/reagent + clicked target → router picks the action:
+//   • → balance    = place
+//   • reagent → container = pour reagent (with step matching for beaker/cylinder)
+//   • container → container = transfer contents (mixing colors)
+// Recipe matching is checked separately; mismatches log silently for
+// end-of-game review. Same-id clicks (self-pour) are a no-op.
 // ============================================================
 function handleClickOn(target) {
   if (!target) { setSelectedTool(null); return; }
@@ -2924,180 +3456,275 @@ function handleClickOn(target) {
 
   const su = selectedTool.userData;
 
-  // ----- 1. PLACE-ON-BALANCE: beaker → balance -----
-  if (su.id === 'beaker' && tu.id === 'balance') {
-    commitNewRestForHeld(new THREE.Vector3(balance.position.x + 0.03, balance.position.y + 0.06, balance.position.z));
-    state.beakerOnBalance = true;
-    drawBalScreen(0, 'TARE OK');
-    sendAction('place-beaker-on-balance');
-    const idx = findMatchingStepIdx('place-on-balance', su, tu);
-    if (idx >= 0) markStepCompleted(idx);
-    else logError('Đặt cốc lên cân — không nằm trong quy trình');
-    setSelectedTool(null);
-    return;
-  }
+  // Self-target → no-op (clicking the same object you're holding).
+  if (su.id === tu.id) { setSelectedTool(null); return; }
 
-  // ----- 2. POUR: reagent → beaker | cylinder -----
-  if (su.kind === 'reagent' && (tu.id === 'beaker' || tu.id === 'cylinder')) {
-    const idx = findMatchingStepIdx('pour', su, tu);
-    if (idx >= 0) {
-      doPour(tu.id, selectedTool, state.recipe.steps[idx], idx);
+  // ----- A. PIPET — hút/nhả thể tích nhỏ -----
+  if (su.id === 'pipet' && containerOps[tu.id]) {
+    if (state.pipetVol < 0.01) {
+      // EMPTY pipet → SUCK from target
+      const dstS = containerOps[tu.id].get();
+      if (dstS.vol < 0.05) {
+        logError(`${tu.name} rỗng — không hút được`);
+        setSelectedTool(null); return;
+      }
+      const amount = Math.min(5, dstS.vol);
+      const tipPos = new THREE.Vector3(); pipetGrp.getWorldPosition(tipPos); tipPos.y += 0.02;
+      const srcPos = new THREE.Vector3(); containerOps[tu.id].grp().getWorldPosition(srcPos); srcPos.y += 0.08;
+      showStream(srcPos, tipPos, dstS.color, 700);
+      sfx.grab();
+      setTimeout(() => {
+        state.pipetVol = amount;
+        state.pipetColor = dstS.color;
+        updatePipetLiquid(state.pipetVol, state.pipetColor);
+        containerOps[tu.id].set(dstS.vol - amount, dstS.color);
+        showToast(`💧 Hút ${amount.toFixed(1)} mL từ ${tu.name}`, 1300);
+        setSelectedTool(null);
+      }, 500);
+      return;
     } else {
-      doFreePour(tu.id, selectedTool);
-      logError(`Rót ${su.name} vào ${tu.id === 'beaker' ? 'cốc' : 'ống đong'} — không có trong đơn`);
-      setTimeout(() => setSelectedTool(null), 500);
-    }
-    return;
-  }
-
-  // ----- 3. TRANSFER: cylinder → beaker -----
-  if (su.id === 'cylinder' && tu.id === 'beaker') {
-    const idx = findMatchingStepIdx('transfer', su, tu);
-    const vol = state.cylinderMl;
-    if (vol < 0.01) {
-      logError('Ống đong rỗng — không có gì để đổ');
-      setSelectedTool(null);
+      // LOADED pipet → DROP into target (uses the full carry-tilt-pour-return anim)
+      const dstS = containerOps[tu.id].get();
+      const space = Math.max(0, dstS.max - dstS.vol);
+      if (space < 0.01) { logError(`${tu.name} đã đầy`); setSelectedTool(null); return; }
+      const amount = Math.min(state.pipetVol, space);
+      startPourAnim(pipetGrp, containerOps[tu.id].grp(), {
+        color: state.pipetColor,
+        tiltAngle: 1.0,
+        pourDur: 450,
+        onPourActive: () => {
+          const dNow = containerOps[tu.id].get();
+          const newVol = dNow.vol + amount;
+          const blendT = newVol > 0 ? amount / newVol : 0;
+          const newColor = blendColor(dNow.color, state.pipetColor, Math.min(1, blendT));
+          containerOps[tu.id].set(newVol, newColor);
+          state.pipetVol -= amount;
+          updatePipetLiquid(state.pipetVol, state.pipetColor);
+        },
+        onComplete: () => {
+          showToast(`💧 Nhỏ ${amount.toFixed(1)} mL vào ${tu.name}`, 1300);
+          setSelectedTool(null);
+        },
+      });
       return;
     }
-    state.beakerVol += vol;
-    state.cylinderMl = 0;
-    const tp = new THREE.Vector3(); beaker.getWorldPosition(tp); tp.y += 0.05;
-    tiltBottleTowards(cylinder, tp, 1000, 1.4);
-    const fp = new THREE.Vector3(); cylinder.getWorldPosition(fp); fp.y += 0.22;
-    const dirH = new THREE.Vector3(tp.x - fp.x, 0, tp.z - fp.z).normalize().multiplyScalar(0.04);
-    fp.add(dirH);
-    showStream(fp, tp, cylinder.userData.liquid.material.color.getHex(), 900);
+  }
+
+  // ----- B. STIRRER — khuấy container có dung dịch -----
+  if (su.id === 'stirrer' && containerOps[tu.id]) {
+    const dstS = containerOps[tu.id].get();
+    if (dstS.vol < 0.5) {
+      logError(`${tu.name} (gần) rỗng — không có gì để khuấy`);
+      setSelectedTool(null); return;
+    }
+    const centerPos = new THREE.Vector3(); containerOps[tu.id].grp().getWorldPosition(centerPos); centerPos.y += 0.06;
+    showSwirl(centerPos, 0.03, dstS.color, 1100);
+    sfx.grab();
     setTimeout(() => {
-      updateCylinderLiquid(0, 0);
-      updateBeakerLiquid(state.beakerVol, state.beakerColor);
-      showToast(`Đã chuyển ${vol.toFixed(1)} mL vào cốc`, 1500);
-      sendAction('transfer-to-beaker');
-      state.transferDone = true;
-      if (idx >= 0) markStepCompleted(idx);
-      else logError('Chuyển ống đong → cốc — không khớp bước nào');
+      // Homogenize: nudge color closer to its own average — slight saturation shift
+      // For now: just mark stirred. Visual swirl is the feedback.
+      state.stirCount[tu.id] = (state.stirCount[tu.id] || 0) + 1;
+      showToast(`🌀 Đã khuấy ${tu.name}`, 1200);
+      sendAction('stir-' + tu.id);
       setSelectedTool(null);
     }, 700);
     return;
   }
 
-  // ----- 4. BOTTLE: beaker → final-bottle -----
-  if (su.id === 'beaker' && tu.id === 'final-bottle') {
-    if (state.beakerVol < 0.01) {
-      logError('Cốc rỗng — không có gì để đóng chai');
-      setSelectedTool(null);
-      return;
+  // ----- C. PESTLE — nghiền cối có hỗn hợp -----
+  if (su.id === 'pestle' && tu.id === 'mortar') {
+    const mState = containerOps.mortar.get();
+    if (mState.vol < 0.5) {
+      logError('Cối rỗng — không có gì để nghiền');
+      setSelectedTool(null); return;
     }
-    const idx = findMatchingStepIdx('bottle', su, tu);
-    const tp = new THREE.Vector3(); finalBottle.getWorldPosition(tp); tp.y += 0.2;
-    tiltBottleTowards(beaker, tp, 1100, 1.4);
-    const fp = new THREE.Vector3(); beaker.getWorldPosition(fp); fp.y += 0.14;
-    const dirH = new THREE.Vector3(tp.x - fp.x, 0, tp.z - fp.z).normalize().multiplyScalar(0.05);
-    fp.add(dirH);
-    showStream(fp, tp, state.beakerColor || 0xa67c2a, 1000);
+    const centerPos = new THREE.Vector3(); mortar.getWorldPosition(centerPos); centerPos.y += 0.04;
+    showDustPuff(centerPos, mState.color, 1100);
+    sfx.grab();
     setTimeout(() => {
-      state.bottled = true;
-      finalBottle.userData.fill.visible = true;
-      finalBottle.userData.fill.material.color.setHex(state.recipe.finalColor);
-      updateBeakerLiquid(0, 0);
-      state.beakerVol = 0;
-      sendAction('bottled');
-      if (idx >= 0) { sfx.perfect(); markStepCompleted(idx); showToast('🎉 Đã đóng chai!', 2500, 'ok'); }
-      else logError('Đóng chai — không khớp bước nào');
+      state.grindCount++;
+      showToast(`💢 Đã nghiền cối (lần ${state.grindCount})`, 1400);
+      sendAction('grind-mortar');
       setSelectedTool(null);
-    }, 900);
+    }, 800);
     return;
   }
 
-  // ----- Any other combo: physically not sensible -----
+  // Pestle clicked on something other than mortar → error
+  if (su.id === 'pestle' && tu.id !== 'mortar') {
+    logError(`Chày chỉ dùng được với cối — không thể với ${tu.name}`);
+    setSelectedTool(null); return;
+  }
+
+  // Pipet / stirrer placed on balance: handled by next block (PLACE ON BALANCE).
+
+  // ----- 1. PLACE ON BALANCE — any tool/reagent can be placed on cân -----
+  if (tu.id === 'balance') {
+    commitNewRestForHeld(new THREE.Vector3(balance.position.x + 0.03, balance.position.y + 0.06, balance.position.z));
+    if (su.id === 'beaker') state.beakerOnBalance = true;
+    drawBalScreen(0, 'TARE OK');
+    sendAction('place-' + su.id + '-on-balance');
+    const idx = findMatchingStepIdx('place-on-balance', su, tu);
+    if (idx >= 0) markStepCompleted(idx);
+    else logError(`Đặt ${su.name} lên cân — không nằm trong quy trình`);
+    setSelectedTool(null);
+    return;
+  }
+
+  // ----- 2. POUR REAGENT → CONTAINER (beaker / cylinder / mortar / final-bottle) -----
+  if (su.kind === 'reagent' && containerOps[tu.id]) {
+    const idx = findMatchingStepIdx('pour', su, tu);
+    if (idx >= 0) {
+      // Recipe-matched pour → quantitative tracking (beaker/cylinder only by recipe shape)
+      doPour(tu.id, selectedTool, state.recipe.steps[idx], idx);
+    } else {
+      // Free pour into any container — visual + spill some contents into target.
+      // doFreePour handles its own setSelectedTool(null) in onComplete.
+      doFreePour(tu.id, selectedTool);
+      const dstName = tu.id === 'beaker' ? 'cốc' : tu.id === 'cylinder' ? 'ống đong' : tu.id === 'mortar' ? 'cối' : 'chai thành phẩm';
+      logError(`Rót ${su.name} vào ${dstName} — không có trong đơn`);
+    }
+    return;
+  }
+
+  // ----- 3. POUR CONTAINER → CONTAINER (cylinder→beaker, beaker→final-bottle, mortar→cốc, etc.) -----
+  if (containerOps[su.id] && containerOps[tu.id]) {
+    const srcInfo = containerOps[su.id].get();
+    if (srcInfo.vol < 0.01) {
+      logError(`${su.name} rỗng — không có gì để đổ`);
+      setSelectedTool(null);
+      return;
+    }
+    const dstSpace = Math.max(0, containerOps[tu.id].get().max - containerOps[tu.id].get().vol);
+    if (dstSpace < 0.01) {
+      logError(`${tu.name} đã đầy`);
+      setSelectedTool(null);
+      return;
+    }
+
+    // Determine if this combo matches a recipe step.
+    const matchAction = (su.id === 'cylinder' && tu.id === 'beaker')      ? 'transfer'
+                      : (su.id === 'beaker'   && tu.id === 'final-bottle') ? 'bottle'
+                      : null;
+    const idx = matchAction ? findMatchingStepIdx(matchAction, su, tu) : -1;
+
+    pourBetweenContainers(selectedTool, tu.id, {
+      onComplete: () => {
+        if (matchAction === 'transfer' && idx >= 0) {
+          state.transferDone = true;
+          showToast(`Đã chuyển ${srcInfo.vol.toFixed(1)} mL vào cốc`, 1500);
+          sendAction('transfer-to-beaker');
+          markStepCompleted(idx);
+        } else if (matchAction === 'bottle' && idx >= 0) {
+          state.bottled = true;
+          finalBottle.userData.fill.material.color.setHex(state.recipe.finalColor);
+          state.finalBottleColor = state.recipe.finalColor;
+          updateFinalBottleFill(state.finalBottleVol || srcInfo.vol, state.finalBottleColor);
+          sendAction('bottled');
+          showToast('🎉 Đã đóng chai!', 2500, 'ok');
+          sfx.perfect();
+          markStepCompleted(idx);
+        } else {
+          logError(`Đổ ${su.name} → ${tu.name} — không có trong đơn`);
+        }
+        setSelectedTool(null);
+      },
+    });
+    return;
+  }
+
+  // ----- Any other combo: log silently and release -----
   logError(`Thao tác không hợp lý: ${su.name} → ${tu.name}`);
   setSelectedTool(null);
 }
 
 function doPour(containerKind, reagentGrp, step, stepIdx) {
-  // Tilt the reagent bottle toward the target so the spout points at it
-  const toPos = new THREE.Vector3();
-  if (containerKind === 'beaker') beaker.getWorldPosition(toPos); else cylinder.getWorldPosition(toPos);
-  toPos.y += 0.1;
   const reagentInfo = REAGENTS[step.reagentId];
-  tiltBottleTowards(reagentGrp, toPos, 900, 1.3);
-  const fromPos = new THREE.Vector3(); reagentGrp.getWorldPosition(fromPos);
-  fromPos.y += 0.30;
-  const dirH = new THREE.Vector3(toPos.x - fromPos.x, 0, toPos.z - fromPos.z).normalize().multiplyScalar(0.05);
-  fromPos.add(dirH);
-  showStream(fromPos, toPos, reagentInfo?.liquid || 0x88ccee, 800, !!reagentInfo?.isPowder);
+  const dstGrp = containerOps[containerKind].grp();
 
+  // Compute chunk size BEFORE animating (so onPourActive uses the right number).
   const i = stepIdx;
   state.stepProgress[i] = state.stepProgress[i] ?? 0;
-
-  // Two-hand bonus → tighter chunk: smaller variance, biased toward target.
-  // Without bonus → original wider variance (more risk of overshoot).
   const bonus = state.twoHandBonus;
   if (bonus) state.twoHandPours++;
   let chunk;
   if (step.unit === 'g') {
-    chunk = bonus
-      ? step.target * (0.10 + Math.random() * 0.10)   // 10–20% of target per chunk
-      : step.target * (0.18 + Math.random() * 0.20);  // 18–38% (more variance)
+    chunk = bonus ? step.target * (0.10 + Math.random() * 0.10)
+                  : step.target * (0.18 + Math.random() * 0.20);
   } else {
-    chunk = bonus
-      ? step.target * (0.08 + Math.random() * 0.08)
-      : step.target * (0.12 + Math.random() * 0.18);
+    chunk = bonus ? step.target * (0.08 + Math.random() * 0.08)
+                  : step.target * (0.12 + Math.random() * 0.18);
   }
-  // Snap final increment so target is reachable in a clean step
   if (state.stepProgress[i] + chunk > step.target * 0.92 && state.stepProgress[i] + chunk < step.target + step.tolerance) {
     chunk = Math.min(step.target - state.stepProgress[i] + (Math.random() - 0.3) * step.tolerance * 0.4, chunk);
   }
 
-  state.stepProgress[i] += chunk;
-  const cur = state.stepProgress[i];
-
-  if (containerKind === 'beaker') {
-    if (step.unit === 'g') {
-      state.beakerWeight = cur;
-      drawBalScreen(cur, 'STABLE');
-      state.beakerVol = Math.max(state.beakerVol, cur * 3);   // visual proxy
-      state.beakerColor = REAGENTS[step.reagentId]?.liquid || 0xfafafa;
-      updateBeakerLiquid(state.beakerVol, state.beakerColor);
-    } else {
-      state.beakerVol = cur;
-      state.beakerColor = blendColor(state.beakerColor || REAGENTS[step.reagentId]?.liquid, REAGENTS[step.reagentId]?.liquid || 0xddeefa, 0.4);
-      updateBeakerLiquid(state.beakerVol, state.beakerColor);
-    }
-  } else {
-    state.cylinderMl = cur;
-    updateCylinderLiquid(cur, REAGENTS[step.reagentId]?.liquid || 0xc16e1c);
-  }
-
-  renderStep();
-  sendProgress();
-
-  if (Math.abs(cur - step.target) <= step.tolerance) {
-    showToast(`✅ Đạt ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit}`, 1700, 'ok');
-    sendAction(`pour-${step.reagentId}-done`);
-    setTimeout(() => { markStepCompleted(i); setSelectedTool(null); }, 400);
-  } else if (cur > step.target + step.tolerance) {
-    logError(`Quá tay ${reagentInfo?.name}: ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} (đích ${step.target})`);
-    setTimeout(() => { markStepCompleted(i); setSelectedTool(null); }, 400);
-  } else {
-    showToast(`+${chunk.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} · còn ${(step.target - cur).toFixed(step.unit === 'g' ? 3 : 1)}`, 1100);
-  }
+  startPourAnim(reagentGrp, dstGrp, {
+    color: reagentInfo?.liquid || 0x88ccee,
+    isPowder: !!reagentInfo?.isPowder,
+    onPourActive: () => {
+      state.stepProgress[i] += chunk;
+      const cur = state.stepProgress[i];
+      if (containerKind === 'beaker') {
+        if (step.unit === 'g') {
+          state.beakerWeight = cur;
+          drawBalScreen(cur, 'STABLE');
+          state.beakerVol = Math.max(state.beakerVol, cur * 3);
+          state.beakerColor = REAGENTS[step.reagentId]?.liquid || 0xfafafa;
+          updateBeakerLiquid(state.beakerVol, state.beakerColor);
+        } else {
+          state.beakerVol = cur;
+          state.beakerColor = blendColor(state.beakerColor || REAGENTS[step.reagentId]?.liquid, REAGENTS[step.reagentId]?.liquid || 0xddeefa, 0.4);
+          updateBeakerLiquid(state.beakerVol, state.beakerColor);
+        }
+      } else {
+        state.cylinderMl = cur;
+        updateCylinderLiquid(cur, REAGENTS[step.reagentId]?.liquid || 0xc16e1c);
+      }
+      renderStep();
+      sendProgress();
+    },
+    onComplete: () => {
+      const cur = state.stepProgress[i];
+      if (Math.abs(cur - step.target) <= step.tolerance) {
+        showToast(`✅ Đạt ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit}`, 1700, 'ok');
+        sendAction(`pour-${step.reagentId}-done`);
+        markStepCompleted(i); setSelectedTool(null);
+      } else if (cur > step.target + step.tolerance) {
+        logError(`Quá tay ${reagentInfo?.name}: ${cur.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} (đích ${step.target})`);
+        markStepCompleted(i); setSelectedTool(null);
+      } else {
+        showToast(`+${chunk.toFixed(step.unit === 'g' ? 3 : 1)} ${step.unit} · còn ${(step.target - cur).toFixed(step.unit === 'g' ? 3 : 1)}`, 1100);
+        // Don't deselect — user keeps holding to pour again.
+      }
+    },
+  });
 }
 
-// Pour something the recipe doesn't ask for — visual only (tilt + stream).
-// Beaker/cylinder contents are *not* mutated, so a stray click doesn't
-// permanently contaminate the in-progress preparation.
+// Free pour into any container — uses the same carry-tilt-pour-return
+// animation; deposits a small unmetered portion (5–15 units).
 function doFreePour(containerKind, reagentGrp) {
   const ru = reagentGrp.userData;
   const info = REAGENTS[ru.id];
-  const toPos = new THREE.Vector3();
-  if (containerKind === 'beaker') beaker.getWorldPosition(toPos); else cylinder.getWorldPosition(toPos);
-  toPos.y += 0.1;
-  tiltBottleTowards(reagentGrp, toPos, 900, 1.3);
-  const fromPos = new THREE.Vector3(); reagentGrp.getWorldPosition(fromPos);
-  fromPos.y += 0.30;
-  const dirH = new THREE.Vector3(toPos.x - fromPos.x, 0, toPos.z - fromPos.z).normalize().multiplyScalar(0.05);
-  fromPos.add(dirH);
-  showStream(fromPos, toPos, info?.liquid || 0x88ccee, 700, !!info?.isPowder);
+  const dst = containerOps[containerKind];
+  if (!dst) return;
+  const dstS = dst.get();
+  const space = Math.max(0, dstS.max - dstS.vol);
+  const portion = Math.min(space, 5 + Math.random() * 10);
+
+  startPourAnim(reagentGrp, dst.grp(), {
+    color: info?.liquid || 0x88ccee,
+    isPowder: !!info?.isPowder,
+    onPourActive: () => {
+      if (portion < 0.01) return;
+      const dstS2 = dst.get();
+      const newVol = dstS2.vol + portion;
+      const blendT = newVol > 0 ? portion / newVol : 0;
+      const newColor = blendColor(dstS2.color, info?.liquid || dstS2.color, Math.min(1, blendT));
+      dst.set(newVol, newColor);
+    },
+    onComplete: () => setSelectedTool(null),
+  });
 }
 
 function blendColor(a, b, t) {
@@ -3258,6 +3885,19 @@ startGameImpl = function () {
     beakerVol: 0,
     beakerColor: 0xa1d99b,
     cylinderMl: 0,
+    // Free-form additions: mortar + final-bottle can also receive pours.
+    mortarVol: 0,
+    mortarColor: 0xb8a880,
+    finalBottleVol: 0,
+    finalBottleColor: 0,
+    // New tools
+    pipetVol: 0,
+    pipetColor: 0xa1d99b,
+    stirCount: { beaker: 0, cylinder: 0, mortar: 0 },
+    grindCount: 0,
+    shakeCount: 0,
+    // Double-click detection for shake gesture on the final bottle.
+    _lastClickAt: 0, _lastClickId: null,
     bottled: false,
     transferDone: false,
     stepProgress: {},
@@ -3275,6 +3915,8 @@ startGameImpl = function () {
   };
   updateBeakerLiquid(0, 0);
   updateCylinderLiquid(0, 0);
+  updateMortarLiquid(0, 0xb8a880);
+  updatePipetLiquid(0, 0xa1d99b);
   finalBottle.userData.fill.visible = false;
   drawBalScreen(0, 'READY');
   setSelectedTool(null);
@@ -3311,7 +3953,24 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
   const hits = raycaster.intersectObjects(getClickable(), true);
   if (hits.length) {
     const grp = pickTopGroup(hits[0].object);
-    if (grp) handleClickOn(grp);
+    if (grp) {
+      // SHAKE GESTURE — double-click the final-bottle when it's not held to wobble it
+      // (useful for "lắc đều" after bottling).
+      if (state && grp.userData?.id === 'final-bottle' && !selectedTool) {
+        const now = performance.now();
+        if (state._lastClickId === 'final-bottle' && now - state._lastClickAt < 400) {
+          startShake(finalBottle, 900);
+          state.shakeCount++;
+          state._lastClickAt = 0; state._lastClickId = null;
+          showToast('🤝 Lắc đều chai thành phẩm', 1500, 'ok');
+          sendAction('shake-bottle');
+          sfx.grab();
+          return;
+        }
+        state._lastClickAt = now; state._lastClickId = 'final-bottle';
+      }
+      handleClickOn(grp);
+    }
   } else {
     setSelectedTool(null);
   }
@@ -3555,7 +4214,9 @@ renderer.setAnimationLoop((time) => {
   updateWalk(dt);
   updateStream(dt);
   updateTilt();
+  updatePourAnim();
   updateLift();
+  updateShake();
   updateHand(time ?? performance.now());
 
   // hover label position

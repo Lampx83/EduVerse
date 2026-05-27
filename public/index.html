@@ -245,21 +245,21 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   </div>
 </div>
 
-<!-- ============ LEVEL SELECT ============ -->
+<!-- ============ LEVEL SELECT (chỉ áp dụng cho nhóm Sắp xếp thuốc) ============ -->
 <div class="section">
   <div class="section-title">
     <h2>🎯 Chọn cấp độ</h2>
-    <span class="hint" id="level-current-hint">Level 1 đang mở</span>
+    <span class="hint" id="level-current-hint">Level 1 đang mở · áp dụng cho nhóm <b>Sắp xếp thuốc</b></span>
     <span class="actions"><a id="reset-progress" href="#">↺ Reset tiến độ</a></span>
   </div>
   <div class="levels" id="levels"></div>
 </div>
 
-<!-- ============ MODES ============ -->
+<!-- ============ NHÓM 1 · SẮP XẾP THUỐC ============ -->
 <div class="section">
   <div class="section-title">
-    <h2>🎮 Các chế độ chơi</h2>
-    <span class="hint">Cùng 1 level, nhiều cách chơi khác nhau</span>
+    <h2>💊 Demo 1 · Sắp xếp thuốc</h2>
+    <span class="hint">Phân loại thuốc vào đúng kệ theo nhóm điều trị — 6 cách chơi</span>
   </div>
   <div class="modes">
 
@@ -307,27 +307,6 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
       <a class="btn dark" href="quiz.html">🧠 Bắt đầu</a>
     </div>
 
-    <div class="mode" style="--mode-color: #ec4899">
-      <div class="mode-head">
-        <div class="mode-icon">📊</div>
-        <div class="mode-info"><h3>Dashboard Giảng viên</h3><span class="tag" style="background:#ec4899">Analytics</span></div>
-      </div>
-      <div class="chips"><span>4 versions</span><span>Histogram</span><span>Confusion matrix</span><span>CSV export</span></div>
-      <p class="desc">Theo dõi cả lớp: tổng lượt, phổ điểm, top 10, ma trận nhầm lẫn, export CSV.</p>
-      <a class="btn dark" href="dashboard.html">📊 Mở dashboard</a>
-    </div>
-
-    <div class="mode" style="--mode-color: #14b8a6">
-      <div class="mode-head">
-        <div class="mode-icon">🧪</div>
-        <div class="mode-info"><h3>Phòng bào chế</h3><span class="tag" style="background:#14b8a6">🆕 Mới</span></div>
-      </div>
-      <div class="chips"><span>Cân điện tử</span><span>Ống đong</span><span>Cốc thủy tinh</span><span>GMP</span></div>
-      <p class="desc">Mô phỏng pha chế Siro Paracetamol theo đơn — cân 2.4g hoạt chất, đong 80mL Syrup, q.s. nước cất đến 100mL, đóng chai. Hiển thị cân điện tử số thật.</p>
-      <div class="leaderboard" data-version="compounding-lab"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
-      <a class="btn dark" href="compounding-lab.html">🧪 Vào phòng lab</a>
-    </div>
-
     <div class="mode" style="--mode-color: #f97316">
       <div class="mode-head">
         <div class="mode-icon">⚡</div>
@@ -338,6 +317,49 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
       <div class="leaderboard" data-version="time-attack"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
       <a class="btn dark" href="time-attack.html">⚡ Bắt đầu</a>
     </div>
+
+    <div class="mode" style="--mode-color: #ef4444">
+      <div class="mode-head">
+        <div class="mode-icon">🏁</div>
+        <div class="mode-info"><h3>Race 1v1</h3><span class="tag future">Sắp có</span></div>
+      </div>
+      <div class="chips"><span>WebSocket</span><span>1v1</span><span>Auto-match</span><span>Live opponent</span></div>
+      <p class="desc">Bắt cặp 2 người ngẫu nhiên qua WebSocket, cùng chơi 1 level, ai xong trước thắng. Backend đã sẵn sàng.</p>
+      <a class="btn disabled" href="#">🏁 Sắp ra mắt</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ NHÓM 2 · BÀO CHẾ ============ -->
+<div class="section">
+  <div class="section-title">
+    <h2>🧪 Demo 2 · Bào chế GMP</h2>
+    <span class="hint">Mô phỏng pha chế theo đơn — cân, đong, hòa tan, đóng chai</span>
+  </div>
+  <div class="modes">
+
+    <div class="mode" style="--mode-color: #14b8a6">
+      <div class="mode-head">
+        <div class="mode-icon">🧪</div>
+        <div class="mode-info"><h3>Phòng bào chế · 8 đơn</h3><span class="tag" style="background:#14b8a6">🆕 Mới</span></div>
+      </div>
+      <div class="chips"><span>Cân điện tử</span><span>Ống đong</span><span>Cốc thủy tinh</span><span>GMP</span><span>🤲 2 tay (MediaPipe)</span></div>
+      <p class="desc">Mô phỏng pha chế đầy đủ Siro Paracetamol, Vitamin C, Diosmectit, Cồn iod, Calamine 8% … Cân hoạt chất, đong dung môi, q.s. nước cất, đóng chai. <b>Free-form</b> — thao tác tự do, lỗi quy trình tổng kết cuối bài. <b>2 tay phối hợp</b> rót ổn định hơn (bonus điểm).</p>
+      <div class="leaderboard" data-version="compounding-lab"><h5>🏆 Top điểm</h5><div class="lb-list">đang tải...</div><div class="lb-stats"></div></div>
+      <a class="btn dark" href="compounding-lab.html">🧪 Vào phòng lab</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ NHÓM 3 · SẮC KÝ ============ -->
+<div class="section">
+  <div class="section-title">
+    <h2>🧬 Demo 3 · Sắc ký TLC</h2>
+    <span class="hint">Sắc ký lớp mỏng — 6 phiên bản công nghệ từ 2D đến Metaverse</span>
+  </div>
+  <div class="modes">
 
     <div class="mode" style="--mode-color: #a78bfa">
       <div class="mode-head">
@@ -357,6 +379,27 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
       <a class="btn dark" href="sac-ky-vr.html">🧪 Vào Hub Sắc ký</a>
     </div>
 
+  </div>
+</div>
+
+<!-- ============ CÔNG CỤ CHUNG ============ -->
+<div class="section">
+  <div class="section-title">
+    <h2>🛠️ Công cụ chung</h2>
+    <span class="hint">Dashboard giảng viên, quản lý lớp, tra cứu thiết bị</span>
+  </div>
+  <div class="modes">
+
+    <div class="mode" style="--mode-color: #ec4899">
+      <div class="mode-head">
+        <div class="mode-icon">📊</div>
+        <div class="mode-info"><h3>Dashboard Giảng viên</h3><span class="tag" style="background:#ec4899">Analytics</span></div>
+      </div>
+      <div class="chips"><span>Tất cả demo</span><span>Histogram</span><span>Confusion matrix</span><span>CSV export</span></div>
+      <p class="desc">Theo dõi cả lớp ở mọi demo: tổng lượt, phổ điểm, top 10, ma trận nhầm lẫn, export CSV.</p>
+      <a class="btn dark" href="dashboard.html">📊 Mở dashboard</a>
+    </div>
+
     <div class="mode" style="--mode-color: #c026d3">
       <div class="mode-head">
         <div class="mode-icon">👨‍🏫</div>
@@ -365,16 +408,6 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
       <div class="chips"><span>Tạo lớp</span><span>Mã mời</span><span>Roster</span><span>CSV theo lớp</span></div>
       <p class="desc">Giảng viên tạo lớp → phát mã 6 ký tự cho SV → theo dõi tiến độ từng SV, export CSV theo lớp.</p>
       <a class="btn dark" href="teacher.html">👨‍🏫 Mở quản lý lớp</a>
-    </div>
-
-    <div class="mode" style="--mode-color: #ef4444">
-      <div class="mode-head">
-        <div class="mode-icon">🏁</div>
-        <div class="mode-info"><h3>Race 1v1</h3><span class="tag future">Sắp có</span></div>
-      </div>
-      <div class="chips"><span>WebSocket</span><span>1v1</span><span>Auto-match</span><span>Live opponent</span></div>
-      <p class="desc">Bắt cặp 2 người ngẫu nhiên qua WebSocket, cùng chơi 1 level, ai xong trước thắng. Backend đã sẵn sàng.</p>
-      <a class="btn disabled" href="#">🏁 Sắp ra mắt</a>
     </div>
 
     <div class="mode" style="--mode-color: #6b7280">
