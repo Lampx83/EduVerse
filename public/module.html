@@ -155,12 +155,26 @@
 <script type="module">
   import { ScenarioEngine } from './js/engine/index.js';
   import { getScenariosForModule } from './js/scenarios/index.js';
-  import { MODULES } from './js/engine/learning-path.js';
+  import { MODULES as PHARMACY_MODULES } from './js/engine/learning-path.js';
   import { getPlayerName, getClassCode } from './js/api.js';
+  import { loadActiveDomain } from './js/engine/domain.js';
+  import { awardForResult, recordModuleStars, getProgress } from './js/engine/wallet.js';
+  import { showRewardOverlay } from './js/engine/reward-fx.js';
 
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'L1.1';
-  const moduleMeta = MODULES.find(m => m.id === moduleId);
+
+  // Load the ACTIVE domain so module metadata + achievement catalog match
+  // the school the student came from (falls back to pharmacy modules).
+  let DOMAIN_MODULES = PHARMACY_MODULES, ACHIEVEMENTS = [];
+  try {
+    const dom = await loadActiveDomain();
+    DOMAIN_MODULES = dom.MODULES || PHARMACY_MODULES;
+    ACHIEVEMENTS = dom.ACHIEVEMENTS || [];
+  } catch {}
+  const MODULES = DOMAIN_MODULES;
+  const moduleMeta = MODULES.find(m => m.id === moduleId)
+    || PHARMACY_MODULES.find(m => m.id === moduleId);
 
   const picker = document.getElementById('picker');
   const app = document.getElementById('app');
@@ -289,9 +303,26 @@
       scenario,
       playerName: getPlayerName() || 'Ẩn danh',
       classCode: getClassCode() || undefined,
-      onComplete: showResult,
+      onComplete: (result) => handleComplete(result, scenario),
     });
     engine.start();
+  }
+
+  /** Core loop reward step: award coins/XP/stars/quests, celebrate, then show breakdown. */
+  async function handleComplete(result, scenario) {
+    let award = null;
+    try {
+      const progress = getProgress();
+      const mod = moduleMeta || { id: moduleId, subject: scenario?.subject };
+      award = awardForResult(progress, mod, result, ACHIEVEMENTS);
+      recordModuleStars(moduleId, result.stars);
+    } catch (e) { console.warn('[reward] award failed', e); }
+
+    try {
+      if (award) await showRewardOverlay({ result, award, wallet: award.wallet });
+    } catch (e) { console.warn('[reward] overlay failed', e); }
+
+    showResult(result);
   }
 
   function showResult(result) {

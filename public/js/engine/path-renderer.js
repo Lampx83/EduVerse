@@ -11,6 +11,11 @@
 // Domain-agnostic: nhận MODULES + SUBJECTS + DOMAIN config.
 // ============================================================
 
+import {
+  aggregateProgress, recommendNext, nextMilestone, isBossModule,
+  levelInfo, rankFor, avatarFor, titleFor,
+} from './gamification.js';
+
 const MODE_ICONS = {
   quiz:   '📚',
   '2d':   '📱',
@@ -88,6 +93,18 @@ export function renderPath({ host, modules, subjects, domain, categories, progre
 
   const hasContent = (id) => !contentSet || contentSet.has(id);
 
+  // ── Gamification: recommendation · boss · milestone · overall progress ──
+  const subjectLabels = {};
+  for (const [k, v] of Object.entries(subjects || {})) subjectLabels[k] = v.label;
+  const agg = aggregateProgress(modules, progress);
+  const rec = recommendNext(modules, progress, hasContent);
+  const milestone = nextMilestone(modules, progress, hasContent, subjectLabels);
+  const recommendedId = rec?.module?.id || null;
+  const bossIds = new Set(modules.filter(m => isBossModule(m, modules)).map(m => m.id));
+  const nodeFlags = { recommendedId, bossIds };
+
+  const journeyHtml = renderJourneyHeader({ rec, milestone, agg, subjects, domain });
+
   // ── Tabs (sticky) ──
   const tabsHtml = groups.map(g => {
     const openable = g.modules.filter(m => hasContent(m.id)).length;
@@ -101,7 +118,7 @@ export function renderPath({ host, modules, subjects, domain, categories, progre
   // ── Chapters ──
   const chaptersHtml = groups.map(g => {
     const openable = g.modules.filter(m => hasContent(m.id)).length;
-    const nodesHtml = g.modules.map(m => renderNode(m, { subjects, progress, locked, hasContent })).join('');
+    const nodesHtml = g.modules.map(m => renderNode(m, { subjects, progress, locked, hasContent, nodeFlags })).join('');
     return `
       <section class="path-year" id="path-${g.id}">
         <header class="path-year-head">
@@ -122,6 +139,7 @@ export function renderPath({ host, modules, subjects, domain, categories, progre
         <p class="pdh-tagline">${domain.tagline || ''}</p>
       </div>
     </div>
+    ${journeyHtml}
     <nav class="path-year-tabs">${tabsHtml}</nav>
     <div class="path-chapters">${chaptersHtml}</div>
   `;
@@ -145,7 +163,57 @@ export function renderPath({ host, modules, subjects, domain, categories, progre
   }
 }
 
-function renderNode(mod, { subjects, progress, locked, hasContent }) {
+/**
+ * Journey header: big "Continue Learning" CTA + next milestone +
+ * overall progress + per-subject progress bars.
+ */
+function renderJourneyHeader({ rec, milestone, agg, subjects, domain }) {
+  const overall = agg.overall;
+  // Per-subject progress bars (only subjects that have modules)
+  const subjBars = Object.entries(agg.subjects).map(([sid, s]) => {
+    const meta = subjects[sid] || { label: sid, icon: '📘', color: '#94a3b8' };
+    return `
+      <div class="jh-subj">
+        <div class="jh-subj-head"><span>${meta.icon} ${meta.label}</span><span>${s.passed}/${s.total}</span></div>
+        <div class="jh-mini-bar"><i style="width:${s.pct}%;background:${meta.color}"></i></div>
+      </div>`;
+  }).join('');
+
+  const ctaInner = rec
+    ? `<a class="jh-cta" href="module.html?module=${encodeURIComponent(rec.module.id)}">
+         <span class="jh-cta-ic">▶</span>
+         <span class="jh-cta-txt">
+           <b>${rec.reason}</b>
+           <small>${rec.module.title}</small>
+         </span>
+         <span class="jh-cta-go">Tiếp tục →</span>
+       </a>`
+    : `<div class="jh-cta done"><span class="jh-cta-ic">🎉</span>
+         <span class="jh-cta-txt"><b>Bạn đã hoàn thành tất cả bài có sẵn!</b>
+         <small>Quay lại sau khi mở thêm nội dung mới</small></span></div>`;
+
+  const milestoneHtml = milestone
+    ? `<div class="jh-milestone ${milestone.ready ? 'ready' : ''}">🎯 ${milestone.text}</div>` : '';
+
+  return `
+    <section class="journey-header">
+      <div class="jh-top">
+        <div class="jh-overall">
+          <div class="jh-overall-head">
+            <span>🗺️ Tiến độ ${domain.shortName || ''}</span>
+            <span class="jh-overall-pct">${overall.pct}%</span>
+          </div>
+          <div class="jh-bar"><i style="width:${overall.pct}%"></i></div>
+          <div class="jh-overall-sub">${overall.passed}/${overall.total} bài · ⭐ ${overall.stars}</div>
+        </div>
+        ${milestoneHtml}
+      </div>
+      ${ctaInner}
+      ${subjBars ? `<div class="jh-subjects">${subjBars}</div>` : ''}
+    </section>`;
+}
+
+function renderNode(mod, { subjects, progress, locked, hasContent, nodeFlags }) {
   const stars = progress[mod.id]?.stars || 0;
   const noContent = !hasContent(mod.id);
   const prereqReason = locked?.get(mod.id);
@@ -153,6 +221,17 @@ function renderNode(mod, { subjects, progress, locked, hasContent }) {
   const reason = noContent ? 'Chưa có nội dung — sắp ra mắt' : (prereqReason || '');
   const subj = subjects[mod.subject] || { label: mod.subject, icon: '📘', color: '#94a3b8' };
   const starsHtml = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+
+  // ── Status tag hierarchy ──
+  const isBoss = nodeFlags?.bossIds?.has(mod.id);
+  const isRecommended = nodeFlags?.recommendedId === mod.id;
+  const passed = stars >= 1;
+  let tag = '';
+  if (isLocked) tag = `<span class="pn-tag locked">⛔ Khoá</span>`;
+  else if (passed) tag = `<span class="pn-tag done">✓ Hoàn thành</span>`;
+  else if (isRecommended) tag = `<span class="pn-tag rec">🔥 Gợi ý hôm nay</span>`;
+  else tag = `<span class="pn-tag new">🟣 Mới mở</span>`;
+  const bossBadge = isBoss ? `<span class="pn-boss" title="Boss môn ${subj.label}">👑</span>` : '';
 
   // Quiz badge (luôn có) + experiences. Node khoá → CSS pointer-events:none làm badge trơ.
   const modes = [{ mode: 'quiz', icon: '📚', label: MODE_LABEL.quiz, tech: 'Quiz', url: `module.html?module=${encodeURIComponent(mod.id)}` }];
@@ -167,8 +246,14 @@ function renderNode(mod, { subjects, progress, locked, hasContent }) {
   }).join('');
 
   const targetUrl = isLocked ? '#' : `module.html?module=${encodeURIComponent(mod.id)}`;
+  const cls = ['path-node'];
+  if (isLocked) cls.push('locked');
+  if (noContent) cls.push('no-content');
+  if (passed) cls.push('passed');
+  if (isBoss) cls.push('boss');
+  if (isRecommended && !isLocked && !passed) cls.push('recommended');
   return `
-    <div class="path-node ${isLocked ? 'locked' : ''} ${noContent ? 'no-content' : ''} ${stars >= 1 ? 'passed' : ''}"
+    <div class="${cls.join(' ')}"
          data-mod="${mod.id}"
          data-subject="${mod.subject}"
          data-href="${targetUrl}"
@@ -176,6 +261,7 @@ function renderNode(mod, { subjects, progress, locked, hasContent }) {
          role="link"
          tabindex="${isLocked ? -1 : 0}"
          ${isLocked ? `aria-disabled="true" title="🔒 ${reason}"` : ''}>
+      <div class="pn-tagrow">${tag}${bossBadge}</div>
       <div class="pn-head">
         <span class="pn-icon">${mod.icon || subj.icon}</span>
         <span class="pn-id">${mod.id}</span>
@@ -187,7 +273,7 @@ function renderNode(mod, { subjects, progress, locked, hasContent }) {
         <span class="pn-subject">${subj.icon} ${subj.label}</span>
       </div>
       <div class="pn-badges">${badgesHtml}</div>
-      ${isLocked ? `<div class="pn-lock">${noContent ? '🔒' : '🔒'}</div>` : ''}
+      ${isLocked ? `<div class="pn-lock">🔒</div>` : ''}
     </div>
   `;
 }
@@ -463,6 +549,106 @@ function injectStylesOnce() {
     .achievement-toast .at-title { font-weight: 800; }
     .achievement-toast .at-desc  { opacity: 0.85; font-size: 12px; margin-top: 2px; }
 
+    /* ===== Journey header (Continue + milestone + progress) ===== */
+    .journey-header {
+      background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(34,211,238,0.12));
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 16px;
+      padding: 16px 18px; margin-bottom: 18px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .jh-top { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+    .jh-overall { flex: 1 1 220px; min-width: 200px; }
+    .jh-overall-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #fff; }
+    .jh-overall-pct { color: #22d3ee; }
+    .jh-bar { height: 10px; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; margin: 6px 0 4px; }
+    .jh-bar > i { display: block; height: 100%; background: linear-gradient(90deg,#8b5cf6,#22d3ee); border-radius: 6px; transition: width .8s cubic-bezier(.2,.8,.2,1); }
+    .jh-overall-sub { font-size: 11.5px; opacity: 0.75; }
+    .jh-milestone {
+      flex: 1 1 240px; font-size: 13.5px; font-weight: 700; color: #fde68a;
+      background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35);
+      border-radius: 12px; padding: 10px 14px;
+    }
+    .jh-milestone.ready { color: #86efac; background: rgba(34,197,94,0.14); border-color: rgba(34,197,94,0.4); }
+    .jh-cta {
+      display: flex; align-items: center; gap: 14px; text-decoration: none;
+      background: linear-gradient(90deg,#fbbf24,#f59e0b); color: #1f1147;
+      border-radius: 14px; padding: 13px 18px; transition: filter .15s, transform .15s;
+    }
+    .jh-cta:hover { filter: brightness(1.05); transform: translateY(-2px); }
+    .jh-cta.done { background: rgba(255,255,255,0.08); color: #fff; cursor: default; }
+    .jh-cta-ic { font-size: 22px; width: 40px; height: 40px; flex: none; border-radius: 50%;
+      background: rgba(31,17,71,0.18); display: flex; align-items: center; justify-content: center; }
+    .jh-cta.done .jh-cta-ic { background: rgba(255,255,255,0.1); }
+    .jh-cta-txt { flex: 1; display: flex; flex-direction: column; line-height: 1.3; }
+    .jh-cta-txt b { font-size: 15px; font-weight: 800; }
+    .jh-cta-txt small { font-size: 12.5px; opacity: 0.85; }
+    .jh-cta-go { font-weight: 800; font-size: 14px; white-space: nowrap; }
+    .jh-subjects { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); }
+    .jh-subj-head { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #fff; opacity: 0.9; }
+    .jh-mini-bar { height: 7px; border-radius: 5px; background: rgba(255,255,255,0.12); overflow: hidden; margin-top: 4px; }
+    .jh-mini-bar > i { display: block; height: 100%; border-radius: 5px; transition: width .8s; }
+
+    /* ===== Node status tags + boss ===== */
+    .pn-tagrow { display: flex; align-items: center; gap: 6px; min-height: 18px; }
+    .pn-tag { font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px; letter-spacing: .2px; }
+    .pn-tag.rec  { background: #f97316; color: #1f1147; box-shadow: 0 0 0 0 rgba(249,115,22,.6); animation: pn-pulse 1.8s infinite; }
+    .pn-tag.new  { background: rgba(168,85,247,0.25); color: #e9d5ff; border: 1px solid rgba(168,85,247,0.5); }
+    .pn-tag.done { background: rgba(16,185,129,0.22); color: #6ee7b7; }
+    .pn-tag.locked { background: rgba(148,163,184,0.2); color: #cbd5e1; }
+    .pn-boss { margin-left: auto; font-size: 16px; filter: drop-shadow(0 0 6px rgba(251,191,36,.7)); }
+    .path-node.recommended { border-color: #f97316; box-shadow: 0 0 0 1px rgba(249,115,22,.5), 0 8px 24px rgba(249,115,22,.22); }
+    .path-node.boss { border-color: #fbbf24; background: linear-gradient(160deg, rgba(251,191,36,0.12), rgba(0,0,0,0.3)); }
+    .path-node.boss.passed { background: linear-gradient(160deg, rgba(251,191,36,0.2), rgba(16,185,129,0.18)); }
+    @keyframes pn-pulse { 0%{box-shadow:0 0 0 0 rgba(249,115,22,.5)} 70%{box-shadow:0 0 0 8px rgba(249,115,22,0)} 100%{box-shadow:0 0 0 0 rgba(249,115,22,0)} }
+
+    /* ===== Identity bar (avatar/level/rank/XP/title) ===== */
+    .identity-bar {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+      border-left: 4px solid var(--rank-color, #fbbf24);
+      border-radius: 14px; padding: 12px 16px; margin: 14px 0 8px;
+    }
+    .ib-avatar { font-size: 38px; line-height: 1; filter: drop-shadow(0 3px 8px rgba(0,0,0,.4)); }
+    .ib-main { flex: 1; min-width: 0; }
+    .ib-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .ib-rank { font-weight: 800; color: var(--rank-color, #fbbf24); font-size: 14px; }
+    .ib-title { font-size: 12.5px; opacity: 0.8; color: #fff; }
+    .ib-levelrow { display: flex; align-items: center; gap: 8px; margin: 5px 0 2px; }
+    .ib-lvl { font-size: 12px; font-weight: 800; color: #fff; white-space: nowrap; }
+    .ib-xpbar { flex: 1; height: 9px; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
+    .ib-xpbar > i { display: block; height: 100%; background: linear-gradient(90deg,#8b5cf6,#22d3ee); border-radius: 6px; transition: width .9s cubic-bezier(.2,.8,.2,1); }
+    .ib-xp { font-size: 11px; opacity: 0.75; white-space: nowrap; }
+    .ib-next { font-size: 11px; opacity: 0.65; }
+    .streak-risk {
+      display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px;
+      font-size: 12.5px; font-weight: 700; color: #fecaca;
+      background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.5);
+      animation: pn-pulse 2s infinite;
+    }
+
+    .dash-mappath { display: inline-block; margin-top: 10px; font-size: 12.5px; font-weight: 600;
+      color: #c4b5fd; text-decoration: none; opacity: 0.85; }
+    .dash-mappath:hover { opacity: 1; text-decoration: underline; }
+    .dash-grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .dash-grid { grid-template-columns: 1.4fr 1fr; align-items: start; } }
+
+    /* ===== Daily quests ===== */
+    .daily-quests {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 9px;
+    }
+    .dq-head { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: #fff; }
+    .dq-count { color: #4ade80; }
+    .dq-item { display: flex; align-items: center; gap: 10px; }
+    .dq-item.done .dq-label { opacity: 0.65; text-decoration: line-through; }
+    .dq-ic { font-size: 17px; width: 20px; text-align: center; }
+    .dq-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .dq-label { font-size: 12.5px; font-weight: 600; color: #fff; }
+    .dq-bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.12); overflow: hidden; }
+    .dq-bar > i { display: block; height: 100%; background: linear-gradient(90deg,#22c55e,#4ade80); border-radius: 4px; transition: width .6s; }
+    .dq-reward { font-size: 11px; font-weight: 700; opacity: 0.85; white-space: nowrap; }
+    .dq-claimed { color: #4ade80; }
+
     /* Side rail layout (desktop ≥1024px) */
     .path-with-rail { display: grid; gap: 18px; grid-template-columns: 1fr; }
     @media (min-width: 1024px) {
@@ -474,6 +660,62 @@ function injectStylesOnce() {
   style.setAttribute('data-injected', 'path-renderer');
   style.textContent = css;
   document.head.appendChild(style);
+}
+
+/**
+ * Compact "Continue Learning" card for the home dashboard.
+ * @param {HTMLElement} host
+ * @param {{rec:{module:object,reason:string}|null, domain:object, milestone?:object}} opts
+ */
+export function renderContinueCard(host, { rec, domain, milestone }) {
+  if (!host) return;
+  injectStylesOnce();
+  const dn = domain?.name || 'trường';
+  if (!rec) {
+    host.innerHTML = `<div class="jh-cta done"><span class="jh-cta-ic">🎉</span>
+      <span class="jh-cta-txt"><b>Bạn đã học hết nội dung hiện có ở ${dn}!</b>
+      <small>Chọn một trường khác bên dưới để học tiếp</small></span></div>`;
+    return;
+  }
+  const ms = milestone ? `<div class="jh-milestone ${milestone.ready ? 'ready' : ''}" style="margin-top:10px">🎯 ${milestone.text}</div>` : '';
+  host.innerHTML = `
+    <a class="jh-cta" href="module.html?module=${encodeURIComponent(rec.module.id)}">
+      <span class="jh-cta-ic">▶</span>
+      <span class="jh-cta-txt">
+        <b>${rec.reason} · ${domain?.icon || ''} ${domain?.shortName || ''}</b>
+        <small>${rec.module.title}</small>
+      </span>
+      <span class="jh-cta-go">Học ngay →</span>
+    </a>${ms}
+    <a class="dash-mappath" href="school.html?domain=${encodeURIComponent(domain?.id || '')}">🗺️ Xem toàn bộ lộ trình ${dn} →</a>`;
+}
+
+/**
+ * Render the Daily Quest panel.
+ * @param {HTMLElement} host
+ * @param {Array<{id,icon,label,goal,progress,done,claimed,reward}>} quests
+ */
+export function renderDailyQuests(host, quests) {
+  if (!host) return;
+  injectStylesOnce();
+  const doneCount = quests.filter(q => q.done).length;
+  const rows = quests.map(q => {
+    const pct = Math.min(100, Math.round((q.progress / q.goal) * 100));
+    return `
+      <div class="dq-item ${q.done ? 'done' : ''}">
+        <span class="dq-ic">${q.done ? '✅' : q.icon}</span>
+        <span class="dq-body">
+          <span class="dq-label">${q.label}</span>
+          <span class="dq-bar"><i style="width:${pct}%"></i></span>
+        </span>
+        <span class="dq-reward">${q.done ? `<span class="dq-claimed">+${q.reward.xp} XP 🪙${q.reward.coin}</span>` : `${q.progress}/${q.goal}`}</span>
+      </div>`;
+  }).join('');
+  host.innerHTML = `
+    <div class="daily-quests">
+      <div class="dq-head"><span>📋 Nhiệm vụ hôm nay</span><span class="dq-count">${doneCount}/${quests.length}</span></div>
+      ${rows}
+    </div>`;
 }
 
 /** Toast 1 achievement vừa unlock. */
@@ -495,15 +737,45 @@ export function showAchievementToast(achievement) {
   }, 3800);
 }
 
-/** Render wallet pill row vào host. */
-export function renderWalletPills(host, { wallet, progress }) {
+/**
+ * Render the player identity bar: avatar + level + rank + XP bar + title,
+ * followed by stat pills (sao / coin / streak + risk / huy hiệu).
+ * @param {{wallet:object, progress:object, modules?:Array, atRisk?:boolean}} opts
+ */
+export function renderWalletPills(host, { wallet, progress, modules, atRisk }) {
+  injectStylesOnce();
   const totalStars = Object.values(progress || {}).reduce((s, p) => s + (p?.stars || 0), 0);
+  const li = levelInfo(wallet.xp || 0);
+  const { rank, next, levelsToNext } = rankFor(li.level);
+  const avatar = avatarFor(li.level);
+  const agg = modules ? aggregateProgress(modules, progress) : { subjects: {} };
+  const title = titleFor(agg, li.level);
+  const shields = wallet.streakShields || 0;
+  const riskHtml = atRisk
+    ? `<span class="streak-risk" title="Học 1 bài hôm nay để giữ chuỗi!">⚠️ giữ chuỗi hôm nay</span>` : '';
+
   host.innerHTML = `
+    <div class="identity-bar" style="--rank-color:${rank.color}">
+      <div class="ib-avatar">${avatar}</div>
+      <div class="ib-main">
+        <div class="ib-top">
+          <span class="ib-rank">${rank.icon} ${rank.name}</span>
+          <span class="ib-title">${title}</span>
+        </div>
+        <div class="ib-levelrow">
+          <span class="ib-lvl">Lv.${li.level}</span>
+          <div class="ib-xpbar"><i style="width:${li.pct}%"></i></div>
+          <span class="ib-xp">${li.intoLevel}/${li.span} XP</span>
+        </div>
+        ${next ? `<div class="ib-next">Còn ${levelsToNext} cấp → ${next.icon} ${next.name}</div>` : `<div class="ib-next">Đã đạt hạng cao nhất 👑</div>`}
+      </div>
+    </div>
     <div class="wallet-row" id="wallet-row">
       <span class="wallet-pill stars"><span class="wp-icon">⭐</span><span class="wp-val">${totalStars}</span> sao</span>
-      <span class="wallet-pill coins"><span class="wp-icon">🪙</span><span class="wp-val">${wallet.coins}</span> Pharma-coin</span>
-      <span class="wallet-pill streak"><span class="wp-icon">🔥</span><span class="wp-val">${wallet.streak}</span> ngày streak</span>
-      <span class="wallet-pill achievements"><span class="wp-icon">🏆</span><span class="wp-val">${wallet.achievements.length}</span> huy hiệu</span>
+      <span class="wallet-pill coins"><span class="wp-icon">🪙</span><span class="wp-val">${wallet.coins}</span> coin</span>
+      <span class="wallet-pill streak"><span class="wp-icon">🔥</span><span class="wp-val">${wallet.streak}</span> ngày${shields ? ` · 🛡️${shields}` : ''}</span>
+      ${riskHtml}
+      <span class="wallet-pill achievements"><span class="wp-icon">🏆</span><span class="wp-val">${(wallet.achievements || []).length}</span> huy hiệu</span>
     </div>
   `;
 }

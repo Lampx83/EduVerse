@@ -24,5 +24,5 @@ export const DOMAIN = {
   icon: '📐',
   yearsTotal: 4,
   yearLabels: ['Lớp 6', 'Lớp 7', 'Lớp 8', 'Lớp 9'],
-  tagline: 'Lớp 6–9 · Toán (đã có) · Ngữ văn · Anh · KHTN · Sử-Địa · luyện thi vào lớp 10',
+  tagline: 'Lớp 6–9 · Toán (đã có) · Ngữ văn (đã có) · Anh · KHTN · Sử-Địa · luyện thi vào lớp 10',
 };

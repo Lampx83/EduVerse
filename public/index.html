@@ -259,6 +259,60 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   </div>
 </div>
 
+<!-- ============ DASHBOARD — core loop entry ============ -->
+<div class="section" id="dashboard" style="display:none">
+  <div class="section-title">
+    <h2>🎮 Bảng điều khiển</h2>
+    <span class="hint" id="dashboard-hint">Tiếp tục hành trình của bạn</span>
+  </div>
+  <div id="dash-identity"></div>
+  <div class="dash-grid" style="margin-top:14px">
+    <div id="dash-continue"></div>
+    <div id="dash-quests"></div>
+  </div>
+</div>
+<script type="module">
+  import { loadActiveDomain } from './js/engine/domain.js';
+  import { onLogin, getProgress, getDailyQuests, streakAtRisk } from './js/engine/wallet.js';
+  import { recommendNext, nextMilestone } from './js/engine/gamification.js';
+  import { renderWalletPills, renderDailyQuests, renderContinueCard, showAchievementToast } from './js/engine/path-renderer.js';
+  import { ALL_SCENARIOS } from './js/scenarios/index.js';
+
+  try {
+    const loginEvent = onLogin();              // streak + daily check-in
+    const dom = await loadActiveDomain();
+    const { MODULES, SUBJECTS, DOMAIN } = dom;
+    const progress = getProgress();
+
+    // hasContent = có experiences[] hoặc scenario thật (prefix module-)
+    const scenarioIds = new Set(Object.values(ALL_SCENARIOS).map(s => s?.id).filter(Boolean));
+    const hasContent = (id) => {
+      const m = MODULES.find(x => x.id === id); if (!m) return false;
+      if ((m.experiences || []).length > 0) return true;
+      for (const sid of (m.scenarioIds || [])) if (scenarioIds.has(sid)) return true;
+      for (const sid of scenarioIds) if (sid.startsWith(m.id + '-')) return true;
+      return false;
+    };
+    const subjectLabels = {}; for (const [k, v] of Object.entries(SUBJECTS || {})) subjectLabels[k] = v.label;
+    const rec = recommendNext(MODULES, progress, hasContent);
+    const milestone = nextMilestone(MODULES, progress, hasContent, subjectLabels);
+
+    document.getElementById('dashboard').style.display = '';
+    renderWalletPills(document.getElementById('dash-identity'), {
+      wallet: loginEvent.wallet, progress, modules: MODULES, atRisk: streakAtRisk(),
+    });
+    renderContinueCard(document.getElementById('dash-continue'), { rec, domain: DOMAIN, milestone });
+    renderDailyQuests(document.getElementById('dash-quests'), getDailyQuests());
+
+    if (loginEvent.milestone) {
+      setTimeout(() => showAchievementToast({
+        icon: '🔥', title: `Chuỗi ${loginEvent.milestone.streak} ngày!`,
+        desc: `+${loginEvent.milestone.coin} coin · +${loginEvent.milestone.xp} XP${loginEvent.milestone.shield ? ' · 🛡️ +1 khiên streak' : ''}`,
+      }), 700);
+    }
+  } catch (e) { console.warn('[dashboard] init skipped', e); }
+</script>
+
 <!-- ============ SCHOOL SELECTOR ============ -->
 <div class="section" id="schools">
   <div class="section-title">

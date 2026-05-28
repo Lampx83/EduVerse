@@ -57,6 +57,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     <span class="hint">Click node để vào module · badge 📚🥽🕹️📱🌐 = phiên bản trải nghiệm · 🔒 = chưa có nội dung / chưa mở khoá</span>
   </div>
   <div id="wallet-host"></div>
+  <div id="quests-host" style="margin:0 0 16px"></div>
   <div id="path-host">Đang dựng lộ trình…</div>
 </div>
 
@@ -74,8 +75,8 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 <script type="module">
   import { CATEGORIES } from './js/engine/learning-path.js';
   import { loadActiveDomain, getActiveDomainId, isDomainOpen } from './js/engine/domain.js';
-  import { renderPath, renderWalletPills, showAchievementToast } from './js/engine/path-renderer.js';
-  import { onLogin, getProgress, checkAchievements } from './js/engine/wallet.js';
+  import { renderPath, renderWalletPills, renderDailyQuests, showAchievementToast } from './js/engine/path-renderer.js';
+  import { onLogin, getProgress, checkAchievements, getDailyQuests, streakAtRisk } from './js/engine/wallet.js';
   import { primeModulesCache, ALL_SCENARIOS } from './js/scenarios/index.js';
   import { renderRequestBoard } from './js/request-board.js';
 
@@ -112,11 +113,20 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   });
 
   const loginEvent = onLogin();
-  renderWalletPills(document.getElementById('wallet-host'), { wallet: loginEvent.wallet, progress });
+  renderWalletPills(document.getElementById('wallet-host'), {
+    wallet: loginEvent.wallet, progress, modules: MODULES, atRisk: streakAtRisk(),
+  });
+  renderDailyQuests(document.getElementById('quests-host'), getDailyQuests());
 
   const newly = checkAchievements(progress, loginEvent.wallet, ACHIEVEMENTS);
   let delay = 600;
   for (const a of newly) { setTimeout(() => showAchievementToast(a), delay); delay += 1200; }
+  if (loginEvent.milestone) {
+    setTimeout(() => showAchievementToast({
+      icon: '🔥', title: `Chuỗi ${loginEvent.milestone.streak} ngày!`,
+      desc: `+${loginEvent.milestone.coin} coin · +${loginEvent.milestone.xp} XP${loginEvent.milestone.shield ? ' · 🛡️ +1 khiên streak' : ''}`,
+    }), delay);
+  }
 
   // Ban điều hành AI — nhận yêu cầu cải tiến trường từ SV
   renderRequestBoard({
