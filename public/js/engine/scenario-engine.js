@@ -162,14 +162,74 @@ function renderQuiz(engine, host) {
 /** @param {ScenarioEngine} engine */
 function renderDragMatch(engine, host) {
   const sc = /** @type {import('./types.js').DragMatchScenario} */ (engine.scenario);
-  // MVP: render placeholder — implementation đầy đủ trong file riêng
-  host.insertAdjacentHTML('beforeend',
-    `<div class="drag-match-placeholder">
-      <div>🔗 Drag-Match scenario: ${sc.leftItems.length} ↔ ${sc.rightItems.length} items</div>
-      <button class="submit-btn">[stub] Hoàn thành</button>
-    </div>`);
-  host.querySelector('.drag-match-placeholder .submit-btn')
-      .onclick = () => engine.complete({ stub: true, pairs: sc.correctPairs });
+  injectDragMatchStyles();
+  const right = [...sc.rightItems].sort(() => Math.random() - 0.5);
+  const pairs = {};          // leftId -> rightId
+  let activeLeft = null;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'dm-wrap';
+  wrap.innerHTML = `
+    <div class="dm-hint">👉 Bấm một ô bên <b>trái</b>, rồi bấm ô bên <b>phải</b> tương ứng để ghép cặp. Bấm lại để đổi.</div>
+    <div class="dm-cols">
+      <div class="dm-col">${sc.leftItems.map(it => `<button type="button" class="dm-item" data-side="L" data-id="${it.id}">${it.label}</button>`).join('')}</div>
+      <div class="dm-col">${right.map(it => `<button type="button" class="dm-item" data-side="R" data-id="${it.id}">${it.label}</button>`).join('')}</div>
+    </div>
+    <div class="dm-foot"><span class="dm-progress"></span><button type="button" class="submit-btn dm-submit">Nộp bài</button></div>`;
+  host.appendChild(wrap);
+
+  const colorFor = i => `hsl(${(i * 57) % 360} 70% 55%)`;
+  function refresh() {
+    wrap.querySelectorAll('.dm-item').forEach(b => {
+      b.classList.remove('active', 'paired');
+      b.style.removeProperty('--pc');
+    });
+    if (activeLeft) wrap.querySelector(`.dm-item[data-side="L"][data-id="${CSS.escape(activeLeft)}"]`)?.classList.add('active');
+    Object.entries(pairs).forEach(([lid, rid], idx) => {
+      const c = colorFor(idx);
+      for (const sel of [`.dm-item[data-side="L"][data-id="${CSS.escape(lid)}"]`,
+                         `.dm-item[data-side="R"][data-id="${CSS.escape(rid)}"]`]) {
+        const el = wrap.querySelector(sel);
+        if (el) { el.classList.add('paired'); el.style.setProperty('--pc', c); }
+      }
+    });
+    const n = Object.keys(pairs).length;
+    wrap.querySelector('.dm-progress').textContent = `Đã ghép ${n}/${sc.leftItems.length}`;
+  }
+  wrap.querySelectorAll('.dm-item[data-side="L"]').forEach(b =>
+    b.onclick = () => { activeLeft = (activeLeft === b.dataset.id) ? null : b.dataset.id; refresh(); });
+  wrap.querySelectorAll('.dm-item[data-side="R"]').forEach(b =>
+    b.onclick = () => {
+      if (!activeLeft) return;
+      for (const k of Object.keys(pairs)) if (pairs[k] === b.dataset.id) delete pairs[k];
+      pairs[activeLeft] = b.dataset.id;
+      activeLeft = null; refresh();
+    });
+  wrap.querySelector('.dm-submit').onclick = () =>
+    engine.complete({ pairs: Object.entries(pairs).map(([l, r]) => [l, r]) });
+  refresh();
+}
+
+let _dmStyled = false;
+function injectDragMatchStyles() {
+  if (_dmStyled) return; _dmStyled = true;
+  const css = `
+    .dm-wrap { display:flex; flex-direction:column; gap:14px; }
+    .dm-hint { font-size:13px; opacity:0.8; }
+    .dm-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .dm-col { display:flex; flex-direction:column; gap:10px; }
+    .dm-item {
+      padding:12px 14px; border-radius:10px; font-size:15px; font-family:inherit;
+      background:rgba(255,255,255,0.06); color:#fff; border:2px solid rgba(255,255,255,0.15);
+      cursor:pointer; transition:all 0.12s; text-align:center;
+    }
+    .dm-item:hover { background:rgba(255,255,255,0.12); }
+    .dm-item.active { border-color:#fbbf24; box-shadow:0 0 0 3px rgba(251,191,36,0.3); }
+    .dm-item.paired { border-color:var(--pc); background:color-mix(in srgb, var(--pc) 18%, transparent); }
+    .dm-foot { display:flex; align-items:center; gap:12px; }
+    .dm-progress { font-size:13px; opacity:0.7; margin-right:auto; }
+  `;
+  const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
 }
 
 /** @param {ScenarioEngine} engine */
@@ -255,6 +315,10 @@ function computeFormula(name, v) {
     case 'auc-trapezoidal':
       // simplified: AUC = (C0 + C1)/2 × (t1 - t0)
       return ((v.c0 + v.c1) / 2) * (v.t1 - v.t0);
+    case 'custom':
+      // Fill-in số: SV tự gõ đáp án (dùng cho Toán/khoa học). Lấy ô 'answer'
+      // hoặc ô input đầu tiên; so với target ± tolerance.
+      return v.answer ?? Object.values(v)[0] ?? NaN;
     default: return NaN;
   }
 }

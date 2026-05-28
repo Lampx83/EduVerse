@@ -22,6 +22,7 @@ import { KEYS, lsGet, lsSet } from './storage.js';
 const DOMAIN_REGISTRY = {
   pharmacy:  () => import('../domains/pharmacy/index.js'),
   it:        () => import('../domains/it/index.js'),
+  preschool: () => import('../domains/preschool/index.js'),
   primary:   () => import('../domains/primary/index.js'),
   secondary: () => import('../domains/secondary/index.js'),
   // economics đã có skeleton nhưng đang KHOÁ — chưa đăng ký:
@@ -50,7 +51,10 @@ export const DOMAIN_META = [
     tagline: '4 năm · Cử nhân CNTT · Python → ML · CTF · Hackathon · Cloud',
     accent: '#22c55e', status: 'preview', moduleCount: 35 },
 
-  // ───────── PHỔ THÔNG (K-12) ─────────
+  // ───────── PHỔ THÔNG (Mầm non + K-12) ─────────
+  { id: 'preschool', name: 'Trường Mầm non',               shortName: 'Mầm non', icon: '🧸',
+    tagline: '3–5 tuổi (Mầm/Chồi/Lá) · đếm số · màu sắc · hình khối · học bằng hình ảnh vui',
+    accent: '#f472b6', status: 'preview', moduleCount: 3 },
   { id: 'primary', name: 'Trường Tiểu học',                shortName: 'Tiểu học', icon: '🎒',
     tagline: 'Lớp 1–5 · Toán (đã có) · Tiếng Việt · TN&XH · Tiếng Anh · học mà chơi',
     accent: '#f59e0b', status: 'preview', moduleCount: 5 },
@@ -117,8 +121,8 @@ export const DOMAIN_META = [
     accent: '#94a3b8', status: 'locked' },
 ];
 
-// Gán cụm cấp học: K-12 → 'school', còn lại → 'he' (Higher Education)
-const K12_IDS = new Set(['primary', 'secondary', 'highschool']);
+// Gán cụm cấp học: Mầm non + K-12 → 'school', còn lại → 'he' (Higher Education)
+const K12_IDS = new Set(['preschool', 'primary', 'secondary', 'highschool']);
 for (const d of DOMAIN_META) d.level = K12_IDS.has(d.id) ? 'school' : 'he';
 
 /** True nếu trường được phép vào (đã đăng ký + không khoá). */

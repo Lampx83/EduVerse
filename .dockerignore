@@ -1,4 +1,7 @@
 node_modules
+pharmacy-ai/node_modules
+pharmacy-ai/.next
+pharmacy-ai/out
 npm-debug.log
 .git
 .gitignore
