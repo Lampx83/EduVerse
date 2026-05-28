@@ -15,8 +15,10 @@ services:
       # Set to "/ps" for limio.vn/ps, leave empty for root or subdomain.
       BASE_PATH: ${BASE_PATH:-}
     volumes:
-      - eduverse-data:/data
+      # Giữ tên volume cũ "pharmacysim-data" để KHÔNG mất dữ liệu SQLite hiện có
+      # (attempts/classes/achievements/requests) khi đổi thương hiệu sang EduVerse.
+      - pharmacysim-data:/data
 
 volumes:
-  eduverse-data:
+  pharmacysim-data:
     driver: local
