@@ -190,12 +190,12 @@
 
   // 3 track học tập. Thực hành đặt TRÊN CÙNG (ưu tiên trải nghiệm).
   const TRACKS = [
-    { key: 'practice', icon: '🧪', label: 'Thực hành — Lab / 3D / VR',
-      hint: 'Ưu tiên: học bằng trải nghiệm', kinds: ['compound-lab', 'titration', 'arrange', 'identification'] },
+    { key: 'practice', icon: '🧪', label: 'Thực hành — làm & trải nghiệm',
+      hint: 'Ưu tiên: học bằng làm', kinds: ['compound-lab', 'titration', 'arrange', 'identification', 'calculator', 'drag-match'] },
     { key: 'theory', icon: '📖', label: 'Lý thuyết',
       hint: 'Kiến thức nền tảng', kinds: ['quiz'] },
     { key: 'skill', icon: '🎯', label: 'Luyện kỹ năng',
-      hint: 'Tư vấn · tính toán · OSCE · ghép cặp', kinds: ['patient-roleplay', 'soap-write', 'osce-station', 'calculator', 'drag-match', 'structure-draw'] },
+      hint: 'Tư vấn · OSCE · viết SOAP · role-play', kinds: ['patient-roleplay', 'soap-write', 'osce-station', 'structure-draw'] },
   ];
   const kindToTrack = {};
   for (const t of TRACKS) for (const k of t.kinds) kindToTrack[k] = t.key;
