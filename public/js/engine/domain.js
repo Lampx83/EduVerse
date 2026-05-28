@@ -40,6 +40,17 @@ export const DOMAIN_META = [
     accent: '#22c55e', status: 'preview', moduleCount: 35 },
 
   // ───────── ĐANG KHOÁ (Sắp mở) ─────────
+  // Phổ thông (K-12)
+  { id: 'primary', name: 'Trường Tiểu học',                shortName: 'Tiểu học', icon: '🎒',
+    tagline: 'Lớp 1–5 · Toán · Tiếng Việt · Tự nhiên & Xã hội · Tiếng Anh · kỹ năng sống',
+    accent: '#f59e0b', status: 'locked' },
+  { id: 'secondary', name: 'Trường Trung học cơ sở',       shortName: 'THCS', icon: '📐',
+    tagline: 'Lớp 6–9 · Toán · Văn · Anh · Lý · Hoá · Sinh · Sử · Địa · Tin học',
+    accent: '#10b981', status: 'locked' },
+  { id: 'highschool', name: 'Trường Trung học phổ thông',  shortName: 'THPT', icon: '🏫',
+    tagline: 'Lớp 10–12 · phân ban KHTN/KHXH · luyện thi tốt nghiệp THPT & ĐH',
+    accent: '#6366f1', status: 'locked' },
+  // Cao đẳng / Đại học chuyên ngành
   { id: 'economics', name: 'Trường Kinh tế',               shortName: 'Kinh tế', icon: '📉',
     tagline: 'Kinh tế Vi mô/Vĩ mô · Kinh tế lượng · chính sách công',
     accent: '#0ea5e9', status: 'locked' },
