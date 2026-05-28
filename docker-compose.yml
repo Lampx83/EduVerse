@@ -21,6 +21,10 @@ services:
       BASE_PATH: ${BASE_PATH:-}
       # Embedded Pharmacy-AI (Next.js) — internal upstream for the /segue proxy.
       SEGUE_TARGET: http://127.0.0.1:3100
+      # Đặt sau reverse proxy strip prefix (vd. limio.vn/ps, nginx bỏ /ps trước khi
+      # forward): set =/ps/segue VÀ build với --build-arg SEGUE_BASE_PATH=/ps/segue
+      # (hai giá trị phải KHỚP). Trống = không rewrite (dev / root / subdomain).
+      SEGUE_PUBLIC_PATH: ${SEGUE_PUBLIC_PATH:-}
       # NPC dùng OpenAI khi có key; nếu trống sẽ chạy stub rule-based (vẫn demo được).
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}

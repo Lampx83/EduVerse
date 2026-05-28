@@ -12,6 +12,15 @@
 //
 // Env:
 //   SEGUE_TARGET — upstream Next.js origin (default http://127.0.0.1:3100)
+//
+// mountPath vs publicPath:
+//   - mountPath  = the path THIS Express app receives requests on.
+//   - publicPath = the basePath Next was BUILT with (what it expects / bakes
+//                  into asset URLs).
+//   They're equal for dev/root (/segue). They differ behind a reverse proxy
+//   that rewrites the prefix: e.g. limio.vn/ps where nginx strips "/ps" before
+//   forwarding — the app receives "/segue" (mount) but Next is built with
+//   "/ps/segue" (public), so we re-add the prefix when forwarding upstream.
 // ============================================================
 
 import http from 'node:http';
@@ -19,23 +28,29 @@ import http from 'node:http';
 const TARGET = (process.env.SEGUE_TARGET || 'http://127.0.0.1:3100').replace(/\/+$/, '');
 const { hostname, port } = new URL(TARGET);
 
-console.log(`[segue] proxy → ${TARGET}`);
-
 /**
  * Attach the SEGUE reverse proxy to an Express app.
  * @param {import('express').Express} app
- * @param {string} mountPath  e.g. "/segue" (or "<BASE_PATH>/segue")
+ * @param {string} mountPath   path the app receives on, e.g. "/segue"
+ * @param {string} [publicPath] Next's built basePath; defaults to mountPath
  */
-export function attachSegueProxy(app, mountPath) {
+export function attachSegueProxy(app, mountPath, publicPath = mountPath) {
+  const rewrite = mountPath !== publicPath;
+  console.log(`[segue] proxy ${mountPath}${rewrite ? ` → (rewrite ${publicPath})` : ''} → ${TARGET}`);
+
   app.use(mountPath, (req, res) => {
+    // Map mountPath → publicPath so Next's basePath keeps matching. Without a
+    // rewrite we forward originalUrl verbatim (Express would otherwise strip
+    // mountPath). originalUrl includes the query string.
+    const upstreamPath = rewrite
+      ? publicPath + req.originalUrl.slice(mountPath.length)
+      : req.originalUrl;
     const proxyReq = http.request(
       {
         hostname,
         port: port || 80,
         method: req.method,
-        // Forward the ORIGINAL url (keeps the /segue prefix) so Next's
-        // basePath keeps matching. Express would otherwise strip mountPath.
-        path: req.originalUrl,
+        path: upstreamPath,
         headers: { ...req.headers, host: `${hostname}:${port}` },
       },
       (proxyRes) => {

@@ -105,7 +105,10 @@ app.disable('x-powered-by');
 
 // Reverse-proxy the embedded Pharmacy-AI (Next.js) app at <BASE_PATH>/segue.
 // MUST come before express.json so POST bodies stream through untouched.
-attachSegueProxy(app, `${BASE_PATH}/segue`);
+// SEGUE_PUBLIC_PATH = Next's built basePath; set it (e.g. /ps/segue) only when a
+// front proxy strips a prefix this app doesn't see — otherwise defaults to mount.
+const SEGUE_MOUNT = `${BASE_PATH}/segue`;
+attachSegueProxy(app, SEGUE_MOUNT, process.env.SEGUE_PUBLIC_PATH || SEGUE_MOUNT);
 
 app.use(express.json({ limit: '64kb' }));
 
