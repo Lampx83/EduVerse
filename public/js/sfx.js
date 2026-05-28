@@ -1,16 +1,18 @@
 // Synthesized sound effects via WebAudio API.
 // No audio files needed — every sound is generated procedurally.
 
+import { KEYS, lsGet, lsSet } from './engine/storage.js';
+
 let ctx = null;
 let enabled = true;
 
-const SFX_KEY = 'pharmacysim:sfx';
-try { enabled = localStorage.getItem(SFX_KEY) !== 'off'; } catch {}
+const SFX_KEY = KEYS.SFX;
+enabled = lsGet(SFX_KEY) !== 'off';
 
 export function isSfxEnabled() { return enabled; }
 export function toggleSfx() {
   enabled = !enabled;
-  try { localStorage.setItem(SFX_KEY, enabled ? 'on' : 'off'); } catch {}
+  lsSet(SFX_KEY, enabled ? 'on' : 'off');
   return enabled;
 }
 

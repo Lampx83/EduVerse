@@ -11,7 +11,8 @@
 //                    Dev:  http://101.96.66.232:8037/ollama/api
 //                    Prod: http://10.2.13.58/ollama/api  (LAN — khi app chạy
 //                          trên cùng host 232, đi qua nginx nội bộ)
-//   OLLAMA_SECKEY  — Header x-ollama-seckey (mặc định "pharmasim")
+//   OLLAMA_SECKEY  — Header x-ollama-seckey (mặc định "pharmasim" — shared
+//                    secret với Ollama server nội bộ; KHÔNG đổi tuỳ ý).
 //   OLLAMA_MODEL   — Tên model (mặc định qwen2.5:14b-instruct-ctx16k)
 //   OLLAMA_TIMEOUT_MS — Timeout 1 yêu cầu (mặc định 60s)
 //
@@ -324,6 +325,55 @@ ${transcriptText}
     overall: parsed.overall || '',
     transcript: transcriptText,
   };
+}
+
+// ─────────────────────────────────────────────────────────────
+// BAN ĐIỀU HÀNH AI — tiếp nhận & phản hồi yêu cầu của SV
+// ─────────────────────────────────────────────────────────────
+
+const REQ_TYPE_VN = {
+  game:   'thêm trò chơi',
+  theory: 'thêm học liệu lý thuyết',
+  lab:    'cải thiện phòng thí nghiệm / thực hành',
+  skill:  'thêm bài luyện kỹ năng',
+  other:  'ý kiến đóng góp',
+};
+
+/** Câu trả lời mẫu khi Ollama không kết nối được — vẫn giữ trải nghiệm "AI điều hành". */
+function templateNote({ type, title }) {
+  const kind = REQ_TYPE_VN[type] || 'đề xuất';
+  return `Ban điều hành AI đã tiếp nhận đề xuất "${title}" (${kind}). `
+    + `Yêu cầu được đưa vào hàng đợi cải tiến — các đề xuất nhiều lượt ủng hộ sẽ được ưu tiên triển khai trong đợt cập nhật tới.`;
+}
+
+/**
+ * AI "Hiệu trưởng" xem xét 1 yêu cầu, sinh phản hồi ngắn + trạng thái.
+ * Best-effort: nếu Ollama lỗi/timeout → dùng câu trả lời mẫu.
+ * @returns {Promise<{ note:string, status:string, source:'ai'|'template' }>}
+ */
+export async function aiReviewRequest({ domain, type, title, detail }) {
+  const fallback = { note: templateNote({ type, title }), status: 'reviewing', source: 'template' };
+  const system = `Bạn là HIỆU TRƯỞNG AI của một trường trong vũ trụ giáo dục EduVerse — `
+    + `nơi cơ sở giáo dục do AI điều hành, cung cấp học liệu và môi trường học tập, liên tục tự cải tiến theo góp ý của sinh viên. `
+    + `Giọng văn: thân thiện, chuyên nghiệp, khích lệ. Tiếng Việt.`;
+  const prompt = `Sinh viên gửi yêu cầu cải tiến tới trường "${domain}":
+- Loại: ${REQ_TYPE_VN[type] || type}
+- Tiêu đề: ${title}
+- Chi tiết: ${detail || '(không có)'}
+
+Hãy viết phản hồi NGẮN (1–2 câu, tối đa ~60 từ): xác nhận đã tiếp nhận, nêu hướng xử lý/dự kiến hợp lý. KHÔNG hứa hẹn quá mức, KHÔNG bịa thời hạn cụ thể. Chỉ trả về nội dung phản hồi, không mở đầu thừa.`;
+  try {
+    const note = await Promise.race([
+      ollamaGenerate({ prompt, system, temperature: 0.5, maxTokens: 160 }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('triage timeout')), 12000)),
+    ]);
+    const clean = String(note || '').trim();
+    if (!clean) return fallback;
+    return { note: clean.slice(0, 500), status: 'reviewing', source: 'ai' };
+  } catch (e) {
+    console.warn('[board-ai] triage fallback:', e?.message || e);
+    return fallback;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

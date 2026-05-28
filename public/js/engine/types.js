@@ -1,5 +1,5 @@
 // ============================================================
-// PharmaSIM Engine — Central type definitions (JSDoc)
+// EduVerse Engine — Central type definitions (JSDoc)
 // ============================================================
 // Tất cả schema cho DrugDB, HerbDB, CaseDB, Scenario, Rubric…
 // được định nghĩa ở đây để 38 module dùng chung.
@@ -316,18 +316,112 @@
 
 
 // ─────────────────────────────────────────────────────────────
-// LEARNING PATH  — Lộ trình 5 năm
+// LEARNING PATH  — Lộ trình 5 năm (đa-ngành)
 // ─────────────────────────────────────────────────────────────
+
+/**
+ * @typedef {'2d'|'3d'|'vr'|'xr'|'ar'|'meta'|'native'|'quiz'} ExperienceModeKind
+ *
+ * - quiz   = lớp kiến thức (mọi module đều có)
+ * - 2d     = Canvas/HTML 2D
+ * - 3d     = Three.js / Babylon (desktop browser)
+ * - vr     = WebXR VR mode (Quest, Vision Pro browser)
+ * - xr     = WebXR mixed reality (passthrough)
+ * - ar     = AR camera-based (placeholder cho future)
+ * - meta   = Multiplayer / metaverse
+ * - native = APK / app native (Unity, etc.)
+ */
+
+/**
+ * @typedef {Object} ExperienceMode  Một phiên bản trải nghiệm của module.
+ * @property {ExperienceModeKind} mode
+ * @property {string}   label    - "3D Realistic", "VR / XR Web"
+ * @property {string}   tech     - "Three.js · WebGL"
+ * @property {string}   icon     - emoji (🥽 🕹️ 📱 🌐 🎨 📦 🧠)
+ * @property {string}   url      - relative URL hoặc full URL (target=_blank nếu external)
+ * @property {string}   [desc]   - mô tả ngắn
+ * @property {string[]} [specs]  - ["ok:Mobile mượt", "bad:Không VR"]
+ * @property {'ready'|'soon'|'external'} [status] - default 'ready'
+ */
+
 /**
  * @typedef {Object} CourseModule
- * @property {string}      id              - "L3.3"
- * @property {string}      title           - "Tương tác thuốc"
- * @property {number}      yearLevel       - 1–5
- * @property {string}      subject         - "duoc-ly"
- * @property {string[]}    scenarioIds     - Các scenario thuộc module này
- * @property {string[]}    [prerequisites] - module IDs phải hoàn thành trước
- * @property {number}      minStarsToUnlock - tổng sao tối thiểu của prereq
- * @property {boolean}     [hasCertificate] - module này có cấp chứng chỉ?
+ *
+ * --- Lõi (bắt buộc) ---
+ * @property {string}   id               - "L3.3" | "PS11" | "SC02" …
+ * @property {string}   title
+ * @property {ModuleCategory} category   - 'curriculum'|'practice'|…
+ * @property {string}   subject
+ * @property {string[]} scenarioIds      - 0–N engine scenario IDs
+ * @property {number}   minStarsToUnlock - tổng sao prereq tối thiểu
+ *
+ * --- Optional cũ ---
+ * @property {number}   [yearLevel]       - 1–5 (chỉ curriculum)
+ * @property {string[]} [prerequisites]   - module IDs phải pass trước
+ * @property {boolean}  [hasCertificate]
+ * @property {string}   [icon]
+ *
+ * --- Mở rộng v2 (tổng quát, đa-ngành) ---
+ * @property {string}            [description]      - 1-2 câu mô tả
+ * @property {1|2|3|4|5}         [difficulty]
+ * @property {number}            [estimatedMinutes]
+ * @property {string[]}          [tags]
+ * @property {number}            [rewardCoin]       - coin nhận khi pass (mặc định stars*10)
+ * @property {string}            [knowledgeQuiz]    - scenario ID quiz mặc định; nếu thiếu sẽ auto-stub
+ * @property {ExperienceMode[]}  [experiences]      - các phiên bản trải nghiệm
+ * @property {{ row:number, col:number }} [nodePos] - vị trí trong subway-map
+ *
+ * --- @typedef {'curriculum'|'practice'|'skill'|'library'|'career'|'game'} ModuleCategory ---
+ */
+
+// ─────────────────────────────────────────────────────────────
+// DOMAIN  — Cấu hình cho từng ngành (Dược, Y, CNTT, …)
+// ─────────────────────────────────────────────────────────────
+/**
+ * @typedef {Object} DomainConfig
+ * @property {string}  id              - 'pharmacy' | 'medicine' | 'it' …
+ * @property {string}  name            - "Trường Dược"
+ * @property {string}  shortName       - "Dược"
+ * @property {string}  icon            - emoji
+ * @property {number}  yearsTotal      - Số năm chính quy (5 cho Dược)
+ * @property {string[]} yearLabels     - ["Năm 1 — HỌC", "Năm 2 — TẬP", …]
+ * @property {string}  [tagline]
+ */
+
+
+// ─────────────────────────────────────────────────────────────
+// WALLET + ACHIEVEMENTS — Gamification
+// ─────────────────────────────────────────────────────────────
+/**
+ * @typedef {Object} Wallet
+ * @property {number}   coins         - Pharma-coin tích luỹ
+ * @property {number}   streak        - Số ngày liên tiếp truy cập
+ * @property {string}   lastVisitDay  - "YYYY-MM-DD" (local time)
+ * @property {string[]} achievements  - Các achievement.id đã unlock
+ * @property {number}   [vrSessions]  - đếm số lần mở VR/XR mode
+ * @property {number}   [metaSessions] - đếm số lần vào Metaverse
+ */
+
+/**
+ * @typedef {Object} AchievementTrigger
+ *   Mọi key đều optional; achievement unlock khi MỌI key thoả mãn.
+ * @property {number} [quizzesPassed]      - tổng số quiz pass ≥
+ * @property {number} [modulesIn1Day]      - module pass trong cùng 1 ngày ≥
+ * @property {number} [streak]             - streak ≥
+ * @property {number} [totalStars]
+ * @property {Object<string, number>} [moduleStars] - { 'L3.6': 3 } → L3.6 phải đạt ≥3 sao
+ * @property {number} [vrSessions]
+ * @property {number} [metaverseVisit]
+ * @property {number} [yearComplete]       - hoàn thành mọi module của năm X
+ */
+
+/**
+ * @typedef {Object} Achievement
+ * @property {string} id
+ * @property {string} icon
+ * @property {string} title
+ * @property {string} desc
+ * @property {AchievementTrigger} trigger
  */
 
 export const _typedef_only = true; // marker — file này chỉ chứa JSDoc

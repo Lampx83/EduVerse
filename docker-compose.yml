@@ -1,8 +1,8 @@
 services:
-  pharmacysim:
+  eduverse:
     build: .
-    image: pharmacysim:latest
-    container_name: pharmacysim
+    image: eduverse:latest
+    container_name: eduverse
     restart: unless-stopped
     ports:
       - "8041:8041"
@@ -15,8 +15,8 @@ services:
       # Set to "/ps" for limio.vn/ps, leave empty for root or subdomain.
       BASE_PATH: ${BASE_PATH:-}
     volumes:
-      - pharmacysim-data:/data
+      - eduverse-data:/data
 
 volumes:
-  pharmacysim-data:
+  eduverse-data:
     driver: local

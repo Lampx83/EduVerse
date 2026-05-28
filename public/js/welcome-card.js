@@ -11,9 +11,11 @@
 //       'Đặt vào ô kệ đúng nhóm điều trị',
 //     ],
 //     controls: { keys: ['W','A','S','D'], mouse: 'left', extras: [{ key: 'E', desc: 'tương tác' }] },
-//     persistKey: 'pharmacysim:welcome:3d-shelf',
+//     persistKey: 'eduverse:welcome:3d-shelf',
 //     dismissLabel: 'Bắt đầu',
 //   });
+
+import { lsGet, lsSet } from './engine/storage.js';
 
 const STYLE_ID = 'welcome-card-style';
 
@@ -227,7 +229,7 @@ export function showWelcomeCard(opts = {}) {
   injectStyle();
   const {
     icon = '💊',
-    title = 'PharmaSIM',
+    title = 'EduVerse',
     intro = '',
     bullets = [],
     controls = {},
@@ -236,8 +238,8 @@ export function showWelcomeCard(opts = {}) {
     tip = '',
   } = opts;
 
-  // Skip if user opted out previously
-  if (persistKey && localStorage.getItem(persistKey) === 'hidden') {
+  // Skip if user opted out previously (auto-migrate old `pharmacysim:*` key)
+  if (persistKey && lsGet(persistKey) === 'hidden') {
     return Promise.resolve({ dontShowAgain: true, skipped: true });
   }
 
@@ -277,7 +279,7 @@ export function showWelcomeCard(opts = {}) {
 
     function close() {
       const dontShowAgain = !!dontEl?.checked;
-      if (dontShowAgain && persistKey) localStorage.setItem(persistKey, 'hidden');
+      if (dontShowAgain && persistKey) lsSet(persistKey, 'hidden');
       backdrop.style.animation = 'wc-bd-fade .18s ease-in reverse forwards';
       card.style.animation = 'wc-pop .18s ease-in reverse forwards';
       setTimeout(() => { backdrop.remove(); }, 180);

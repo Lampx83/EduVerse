@@ -1269,8 +1269,8 @@ async function submitResult() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         version: 'PS01-er-anaphylaxis',
-        playerName: localStorage.getItem('pharmacysim:playerName') || 'Ẩn danh',
-        classCode: localStorage.getItem('pharmacysim:classCode') || undefined,
+        playerName: localStorage.getItem('eduverse:playerName') || 'Ẩn danh',
+        classCode: localStorage.getItem('eduverse:classCode') || undefined,
         score,
         correct: score >= 70 ? 1 : 0,
         total: 1,

@@ -1,5 +1,5 @@
 // ============================================================
-// PharmaSIM Engine — Public API
+// EduVerse Engine — Public API
 // ============================================================
 // Module mới chỉ cần import từ đây:
 //

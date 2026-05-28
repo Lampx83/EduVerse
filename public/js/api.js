@@ -1,15 +1,17 @@
-// Shared API client + player name management for both games.
+// Shared API client + player name management cho EduVerse.
 
-const PLAYER_KEY = 'pharmacysim:playerName';
-const CLASS_KEY = 'pharmacysim:classCode';
+import { KEYS, lsGet, lsSet, lsRemove } from './engine/storage.js';
+
+const PLAYER_KEY = KEYS.PLAYER_NAME;
+const CLASS_KEY = KEYS.CLASS_CODE;
 
 export function getClassCode() {
-  return localStorage.getItem(CLASS_KEY) || '';
+  return lsGet(CLASS_KEY) || '';
 }
 export function setClassCode(code) {
   const c = String(code || '').trim().toUpperCase().slice(0, 12);
-  if (c) localStorage.setItem(CLASS_KEY, c);
-  else localStorage.removeItem(CLASS_KEY);
+  if (c) lsSet(CLASS_KEY, c);
+  else lsRemove(CLASS_KEY);
   return c;
 }
 
@@ -26,12 +28,12 @@ export async function joinClassByCode(code) {
 }
 
 export function getPlayerName() {
-  return localStorage.getItem(PLAYER_KEY) || '';
+  return lsGet(PLAYER_KEY) || '';
 }
 
 export function setPlayerName(name) {
   const clean = String(name || '').trim().slice(0, 40);
-  if (clean) localStorage.setItem(PLAYER_KEY, clean);
+  if (clean) lsSet(PLAYER_KEY, clean);
   return clean;
 }
 

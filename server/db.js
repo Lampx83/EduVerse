@@ -52,6 +52,22 @@ db.exec(`
     created_at    INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_classes_code ON classes(code);
+
+  -- Yêu cầu của SV gửi tới "Ban điều hành AI" của từng trường
+  CREATE TABLE IF NOT EXISTS requests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain      TEXT    NOT NULL,                     -- pharmacy | it | ...
+    type        TEXT    NOT NULL DEFAULT 'other',     -- game | theory | lab | skill | other
+    title       TEXT    NOT NULL,
+    detail      TEXT,
+    student     TEXT    NOT NULL DEFAULT 'Ẩn danh',
+    status      TEXT    NOT NULL DEFAULT 'pending',   -- pending | reviewing | done | rejected
+    votes       INTEGER NOT NULL DEFAULT 1,
+    admin_note  TEXT,
+    created_at  INTEGER NOT NULL,
+    updated_at  INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_requests_domain ON requests(domain, votes DESC, created_at DESC);
 `);
 
 // Step 2: add v5 columns to attempts if upgrading from older DB
@@ -200,6 +216,58 @@ export function unlockAchievement(player, badge) {
 
 // Confusion matrix: parses attempt.details.breakdown / details.medicines
 // → returns { categories: [...], matrix: { actualCat: { placedCat: count } } }
+// --- Requests ("Ban điều hành AI" inbox) ---
+const VALID_REQ_TYPES = new Set(['game', 'theory', 'lab', 'skill', 'other']);
+const VALID_REQ_STATUS = new Set(['pending', 'reviewing', 'done', 'rejected']);
+
+const insertRequestStmt = db.prepare(`
+  INSERT INTO requests (domain, type, title, detail, student, status, votes, created_at, updated_at)
+  VALUES (@domain, @type, @title, @detail, @student, 'pending', 1, @t, @t)
+`);
+const listRequestsStmt = db.prepare(`
+  SELECT id, domain, type, title, detail, student, status, votes, admin_note, created_at, updated_at
+  FROM requests WHERE domain = @domain
+  ORDER BY (status='done') ASC, votes DESC, created_at DESC
+  LIMIT @limit
+`);
+const voteRequestStmt = db.prepare(`UPDATE requests SET votes = votes + 1, updated_at = @t WHERE id = @id`);
+const setRequestStatusStmt = db.prepare(`UPDATE requests SET status = @status, admin_note = @note, updated_at = @t WHERE id = @id`);
+const requestStatsStmt = db.prepare(`
+  SELECT status, COUNT(*) AS n FROM requests WHERE domain = @domain GROUP BY status
+`);
+
+export function createRequest({ domain, type, title, detail, student }) {
+  const t = Date.now();
+  const safeType = VALID_REQ_TYPES.has(type) ? type : 'other';
+  const info = insertRequestStmt.run({
+    domain: String(domain || '').slice(0, 40),
+    type: safeType,
+    title: String(title || '').slice(0, 200),
+    detail: detail ? String(detail).slice(0, 2000) : null,
+    student: String(student || 'Ẩn danh').slice(0, 60),
+    t,
+  });
+  return { id: info.lastInsertRowid, createdAt: t };
+}
+export function listRequests(domain, limit = 50) {
+  return listRequestsStmt.all({ domain: String(domain || ''), limit });
+}
+export function voteRequest(id) {
+  const info = voteRequestStmt.run({ id: Number(id), t: Date.now() });
+  return info.changes > 0;
+}
+export function setRequestStatus(id, status, note) {
+  if (!VALID_REQ_STATUS.has(status)) return false;
+  const info = setRequestStatusStmt.run({ id: Number(id), status, note: note ? String(note).slice(0, 500) : null, t: Date.now() });
+  return info.changes > 0;
+}
+export function getRequestStats(domain) {
+  const rows = requestStatsStmt.all({ domain: String(domain || '') });
+  const out = { pending: 0, reviewing: 0, done: 0, rejected: 0 };
+  for (const r of rows) out[r.status] = r.n;
+  return out;
+}
+
 export function getConfusion(version) {
   const rows = db.prepare(`SELECT details FROM attempts WHERE version = ? AND details IS NOT NULL`).all(version);
   const matrix = {};

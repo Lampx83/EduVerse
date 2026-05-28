@@ -14,13 +14,13 @@
 #
 # Ports:
 #   80 → Caddy (HTTP → HTTPS redirect)
-#   443 → Caddy (HTTPS, terminates TLS, proxies to pharmacysim:8041)
+#   443 → Caddy (HTTPS, terminates TLS, proxies to eduverse:8041)
 #   8041 → still exposed for direct access if needed
 
 services:
   caddy:
     image: caddy:2-alpine
-    container_name: pharmacysim-caddy
+    container_name: eduverse-caddy
     restart: unless-stopped
     ports:
       - "80:80"
@@ -31,10 +31,10 @@ services:
       - caddy-data:/data
       - caddy-config:/config
     environment:
-      DOMAIN: ${DOMAIN:-pharmacysim.local}
+      DOMAIN: ${DOMAIN:-eduverse.local}
       EMAIL:  ${ACME_EMAIL:-admin@example.com}
     depends_on:
-      - pharmacysim
+      - eduverse
 
 volumes:
   caddy-data:

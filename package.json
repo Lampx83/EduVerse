@@ -1,8 +1,8 @@
 {
-  "name": "pharmacysim",
-  "version": "0.1.0",
+  "name": "eduverse",
+  "version": "0.2.0",
   "private": true,
-  "description": "Hệ thống mô phỏng đào tạo dược sĩ — xếp thuốc lên kệ bằng MediaPipe hand tracking",
+  "description": "EduVerse — Vũ trụ giáo dục ảo: nhiều trường ảo (Dược, Kinh tế, CNTT…) với 2D · 3D · VR · XR · Metaverse · gamification",
   "type": "module",
   "scripts": {
     "start": "node server/index.js",

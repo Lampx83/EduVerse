@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Module · PharmaSIM</title>
+<title>Module · EduVerse</title>
 <style>
   :root {
     --bg-1: #0f172a; --bg-2: #1e293b; --bg-3: #312e81;
@@ -34,15 +34,40 @@
     background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.3);
     padding: 4px 10px; border-radius: 12px; font-size: 12px;
   }
-  .scenarios { display: grid; gap: 12px; margin-bottom: 20px; }
-  @media (min-width: 720px) { .scenarios { grid-template-columns: 1fr 1fr; } }
+  .scenarios { display: block; margin-bottom: 20px; }
+
+  /* 3 track học tập */
+  .track {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;
+  }
+  .track-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+  .track-icon { font-size: 20px; }
+  .track-label { font-size: 16px; font-weight: 800; }
+  .track-hint { font-size: 12px; opacity: 0.6; }
+  .track-count { margin-left: auto; font-size: 11px; font-weight: 700;
+    background: rgba(255,255,255,0.1); padding: 2px 9px; border-radius: 10px; }
+  /* Thực hành nổi bật hơn */
+  .track-practice {
+    background: linear-gradient(135deg, rgba(20,184,166,0.14), rgba(139,92,246,0.10));
+    border-color: rgba(20,184,166,0.4);
+  }
+  .track-practice .track-count { background: #14b8a6; color: #07221f; }
+  .track-cards { display: grid; gap: 12px; }
+  @media (min-width: 720px) { .track-cards { grid-template-columns: 1fr 1fr; } }
+
   .scn-card {
     background: var(--card); border: 1px solid var(--border);
     border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.15s;
+    text-decoration: none; color: white; display: block;
   }
   .scn-card:hover { background: rgba(255,255,255,0.1); border-color: var(--accent); transform: translateY(-2px); }
   .scn-card h4 { margin: 0 0 6px; }
-  .scn-card .meta { font-size: 12px; opacity: 0.7; display: flex; gap: 10px; }
+  .scn-card .meta { font-size: 12px; opacity: 0.7; display: flex; gap: 10px; flex-wrap: wrap; }
+  .scn-card .exp-desc { font-size: 12px; opacity: 0.78; margin-top: 8px; line-height: 1.45; }
+  .scn-card.exp-card { border-color: rgba(20,184,166,0.45); }
+  .scn-card.soon { opacity: 0.5; pointer-events: none; }
+  .stub-tag { background: rgba(251,191,36,0.25); padding: 1px 7px; border-radius: 6px; font-size: 10px; }
   #app { min-height: 200px; }
   .scenario-header { padding: 16px 20px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; }
   .scenario-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
@@ -150,7 +175,7 @@
     title.textContent = `${moduleId} · ${moduleMeta.title}`;
     subtitle.textContent = `Năm ${moduleMeta.yearLevel} · Môn: ${moduleMeta.subject}`;
     breadcrumb.textContent = `Năm ${moduleMeta.yearLevel} · ${moduleMeta.title}`;
-    document.title = `${moduleId} · ${moduleMeta.title} — PharmaSIM`;
+    document.title = `${moduleId} · ${moduleMeta.title} — EduVerse`;
     info.style.display = 'block';
     infoText.innerHTML = `<b>Yêu cầu mở khoá:</b> ${moduleMeta.minStarsToUnlock} sao tích luỹ${moduleMeta.prerequisites?.length ? ` · <b>Tiền đề:</b> ${moduleMeta.prerequisites.join(', ')}` : ''}`;
     infoChips.innerHTML = `
@@ -163,17 +188,71 @@
     subtitle.textContent = '(không tìm thấy metadata trong learning-path)';
   }
 
+  // 3 track học tập. Thực hành đặt TRÊN CÙNG (ưu tiên trải nghiệm).
+  const TRACKS = [
+    { key: 'practice', icon: '🧪', label: 'Thực hành — Lab / 3D / VR',
+      hint: 'Ưu tiên: học bằng trải nghiệm', kinds: ['compound-lab', 'titration', 'arrange', 'identification'] },
+    { key: 'theory', icon: '📖', label: 'Lý thuyết',
+      hint: 'Kiến thức nền tảng', kinds: ['quiz'] },
+    { key: 'skill', icon: '🎯', label: 'Luyện kỹ năng',
+      hint: 'Tư vấn · tính toán · OSCE · ghép cặp', kinds: ['patient-roleplay', 'soap-write', 'osce-station', 'calculator', 'drag-match', 'structure-draw'] },
+  ];
+  const kindToTrack = {};
+  for (const t of TRACKS) for (const k of t.kinds) kindToTrack[k] = t.key;
+
   function renderPicker() {
     const scenarios = getScenariosForModule(moduleId);
-    if (!scenarios.length) {
+    const experiences = moduleMeta?.experiences || [];
+
+    if (!scenarios.length && !experiences.length) {
       app.innerHTML = `<div class="not-found">
-        <h3>⏳ Module ${moduleId} chưa có scenario</h3>
-        <p>Nội dung đang được phát triển. Quay lại sau hoặc thử module khác.</p>
-        <button class="back-btn" onclick="location.href='index.html'">← Trang chủ</button>
+        <h3>⏳ Module ${moduleId} chưa có nội dung</h3>
+        <p>Ban điều hành AI đang phát triển. Bạn có thể gửi yêu cầu ở trang trường để được ưu tiên!</p>
+        <button class="back-btn" onclick="history.back()">← Quay lại</button>
       </div>`;
       return;
     }
-    picker.innerHTML = scenarios.map(s => `
+
+    // Gom item vào 3 track
+    const buckets = { practice: [], theory: [], skill: [] };
+    // Experiences (2D/3D/VR/Meta) → luôn là Thực hành
+    for (const e of experiences) {
+      buckets.practice.push({ kind: 'experience', exp: e });
+    }
+    // Scenarios → theo kind
+    for (const s of scenarios) {
+      const track = kindToTrack[s.kind] || 'theory';
+      buckets[track].push({ kind: 'scenario', scenario: s });
+    }
+
+    picker.innerHTML = TRACKS.map(t => {
+      const items = buckets[t.key];
+      if (!items.length) return '';
+      const cards = items.map(it => it.kind === 'experience'
+        ? expCard(it.exp)
+        : scnCard(it.scenario)).join('');
+      return `
+        <section class="track track-${t.key}">
+          <div class="track-head">
+            <span class="track-icon">${t.icon}</span>
+            <span class="track-label">${t.label}</span>
+            <span class="track-hint">${t.hint}</span>
+            <span class="track-count">${items.length}</span>
+          </div>
+          <div class="track-cards">${cards}</div>
+        </section>
+      `;
+    }).join('');
+
+    // Wire scenario cards (chạy engine) + experience cards (mở trang)
+    picker.querySelectorAll('.scn-card[data-id]').forEach(card => {
+      card.addEventListener('click', () => startScenario(card.dataset.id));
+    });
+    app.innerHTML = '';
+  }
+
+  function scnCard(s) {
+    return `
       <div class="scn-card" data-id="${s.id}">
         <h4>${s.title}</h4>
         <div class="meta">
@@ -182,13 +261,21 @@
           ${s.questions ? `<span>${s.questions.length} câu</span>` : ''}
           ${s.correctPairs ? `<span>${s.correctPairs.length} cặp</span>` : ''}
           ${s.targets ? `<span>${s.targets.length} ảnh</span>` : ''}
+          ${s.isStub ? '<span class="stub-tag">nháp</span>' : ''}
         </div>
-      </div>
-    `).join('');
-    picker.querySelectorAll('.scn-card').forEach(card => {
-      card.addEventListener('click', () => startScenario(card.dataset.id));
-    });
-    app.innerHTML = '';
+      </div>`;
+  }
+
+  function expCard(e) {
+    const external = e.status === 'external' ? 'target="_blank" rel="noopener"' : '';
+    const soon = e.status === 'soon';
+    return `
+      <a class="scn-card exp-card ${soon ? 'soon' : ''}" href="${soon ? '#' : e.url}" ${external}
+         ${soon ? 'aria-disabled="true"' : ''}>
+        <h4>${e.icon || '🧪'} ${e.label}</h4>
+        <div class="meta"><span>${e.tech || ''}</span>${soon ? '<span class="stub-tag">sắp có</span>' : ''}</div>
+        ${e.desc ? `<div class="exp-desc">${e.desc}</div>` : ''}
+      </a>`;
   }
 
   function startScenario(id) {

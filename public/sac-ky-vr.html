@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hub Sắc ký · 5 phiên bản — PharmaSIM</title>
+<title>Hub Sắc ký TLC — EduVerse</title>
 <style>
   :root {
     --bg-1: #0f172a;
@@ -132,7 +132,7 @@
 <body>
 
 <div class="container">
-  <a class="back" href="index.html">← Quay lại PharmaSIM</a>
+  <a class="back" href="index.html">← Quay lại EduVerse</a>
 
   <div class="hero">
     <div class="logo">🧪</div>
@@ -143,11 +143,10 @@
       Chọn phiên bản phù hợp với thiết bị của bạn.
     </p>
     <div class="pills">
-      <span class="pill">📊 6 phiên bản</span>
-      <span class="pill">📱 Mobile · Desktop · VR</span>
+      <span class="pill">📱 Mobile · Desktop · VR / XR</span>
       <span class="pill">🌐 Có multiplayer</span>
       <span class="pill">🎯 Cùng 6 bước TLC</span>
-      <span class="pill">📈 Điểm chung 1 leaderboard</span>
+      <span class="pill">🎮 6 phiên bản gộp 1 card</span>
     </div>
   </div>
 
@@ -167,132 +166,21 @@
 
   <div class="section-title">
     <h2>🎮 Chọn phiên bản</h2>
-    <span class="hint">Cùng nội dung TLC, khác công nghệ thực thi</span>
+    <span class="hint">Tất cả 6 phiên bản gộp trong 1 card — chọn chip để đổi chế độ</span>
   </div>
 
-  <div class="grid">
-    <!-- Variant A: 2D Canvas -->
-    <div class="variant" style="--vcolor: #fbbf24">
-      <div class="tech">Canvas 2D · Vanilla JS</div>
-      <h3>🎨 Sắc ký 2D</h3>
-      <p>Side-view minimalist — pure Canvas, không cần library. Tải cực nhanh (~5KB), chạy mượt trên mọi máy kể cả máy yếu / mobile cũ.</p>
-      <div class="specs">
-        <span class="ok">~5 KB</span>
-        <span>Click chuột</span>
-        <span>Mobile OK</span>
-        <span class="bad">Không VR</span>
-      </div>
-      <a class="btn" href="sac-ky-2d.html">▶️ Chơi ngay</a>
-    </div>
-
-    <!-- Variant B: Three.js -->
-    <div class="variant" style="--vcolor: #8b5cf6">
-      <div class="tech">Three.js · WebGL</div>
-      <h3>🥽 Sắc ký 3D</h3>
-      <p>Full 3D scene với glass material, shadow, lighting. Camera orbit chuột/touch, click vào đối tượng để tương tác. Đẹp nhất trên desktop.</p>
-      <div class="specs">
-        <span>~150 KB</span>
-        <span>Desktop tốt nhất</span>
-        <span>Touch OK</span>
-        <span class="bad">Mobile yếu chậm</span>
-      </div>
-      <a class="btn" href="sac-ky-3d.html">▶️ Chơi ngay</a>
-    </div>
-
-    <!-- Variant C: A-Frame WebXR -->
-    <div class="variant" style="--vcolor: #ec4899">
-      <div class="tech">A-Frame · WebXR</div>
-      <h3>🕹️ Sắc ký VR Web</h3>
-      <p>Declarative HTML + WebXR. Vào kính Quest browser bấm <b>Enter VR</b> để chơi thật như VR native. Cũng chạy được trên desktop với gaze pointer.</p>
-      <div class="specs">
-        <span>~250 KB</span>
-        <span class="ok">VR thật trên Quest</span>
-        <span>Desktop OK</span>
-        <span>Hand tracking native</span>
-      </div>
-      <a class="btn" href="sac-ky-vr-web.html">▶️ Chơi ngay</a>
-    </div>
-
-    <!-- Variant D: Quiz -->
-    <div class="variant" style="--vcolor: #14b8a6">
-      <div class="tech">HTML + JS · Quiz</div>
-      <h3>🧠 Sắc ký Quiz</h3>
-      <p>10 câu hỏi MCQ về quy trình, công thức R<sub>f</sub>, ứng dụng dược, an toàn. 15s/câu, streak bonus. Phù hợp ôn lý thuyết — không cần 3D.</p>
-      <div class="specs">
-        <span class="ok">~3 KB</span>
-        <span>Mobile-first</span>
-        <span>Lý thuyết</span>
-        <span class="ok">Ai cũng chơi</span>
-      </div>
-      <a class="btn" href="sac-ky-quiz.html">▶️ Bắt đầu</a>
-    </div>
-
-    <!-- Variant F: Metaverse multiplayer -->
-    <div class="variant" style="--vcolor: #f97316">
-      <div class="tech">Three.js + WebSocket · Multiplayer</div>
-      <h3>🌐 Metaverse Sắc ký</h3>
-      <p>Phòng lab 3D <b>realtime multiplayer</b> — thấy avatar người khác cùng làm thí nghiệm trong phòng, chat & xem tiến độ. Mỗi SV có bàn lab riêng nhưng cùng không gian.</p>
-      <div class="specs">
-        <span class="ok">Multiplayer</span>
-        <span>~200 KB</span>
-        <span class="ok">Chat & avatar</span>
-        <span>Desktop · Mobile</span>
-      </div>
-      <a class="btn" href="sac-ky-meta.html">▶️ Vào phòng</a>
-    </div>
-
-    <!-- Variant E: Unity VR (external) -->
-    <div class="variant" style="--vcolor: #6366f1">
-      <div class="tech">Unity · Meta XR SDK · Native</div>
-      <h3>🥽 VR Sắc Ký · Quest native</h3>
-      <p>Phiên bản app native chạy trên Meta Quest — đồ hoạ tốt nhất, hand-tracking chuẩn Meta XR SDK, vật lý PhysX. Cần build từ source Unity.</p>
-      <div class="specs">
-        <span>~50 MB APK</span>
-        <span class="ok">VR chất lượng cao nhất</span>
-        <span class="bad">Chỉ Meta Quest</span>
-        <span>Cần Unity build</span>
-      </div>
-      <a class="btn outline" href="https://github.com/minhquang2k4/VR-Sac-Ky" target="_blank" rel="noopener">📦 Repo & hướng dẫn build</a>
-    </div>
-  </div>
-
-  <div class="section-title">
-    <h2>⚖️ So sánh chi tiết</h2>
-  </div>
-
-  <div class="compare">
-    <table>
-      <thead>
-        <tr>
-          <th>Tiêu chí</th>
-          <th>2D Canvas</th>
-          <th>3D Three.js</th>
-          <th>VR Web</th>
-          <th>Quiz</th>
-          <th>🌐 Metaverse</th>
-          <th>Unity Quest</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Bundle size</td><td>~5 KB</td><td>~150 KB</td><td>~250 KB</td><td>~3 KB</td><td>~200 KB</td><td>~50 MB</td></tr>
-        <tr><td>Mobile</td><td class="yes">✓ Mượt</td><td>~ OK</td><td>~ OK</td><td class="yes">✓ Mượt</td><td>~ OK</td><td class="no">✗</td></tr>
-        <tr><td>Desktop</td><td class="yes">✓</td><td class="yes">✓ Tốt</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
-        <tr><td>Meta Quest browser</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓ VR thật</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
-        <tr><td>Meta Quest native</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Native</td></tr>
-        <tr><td>Hand tracking</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Web</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Meta XR</td></tr>
-        <tr><td>Multiplayer</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Realtime</td><td class="no">✗</td></tr>
-        <tr><td>Chat trong game</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td><td class="no">✗</td></tr>
-        <tr><td>Cần cài đặt</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="yes">APK</td></tr>
-        <tr><td>Độ chân thực</td><td>★★☆☆☆</td><td>★★★★☆</td><td>★★★★☆</td><td>★☆☆☆☆</td><td>★★★☆☆</td><td>★★★★★</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div id="topic-card"></div>
 
   <footer>
     Cùng dữ liệu, cùng 6 bước TLC, khác công nghệ — chọn phiên bản phù hợp với thiết bị & mục đích.
     Tất cả phiên bản web ghi điểm về cùng 1 dashboard giảng viên.
   </footer>
 </div>
+
+<script type="module">
+  import { renderTopicCard } from './js/topic-modes.js';
+  renderTopicCard({ host: document.getElementById('topic-card'), topicId: 'sac-ky' });
+</script>
 
 </body>
 </html>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 <meta name="theme-color" content="#dde6e1" />
-<title>PharmaSIM · Phòng bào chế</title>
+<title>EduVerse · Phòng bào chế</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(180deg, #e8efe9 0%, #c9d5cc 100%); font-family: system-ui, sans-serif; touch-action: none; -webkit-tap-highlight-color: transparent; color: #1f2937; }
   canvas { display: block; touch-action: none; }
@@ -561,7 +561,7 @@ showWelcomeCard({
   ],
   controls: { keys: ['W','A','S','D'], mouse: 'left' },
   tip: 'Kéo chuột để xoay · cuộn để zoom · click dụng cụ + reagent đúng theo bước.',
-  persistKey: 'pharmacysim:welcome:compounding-lab',
+  persistKey: 'eduverse:welcome:compounding-lab',
   dismissLabel: 'Bắt đầu pha chế',
 });
 
@@ -1138,7 +1138,7 @@ makeBook( 0.65, 0.555 + 0.20, -0.001, 0.20, 0.04, 0.13, 0xb91c1c, 'DDVN V');
     }
   });
   x.fillStyle = '#bae6fd'; x.font = '14px system-ui';
-  x.fillText('PharmaSIM · Compounding Pharmacy Lab', 384, 410);
+  x.fillText('EduVerse · Compounding Pharmacy Lab', 384, 410);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const poster = new THREE.Mesh(
     new THREE.PlaneGeometry(0.95, 0.54),

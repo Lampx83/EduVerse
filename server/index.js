@@ -2,9 +2,9 @@ import express from 'express';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats } from './db.js';
 import { attachRoom } from './room.js';
-import { attachAi } from './ai.js';
+import { attachAi, aiReviewRequest } from './ai.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -109,7 +109,7 @@ app.use(express.json({ limit: '64kb' }));
 const r = express.Router();
 
 r.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'pharmacysim', port: PORT, basePath: BASE_PATH, time: Date.now() });
+  res.json({ ok: true, service: 'eduverse', port: PORT, basePath: BASE_PATH, time: Date.now() });
 });
 
 r.post('/api/attempts', (req, res) => {
@@ -248,6 +248,44 @@ r.get('/api/achievements', (req, res) => {
   res.json(rows.map(row => ({ ...row, badge: BADGES.find(b => b.id === row.badge_id) })));
 });
 
+// ── Requests — "Ban điều hành AI" inbox ──
+r.post('/api/requests', (req, res) => {
+  const b = req.body ?? {};
+  const domain = String(b.domain || '').trim();
+  const title = String(b.title || '').trim();
+  if (!domain) return res.status(400).json({ error: 'domain required' });
+  if (title.length < 4) return res.status(400).json({ error: 'title quá ngắn (≥4 ký tự)' });
+  const row = createRequest({
+    domain, type: b.type, title, detail: b.detail, student: b.student,
+  });
+  res.json({ ok: true, ...row });
+
+  // Ban điều hành AI xem xét ngay (nền, không chặn response). Cập nhật
+  // admin_note + status khi xong; client tự reload để thấy phản hồi.
+  aiReviewRequest({ domain, type: b.type, title, detail: b.detail })
+    .then(r => setRequestStatus(row.id, r.status, r.note))
+    .catch(err => console.warn('[requests] AI review failed:', err?.message || err));
+});
+
+r.get('/api/requests', (req, res) => {
+  const domain = String(req.query.domain || '').trim();
+  if (!domain) return res.status(400).json({ error: 'domain required' });
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+  res.json({ items: listRequests(domain, limit), stats: getRequestStats(domain) });
+});
+
+r.post('/api/requests/:id/vote', (req, res) => {
+  const ok = voteRequest(req.params.id);
+  res.json({ ok });
+});
+
+// Admin (AI board) — đổi trạng thái khi đã xử lý. Để mở; sau có thể gate teacher.
+r.post('/api/requests/:id/status', (req, res) => {
+  const b = req.body ?? {};
+  const ok = setRequestStatus(req.params.id, String(b.status || ''), b.note);
+  res.json({ ok });
+});
+
 r.get('/api/export.csv', (_req, res) => {
   const rows = getAllAttempts();
   const esc = v => {
@@ -263,7 +301,7 @@ r.get('/api/export.csv', (_req, res) => {
     ].join(','));
   }
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="pharmacysim-attempts-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.setHeader('Content-Disposition', `attachment; filename="eduverse-attempts-${new Date().toISOString().slice(0,10)}.csv"`);
   res.send('﻿' + lines.join('\n'));
 });
 
@@ -297,5 +335,5 @@ if (BASE_PATH) {
 const httpServer = http.createServer(app);
 attachRoom(httpServer, BASE_PATH);
 httpServer.listen(PORT, HOST, () => {
-  console.log(`[pharmacysim] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
+  console.log(`[eduverse] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
 });

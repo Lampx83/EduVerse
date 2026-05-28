@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hub Sắp xếp thuốc · 6 phiên bản — PharmaSIM</title>
+<title>Hub Sắp xếp thuốc — EduVerse</title>
 <style>
   :root {
     --bg-1: #0f172a;
@@ -170,7 +170,7 @@
 <body>
 
 <div class="container">
-  <a class="back" href="index.html">← Quay lại PharmaSIM</a>
+  <a class="back" href="index.html">← Quay lại EduVerse</a>
 
   <div class="hero">
     <div class="logo">💊</div>
@@ -181,11 +181,10 @@
       và phòng dược <b>Metaverse multiplayer</b>. 16 thuốc thông dụng · 10 cấp độ.
     </p>
     <div class="pills">
-      <span class="pill">📊 6 phiên bản</span>
-      <span class="pill">📱 Mobile · Desktop · VR</span>
+      <span class="pill">📱 Mobile · Desktop · VR / XR</span>
       <span class="pill">🌐 Có multiplayer</span>
       <span class="pill">🎯 10 cấp độ · 16 thuốc</span>
-      <span class="pill">📈 Leaderboard từng phiên bản</span>
+      <span class="pill">🎮 8 phiên bản gộp 1 card</span>
     </div>
   </div>
 
@@ -213,163 +212,10 @@
 
   <div class="section-title">
     <h2>🎮 Chọn phiên bản</h2>
-    <span class="hint">Cùng nội dung sắp xếp thuốc, khác công nghệ thực thi</span>
+    <span class="hint">Tất cả 8 phiên bản gộp trong 1 card — chọn chip để đổi chế độ</span>
   </div>
 
-  <div class="grid">
-    <!-- Variant A: 2D Canvas -->
-    <div class="variant" style="--vcolor: #fbbf24">
-      <div class="tech">Canvas 2D · MediaPipe · Mouse</div>
-      <h3>🎮 Sắp xếp 2D Arcade</h3>
-      <p>Game-style side-view. Pinch mở thùng → thuốc bay ra → kéo vào kệ đúng nhóm. Hỗ trợ chuột nếu không có webcam.</p>
-      <div class="specs">
-        <span class="ok">Mobile OK</span>
-        <span>MediaPipe · Mouse</span>
-        <span>🔊 SFX</span>
-        <span class="bad">Không VR</span>
-      </div>
-      <a class="btn" href="2d-arcade.html">▶️ Chơi Level <span id="lvl-2d">1</span></a>
-    </div>
-
-    <!-- Variant B: Three.js -->
-    <div class="variant" style="--vcolor: #8b5cf6">
-      <div class="tech">Three.js · WebGL</div>
-      <h3>🥽 Sắp xếp 3D Realistic</h3>
-      <p>Three.js 3D scene, carton mở được, snap-to-slot, hover halo. Camera orbit chuột/touch, click vào đối tượng để nhặt.</p>
-      <div class="specs">
-        <span>Desktop tốt nhất</span>
-        <span>Touch OK</span>
-        <span class="ok">Đẹp · Realistic</span>
-        <span class="bad">Mobile yếu chậm</span>
-      </div>
-      <a class="btn" href="3d-shelf.html">▶️ Chơi ngay</a>
-    </div>
-
-    <!-- Variant C: WebXR Hand Tracking -->
-    <div class="variant" style="--vcolor: #ec4899">
-      <div class="tech">Three.js · WebXR · Hand tracking</div>
-      <h3>🕹️ Sắp xếp VR Web</h3>
-      <p>Cùng scene 3D, vào kính <b>Meta Quest browser</b> bấm <b>Enter VR</b> để chơi thật bằng tay (hand tracking native). Cũng chạy desktop với chuột.</p>
-      <div class="specs">
-        <span class="ok">VR thật trên Quest</span>
-        <span>Desktop OK</span>
-        <span class="ok">Hand tracking native</span>
-        <span>Snap-to-slot</span>
-      </div>
-      <a class="btn" href="3d-shelf.html">▶️ Vào VR</a>
-    </div>
-
-    <!-- Variant D: Quiz -->
-    <div class="variant" style="--vcolor: #14b8a6">
-      <div class="tech">HTML + JS · Quiz</div>
-      <h3>🧠 Sắp xếp Quiz</h3>
-      <p>10 câu hỏi MCQ về phân loại thuốc — nhìn tên/hoạt chất chọn đúng nhóm điều trị trong 4 đáp án. 15s/câu, streak bonus. Mobile-first, không cần webcam.</p>
-      <div class="specs">
-        <span class="ok">~3 KB</span>
-        <span>Mobile-first</span>
-        <span>Lý thuyết</span>
-        <span class="ok">Ai cũng chơi</span>
-      </div>
-      <a class="btn" href="quiz.html">▶️ Bắt đầu</a>
-    </div>
-
-    <!-- Variant E: Metaverse -->
-    <div class="variant" style="--vcolor: #f97316">
-      <div class="tech">Three.js + WebSocket · Multiplayer</div>
-      <h3>🌐 Metaverse Sắp xếp</h3>
-      <p>Phòng dược 3D <b>realtime multiplayer</b> — thấy avatar người khác chuyển động real-time, cùng xếp thuốc, chat & xem tiến độ.</p>
-      <div class="specs">
-        <span class="ok">Multiplayer</span>
-        <span class="ok">Chat & avatar</span>
-        <span>Desktop · Mobile</span>
-        <span>Realtime sync</span>
-      </div>
-      <a class="btn" href="metaverse.html">▶️ Vào phòng</a>
-    </div>
-
-    <!-- Variant F: Unity Quest (placeholder) -->
-    <div class="variant" style="--vcolor: #6366f1">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">Unity · Meta XR SDK · Native</div>
-      <h3>🥽 VR Sắp xếp · Quest native</h3>
-      <p>Bản app native Quest dự kiến — hand tracking chuẩn Meta XR SDK, vật lý PhysX, đồ hoạ tốt nhất. Đang chờ team Unity build.</p>
-      <div class="specs">
-        <span>~50 MB APK</span>
-        <span class="ok">VR chất lượng cao nhất</span>
-        <span class="bad">Chỉ Meta Quest</span>
-        <span>Cần Unity build</span>
-      </div>
-      <a class="btn disabled" href="#">📦 Đang phát triển</a>
-    </div>
-  </div>
-
-  <div class="section-title">
-    <h2>🎯 Chế độ chơi đặc biệt</h2>
-    <span class="hint">Cùng catalog 16 thuốc, khác cách chơi</span>
-  </div>
-
-  <div class="grid">
-    <!-- Time Attack -->
-    <div class="variant" style="--vcolor: #f59e0b">
-      <div class="tech">Canvas 2D · Survival</div>
-      <h3>⚡ Time Attack</h3>
-      <p>Sống được càng nhiều wave càng tốt — mỗi wave thêm 1 thuốc, time giảm dần, sai sẽ trừ 5s. Test phản xạ và độ nhớ.</p>
-      <div class="specs">
-        <span class="ok">Endless</span>
-        <span>Escalating</span>
-        <span class="bad">Sai -5s</span>
-        <span>Wave-based</span>
-      </div>
-      <a class="btn" href="time-attack.html">⚡ Bắt đầu</a>
-    </div>
-
-    <!-- Race 1v1 -->
-    <div class="variant" style="--vcolor: #ef4444">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">WebSocket · 1v1</div>
-      <h3>🏁 Race 1v1</h3>
-      <p>Bắt cặp 2 người ngẫu nhiên qua WebSocket, cùng chơi 1 level, ai xong trước thắng. Backend đã sẵn sàng, UI đang hoàn thiện.</p>
-      <div class="specs">
-        <span class="ok">Auto-match</span>
-        <span>Live opponent</span>
-        <span>Real-time score</span>
-        <span>Best of 3</span>
-      </div>
-      <a class="btn disabled" href="#">🏁 Sắp ra mắt</a>
-    </div>
-  </div>
-
-  <div class="section-title">
-    <h2>⚖️ So sánh chi tiết</h2>
-  </div>
-
-  <div class="compare">
-    <table>
-      <thead>
-        <tr>
-          <th>Tiêu chí</th>
-          <th>2D Arcade</th>
-          <th>3D Realistic</th>
-          <th>VR Web</th>
-          <th>Quiz</th>
-          <th>🌐 Metaverse</th>
-          <th>Unity Quest</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Bundle size</td><td>~30 KB</td><td>~180 KB</td><td>~180 KB</td><td>~5 KB</td><td>~220 KB</td><td>~50 MB</td></tr>
-        <tr><td>Mobile</td><td class="yes">✓ Mượt</td><td>~ OK</td><td class="no">✗</td><td class="yes">✓ Mượt</td><td>~ OK</td><td class="no">✗</td></tr>
-        <tr><td>Desktop</td><td class="yes">✓</td><td class="yes">✓ Tốt</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
-        <tr><td>Meta Quest browser</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓ VR thật</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
-        <tr><td>Meta Quest native</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Native</td></tr>
-        <tr><td>Hand tracking</td><td>MediaPipe</td><td>MediaPipe</td><td class="yes">✓ WebXR</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Meta XR</td></tr>
-        <tr><td>Multiplayer</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Realtime</td><td class="no">✗</td></tr>
-        <tr><td>Level 1-10</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td>—</td><td>—</td><td>—</td></tr>
-        <tr><td>Cần cài đặt</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="yes">APK</td></tr>
-        <tr><td>Độ chân thực</td><td>★★☆☆☆</td><td>★★★★☆</td><td>★★★★☆</td><td>★☆☆☆☆</td><td>★★★☆☆</td><td>★★★★★</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div id="topic-card"></div>
 
   <footer>
     Cùng 16 thuốc, cùng nhóm điều trị, khác công nghệ — chọn phiên bản phù hợp với thiết bị & mục đích.
@@ -379,12 +225,14 @@
 
 <script type="module">
 import { LEVELS, getCurrentLevel, setCurrentLevel, getProgress, isLevelUnlocked } from './js/medicines.js';
+import { renderTopicCard } from './js/topic-modes.js';
+
+renderTopicCard({ host: document.getElementById('topic-card'), topicId: 'sap-xep' });
 
 function renderLevels() {
   const progress = getProgress();
   const cur = getCurrentLevel();
   document.getElementById('level-current-hint').textContent = `Đang chọn: Level ${cur.n} · ${cur.label}`;
-  document.getElementById('lvl-2d').textContent = cur.n;
   const grid = document.getElementById('levels');
   grid.innerHTML = LEVELS.map(l => {
     const unlocked = isLevelUnlocked(l.n);
@@ -413,8 +261,8 @@ renderLevels();
 document.getElementById('reset-progress').addEventListener('click', (e) => {
   e.preventDefault();
   if (!confirm('Xoá toàn bộ tiến độ + sao đã đạt?')) return;
-  localStorage.removeItem('pharmacysim:progress');
-  localStorage.removeItem('pharmacysim:level');
+  localStorage.removeItem('eduverse:progress');
+  localStorage.removeItem('eduverse:level');
   renderLevels();
 });
 </script>

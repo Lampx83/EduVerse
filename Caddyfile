@@ -1,9 +1,9 @@
-# Caddy reverse-proxy config for PharmacySIM
+# Caddy reverse-proxy config for EduVerse
 #
 # Two common patterns supported:
 #
 #   1. SUBDOMAIN (easiest, no app config needed):
-#      Domain: ps.limio.vn  →  reverse_proxy pharmacysim:8041
+#      Domain: ps.limio.vn  →  reverse_proxy eduverse:8041
 #      Run app with BASE_PATH unset (default).
 #
 #   2. PATH (limio.vn/ps/*):
@@ -21,7 +21,7 @@
 {$DOMAIN} {
 	tls {$EMAIL}
 
-	reverse_proxy pharmacysim:8041 {
+	reverse_proxy eduverse:8041 {
 		# WebSocket upgrade headers — required for /ws and /ws-race
 		header_up Connection {http.request.header.Connection}
 		header_up Upgrade {http.request.header.Upgrade}
@@ -44,7 +44,7 @@
 # 	tls {$EMAIL}
 #
 # 	handle /ps/* {
-# 		reverse_proxy pharmacysim:8041 {
+# 		reverse_proxy eduverse:8041 {
 # 			header_up Connection {http.request.header.Connection}
 # 			header_up Upgrade {http.request.header.Upgrade}
 # 		}

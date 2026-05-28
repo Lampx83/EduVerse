@@ -30,6 +30,7 @@ export const ALL_SCENARIOS = {
 
 /**
  * Lấy danh sách scenarios của 1 module qua prefix ID.
+ * Nếu module không có scenario thật → fallback 1 quiz stub.
  * @param {string} moduleId — e.g. "L1.1", "L3.3", "L2.1"
  * @returns {Array} scenarios trong module
  */
@@ -38,9 +39,61 @@ export function getScenariosForModule(moduleId) {
   for (const [_, s] of Object.entries(ALL_SCENARIOS)) {
     if (s?.id?.startsWith(moduleId + '-')) out.push(s);
   }
-  // Sắp xếp ID
   out.sort((a, b) => a.id.localeCompare(b.id));
+
+  // Fallback: nếu rỗng, sinh quiz stub để module luôn có 1 lối vào
+  if (out.length === 0) {
+    // Lazy import để tránh circular dep
+    // (chỉ chạy khi thật sự cần)
+    try {
+      // eslint-disable-next-line no-unused-expressions
+      // Sử dụng dynamic require qua side channel — fallback dùng module info từ MODULES
+      const mod = _findModule(moduleId);
+      if (mod) {
+        return [_makeStubForModule(mod)];
+      }
+    } catch {}
+  }
   return out;
+}
+
+/** Cache MODULES tra cứu */
+let _modulesCache = null;
+function _findModule(id) {
+  if (!_modulesCache) {
+    // Dynamic-ish: import sync would loop; we read from window cache if set
+    return null;
+  }
+  return _modulesCache.find(m => m.id === id) || null;
+}
+
+function _makeStubForModule(mod) {
+  return {
+    id: `quiz-stub-${mod.id}`,
+    title: `${mod.id} · ${mod.title} — Quiz (đang phát triển)`,
+    kind: 'quiz',
+    yearLevel: mod.yearLevel,
+    subject: mod.subject,
+    difficulty: mod.difficulty ?? 1,
+    description: 'Quiz cho module này đang được hoàn thiện. Tạm thời 1 câu giới thiệu.',
+    questions: [{
+      stem: `Module này là về: ${mod.title}. Bạn đã sẵn sàng học?`,
+      choices: [
+        'Sẵn sàng — chờ nội dung quiz đầy đủ',
+        'Muốn xem 2D/3D/VR trước',
+        'Đọc tài liệu trước',
+        'Quay lại lộ trình',
+      ],
+      answer: 0,
+      explanation: `Quiz đầy đủ cho ${mod.id} đang được biên soạn.`,
+    }],
+    isStub: true,
+  };
+}
+
+/** Cho phép caller bơm MODULES vào cache để stub có thể tra. */
+export function primeModulesCache(modules) {
+  _modulesCache = modules;
 }
 
 /** Lấy 1 scenario cụ thể */

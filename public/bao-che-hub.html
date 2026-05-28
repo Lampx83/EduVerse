@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hub Bào chế GMP · 6 phiên bản — PharmaSIM</title>
+<title>Hub Bào chế GMP — EduVerse</title>
 <style>
   :root {
     --bg-1: #0f172a;
@@ -162,7 +162,7 @@
 <body>
 
 <div class="container">
-  <a class="back" href="index.html">← Quay lại PharmaSIM</a>
+  <a class="back" href="index.html">← Quay lại EduVerse</a>
 
   <div class="hero">
     <div class="logo">🧪</div>
@@ -173,11 +173,10 @@
       <b>2 tay phối hợp</b> qua MediaPipe để rót ổn định hơn.
     </p>
     <div class="pills">
-      <span class="pill">📊 6 phiên bản</span>
-      <span class="pill">📱 Mobile · Desktop · VR</span>
+      <span class="pill">📱 Mobile · Desktop · VR / XR</span>
       <span class="pill">🤲 2 tay MediaPipe</span>
       <span class="pill">🎯 8 đơn · Free-form</span>
-      <span class="pill">📈 Leaderboard từng đơn</span>
+      <span class="pill">🎮 8 phiên bản gộp 1 card</span>
     </div>
   </div>
 
@@ -213,175 +212,21 @@
 
   <div class="section-title">
     <h2>🎮 Chọn phiên bản</h2>
-    <span class="hint">Cùng quy trình GMP, khác công nghệ thực thi</span>
+    <span class="hint">Tất cả 8 phiên bản gộp trong 1 card — chọn chip để đổi chế độ</span>
   </div>
 
-  <div class="grid">
-    <!-- Variant A: 2D Canvas (Soon) -->
-    <div class="variant" style="--vcolor: #fbbf24">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">Canvas 2D · Vanilla JS</div>
-      <h3>🎨 Bào chế 2D</h3>
-      <p>Side-view minimalist — kéo cốc, ống đong, lọ thuốc bằng chuột/touch. Tải nhẹ, phù hợp ôn quy trình trên mobile mà không cần webcam hay 3D.</p>
-      <div class="specs">
-        <span class="ok">~10 KB</span>
-        <span>Click/touch</span>
-        <span>Mobile OK</span>
-        <span class="bad">Không VR</span>
-      </div>
-      <a class="btn disabled" href="#">📦 Đang phát triển</a>
-    </div>
-
-    <!-- Variant B: 3D Three.js (Ready) -->
-    <div class="variant" style="--vcolor: #14b8a6">
-      <div class="tech">Three.js · MediaPipe · 2 tay</div>
-      <h3>🥽 Phòng bào chế 3D</h3>
-      <p>Three.js full 3D scene với cân điện tử, ống đong, cốc thuỷ tinh. <b>Free-form</b> — thao tác tự do, lỗi quy trình tổng kết cuối bài. <b>2 tay phối hợp</b> rót ổn định hơn (bonus điểm).</p>
-      <div class="specs">
-        <span class="ok">Sẵn sàng</span>
-        <span class="ok">2 tay MediaPipe</span>
-        <span>Free-form</span>
-        <span>Desktop tốt nhất</span>
-      </div>
-      <a class="btn" href="compounding-lab.html">▶️ Vào phòng lab</a>
-    </div>
-
-    <!-- Variant C: VR Web (Soon) -->
-    <div class="variant" style="--vcolor: #ec4899">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">A-Frame · WebXR</div>
-      <h3>🕹️ Bào chế VR Web</h3>
-      <p>Phòng lab WebXR — vào kính Meta Quest bấm Enter VR, dùng hand tracking native để cầm cốc, rót thuốc thật như đang ở phòng pha chế.</p>
-      <div class="specs">
-        <span>~250 KB</span>
-        <span class="ok">VR thật trên Quest</span>
-        <span>Desktop OK</span>
-        <span>Hand tracking native</span>
-      </div>
-      <a class="btn disabled" href="#">📦 Đang phát triển</a>
-    </div>
-
-    <!-- Variant D: Quiz (Soon) -->
-    <div class="variant" style="--vcolor: #0ea5e9">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">HTML + JS · Quiz</div>
-      <h3>🧠 Bào chế Quiz</h3>
-      <p>10 câu hỏi MCQ về quy trình GMP — thứ tự bước, công thức q.s., tolerance cân, an toàn vô khuẩn. 15s/câu, streak bonus.</p>
-      <div class="specs">
-        <span class="ok">~3 KB</span>
-        <span>Mobile-first</span>
-        <span>Lý thuyết GMP</span>
-        <span class="ok">Ai cũng chơi</span>
-      </div>
-      <a class="btn disabled" href="#">📦 Đang phát triển</a>
-    </div>
-
-    <!-- Variant E: Metaverse (Soon) -->
-    <div class="variant" style="--vcolor: #f97316">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">Three.js + WebSocket · Multiplayer</div>
-      <h3>🌐 Metaverse Bào chế</h3>
-      <p>Phòng lab GMP <b>realtime multiplayer</b> — mỗi SV có bàn pha riêng, thấy avatar người khác, giảng viên ghé qua kiểm tra trực tiếp.</p>
-      <div class="specs">
-        <span class="ok">Multiplayer</span>
-        <span>~220 KB</span>
-        <span class="ok">Giảng viên giám sát</span>
-        <span>Desktop · Mobile</span>
-      </div>
-      <a class="btn disabled" href="#">📦 Đang phát triển</a>
-    </div>
-
-    <!-- Variant F: Unity Quest (Soon) -->
-    <div class="variant" style="--vcolor: #6366f1">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">Unity · Meta XR SDK · Native</div>
-      <h3>🥽 VR Bào chế · Quest native</h3>
-      <p>App native Quest — vật lý PhysX cho chất lỏng, hand tracking Meta XR SDK chuẩn. Mô phỏng cảm giác cầm cốc, rót, lắc gần như thật.</p>
-      <div class="specs">
-        <span>~70 MB APK</span>
-        <span class="ok">VR cao nhất</span>
-        <span class="bad">Chỉ Meta Quest</span>
-        <span>Cần Unity build</span>
-      </div>
-      <a class="btn disabled" href="#">📦 Đang phát triển</a>
-    </div>
-  </div>
-
-  <div class="section-title">
-    <h2>🎯 Chế độ chơi đặc biệt</h2>
-    <span class="hint">Cùng 8 đơn, khác cách chơi</span>
-  </div>
-
-  <div class="grid">
-    <!-- Time Attack (Soon) -->
-    <div class="variant" style="--vcolor: #f59e0b">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">Three.js · Survival</div>
-      <h3>⚡ Time Attack Bào chế</h3>
-      <p>Pha đúng đơn càng nhanh càng tốt — đếm ngược, sai bước trừ thời gian. Test phản xạ quy trình GMP dưới áp lực thời gian.</p>
-      <div class="specs">
-        <span class="ok">Endless</span>
-        <span>Escalating</span>
-        <span class="bad">Sai -10s</span>
-        <span>Đơn random</span>
-      </div>
-      <a class="btn disabled" href="#">📦 Đang phát triển</a>
-    </div>
-
-    <!-- Race 1v1 (Soon) -->
-    <div class="variant" style="--vcolor: #ef4444">
-      <span class="badge-soon">Sắp có</span>
-      <div class="tech">WebSocket · 1v1</div>
-      <h3>🏁 Race Bào chế 1v1</h3>
-      <p>2 SV ngẫu nhiên cùng pha 1 đơn — ai đúng & nhanh hơn thắng. Backend WebSocket dùng chung với Demo 1.</p>
-      <div class="specs">
-        <span class="ok">Auto-match</span>
-        <span>Live opponent</span>
-        <span>Real-time score</span>
-        <span>Best of 3</span>
-      </div>
-      <a class="btn disabled" href="#">📦 Đang phát triển</a>
-    </div>
-  </div>
-
-  <div class="section-title">
-    <h2>⚖️ So sánh chi tiết</h2>
-  </div>
-
-  <div class="compare">
-    <table>
-      <thead>
-        <tr>
-          <th>Tiêu chí</th>
-          <th>2D</th>
-          <th>3D Lab</th>
-          <th>VR Web</th>
-          <th>Quiz</th>
-          <th>🌐 Metaverse</th>
-          <th>Unity Quest</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Trạng thái</td><td>Sắp có</td><td class="yes">Sẵn sàng</td><td>Sắp có</td><td>Sắp có</td><td>Sắp có</td><td>Sắp có</td></tr>
-        <tr><td>Bundle size</td><td>~10 KB</td><td>~200 KB</td><td>~250 KB</td><td>~3 KB</td><td>~220 KB</td><td>~70 MB</td></tr>
-        <tr><td>Mobile</td><td class="yes">✓ Mượt</td><td>~ OK</td><td class="no">✗</td><td class="yes">✓ Mượt</td><td>~ OK</td><td class="no">✗</td></tr>
-        <tr><td>Desktop</td><td class="yes">✓</td><td class="yes">✓ Tốt</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
-        <tr><td>Meta Quest browser</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓ VR thật</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
-        <tr><td>Meta Quest native</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Native</td></tr>
-        <tr><td>Hand tracking</td><td class="no">✗</td><td class="yes">MediaPipe 2 tay</td><td class="yes">✓ WebXR</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Meta XR</td></tr>
-        <tr><td>Multiplayer</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓ Realtime</td><td class="no">✗</td></tr>
-        <tr><td>Free-form workflow</td><td>—</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">Theory</td><td class="yes">✓</td><td class="yes">✓</td></tr>
-        <tr><td>Cần cài đặt</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="no">Không</td><td class="yes">APK</td></tr>
-        <tr><td>Độ chân thực</td><td>★★☆☆☆</td><td>★★★★☆</td><td>★★★★☆</td><td>★☆☆☆☆</td><td>★★★☆☆</td><td>★★★★★</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div id="topic-card"></div>
 
   <footer>
     Cùng 8 đơn GMP, cùng quy trình bào chế chuẩn, khác công nghệ — chọn phiên bản phù hợp.
     Tất cả phiên bản web ghi điểm về cùng 1 dashboard giảng viên.
   </footer>
 </div>
+
+<script type="module">
+  import { renderTopicCard } from './js/topic-modes.js';
+  renderTopicCard({ host: document.getElementById('topic-card'), topicId: 'bao-che' });
+</script>
 
 </body>
 </html>

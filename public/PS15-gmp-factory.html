@@ -1280,8 +1280,8 @@ async function submitResult() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         version: 'PS15-gmp-tour',
-        playerName: (localStorage.getItem('pharmacysim:playerName') || 'Ẩn danh'),
-        classCode: localStorage.getItem('pharmacysim:classCode') || undefined,
+        playerName: (localStorage.getItem('eduverse:playerName') || 'Ẩn danh'),
+        classCode: localStorage.getItem('eduverse:classCode') || undefined,
         score, correct, total, durationMs,
         details: JSON.stringify({
           kind: 'gmp-factory-tour',

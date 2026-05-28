@@ -29,21 +29,22 @@ export const LEVELS = [
 ];
 
 // --- Level progression in localStorage ---
-const LEVEL_KEY = 'pharmacysim:level';
-const PROGRESS_KEY = 'pharmacysim:progress';   // {[levelN]: { stars: 0-3, bestScore }}
+import { KEYS, lsGet, lsSet } from './engine/storage.js';
+const LEVEL_KEY = KEYS.LEVEL;
+const PROGRESS_KEY = KEYS.PROGRESS;   // {[levelN]: { stars: 0-3, bestScore }}
 
 export function getCurrentLevel() {
-  const n = parseInt(localStorage.getItem(LEVEL_KEY) || '1', 10);
+  const n = parseInt(lsGet(LEVEL_KEY) || '1', 10);
   return LEVELS.find(l => l.n === n) || LEVELS[0];
 }
 
 export function setCurrentLevel(n) {
   const lvl = LEVELS.find(l => l.n === n);
-  if (lvl) localStorage.setItem(LEVEL_KEY, String(n));
+  if (lvl) lsSet(LEVEL_KEY, String(n));
 }
 
 export function getProgress() {
-  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); }
+  try { return JSON.parse(lsGet(PROGRESS_KEY) || '{}'); }
   catch { return {}; }
 }
 
@@ -54,7 +55,7 @@ export function saveLevelResult(n, { stars, score }) {
     stars: Math.max(cur.stars, stars),
     bestScore: Math.max(cur.bestScore, score),
   };
-  localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+  lsSet(PROGRESS_KEY, JSON.stringify(p));
   return p[n];
 }
 
@@ -79,13 +80,13 @@ export const DIFFICULTIES = [
   { id: 'med',  label: 'Vừa', count: 6, desc: '6 loại thuốc' },
   { id: 'hard', label: 'Khó', count: 8, desc: '8 loại thuốc' },
 ];
-const DIFFICULTY_KEY = 'pharmacysim:difficulty';
+const DIFFICULTY_KEY = KEYS.DIFFICULTY;
 export function getDifficulty() {
-  const id = localStorage.getItem(DIFFICULTY_KEY) || 'easy';
+  const id = lsGet(DIFFICULTY_KEY) || 'easy';
   return DIFFICULTIES.find(d => d.id === id) || DIFFICULTIES[0];
 }
 export function setDifficulty(id) {
-  if (DIFFICULTIES.some(d => d.id === id)) localStorage.setItem(DIFFICULTY_KEY, id);
+  if (DIFFICULTIES.some(d => d.id === id)) lsSet(DIFFICULTY_KEY, id);
 }
 
 // --- Helpers ---
