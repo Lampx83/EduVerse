@@ -83,6 +83,21 @@ const PAGES = {
   'metaverse':     { mode: 'meta', icon: '🌐', label: 'Phòng học chung', tech: 'Three.js · WebXR · WebSocket', url: 'metaverse.html',
                  desc: 'WebXR multiplayer · học cùng nhau qua avatar · WebSocket sync · Quest + Vision Pro.',
                  specs: ['ok:Multiplayer', 'XR', 'Real-time', 'Quest · Vision Pro'] },
+
+  // SEGUE AI Sim — app Next.js (React Three Fiber + AI NPC) nhúng tại /segue
+  // qua reverse proxy. Chấm điểm giao tiếp theo khung SEGUE 100đ + lỗi điểm liệt.
+  'segue-hub':      { mode: 'native', icon: '🗣️', label: 'SEGUE AI Sim',           tech: 'Next.js · R3F · AI NPC', url: 'segue',
+                 desc: '3 phân hệ giao tiếp: Nhà thuốc GPP · Dược bệnh viện · Trình dược viên. Chấm điểm SEGUE 100đ + phát hiện lỗi điểm liệt (Auto-Fail).',
+                 specs: ['ok:🆕 AI NPC', 'SEGUE 100đ', 'Auto-Fail', '3D R3F'] },
+  'segue-gpp':      { mode: 'native', icon: '🏪', label: 'SEGUE · Nhà thuốc GPP',   tech: 'Next.js · R3F · AI NPC', url: 'segue/sim/gpp',
+                 desc: 'Khách nữ mang thai 12 tuần đòi mua kháng sinh — khai thác triệu chứng, tư vấn an toàn, tránh thuốc chống chỉ định thai kỳ.',
+                 specs: ['ok:🆕', 'Khai thác · tư vấn', 'Auto-Fail thai kỳ', '3D'] },
+  'segue-hospital': { mode: 'native', icon: '🏥', label: 'SEGUE · Dược bệnh viện',  tech: 'Next.js · R3F · AI NPC', url: 'segue/sim/hospital',
+                 desc: 'BS tim mạch kê aspirin trên BN đang dùng warfarin — sàng lọc tương tác, đối thoại chuyên môn, bảo đảm an toàn người bệnh.',
+                 specs: ['ok:🆕', 'Sàng lọc tương tác', 'Auto-Fail', 'HIS'] },
+  'segue-medrep':   { mode: 'native', icon: '💼', label: 'SEGUE · Trình dược viên', tech: 'Next.js · R3F · AI NPC', url: 'segue/sim/medrep',
+                 desc: 'Đàm phán với Trưởng khoa Nội — trình bày FAB, dữ liệu QALY/ICER, xử lý phản bác bằng kinh tế dược.',
+                 specs: ['ok:🆕', 'FAB · QALY/ICER', 'Đàm phán', 'Slide 3D'] },
 };
 
 /**
@@ -112,6 +127,14 @@ const MODULE_PAGES = {
   // Skill / Game
   'GC07':  ['osce-champion'],
   'GC08':  ['metaverse'],
+
+  // SEGUE AI Sim (Pharmacy-AI nhúng) — gắn hub vào module giao tiếp, deep-link
+  // từng phân hệ vào module lâm sàng / marketing tương ứng.
+  'SC03':  ['segue-hub'],        // Phòng kỹ năng giao tiếp → cả 3 phân hệ
+  'PS11':  ['segue-gpp'],        // Nhà thuốc GPP đầy đủ
+  'L5.4':  ['segue-hospital'],   // Dược bệnh viện
+  'L5.5':  ['segue-gpp'],        // Dược cộng đồng
+  'L4.8':  ['segue-medrep'],     // Marketing dược → Trình dược viên
 };
 
 /**

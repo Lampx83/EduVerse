@@ -1,6 +1,11 @@
 services:
   eduverse:
-    build: .
+    build:
+      context: .
+      args:
+        # Next.js basePath for the embedded Pharmacy-AI, baked at build time.
+        # Default /segue. For limio.vn/ps, build with SEGUE_BASE_PATH=/ps/segue.
+        SEGUE_BASE_PATH: ${SEGUE_BASE_PATH:-/segue}
     image: eduverse:latest
     container_name: eduverse
     restart: unless-stopped
@@ -14,6 +19,11 @@ services:
       # Optional path prefix when deployed behind a reverse proxy at a sub-path.
       # Set to "/ps" for limio.vn/ps, leave empty for root or subdomain.
       BASE_PATH: ${BASE_PATH:-}
+      # Embedded Pharmacy-AI (Next.js) — internal upstream for the /segue proxy.
+      SEGUE_TARGET: http://127.0.0.1:3100
+      # NPC dùng OpenAI khi có key; nếu trống sẽ chạy stub rule-based (vẫn demo được).
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
     volumes:
       # Giữ tên volume cũ "pharmacysim-data" để KHÔNG mất dữ liệu SQLite hiện có
       # (attempts/classes/achievements/requests) khi đổi thương hiệu sang EduVerse.

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi, aiReviewRequest } from './ai.js';
+import { attachSegueProxy } from './segue-proxy.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -101,6 +102,11 @@ function checkAndUnlockBadges(playerName, attempt) {
 
 const app = express();
 app.disable('x-powered-by');
+
+// Reverse-proxy the embedded Pharmacy-AI (Next.js) app at <BASE_PATH>/segue.
+// MUST come before express.json so POST bodies stream through untouched.
+attachSegueProxy(app, `${BASE_PATH}/segue`);
+
 app.use(express.json({ limit: '64kb' }));
 
 // All routes attached to this Router. The Router is then mounted at
