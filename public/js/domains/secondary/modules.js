@@ -8,9 +8,11 @@
 /** @type {import('../../engine/types.js').CourseModule[]} */
 export const MODULES = [
   // ───────── Môn Toán ─────────
+  // S6 = "cổng" vào lộ trình bài học (5 chương · nhiều bài) → subject.html
   { category: 'curriculum', id: 'S6', title: 'Toán lớp 6', yearLevel: 1, subject: 'toan',
-    scenarioIds: ['S6-toan-quiz'], knowledgeQuiz: 'S6-toan-quiz', minStarsToUnlock: 0,
-    description: 'Số nguyên · phân số · số thập phân · ƯCLN/BCNN · tỉ số phần trăm · hình học trực quan.' },
+    scenarioIds: [], minStarsToUnlock: 0,
+    pathHref: 'subject.html?domain=secondary&subject=toan&grade=6',
+    description: 'Lộ trình 5 chương: Số nguyên · Phân số · Tỉ số–tỉ lệ · ƯCLN–BCNN · Hình học cơ bản.' },
   { category: 'curriculum', id: 'S7', title: 'Toán lớp 7', yearLevel: 2, subject: 'toan',
     scenarioIds: ['S7-toan-quiz'], knowledgeQuiz: 'S7-toan-quiz', minStarsToUnlock: 3, prerequisites: ['S6'],
     description: 'Số hữu tỉ · số thực · tỉ lệ thức · tam giác · thống kê & xác suất.' },

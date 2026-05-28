@@ -127,36 +127,149 @@ export class ScenarioEngine {
 // scenario phức tạp hơn. Dưới đây là MVP để demo API engine.
 // ============================================================
 
-/** @param {ScenarioEngine} engine */
+/**
+ * Quiz với PHẢN HỒI NGAY mỗi câu:
+ *  - chọn đáp án → khoá câu, tô xanh đáp án đúng / đỏ đáp án sai,
+ *    hiện "+XP" và lời giải ngắn.
+ *  - đủ tất cả câu → nút "Xem kết quả" mở màn tổng kết.
+ * @param {ScenarioEngine} engine
+ */
 function renderQuiz(engine, host) {
+  injectQuizFxStyles();
   const sc = /** @type {import('./types.js').QuizScenario} */ (engine.scenario);
   const wrap = document.createElement('div');
-  wrap.className = 'quiz-wrap';
+  wrap.className = 'qzx-wrap';
   const answers = new Array(sc.questions.length).fill(-1);
+  const locked = new Array(sc.questions.length).fill(false);
+  let answered = 0;
+  let correctCount = 0;
 
   sc.questions.forEach((q, i) => {
     const card = document.createElement('div');
-    card.className = 'quiz-card';
+    card.className = 'qzx-card';
     card.innerHTML = `
-      <div class="quiz-stem"><b>Câu ${i + 1}.</b> ${q.stem}</div>
-      ${q.image ? `<img src="${q.image}" class="quiz-img"/>` : ''}
-      <div class="quiz-choices">
+      <div class="qzx-stem"><span class="qzx-num">Câu ${i + 1}</span> ${q.stem}</div>
+      ${q.image ? `<img src="${q.image}" class="qzx-img"/>` : ''}
+      <div class="qzx-choices">
         ${q.choices.map((c, ci) => `
-          <label class="quiz-choice"><input type="radio" name="q${i}" value="${ci}"/> ${c}</label>
-        `).join('')}
-      </div>`;
-    card.querySelectorAll('input').forEach(inp => {
-      inp.addEventListener('change', () => { answers[i] = parseInt(inp.value); });
-    });
+          <button class="qzx-choice" type="button" data-i="${i}" data-ci="${ci}">
+            <span class="qzx-key">${String.fromCharCode(65 + ci)}</span>
+            <span class="qzx-ctext">${c}</span>
+          </button>`).join('')}
+      </div>
+      <div class="qzx-explain" hidden></div>`;
     wrap.appendChild(card);
   });
 
-  const submitBtn = document.createElement('button');
-  submitBtn.className = 'submit-btn';
-  submitBtn.textContent = 'Nộp bài';
-  submitBtn.onclick = () => engine.complete({ answers, questions: sc.questions });
-  wrap.appendChild(submitBtn);
+  const footer = document.createElement('div');
+  footer.className = 'qzx-footer';
+  footer.innerHTML = `
+    <div class="qzx-prog"><span data-done>0</span>/${sc.questions.length} câu · <span data-correct>0</span> đúng</div>
+    <button class="qzx-finish" type="button" disabled>Hoàn thành</button>`;
+  wrap.appendChild(footer);
   host.appendChild(wrap);
+
+  const doneEl = footer.querySelector('[data-done]');
+  const correctEl = footer.querySelector('[data-correct]');
+  const finishBtn = footer.querySelector('.qzx-finish');
+
+  wrap.querySelectorAll('.qzx-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = Number(btn.dataset.i);
+      const ci = Number(btn.dataset.ci);
+      if (locked[i]) return;
+      locked[i] = true;
+      answers[i] = ci;
+      const q = sc.questions[i];
+      const ok = ci === q.answer;
+      const card = btn.closest('.qzx-card');
+
+      card.querySelectorAll('.qzx-choice').forEach(b => {
+        b.disabled = true;
+        const bci = Number(b.dataset.ci);
+        if (bci === q.answer) b.classList.add('is-correct');
+        if (bci === ci && !ok) b.classList.add('is-wrong');
+      });
+
+      const ex = card.querySelector('.qzx-explain');
+      ex.hidden = false;
+      ex.className = 'qzx-explain ' + (ok ? 'ok' : 'bad');
+      ex.innerHTML = ok
+        ? `<b>✓ Chính xác!</b> <span class="qzx-xp">+10 XP</span>${q.explanation ? ' · ' + q.explanation : ''}`
+        : `<b>✗ Chưa đúng.</b> Đáp án đúng: <b>${q.choices[q.answer]}</b>${q.explanation ? ' — ' + q.explanation : ''}`;
+
+      if (ok) { correctCount++; card.classList.add('qzx-flash'); }
+      answered++;
+      doneEl.textContent = answered;
+      correctEl.textContent = correctCount;
+
+      if (answered === sc.questions.length) {
+        finishBtn.disabled = false;
+        finishBtn.classList.add('ready');
+        finishBtn.textContent = 'Xem kết quả →';
+        finishBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+
+  finishBtn.addEventListener('click', () => {
+    if (finishBtn.disabled) return;
+    engine.complete({ answers, questions: sc.questions });
+  });
+}
+
+let _quizFxInjected = false;
+function injectQuizFxStyles() {
+  if (_quizFxInjected || typeof document === 'undefined') return;
+  _quizFxInjected = true;
+  const css = `
+  .qzx-wrap { display: flex; flex-direction: column; gap: 14px; }
+  .qzx-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px; padding: 16px 18px; }
+  .qzx-card.qzx-flash { animation: qzxFlash .6s ease; }
+  @keyframes qzxFlash { 0%{box-shadow:0 0 0 0 rgba(34,197,94,0)} 30%{box-shadow:0 0 0 3px rgba(34,197,94,.55)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
+  .qzx-stem { line-height: 1.55; margin-bottom: 12px; font-size: 15.5px; }
+  .qzx-num { display: inline-block; font-size: 11px; font-weight: 800; color: #1f1147;
+    background: #fbbf24; padding: 2px 8px; border-radius: 999px; margin-right: 6px; }
+  .qzx-img { max-width: 100%; border-radius: 10px; margin-bottom: 10px; }
+  .qzx-choices { display: flex; flex-direction: column; gap: 9px; }
+  .qzx-choice { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+    background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.14);
+    color: #fff; padding: 11px 14px; border-radius: 11px; cursor: pointer;
+    font-family: inherit; font-size: 14.5px; transition: all .14s; }
+  .qzx-choice:hover:not(:disabled) { background: rgba(255,255,255,0.12); border-color: #fbbf24; transform: translateX(3px); }
+  .qzx-choice:disabled { cursor: default; }
+  .qzx-key { flex: none; width: 26px; height: 26px; border-radius: 7px; display: flex;
+    align-items: center; justify-content: center; font-weight: 800; font-size: 13px;
+    background: rgba(255,255,255,0.1); }
+  .qzx-choice.is-correct { background: rgba(34,197,94,0.2); border-color: #22c55e; }
+  .qzx-choice.is-correct .qzx-key { background: #22c55e; color: #06281a; }
+  .qzx-choice.is-wrong { background: rgba(239,68,68,0.18); border-color: #ef4444; }
+  .qzx-choice.is-wrong .qzx-key { background: #ef4444; color: #fff; }
+  .qzx-explain { margin-top: 12px; padding: 10px 14px; border-radius: 10px; font-size: 13.5px; line-height: 1.5;
+    animation: qzxSlide .25s ease; }
+  @keyframes qzxSlide { from{opacity:0; transform:translateY(-4px)} to{opacity:1; transform:none} }
+  .qzx-explain.ok  { background: rgba(34,197,94,0.12); border-left: 3px solid #22c55e; }
+  .qzx-explain.bad { background: rgba(239,68,68,0.12); border-left: 3px solid #ef4444; }
+  .qzx-xp { display: inline-block; font-weight: 800; color: #fde047;
+    background: rgba(253,224,71,0.15); padding: 1px 8px; border-radius: 999px;
+    animation: qzxPop .4s cubic-bezier(.2,.9,.3,1.6); }
+  @keyframes qzxPop { 0%{transform:scale(0)} 60%{transform:scale(1.25)} 100%{transform:scale(1)} }
+  .qzx-footer { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; background: rgba(15,23,42,0.92); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 12px 16px; margin-top: 4px; }
+  .qzx-prog { font-size: 13.5px; font-weight: 700; opacity: 0.9; }
+  .qzx-finish { padding: 11px 22px; border: 0; border-radius: 11px; font-weight: 800; font-size: 15px;
+    font-family: inherit; cursor: pointer; color: #fff; background: rgba(255,255,255,0.12); }
+  .qzx-finish:disabled { opacity: 0.5; cursor: not-allowed; }
+  .qzx-finish.ready { background: linear-gradient(90deg,#fbbf24,#f59e0b); color: #1f1147;
+    animation: qzxPop .4s cubic-bezier(.2,.9,.3,1.6); }
+  @media (prefers-reduced-motion: reduce) {
+    .qzx-card.qzx-flash, .qzx-explain, .qzx-xp, .qzx-finish.ready { animation: none; }
+  }`;
+  const tag = document.createElement('style');
+  tag.textContent = css;
+  document.head.appendChild(tag);
 }
 
 /** @param {ScenarioEngine} engine */

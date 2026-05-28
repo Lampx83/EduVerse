@@ -164,6 +164,21 @@
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'L1.1';
 
+  // Nếu mở từ lộ trình môn (subject.html) → thêm link quay lại lộ trình.
+  const backParam = params.get('back');
+  if (backParam) {
+    try {
+      const nav = document.querySelector('.top-nav');
+      const a = document.createElement('a');
+      a.href = decodeURIComponent(backParam);
+      a.textContent = '← Lộ trình môn';
+      const sep = document.createElement('span');
+      sep.style.opacity = '0.4'; sep.textContent = '·';
+      nav.insertBefore(sep, nav.firstChild);
+      nav.insertBefore(a, nav.firstChild);
+    } catch {}
+  }
+
   // Load the ACTIVE domain so module metadata + achievement catalog match
   // the school the student came from (falls back to pharmacy modules).
   let DOMAIN_MODULES = PHARMACY_MODULES, ACHIEVEMENTS = [];
@@ -198,8 +213,19 @@
       ${moduleMeta.hasCertificate ? '<span class="chip">🏆 Cấp chứng chỉ</span>' : ''}
     `;
   } else {
-    title.textContent = moduleId;
-    subtitle.textContent = '(không tìm thấy metadata trong learning-path)';
+    // Không có metadata (vd bài học lẻ của lộ trình môn) → lấy tiêu đề từ scenario.
+    const scns = getScenariosForModule(moduleId);
+    const s0 = scns[0];
+    if (s0) {
+      title.textContent = s0.title;
+      const bits = [s0.chapter && `📂 ${s0.chapter}`, s0.boss && '👑 Boss', s0.difficulty && `⭐ Độ khó ${s0.difficulty}/5`].filter(Boolean);
+      subtitle.textContent = bits.join(' · ');
+      breadcrumb.textContent = s0.chapter || s0.title;
+      document.title = `${s0.title} — EduVerse`;
+    } else {
+      title.textContent = moduleId;
+      subtitle.textContent = 'Bài học';
+    }
   }
 
   // 3 track học tập. Thực hành đặt TRÊN CÙNG (ưu tiên trải nghiệm).

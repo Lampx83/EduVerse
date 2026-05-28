@@ -16,6 +16,11 @@ import {
   levelInfo, rankFor, avatarFor, titleFor,
 } from './gamification.js';
 
+/** Link đích của 1 module: ưu tiên pathHref (cổng lộ trình con) nếu có. */
+function moduleHref(mod) {
+  return mod?.pathHref || `module.html?module=${encodeURIComponent(mod.id)}`;
+}
+
 const MODE_ICONS = {
   quiz:   '📚',
   '2d':   '📱',
@@ -180,7 +185,7 @@ function renderJourneyHeader({ rec, milestone, agg, subjects, domain }) {
   }).join('');
 
   const ctaInner = rec
-    ? `<a class="jh-cta" href="module.html?module=${encodeURIComponent(rec.module.id)}">
+    ? `<a class="jh-cta" href="${moduleHref(rec.module)}">
          <span class="jh-cta-ic">▶</span>
          <span class="jh-cta-txt">
            <b>${rec.reason}</b>
@@ -245,7 +250,7 @@ function renderNode(mod, { subjects, progress, locked, hasContent, nodeFlags }) 
     return `<a class="${cls}" href="${safeUrl}" ${external} title="${e.label} · ${e.tech || ''}">${icon}</a>`;
   }).join('');
 
-  const targetUrl = isLocked ? '#' : `module.html?module=${encodeURIComponent(mod.id)}`;
+  const targetUrl = isLocked ? '#' : moduleHref(mod);
   const cls = ['path-node'];
   if (isLocked) cls.push('locked');
   if (noContent) cls.push('no-content');
@@ -679,7 +684,7 @@ export function renderContinueCard(host, { rec, domain, milestone }) {
   }
   const ms = milestone ? `<div class="jh-milestone ${milestone.ready ? 'ready' : ''}" style="margin-top:10px">🎯 ${milestone.text}</div>` : '';
   host.innerHTML = `
-    <a class="jh-cta" href="module.html?module=${encodeURIComponent(rec.module.id)}">
+    <a class="jh-cta" href="${moduleHref(rec.module)}">
       <span class="jh-cta-ic">▶</span>
       <span class="jh-cta-txt">
         <b>${rec.reason} · ${domain?.icon || ''} ${domain?.shortName || ''}</b>
