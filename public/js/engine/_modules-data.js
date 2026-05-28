@@ -32,7 +32,7 @@ export const MODULES = [
   { category: 'curriculum', id: 'L2.3', title: 'Vi sinh — Ký sinh',           yearLevel: 2, subject: 'vi-sinh',        scenarioIds: ['L2.3-microbiology-parasitology'], minStarsToUnlock: 6 },
   { category: 'curriculum', id: 'L2.4', title: 'Sinh hoá — Enzyme kinetics',  yearLevel: 2, subject: 'sinh-hoa',       scenarioIds: ['L2.4-enzyme-kinetics-quiz', 'L2.4-km-vmax-calculator'], minStarsToUnlock: 6 },
   { category: 'curriculum', id: 'L2.5', title: 'Hoá lý',                      yearLevel: 2, subject: 'hoa-ly',         scenarioIds: ['L2.5-physical-chemistry'], minStarsToUnlock: 6 },
-  { category: 'curriculum', id: 'L2.6', title: 'Sắc ký TLC',                  yearLevel: 2, subject: 'sac-ky',         scenarioIds: ['sac-ky-2d', 'sac-ky-3d', 'sac-ky-vr-web'], minStarsToUnlock: 6, prerequisites: ['L2.1'] },
+  { category: 'curriculum', id: 'L2.6', title: 'Sắc ký lớp mỏng (TLC)',      yearLevel: 2, subject: 'hoa-phan-tich',  scenarioIds: ['sac-ky-2d', 'sac-ky-3d', 'sac-ky-vr-web'], minStarsToUnlock: 6, prerequisites: ['L2.1'] },
 
   // ────────── NĂM 3 — ÁP DỤNG (Independent) ──────────
   { category: 'curriculum', id: 'L3.1', title: 'Dược lý — ATC',               yearLevel: 3, subject: 'duoc-ly',        scenarioIds: ['L3.1-atc-01'], minStarsToUnlock: 12, prerequisites: ['L2.6'] },

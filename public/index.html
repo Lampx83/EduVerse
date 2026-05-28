@@ -331,51 +331,72 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     .school-card.locked .sc-cta {
       background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.6);
     }
+
+    /* Cụm cấp học (Phổ thông / Higher Ed) */
+    .school-cluster { margin-bottom: 22px; }
+    .cluster-head {
+      display: flex; align-items: baseline; gap: 10px; margin: 6px 0 12px;
+      padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .cluster-head .ch-icon { font-size: 22px; }
+    .cluster-head .ch-label { font-size: 18px; font-weight: 800; }
+    .cluster-head .ch-desc { font-size: 12px; opacity: 0.6; }
+    .cluster-head .ch-count { margin-left: auto; font-size: 11px; opacity: 0.7;
+      background: rgba(255,255,255,0.08); padding: 2px 9px; border-radius: 10px; }
   </style>
-  <div id="school-grid" class="school-grid"></div>
+  <div id="school-clusters"></div>
 
   <script type="module">
-    import { DOMAIN_META } from './js/engine/domain.js';
+    import { DOMAIN_META, DOMAIN_LEVELS } from './js/engine/domain.js';
 
-    const host = document.getElementById('school-grid');
+    const host = document.getElementById('school-clusters');
     const statusLabel = { ready: '✓ Sẵn sàng', preview: 'Preview', locked: '🔒 Sắp mở' };
-
-    // Trường mở trước, trường khoá xuống dưới
     const order = { ready: 0, preview: 1, locked: 2 };
-    const sorted = [...DOMAIN_META].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
 
     const openCount = DOMAIN_META.filter(d => d.status !== 'locked').length;
     document.getElementById('schools-hint').textContent =
-      `${openCount}/${DOMAIN_META.length} trường đã mở · các trường khác đang được xây dựng`;
+      `${openCount}/${DOMAIN_META.length} trường đã mở · chia theo cấp học · các trường khác đang được xây dựng`;
 
-    host.innerHTML = sorted.map(d => {
+    function card(d) {
       const locked = d.status === 'locked';
-      const meta = locked
-        ? '<span class="sc-meta-sub">Đang phát triển</span>'
-        : `${d.shortName} · ${d.moduleCount} module`;
+      const meta = locked ? '<span class="sc-meta-sub">Đang phát triển</span>'
+                          : `${d.shortName} · ${d.moduleCount} module`;
       const tag = `<span class="sc-pill ${d.status}">${statusLabel[d.status] || d.status}</span>`;
       const cta = locked ? '🔒 Sắp mở' : '→ Vào trường';
-      // Mỗi trường có TRANG RIÊNG: school.html?domain=<id>
       const attrs = locked
         ? 'aria-disabled="true" title="Trường này đang được xây dựng — sắp mở"'
         : `href="school.html?domain=${encodeURIComponent(d.id)}"`;
-      const tag2 = locked ? 'div' : 'a';
+      const t = locked ? 'div' : 'a';
       return `
-        <${tag2} class="school-card ${locked ? 'locked' : ''}"
-           ${attrs}
-           style="--sc-color: ${d.accent}">
+        <${t} class="school-card ${locked ? 'locked' : ''}" ${attrs} style="--sc-color: ${d.accent}">
           <div class="sc-head">
             <div class="sc-icon">${d.icon}</div>
-            <div>
-              <div class="sc-name">${d.name}</div>
-              <div class="sc-short">${meta}</div>
-            </div>
+            <div><div class="sc-name">${d.name}</div><div class="sc-short">${meta}</div></div>
           </div>
           <div class="sc-tagline">${d.tagline}</div>
           <div class="sc-meta">${tag}</div>
           <div class="sc-cta">${cta}</div>
-        </${tag2}>
-      `;
+        </${t}>`;
+    }
+
+    // Nhóm theo cấp học: Phổ thông (school) trước, rồi Đại học/CĐ (he)
+    const CLUSTER_ORDER = ['school', 'he'];
+    host.innerHTML = CLUSTER_ORDER.map(lvl => {
+      const meta = DOMAIN_LEVELS[lvl];
+      const items = DOMAIN_META.filter(d => d.level === lvl)
+        .sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+      if (!items.length) return '';
+      const opened = items.filter(d => d.status !== 'locked').length;
+      return `
+        <div class="school-cluster">
+          <div class="cluster-head">
+            <span class="ch-icon">${meta.icon}</span>
+            <span class="ch-label">${meta.label}</span>
+            <span class="ch-desc">${meta.desc}</span>
+            <span class="ch-count">${opened}/${items.length} mở</span>
+          </div>
+          <div class="school-grid">${items.map(card).join('')}</div>
+        </div>`;
     }).join('');
   </script>
 </div>

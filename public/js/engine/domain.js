@@ -23,8 +23,18 @@ const DOMAIN_REGISTRY = {
   pharmacy:  () => import('../domains/pharmacy/index.js'),
   it:        () => import('../domains/it/index.js'),
   primary:   () => import('../domains/primary/index.js'),
+  secondary: () => import('../domains/secondary/index.js'),
   // economics đã có skeleton nhưng đang KHOÁ — chưa đăng ký:
   // economics: () => import('../domains/economics/index.js'),
+};
+
+/**
+ * Cụm cấp học để nhóm trên selector:
+ *   'school' = Phổ thông (K-12) · 'he' = Đại học & Cao đẳng (Higher Education)
+ */
+export const DOMAIN_LEVELS = {
+  school: { label: 'Phổ thông', icon: '🎒', desc: 'Tiểu học · THCS · THPT' },
+  he:     { label: 'Đại học & Cao đẳng', icon: '🎓', desc: 'Higher Education — đào tạo nghề chuyên sâu' },
 };
 
 /**
@@ -45,8 +55,8 @@ export const DOMAIN_META = [
     tagline: 'Lớp 1–5 · Toán (đã có) · Tiếng Việt · TN&XH · Tiếng Anh · học mà chơi',
     accent: '#f59e0b', status: 'preview', moduleCount: 5 },
   { id: 'secondary', name: 'Trường Trung học cơ sở',       shortName: 'THCS', icon: '📐',
-    tagline: 'Lớp 6–9 · Toán · Văn · Anh · Lý · Hoá · Sinh · Sử · Địa · Tin học',
-    accent: '#10b981', status: 'locked' },
+    tagline: 'Lớp 6–9 · Toán (đã có) · Ngữ văn · Anh · KHTN · Sử-Địa · luyện thi vào 10',
+    accent: '#10b981', status: 'preview', moduleCount: 4 },
   { id: 'highschool', name: 'Trường Trung học phổ thông',  shortName: 'THPT', icon: '🏫',
     tagline: 'Lớp 10–12 · phân ban KHTN/KHXH · luyện thi tốt nghiệp THPT & ĐH',
     accent: '#6366f1', status: 'locked' },
@@ -106,6 +116,10 @@ export const DOMAIN_META = [
     tagline: 'Hành chính công · chính sách · quản lý đô thị · e-government',
     accent: '#94a3b8', status: 'locked' },
 ];
+
+// Gán cụm cấp học: K-12 → 'school', còn lại → 'he' (Higher Education)
+const K12_IDS = new Set(['primary', 'secondary', 'highschool']);
+for (const d of DOMAIN_META) d.level = K12_IDS.has(d.id) ? 'school' : 'he';
 
 /** True nếu trường được phép vào (đã đăng ký + không khoá). */
 export function isDomainOpen(id) {
