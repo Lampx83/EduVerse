@@ -14,6 +14,7 @@ import { PRACTICE_QUIZZES } from './practice-quizzes.js';
 import { SKILL_QUIZZES } from './skill-quizzes.js';
 import { LIBRARY_CAREER_GAMES_SCENARIOS } from './library-career-games.js';
 import { BAO_CHE_LAB_SCENARIOS } from './bao-che-labs.js';
+import { PRIMARY_MATH_SCENARIOS } from './primary-math.js';
 
 // Phẳng hoá tất cả scenarios thành 1 object {id → scenario}
 export const ALL_SCENARIOS = {
@@ -26,6 +27,7 @@ export const ALL_SCENARIOS = {
   ...SKILL_QUIZZES,
   ...LIBRARY_CAREER_GAMES_SCENARIOS,
   ...BAO_CHE_LAB_SCENARIOS,
+  ...PRIMARY_MATH_SCENARIOS,
 };
 
 /**

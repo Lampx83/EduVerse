@@ -22,6 +22,7 @@ import { KEYS, lsGet, lsSet } from './storage.js';
 const DOMAIN_REGISTRY = {
   pharmacy:  () => import('../domains/pharmacy/index.js'),
   it:        () => import('../domains/it/index.js'),
+  primary:   () => import('../domains/primary/index.js'),
   // economics đã có skeleton nhưng đang KHOÁ — chưa đăng ký:
   // economics: () => import('../domains/economics/index.js'),
 };
@@ -39,11 +40,10 @@ export const DOMAIN_META = [
     tagline: '4 năm · Cử nhân CNTT · Python → ML · CTF · Hackathon · Cloud',
     accent: '#22c55e', status: 'preview', moduleCount: 35 },
 
-  // ───────── ĐANG KHOÁ (Sắp mở) ─────────
-  // Phổ thông (K-12)
+  // ───────── PHỔ THÔNG (K-12) ─────────
   { id: 'primary', name: 'Trường Tiểu học',                shortName: 'Tiểu học', icon: '🎒',
-    tagline: 'Lớp 1–5 · Toán · Tiếng Việt · Tự nhiên & Xã hội · Tiếng Anh · kỹ năng sống',
-    accent: '#f59e0b', status: 'locked' },
+    tagline: 'Lớp 1–5 · Toán (đã có) · Tiếng Việt · TN&XH · Tiếng Anh · học mà chơi',
+    accent: '#f59e0b', status: 'preview', moduleCount: 5 },
   { id: 'secondary', name: 'Trường Trung học cơ sở',       shortName: 'THCS', icon: '📐',
     tagline: 'Lớp 6–9 · Toán · Văn · Anh · Lý · Hoá · Sinh · Sử · Địa · Tin học',
     accent: '#10b981', status: 'locked' },
