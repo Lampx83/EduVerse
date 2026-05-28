@@ -55,7 +55,7 @@ const MODE_LABEL = {
  *   locked: Map<string, string>,  // moduleId → reason
  * }} opts
  */
-export function renderPath({ host, modules, subjects, domain, categories, progress, unlocked, locked, contentSet }) {
+export function renderPath({ host, modules, subjects, domain, categories, progress, unlocked, locked, contentSet, gamified = true }) {
   injectStylesOnce();
 
   // ── Build groups: curriculum theo năm + các cụm khác (practice/skill/…) ──
@@ -99,16 +99,18 @@ export function renderPath({ host, modules, subjects, domain, categories, progre
   const hasContent = (id) => !contentSet || contentSet.has(id);
 
   // ── Gamification: recommendation · boss · milestone · overall progress ──
-  const subjectLabels = {};
-  for (const [k, v] of Object.entries(subjects || {})) subjectLabels[k] = v.label;
-  const agg = aggregateProgress(modules, progress);
-  const rec = recommendNext(modules, progress, hasContent);
-  const milestone = nextMilestone(modules, progress, hasContent, subjectLabels);
-  const recommendedId = rec?.module?.id || null;
-  const bossIds = new Set(modules.filter(m => isBossModule(m, modules)).map(m => m.id));
-  const nodeFlags = { recommendedId, bossIds };
-
-  const journeyHtml = renderJourneyHeader({ rec, milestone, agg, subjects, domain });
+  // CHỈ Tiểu học/THCS (gamified). Trường khác → nodeFlags null + không header.
+  let nodeFlags = null;
+  let journeyHtml = '';
+  if (gamified) {
+    const subjectLabels = {};
+    for (const [k, v] of Object.entries(subjects || {})) subjectLabels[k] = v.label;
+    const agg = aggregateProgress(modules, progress);
+    const rec = recommendNext(modules, progress, hasContent);
+    const milestone = nextMilestone(modules, progress, hasContent, subjectLabels);
+    nodeFlags = { recommendedId: rec?.module?.id || null, bossIds: new Set(modules.filter(m => isBossModule(m, modules)).map(m => m.id)) };
+    journeyHtml = renderJourneyHeader({ rec, milestone, agg, subjects, domain });
+  }
 
   // ── Tabs (sticky) ──
   const tabsHtml = groups.map(g => {
@@ -227,15 +229,18 @@ function renderNode(mod, { subjects, progress, locked, hasContent, nodeFlags }) 
   const subj = subjects[mod.subject] || { label: mod.subject, icon: '📘', color: '#94a3b8' };
   const starsHtml = '★'.repeat(stars) + '☆'.repeat(3 - stars);
 
-  // ── Status tag hierarchy ──
-  const isBoss = nodeFlags?.bossIds?.has(mod.id);
-  const isRecommended = nodeFlags?.recommendedId === mod.id;
+  // ── Status tag hierarchy (chỉ khi gamified = có nodeFlags) ──
+  const gami = !!nodeFlags;
   const passed = stars >= 1;
+  const isBoss = gami && nodeFlags.bossIds?.has(mod.id);
+  const isRecommended = gami && nodeFlags.recommendedId === mod.id;
   let tag = '';
-  if (isLocked) tag = `<span class="pn-tag locked">⛔ Khoá</span>`;
-  else if (passed) tag = `<span class="pn-tag done">✓ Hoàn thành</span>`;
-  else if (isRecommended) tag = `<span class="pn-tag rec">🔥 Gợi ý hôm nay</span>`;
-  else tag = `<span class="pn-tag new">🟣 Mới mở</span>`;
+  if (gami) {
+    if (isLocked) tag = `<span class="pn-tag locked">⛔ Khoá</span>`;
+    else if (passed) tag = `<span class="pn-tag done">✓ Hoàn thành</span>`;
+    else if (isRecommended) tag = `<span class="pn-tag rec">🔥 Gợi ý hôm nay</span>`;
+    else tag = `<span class="pn-tag new">🟣 Mới mở</span>`;
+  }
   const bossBadge = isBoss ? `<span class="pn-boss" title="Boss môn ${subj.label}">👑</span>` : '';
 
   // Quiz badge (luôn có) + experiences. Node khoá → CSS pointer-events:none làm badge trơ.
@@ -266,7 +271,7 @@ function renderNode(mod, { subjects, progress, locked, hasContent, nodeFlags }) 
          role="link"
          tabindex="${isLocked ? -1 : 0}"
          ${isLocked ? `aria-disabled="true" title="🔒 ${reason}"` : ''}>
-      <div class="pn-tagrow">${tag}${bossBadge}</div>
+      ${gami ? `<div class="pn-tagrow">${tag}${bossBadge}</div>` : ''}
       <div class="pn-head">
         <span class="pn-icon">${mod.icon || subj.icon}</span>
         <span class="pn-id">${mod.id}</span>
@@ -747,9 +752,22 @@ export function showAchievementToast(achievement) {
  * followed by stat pills (sao / coin / streak + risk / huy hiệu).
  * @param {{wallet:object, progress:object, modules?:Array, atRisk?:boolean}} opts
  */
-export function renderWalletPills(host, { wallet, progress, modules, atRisk }) {
+export function renderWalletPills(host, { wallet, progress, modules, atRisk, gamified = true }) {
   injectStylesOnce();
   const totalStars = Object.values(progress || {}).reduce((s, p) => s + (p?.stars || 0), 0);
+
+  // Trường không game hoá → chỉ hàng pill cổ điển (không thanh cấp độ/rank).
+  if (!gamified) {
+    host.innerHTML = `
+      <div class="wallet-row" id="wallet-row">
+        <span class="wallet-pill stars"><span class="wp-icon">⭐</span><span class="wp-val">${totalStars}</span> sao</span>
+        <span class="wallet-pill coins"><span class="wp-icon">🪙</span><span class="wp-val">${wallet.coins}</span> coin</span>
+        <span class="wallet-pill streak"><span class="wp-icon">🔥</span><span class="wp-val">${wallet.streak}</span> ngày</span>
+        <span class="wallet-pill achievements"><span class="wp-icon">🏆</span><span class="wp-val">${(wallet.achievements || []).length}</span> huy hiệu</span>
+      </div>`;
+    return;
+  }
+
   const li = levelInfo(wallet.xp || 0);
   const { rank, next, levelsToNext } = rankFor(li.level);
   const avatar = avatarFor(li.level);

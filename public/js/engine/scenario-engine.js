@@ -52,6 +52,9 @@ export class ScenarioEngine {
     this.onComplete = cfg.onComplete || (() => {});
     this.playerName = cfg.playerName || 'Ẩn danh';
     this.classCode = cfg.classCode;
+    // Quiz "phản hồi tức thì" (game hoá) — chỉ bật cho Tiểu học/THCS.
+    // Mặc định false → quiz cổ điển (chọn rồi Nộp bài một lần).
+    this.instantFeedback = !!cfg.instantFeedback;
     this.assessment = new Assessment(this.scenario);
     this.startedAt = 0;
     this.state = {};
@@ -128,13 +131,55 @@ export class ScenarioEngine {
 // ============================================================
 
 /**
+ * Quiz dispatcher: bản game hoá (phản hồi tức thì) cho Tiểu học/THCS,
+ * còn lại dùng bản cổ điển (chọn rồi Nộp bài).
+ * @param {ScenarioEngine} engine
+ */
+function renderQuiz(engine, host) {
+  if (engine.instantFeedback) return renderQuizInstant(engine, host);
+  return renderQuizClassic(engine, host);
+}
+
+/** Quiz cổ điển — chọn đáp án bằng radio, nộp 1 lần (không thưởng tức thì). */
+function renderQuizClassic(engine, host) {
+  const sc = /** @type {import('./types.js').QuizScenario} */ (engine.scenario);
+  const wrap = document.createElement('div');
+  wrap.className = 'quiz-wrap';
+  const answers = new Array(sc.questions.length).fill(-1);
+
+  sc.questions.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.innerHTML = `
+      <div class="quiz-stem"><b>Câu ${i + 1}.</b> ${q.stem}</div>
+      ${q.image ? `<img src="${q.image}" class="quiz-img"/>` : ''}
+      <div class="quiz-choices">
+        ${q.choices.map((c, ci) => `
+          <label class="quiz-choice"><input type="radio" name="q${i}" value="${ci}"/> ${c}</label>
+        `).join('')}
+      </div>`;
+    card.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('change', () => { answers[i] = parseInt(inp.value); });
+    });
+    wrap.appendChild(card);
+  });
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'submit-btn';
+  submitBtn.textContent = 'Nộp bài';
+  submitBtn.onclick = () => engine.complete({ answers, questions: sc.questions });
+  wrap.appendChild(submitBtn);
+  host.appendChild(wrap);
+}
+
+/**
  * Quiz với PHẢN HỒI NGAY mỗi câu:
  *  - chọn đáp án → khoá câu, tô xanh đáp án đúng / đỏ đáp án sai,
  *    hiện "+XP" và lời giải ngắn.
  *  - đủ tất cả câu → nút "Xem kết quả" mở màn tổng kết.
  * @param {ScenarioEngine} engine
  */
-function renderQuiz(engine, host) {
+function renderQuizInstant(engine, host) {
   injectQuizFxStyles();
   const sc = /** @type {import('./types.js').QuizScenario} */ (engine.scenario);
   const wrap = document.createElement('div');

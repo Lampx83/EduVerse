@@ -272,7 +272,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   </div>
 </div>
 <script type="module">
-  import { loadActiveDomain } from './js/engine/domain.js';
+  import { loadActiveDomain, getActiveDomainId, isGamifiedDomain } from './js/engine/domain.js';
   import { onLogin, getProgress, getDailyQuests, streakAtRisk } from './js/engine/wallet.js';
   import { recommendNext, nextMilestone } from './js/engine/gamification.js';
   import { renderWalletPills, renderDailyQuests, renderContinueCard, showAchievementToast } from './js/engine/path-renderer.js';
@@ -280,6 +280,8 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
   try {
     const loginEvent = onLogin();              // streak + daily check-in
+    // Bảng điều khiển game hoá CHỈ hiện cho Tiểu học + THCS.
+    if (!isGamifiedDomain(getActiveDomainId())) throw new Error('not-gamified');
     const dom = await loadActiveDomain();
     const { MODULES, SUBJECTS, DOMAIN } = dom;
     const progress = getProgress();

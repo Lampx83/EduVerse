@@ -74,7 +74,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 <!-- Load domain + render path (curriculum + các cụm thực hành/kỹ năng/…) -->
 <script type="module">
   import { CATEGORIES } from './js/engine/learning-path.js';
-  import { loadActiveDomain, getActiveDomainId, isDomainOpen } from './js/engine/domain.js';
+  import { loadActiveDomain, getActiveDomainId, isDomainOpen, isGamifiedDomain } from './js/engine/domain.js';
   import { renderPath, renderWalletPills, renderDailyQuests, showAchievementToast } from './js/engine/path-renderer.js';
   import { onLogin, getProgress, checkAchievements, getDailyQuests, streakAtRisk } from './js/engine/wallet.js';
   import { primeModulesCache, ALL_SCENARIOS } from './js/scenarios/index.js';
@@ -104,19 +104,22 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
   const progress = getProgress();
 
+  // Game hoá (XP/level/journey/quest) CHỈ cho Tiểu học + THCS.
+  const GAMIFIED = isGamifiedDomain(getActiveDomainId());
+
   // Gate DUY NHẤT = có nội dung. Module nào có content → bấm được;
   // không có → khoá. Prereq chỉ còn là đường nối trực quan (không chặn).
   renderPath({
     host: document.getElementById('path-host'),
     modules: MODULES, subjects: SUBJECTS, domain: DOMAIN, categories: CATEGORIES,
-    progress, locked: new Map(), contentSet,
+    progress, locked: new Map(), contentSet, gamified: GAMIFIED,
   });
 
   const loginEvent = onLogin();
   renderWalletPills(document.getElementById('wallet-host'), {
-    wallet: loginEvent.wallet, progress, modules: MODULES, atRisk: streakAtRisk(),
+    wallet: loginEvent.wallet, progress, modules: MODULES, atRisk: streakAtRisk(), gamified: GAMIFIED,
   });
-  renderDailyQuests(document.getElementById('quests-host'), getDailyQuests());
+  if (GAMIFIED) renderDailyQuests(document.getElementById('quests-host'), getDailyQuests());
 
   const newly = checkAchievements(progress, loginEvent.wallet, ACHIEVEMENTS);
   let delay = 600;

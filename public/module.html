@@ -157,7 +157,7 @@
   import { getScenariosForModule } from './js/scenarios/index.js';
   import { MODULES as PHARMACY_MODULES } from './js/engine/learning-path.js';
   import { getPlayerName, getClassCode } from './js/api.js';
-  import { loadActiveDomain } from './js/engine/domain.js';
+  import { loadActiveDomain, getActiveDomainId, isGamifiedDomain } from './js/engine/domain.js';
   import { awardForResult, recordModuleStars, getProgress } from './js/engine/wallet.js';
   import { showRewardOverlay } from './js/engine/reward-fx.js';
 
@@ -190,6 +190,9 @@
   const MODULES = DOMAIN_MODULES;
   const moduleMeta = MODULES.find(m => m.id === moduleId)
     || PHARMACY_MODULES.find(m => m.id === moduleId);
+
+  // Game hoá (XP/reward/quiz phản hồi tức thì) CHỈ cho Tiểu học + THCS.
+  const GAMIFIED = isGamifiedDomain(getActiveDomainId());
 
   const picker = document.getElementById('picker');
   const app = document.getElementById('app');
@@ -329,13 +332,23 @@
       scenario,
       playerName: getPlayerName() || 'Ẩn danh',
       classCode: getClassCode() || undefined,
+      instantFeedback: GAMIFIED,            // quiz phản hồi tức thì chỉ ở Tiểu học/THCS
       onComplete: (result) => handleComplete(result, scenario),
     });
     engine.start();
   }
 
-  /** Core loop reward step: award coins/XP/stars/quests, celebrate, then show breakdown. */
+  // Chống nộp/“Hoàn thành” nhiều lần để farm điểm: chỉ xử lý 1 lần.
+  let _completed = false;
+
   async function handleComplete(result, scenario) {
+    if (_completed) return;
+    _completed = true;
+
+    // Trường KHÔNG game hoá (Dược, CNTT…): giữ hành vi cũ — chỉ hiện kết quả,
+    // không thưởng XP/coin, không màn reward.
+    if (!GAMIFIED) { showResult(result); return; }
+
     let award = null;
     try {
       const progress = getProgress();
@@ -348,7 +361,11 @@
       if (award) await showRewardOverlay({ result, award, wallet: award.wallet });
     } catch (e) { console.warn('[reward] overlay failed', e); }
 
-    showResult(result);
+    // Làm xong là THOÁT ngay về lộ trình (chống bấm hoàn thành nhiều lần).
+    const dest = backParam
+      ? decodeURIComponent(backParam)
+      : `school.html?domain=${encodeURIComponent(getActiveDomainId())}`;
+    location.href = dest;
   }
 
   function showResult(result) {

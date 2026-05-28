@@ -131,6 +131,14 @@ export function isDomainOpen(id) {
   return !!DOMAIN_REGISTRY[id] && meta?.status !== 'locked';
 }
 
+/**
+ * Các trường áp dụng "lớp học game hoá" (XP/level/reward/quiz phản hồi tức
+ * thì/learning-path). CHỈ Tiểu học + THCS; các trường khác giữ giao diện học
+ * cổ điển (quiz nộp 1 lần, không thưởng).
+ */
+export const GAMIFIED_DOMAINS = new Set(['primary', 'secondary']);
+export function isGamifiedDomain(id) { return GAMIFIED_DOMAINS.has(id); }
+
 /** Active domain ID (đọc từ URL hoặc localStorage). Trường khoá → fallback pharmacy. */
 export function getActiveDomainId() {
   const params = new URLSearchParams(location.search);
