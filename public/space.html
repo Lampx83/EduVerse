@@ -108,6 +108,7 @@
   .mcq .mcq-fb { font-size:13px; margin-top:8px; padding:10px 13px; border-radius:9px; background:rgba(251,191,36,.12); border-left:3px solid var(--accent); display:none; }
   .mcq .mcq-fb.show { display:block; }
 </style>
+<script src="/js/spaces-highschool.js" charset="utf-8"></script>
 </head>
 <body>
 <div class="wrap" id="wrap">Đang tải…</div>
@@ -281,7 +282,9 @@ const SPACES_PHARMACY = {
       {ic:'📋',name:'Đảm bảo chất lượng (QA)',rd:'SOP & hồ sơ lô.',panel:[
         {h:'QA – Đảm bảo chất lượng'},
         {ul:['QA = hệ thống phòng ngừa lỗi (toàn quy trình); QC = kiểm tra sản phẩm','SOP – quy trình thao tác chuẩn cho từng việc','Hồ sơ lô (batch record) giúp truy xuất nguồn gốc','Đào tạo & audit định kỳ']},
-        {note:'GMP nhấn mạnh: "chất lượng được thiết kế vào quy trình", không chỉ kiểm ở khâu cuối.'}]}],
+        {note:'GMP nhấn mạnh: "chất lượng được thiết kế vào quy trình", không chỉ kiểm ở khâu cuối.'}]},
+      {ic:'🧪',name:'Pha loãng dung dịch (tương tác)',rd:'C₁V₁=C₂V₂ — tính V₁ & dung môi, có becher minh hoạ.',href:'/dilution.html'},
+      {ic:'📈',name:'Đường chuẩn UV-Vis (tương tác)',rd:'Hồi quy A–C, R², suy nồng độ mẫu thử.',href:'/calibration-curve.html'}],
     skills:['Chạy & đọc TLC','Phương pháp định lượng','QC/QA theo Dược điển'],
     quiz:[{q:'Hệ số Rf được tính bằng?',o:['Quãng đường chất / quãng đường dung môi','Quãng dung môi / quãng chất','Khối lượng / thể tích','Thời gian chạy'],a:0},
       {q:'TLC chủ yếu dùng để?',o:['Định tính & kiểm tra độ tinh khiết','Đo huyết áp','Trồng dược liệu','Tính giá thuốc'],a:0},
@@ -363,7 +366,8 @@ const SPACES_PHARMACY = {
       {q:'Thuốc "khoảng điều trị hẹp" (vd warfarin) đòi hỏi?',o:['Theo dõi nồng độ/đáp ứng chặt chẽ','Dùng tuỳ ý','Không cần theo dõi','Tăng liều liên tục'],a:0}]},
 
   garden:{emoji:'🌿',name:'Vườn dược liệu',accent:'#5bbd7c',intro:'Nhận diện cây thuốc, bộ phận dùng và công dụng.',
-    rooms:[{ic:'🌱',name:'Nhận diện dược liệu',rd:'Lật thẻ ôn bộ phận dùng + công dụng.',panel:[
+    rooms:[{ic:'🌳',name:'Vườn 3D (đi dạo & khám phá)',rd:'Bấm vào cây xem bộ phận dùng & công dụng · có đố vui.',href:'/herb-garden-3d.html'},
+      {ic:'🌱',name:'Nhận diện dược liệu',rd:'Lật thẻ ôn bộ phận dùng + công dụng.',panel:[
         {p:'Lật từng thẻ để ôn BỘ PHẬN DÙNG & CÔNG DỤNG của 6 dược liệu quen thuộc.'},
         {flash:[{e:'🫚',f:'Gừng',b:'Thân rễ — ấm bụng, chống nôn'},
           {e:'🌿',f:'Bạc hà',b:'Lá — giải cảm, sát khuẩn họng'},
@@ -420,7 +424,9 @@ const SPACES_PHARMACY = {
         {h:'Ca truyền nhiễm'},
         {mcq:[{q:'Nguyên tắc cốt lõi điều trị lao để tránh kháng thuốc?',o:['Phối hợp nhiều thuốc, đủ liều, đủ thời gian, tuân thủ (DOTS)','Một thuốc, ngắn ngày','Ngừng khi hết triệu chứng','Đổi thuốc liên tục'],a:0,fb:'Lao cần phác đồ phối hợp đủ liều/thời gian; DOTS giúp tuân thủ, tránh lao kháng thuốc.'},
           {q:'Thuốc ARV trong HIV cần dùng thế nào?',o:['Đều đặn suốt đời, tuân thủ cao giữ tải lượng dưới ngưỡng','Khi nào nhớ thì uống','Ngừng khi thấy khoẻ','Chỉ uống lúc ốm'],a:0,fb:'Tuân thủ ARV cao giữ tải lượng virus thấp (U=U) — giảm kháng thuốc & lây truyền.'}]},
-        {note:'Dược sĩ tư vấn tuân thủ & sàng lọc tương tác (vd rifampicin cảm ứng CYP mạnh).'}]}],
+        {note:'Dược sĩ tư vấn tuân thủ & sàng lọc tương tác (vd rifampicin cảm ứng CYP mạnh).'}]},
+      {ic:'🧮',name:'Máy tính liều Nhi (tương tác)',rd:'Theo cân nặng → liều & thể tích siro; có tự kiểm tra.',href:'/pediatric-dose.html'},
+      {ic:'💧',name:'Tốc độ truyền dịch (tương tác)',rd:'Tính mL/h & giọt/phút; buồng đếm giọt động.',href:'/iv-infusion.html'}],
     skills:['Xử trí cấp cứu','Dược lâm sàng theo khoa','An toàn thuốc & liều đặc biệt'],
     quiz:[{q:'Thuốc ĐẦU TAY trong sốc phản vệ?',o:['Adrenalin (epinephrine) tiêm bắp','Paracetamol','Vitamin C','Kháng sinh'],a:0},
       {q:'Liều Adrenalin người lớn tiêm bắp (BYT 51/2017)?',o:['0,5 mg (½ ống 1mg/1ml)','5 mg','50 mg','0,01 mg'],a:0},
@@ -446,7 +452,9 @@ const SPACES_PHARMACY = {
       {ic:'🚭',name:'Tư vấn cai thuốc lá',rd:'Mô hình 5A.',panel:[
         {h:'Mô hình 5A cai thuốc lá'},
         {ul:['Ask – Hỏi về thói quen hút thuốc','Advise – Khuyên bỏ thuốc rõ ràng','Assess – Đánh giá mức sẵn sàng bỏ','Assist – Hỗ trợ (NRT, tư vấn hành vi)','Arrange – Hẹn theo dõi']},
-        {note:'Liệu pháp thay thế nicotine (NRT) + tư vấn hành vi tăng rõ tỉ lệ cai thành công.'}]}],
+        {note:'Liệu pháp thay thế nicotine (NRT) + tư vấn hành vi tăng rõ tỉ lệ cai thành công.'}]},
+      {ic:'🩺',name:'Đo huyết áp (tương tác)',rd:'Bơm – xả – nghe Korotkoff – đọc & phân loại HA.',href:'/bp-measure.html'},
+      {ic:'💊',name:'Cấp phát thuốc (tương tác)',rd:'Đếm đúng số viên + kiểm 5 Đúng, bắt lỗi nhãn.',href:'/dispense.html'}],
     skills:['Sắp xếp thuốc theo ATC','Cấp phát & tư vấn GPP','Sàng lọc cờ đỏ → chuyển khám'],
     quiz:[{q:'GPP là viết tắt của?',o:['Good Pharmacy Practice','Global Product Plan','General Pharma Price','Good People Project'],a:0},
       {q:'Bán thuốc kê đơn (Rx) bắt buộc phải có?',o:['Đơn thuốc hợp lệ','Chỉ cần tiền','Quảng cáo','Lời giới thiệu'],a:0},
@@ -860,14 +868,632 @@ const SPACES_SECONDARY = {
       {q:'Sau khi ăn ở căng tin, em nên?',o:['Dọn & bỏ rác đúng nơi quy định','Để rác lại trên bàn','Vứt xuống sàn','Đổ thức ăn thừa bừa bãi'],a:0}]},
 };
 
-const SPACE_SETS = { pharmacy: SPACES_PHARMACY, secondary: SPACES_SECONDARY };
-const DOMAIN_TITLES = { pharmacy: 'Trường Dược', secondary: 'Trường THCS' };
+// ============================================================
+// TRƯỜNG CÔNG NGHỆ THÔNG TIN — không gian bên trong mỗi toà nhà
+// (keyed theo building.id của campus IT trong b-iso-canvas.html)
+// ============================================================
+const SPACES_IT = {
+  admin:{emoji:'⚙️',name:'Hành chính – Hiệu bộ',accent:'#94a3b8',intro:'Trung tâm điều hành Trường CNTT: theo dõi tiến độ, chương trình đào tạo 4 năm, hướng nghiệp và tiếp nhận yêu cầu cải tiến.',
+    rooms:[{ic:'📊',name:'Bảng điều khiển',rd:'Tiến độ, điểm, huy hiệu.',href:'/dashboard.html'},
+      {ic:'🛎️',name:'Phòng tiếp nhận yêu cầu',rd:'Gửi đề xuất cải tiến môn học/lab.',panel:[
+        {h:'Ban điều hành AI'},
+        {p:'Nơi sinh viên gửi yêu cầu, đề xuất cải tiến môn học, lab và hoạt động thực hành.'},
+        {ul:['Đề xuất thêm bài lab, đề CTF, dataset','Báo lỗi nội dung hoặc góp ý giao diện','Xin mở thêm chủ đề (Rust, Go, LLMOps…)']},
+        {note:'Vào mục "Ban điều hành AI" ở trang trường để gửi — nội dung được cập nhật mỗi ngày.'}]},
+      {ic:'🎓',name:'Chương trình đào tạo',rd:'Lộ trình Cử nhân CNTT 4 năm.',panel:[
+        {h:'Cử nhân Công nghệ thông tin — 4 năm'},
+        {timeline:[{t:'Năm 1 — Đại cương',d:'Python, Toán rời rạc, Kiến trúc máy tính, Hệ điều hành, Tiếng Anh CNTT.'},
+          {t:'Năm 2 — Cơ sở ngành',d:'Cấu trúc dữ liệu & giải thuật, OOP, CSDL, Mạng, Web.'},
+          {t:'Năm 3 — Chuyên ngành',d:'Kỹ thuật phần mềm, AI/ML, Mobile, DevOps, An toàn thông tin.'},
+          {t:'Năm 4 — Tích hợp',d:'Kiến trúc phần mềm, Cloud, Khoa học dữ liệu, Khoá luận.'}]}]},
+      {ic:'🧭',name:'Hướng nghiệp CNTT',rd:'Các vị trí nghề nghiệp.',panel:[
+        {h:'Một tấm bằng CNTT — nhiều hướng đi'},
+        {cards:[{ic:'👨‍💻',t:'Software Engineer',d:'Phát triển phần mềm, web, hệ thống.'},
+          {ic:'📊',t:'Data Scientist',d:'Phân tích dữ liệu, mô hình ML.'},
+          {ic:'☁️',t:'DevOps / SRE',d:'CI/CD, hạ tầng, vận hành cloud.'},
+          {ic:'🔒',t:'Security Engineer',d:'Bảo mật, pentest, ứng cứu sự cố.'},
+          {ic:'📱',t:'Mobile Developer',d:'Ứng dụng Android/iOS.'},
+          {ic:'🤖',t:'AI/ML Engineer',d:'Huấn luyện & triển khai mô hình AI.'}]},
+        {note:'Chọn hướng theo thế mạnh — đặt mục tiêu học phù hợp ở Ký túc xá.'}]}],
+    skills:['Hiểu chương trình đào tạo','Định hướng nghề nghiệp CNTT'],
+    quiz:[{q:'Cử nhân CNTT ở Việt Nam thường đào tạo mấy năm?',o:['3 năm','4 năm','5 năm','6 năm'],a:1},
+      {q:'Môn lập trình nhập môn phổ biến hiện nay hay dùng ngôn ngữ?',o:['Python','COBOL','Assembly','Fortran'],a:0},
+      {q:'Khoá luận tốt nghiệp thường nằm ở năm nào?',o:['Năm 1','Năm 2','Năm 4','Không có'],a:2}]},
+
+  lecture:{emoji:'🏛️',name:'Giảng đường',accent:'#c2703d',intro:'Học lý thuyết nền tảng ngành CNTT: bài giảng, thuật ngữ tiếng Anh và kiểm tra nhanh.',
+    rooms:[{ic:'🐍',name:'Thực hành Python',rd:'Đọc code & đoán kết quả.',panel:[{h:'Đọc hiểu code Python'},{p:'Chọn kết quả đúng cho từng đoạn code.'},{mcq:[{q:'print(2 ** 3) in ra gì?',o:['8','6','9','23'],a:0,fb:'** là phép luỹ thừa: 2^3 = 8.'},{q:'len("EduVerse") trả về?',o:['8','7','9','Báo lỗi'],a:0,fb:'Chuỗi "EduVerse" có 8 ký tự.'},{q:'[1,2,3][-1] trả về?',o:['3','1','-1','Báo lỗi'],a:0,fb:'Chỉ số âm đếm từ cuối: [-1] là phần tử cuối = 3.'}]}]},
+      {ic:'📽️',name:'Bài giảng nền tảng',rd:'Các môn cốt lõi năm 1–2.',panel:[
+        {h:'Các môn nền tảng'},
+        {cards:[{ic:'🐍',t:'Lập trình (Python)',d:'Biến, vòng lặp, hàm, cấu trúc cơ bản.'},
+          {ic:'🔢',t:'Toán rời rạc',d:'Logic, tập hợp, đồ thị, tổ hợp.'},
+          {ic:'🖥️',t:'Kiến trúc máy tính',d:'CPU, bộ nhớ, nhị phân, hợp ngữ.'},
+          {ic:'🐧',t:'Hệ điều hành',d:'Tiến trình, luồng, bộ nhớ, file system.'},
+          {ic:'🌳',t:'CTDL & Giải thuật',d:'Mảng, danh sách, cây, sắp xếp, tìm kiếm.'},
+          {ic:'🧩',t:'OOP',d:'Lớp, đối tượng, kế thừa, đa hình.'}]},
+        {note:'Luyện các câu hỏi ở mục "Củng cố kiến thức" cuối trang để nắm cốt lõi trước khi vào lab.'}]},
+      {ic:'🔤',name:'Tiếng Anh CNTT',rd:'Lật thẻ thuật ngữ Anh–Việt.',panel:[
+        {p:'Lật thẻ ôn thuật ngữ tiếng Anh chuyên ngành.'},
+        {flash:[{e:'🐞',f:'Bug',b:'Lỗi phần mềm'},{e:'🔁',f:'Loop',b:'Vòng lặp'},
+          {e:'🧮',f:'Algorithm',b:'Thuật toán'},{e:'🗃️',f:'Database',b:'Cơ sở dữ liệu'},
+          {e:'🔌',f:'API',b:'Giao diện lập trình ứng dụng'},{e:'☁️',f:'Deploy',b:'Triển khai (đưa lên chạy)'}]}]},
+      {ic:'⚖️',name:'Đạo đức nghề CNTT',rd:'Tình huống đạo đức số.',panel:[
+        {h:'Đạo đức nghề nghiệp'},
+        {mcq:[{q:'Khi debug, bạn vô tình truy cập được dữ liệu cá nhân người dùng. Nên?',o:['Không xem/sao chép, báo nhóm & xử lý theo quy định','Lưu lại để dùng sau','Đăng lên mạng cho vui','Bán cho bên thứ ba'],a:0,fb:'Tôn trọng quyền riêng tư & bảo mật dữ liệu là nguyên tắc cốt lõi (Nghị định 13/2023, GDPR).'},
+          {q:'Bạn dùng đoạn mã nguồn mở giấy phép GPL trong sản phẩm. Cần?',o:['Tuân thủ điều khoản giấy phép (ghi nguồn, chia sẻ mã theo yêu cầu)','Xoá hết chú thích bản quyền','Coi như code của mình','Bỏ qua giấy phép'],a:0,fb:'Vi phạm giấy phép nguồn mở là vi phạm pháp lý — luôn đọc & tuân thủ LICENSE.'}]}]}],
+    skills:['Nắm lý thuyết cốt lõi','Thuật ngữ tiếng Anh CNTT','Đạo đức nghề nghiệp'],
+    quiz:[{q:'Trong Python, kiểu dữ liệu nào lưu cặp khoá–giá trị?',o:['list','dict','tuple','set'],a:1},
+      {q:'Độ phức tạp của tìm kiếm nhị phân trên mảng đã sắp xếp?',o:['O(n)','O(log n)','O(n²)','O(1)'],a:1},
+      {q:'Trình biên dịch (compiler) làm gì?',o:['Dịch mã nguồn sang mã máy/bytecode','Vẽ giao diện','Quản lý cơ sở dữ liệu','Gửi email'],a:0}]},
+
+  library:{emoji:'📚',name:'Thư viện số',accent:'#93c5fd',intro:'Tra cứu tài liệu, đọc paper khoa học, học mã nguồn mở và rèn kỹ năng viết khoá luận CNTT.',
+    rooms:[{ic:'🧭',name:'Lộ trình tự học',rd:'Roadmap kỹ năng CNTT.',panel:[{h:'Tự học CNTT hiệu quả'},{ul:['Chọn một hướng (web / AI / mobile / security) và bám lộ trình (vd roadmap.sh)','Học theo dự án: làm sản phẩm nhỏ thay vì chỉ xem video','Ghi chú & dạy lại (Feynman) để nhớ lâu','Tham gia cộng đồng: GitHub, diễn đàn, nhóm học']},{note:'Kiên trì đều đặn quan trọng hơn học dồn — mỗi ngày một chút.'}]},
+      {ic:'🔎',name:'Kỹ năng tra cứu',rd:'Nguồn tin cậy cho dân lập trình.',panel:[
+        {h:'Nguồn tra cứu đáng tin'},
+        {ul:['Tài liệu chính thức (docs) của ngôn ngữ/framework','MDN Web Docs cho web; man pages cho Linux','Stack Overflow — đọc kỹ, kiểm chứng lại','Paper: Google Scholar, arXiv, IEEE Xplore, ACM DL']},
+        {note:'Luôn kiểm chứng code chép từ mạng; ưu tiên tài liệu chính thức & đúng phiên bản.'}]},
+      {ic:'📄',name:'Đọc paper khoa học',rd:'Cấu trúc & cách đọc nhanh.',panel:[
+        {h:'Đọc một bài báo khoa học CNTT'},
+        {ol:['Đọc Abstract + Kết luận để nắm ý chính','Xem Hình/Bảng & phần Kết quả','Đọc Phương pháp nếu cần tái lập','Ghi lại đóng góp chính & hạn chế']},
+        {note:'Mẹo 3 lượt đọc: lướt → kỹ ý chính → chi tiết khi cần triển khai.'}]},
+      {ic:'🐙',name:'Open Source Lab',rd:'Đóng góp mã nguồn mở.',panel:[
+        {h:'Bắt đầu đóng góp open source'},
+        {check:['Đọc README & CONTRIBUTING','Tìm issue gắn nhãn "good first issue"','Fork → tạo nhánh → commit nhỏ, rõ','Mở Pull Request kèm mô tả & test','Phản hồi review lịch sự, sửa theo góp ý']},
+        {note:'Đóng góp open source là cách xây portfolio thật & học làm việc nhóm phân tán.'}]},
+      {ic:'✍️',name:'Viết khoá luận',rd:'Cấu trúc IMRaD cho đề tài CNTT.',panel:[
+        {h:'Cấu trúc khoá luận (IMRaD)'},
+        {ol:['Introduction — bài toán & mục tiêu','Methods — kiến trúc hệ thống / thuật toán / thực nghiệm','Results — kết quả, benchmark, đánh giá','and Discussion — bàn luận, hạn chế, hướng phát triển']},
+        {note:'Trích dẫn trung thực, tránh đạo văn (kể cả đạo code); quản lý tài liệu bằng Zotero/BibTeX.'}]}],
+    skills:['Tra cứu & đọc tài liệu','Đóng góp open source','Viết học thuật'],
+    quiz:[{q:'Hệ thống quản lý phiên bản phân tán phổ biến nhất?',o:['Git','SVN','FTP','Zip'],a:0},
+      {q:'Pull Request dùng để?',o:['Đề xuất thay đổi mã để được review & hợp nhất','Tải dữ liệu về máy','Xoá nhánh','Khởi động server'],a:0},
+      {q:'Nguồn nào đáng tin nhất khi học một thư viện mới?',o:['Tài liệu chính thức (official docs)','Bình luận ngẫu nhiên','Quảng cáo','Tin đồn'],a:0}]},
+
+  hall:{emoji:'🎤',name:'Hội trường',accent:'#8b5cf6',intro:'Sự kiện, seminar công nghệ, kick-off hackathon và kết nối cộng đồng công nghệ.',
+    rooms:[{ic:'🎙️',name:'Tech Talk & cộng đồng',rd:'Hội thảo, meetup, hội nghị.',panel:[{h:'Tham gia cộng đồng công nghệ'},{ul:['Tech talk & webinar: học từ kỹ sư đi trước','Meetup / Hackathon: kết nối & thực chiến','Hội nghị lớn: Google I/O, WWDC, GitHub Universe…','Đóng góp lại: viết blog, thuyết trình, mentor']},{mcq:[{q:'Lợi ích lớn nhất khi tham gia cộng đồng lập trình?',o:['Học hỏi, kết nối & cơ hội nghề nghiệp','Chỉ để cho vui','Không có lợi ích gì','Chỉ tốn thời gian'],a:0,fb:'Cộng đồng giúp cập nhật xu hướng, mở rộng quan hệ và tìm việc/mentor.'}]}]},
+      {ic:'⚡',name:'Hackathon 48h',rd:'Quy trình một cuộc thi lập trình.',panel:[
+        {h:'Sống sót qua một hackathon'},
+        {timeline:[{t:'Hình thành ý tưởng',d:'Chọn bài toán nhỏ, có demo được trong 48h.'},
+          {t:'Phân vai',d:'Frontend / backend / thuyết trình — chia rõ.'},
+          {t:'MVP trước, đẹp sau',d:'Ưu tiên chạy được luồng chính.'},
+          {t:'Pitch 3 phút',d:'Vấn đề → giải pháp → demo → tác động.'}]},
+        {note:'Đừng ôm đồm: một tính năng chạy mượt hơn mười tính năng dở dang.'}]},
+      {ic:'🎓',name:'Seminar công nghệ',rd:'Kỹ năng thuyết trình kỹ thuật.',panel:[
+        {h:'Thuyết trình kỹ thuật hiệu quả'},
+        {ul:['Mở đầu bằng vấn đề & vì sao quan trọng','Một slide một ý; sơ đồ hơn chữ','Demo trực tiếp nếu được (có phương án dự phòng)','Chuẩn bị trả lời câu hỏi phản biện']},
+        {mcq:[{q:'Demo live có rủi ro hỏng. Cách phòng ngừa tốt nhất?',o:['Quay sẵn video demo dự phòng','Không demo gì cả','Đổ lỗi cho mạng','Bỏ qua phần hỏi đáp'],a:0,fb:'Luôn có video/screenshot dự phòng — sự cố mạng/máy chiếu là chuyện thường gặp.'}]}]}],
+    skills:['Thuyết trình kỹ thuật','Làm việc nhóm','Tinh thần hackathon'],
+    quiz:[{q:'MVP trong khởi nghiệp/hackathon nghĩa là?',o:['Minimum Viable Product — sản phẩm khả dụng tối thiểu','Most Valuable Player','Maximum Value Plan','Multi Version Product'],a:0},
+      {q:'Khi pitch 3 phút, nên ưu tiên trình bày?',o:['Vấn đề → giải pháp → demo → tác động','Lịch sử công ty','Đọc toàn bộ code','Liệt kê mọi tính năng'],a:0},
+      {q:'Yếu tố quan trọng nhất của một demo hackathon?',o:['Luồng chính chạy được & rõ ràng','Giao diện cực kỳ cầu kỳ','Nhiều màu sắc','Nhạc nền'],a:0}]},
+
+  codelab:{emoji:'💻',name:'Lab Lập trình',accent:'#38bdf8',intro:'Phòng thực hành lập trình: viết code, debug, dùng Git và rèn thói quen clean code.',
+    rooms:[{ic:'💻',name:'Code Lab — viết & chạy code',rd:'Viết JavaScript, chạy thật, chấm tự động.',href:'/it-code-lab.html?domain=it'},
+      {ic:'⚡',name:'Thử thách giải thuật',rd:'Giải nhanh bài nhỏ.',panel:[{h:'Khởi động tư duy lập trình'},{mcq:[{q:'Đảo ngược chuỗi "abc" được?',o:['"cba"','"abc"','"bca"','Báo lỗi'],a:0,fb:'Đảo ngược thứ tự: c-b-a.'},{q:'Tổng 1+2+…+100 bằng?',o:['5050','100','1000','5000'],a:0,fb:'Công thức n(n+1)/2 = 100×101/2 = 5050.'},{q:'Kiểm tra một số là chẵn dùng phép?',o:['n % 2 == 0','n / 2','n * 2','n + 2'],a:0,fb:'Số dư khi chia 2 bằng 0 ⇒ số chẵn.'}]}]},
+      {ic:'🐞',name:'Quy trình debug',rd:'Tìm & sửa lỗi có hệ thống.',panel:[
+        {h:'Debug như một kỹ sư'},
+        {ol:['Tái hiện lỗi một cách ổn định','Khoanh vùng: chia để trị, in log / breakpoint','Đặt giả thuyết & kiểm chứng từng cái','Sửa nguyên nhân gốc, không chỉ triệu chứng','Viết test để lỗi không tái phát']},
+        {note:'Rubber duck debugging: giải thích code cho "vịt nhựa" thường giúp tự phát hiện lỗi.'}]},
+      {ic:'🌿',name:'Git căn bản',rd:'Lật thẻ lệnh Git thường dùng.',panel:[
+        {p:'Lật thẻ ôn các lệnh Git cốt lõi.'},
+        {flash:[{e:'📥',f:'git clone',b:'Sao chép repo về máy'},{e:'➕',f:'git add',b:'Đưa thay đổi vào staging'},
+          {e:'💾',f:'git commit',b:'Ghi lại một mốc thay đổi'},{e:'🌱',f:'git branch',b:'Tạo/xem nhánh'},
+          {e:'🔀',f:'git merge',b:'Hợp nhất nhánh'},{e:'☁️',f:'git push',b:'Đẩy commit lên remote'}]}]},
+      {ic:'✨',name:'Clean code',rd:'Viết code dễ đọc, dễ bảo trì.',panel:[
+        {h:'Nguyên tắc clean code'},
+        {ul:['Đặt tên biến/hàm rõ nghĩa, nhất quán','Hàm ngắn, làm một việc (Single Responsibility)','Tránh lặp (DRY); tách hằng số magic number','Viết test & xử lý lỗi ở ranh giới hệ thống']},
+        {mcq:[{q:'Tên biến nào tốt nhất cho số sinh viên đã đăng ký?',o:['registeredStudentCount','x','data2','tmp'],a:0,fb:'Tên rõ nghĩa giúp code tự tài liệu hoá — người sau (và chính bạn) đọc dễ hơn nhiều.'}]}]}],
+    skills:['Viết & debug code','Dùng Git','Thói quen clean code'],
+    quiz:[{q:'Lệnh nào ghi lại một mốc thay đổi trong Git?',o:['git commit','git status','git log','git diff'],a:0},
+      {q:'Nguyên tắc DRY nghĩa là?',o:['Do not Repeat Yourself — tránh lặp code','Delete Run Yearly','Data Read Yield','Debug Right Yet'],a:0},
+      {q:'Cách tốt để lỗi đã sửa không tái phát?',o:['Viết test tự động cho trường hợp đó','Xoá file','Ẩn thông báo lỗi','Khởi động lại máy'],a:0}]},
+
+  algolab:{emoji:'🌳',name:'Lab Giải thuật & CTDL',accent:'#4ade80',intro:'Cấu trúc dữ liệu và giải thuật: chọn đúng cấu trúc, phân tích độ phức tạp, luyện tư duy giải bài.',
+    rooms:[{ic:'📊',name:'Trực quan giải thuật — xem từng bước',rd:'Bubble/Selection/Insertion/Merge/Quick chạy động: so sánh, hoán đổi, Big-O + củng cố.',href:'/it-algo-viz.html?domain=it'},
+      {ic:'🧮',name:'Code Lab — luyện giải thuật',rd:'Cài & chạy thuật toán, vượt bộ test.',href:'/it-code-lab.html?domain=it'},
+      {ic:'🧗',name:'Luyện giải bài',rd:'Chọn thuật toán & cấu trúc đúng.',panel:[{h:'Chọn đúng công cụ cho bài toán'},{mcq:[{q:'Tìm một phần tử trong MẢNG ĐÃ SẮP XẾP nhanh nhất bằng?',o:['Tìm kiếm nhị phân O(log n)','Duyệt tuyến tính O(n)','Sắp xếp lại rồi duyệt','Chọn ngẫu nhiên'],a:0,fb:'Mảng đã sắp xếp ⇒ binary search O(log n).'},{q:'Hàng đợi công việc xử lý theo thứ tự đến nên dùng?',o:['Queue (FIFO)','Stack (LIFO)','Mảng ngẫu nhiên','Cây nhị phân'],a:0,fb:'Đến trước xử lý trước ⇒ Queue.'},{q:'Liên tục lấy phần tử NHỎ NHẤT nên dùng?',o:['Min-heap (priority queue)','Mảng thường','Stack','Hash map'],a:0,fb:'Heap cho lấy min/max ở O(log n).'}]}]},
+      {ic:'🧱',name:'Cấu trúc dữ liệu',rd:'Lật thẻ đặc điểm & ứng dụng.',panel:[
+        {p:'Lật thẻ ôn các cấu trúc dữ liệu nền tảng.'},
+        {flash:[{e:'📚',f:'Stack',b:'LIFO — vào sau ra trước (undo, đệ quy)'},{e:'🚶',f:'Queue',b:'FIFO — vào trước ra trước (hàng đợi)'},
+          {e:'🗺️',f:'Hash map',b:'Tra cứu khoá trung bình O(1)'},{e:'🌲',f:'Binary tree',b:'Cây nhị phân — tìm kiếm/sắp xếp'},
+          {e:'🕸️',f:'Graph',b:'Đồ thị — quan hệ, đường đi (BFS/DFS)'},{e:'🪵',f:'Heap',b:'Lấy min/max nhanh (priority queue)'}]}]},
+      {ic:'⏱️',name:'Độ phức tạp (Big-O)',rd:'Ước lượng chi phí thuật toán.',panel:[
+        {h:'Big-O thường gặp (nhanh → chậm)'},
+        {cards:[{ic:'🟢',t:'O(1)',d:'Hằng số — truy cập mảng, hash.'},
+          {ic:'🔵',t:'O(log n)',d:'Tìm kiếm nhị phân, cây cân bằng.'},
+          {ic:'🟡',t:'O(n)',d:'Duyệt tuyến tính một lần.'},
+          {ic:'🟠',t:'O(n log n)',d:'Sắp xếp tốt (merge/quick).'},
+          {ic:'🔴',t:'O(n²)',d:'Hai vòng lặp lồng — tránh khi n lớn.'}]},
+        {mcq:[{q:'Sắp xếp n phần tử nhanh thường đạt độ phức tạp?',o:['O(n log n)','O(n²)','O(2^n)','O(1)'],a:0,fb:'Merge sort / quicksort trung bình O(n log n) — tốt hơn nhiều so với O(n²).'}]}]}],
+    skills:['Chọn đúng cấu trúc dữ liệu','Phân tích Big-O','Tư duy giải thuật'],
+    quiz:[{q:'Cấu trúc nào hoạt động theo LIFO?',o:['Stack','Queue','Array','Hash map'],a:0},
+      {q:'Tra cứu theo khoá trong hash map trung bình có độ phức tạp?',o:['O(1)','O(n)','O(log n)','O(n²)'],a:0},
+      {q:'Duyệt đồ thị theo chiều rộng (BFS) dùng cấu trúc?',o:['Queue','Stack','Heap','Cây nhị phân'],a:0}]},
+
+  dblab:{emoji:'🗄️',name:'Trung tâm CSDL',accent:'#60a5fa',intro:'Cơ sở dữ liệu quan hệ: thiết kế bảng, viết SQL, chuẩn hoá và phòng tránh SQL injection.',
+    rooms:[{ic:'🔎',name:'SQL căn bản',rd:'Các câu lệnh truy vấn cốt lõi.',panel:[
+        {h:'Bộ lệnh SQL thường dùng'},
+        {cards:[{ic:'📤',t:'SELECT',d:'Lấy dữ liệu từ bảng.'},{ic:'🔗',t:'JOIN',d:'Nối nhiều bảng theo khoá.'},
+          {ic:'🧮',t:'GROUP BY',d:'Gom nhóm & tổng hợp (COUNT, SUM).'},{ic:'🎯',t:'WHERE',d:'Lọc theo điều kiện.'},
+          {ic:'➕',t:'INSERT',d:'Thêm bản ghi mới.'},{ic:'♻️',t:'UPDATE',d:'Cập nhật bản ghi.'}]},
+        {note:'Khoá chính (primary key) định danh duy nhất; khoá ngoại (foreign key) liên kết bảng.'}]},
+      {ic:'📐',name:'Thiết kế & chuẩn hoá',rd:'ER & dạng chuẩn (1NF–3NF).',panel:[
+        {h:'Chuẩn hoá dữ liệu'},
+        {ol:['1NF — mỗi ô một giá trị nguyên tử','2NF — bỏ phụ thuộc một phần vào khoá','3NF — bỏ phụ thuộc bắc cầu']},
+        {note:'Chuẩn hoá giảm trùng lặp & bất nhất; đôi khi denormalize có chủ đích để tăng tốc đọc.'}]},
+      {ic:'🛡️',name:'Phòng SQL injection',rd:'Bảo mật truy vấn.',panel:[
+        {h:'Chống SQL injection'},
+        {mcq:[{q:'Cách hiệu quả nhất để chống SQL injection?',o:['Dùng prepared statement / tham số hoá truy vấn','Nối chuỗi trực tiếp dữ liệu người dùng','Tin tưởng mọi input','Ẩn thông báo lỗi'],a:0,fb:'Prepared statement tách dữ liệu khỏi câu lệnh — input không thể đổi cấu trúc truy vấn.'},
+          {q:'Có nên lưu mật khẩu dạng văn bản thường (plaintext)?',o:['Không — phải băm bằng bcrypt/argon2 + salt','Có, cho tiện','Mã hoá base64 là đủ','Lưu trong cookie'],a:0,fb:'Mật khẩu phải được băm (hash) có salt; base64 KHÔNG phải mã hoá.'}]}]}],
+    skills:['Viết SQL truy vấn','Thiết kế & chuẩn hoá CSDL','Bảo mật dữ liệu'],
+    quiz:[{q:'Lệnh SQL nào dùng để LẤY dữ liệu?',o:['SELECT','DELETE','DROP','CREATE'],a:0},
+      {q:'Khoá chính (primary key) có đặc điểm?',o:['Định danh duy nhất mỗi bản ghi','Có thể trùng lặp','Luôn là kiểu chuỗi','Không bắt buộc duy nhất'],a:0},
+      {q:'Phòng SQL injection tốt nhất bằng?',o:['Truy vấn tham số hoá (prepared statement)','Nối chuỗi input','Tắt log','Dùng tài khoản admin'],a:0}]},
+
+  netlab:{emoji:'🌐',name:'Lab Mạng máy tính',accent:'#22d3ee',intro:'Mạng máy tính: mô hình OSI/TCP-IP, giao thức, địa chỉ IP và nền tảng bảo mật mạng.',
+    rooms:[{ic:'🧅',name:'Mô hình OSI',rd:'7 tầng & vai trò.',panel:[
+        {h:'7 tầng OSI (trên → dưới)'},
+        {ul:['7 Application — HTTP, DNS, SMTP','6 Presentation — mã hoá, nén','5 Session — phiên làm việc','4 Transport — TCP/UDP, cổng','3 Network — IP, định tuyến','2 Data Link — MAC, switch','1 Physical — tín hiệu, cáp']},
+        {note:'TCP đảm bảo thứ tự & tin cậy; UDP nhanh nhưng không đảm bảo (dùng cho streaming, game).'}]},
+      {ic:'🔌',name:'Giao thức & cổng',rd:'Lật thẻ giao thức ↔ cổng.',panel:[
+        {p:'Lật thẻ ôn giao thức và số cổng mặc định.'},
+        {flash:[{e:'🌍',f:'HTTP',b:'Cổng 80 — web'},{e:'🔒',f:'HTTPS',b:'Cổng 443 — web mã hoá TLS'},
+          {e:'📛',f:'DNS',b:'Cổng 53 — phân giải tên miền'},{e:'📁',f:'SSH',b:'Cổng 22 — truy cập từ xa an toàn'},
+          {e:'📧',f:'SMTP',b:'Cổng 25 — gửi email'},{e:'🖧',f:'DHCP',b:'Cấp IP động cho thiết bị'}]}]},
+      {ic:'🧮',name:'Địa chỉ IP & subnet',rd:'IPv4, mặt nạ mạng.',panel:[
+        {h:'Cơ bản về IP'},
+        {mcq:[{q:'Địa chỉ IPv4 192.168.1.10 thuộc loại?',o:['IP riêng (private) — dùng trong mạng nội bộ','IP công cộng toàn cầu','Địa chỉ MAC','Tên miền'],a:0,fb:'Dải 192.168.x.x là IP riêng (RFC 1918), không định tuyến trực tiếp ra Internet.'},
+          {q:'Giao thức nào đảm bảo truyền tin cậy, đúng thứ tự?',o:['TCP','UDP','ICMP','ARP'],a:0,fb:'TCP có bắt tay 3 bước, đánh số & truyền lại gói mất — đảm bảo tin cậy.'}]}]}],
+    skills:['Hiểu mô hình OSI/TCP-IP','Giao thức & cổng','Cơ bản địa chỉ IP'],
+    quiz:[{q:'HTTPS dùng cổng mặc định nào?',o:['443','80','21','25'],a:0},
+      {q:'Giao thức nào phân giải tên miền thành IP?',o:['DNS','FTP','SMTP','SSH'],a:0},
+      {q:'TCP khác UDP ở điểm chính?',o:['TCP tin cậy, có thứ tự; UDP nhanh, không đảm bảo','UDP an toàn hơn','TCP không cần kết nối','Giống hệt nhau'],a:0}]},
+
+  seclab:{emoji:'🔒',name:'TT An toàn thông tin – CTF',accent:'#ef4444',intro:'An toàn thông tin theo hướng phòng thủ: OWASP Top 10, mật mã cơ bản và sân chơi Capture The Flag có đạo đức.',
+    rooms:[{ic:'🚩',name:'Các dạng đề CTF',rd:'Làm quen sân chơi CTF.',panel:[
+        {h:'Các thể loại Capture The Flag'},
+        {cards:[{ic:'🌐',t:'Web',d:'Lỗ hổng ứng dụng web (XSS, SQLi…).'},
+          {ic:'🔐',t:'Crypto',d:'Phá/hiểu sơ đồ mã hoá yếu.'},
+          {ic:'🧬',t:'Reverse',d:'Dịch ngược nhị phân để hiểu logic.'},
+          {ic:'🕵️',t:'Forensics',d:'Phân tích file, gói tin, ảnh đĩa.'},
+          {ic:'💥',t:'Pwn',d:'Khai thác lỗi bộ nhớ (buffer overflow).'},
+          {ic:'🔎',t:'OSINT',d:'Thu thập thông tin công khai.'}]},
+        {note:'CTF là môi trường HỢP PHÁP để luyện tấn công–phòng thủ. Chỉ thử nghiệm trên hệ thống được phép.'}]},
+      {ic:'🛡️',name:'OWASP Top 10',rd:'Lỗ hổng web phổ biến.',panel:[
+        {h:'Một số rủi ro OWASP hàng đầu'},
+        {ul:['Broken Access Control — phân quyền sai','Injection — SQL/command injection','Cryptographic Failures — mã hoá yếu/lộ dữ liệu','Security Misconfiguration — cấu hình lỏng','Vulnerable Components — thư viện lỗi thời']},
+        {mcq:[{q:'Phòng tấn công XSS (chèn script) hiệu quả bằng?',o:['Escape/encode output & dùng Content-Security-Policy','Tin tưởng input người dùng','Tắt HTTPS','Lưu mật khẩu plaintext'],a:0,fb:'XSS được chặn bằng cách mã hoá dữ liệu khi render + CSP giới hạn script được phép chạy.'}]}]},
+      {ic:'🔑',name:'Mật mã căn bản',rd:'Hash, mã hoá, chữ ký số.',panel:[
+        {h:'Khái niệm cốt lõi'},
+        {ul:['Hash (SHA-256) một chiều — kiểm tra toàn vẹn, lưu mật khẩu (có salt)','Đối xứng (AES) — một khoá chung','Bất đối xứng (RSA/ECC) — khoá công khai + khoá bí mật','Chữ ký số — xác thực & chống chối bỏ']},
+        {note:'Đừng tự chế thuật toán mã hoá — dùng thư viện chuẩn đã được kiểm định.'}]},
+      {ic:'⚖️',name:'Hacking có đạo đức',rd:'Ranh giới pháp lý.',panel:[
+        {h:'Ethical hacking'},
+        {mcq:[{q:'Bạn phát hiện lỗ hổng trên website một công ty. Nên?',o:['Báo cho họ một cách có trách nhiệm (responsible disclosure)','Khai thác để lấy dữ liệu','Bán lỗ hổng','Đăng công khai cách khai thác ngay'],a:0,fb:'Chỉ kiểm thử khi được phép; báo lỗ hổng có trách nhiệm. Tấn công trái phép là vi phạm pháp luật.'}]}]}],
+    skills:['Tư duy phòng thủ (OWASP)','Mật mã căn bản','Đạo đức an ninh mạng'],
+    quiz:[{q:'Hàm băm (hash) như SHA-256 có tính chất?',o:['Một chiều — khó tìm ngược đầu vào','Hai chiều, giải mã dễ','Là thuật toán nén ảnh','Luôn rút ngắn dữ liệu một nửa'],a:0},
+      {q:'Lưu mật khẩu người dùng đúng cách?',o:['Băm bằng bcrypt/argon2 + salt','Lưu plaintext','Mã hoá base64','Ghi vào log'],a:0},
+      {q:'Chỉ được kiểm thử xâm nhập (pentest) khi?',o:['Có sự cho phép/hợp đồng rõ ràng','Bất cứ lúc nào','Khi tò mò','Khi không ai biết'],a:0}]},
+
+  ailab:{emoji:'🤖',name:'Lab AI & Machine Learning',accent:'#a78bfa',intro:'Trí tuệ nhân tạo và học máy: quy trình ML, học có giám sát/không giám sát, overfitting và mạng nơ-ron.',
+    rooms:[{ic:'🔁',name:'Quy trình ML',rd:'Các bước xây dựng mô hình.',panel:[
+        {h:'Pipeline học máy điển hình'},
+        {timeline:[{t:'Thu thập & làm sạch dữ liệu',d:'Xử lý thiếu/nhiễu, chuẩn hoá đặc trưng.'},
+          {t:'Chia tập',d:'Train / validation / test.'},
+          {t:'Huấn luyện',d:'Chọn mô hình & tối ưu tham số.'},
+          {t:'Đánh giá',d:'Accuracy, precision/recall, F1, AUC.'},
+          {t:'Triển khai & theo dõi',d:'Đưa vào sản phẩm, giám sát trôi dữ liệu.'}]}]},
+      {ic:'🧩',name:'Các kiểu học',rd:'Giám sát vs không giám sát.',panel:[
+        {h:'Phân loại bài toán ML'},
+        {cards:[{ic:'🏷️',t:'Có giám sát',d:'Dữ liệu có nhãn — phân loại, hồi quy.'},
+          {ic:'🔍',t:'Không giám sát',d:'Không nhãn — phân cụm, giảm chiều.'},
+          {ic:'🎮',t:'Tăng cường',d:'Học qua thưởng/phạt (agent).'},
+          {ic:'🧠',t:'Học sâu',d:'Mạng nơ-ron nhiều lớp (ảnh, NLP).'}]},
+        {mcq:[{q:'Dự đoán giá nhà (số liên tục) là bài toán?',o:['Hồi quy (regression)','Phân loại','Phân cụm','Giảm chiều'],a:0,fb:'Đầu ra liên tục → hồi quy; đầu ra nhãn rời rạc → phân loại.'}]}]},
+      {ic:'⚠️',name:'Overfitting',rd:'Khi mô hình học vẹt.',panel:[
+        {h:'Quá khớp (overfitting)'},
+        {ul:['Dấu hiệu: rất tốt trên train nhưng kém trên test','Khắc phục: thêm dữ liệu, regularization (L1/L2), dropout','Dùng cross-validation để đánh giá khách quan','Đơn giản hoá mô hình nếu cần']},
+        {note:'Mục tiêu là TỔNG QUÁT HOÁ — đoán tốt trên dữ liệu CHƯA TỪNG thấy.'}]},
+      {ic:'🧠',name:'Mạng nơ-ron',rd:'Lật thẻ khái niệm.',panel:[
+        {p:'Lật thẻ ôn khái niệm mạng nơ-ron.'},
+        {flash:[{e:'⚖️',f:'Trọng số (weight)',b:'Tham số mô hình học được'},{e:'📈',f:'Hàm kích hoạt',b:'ReLU, sigmoid — thêm phi tuyến'},
+          {e:'📉',f:'Hàm mất mát',b:'Đo sai số dự đoán so với thực tế'},{e:'🔙',f:'Backpropagation',b:'Lan truyền ngược để cập nhật trọng số'},
+          {e:'🎚️',f:'Learning rate',b:'Tốc độ cập nhật trọng số'},{e:'🧱',f:'Epoch',b:'Một lượt duyệt toàn bộ dữ liệu train'}]}]}],
+    skills:['Hiểu quy trình ML','Phân biệt kiểu học','Tránh overfitting'],
+    quiz:[{q:'Học có giám sát (supervised) cần?',o:['Dữ liệu có nhãn','Không cần dữ liệu','Chỉ phần thưởng','Không nhãn'],a:0},
+      {q:'Overfitting là khi mô hình?',o:['Tốt trên train nhưng kém trên dữ liệu mới','Kém trên cả train lẫn test','Luôn hoàn hảo','Không học được gì'],a:0},
+      {q:'Phân cụm khách hàng thành nhóm (không nhãn) là?',o:['Học không giám sát','Học có giám sát','Hồi quy','Phân loại nhị phân'],a:0}]},
+
+  webstudio:{emoji:'🎨',name:'Studio Web & Mobile',accent:'#f472b6',intro:'Phát triển web và mobile: HTML/CSS/JS, responsive, REST API, khả năng truy cập và ứng dụng di động.',
+    rooms:[{ic:'🎨',name:'Web Playground — code & xem ngay',rd:'Viết HTML/CSS/JS, xem trước trực tiếp.',href:'/it-web-playground.html?domain=it'},
+      {ic:'🧱',name:'Bộ ba nền tảng web',rd:'HTML · CSS · JavaScript.',panel:[
+        {h:'Ba lớp của một trang web'},
+        {cards:[{ic:'📄',t:'HTML',d:'Cấu trúc & nội dung.'},{ic:'🎨',t:'CSS',d:'Trình bày, bố cục, màu.'},
+          {ic:'⚙️',t:'JavaScript',d:'Tương tác & logic phía client.'},{ic:'🔌',t:'REST API',d:'Giao tiếp với server qua HTTP.'}]},
+        {note:'Tách biệt nội dung (HTML), hình thức (CSS) và hành vi (JS) giúp dễ bảo trì.'}]},
+      {ic:'📱',name:'Responsive design',rd:'Giao diện mọi kích thước màn hình.',panel:[
+        {h:'Thiết kế đáp ứng'},
+        {check:['Dùng viewport meta & đơn vị tương đối (%, rem)','Media query cho breakpoint','Layout linh hoạt: Flexbox / Grid','Ảnh co giãn, không tràn','Kiểm thử trên mobile thật']},
+        {note:'Mobile-first: thiết kế cho màn nhỏ trước rồi mở rộng lên desktop.'}]},
+      {ic:'♿',name:'Khả năng truy cập (a11y)',rd:'Web cho tất cả mọi người.',panel:[
+        {h:'Accessibility cơ bản'},
+        {ul:['Văn bản thay thế (alt) cho ảnh','Đủ tương phản màu chữ/nền','Điều hướng được bằng bàn phím','Dùng thẻ ngữ nghĩa (header, nav, main)']},
+        {mcq:[{q:'Vì sao cần thuộc tính alt cho ảnh?',o:['Trình đọc màn hình & SEO; hiển thị khi ảnh lỗi','Để ảnh đẹp hơn','Tăng tốc mạng','Không cần thiết'],a:0,fb:'alt giúp người khiếm thị hiểu nội dung ảnh và là dự phòng khi ảnh không tải được.'}]}]},
+      {ic:'📲',name:'Mobile dev',rd:'Native vs cross-platform.',panel:[
+        {h:'Phát triển ứng dụng di động'},
+        {cards:[{ic:'🤖',t:'Android',d:'Kotlin/Java, Android Studio.'},{ic:'🍎',t:'iOS',d:'Swift, Xcode.'},
+          {ic:'🦋',t:'Flutter',d:'Một codebase, đa nền tảng (Dart).'},{ic:'⚛️',t:'React Native',d:'JS/TS, đa nền tảng.'}]},
+        {note:'Cross-platform tiết kiệm công sức; native tối ưu hiệu năng & tính năng đặc thù.'}]}],
+    skills:['Làm chủ HTML/CSS/JS','Responsive & a11y','Hiểu mobile dev'],
+    quiz:[{q:'CSS chịu trách nhiệm gì trên trang web?',o:['Trình bày & bố cục','Lưu cơ sở dữ liệu','Định tuyến mạng','Biên dịch mã'],a:0},
+      {q:'Kỹ thuật bố cục linh hoạt hiện đại của CSS?',o:['Flexbox / Grid','Bảng (table) lồng nhau','Thẻ font','iframe'],a:0},
+      {q:'Thuộc tính nào giúp ảnh truy cập được với trình đọc màn hình?',o:['alt','color','href','id'],a:0}]},
+
+  startuphub:{emoji:'🚀',name:'Vườn ươm Khởi nghiệp',accent:'#fca5a5',intro:'Biến ý tưởng công nghệ thành sản phẩm: Lean Canvas, MVP, pitching và công nghệ mới như blockchain/Web3.',
+    rooms:[{ic:'🧩',name:'Lean Canvas',rd:'Phác mô hình kinh doanh 1 trang.',panel:[
+        {h:'Các ô của Lean Canvas'},
+        {ul:['Vấn đề & Phân khúc khách hàng','Giải pháp & Lợi thế độc nhất','Kênh tiếp cận & Dòng doanh thu','Cấu trúc chi phí & Chỉ số then chốt','Lợi thế khó sao chép']},
+        {note:'Khởi nghiệp = tìm mô hình kinh doanh lặp lại & mở rộng được, không chỉ là viết code.'}]},
+      {ic:'🛠️',name:'MVP & vòng lặp',rd:'Build–Measure–Learn.',panel:[
+        {h:'Xây MVP rồi học'},
+        {timeline:[{t:'Build',d:'Làm sản phẩm khả dụng tối thiểu.'},
+          {t:'Measure',d:'Đo hành vi người dùng thật.'},
+          {t:'Learn',d:'Rút ra bài học, xoay trục (pivot) nếu cần.'}]},
+        {mcq:[{q:'Mục đích chính của MVP?',o:['Kiểm chứng giả định với ít công sức nhất','Có sản phẩm hoàn hảo ngay','Gọi vốn thật nhiều','Làm cho vui'],a:0,fb:'MVP để HỌC nhanh từ người dùng thật với chi phí thấp nhất, trước khi đầu tư lớn.'}]}]},
+      {ic:'⛓️',name:'Blockchain & Web3',rd:'Sổ cái phân tán, hợp đồng thông minh.',panel:[
+        {h:'Khái niệm Web3'},
+        {ul:['Blockchain: sổ cái phân tán, bất biến','Hợp đồng thông minh (smart contract) tự thực thi','Phi tập trung — không bên trung gian duy nhất','Cẩn trọng: nhiều rủi ro bảo mật & pháp lý']},
+        {note:'Không phải bài toán nào cũng cần blockchain — đa số trường hợp CSDL truyền thống là đủ.'}]},
+      {ic:'🎯',name:'Mục tiêu khởi nghiệp',rd:'Đặt & lưu mục tiêu.',panel:[
+        {h:'Đặt mục tiêu SMART'},
+        {p:'Cụ thể – Đo được – Khả thi – Liên quan – Có thời hạn. Ví dụ: ra mắt landing page & thu 50 email đăng ký trong 2 tuần.'},
+        {goal:true}]}],
+    skills:['Tư duy mô hình kinh doanh','Xây MVP & học nhanh','Hiểu công nghệ mới'],
+    quiz:[{q:'MVP trong khởi nghiệp tinh gọn nghĩa là?',o:['Minimum Viable Product','Most Valuable Player','Maximum Value Plan','Minimal Visual Page'],a:0},
+      {q:'Vòng lặp khởi nghiệp tinh gọn (Lean Startup)?',o:['Build – Measure – Learn','Plan – Sell – Stop','Code – Ship – Forget','Hire – Fire – Repeat'],a:0},
+      {q:'Hợp đồng thông minh (smart contract) là?',o:['Đoạn mã tự thực thi trên blockchain','Hợp đồng giấy','Email cam kết','Tệp PDF có chữ ký'],a:0}]},
+
+  cloudcenter:{emoji:'☁️',name:'TT Dữ liệu & Cloud',accent:'#7dd3fc',intro:'Hạ tầng hiện đại: mô hình điện toán đám mây, container, CI/CD và khả năng mở rộng hệ thống.',
+    rooms:[{ic:'🏗️',name:'Mô hình dịch vụ cloud',rd:'IaaS · PaaS · SaaS.',panel:[
+        {h:'Ba tầng dịch vụ đám mây'},
+        {cards:[{ic:'🧱',t:'IaaS',d:'Thuê hạ tầng (máy ảo, mạng). VD: EC2.'},
+          {ic:'🛠️',t:'PaaS',d:'Nền tảng chạy app, lo hạ tầng giúp bạn.'},
+          {ic:'📦',t:'SaaS',d:'Phần mềm dùng ngay qua trình duyệt.'}]},
+        {note:'Càng lên cao (SaaS) bạn càng ít phải quản lý hạ tầng — đổi lại ít kiểm soát hơn.'}]},
+      {ic:'🐳',name:'Container & Docker',rd:'Đóng gói app chạy mọi nơi.',panel:[
+        {h:'Vì sao dùng container'},
+        {ul:['Đóng gói app + phụ thuộc thành một image','Chạy nhất quán: máy dev = staging = production','Nhẹ hơn máy ảo; khởi động nhanh','Kubernetes điều phối nhiều container']},
+        {mcq:[{q:'Lợi ích chính của Docker container?',o:['Chạy nhất quán ở mọi môi trường (hết cảnh "máy tôi chạy được")','Tăng dung lượng ổ cứng','Thay thế ngôn ngữ lập trình','Vẽ giao diện đẹp hơn'],a:0,fb:'Container đóng gói cả môi trường nên loại bỏ lỗi "máy tôi chạy được" khi triển khai.'}]}]},
+      {ic:'🔄',name:'CI/CD',rd:'Tích hợp & triển khai liên tục.',panel:[
+        {h:'Đường ống CI/CD'},
+        {ol:['Commit kích hoạt pipeline tự động','CI: build + chạy test','Đóng gói artifact/image','CD: triển khai tự động lên môi trường','Theo dõi & rollback nếu lỗi']},
+        {note:'CI/CD giúp giao hàng nhanh, ít lỗi nhờ tự động hoá kiểm thử & triển khai.'}]},
+      {ic:'📈',name:'Khả năng mở rộng',rd:'Scale up vs scale out.',panel:[
+        {h:'Mở rộng hệ thống'},
+        {ul:['Scale up (dọc): tăng sức mạnh một máy','Scale out (ngang): thêm nhiều máy + load balancer','Cache để giảm tải CSDL','Thiết kế stateless để dễ nhân bản']},
+        {note:'Scale out + load balancer là cách phổ biến để phục vụ lượng lớn người dùng.'}]}],
+    skills:['Hiểu mô hình cloud','Container hoá ứng dụng','Tư duy CI/CD & mở rộng'],
+    quiz:[{q:'SaaS là gì?',o:['Phần mềm dùng ngay qua mạng (vd Gmail)','Thuê máy ảo trống','Ngôn ngữ lập trình','Thiết bị mạng'],a:0},
+      {q:'Docker container giúp ích chính ở chỗ?',o:['Chạy nhất quán trên mọi môi trường','Tăng RAM vật lý','Thay thế Git','Vẽ biểu đồ'],a:0},
+      {q:'CD trong CI/CD thường nghĩa là?',o:['Continuous Delivery/Deployment','Compact Disc','Code Debug','Central Database'],a:0}]},
+
+  canteen:{emoji:'🍜',name:'Căng tin',accent:'#fb7185',intro:'Nghỉ ngơi, nạp năng lượng và giữ sức khoẻ giữa các giờ code.',
+    rooms:[{ic:'🧩',name:'Đố vui công nghệ',rd:'Giải lao với câu đố IT.',panel:[{h:'Đố vui giờ giải lao'},{mcq:[{q:'Mã lỗi "HTTP 404" nghĩa là?',o:['Không tìm thấy trang','Thành công','Lỗi máy chủ','Bị cấm truy cập'],a:0,fb:'404 Not Found — không tìm thấy tài nguyên.'},{q:'1 byte bằng bao nhiêu bit?',o:['8','4','16','1024'],a:0,fb:'1 byte = 8 bit.'},{q:'Phím tắt Copy trên hầu hết hệ điều hành?',o:['Ctrl/Cmd + C','Ctrl + V','Ctrl + X','Ctrl + Z'],a:0,fb:'C = copy, V = paste, X = cut, Z = undo.'}]}]},
+      {ic:'☕',name:'Góc thư giãn',rd:'Mẹo học & code hiệu quả.',panel:[
+        {h:'Mẹo học lập trình hiệu quả'},
+        {ul:['Học bằng cách LÀM — gõ lại code, tự sửa lỗi','Pomodoro: 25 phút tập trung – 5 phút nghỉ','Đọc code của người khác (open source)','Ghi chú & sơ đồ hoá kiến thức']},
+        {note:'Lập trình là kỹ năng — luyện đều mỗi ngày hơn là dồn sát ngày thi.'}]},
+      {ic:'🪑',name:'Sức khoẻ dân code',rd:'Tránh chấn thương khi ngồi lâu.',panel:[
+        {h:'Giữ sức khoẻ khi ngồi máy'},
+        {ul:['Quy tắc 20–20–20: mỗi 20 phút nhìn xa 20 feet trong 20 giây','Tư thế ngồi đúng, màn hình ngang tầm mắt','Đứng dậy vận động mỗi 30–60 phút','Cổ tay thẳng để tránh hội chứng ống cổ tay']},
+        {mcq:[{q:'Quy tắc 20–20–20 giúp ích gì?',o:['Giảm mỏi mắt khi nhìn màn hình lâu','Tăng tốc CPU','Sửa bug nhanh hơn','Tiết kiệm điện'],a:0,fb:'Nhìn xa định kỳ giúp mắt thư giãn, giảm khô & mỏi mắt khi làm việc với màn hình.'}]}]}],
+    skills:['Cân bằng học – nghỉ','Tự chăm sóc sức khoẻ'],
+    quiz:[{q:'Kỹ thuật Pomodoro chia thời gian thế nào?',o:['25 phút làm – 5 phút nghỉ','3 giờ liền không nghỉ','Ngủ 25 phút','Không nghỉ'],a:0},
+      {q:'Cách học lập trình hiệu quả nhất?',o:['Thực hành gõ & sửa code','Chỉ đọc, không gõ','Học thuộc lòng','Xem lướt video'],a:0},
+      {q:'Quy tắc 20–20–20 liên quan đến?',o:['Bảo vệ mắt','Tốc độ mạng','Dung lượng ổ cứng','Pin laptop'],a:0}]},
+
+  dorm:{emoji:'🛏️',name:'Ký túc xá',accent:'#fbbf24',intro:'Không gian cá nhân: theo dõi hồ sơ, đặt mục tiêu học tập và xây lộ trình nghề nghiệp.',
+    rooms:[{ic:'🏅',name:'Hồ sơ & huy hiệu',rd:'Sao, coin, streak, huy hiệu.',href:'/'},
+      {ic:'🎯',name:'Mục tiêu học tập',rd:'Đặt & lưu mục tiêu tuần.',panel:[
+        {h:'Đặt mục tiêu SMART'},
+        {p:'Cụ thể – Đo được – Khả thi – Liên quan – Có thời hạn. Ví dụ: hoàn thành 3 bài Cấu trúc dữ liệu & 1 đề CTF trong tuần này.'},
+        {goal:true},
+        {note:'Duy trì streak (chuỗi ngày học) để nhận thưởng coin & huy hiệu.'}]},
+      {ic:'🗺️',name:'Lộ trình nghề nghiệp',rd:'Xây portfolio từ năm 1.',panel:[
+        {h:'Chuẩn bị nghề nghiệp sớm'},
+        {check:['Tạo tài khoản GitHub & đẩy code đều','Làm 2–3 dự án cá nhân có demo','Viết CV/LinkedIn nêu rõ kỹ năng & dự án','Luyện phỏng vấn: giải thuật + system design','Tham gia CTF/hackathon/open source']},
+        {note:'Portfolio thực tế (GitHub, dự án) thuyết phục nhà tuyển dụng hơn điểm số.'}]}],
+    skills:['Tự quản lý học tập','Đặt mục tiêu SMART','Xây portfolio nghề nghiệp'],
+    quiz:[{q:'Điều gì thuyết phục nhà tuyển dụng CNTT nhất?',o:['Dự án/portfolio thực tế trên GitHub','Chỉ điểm số','Số giờ ngồi máy','Số tài khoản mạng xã hội'],a:0},
+      {q:'Mục tiêu hiệu quả nên theo nguyên tắc?',o:['SMART','Càng mơ hồ càng tốt','Càng nhiều càng tốt','Không cần đo'],a:0},
+      {q:'Chuỗi ngày học (streak) khuyến khích thói quen?',o:['Học/code đều mỗi ngày','Học 1 lần/tháng','Bỏ học','Học ngẫu nhiên'],a:0}]},
+
+  museum:{emoji:'🖥️',name:'Bảo tàng Công nghệ',accent:'#9aa6b2',intro:'Lịch sử ngành máy tính và những con người đặt nền móng cho công nghệ thông tin.',
+    rooms:[{ic:'🏛️',name:'Lịch sử máy tính',rd:'Dòng thời gian các cột mốc.',panel:[
+        {h:'Dòng thời gian máy tính'},
+        {timeline:[{t:'1843 — Ada Lovelace',d:'Thuật toán đầu tiên cho máy của Babbage.'},
+          {t:'1936 — Alan Turing',d:'Máy Turing — nền tảng lý thuyết tính toán.'},
+          {t:'1969 — ARPANET',d:'Tiền thân của Internet.'},
+          {t:'1991 — World Wide Web',d:'Tim Berners-Lee công bố WWW.'},
+          {t:'Ngày nay — AI & Cloud',d:'Học sâu, điện toán đám mây, di động khắp nơi.'}]}]},
+      {ic:'👤',name:'Danh nhân máy tính',rd:'Những người đặt nền móng.',panel:[
+        {h:'Một số tên tuổi lớn'},
+        {cards:[{ic:'👩‍💻',t:'Ada Lovelace',d:'Lập trình viên đầu tiên trong lịch sử.'},
+          {ic:'🧮',t:'Alan Turing',d:'Cha đẻ khoa học máy tính & AI.'},
+          {ic:'🌐',t:'Tim Berners-Lee',d:'Phát minh World Wide Web.'},
+          {ic:'🐧',t:'Linus Torvalds',d:'Tạo ra Linux & Git.'}]},
+        {p:'Cùng nhiều nhà khoa học, kỹ sư đã định hình ngành công nghệ thông tin hiện đại.'}]},
+      {ic:'💾',name:'Phần cứng qua các thời kỳ',rd:'Từ đèn điện tử tới chip.',panel:[
+        {h:'Tiến hoá phần cứng'},
+        {flash:[{e:'💡',f:'Đèn điện tử (vacuum tube)',b:'Máy tính thế hệ đầu, to & nóng'},{e:'🔲',f:'Transistor',b:'Nhỏ, bền, ít điện hơn'},
+          {e:'🔳',f:'Mạch tích hợp (IC)',b:'Nhiều transistor trên một chip'},{e:'🧠',f:'Vi xử lý (CPU)',b:'Cả bộ xử lý trên một chip'},
+          {e:'💽',f:'Lưu trữ',b:'Băng từ → đĩa cứng → SSD'},{e:'☁️',f:'Đám mây',b:'Tính toán & lưu trữ qua mạng'}]}]}],
+    skills:['Hiểu lịch sử ngành','Biết danh nhân máy tính'],
+    quiz:[{q:'Ai được xem là lập trình viên đầu tiên?',o:['Ada Lovelace','Bill Gates','Steve Jobs','Mark Zuckerberg'],a:0},
+      {q:'World Wide Web (WWW) do ai phát minh?',o:['Tim Berners-Lee','Alan Turing','Linus Torvalds','Elon Musk'],a:0},
+      {q:'Linus Torvalds nổi tiếng vì tạo ra?',o:['Linux & Git','Windows','iOS','Photoshop'],a:0}]},
+};
+
+// ====== TRƯỜNG TIỂU HỌC — không gian bên trong từng toà (lớp 1–5 + phòng chức năng) ======
+const SPACES_PRIMARY = {
+  g1:{emoji:'1️⃣',name:'Lớp 1',accent:'#ef4444',intro:'Lớp 1 — những bước đầu tiên: tập đếm, tập đọc và làm quen trường lớp. Học mà chơi, chơi mà học!',
+    rooms:[{ic:'➗',name:'Toán lớp 1',rd:'Đếm & so sánh số trong 100, cộng trừ không nhớ, hình cơ bản.',href:'/module.html?domain=primary&module=P1'},
+      {ic:'📖',name:'Tiếng Việt 1 — Học vần',rd:'Học âm, vần và tập đọc trơn.',panel:[
+        {h:'Bắt đầu biết đọc'},
+        {ul:['Học các âm và vần, ghép lại thành tiếng','Đánh vần rồi đọc trơn cả tiếng','Đọc to, rõ ràng từng câu ngắn','Tập viết chữ thường và chữ hoa']},
+        {note:'Mỗi tối đọc vài câu cùng bố mẹ, em sẽ mau biết đọc!'}]},
+      {ic:'🔤',name:'Tiếng Anh 1 — Lật thẻ',rd:'Chào hỏi, màu sắc và con vật.',panel:[
+        {p:'Bấm vào thẻ để học những từ tiếng Anh đầu tiên.'},
+        {flash:[{e:'👋',f:'Hello',b:'Xin chào'},{e:'🔴',f:'Red',b:'Màu đỏ'},{e:'🔵',f:'Blue',b:'Màu xanh'},{e:'1️⃣',f:'One',b:'Số một'},{e:'🐱',f:'Cat',b:'Con mèo'},{e:'🐶',f:'Dog',b:'Con chó'}]}]},
+      {ic:'🏫',name:'TN&XH — Trường lớp & gia đình',rd:'Em và những người xung quanh.',panel:[
+        {h:'Em khám phá xung quanh'},
+        {ul:['Các thành viên trong gia đình em','Trường lớp: thầy cô, bạn bè, đồ dùng học tập','Giữ vệ sinh: rửa tay, đánh răng, mặc ấm khi trời lạnh']},
+        {mcq:[{q:'Trước khi ăn và sau khi đi vệ sinh, em cần làm gì?',o:['Rửa tay bằng xà phòng','Lau tay vào áo','Không cần làm gì','Chỉ thổi cho sạch'],a:0,fb:'Rửa tay với xà phòng giúp phòng bệnh — nhớ rửa đủ các bước nhé!'}]}]}],
+    skills:['Đếm & cộng trừ trong 100','Bắt đầu biết đọc'],
+    quiz:[{q:'Số liền sau của 9 là số nào?',o:['10','8','11','0'],a:0},
+      {q:'5 + 3 = ?',o:['8','7','9','6'],a:0},
+      {q:'Hình nào có 3 cạnh?',o:['Hình tam giác','Hình tròn','Hình vuông','Hình chữ nhật'],a:0}]},
+
+  g2:{emoji:'2️⃣',name:'Lớp 2',accent:'#f59e0b',intro:'Lớp 2 — cộng trừ có nhớ, làm quen bảng nhân và đọc hiểu câu chuyện ngắn.',
+    rooms:[{ic:'➗',name:'Toán lớp 2',rd:'Cộng trừ có nhớ, bảng nhân/chia 2–5, số đến 1000.',href:'/module.html?domain=primary&module=P2'},
+      {ic:'📖',name:'Tiếng Việt 2 — Đọc hiểu',rd:'Đọc đoạn ngắn và viết câu.',panel:[
+        {h:'Đọc hiểu & viết câu'},
+        {ul:['Đọc trôi chảy một đoạn văn ngắn','Trả lời câu hỏi về nội dung vừa đọc','Viết câu có đủ ý, đầu câu viết hoa, cuối câu có dấu chấm']},
+        {note:'Dấu chấm (.) kết thúc câu kể; dấu chấm hỏi (?) đặt cuối câu hỏi.'}]},
+      {ic:'🔤',name:'Tiếng Anh 2 — Lật thẻ',rd:'Đồ vật và số đếm.',panel:[
+        {flash:[{e:'📕',f:'Book',b:'Quyển sách'},{e:'✏️',f:'Pen',b:'Cái bút'},{e:'🪑',f:'Chair',b:'Cái ghế'},{e:'2️⃣',f:'Two',b:'Số hai'},{e:'🍎',f:'Apple',b:'Quả táo'},{e:'🏠',f:'House',b:'Ngôi nhà'}]}]},
+      {ic:'🌳',name:'TN&XH — Cây cối & con vật',rd:'Thế giới quanh em & an toàn.',panel:[
+        {h:'Quanh em có gì?'},
+        {ul:['Cây cối cần đất, nước và ánh sáng để lớn','Con vật nuôi và con vật sống hoang dã','Đi bộ đúng phần đường, đội mũ bảo hiểm khi ngồi xe máy']},
+        {mcq:[{q:'Khi qua đường, em nên?',o:['Quan sát và đi trên vạch kẻ dành cho người đi bộ','Chạy thật nhanh qua đường','Vừa đi vừa xem điện thoại','Qua đường ở chỗ khuất'],a:0,fb:'Qua đường ở vạch kẻ, quan sát hai phía và đi cùng người lớn cho an toàn.'}]}]}],
+    skills:['Bảng nhân 2–5','Đọc hiểu đoạn ngắn'],
+    quiz:[{q:'2 × 4 = ?',o:['8','6','10','24'],a:0},
+      {q:'27 + 5 = ?',o:['32','22','31','37'],a:0},
+      {q:'Từ nào chỉ con vật?',o:['Con gà','Cái bàn','Chạy','Xanh'],a:0}]},
+
+  g3:{emoji:'3️⃣',name:'Lớp 3',accent:'#22c55e',intro:'Lớp 3 — thành thạo bảng nhân chia, tính chu vi và viết đoạn văn ngắn.',
+    rooms:[{ic:'➗',name:'Toán lớp 3',rd:'Bảng nhân/chia 6–9, chu vi, số đến 100 000.',href:'/module.html?domain=primary&module=P3'},
+      {ic:'📖',name:'Tiếng Việt 3 — Từ & câu',rd:'Từ chỉ sự vật, hoạt động, đặc điểm.',panel:[
+        {h:'Luyện từ và câu'},
+        {cards:[{ic:'🍎',t:'Từ chỉ sự vật',d:'bàn, cây, mẹ, con mèo…'},{ic:'🏃',t:'Từ chỉ hoạt động',d:'chạy, đọc, hát…'},{ic:'🌈',t:'Từ chỉ đặc điểm',d:'cao, xanh, ngoan…'}]},
+        {note:'Mẫu câu: "Ai là gì?", "Ai làm gì?", "Ai thế nào?".'}]},
+      {ic:'🔤',name:'Tiếng Anh 3 — Lật thẻ',rd:'Gia đình và cơ thể.',panel:[
+        {flash:[{e:'👩',f:'Mother',b:'Mẹ'},{e:'👨',f:'Father',b:'Bố'},{e:'✋',f:'Hand',b:'Bàn tay'},{e:'👀',f:'Eyes',b:'Đôi mắt'},{e:'😀',f:'Happy',b:'Vui'},{e:'🟢',f:'Green',b:'Màu xanh lá'}]}]},
+      {ic:'🌏',name:'TN&XH — Cơ thể & họ hàng',rd:'Giữ gìn sức khoẻ.',panel:[
+        {ul:['Các cơ quan: tiêu hoá, hô hấp, tuần hoàn (mức đơn giản)','Họ hàng nội – ngoại','Ăn chín, uống sôi, ngủ đủ giấc để khoẻ mạnh']},
+        {mcq:[{q:'Để răng chắc khoẻ, em nên?',o:['Đánh răng sáng và tối, hạn chế ăn nhiều kẹo','Chỉ súc miệng','Ăn thật nhiều kẹo','Không cần đánh răng'],a:0,fb:'Đánh răng 2 lần/ngày và hạn chế đồ ngọt giúp răng chắc khoẻ.'}]}]}],
+    skills:['Nhân chia thành thạo','Viết đoạn văn ngắn'],
+    quiz:[{q:'7 × 8 = ?',o:['56','54','64','49'],a:0},
+      {q:'Chu vi hình vuông cạnh 5cm là?',o:['20cm','10cm','25cm','15cm'],a:0},
+      {q:'Từ "ngoan" là từ chỉ?',o:['Đặc điểm','Sự vật','Hoạt động','Số lượng'],a:0}]},
+
+  g4:{emoji:'4️⃣',name:'Lớp 4',accent:'#0ea5e9',intro:'Lớp 4 — phân số, dấu hiệu chia hết và bắt đầu môn Khoa học, Lịch sử & Địa lí.',
+    rooms:[{ic:'➗',name:'Toán lớp 4',rd:'Phân số, dấu hiệu chia hết, diện tích, góc.',href:'/module.html?domain=primary&module=P4'},
+      {ic:'📖',name:'Tiếng Việt 4 — Câu & văn',rd:'Câu kể, câu hỏi, câu cảm; viết bài văn.',panel:[
+        {h:'Các kiểu câu'},
+        {ul:['Câu kể: thuật lại sự việc, kết thúc bằng dấu chấm','Câu hỏi: hỏi điều chưa biết, kết thúc bằng dấu chấm hỏi','Câu cảm: bộc lộ cảm xúc, thường có "ôi, chao, biết bao!"']},
+        {note:'Bài văn có 3 phần: mở bài – thân bài – kết bài.'}]},
+      {ic:'🔬',name:'Khoa học 4',rd:'Nước, không khí và dinh dưỡng.',panel:[
+        {h:'Khám phá khoa học'},
+        {cards:[{ic:'💧',t:'Nước',d:'Có 3 thể: rắn – lỏng – khí.'},{ic:'🌬️',t:'Không khí',d:'Cần cho sự sống & sự cháy.'},{ic:'🥗',t:'Dinh dưỡng',d:'Ăn đủ 4 nhóm chất để khoẻ.'}]},
+        {mcq:[{q:'Nước đóng băng (thể rắn) khi nào?',o:['Khi gặp lạnh (0°C trở xuống)','Khi đun sôi','Khi để ngoài nắng','Khi pha đường'],a:0,fb:'Gặp lạnh, nước chuyển từ thể lỏng sang thể rắn (đóng băng) ở 0°C.'}]}]},
+      {ic:'🗺️',name:'Lịch sử & Địa lí 4',rd:'Buổi đầu dựng nước & bản đồ Việt Nam.',panel:[
+        {ul:['Nhà nước Văn Lang – Âu Lạc: buổi đầu dựng nước','Truyền thuyết Con Rồng cháu Tiên, Sơn Tinh – Thuỷ Tinh','Việt Nam hình chữ S, có đồng bằng, núi và biển']},
+        {note:'Bản đồ giúp em biết phương hướng và vị trí các vùng miền.'}]}],
+    skills:['Phân số & hình học','Bắt đầu Khoa học – Sử – Địa'],
+    quiz:[{q:'Phân số nào bằng một nửa?',o:['1/2','1/3','2/3','3/4'],a:0},
+      {q:'Số nào chia hết cho 5?',o:['25','22','13','9'],a:0},
+      {q:'Nước sôi và bốc hơi khi nào?',o:['Khi bị đun nóng (100°C)','Khi gặp lạnh','Khi để trong tủ đá','Khi trộn muối'],a:0}]},
+
+  g5:{emoji:'5️⃣',name:'Lớp 5',accent:'#8b5cf6',intro:'Lớp 5 — số thập phân, tỉ số phần trăm, hình học; chuẩn bị hành trang lên THCS.',
+    rooms:[{ic:'➗',name:'Toán lớp 5',rd:'Số thập phân, tỉ số phần trăm, diện tích – thể tích, vận tốc.',href:'/module.html?domain=primary&module=P5'},
+      {ic:'📖',name:'Tiếng Việt 5 — Viết văn',rd:'Liên kết câu; văn tả & kể.',panel:[
+        {h:'Viết bài văn hay'},
+        {ul:['Liên kết câu bằng từ nối, lặp từ, thay thế từ','Văn tả: tả người, tả cảnh có quan sát & cảm xúc','Văn kể: kể lại sự việc theo trình tự']},
+        {note:'Lập dàn ý trước khi viết để bài mạch lạc, không thiếu ý.'}]},
+      {ic:'🔬',name:'Khoa học 5',rd:'Cây cối, con vật và môi trường.',panel:[
+        {h:'Sự sống & môi trường'},
+        {ul:['Cây ra hoa, kết quả rồi sinh ra cây con','Mỗi loài vật có cách sinh sản và lớn lên riêng','Bảo vệ môi trường: trồng cây, tiết kiệm nước, phân loại rác']},
+        {mcq:[{q:'Việc nào giúp bảo vệ môi trường?',o:['Bỏ rác đúng nơi & phân loại rác','Vứt rác xuống sông','Để vòi nước chảy lãng phí','Bẻ cành, hái lá cây'],a:0,fb:'Giảm – Tái sử dụng – Tái chế (3R) và bỏ rác đúng nơi giúp môi trường sạch đẹp.'}]}]},
+      {ic:'🗺️',name:'Lịch sử & Địa lí 5',rd:'Các mốc lịch sử & địa lí Việt Nam.',panel:[
+        {timeline:[{t:'Dựng nước',d:'Văn Lang – Âu Lạc.'},{t:'Đấu tranh giữ nước',d:'Các cuộc kháng chiến chống ngoại xâm.'},{t:'1945',d:'Bác Hồ đọc Tuyên ngôn Độc lập.'},{t:'1975',d:'Đất nước thống nhất.'}]},
+        {note:'Việt Nam nằm ở Đông Nam Á, có nhiều dân tộc cùng chung sống.'}]}],
+    skills:['Số thập phân & phần trăm','Sẵn sàng lên lớp 6'],
+    quiz:[{q:'Số thập phân 0,5 bằng phân số nào?',o:['1/2','1/5','5','1/50'],a:0},
+      {q:'25% của 100 là?',o:['25','50','75','10'],a:0},
+      {q:'Bác Hồ đọc Tuyên ngôn Độc lập năm nào?',o:['1945','1930','1954','1975'],a:0}]},
+
+  library:{emoji:'📚',name:'Thư viện',accent:'#3b82f6',intro:'Thư viện trường — nơi đọc sách, nghe kể chuyện và nuôi dưỡng tình yêu đọc sách.',
+    rooms:[{ic:'📚',name:'Góc đọc sách',rd:'Văn hoá đọc & giữ gìn sách.',panel:[
+        {h:'Em yêu đọc sách'},
+        {ul:['Chọn sách phù hợp lứa tuổi: truyện tranh, truyện cổ tích, sách khoa học vui','Giữ sách sạch: không vẽ bậy, không gấp trang, bọc bìa cẩn thận','Mượn sách phải trả đúng hẹn cho bạn khác cùng đọc']},
+        {note:'Đọc mỗi ngày 15 phút giúp em giỏi tiếng Việt và biết nhiều điều hay.'}]},
+      {ic:'🦊',name:'Kể chuyện — Bài học hay',rd:'Truyện ngụ ngôn & bài học.',panel:[
+        {h:'Rùa và Thỏ'},
+        {p:'Thỏ chủ quan ngủ quên, Rùa chậm mà chăm chỉ nên về đích trước.'},
+        {note:'Bài học: kiên trì, chăm chỉ và không kiêu căng thì sẽ thành công.'}]},
+      {ic:'🧠',name:'Đố vui ôn tập',rd:'Câu đố nhanh giữa các môn.',panel:[
+        {mcq:[{q:'Con gì kêu "gâu gâu" và trông nhà giúp người?',o:['Con chó','Con mèo','Con gà','Con cá'],a:0,fb:'Chó là vật nuôi trung thành, biết trông nhà.'},
+          {q:'Một tuần có mấy ngày?',o:['7 ngày','5 ngày','10 ngày','12 ngày'],a:0,fb:'Một tuần có 7 ngày, từ thứ Hai đến Chủ nhật.'}]}]}],
+    skills:['Văn hoá đọc','Yêu sách & tự học'],
+    quiz:[{q:'Khi mượn sách thư viện, em cần?',o:['Giữ gìn và trả đúng hẹn','Vẽ vào sách','Xé trang mình thích','Giữ luôn không trả'],a:0},
+      {q:'Đọc sách mỗi ngày giúp em?',o:['Giỏi đọc & biết nhiều điều','Mỏi mắt nên đừng đọc','Không có ích gì','Quên hết chữ'],a:0},
+      {q:'Truyện "Rùa và Thỏ" khuyên em điều gì?',o:['Kiên trì, chăm chỉ, không kiêu căng','Nên ngủ nhiều','Chạy thật nhanh','Coi thường bạn bè'],a:0}]},
+
+  english:{emoji:'🔤',name:'Phòng Tiếng Anh',accent:'#60a5fa',intro:'Phòng Tiếng Anh — học từ vựng và mẫu câu đơn giản qua hình ảnh, trò chơi lật thẻ.',
+    rooms:[{ic:'🃏',name:'Lật thẻ từ vựng',rd:'Con vật, màu sắc, số đếm.',panel:[
+        {p:'Bấm vào thẻ để xem nghĩa tiếng Việt.'},
+        {flash:[{e:'🐘',f:'Elephant',b:'Con voi'},{e:'🦁',f:'Lion',b:'Con sư tử'},{e:'🟡',f:'Yellow',b:'Màu vàng'},{e:'🟠',f:'Orange',b:'Màu cam'},{e:'3️⃣',f:'Three',b:'Số ba'},{e:'🔟',f:'Ten',b:'Số mười'}]}]},
+      {ic:'💬',name:'Mẫu câu chào hỏi',rd:'Nói câu tiếng Anh đầu tiên.',panel:[
+        {h:'Chào hỏi & giới thiệu'},
+        {ul:['Hello! / Hi! — Xin chào!','What is your name? — Bạn tên là gì?','My name is Nam. — Mình tên là Nam.','How are you? — I am fine, thank you!']},
+        {mcq:[{q:'"Goodbye" nghĩa là gì?',o:['Tạm biệt','Xin chào','Cảm ơn','Xin lỗi'],a:0,fb:'"Goodbye" (hoặc "Bye") nghĩa là Tạm biệt.'}]}]}],
+    skills:['Từ vựng cơ bản','Mẫu câu chào hỏi'],
+    quiz:[{q:'"Hello" nghĩa là gì?',o:['Xin chào','Tạm biệt','Cảm ơn','Con mèo'],a:0},
+      {q:'"Red" là màu gì?',o:['Màu đỏ','Màu xanh','Màu vàng','Màu đen'],a:0},
+      {q:'"Cat" nghĩa là con gì?',o:['Con mèo','Con chó','Con voi','Con cá'],a:0}]},
+
+  computer:{emoji:'💻',name:'Phòng Tin học',accent:'#8b5cf6',intro:'Phòng Tin học — làm quen máy tính, gõ phím, vẽ trên máy và học cách dùng internet an toàn.',
+    rooms:[{ic:'🛡️',name:'An toàn trên mạng',rd:'Quy tắc an toàn cho học sinh.',panel:[
+        {h:'Em dùng internet an toàn'},
+        {ul:['Không cho người lạ trên mạng biết tên thật, địa chỉ, trường lớp','Không nhấn vào đường link hay quảng cáo lạ','Gặp điều khó chịu trên mạng → kể ngay cho bố mẹ, thầy cô','Hỏi người lớn trước khi tải hay cài đặt gì đó']},
+        {mcq:[{q:'Một người lạ trên mạng hỏi địa chỉ nhà em. Em nên?',o:['Không nói và kể cho bố mẹ biết','Nói luôn cho họ','Cho số điện thoại','Hẹn gặp riêng'],a:0,fb:'Tuyệt đối không chia sẻ thông tin cá nhân với người lạ và hãy báo người lớn.'}]}]},
+      {ic:'🖥️',name:'Các bộ phận máy tính',rd:'Nhận biết phần cứng quen thuộc.',panel:[
+        {cards:[{ic:'🖥️',t:'Màn hình',d:'Hiển thị hình ảnh.'},{ic:'⌨️',t:'Bàn phím',d:'Gõ chữ và số.'},{ic:'🖱️',t:'Chuột',d:'Di chuyển & chọn.'},{ic:'🔊',t:'Loa',d:'Phát âm thanh.'}]},
+        {note:'Ngồi thẳng lưng, mắt cách màn hình một sải tay và nghỉ mắt sau 20 phút.'}]}],
+    skills:['Dùng internet an toàn','Biết các bộ phận máy tính'],
+    quiz:[{q:'Bộ phận nào dùng để gõ chữ?',o:['Bàn phím','Màn hình','Loa','Chuột'],a:0},
+      {q:'Người lạ trên mạng xin ảnh và địa chỉ, em nên?',o:['Từ chối và báo người lớn','Gửi ngay','Gửi cho vui','Đăng công khai'],a:0},
+      {q:'Ngồi học máy tính đúng cách là?',o:['Thẳng lưng, nghỉ mắt thường xuyên','Nằm dùng máy','Ngồi sát màn hình','Dùng liên tục vài giờ'],a:0}]},
+
+  admin:{emoji:'🏫',name:'Ban giám hiệu',accent:'#f59e0b',intro:'Khu điều hành nhà trường: nội quy, bảng tin và nơi em gửi ý kiến, mong muốn của mình.',
+    rooms:[{ic:'📜',name:'Nội quy trường em',rd:'Những điều nên làm ở trường.',panel:[
+        {h:'Nội quy học sinh'},
+        {check:['Đi học đúng giờ, mặc đồng phục gọn gàng','Lễ phép với thầy cô, hoà nhã với bạn bè','Giữ gìn vệ sinh chung, không vứt rác bừa bãi','Học bài và làm bài đầy đủ']},
+        {note:'Thực hiện tốt nội quy giúp lớp em đoàn kết và trường thêm đẹp.'}]},
+      {ic:'⭐',name:'5 điều Bác Hồ dạy',rd:'Lời dạy cho thiếu niên, nhi đồng.',panel:[
+        {ol:['Yêu Tổ quốc, yêu đồng bào','Học tập tốt, lao động tốt','Đoàn kết tốt, kỷ luật tốt','Giữ gìn vệ sinh thật tốt','Khiêm tốn, thật thà, dũng cảm']},
+        {note:'Em hãy chọn một điều để cố gắng thực hiện trong tuần này nhé!'}]},
+      {ic:'🛎️',name:'Gửi ý kiến cho trường',rd:'Điều em mong muốn ở trường.',panel:[
+        {p:'Đây là nơi em nói lên mong muốn của mình về lớp học và hoạt động.'},
+        {goal:true},
+        {note:'Thầy cô (và trợ lý AI của trường) sẽ đọc và cố gắng giúp em.'}]}],
+    skills:['Hiểu nội quy trường','Ghi nhớ 5 điều Bác Hồ dạy'],
+    quiz:[{q:'5 điều Bác Hồ dạy, điều đầu tiên là?',o:['Yêu Tổ quốc, yêu đồng bào','Giữ gìn vệ sinh','Khiêm tốn, thật thà','Học tập tốt'],a:0},
+      {q:'Đến trường, em nên?',o:['Đi học đúng giờ, lễ phép','Đi muộn cũng được','Nói chuyện riêng trong giờ','Vứt rác ra sân'],a:0},
+      {q:'Gặp thầy cô giáo, em cần?',o:['Chào hỏi lễ phép','Làm ngơ đi qua','Trêu đùa','Chạy thật nhanh'],a:0}]},
+
+  doi:{emoji:'🧣',name:'Phòng Đội & Sao Nhi đồng',accent:'#ef4444',intro:'Đội Thiếu niên Tiền phong Hồ Chí Minh và Sao Nhi đồng — nơi sinh hoạt tập thể và rèn kĩ năng.',
+    rooms:[{ic:'⭐',name:'Sao Nhi đồng',rd:'Sinh hoạt Sao của lớp nhỏ.',panel:[
+        {h:'Nhi đồng & Sao'},
+        {ul:['Học sinh lớp 1–3 sinh hoạt theo Sao Nhi đồng','Mỗi Sao có tên đẹp: Sao Chăm ngoan, Sao Đoàn kết…','Lời hứa nhi đồng: vâng lời Bác Hồ dạy']},
+        {note:'Lên lớp 4–5, em phấn đấu để được kết nạp vào Đội.'}]},
+      {ic:'🧣',name:'Khăn quàng đỏ',rd:'Ý nghĩa & cách thắt khăn.',panel:[
+        {h:'Người Đội viên'},
+        {ul:['Khăn quàng đỏ là một phần của lá cờ Tổ quốc','Đội viên đeo khăn quàng khi đến trường và sinh hoạt','Chào kiểu Đội: bàn tay phải giơ cao trên đầu']},
+        {note:'Đeo khăn quàng ngay ngắn thể hiện em là Đội viên gương mẫu.'}]},
+      {ic:'🤝',name:'Kĩ năng & hoạt động',rd:'Làm việc tốt mỗi ngày.',panel:[
+        {mcq:[{q:'"Làm nghìn việc tốt" — việc nào là việc tốt?',o:['Giúp bạn, nhặt được của rơi trả lại','Nói dối thầy cô','Bắt nạt bạn nhỏ','Bỏ học đi chơi'],a:0,fb:'Việc tốt là giúp đỡ mọi người, thật thà và trung thực.'}]}]}],
+    skills:['Sinh hoạt tập thể','Tinh thần Đội viên'],
+    quiz:[{q:'Khăn quàng đỏ tượng trưng cho?',o:['Một phần lá cờ Tổ quốc','Một chiếc khăn bình thường','Đồng phục thể thao','Khăn lau bảng'],a:0},
+      {q:'Tên đầy đủ của Đội là?',o:['Đội Thiếu niên Tiền phong Hồ Chí Minh','Đội bóng đá','Đội văn nghệ','Đội trực nhật'],a:0},
+      {q:'Nhặt được của rơi, em nên?',o:['Trả lại người mất hoặc nhờ thầy cô','Giữ làm của mình','Giấu đi','Vứt bỏ'],a:0}]},
+
+  health:{emoji:'⛑️',name:'Phòng Y tế',accent:'#e23b3b',intro:'Chăm sóc sức khoẻ học đường: rửa tay, ăn uống lành mạnh và sơ cứu vết thương nhỏ.',
+    rooms:[{ic:'🧼',name:'Rửa tay đúng cách',rd:'6 bước rửa tay sạch.',panel:[
+        {h:'Em rửa tay sạch'},
+        {ol:['Làm ướt tay, xoa xà phòng','Chà lòng bàn tay vào nhau','Chà mu bàn tay & kẽ ngón','Chà ngón tay & móng tay','Rửa sạch dưới vòi nước','Lau khô bằng khăn sạch']},
+        {note:'Rửa tay trước khi ăn, sau khi đi vệ sinh và sau khi chơi ngoài sân.'}]},
+      {ic:'🥗',name:'Ăn uống lành mạnh',rd:'Tháp dinh dưỡng cho em.',panel:[
+        {cards:[{ic:'🍚',t:'Tinh bột',d:'Cơm, bánh mì — ăn đủ.'},{ic:'🥦',t:'Rau & quả',d:'Ăn nhiều mỗi ngày.'},{ic:'🍗',t:'Đạm',d:'Thịt, cá, trứng, đậu.'},{ic:'🍬',t:'Đồ ngọt',d:'Hạn chế bánh kẹo.'}]},
+        {note:'Uống đủ nước và ăn đa dạng để cơ thể khoẻ mạnh, học tốt.'}]},
+      {ic:'🩹',name:'Sơ cứu vết thương nhỏ',rd:'Khi bị trầy xước.',panel:[
+        {mcq:[{q:'Khi bị trầy xước nhẹ ở đầu gối, em nên?',o:['Rửa sạch vết thương & báo cô y tế','Bôi đất cho cầm máu','Mặc kệ và tiếp tục chơi','Gãi cho đỡ ngứa'],a:0,fb:'Rửa sạch bằng nước, sát trùng và báo người lớn/cô y tế để được dán băng.'}]}]}],
+    skills:['Vệ sinh cá nhân','Ăn uống lành mạnh'],
+    quiz:[{q:'Em nên rửa tay khi nào?',o:['Trước khi ăn & sau khi đi vệ sinh','Chỉ khi tay bẩn nhìn thấy','Một tuần một lần','Không cần rửa'],a:0},
+      {q:'Nhóm thức ăn nào nên hạn chế?',o:['Bánh kẹo, nước ngọt','Rau xanh','Cơm','Cá'],a:0},
+      {q:'Để khoẻ mạnh, mỗi ngày em cần?',o:['Ngủ đủ giấc & vận động','Thức khuya xem tivi','Bỏ bữa sáng','Ăn thật nhiều kẹo'],a:0}]},
+
+  art:{emoji:'🎨',name:'Phòng Mĩ thuật',accent:'#f472b6',intro:'Phòng Mĩ thuật — làm quen màu sắc, tập vẽ và nặn để thoả sức sáng tạo.',
+    rooms:[{ic:'🌈',name:'Màu sắc & pha màu',rd:'Ba màu cơ bản và cách pha.',panel:[
+        {h:'Thế giới màu sắc'},
+        {cards:[{ic:'🔴',t:'Đỏ',d:'Màu cơ bản.'},{ic:'🟡',t:'Vàng',d:'Màu cơ bản.'},{ic:'🔵',t:'Lam',d:'Màu cơ bản.'}]},
+        {ul:['Đỏ + Vàng = Cam','Vàng + Lam = Lục (xanh lá)','Đỏ + Lam = Tím']},
+        {note:'Từ 3 màu cơ bản, em pha ra rất nhiều màu mới!'}]},
+      {ic:'🖍️',name:'Tập vẽ & nặn',rd:'Vẽ tranh, nặn đất.',panel:[
+        {ul:['Vẽ những gì em yêu thích: gia đình, trường lớp, thiên nhiên','Tô màu gọn trong nét, không lem ra ngoài','Nặn đất tạo hình con vật, đồ vật ngộ nghĩnh']},
+        {note:'Không có bức tranh nào là sai — quan trọng là em sáng tạo và vui!'}]}],
+    skills:['Nhận biết & pha màu','Sáng tạo nghệ thuật'],
+    quiz:[{q:'Đỏ pha với Vàng ra màu gì?',o:['Cam','Tím','Xanh lá','Đen'],a:0},
+      {q:'Đâu là ba màu cơ bản?',o:['Đỏ, Vàng, Lam','Cam, Lục, Tím','Đen, Trắng, Xám','Hồng, Nâu, Be'],a:0},
+      {q:'Vàng pha với Lam (xanh dương) ra màu gì?',o:['Xanh lá','Cam','Tím','Đỏ'],a:0}]},
+
+  music:{emoji:'🎵',name:'Phòng Âm nhạc',accent:'#a855f7',intro:'Phòng Âm nhạc — học 7 nốt nhạc, hát và gõ nhịp theo bài hát em yêu thích.',
+    rooms:[{ic:'🎼',name:'Bảy nốt nhạc',rd:'Đồ Rê Mi Fa Sol La Si.',panel:[
+        {h:'7 nốt nhạc cơ bản'},
+        {p:'Đồ – Rê – Mi – Fa – Sol – La – Si, rồi lại trở về Đố (Đồ cao).'},
+        {note:'Hát đúng cao độ và rõ lời giúp bài hát hay hơn.'}]},
+      {ic:'🥁',name:'Hát & gõ nhịp',rd:'Giữ nhịp theo bài hát.',panel:[
+        {ul:['Vỗ tay hoặc gõ thanh phách theo phách mạnh – nhẹ','Hát rõ lời, lấy hơi đúng chỗ','Biểu diễn tự tin, vui tươi']},
+        {mcq:[{q:'Có bao nhiêu nốt nhạc cơ bản?',o:['7 nốt','5 nốt','10 nốt','3 nốt'],a:0,fb:'Có 7 nốt: Đồ, Rê, Mi, Fa, Sol, La, Si.'}]}]}],
+    skills:['Biết 7 nốt nhạc','Hát & giữ nhịp'],
+    quiz:[{q:'Nốt nhạc đầu tiên là?',o:['Đồ','Sol','La','Si'],a:0},
+      {q:'Có mấy nốt nhạc cơ bản?',o:['7','5','8','3'],a:0},
+      {q:'Khi hát, em nên?',o:['Hát rõ lời, đúng nhịp','Hát thật to át bạn','Hát sai cũng được','Không cần lấy hơi'],a:0}]},
+
+  science:{emoji:'🔬',name:'Phòng Khoa học & TN-XH',accent:'#14b8a6',intro:'Phòng Khoa học — làm thí nghiệm vui, khám phá cây cối, con vật và bảo vệ môi trường.',
+    rooms:[{ic:'💧',name:'Ba thể của nước',rd:'Rắn – lỏng – khí.',panel:[
+        {h:'Nước kì diệu'},
+        {cards:[{ic:'🧊',t:'Thể rắn',d:'Nước đá (gặp lạnh, 0°C).'},{ic:'💧',t:'Thể lỏng',d:'Nước ta thường thấy.'},{ic:'☁️',t:'Thể khí',d:'Hơi nước (đun nóng bốc hơi).'}]},
+        {note:'Nước có thể chuyển qua lại giữa 3 thể khi nóng lên hoặc lạnh đi.'}]},
+      {ic:'🌱',name:'Cây cần gì để sống?',rd:'Điều kiện cho cây lớn.',panel:[
+        {ul:['Cây cần: nước, ánh sáng, không khí và đất','Lá cây quang hợp dưới ánh nắng để tạo thức ăn','Tưới cây vừa đủ, đặt cây nơi có nắng']},
+        {mcq:[{q:'Cây xanh KHÔNG cần điều gì để sống?',o:['Bóng tối hoàn toàn','Nước','Ánh sáng','Không khí'],a:0,fb:'Cây cần ánh sáng để quang hợp — để trong bóng tối lâu cây sẽ héo.'}]}]},
+      {ic:'♻️',name:'Bảo vệ môi trường',rd:'Việc nhỏ ý nghĩa lớn.',panel:[
+        {ul:['Phân loại rác: rác tái chế và rác bỏ đi','Tiết kiệm nước và điện','Trồng và chăm sóc cây xanh']},
+        {note:'3R: Reduce – Reuse – Recycle (Giảm – Tái sử dụng – Tái chế).'}]}],
+    skills:['Hiểu hiện tượng tự nhiên','Ý thức bảo vệ môi trường'],
+    quiz:[{q:'Nước đá là nước ở thể nào?',o:['Thể rắn','Thể lỏng','Thể khí','Không phải nước'],a:0},
+      {q:'Cây xanh cần gì để sống?',o:['Nước, ánh sáng, không khí','Chỉ cần bóng tối','Chỉ cần kẹo','Không cần gì'],a:0},
+      {q:'Việc nào bảo vệ môi trường?',o:['Trồng cây & tiết kiệm nước','Xả rác bừa bãi','Phí điện nước','Bẻ cây'],a:0}]},
+
+  canteen:{emoji:'🍱',name:'Nhà ăn bán trú',accent:'#f59e0b',intro:'Nhà ăn bán trú — ăn trưa đủ chất, giữ vệ sinh và rèn nếp ăn uống văn minh.',
+    rooms:[{ic:'🍽️',name:'Bữa ăn đủ chất',rd:'Ăn đa dạng để khoẻ.',panel:[
+        {h:'Bữa trưa khoẻ mạnh'},
+        {ul:['Có đủ cơm, món mặn (đạm), canh và rau','Ăn thêm trái cây tráng miệng','Nhai kĩ, ăn vừa đủ no, không bỏ phí thức ăn']},
+        {note:'Ăn đủ bữa và đa dạng giúp em có sức học cả buổi chiều.'}]},
+      {ic:'🧼',name:'Vệ sinh ăn uống',rd:'Nếp ăn sạch sẽ.',panel:[
+        {check:['Rửa tay trước khi ăn','Ăn chín, uống nước đun sôi để nguội','Không nói chuyện lúc miệng đầy thức ăn','Dọn bát đĩa gọn gàng sau khi ăn']},
+        {mcq:[{q:'Trước khi ăn cơm, em phải?',o:['Rửa tay sạch','Chơi cho mệt đã','Ăn ngay không cần rửa','Uống thật nhiều nước ngọt'],a:0,fb:'Rửa tay trước khi ăn để vi khuẩn không theo thức ăn vào bụng.'}]}]}],
+    skills:['Ăn uống đủ chất','Giữ vệ sinh ăn uống'],
+    quiz:[{q:'Một bữa ăn cân đối nên có?',o:['Cơm, đạm, rau và canh','Chỉ toàn bánh kẹo','Chỉ nước ngọt','Chỉ cơm trắng'],a:0},
+      {q:'Trước khi ăn, em cần?',o:['Rửa tay sạch','Xem tivi','Chạy nhảy','Không làm gì'],a:0},
+      {q:'Với thức ăn còn thừa, em nên?',o:['Lấy vừa đủ, không bỏ phí','Bỏ thật nhiều đi','Vứt xuống đất','Ném cho bạn'],a:0}]},
+
+  gym:{emoji:'🤸',name:'Nhà đa năng (Thể chất)',accent:'#0ea5e9',intro:'Nhà đa năng — vận động, chơi trò chơi và rèn sức khoẻ một cách an toàn, vui vẻ.',
+    rooms:[{ic:'🤸',name:'Khởi động trước khi chơi',rd:'Làm nóng cơ thể.',panel:[
+        {h:'Khởi động đúng cách'},
+        {ol:['Xoay cổ tay, cổ chân nhẹ nhàng','Xoay khớp vai, khớp gối','Chạy bước nhỏ tại chỗ','Hít thở sâu vài lần']},
+        {note:'Khởi động giúp em tránh bị đau cơ hay trẹo chân khi vận động.'}]},
+      {ic:'🪀',name:'Trò chơi vận động',rd:'Vận động vui & đoàn kết.',panel:[
+        {cards:[{ic:'🤾',t:'Nhảy dây',d:'Khoẻ chân, bền bỉ.'},{ic:'🏸',t:'Đá cầu',d:'Khéo léo, nhanh nhẹn.'},{ic:'🪢',t:'Kéo co',d:'Đoàn kết cả đội.'}]},
+        {note:'Chơi cùng nhau giúp em vui, khoẻ và thêm gắn bó với bạn bè.'}]},
+      {ic:'⚠️',name:'An toàn khi vận động',rd:'Chơi vui nhưng an toàn.',panel:[
+        {mcq:[{q:'Khi chơi đùa ngoài sân, em nên?',o:['Chơi nhẹ nhàng, không xô đẩy bạn','Xô đẩy cho vui','Chạy nhắm mắt','Leo trèo nơi nguy hiểm'],a:0,fb:'Chơi an toàn: không xô đẩy, không leo trèo nơi nguy hiểm để tránh té ngã.'}]}]}],
+    skills:['Vận động đúng cách','Chơi an toàn & đoàn kết'],
+    quiz:[{q:'Trước khi chơi thể thao, em nên?',o:['Khởi động làm nóng cơ thể','Ăn thật no','Chạy hết sức ngay','Ngồi yên'],a:0},
+      {q:'Khi chơi cùng bạn, em nên?',o:['Nhường nhịn, không xô đẩy','Tranh giành','Chơi xấu','Bắt nạt bạn nhỏ'],a:0},
+      {q:'Vận động mỗi ngày giúp em?',o:['Khoẻ mạnh & nhanh nhẹn','Mệt nên đừng chơi','Học kém đi','Hay ốm hơn'],a:0}]},
+};
+
+const SPACE_SETS = { pharmacy: SPACES_PHARMACY, secondary: SPACES_SECONDARY, it: SPACES_IT, primary: SPACES_PRIMARY };
+const DOMAIN_TITLES = { pharmacy: 'Trường Dược', secondary: 'Trường THCS', it: 'Trường Công nghệ thông tin', primary: 'Trường Tiểu học' };
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),4200); }
 
 const params=new URLSearchParams(location.search);
 const id=params.get('b')||'admin';
 const dom=params.get('domain')||'pharmacy';
+if(window.SPACES_HIGHSCHOOL){ SPACE_SETS.highschool=window.SPACES_HIGHSCHOOL; DOMAIN_TITLES.highschool='Trường THPT'; }
 const SPACES=SPACE_SETS[dom]||SPACES_PHARMACY;
 const S=SPACES[id]||SPACES[Object.keys(SPACES)[0]];
 document.title=`${S.emoji} ${S.name} · ${DOMAIN_TITLES[dom]||'EduVerse'}`;

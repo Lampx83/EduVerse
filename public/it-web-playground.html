@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎨 Web Playground · Trường CNTT · EduVerse</title>
+<style>
+  :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#ec4899; --border:rgba(255,255,255,.12); --card:rgba(255,255,255,.05); }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; font-family:'Inter',system-ui,sans-serif; color:#e5edf7;
+    background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(236,72,153,.15), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); }
+  .top { display:flex; align-items:center; gap:14px; padding:12px 18px; border-bottom:1px solid var(--border); background:rgba(0,0,0,.2); }
+  .back { color:#fff; text-decoration:none; opacity:.85; font-size:13.5px; background:rgba(255,255,255,.08); padding:7px 12px; border-radius:9px; }
+  .back:hover { opacity:1; background:rgba(255,255,255,.16); }
+  .top h1 { margin:0; font-size:17px; font-weight:800; }
+  .top .sub { font-size:12.5px; opacity:.6; font-weight:400; }
+  .top .right { margin-left:auto; display:flex; gap:9px; align-items:center; }
+  select, .btn { font-family:inherit; border-radius:9px; font-size:13px; border:1px solid var(--border); }
+  select { background:#0f1830; color:#fff; padding:8px 10px; }
+  .btn { border:none; font-weight:800; padding:9px 15px; cursor:pointer; }
+  .btn.run { background:var(--accent); color:#fff; } .btn.run:hover{ filter:brightness(1.08); }
+  .btn.ghost { background:rgba(255,255,255,.08); color:#fff; } .btn.ghost:hover{ background:rgba(255,255,255,.16); }
+  .layout { display:grid; grid-template-columns:1fr 1fr; gap:0; height:calc(100vh - 58px); }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; height:auto; } .preview-pane{ min-height:420px; } }
+  .editors { display:flex; flex-direction:column; border-right:1px solid var(--border); overflow:hidden; }
+  .tabs { display:flex; gap:2px; padding:8px 10px 0; background:rgba(0,0,0,.15); }
+  .tab { padding:8px 16px; font-size:13px; font-weight:700; cursor:pointer; border-radius:9px 9px 0 0; color:#9fb3c8; }
+  .tab.active { background:#0a0f1d; color:#fff; }
+  .tab .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .tab[data-l=html] .dot{ background:#e34c26; } .tab[data-l=css] .dot{ background:#2965f1; } .tab[data-l=js] .dot{ background:#f0db4f; }
+  .ed { flex:1; display:none; }
+  .ed.active { display:block; }
+  textarea { width:100%; height:100%; resize:none; background:#0a0f1d; color:#e7f0ff; border:none; padding:14px 16px;
+    font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace; font-size:13.5px; line-height:1.6; tab-size:2; }
+  textarea:focus { outline:none; }
+  .preview-pane { display:flex; flex-direction:column; background:#fff; }
+  .pv-bar { background:#0f1830; color:#9fb3c8; font-size:11.5px; padding:7px 14px; letter-spacing:.4px; border-bottom:1px solid var(--border); }
+  iframe { flex:1; width:100%; border:0; background:#fff; }
+  .hint { font-size:11.5px; opacity:.55; padding:0 10px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="back" id="back" href="/school.html?domain=it#campus-hero">← Khuôn viên trường</a>
+  <div><h1>🎨 Web Playground <span class="sub">— viết HTML/CSS/JS, xem kết quả ngay</span></h1></div>
+  <div class="right">
+    <select id="tpl" title="Mẫu khởi đầu">
+      <option value="">— Mẫu —</option>
+      <option value="hello">Trang chào</option>
+      <option value="card">Thẻ hồ sơ (card)</option>
+      <option value="button">Nút đổi màu (JS)</option>
+      <option value="flex">Bố cục Flexbox</option>
+      <option value="todo">To-do list (JS)</option>
+    </select>
+    <button class="btn ghost" id="resetBtn">↺ Xoá</button>
+    <button class="btn run" id="runBtn">▶ Chạy (Ctrl+Enter)</button>
+  </div>
+</div>
+<div class="layout">
+  <div class="editors">
+    <div class="tabs">
+      <div class="tab active" data-l="html"><span class="dot"></span>HTML</div>
+      <div class="tab" data-l="css"><span class="dot"></span>CSS</div>
+      <div class="tab" data-l="js"><span class="dot"></span>JS</div>
+      <span class="hint">Tự cập nhật khi bạn gõ (sau ~0,6s)</span>
+    </div>
+    <div class="ed active" data-l="html"><textarea id="html" spellcheck="false"></textarea></div>
+    <div class="ed" data-l="css"><textarea id="css" spellcheck="false"></textarea></div>
+    <div class="ed" data-l="js" ><textarea id="js" spellcheck="false"></textarea></div>
+  </div>
+  <div class="preview-pane">
+    <div class="pv-bar">🔎 Xem trước trực tiếp (sandbox)</div>
+    <iframe id="preview" sandbox="allow-scripts" title="Xem trước"></iframe>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const LS = 'eduverse:it:webplay';
+
+const TEMPLATES = {
+  hello: {
+    html: '<h1>Xin chào EduVerse 👋</h1>\n<p>Đây là trang web đầu tiên của bạn.</p>\n<button id="btn">Bấm tôi</button>',
+    css: 'body { font-family: system-ui; text-align: center; padding: 40px; color: #1f2937; }\nh1 { color: #ec4899; }\nbutton { padding: 10px 20px; border: 0; border-radius: 8px; background: #38bdf8; color: #fff; font-weight: 700; cursor: pointer; }',
+    js: "document.getElementById('btn').addEventListener('click', () => {\n  document.querySelector('p').textContent = 'Bạn vừa chạy JavaScript! 🎉';\n});"
+  },
+  card: {
+    html: '<div class="card">\n  <div class="avatar">👩‍💻</div>\n  <h2>Nguyễn Văn A</h2>\n  <p>Sinh viên CNTT · Năm 2</p>\n  <span class="tag">JavaScript</span>\n  <span class="tag">Python</span>\n</div>',
+    css: 'body { display:grid; place-items:center; min-height:100vh; margin:0; background:#0f172a; font-family:system-ui; }\n.card { background:#fff; border-radius:16px; padding:28px; width:240px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.3); }\n.avatar { font-size:60px; }\n.tag { display:inline-block; background:#e0f2fe; color:#0369a1; font-size:12px; padding:4px 10px; border-radius:20px; margin:3px; }',
+    js: '// Thẻ hồ sơ thuần HTML/CSS — thử đổi nội dung & màu sắc!'
+  },
+  button: {
+    html: '<h2>Đổi màu nền</h2>\n<button id="b">Màu ngẫu nhiên</button>',
+    css: 'body { font-family:system-ui; text-align:center; padding:50px; transition:background .3s; }\nbutton { padding:12px 22px; font-size:16px; border:0; border-radius:10px; background:#111827; color:#fff; cursor:pointer; }',
+    js: "const colors = ['#fca5a5','#fcd34d','#86efac','#93c5fd','#c4b5fd','#f9a8d4'];\ndocument.getElementById('b').addEventListener('click', () => {\n  const c = colors[Math.floor(Math.random()*colors.length)];\n  document.body.style.background = c;\n});"
+  },
+  flex: {
+    html: '<div class="row">\n  <div class="box">1</div>\n  <div class="box">2</div>\n  <div class="box">3</div>\n</div>',
+    css: '.row { display:flex; gap:12px; justify-content:center; padding:40px; }\n.box { width:80px; height:80px; display:grid; place-items:center; font-size:24px; font-weight:800;\n  background:#38bdf8; color:#fff; border-radius:12px; }',
+    js: '// Thử đổi justify-content: center / space-between / flex-end\n// hoặc thêm flex-wrap, align-items...'
+  },
+  todo: {
+    html: '<h2>📝 Việc cần làm</h2>\n<input id="t" placeholder="Nhập việc..." />\n<button id="add">Thêm</button>\n<ul id="list"></ul>',
+    css: 'body{font-family:system-ui;max-width:360px;margin:30px auto;} input{padding:8px;width:60%;} button{padding:8px 12px;} li{padding:6px;border-bottom:1px solid #eee;cursor:pointer;} li.done{text-decoration:line-through;opacity:.5;}',
+    js: "const list=document.getElementById('list');\ndocument.getElementById('add').onclick=()=>{\n  const v=document.getElementById('t').value.trim(); if(!v)return;\n  const li=document.createElement('li'); li.textContent=v;\n  li.onclick=()=>li.classList.toggle('done');\n  list.appendChild(li); document.getElementById('t').value='';\n};"
+  }
+};
+
+const DEFAULT = TEMPLATES.hello;
+
+function load(){
+  try { const s = JSON.parse(localStorage.getItem(LS) || 'null'); if (s){ $('html').value=s.html; $('css').value=s.css; $('js').value=s.js; return; } } catch(e){}
+  apply(DEFAULT);
+}
+function apply(t){ $('html').value=t.html; $('css').value=t.css; $('js').value=t.js; save(); render(); }
+function save(){ try { localStorage.setItem(LS, JSON.stringify({ html:$('html').value, css:$('css').value, js:$('js').value })); } catch(e){} }
+
+function render(){
+  const doc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${$('css').value}</style></head>`
+    + `<body>${$('html').value}<script>try{${$('js').value}\n}catch(e){document.body.insertAdjacentHTML('beforeend','<pre style=\\'color:#b91c1c;font-family:monospace;white-space:pre-wrap\\'>⛔ '+e+'</pre>');}<\/script></body></html>`;
+  $('preview').srcdoc = doc;
+}
+
+// tabs
+document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ed').forEach(e => e.classList.remove('active'));
+  tab.classList.add('active');
+  document.querySelector('.ed[data-l="' + tab.dataset.l + '"]').classList.add('active');
+  document.querySelector('.ed.active textarea').focus();
+}));
+
+// Tab key → 2 spaces; debounced live render
+let deb;
+['html','css','js'].forEach(id => {
+  const ta = $(id);
+  ta.addEventListener('keydown', e => { if (e.key === 'Tab'){ e.preventDefault(); const s=ta.selectionStart,en=ta.selectionEnd;
+    ta.value = ta.value.slice(0,s)+'  '+ta.value.slice(en); ta.selectionStart=ta.selectionEnd=s+2; } });
+  ta.addEventListener('input', () => { save(); clearTimeout(deb); deb = setTimeout(render, 600); });
+});
+
+$('runBtn').addEventListener('click', render);
+$('resetBtn').addEventListener('click', () => { if(confirm('Xoá hết code hiện tại?')){ apply({html:'',css:'',js:''}); } });
+$('tpl').addEventListener('change', e => { const t = TEMPLATES[e.target.value]; if (t) apply(t); e.target.value=''; });
+document.addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey) && e.key === 'Enter'){ e.preventDefault(); render(); } });
+(function(){ const d=new URLSearchParams(location.search).get('domain'); if(d) $('back').href='/school.html?domain='+encodeURIComponent(d)+'#campus-hero'; })();
+
+load(); render();
+</script>
+</body>
+</html>
