@@ -50,15 +50,36 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
 <a class="back" href="index.html">← Trang chủ EduVerse · chọn trường khác</a>
 
-<!-- ============ LỘ TRÌNH HỌC TẬP — SUBWAY MAP ============ -->
+<!-- ============ KHUÔN VIÊN TRƯỜNG — CAMPUS MAP ============ -->
+<div class="section" id="campus-hero">
+  <div class="section-title">
+    <h2>🏫 Khuôn viên trường</h2>
+    <span class="hint">Bấm vào từng toà nhà để vào phòng học · thực hành · trải nghiệm bên trong · di chuột xem tên</span>
+  </div>
+  <div style="position:relative;width:100%;height:82vh;min-height:520px;border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 8px 26px rgba(0,0,0,.28)">
+    <iframe id="campus-frame" style="width:100%;height:100%;border:0;display:block" title="Khuôn viên trường" loading="lazy"></iframe>
+  </div>
+</div>
+<script>
+(function(){
+  const dom = new URLSearchParams(location.search).get('domain') || 'pharmacy';
+  document.getElementById('campus-frame').src = 'campus-proto/b-iso-canvas.html?embed=1&domain=' + encodeURIComponent(dom);
+  window.addEventListener('message', function(e){
+    const d = e.data; if(!d || d.type !== 'campus-enter') return;
+    const path = document.getElementById('campus');   // cuộn tới khu lộ trình học
+    if(path) path.scrollIntoView({ block:'start' });
+  });
+})();
+</script>
+
+<!-- ============ TIẾN ĐỘ CỦA BẠN ============ -->
 <div class="section" id="campus">
   <div class="section-title">
-    <h2 id="path-title">🗺️ Lộ trình học tập</h2>
-    <span class="hint">Click node để vào module · badge 📚🥽🕹️📱🌐 = phiên bản trải nghiệm · 🔒 = chưa có nội dung / chưa mở khoá</span>
+    <h2 id="path-title">📊 Tiến độ của bạn</h2>
+    <span class="hint">Mọi phòng học & thực hành đều nằm trong các toà nhà phía trên</span>
   </div>
   <div id="wallet-host"></div>
   <div id="quests-host" style="margin:0 0 16px"></div>
-  <div id="path-host">Đang dựng lộ trình…</div>
 </div>
 
 <!-- ============ BAN ĐIỀU HÀNH AI — nhận yêu cầu SV ============ -->
@@ -88,32 +109,17 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   const { MODULES, SUBJECTS, ACHIEVEMENTS, DOMAIN } = dom;
 
   document.title = `${DOMAIN.icon} ${DOMAIN.name} · EduVerse`;
-  document.getElementById('path-title').innerHTML = `🗺️ Lộ trình · ${DOMAIN.icon} ${DOMAIN.name}`;
+  document.getElementById('path-title').innerHTML = `📊 Tiến độ · ${DOMAIN.icon} ${DOMAIN.name}`;
 
   primeModulesCache(MODULES);
-
-  // "Có nội dung" = có experiences[] HOẶC có scenario thật (id khớp / prefix module-)
-  const scenarioIds = new Set(Object.values(ALL_SCENARIOS).map(s => s?.id).filter(Boolean));
-  const hasContent = (m) => {
-    if ((m.experiences || []).length > 0) return true;
-    for (const sid of (m.scenarioIds || [])) if (scenarioIds.has(sid)) return true;
-    for (const sid of scenarioIds) if (sid.startsWith(m.id + '-')) return true;
-    return false;
-  };
-  const contentSet = new Set(MODULES.filter(hasContent).map(m => m.id));
 
   const progress = getProgress();
 
   // Game hoá (XP/level/journey/quest) CHỈ cho Tiểu học + THCS.
   const GAMIFIED = isGamifiedDomain(getActiveDomainId());
 
-  // Gate DUY NHẤT = có nội dung. Module nào có content → bấm được;
-  // không có → khoá. Prereq chỉ còn là đường nối trực quan (không chặn).
-  renderPath({
-    host: document.getElementById('path-host'),
-    modules: MODULES, subjects: SUBJECTS, domain: DOMAIN, categories: CATEGORIES,
-    progress, locked: new Map(), contentSet, gamified: GAMIFIED,
-  });
+  // Lộ trình học giờ nằm TRONG các toà nhà của campus (xem space.html),
+  // nên trang trường không còn dựng subway map phẳng "bên ngoài" nữa.
 
   const loginEvent = onLogin();
   renderWalletPills(document.getElementById('wallet-host'), {

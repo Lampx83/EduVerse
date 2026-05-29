@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Campus 2.5D · EduVerse</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;
+    background: linear-gradient(180deg, #cfeecb 0%, #d9f3d2 60%, #eafff0 100%); }
+  #c { display: block; }
+  #legend { position:fixed; left:16px; bottom:16px; z-index:12; background:rgba(255,255,255,.92); border-radius:14px; padding:10px 14px 11px; box-shadow:0 8px 24px rgba(0,0,0,.2); color:#1f2937; backdrop-filter:blur(4px); max-height:62vh; overflow:auto; }
+  #legend h4 { margin:0 0 7px; font-size:12px; letter-spacing:1px; color:#0f172a; font-weight:800; }
+  #legend #legend-rows { display:grid; grid-template-columns:repeat(2,auto); gap:2px 14px; }
+  #legend .lr { display:flex; align-items:center; gap:8px; font-size:12px; padding:2px 5px; border-radius:7px; cursor:pointer; transition:background .12s; }
+  #legend .lr:hover { background:rgba(192,57,43,.12); }
+  #legend .lr .e { width:18px; text-align:center; font-size:14px; }
+  .back { position:fixed; left:18px; top:16px; z-index:11; background:rgba(15,23,42,.7); color:#fff; text-decoration:none; padding:7px 13px; border-radius:20px; font-size:12.5px; backdrop-filter:blur(8px); }
+  .credit { position:fixed; right:16px; bottom:16px; z-index:11; color:#33506a; font-size:11px; opacity:.7; }
+  #tip { position:fixed; z-index:20; background:#fff; color:#1f2937; font-weight:800; font-size:13px; padding:6px 11px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.25); pointer-events:none; opacity:0; transition:opacity .12s; transform:translate(-50%,-130%); white-space:nowrap; }
+  #toast { position:fixed; left:50%; top:24px; transform:translateX(-50%) translateY(-10px); z-index:21; background:#16a34a; color:#fff; font-weight:800; padding:10px 18px; border-radius:12px; opacity:0; transition:opacity .25s, transform .25s; box-shadow:0 8px 24px rgba(0,0,0,.25); pointer-events:none; }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #loading { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:30; background:rgba(220,245,255,.92); color:#23506a; font-weight:800; font-size:15px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="legend"><h4>CHÚ GIẢI</h4><div id="legend-rows"></div></div>
+<a class="back" href="/">← EduVerse</a>
+<div class="credit">3D: KayKit (CC0)</div>
+<div id="tip"></div>
+<div id="toast"></div>
+<div id="loading">Đang dựng campus…</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const TW=56, TH=28, N=28;
+const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+const hit=document.createElement('canvas'), hctx=hit.getContext('2d',{willReadFrequently:true});
+let DPR=Math.min(devicePixelRatio||1,2), ox=0, oy=0;
+const P=(gx,gy)=>({ x: ox+(gx-gy)*TW/2, y: oy+(gx+gy)*TH/2 });
+const idCol=i=>`rgb(${(i+1)*7%256},${(i+1)*53%256},${(i+1)*97%256})`;
+const colId=(r,g,b)=>{ for(let i=0;i<40;i++){ const n=i+1; if((n*7%256)===r&&(n*53%256)===g&&(n*97%256)===b) return i; } return -1; };
+const KAY=f=>encodeURI(`assets/kaykit/${f}.gltf`);
+const B=(id,name,emoji,gx,gy,model,s,rot,extra)=>({id,name,emoji,gx,gy,url:KAY(model),s:s||1,rot:rot||0,...(extra||{})});
+
+// ============================================================
+// MỖI TRƯỜNG = 1 CAMPUS RIÊNG (bản đồ + toà nhà + sân khác nhau)
+//   vroads/hroads  → mạng đường (trục dọc theo y, trục ngang theo x)
+//   buildings      → toà nhà 3D (KayKit), nối tự động ra trục dọc gần nhất
+//   facilities     → pin + mục legend cho sân/tiện ích vẽ phẳng
+//   fields         → hình vẽ phẳng (sân bóng, sân chào cờ, vườn, bãi xe…)
+//   trees/cars     → trang trí; sportTargets → id field/facility mở game nào
+// ============================================================
+const CAMPUSES = {
+  // ─────────────────────── TRƯỜNG DƯỢC (Đại học) ───────────────────────
+  pharmacy: {
+    title:'Trường Dược', grass:['#97d177','#a2d983'],
+    vroads:[9.25,17.25,25.25], hroads:[{a:8.6,b:9.9},{a:16.6,b:17.9}],
+    buildings:[
+      B('admin','Hành chính – Hiệu bộ','⚙️',11,2.4,'building_G_withoutBase',1.15,0,{flag:true}),
+      B('lecture','Giảng đường','🏛️',14.4,2.4,'building_D_withoutBase',1.1,180),
+      B('library','Thư viện','📖',11,5.9,'building_C_withoutBase',1.0,90),
+      B('hall','Hội trường','🎤',14.4,5.9,'building_A_withoutBase',1.05,270),
+      B('clinic','BV Thực hành','🏥',19.4,2.4,'building_A_withoutBase',1.05,90,{pin:'#e23b3b'}),
+      B('lab_org','PTN Hoá hữu cơ','🧪',23,2.4,'building_B_withoutBase',1.0,270),
+      B('lab_qc','PTN Kiểm nghiệm','⚗️',19.4,5.9,'building_B_withoutBase',1.0,0),
+      B('lab_micro','PTN Vi sinh','🦠',23,5.9,'building_F_withoutBase',1.0,180),
+      B('canteen','Căng tin','🍜',11,11.4,'building_D_withoutBase',0.95,90),
+      B('gpp','Nhà thuốc GPP','💊',14.4,11.4,'building_F_withoutBase',0.85,0,{pin:'#16a34a'}),
+      B('sim','TT Mô phỏng – OSCE','🎭',11,14.9,'building_C_withoutBase',1.0,180),
+      B('clinpharm','Dược lý – Lâm sàng','💉',14.4,14.9,'building_E_withoutBase',0.95,270),
+      B('garden','Vườn dược liệu','🌿',19.4,11.4,'building_E_withoutBase',0.8,180),
+      B('gmp','Xưởng Bào chế – GMP','🏭',23,11.4,'building_H_withoutBase',1.05,90),
+      B('dorm','Ký túc xá','🛏️',19.4,14.9,'building_H_withoutBase',1.05,270),
+      B('museum','Bảo tàng Dược','🏺',23,14.9,'building_G_withoutBase',0.95,180),
+    ],
+    facilities:[
+      {id:'football',name:'Sân bóng đá',emoji:'⚽',gx:4,gy:2.8},
+      {id:'baseball',name:'Sân bóng chày',emoji:'⚾',gx:3.3,gy:6.8},
+      {id:'track',name:'Đường chạy',emoji:'🏃',gx:4,gy:13},
+      {id:'parking',name:'Bãi đỗ xe',emoji:'🅿️',gx:13,gy:20.6},
+      {id:'bus',name:'Trạm xe buýt',emoji:'🚌',gx:9.3,gy:12.6},
+    ],
+    fields:[
+      {type:'football', gx:1.4,gy:1.3, w:5.3,d:3.2},
+      {type:'baseball', gx:1.6,gy:5.2, sz:3.2},
+      {type:'track', cx:4,cy:13, rx:3.1,ry:2.3},
+      {type:'parking', gx:10.6,gy:19, w:5,d:3.4},
+    ],
+    sportTargets:{ football:'/time-attack.html', baseball:'/time-attack.html', track:'/time-attack.html' },
+    trees:[[7.6,2],[7.6,6],[7.6,10],[7.6,14],[12.7,4.1],[12.7,8],[21.2,4.1],[21.2,8],[12.7,13],[21.2,13],
+      [1.6,10.5],[1.6,16],[4,16.5],[7.6,17.5],[16,8],[24,8.2],[16,16],[26.5,4],[26.5,12],[26.5,18],[9.3,20],[16.2,20.5]],
+    cars:[[9.25,7],[17.25,7],[25.25,7],[6,9.25],[21,17.25],[11.4,20],[13.8,20],[11.4,21.5],[13.8,21.5]],
+  },
+
+  // ─────────────────────── TRƯỜNG THCS (Lớp 6–9) ───────────────────────
+  // Bản đồ kiểu trường phổ thông VN: sân chào cờ ở giữa, dãy phòng học theo
+  // khối lớp, sân bóng/sân bóng rổ, vườn trường, BÃI XE ĐẠP (không phải ô tô).
+  secondary: {
+    title:'Trường THCS', grass:['#9bd57e','#aadd8c'],
+    vroads:[9.25,17.25,25.25], hroads:[{a:8.6,b:9.9},{a:16.6,b:17.9}],
+    buildings:[
+      // Dãy phòng học theo khối lớp (block trên-trái)
+      B('grade6','Khối lớp 6','6️⃣',11,2.4,'building_D_withoutBase',1.05,0),
+      B('grade7','Khối lớp 7','7️⃣',14.4,2.4,'building_D_withoutBase',1.05,180),
+      B('grade8','Khối lớp 8','8️⃣',11,5.9,'building_A_withoutBase',1.0,90),
+      B('grade9','Khối lớp 9','9️⃣',14.4,5.9,'building_A_withoutBase',1.0,270),
+      // Phòng học bộ môn (block trên-phải)
+      B('lab','Phòng thí nghiệm KHTN','🔬',19.4,2.4,'building_B_withoutBase',1.0,90),
+      B('computer','Phòng Tin học','💻',23,2.4,'building_F_withoutBase',0.95,270),
+      B('english','Phòng Ngoại ngữ','🗣️',19.4,5.9,'building_E_withoutBase',0.95,0),
+      B('artmusic','Phòng Nghệ thuật','🎨',23,5.9,'building_C_withoutBase',1.0,180),
+      // Khu điều hành & hỗ trợ (block dưới-trái)
+      B('admin','Phòng Hiệu bộ','🏫',11,11.4,'building_G_withoutBase',1.1,90,{flag:true}),
+      B('library','Thư viện','📚',14.4,11.4,'building_C_withoutBase',1.0,0),
+      B('tradition','Phòng truyền thống','🏆',11,14.9,'building_G_withoutBase',0.9,180),
+      B('youthunion','Phòng Đoàn – Đội','🚩',14.4,14.9,'building_F_withoutBase',0.9,270),
+      // Khu thể chất & sinh hoạt (block dưới-phải)
+      B('gym','Nhà đa năng','🤸',19.4,11.4,'building_H_withoutBase',1.1,90),
+      B('tech','Phòng Công nghệ – STEM','🔧',23,11.4,'building_B_withoutBase',1.0,270),
+      B('medical','Phòng Y tế','⛑️',19.4,14.9,'building_F_withoutBase',0.85,0,{pin:'#e23b3b'}),
+      B('canteen','Căng tin','🍜',23,14.9,'building_D_withoutBase',0.95,180),
+    ],
+    facilities:[
+      {id:'flagyard',name:'Sân chào cờ',emoji:'🚩',gx:4,gy:2.8},
+      {id:'football',name:'Sân bóng đá',emoji:'⚽',gx:4,gy:7.1},
+      {id:'court',name:'Sân bóng rổ',emoji:'🏀',gx:3.3,gy:11.3},
+      {id:'schoolgarden',name:'Vườn trường',emoji:'🌱',gx:6.7,gy:11.3},
+      {id:'bikepark',name:'Bãi xe đạp',emoji:'🚲',gx:13,gy:20.6},
+      {id:'gate',name:'Cổng trường',emoji:'🚪',gx:9.3,gy:12.6},
+    ],
+    fields:[
+      {type:'plaza', gx:1.3,gy:1.0, w:5.4,d:3.6},
+      {type:'football', gx:1.3,gy:5.4, w:5.4,d:3.2},
+      {type:'court', gx:1.6,gy:9.6, w:3.3,d:3.4},
+      {type:'garden', gx:5.2,gy:9.8, w:2.8,d:3.0},
+      {type:'parking', gx:10.6,gy:19, w:5,d:3.4},
+    ],
+    sportTargets:{ football:'/time-attack.html', court:'/time-attack.html' },
+    trees:[[7.6,2],[7.6,5.4],[12.7,4.1],[21.2,4.1],[12.7,8.2],[16,8.4],[21.2,8.2],[24.5,8.4],
+      [16,16.4],[24,16.4],[26.5,4],[26.5,12],[26.5,18],[8.2,16],[8.2,18.5],[2.2,14.2],[7,13.6],
+      [16.2,20.5],[9.3,20]],
+    cars:[[9.25,7],[17.25,7],[25.25,7.3]],
+  },
+
+  // ─────────────────────── TRƯỜNG TIỂU HỌC (Lớp 1–5) ───────────────────────
+  // Trường NHỎ & VUI: nhà thấp (scale bé), cỏ non sáng nhất, lớp 1–5 sơn màu
+  // cầu vồng; khu ngoài có SÂN CHÀO CỜ + cột cờ, SÂN CHƠI, sân bóng mini, vườn
+  // hoa, nhà xe ĐẠP (không phải ô tô). Toà = khối lớp + phòng chức năng tiểu học.
+  primary: {
+    title:'Trường Tiểu học', grass:['#aef08f','#bdf7a3'],
+    vroads:[9.25,17.25,25.25], hroads:[{a:8.6,b:9.9},{a:16.6,b:17.9}],
+    buildings:[
+      // Dãy lớp 1–4 (block trên-trái) — cùng kiểu nhà, sơn màu cầu vồng
+      B('g1','Lớp 1','1️⃣',11,2.4,'building_D_withoutBase',0.9,0,{pin:'#ef4444'}),
+      B('g2','Lớp 2','2️⃣',14.4,2.4,'building_D_withoutBase',0.9,180,{pin:'#f59e0b'}),
+      B('g3','Lớp 3','3️⃣',11,5.9,'building_D_withoutBase',0.9,90,{pin:'#22c55e'}),
+      B('g4','Lớp 4','4️⃣',14.4,5.9,'building_D_withoutBase',0.9,270,{pin:'#0ea5e9'}),
+      // Lớp 5 + phòng học chung (block trên-phải)
+      B('g5','Lớp 5','5️⃣',19.4,2.4,'building_D_withoutBase',0.9,90,{pin:'#8b5cf6'}),
+      B('library','Thư viện','📚',23,2.4,'building_C_withoutBase',0.95,270,{pin:'#3b82f6'}),
+      B('english','Phòng Tiếng Anh','🔤',19.4,5.9,'building_E_withoutBase',0.9,0,{pin:'#60a5fa'}),
+      B('computer','Phòng Tin học','💻',23,5.9,'building_F_withoutBase',0.9,180,{pin:'#8b5cf6'}),
+      // Khu điều hành & Đội (block dưới-trái)
+      B('admin','Ban giám hiệu','🏫',11,11.4,'building_G_withoutBase',1.0,90,{flag:true,pin:'#f59e0b'}),
+      B('doi','Phòng Đội & Sao Nhi đồng','🧣',14.4,11.4,'building_F_withoutBase',0.9,0,{pin:'#ef4444'}),
+      B('health','Phòng Y tế','⛑️',11,14.9,'building_F_withoutBase',0.82,180,{pin:'#e23b3b'}),
+      B('art','Phòng Mĩ thuật','🎨',14.4,14.9,'building_C_withoutBase',0.9,270,{pin:'#f472b6'}),
+      // Khu nghệ thuật – sinh hoạt (block dưới-phải)
+      B('music','Phòng Âm nhạc','🎵',19.4,11.4,'building_E_withoutBase',0.9,90,{pin:'#a855f7'}),
+      B('science','Phòng Khoa học & TN-XH','🔬',23,11.4,'building_B_withoutBase',0.92,270,{pin:'#14b8a6'}),
+      B('canteen','Nhà ăn bán trú','🍱',19.4,14.9,'building_D_withoutBase',0.92,0,{pin:'#f59e0b'}),
+      B('gym','Nhà đa năng (Thể chất)','🤸',23,14.9,'building_H_withoutBase',1.0,180,{pin:'#0ea5e9'}),
+    ],
+    facilities:[
+      {id:'flagyard',name:'Sân chào cờ',emoji:'🚩',gx:4,gy:2.6},
+      {id:'playarea',name:'Sân chơi',emoji:'🛝',gx:3.1,gy:6.7},
+      {id:'football',name:'Sân bóng mini',emoji:'⚽',gx:4,gy:10.7},
+      {id:'schoolgarden',name:'Vườn hoa',emoji:'🌻',gx:7.5,gy:13.7},
+      {id:'bikepark',name:'Nhà xe đạp',emoji:'🚲',gx:13,gy:20.6},
+      {id:'gate',name:'Cổng trường',emoji:'🚪',gx:9.3,gy:12.6},
+    ],
+    fields:[
+      {type:'plaza',    gx:1.3,gy:0.9,  w:5.4,d:3.6},
+      {type:'court',    gx:1.5,gy:5.2,  w:3.4,d:3.4},
+      {type:'football', gx:1.3,gy:9.3,  w:5.4,d:3.0},
+      {type:'garden',   gx:6.2,gy:12.4, w:2.8,d:3.0},
+      {type:'parking',  gx:10.6,gy:19,  w:5,d:3.4},
+    ],
+    sportTargets:{},
+    trees:[[16.7,2.2],[16.7,4.6],[16.7,8.2],[16.7,12.6],[16.7,16.2],
+      [26.4,3.5],[26.4,7.5],[26.4,11.5],[26.4,16],[7.6,2.4],[7.6,16.4],[2.2,16.6],[24.2,17],[20.2,16.9]],
+    cars:[],
+    tints:{ g1:0xff8a8a, g2:0xffc785, g3:0x9be29b, g4:0x8fd0f5, g5:0xc9a7f0,
+      library:0xbcd9f7, english:0xbfe0ff, computer:0xd9c2f5, admin:0xffe0a3, doi:0xffb3b3,
+      health:0xffd0d0, art:0xffc7e6, music:0xe3c9ff, science:0xb6ecdf, canteen:0xffe7b0, gym:0xffd0c2 },
+  },
+
+  // ─────────────────────── TRƯỜNG THPT (Lớp 10–12) ───────────────────────
+  // Bố cục khác hẳn THCS: SÂN CHÀO CỜ nằm GIỮA, hai dãy nhà học kẹp hai bên
+  // (Khối 10/11/12 đối diện cụm Phòng bộ môn). Nhà Hiệu bộ + Hội trường ở mặt
+  // tiền cạnh cổng; sân bóng đá + sân bóng rổ bên trái; bãi xe phía sau.
+  highschool: {
+    title:'Trường THPT', grass:['#9ed98a','#aee49a'],
+    vroads:[10,20], hroads:[{a:5.9,b:7.1}],
+    buildings:[
+      // Dãy ngoài-trái (gx 7.8): khu phục vụ – sinh hoạt
+      B('library','Thư viện','📚',7.8,3.2,'building_A_withoutBase',1.0,90),
+      B('youth','Đoàn TN – Phòng truyền thống','🚩',7.8,9,'building_E_withoutBase',0.9,90,{pin:'#e23b3b',flag:true}),
+      B('arts','Phòng Nghệ thuật','🎨',7.8,13,'building_F_withoutBase',0.95,90),
+      B('bike','Nhà xe học sinh','🚲',7.8,17,'building_H_withoutBase',0.95,90),
+      // Dãy trong-trái (gx 11.6): Nhà Hiệu bộ + KHỐI LỚP HỌC (nhìn ra sân cờ)
+      B('admin','Nhà Hiệu bộ – BGH','🏫',11.6,3.2,'building_G_withoutBase',1.15,0,{flag:true}),
+      B('grade10','Khối lớp 10','🔟',11.6,9,'building_D_withoutBase',1.05,0),
+      B('grade11','Khối lớp 11','📗',11.6,13,'building_C_withoutBase',1.05,0),
+      B('grade12','Khối lớp 12','📕',11.6,17,'building_D_withoutBase',1.05,0),
+      // Dãy trong-phải (gx 18.4): PHÒNG BỘ MÔN (nhìn ra sân cờ)
+      B('computer','Phòng Tin học','💻',18.4,3.2,'building_F_withoutBase',1.0,180),
+      B('lab_phys','Phòng bộ môn Vật lí','🧲',18.4,9,'building_B_withoutBase',1.0,180),
+      B('lab_chem','Phòng bộ môn Hoá học','⚗️',18.4,13,'building_B_withoutBase',1.0,180),
+      B('lab_bio','Phòng bộ môn Sinh học','🧬',18.4,17,'building_F_withoutBase',1.0,180),
+      // Dãy ngoài-phải (gx 22.2): hội trường, căng tin, y tế, nhà thể chất
+      B('hall','Hội trường – Nhà đa năng','🎭',22.2,3.2,'building_A_withoutBase',1.1,270),
+      B('canteen','Căng tin','🍜',22.2,9,'building_D_withoutBase',0.95,270),
+      B('medical','Phòng Y tế','🩹',22.2,13,'building_E_withoutBase',0.8,270,{pin:'#16a34a'}),
+      B('gym','Nhà thể chất','🏀',22.2,17,'building_H_withoutBase',1.1,270),
+    ],
+    facilities:[
+      {id:'flagyard',name:'Sân chào cờ',emoji:'🚩',gx:15,gy:12,pin:'#e23b3b'},
+      {id:'football',name:'Sân bóng đá',emoji:'⚽',gx:3.2,gy:3.8},
+      {id:'court',name:'Sân bóng rổ',emoji:'🏀',gx:3,gy:11.6},
+      {id:'parking',name:'Bãi để xe',emoji:'🅿️',gx:13,gy:21.4},
+      {id:'gate',name:'Cổng trường',emoji:'🚪',gx:15,gy:1.4},
+    ],
+    fields:[
+      {type:'plaza', gx:13.1,gy:8, w:3.9,d:8.4},
+      {type:'football', gx:1,gy:2, w:4.7,d:3},
+      {type:'court', gx:1.4,gy:9.6, w:3.4,d:4.6},
+      {type:'parking', gx:10.4,gy:20, w:5.4,d:3.2},
+    ],
+    sportTargets:{ football:'/time-attack.html', court:'/time-attack.html' },
+    trees:[[5.9,3.2],[5.9,7],[5.9,11],[5.9,15],[5.9,18.6],[16.6,4],[13.4,4],[24.4,4],
+      [9.9,7],[20.1,7],[24.4,9],[24.4,13],[24.4,17],[0.6,6.4],[0.6,14],[6.4,20.4],[16,18.6],[18.4,20.4],[24.4,20.4]],
+    cars:[[10,5.4],[20,5.4],[11.6,20],[14,20],[11.6,21.6],[14,21.6]],
+    tints:{ admin:0xffe0a3, grade10:0xfff0c2, grade11:0xfff0c2, grade12:0xfde2c2, library:0xcfe3f7, hall:0xe9d5ff, gym:0xffd0c2 },
+  },
+
+  // ─────────────────────── TRƯỜNG CÔNG NGHỆ THÔNG TIN (Đại học) ───────────────────────
+  // Campus công nghệ: cụm lab chuyên ngành (Lập trình/Giải thuật/CSDL/Mạng/AI/
+  // An toàn TT/Cloud) + studio web–mobile + vườn ươm khởi nghiệp. Khu ngoài trời
+  // có HỒ NƯỚC + sân thể thao; cỏ tông xanh mint "tech" để phân biệt trường khác.
+  it: {
+    title:'Trường Công nghệ thông tin', grass:['#86c9a6','#94d2b0'],
+    vroads:[9.25,17.25,25.25], hroads:[{a:8.6,b:9.9},{a:16.6,b:17.9}],
+    buildings:[
+      // Khu điều hành & học chung (block trên-trái)
+      B('admin','Hành chính – Hiệu bộ','⚙️',11,2.4,'building_G_withoutBase',1.15,0,{flag:true}),
+      B('lecture','Giảng đường','🏛️',14.4,2.4,'building_D_withoutBase',1.1,180),
+      B('library','Thư viện số','📚',11,5.9,'building_C_withoutBase',1.0,90),
+      B('hall','Hội trường','🎤',14.4,5.9,'building_A_withoutBase',1.05,270),
+      // Cụm lab nền tảng (block trên-phải)
+      B('codelab','Lab Lập trình','💻',19.4,2.4,'building_B_withoutBase',1.0,90),
+      B('algolab','Lab Giải thuật & CTDL','🌳',23,2.4,'building_F_withoutBase',0.95,270),
+      B('dblab','Trung tâm CSDL','🗄️',19.4,5.9,'building_B_withoutBase',1.0,0),
+      B('netlab','Lab Mạng máy tính','🌐',23,5.9,'building_E_withoutBase',0.95,180),
+      // Cụm chuyên ngành (block dưới-trái)
+      B('seclab','TT An toàn thông tin – CTF','🔒',11,11.4,'building_H_withoutBase',1.05,90,{pin:'#ef4444'}),
+      B('ailab','Lab AI & Machine Learning','🤖',14.4,11.4,'building_C_withoutBase',1.0,0,{pin:'#7c3aed'}),
+      B('webstudio','Studio Web & Mobile','🎨',11,14.9,'building_F_withoutBase',0.9,180),
+      B('startuphub','Vườn ươm Khởi nghiệp','🚀',14.4,14.9,'building_E_withoutBase',0.95,270,{pin:'#16a34a'}),
+      // Hạ tầng & sinh hoạt (block dưới-phải)
+      B('cloudcenter','TT Dữ liệu & Cloud','☁️',19.4,11.4,'building_H_withoutBase',1.05,90,{pin:'#0ea5e9'}),
+      B('canteen','Căng tin','🍜',23,11.4,'building_D_withoutBase',0.95,270),
+      B('dorm','Ký túc xá','🛏️',19.4,14.9,'building_A_withoutBase',1.05,0),
+      B('museum','Bảo tàng Công nghệ','🖥️',23,14.9,'building_G_withoutBase',0.95,180),
+    ],
+    facilities:[
+      {id:'pond',name:'Hồ nước',emoji:'🌊',gx:3.2,gy:3.0},
+      {id:'court',name:'Sân thể thao',emoji:'🏀',gx:3.05,gy:7.1},
+      {id:'football',name:'Sân bóng đá',emoji:'⚽',gx:4,gy:11.2},
+      {id:'parking',name:'Bãi đỗ xe',emoji:'🅿️',gx:13,gy:20.6},
+      {id:'bus',name:'Trạm xe buýt',emoji:'🚌',gx:9.3,gy:12.6},
+    ],
+    fields:[
+      {type:'pond', cx:3.2,cy:3.0, rx:2.2,ry:1.6},
+      {type:'court', gx:1.4,gy:5.4, w:3.3,d:3.4},
+      {type:'football', gx:1.3,gy:9.6, w:5.4,d:3.2},
+      {type:'parking', gx:10.6,gy:19, w:5,d:3.4},
+    ],
+    sportTargets:{ football:'/time-attack.html', court:'/time-attack.html' },
+    trees:[[7.6,2],[7.6,6],[7.6,14],[12.7,4.1],[12.7,8],[21.2,4.1],[21.2,8],[12.7,13],[21.2,13],
+      [16,8],[24,8.2],[16,16],[26.5,4],[26.5,12],[26.5,18],[2,18.5],[6.5,18.5],[9.3,20],[16.2,20.5]],
+    cars:[[9.25,7],[17.25,7],[25.25,7],[6,9.25],[21,17.25],[11.4,20],[13.8,20],[11.4,21.5],[13.8,21.5]],
+  },
+};
+
+const params=new URLSearchParams(location.search);
+const _dom=params.get('domain')||'pharmacy';
+const C=CAMPUSES[_dom]||CAMPUSES.pharmacy;
+document.title=`Campus 2.5D · ${C.title}`;
+
+const GRASS=C.grass||['#97d177','#a2d983'];
+const VROADS=C.vroads;
+const ROADS=[
+  ...VROADS.map(c=>({along:'y', a:c-0.65, b:c+0.65, lo:-36, hi:N+36})),
+  ...C.hroads.map(h=>({along:'x', a:h.a, b:h.b, lo:-36, hi:N+36})),
+];
+const BUILDINGS=C.buildings;
+const FACILITIES=C.facilities;
+const FIELDS=C.fields;
+const SPORT_TARGETS=C.sportTargets||{};
+const TINTS=C.tints||{};   // tô màu toà nhà (vd lớp 1–5 màu cầu vồng ở Tiểu học)
+
+// lối đi tự sinh: nối mỗi toà ra trục dọc gần nhất
+const PATHS=BUILDINGS.map(b=>{ let rx=VROADS[0]; for(const r of VROADS) if(Math.abs(r-b.gx)<Math.abs(rx-b.gx)) rx=r;
+  return {along:'x', a:b.gy-0.45, b:b.gy+0.45, lo:Math.min(rx,b.gx), hi:Math.max(rx,b.gx)}; });
+
+// cây ở dải cỏ trống + xe trên đường/bãi
+const EXTRAS={ tree:KAY('bush'), car:KAY('car_hatchback') };
+const DECOR=[ ...(C.trees||[]).map(([gx,gy])=>({k:'tree',gx,gy})),
+  ...(C.cars||[]).map(([gx,gy])=>({k:'car',gx,gy})) ];
+
+// ====== OFFSCREEN ISO SPRITE RENDERER ======
+const SPR=380;
+const rt=new THREE.WebGLRenderer({alpha:true, antialias:true, preserveDrawingBuffer:true});
+rt.setSize(SPR,SPR); rt.setPixelRatio(2); rt.outputColorSpace=THREE.SRGBColorSpace;
+rt.toneMapping=THREE.ACESFilmicToneMapping; rt.toneMappingExposure=1.3;
+const rscene=new THREE.Scene();
+rscene.add(new THREE.HemisphereLight(0xffffff,0xbeccc0,1.3));
+const rsun=new THREE.DirectionalLight(0xfff6e8,1.7); rsun.position.set(5,10,3); rscene.add(rsun);
+const rfill=new THREE.DirectionalLight(0xdfeaff,0.5); rfill.position.set(-6,4,-3); rscene.add(rfill);
+const rcam=new THREE.OrthographicCamera(-1,1,1,-1,0.01,200);
+const EL=Math.atan(0.5), AZ=Math.PI/4, RAD=60;
+rcam.position.set(RAD*Math.cos(EL)*Math.cos(AZ), RAD*Math.sin(EL), RAD*Math.cos(EL)*Math.sin(AZ));
+let ANCHOR={x:SPR,y:SPR};
+
+const loader=new GLTFLoader();
+const load=u=>new Promise((res,rej)=>loader.load(u,g=>res(g.scene),undefined,e=>{console.error('FAIL',u,e);rej(e);}));
+function prep(obj,scale){ obj.scale.setScalar(scale); const b=new THREE.Box3().setFromObject(obj); const c=b.getCenter(new THREE.Vector3());
+  obj.position.x-=c.x; obj.position.z-=c.z; obj.position.y-=b.min.y; return new THREE.Box3().setFromObject(obj); }
+const footOf=o=>{ const b=new THREE.Box3().setFromObject(o); const v=b.getSize(new THREE.Vector3()); return Math.max(v.x,v.z); };
+// tô màu toà nhà theo tints — clone material để mỗi toà 1 màu riêng dù dùng chung model
+function recolor(obj,hex){ obj.traverse(o=>{ if(o.isMesh&&o.material){
+  const tm=m=>{ const c=m.clone(); if(c.color) c.color.setHex(hex); c.needsUpdate=true; return c; };
+  o.material = Array.isArray(o.material) ? o.material.map(tm) : tm(o.material); } }); }
+function renderSprite(obj){ rscene.add(obj); rt.render(rscene,rcam); rscene.remove(obj);
+  const cv=document.createElement('canvas'); cv.width=rt.domElement.width; cv.height=rt.domElement.height;
+  cv.getContext('2d').drawImage(rt.domElement,0,0); return cv; }
+function tint(spr,color){ const cv=document.createElement('canvas'); cv.width=spr.width; cv.height=spr.height; const x=cv.getContext('2d');
+  x.drawImage(spr,0,0); x.globalCompositeOperation='source-in'; x.fillStyle=color; x.fillRect(0,0,cv.width,cv.height); return cv; }
+
+let DS=0.215;
+const bsprite={}, esprite={}, modelCache={};
+
+(async function build(){
+  const items=[];
+  for(const b of BUILDINGS){ try{ if(!modelCache[b.url]) modelCache[b.url]=await load(b.url); items.push({b, sc:modelCache[b.url].clone(true)}); }catch(e){} }
+  let maxFoot=0; for(const it of items) maxFoot=Math.max(maxFoot, footOf(it.sc));
+  const GS = maxFoot? 4/maxFoot : 1;
+  let maxDim=0; for(const it of items){ const bb=prep(it.sc,GS); if(TINTS[it.b.id]!=null) recolor(it.sc, TINTS[it.b.id]); const v=bb.getSize(new THREE.Vector3()); maxDim=Math.max(maxDim,v.x,v.y,v.z); }
+  const FH=maxDim*0.62;
+  rcam.left=-FH; rcam.right=FH; rcam.top=FH; rcam.bottom=-FH; rcam.lookAt(0, maxDim*0.34, 0); rcam.updateProjectionMatrix(); rcam.updateMatrixWorld(true);
+  const o=new THREE.Vector3(0,0,0).project(rcam); ANCHOR={x:(o.x*0.5+0.5)*rt.domElement.width, y:(-o.y*0.5+0.5)*rt.domElement.height};
+  let i=0; for(const it of items){ it.sc.rotation.y=(it.b.rot||0)*Math.PI/180; const spr=renderSprite(it.sc); bsprite[it.b.id]={spr, tint:tint(spr,idCol(i)), idx:i}; i++; }
+  for(const [k,url] of Object.entries(EXTRAS)){ try{ const m=await load(url); prep(m,(k==='tree')?GS*2.2:GS*1.0); esprite[k]=renderSprite(m); }catch(e){} }
+  buildLegend();
+  document.getElementById('loading').style.display='none';
+  draw();
+})();
+
+// ====== VẼ MẶT ĐẤT ======
+let hovered=-1;
+function poly(pts,color,stroke,lw=1){ ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y); ctx.closePath();
+  if(color){ctx.fillStyle=color;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();} }
+const tileRect=(gx,gy,w,d)=>[P(gx,gy),P(gx+w,gy),P(gx+w,gy+d),P(gx,gy+d)];
+function ellipsePts(cx,cy,rx,ry,seg=44){ const a=[]; for(let i=0;i<seg;i++){ const t=i/seg*Math.PI*2; a.push(P(cx+rx*Math.cos(t), cy+ry*Math.sin(t))); } return a; }
+function isoSeg(ax,ay,bx,by,col,lw){ const a=P(ax,ay),b=P(bx,by); ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+function strip(s){ const pts=s.along==='y'?[P(s.a,s.lo),P(s.b,s.lo),P(s.b,s.hi),P(s.a,s.hi)]:[P(s.lo,s.a),P(s.hi,s.a),P(s.hi,s.b),P(s.lo,s.b)];
+  poly(pts, '#8e98a3', 'rgba(0,0,0,.07)', 1.5);
+  const c=(s.a+s.b)/2; ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=2; ctx.setLineDash([7,9]);
+  const p0=s.along==='y'?P(c,s.lo):P(s.lo,c), p1=s.along==='y'?P(c,s.hi):P(s.hi,c); ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke(); ctx.setLineDash([]); }
+function football(gx,gy,w,d){ poly(tileRect(gx,gy,w,d),'#57bd4a','rgba(0,0,0,.06)',1);
+  for(let i=0;i<w;i+=1.5) if(((i/1.5)|0)%2) poly(tileRect(gx+i,gy,1.5,d),'#61c654',null);
+  poly(tileRect(gx,gy,w,d),null,'rgba(255,255,255,.92)',2); isoSeg(gx+w/2,gy,gx+w/2,gy+d,'rgba(255,255,255,.92)',2);
+  poly(ellipsePts(gx+w/2,gy+d/2,0.9,0.9),null,'rgba(255,255,255,.92)',2); }
+function baseball(gx,gy,sz){ poly(tileRect(gx,gy,sz,sz),'#57bd4a','rgba(0,0,0,.06)',1); const d=sz*0.6;
+  poly(tileRect(gx,gy,d,d),'#cf8a44','rgba(0,0,0,.08)',1); poly(tileRect(gx,gy,d,d),null,'rgba(255,255,255,.85)',1.5); }
+function track(cx,cy,rx,ry){ poly(ellipsePts(cx,cy,rx,ry),'#c2543b','rgba(0,0,0,.1)',1.5);
+  poly(ellipsePts(cx,cy,rx-0.3,ry-0.2),null,'rgba(255,255,255,.6)',1); poly(ellipsePts(cx,cy,rx-0.8,ry-0.55),'#5ec152',null); }
+function parking(gx,gy,w,d){ poly(tileRect(gx,gy,w,d),'#969ea8','rgba(0,0,0,.1)',1.5);
+  for(let i=0.6;i<w;i+=1){ isoSeg(gx+i,gy+0.3,gx+i,gy+1.5,'rgba(255,255,255,.7)',1.3); isoSeg(gx+i,gy+d-1.5,gx+i,gy+d-0.3,'rgba(255,255,255,.7)',1.3); } }
+// sân bóng rổ / đa môn — mặt sân xanh dương, vạch trắng + vòng tròn giữa + 2 khu phạt
+function court(gx,gy,w,d){ poly(tileRect(gx,gy,w,d),'#3f7bb0','rgba(0,0,0,.1)',1.5);
+  poly(tileRect(gx+0.25,gy+0.25,w-0.5,d-0.5),null,'rgba(255,255,255,.85)',2);
+  isoSeg(gx+w/2,gy+0.25,gx+w/2,gy+d-0.25,'rgba(255,255,255,.85)',2);
+  poly(ellipsePts(gx+w/2,gy+d/2,0.7,0.7),null,'rgba(255,255,255,.85)',1.6);
+  poly(tileRect(gx+0.25,gy+d/2-0.7,1.1,1.4),null,'rgba(255,255,255,.8)',1.4);
+  poly(tileRect(gx+w-1.35,gy+d/2-0.7,1.1,1.4),null,'rgba(255,255,255,.8)',1.4); }
+// sân chào cờ — sân lát sáng + kẻ ô + bục lễ + cột cờ (vẽ trong draw)
+function plaza(gx,gy,w,d){ poly(tileRect(gx,gy,w,d),'#cfc7b4','rgba(0,0,0,.08)',1.5);
+  for(let i=1;i<w;i++) isoSeg(gx+i,gy,gx+i,gy+d,'rgba(255,255,255,.35)',1);
+  for(let j=1;j<d;j++) isoSeg(gx,gy+j,gx+w,gy+j,'rgba(255,255,255,.35)',1);
+  poly(tileRect(gx+w/2-0.7,gy+0.35,1.4,0.8),'#b23b3b','rgba(0,0,0,.12)',1.2); }   // bục lễ đỏ
+// vườn trường — luống đất + hàng cây xanh
+function garden(gx,gy,w,d){ poly(tileRect(gx,gy,w,d),'#8a6a44','rgba(0,0,0,.12)',1.4);
+  for(let j=0.35;j<d-0.3;j+=0.75){ poly(tileRect(gx+0.25,gy+j,w-0.5,0.42),'#4f9e46',null);
+    poly(tileRect(gx+0.25,gy+j,w-0.5,0.42),null,'rgba(255,255,255,.18)',1); } }
+// hồ nước — mặt nước xanh dương, lõi sáng + đốm phản chiếu
+function pond(cx,cy,rx,ry){ poly(ellipsePts(cx,cy,rx,ry),'#4aa6d8','rgba(0,0,0,.12)',1.5);
+  poly(ellipsePts(cx,cy,rx*0.72,ry*0.72),'#6fc6ec',null);
+  poly(ellipsePts(cx-rx*0.26,cy-ry*0.22,rx*0.3,ry*0.18),'rgba(255,255,255,.45)',null); }
+function drawField(f){ switch(f.type){
+  case 'football': return football(f.gx,f.gy,f.w,f.d);
+  case 'baseball': return baseball(f.gx,f.gy,f.sz);
+  case 'track': return track(f.cx,f.cy,f.rx,f.ry);
+  case 'parking': return parking(f.gx,f.gy,f.w,f.d);
+  case 'court': return court(f.gx,f.gy,f.w,f.d);
+  case 'plaza': return plaza(f.gx,f.gy,f.w,f.d);
+  case 'garden': return garden(f.gx,f.gy,f.w,f.d);
+  case 'pond': return pond(f.cx,f.cy,f.rx,f.ry);
+} }
+function flagpole(cx,cy){ const p=P(cx,cy); ctx.strokeStyle='#8a8f96'; ctx.lineWidth=2.4;
+  ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x,p.y-46); ctx.stroke();
+  ctx.fillStyle='#da251d'; ctx.beginPath(); ctx.moveTo(p.x,p.y-46); ctx.lineTo(p.x+22,p.y-40); ctx.lineTo(p.x,p.y-32); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#ffe017'; ctx.font='10px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★',p.x+8,p.y-39); }
+function ground(){
+  const w=innerWidth, h=innerHeight;
+  const ivx=(x,y)=>((x-ox)/TW + (y-oy)/TH), ivy=(x,y)=>((y-oy)/TH - (x-ox)/TW);
+  let g0x=1/0,g1x=-1/0,g0y=1/0,g1y=-1/0;
+  for(const [x,y] of [[0,0],[w,0],[0,h],[w,h]]){ const a=ivx(x,y),b=ivy(x,y); g0x=Math.min(g0x,a);g1x=Math.max(g1x,a);g0y=Math.min(g0y,b);g1y=Math.max(g1y,b); }
+  g0x=Math.floor(g0x)-1; g1x=Math.ceil(g1x)+1; g0y=Math.floor(g0y)-1; g1y=Math.ceil(g1y)+1;
+  for(let gx=g0x; gx<g1x; gx++) for(let gy=g0y; gy<g1y; gy++){
+    const a=P(gx,gy),b=P(gx+1,gy),c=P(gx+1,gy+1),d=P(gx,gy+1);
+    poly([a,b,c,d], ((gx+gy)&1)?GRASS[0]:GRASS[1], 'rgba(0,0,0,.03)',1); }
+  for(const r of ROADS) strip(r);
+  for(const p of PATHS){ const pts=[P(p.lo,p.a),P(p.hi,p.a),P(p.hi,p.b),P(p.lo,p.b)]; poly(pts,'#d9c8a2','rgba(0,0,0,.05)',1); }
+  for(const f of FIELDS) drawField(f);
+  for(const f of FIELDS) if(f.type==='plaza') flagpole(f.gx+f.w/2, f.gy+f.d-0.4);
+}
+
+function shadowAt(p,s){ ctx.fillStyle='rgba(0,0,0,.13)'; ctx.beginPath(); ctx.ellipse(p.x,p.y,TW*0.4*s,TH*0.4*s,0,0,7); ctx.fill(); }
+function blit(t,img,p,scale){ t.drawImage(img, p.x-ANCHOR.x*scale, p.y-ANCHOR.y*scale, img.width*scale, img.height*scale); }
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function pinMarker(px,py,emoji,color){ const w=28,h=25,x=px-w/2,y=py-h-6; color=color||'#c0392b';
+  ctx.fillStyle='rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(px,py+1,6,2.6,0,0,7); ctx.fill();
+  ctx.fillStyle=color; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px-5,y+h-3); ctx.lineTo(px+5,y+h-3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=color; rr(x,y,w,h,6); ctx.fill(); ctx.fillStyle='#fff'; rr(x+2.2,y+2.2,w-4.4,h-4.4,4.5); ctx.fill();
+  ctx.font='14px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(emoji,px,y+h/2); }
+function flag(p,scale){ const x=p.x,y=p.y-ANCHOR.y*scale; ctx.strokeStyle='#7a7a7a'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x,y-2); ctx.lineTo(x,y-24); ctx.stroke(); ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.moveTo(x,y-24); ctx.lineTo(x+12,y-20); ctx.lineTo(x,y-16); ctx.fill(); }
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height); hctx.clearRect(0,0,hit.width,hit.height);
+  ground();
+  const items=[];
+  BUILDINGS.forEach((b,i)=>items.push({d:b.gx+b.gy, b, i, p:P(b.gx,b.gy)}));
+  DECOR.forEach(o=>{ if(esprite[o.k]) items.push({d:o.gx+o.gy-0.05, deco:o, p:P(o.gx,o.gy)}); });
+  items.sort((a,b)=>a.d-b.d);
+  const pins=[];
+  for(const it of items){
+    if(it.deco){ blit(ctx, esprite[it.deco.k], it.p, DS*(it.deco.k==='tree'?0.92:0.8)); continue; }
+    const sp=bsprite[it.b.id]; if(!sp) continue; const sc=DS*it.b.s; const hl=it.i===hovered;
+    shadowAt(it.p, it.b.s);
+    if(hl){ ctx.fillStyle='rgba(255,206,84,.5)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5*it.b.s,TH*0.5*it.b.s,0,0,7); ctx.fill(); ctx.filter='brightness(1.13)'; }
+    blit(ctx, sp.spr, it.p, sc); ctx.filter='none'; blit(hctx, sp.tint, it.p, sc);
+    if(it.b.flag) flag(it.p, sc);
+    pins.push({x:it.p.x, y:it.p.y-ANCHOR.y*sc+4, e:it.b.emoji, c:it.b.pin||'#c0392b'}); }
+  for(const f of FACILITIES){ const p=P(f.gx,f.gy); pins.push({x:p.x, y:p.y, e:f.emoji, c:f.pin||'#c0392b'}); }
+  for(const pn of pins) pinMarker(pn.x, pn.y, pn.e, pn.c);
+}
+
+// ====== Legend (bấm được) ======
+const EMBED = params.get('embed')==='1' || window.parent!==window;
+const toast=document.getElementById('toast'); let toastT;
+// Mỗi toà nhà → KHÔNG GIAN trải nghiệm bên trong (space.html?b=id). Sân → game.
+const TARGETS={};
+BUILDINGS.forEach(b=>TARGETS[b.id]='/space.html?b='+b.id+'&domain='+_dom);
+Object.entries(SPORT_TARGETS).forEach(([id,url])=>{ TARGETS[id]=url; });
+function enter(item, idx){
+  const t=TARGETS[item.id];
+  if(t){ (window.top||window).location.href=t; return; }   // có trải nghiệm → mở luôn
+  if(idx!=null){ hovered=idx; draw(); }
+  toast.textContent=`Vào: ${item.emoji} ${item.name}`; toast.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>toast.classList.remove('show'),1600);
+  if(EMBED) parent.postMessage({type:'campus-enter', id:item.id, name:item.name, emoji:item.emoji}, '*'); }
+function buildLegend(){ const host=document.getElementById('legend-rows');
+  const all=[...BUILDINGS.map((b,i)=>({...b,bi:i})), ...FACILITIES.map(f=>({...f,bi:null}))];
+  host.innerHTML=all.map(o=>`<div class="lr" data-id="${o.id}"><span class="e">${o.emoji}</span><span>${o.name}</span></div>`).join('');
+  host.querySelectorAll('.lr').forEach(el=>el.addEventListener('click',()=>{
+    const id=el.dataset.id; const bi=BUILDINGS.findIndex(b=>b.id===id);
+    if(bi>=0) enter(BUILDINGS[bi], bi); else { const f=FACILITIES.find(x=>x.id===id); if(f) enter(f,null); } }));
+}
+
+function resize(){ const w=innerWidth,h=innerHeight;
+  canvas.width=w*DPR; canvas.height=h*DPR; canvas.style.width=w+'px'; canvas.style.height=h+'px';
+  hit.width=w*DPR; hit.height=h*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); hctx.setTransform(DPR,0,0,DPR,0,0);
+  ox=w/2 - 3*TW/2; oy=h*0.46 - (N*0.92)*TH/2; draw(); }
+addEventListener('resize', resize); resize();
+if(EMBED){ const bk=document.querySelector('.back'); if(bk) bk.style.display='none'; }
+
+const tip=document.getElementById('tip');
+canvas.addEventListener('pointermove', e=>{
+  const px=hctx.getImageData(e.clientX*DPR,e.clientY*DPR,1,1).data;
+  const id=(px[3]>10)? colId(px[0],px[1],px[2]) : -1;
+  if(id!==hovered){ hovered=id; draw(); }
+  if(id>=0){ const b=BUILDINGS[id]; tip.textContent=`${b.emoji} ${b.name}`; tip.style.left=e.clientX+'px'; tip.style.top=e.clientY+'px'; tip.style.opacity=1; canvas.style.cursor='pointer'; }
+  else { tip.style.opacity=0; canvas.style.cursor='default'; } });
+canvas.addEventListener('click', ()=>{ if(hovered<0) return; enter(BUILDINGS[hovered], hovered); });
+</script>
+</body>
+</html>

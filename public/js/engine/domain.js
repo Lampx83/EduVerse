@@ -20,11 +20,12 @@ import { KEYS, lsGet, lsSet } from './storage.js';
 
 // Chỉ những trường ở đây mới VÀO được. Trường khoá KHÔNG đăng ký.
 const DOMAIN_REGISTRY = {
-  pharmacy:  () => import('../domains/pharmacy/index.js'),
-  it:        () => import('../domains/it/index.js'),
-  preschool: () => import('../domains/preschool/index.js'),
-  primary:   () => import('../domains/primary/index.js'),
-  secondary: () => import('../domains/secondary/index.js'),
+  pharmacy:   () => import('../domains/pharmacy/index.js'),
+  it:         () => import('../domains/it/index.js'),
+  preschool:  () => import('../domains/preschool/index.js'),
+  primary:    () => import('../domains/primary/index.js'),
+  secondary:  () => import('../domains/secondary/index.js'),
+  highschool: () => import('../domains/highschool/index.js'),
   // economics đã có skeleton nhưng đang KHOÁ — chưa đăng ký:
   // economics: () => import('../domains/economics/index.js'),
 };
@@ -63,7 +64,7 @@ export const DOMAIN_META = [
     accent: '#10b981', status: 'preview', moduleCount: 8 },
   { id: 'highschool', name: 'Trường Trung học phổ thông',  shortName: 'THPT', icon: '🏫',
     tagline: 'Lớp 10–12 · phân ban KHTN/KHXH · luyện thi tốt nghiệp THPT & ĐH',
-    accent: '#6366f1', status: 'locked' },
+    accent: '#6366f1', status: 'preview', moduleCount: 30 },
   // Cao đẳng / Đại học chuyên ngành
   { id: 'economics', name: 'Trường Kinh tế',               shortName: 'Kinh tế', icon: '📉',
     tagline: 'Kinh tế Vi mô/Vĩ mô · Kinh tế lượng · chính sách công',

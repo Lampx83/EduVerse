@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Không gian · Trường Dược · EduVerse</title>
+<style>
+  :root { --bg-1:#0f172a; --bg-2:#1e293b; --bg-3:#312e81; --card:rgba(255,255,255,.06); --border:rgba(255,255,255,.12); }
+  * { box-sizing: border-box; }
+  html,body { margin:0; min-height:100%; font-family:'Inter',system-ui,sans-serif; color:#fff;
+    background: radial-gradient(ellipse 90% 50% at 50% 0%, rgba(139,92,246,.22), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2) 60%,var(--bg-3)); }
+  .wrap { max-width:1100px; margin:0 auto; padding:18px 20px 70px; }
+  .top { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+  .back { color:#fff; text-decoration:none; opacity:.85; font-size:14px; background:rgba(255,255,255,.08); padding:8px 13px; border-radius:10px; }
+  .back:hover { opacity:1; background:rgba(255,255,255,.15); }
+  .banner { position:relative; overflow:hidden; border-radius:20px; padding:26px 28px; margin-bottom:22px;
+    border:1px solid var(--border); }
+  .banner .ic { font-size:64px; line-height:1; filter:drop-shadow(0 6px 14px rgba(0,0,0,.4)); }
+  .banner h1 { margin:6px 0 6px; font-size:30px; font-weight:800; }
+  .banner p { margin:0; opacity:.9; max-width:760px; line-height:1.55; }
+  .sec-title { font-size:13px; letter-spacing:1px; text-transform:uppercase; opacity:.65; font-weight:800; margin:24px 0 12px; }
+  .rooms { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
+  .room { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px 17px; cursor:pointer;
+    transition:transform .15s,background .15s,border-color .15s; text-decoration:none; color:#fff; display:flex; flex-direction:column; gap:6px; }
+  .room:hover { transform:translateY(-3px); background:rgba(255,255,255,.12); border-color:var(--accent); }
+  .room .ri { font-size:30px; }
+  .room h3 { margin:2px 0 0; font-size:16px; }
+  .room .rd { font-size:12.5px; opacity:.8; line-height:1.5; }
+  .room .tag { align-self:flex-start; margin-top:6px; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+    padding:2px 8px; border-radius:8px; background:var(--accent); color:#1f1147; }
+  .room .tag.soon { background:#6b7280; color:#fff; }
+  .skills { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { background:rgba(255,255,255,.1); border:1px solid var(--border); padding:6px 12px; border-radius:20px; font-size:12.5px; }
+  .chip b { color:var(--accent); }
+  /* quiz */
+  .quiz { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px 20px; margin-top:12px; }
+  .q { margin:0 0 14px; }
+  .q .qt { font-weight:700; margin-bottom:8px; font-size:14.5px; }
+  .q .opt { display:block; width:100%; text-align:left; background:rgba(255,255,255,.05); border:1px solid var(--border); color:#fff;
+    padding:9px 13px; border-radius:10px; margin:6px 0; cursor:pointer; font-family:inherit; font-size:13.5px; transition:background .12s; }
+  .q .opt:hover { background:rgba(255,255,255,.12); }
+  .q .opt.correct { background:rgba(16,185,129,.35); border-color:#10b981; }
+  .q .opt.wrong { background:rgba(239,68,68,.3); border-color:#ef4444; }
+  .quiz .submit { margin-top:6px; padding:11px 20px; border:none; border-radius:11px; background:var(--accent); color:#1f1147; font-weight:800; font-size:14px; cursor:pointer; }
+  .quiz .submit:hover { filter:brightness(1.08); }
+  .result { margin-top:14px; padding:14px 16px; border-radius:12px; background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.4); display:none; }
+  .result.show { display:block; }
+  .result b { color:#34d399; }
+  #toast { position:fixed; left:50%; top:18px; transform:translateX(-50%) translateY(-10px); background:#1e293b; border:1px solid var(--border); color:#fff; padding:12px 18px; border-radius:12px; max-width:520px; opacity:0; transition:opacity .2s,transform .2s; z-index:30; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  /* modal (room detail) */
+  .modal { position:fixed; inset:0; background:rgba(8,11,22,.66); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  .modal.show { display:flex; }
+  .modal-card { background:linear-gradient(180deg,#1b2438,#141c2e); border:1px solid var(--border); border-radius:18px; width:100%; max-width:640px; max-height:86vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,.5); animation:pop .18s ease; }
+  @keyframes pop { from{transform:scale(.96);opacity:0} to{transform:scale(1);opacity:1} }
+  .modal-head { display:flex; align-items:center; gap:12px; padding:18px 20px 14px; border-bottom:1px solid var(--border); }
+  .modal-head .mh-ic { font-size:30px; }
+  .modal-head h3 { margin:0; font-size:19px; flex:1; }
+  .modal-x { background:rgba(255,255,255,.08); border:none; color:#fff; width:34px; height:34px; border-radius:9px; font-size:16px; cursor:pointer; }
+  .modal-x:hover { background:rgba(255,255,255,.18); }
+  .modal-body { padding:18px 20px 22px; overflow:auto; line-height:1.6; }
+  .modal-body h4 { margin:18px 0 8px; font-size:15px; color:var(--accent); }
+  .modal-body h4:first-child { margin-top:0; }
+  .modal-body p { margin:0 0 10px; opacity:.92; font-size:14px; }
+  .modal-body ul, .modal-body ol { margin:0 0 12px; padding-left:20px; }
+  .modal-body li { margin:5px 0; font-size:14px; opacity:.92; }
+  .mb-note { background:rgba(251,191,36,.12); border-left:3px solid var(--accent); padding:10px 14px; border-radius:8px; margin:4px 0 14px; font-size:13.5px; }
+  .mb-cards { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); margin:4px 0 14px; }
+  .mb-card { background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:12px; padding:12px; }
+  .mb-card .ci { font-size:24px; } .mb-card .ct { font-weight:700; font-size:13.5px; margin:4px 0 2px; } .mb-card .cd { font-size:12.5px; opacity:.82; }
+  .timeline { list-style:none; padding:0; margin:4px 0 8px; }
+  .timeline li { position:relative; padding:0 0 16px 26px; border-left:2px solid rgba(255,255,255,.18); }
+  .timeline li:last-child { border-left-color:transparent; padding-bottom:0; }
+  .timeline li::before { content:''; position:absolute; left:-7px; top:2px; width:12px; height:12px; border-radius:50%; background:var(--accent); }
+  .timeline .tl-t { font-weight:700; font-size:14px; } .timeline .tl-d { font-size:13px; opacity:.85; margin-top:2px; }
+  /* flashcards */
+  .flash-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); margin:4px 0 6px; }
+  .flash { perspective:900px; height:128px; cursor:pointer; }
+  .flash-inner { position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d; }
+  .flash.flipped .flash-inner { transform:rotateY(180deg); }
+  .flash-face { position:absolute; inset:0; backface-visibility:hidden; border-radius:14px; border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:10px; }
+  .flash-front { background:rgba(255,255,255,.06); }
+  .flash-front .fe { font-size:34px; } .flash-front .fn { font-weight:700; margin-top:6px; }
+  .flash-back { background:linear-gradient(160deg,var(--accent),rgba(255,255,255,.08)); color:#1f1147; transform:rotateY(180deg); font-size:13px; font-weight:600; }
+  .flash-hint { font-size:12px; opacity:.6; text-align:center; margin-top:8px; }
+  /* checklist */
+  .checklist { list-style:none; padding:0; margin:4px 0 6px; }
+  .checklist li { margin:0 0 8px; }
+  .checklist label { display:flex; align-items:flex-start; gap:10px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:10px; padding:11px 13px; cursor:pointer; font-size:13.5px; }
+  .checklist label:hover { background:rgba(255,255,255,.1); }
+  .checklist input { margin-top:2px; width:17px; height:17px; accent-color:var(--accent); flex-shrink:0; }
+  .checklist label.done { background:rgba(16,185,129,.15); border-color:rgba(16,185,129,.45); }
+  .ck-prog { font-size:13px; font-weight:700; margin-top:6px; }
+  .ck-prog.full { color:#34d399; }
+  /* goal setter */
+  .goal-in { display:flex; gap:8px; margin:6px 0 4px; }
+  .goal-in input { flex:1; background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:10px; color:#fff; padding:10px 13px; font-family:inherit; font-size:14px; }
+  .goal-in button { background:var(--accent); border:none; color:#1f1147; font-weight:800; padding:0 16px; border-radius:10px; cursor:pointer; }
+  .goal-saved { background:rgba(16,185,129,.14); border:1px solid rgba(16,185,129,.4); border-radius:10px; padding:11px 14px; margin-top:8px; font-size:13.5px; display:none; }
+  .goal-saved.show { display:block; }
+  /* inline decision MCQ (case "bạn sẽ làm gì?") */
+  .mcq { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin:4px 0 12px; }
+  .mcq .mcq-q { font-weight:700; font-size:14px; margin-bottom:9px; }
+  .mcq .mcq-o { display:block; width:100%; text-align:left; background:rgba(255,255,255,.05); border:1px solid var(--border); color:#fff; padding:9px 13px; border-radius:9px; margin:6px 0; cursor:pointer; font-family:inherit; font-size:13.5px; transition:background .12s; }
+  .mcq .mcq-o:hover { background:rgba(255,255,255,.12); }
+  .mcq .mcq-o.correct { background:rgba(16,185,129,.32); border-color:#10b981; }
+  .mcq .mcq-o.wrong { background:rgba(239,68,68,.28); border-color:#ef4444; }
+  .mcq .mcq-fb { font-size:13px; margin-top:8px; padding:10px 13px; border-radius:9px; background:rgba(251,191,36,.12); border-left:3px solid var(--accent); display:none; }
+  .mcq .mcq-fb.show { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">Đang tải…</div>
+<div id="toast"></div>
+<div class="modal" id="modal"><div class="modal-card">
+  <div class="modal-head"><span class="mh-ic" id="m-ic">📌</span><h3 id="m-title">…</h3><button class="modal-x" id="m-x">✕</button></div>
+  <div class="modal-body" id="m-body"></div>
+</div></div>
+
+<script>
+const SPACES_PHARMACY = {
+  admin:{emoji:'⚙️',name:'Hành chính – Hiệu bộ',accent:'#94a3b8',intro:'Trung tâm điều hành & thông tin của Trường Dược: theo dõi tiến độ, tiếp nhận yêu cầu cải tiến, tìm hiểu về trường.',
+    rooms:[{ic:'📊',name:'Bảng điều khiển',rd:'Thống kê tiến độ học tập, phổ điểm, huy hiệu.',href:'/dashboard.html'},
+      {ic:'🛎️',name:'Phòng tiếp nhận yêu cầu',rd:'Gửi đề xuất để trường (AI) cải tiến.',panel:[
+        {h:'Ban điều hành AI'},
+        {p:'Đây là nơi sinh viên gửi yêu cầu/đề xuất cải tiến môn học và hoạt động thực hành.'},
+        {ul:['Đề xuất thêm bài thực hành / ca lâm sàng','Báo lỗi nội dung hoặc góp ý giao diện','Xin mở thêm chủ đề muốn học']},
+        {note:'Ban điều hành AI tiếp nhận mỗi ngày & cập nhật nội dung. Vào mục "Ban điều hành AI" ở trang trường để gửi.'}]},
+      {ic:'📜',name:'Sảnh giới thiệu',rd:'Cơ cấu & chương trình đào tạo Dược.',panel:[
+        {h:'Chương trình đào tạo Dược sĩ đại học'},
+        {p:'Đào tạo 5 năm theo Dược điển Việt Nam (Bộ Y tế ban hành).'},
+        {h:'Hành trình học tập'},
+        {timeline:[{t:'Khoa học cơ bản & Hoá',d:'Hoá hữu cơ, hoá phân tích, sinh học.'},
+          {t:'Bào chế & Kiểm nghiệm',d:'Pha chế dạng thuốc, kiểm tra chất lượng.'},
+          {t:'Dược lý & Lâm sàng',d:'Cơ chế thuốc, dùng thuốc hợp lý.'},
+          {t:'Thực hành & OSCE',d:'Kỹ năng tại nhà thuốc/bệnh viện, thi trạm OSCE.'}]}]},
+      {ic:'⚖️',name:'Pháp luật dược',rd:'Luật Dược & hành nghề.',panel:[
+        {h:'Pháp luật & hành nghề dược'},
+        {ul:['Luật Dược 2016 điều chỉnh sản xuất, kinh doanh, sử dụng thuốc','Chứng chỉ hành nghề dược bắt buộc với người phụ trách chuyên môn','Phân loại thuốc kê đơn (Rx) & không kê đơn (OTC)','Thuốc gây nghiện / hướng thần quản lý đặc biệt']},
+        {note:'Bán thuốc kê đơn khi không có đơn là vi phạm; kháng sinh phải theo đơn.'}]},
+      {ic:'📑',name:'Đăng ký thuốc (CTD)',rd:'Hồ sơ 5 module ICH.',panel:[
+        {h:'Hồ sơ đăng ký thuốc (CTD)'},
+        {ol:['Module 1 – Hành chính & thông tin kê toa','Module 2 – Tóm tắt tổng quan','Module 3 – Chất lượng (CMC)','Module 4 – Báo cáo tiền lâm sàng','Module 5 – Báo cáo lâm sàng']},
+        {note:'CTD = Common Technical Document (chuẩn ICH); nộp Cục Quản lý Dược (DAV).'}]},
+      {ic:'🏷️',name:'Đấu thầu thuốc BV',rd:'Quy trình mua sắm.',panel:[
+        {h:'Đấu thầu thuốc bệnh viện'},
+        {ul:['Lập danh mục & dự trù số lượng theo nhu cầu điều trị','Xây dựng hồ sơ mời thầu theo quy định','Đánh giá kỹ thuật (chất lượng) + tài chính (giá)','Tham chiếu kinh tế dược để cân bằng chi phí – chất lượng']},
+        {note:'Mục tiêu: đủ thuốc, chất lượng đạt, giá hợp lý, minh bạch.'}]},
+      {ic:'⚠️',name:'Cảnh giác dược (ADR)',rd:'Báo cáo phản ứng có hại.',panel:[
+        {h:'Cảnh giác dược (Pharmacovigilance)'},
+        {p:'Phát hiện, đánh giá & phòng tránh phản ứng có hại của thuốc (ADR).'},
+        {mcq:[{q:'Gặp một ADR nghiêm trọng, dược sĩ cần làm gì?',o:['Báo cáo về Trung tâm DI & ADR Quốc gia','Giấu đi để tránh phiền','Chỉ ghi sổ cá nhân','Bỏ qua nếu BN đã ổn'],a:0,fb:'Báo cáo ADR (kể cả nghi ngờ) giúp phát hiện tín hiệu an toàn — gửi Trung tâm DI & ADR Quốc gia.'}]},
+        {note:'Thang WHO-UMC đánh giá mối liên quan thuốc–ADR (chắc chắn → có thể → không chắc).'}]}],
+    skills:['Hiểu cơ cấu trường','Pháp chế & đăng ký thuốc','Cảnh giác dược'],
+    quiz:[{q:'Dược sĩ đại học ở Việt Nam đào tạo mấy năm?',o:['3 năm','4 năm','5 năm','6 năm'],a:2},
+      {q:'Cơ quan ban hành Dược điển Việt Nam?',o:['Bộ Y tế','Bộ Giáo dục','WHO','FDA'],a:0},
+      {q:'Tốt nghiệp Dược sĩ ĐH có thể làm ở?',o:['Nhà thuốc, bệnh viện, công ty dược, kiểm nghiệm','Chỉ bán lẻ','Chỉ giảng dạy','Không nơi nào'],a:0}]},
+
+  lecture:{emoji:'🏛️',name:'Giảng đường',accent:'#c2703d',intro:'Không gian học lý thuyết nền tảng ngành Dược: bài giảng và kiểm tra nhanh.',
+    rooms:[{ic:'🧠',name:'Quiz lý thuyết',rd:'10 câu MCQ, 15s/câu, phản hồi tức thì.',href:'/quiz.html'},
+      {ic:'📽️',name:'Bài giảng',rd:'Các môn nền tảng ngành Dược.',panel:[
+        {h:'Các môn nền tảng'},
+        {cards:[{ic:'⚗️',t:'Hoá dược',d:'Cấu trúc – tác dụng của hoạt chất.'},
+          {ic:'💉',t:'Dược lý',d:'Cơ chế & tác dụng của thuốc.'},
+          {ic:'🧴',t:'Bào chế',d:'Dạng thuốc & kỹ thuật pha chế.'},
+          {ic:'🌿',t:'Dược liệu',d:'Cây thuốc & hoạt chất tự nhiên.'},
+          {ic:'🩺',t:'Dược lâm sàng',d:'Dùng thuốc hợp lý trên người bệnh.'},
+          {ic:'⚖️',t:'Pháp chế dược',d:'Luật & quy định hành nghề.'}]},
+        {note:'Slide/video đang được biên soạn — trước mắt luyện Quiz lý thuyết để nắm cốt lõi.'}]},
+      {ic:'🔤',name:'Tiếng Anh dược',rd:'Lật thẻ thuật ngữ Anh – Việt.',panel:[
+        {p:'Lật thẻ để ôn thuật ngữ tiếng Anh chuyên ngành Dược.'},
+        {flash:[{e:'💊',f:'Tablet',b:'Viên nén'},{e:'🔵',f:'Capsule',b:'Viên nang'},
+          {e:'🥄',f:'Dose',b:'Liều dùng'},{e:'⚠️',f:'Side effect',b:'Tác dụng phụ'},
+          {e:'📝',f:'Prescription (Rx)',b:'Đơn thuốc'},{e:'🆓',f:'OTC',b:'Thuốc không kê đơn'}]}]},
+      {ic:'⚖️',name:'Đạo đức nghề Dược',rd:'Tình huống đạo đức.',panel:[
+        {h:'Tình huống đạo đức nghề nghiệp'},
+        {mcq:[{q:'Khách quen xin mua kháng sinh (thuốc kê đơn) không có đơn. Nên?',o:['Từ chối lịch sự, giải thích & khuyên đi khám','Bán vì là khách quen','Bán nửa liều','Bán nhưng dặn giữ bí mật'],a:0,fb:'Đạo đức + pháp luật: không bán thuốc kê đơn khi không có đơn, kể cả người quen.'},
+          {q:'Thông tin sức khoẻ người bệnh, dược sĩ phải?',o:['Bảo mật, chỉ chia sẻ khi cần & được phép','Kể cho người khác','Đăng mạng xã hội','Dùng để quảng cáo'],a:0,fb:'Bảo mật thông tin người bệnh là nguyên tắc đạo đức cốt lõi của nghề.'}]}]}],
+    skills:['Nắm lý thuyết cốt lõi','Thuật ngữ Anh dược','Đạo đức nghề nghiệp'],
+    quiz:[{q:'"Dược động học" (Pharmacokinetics) nghiên cứu điều gì?',o:['Số phận thuốc trong cơ thể (ADME)','Cách trồng dược liệu','Giá thuốc','Quảng cáo thuốc'],a:0},
+      {q:'ADME gồm: Hấp thu, Phân bố, Chuyển hoá và…?',o:['Thải trừ','Đóng gói','Bảo quản','Nhập kho'],a:0},
+      {q:'Sinh khả dụng (bioavailability) là?',o:['Tỉ lệ thuốc vào tuần hoàn chung ở dạng còn hoạt tính','Giá thuốc','Màu viên','Hạn dùng'],a:0}]},
+
+  library:{emoji:'📖',name:'Thư viện',accent:'#b59b6a',intro:'Tra cứu thông tin thuốc và ôn tập củng cố kiến thức.',
+    rooms:[{ic:'🔎',name:'Tra cứu thuốc',rd:'Nguồn tin cậy & kỹ năng tra cứu.',panel:[
+        {h:'Nguồn tra cứu đáng tin'},
+        {ul:['Dược thư Quốc gia Việt Nam','Dược điển Việt Nam (tiêu chuẩn chất lượng)','Tờ Hướng dẫn sử dụng (HDSD) trong hộp thuốc','CSDL tương tác: Micromedex, Drugs.com']},
+        {h:'Quy trình tra cứu'},
+        {ol:['Xác định hoạt chất (tên gốc), không chỉ tên thương mại','Tra phân loại ATC: Giải phẫu – Điều trị – Hoá học','Đối chiếu chỉ định, liều, chống chỉ định, tương tác','Ghi lại nguồn & ngày tra cứu']},
+        {note:'Tránh nguồn không chính thống (mạng xã hội, quảng cáo). CSDL nội bộ EduVerse: 81 thuốc, 30 dược liệu.'}]},
+      {ic:'🧠',name:'Quiz ôn tập',rd:'Củng cố kiến thức đã học.',href:'/quiz.html'},
+      {ic:'📊',name:'Thống kê y học',rd:'p-value, CI, chọn test.',panel:[
+        {h:'Thống kê y học cơ bản'},
+        {ul:['p < 0.05: khác biệt có ý nghĩa thống kê (theo quy ước)','Khoảng tin cậy 95% (CI): độ chính xác của ước lượng','Biến định lượng → t-test/ANOVA; định tính → Chi-square','Tương quan KHÔNG đồng nghĩa nhân quả']},
+        {note:'Ý nghĩa thống kê (statistical) khác ý nghĩa lâm sàng (clinical) — cần xét cả hai.'}]},
+      {ic:'🧭',name:'Y học chứng cứ (EBM)',rd:'PICO & tháp chứng cứ.',panel:[
+        {h:'Đặt câu hỏi lâm sàng theo PICO'},
+        {cards:[{ic:'🧍',t:'P – Patient',d:'Người bệnh / vấn đề'},{ic:'💊',t:'I – Intervention',d:'Can thiệp / thuốc'},
+          {ic:'⚖️',t:'C – Comparison',d:'So sánh / đối chứng'},{ic:'🎯',t:'O – Outcome',d:'Kết cục quan tâm'}]},
+        {mcq:[{q:'Thiết kế nghiên cứu cho chứng cứ MẠNH nhất về hiệu quả điều trị?',o:['Tổng quan hệ thống / RCT','Báo cáo ca','Ý kiến chuyên gia','Nghiên cứu trên động vật'],a:0,fb:'Tháp chứng cứ: Systematic review/Meta-analysis của RCT ở đỉnh; ý kiến chuyên gia ở đáy.'}]}]},
+      {ic:'📚',name:'Tổng quan hệ thống',rd:'Systematic review & meta-analysis.',panel:[
+        {h:'Tổng quan hệ thống & Meta-analysis'},
+        {ul:['Câu hỏi rõ + tiêu chí chọn/loại minh bạch','Tìm kiếm toàn diện nhiều cơ sở dữ liệu','Đánh giá nguy cơ sai lệch (risk of bias)','Meta-analysis: gộp định lượng kết quả (forest plot)']},
+        {note:'Tuân theo hướng dẫn PRISMA để minh bạch & có thể lặp lại.'}]},
+      {ic:'✍️',name:'Viết khoá luận',rd:'Cấu trúc IMRaD.',panel:[
+        {h:'Cấu trúc khoá luận (IMRaD)'},
+        {ol:['Introduction – Đặt vấn đề & mục tiêu','Methods – Đối tượng & phương pháp','Results – Kết quả','and Discussion – Bàn luận & kết luận']},
+        {note:'Trích dẫn trung thực, tránh đạo văn; quản lý tài liệu bằng Zotero/EndNote.'}]},
+      {ic:'💰',name:'Kinh tế dược',rd:'CEA, CUA, ICER.',panel:[
+        {h:'Kinh tế dược (Pharmacoeconomics)'},
+        {ul:['CMA – tối thiểu hoá chi phí (khi hiệu quả tương đương)','CEA – chi phí / hiệu quả','CUA – chi phí / QALY (chất lượng sống)','ICER – chi phí tăng thêm cho mỗi đơn vị hiệu quả tăng thêm']},
+        {note:'ICER hỗ trợ quyết định chi trả & đấu thầu — cân bằng chi phí và lợi ích sức khoẻ.'}]},
+      {ic:'🤖',name:'AI/ML trong Dược',rd:'Ứng dụng & giới hạn.',panel:[
+        {h:'AI/ML trong ngành Dược'},
+        {ul:['Sàng lọc & thiết kế thuốc (drug discovery)','Dự đoán tương tác & độc tính','Cá thể hoá liều (precision dosing)','Cảnh giác dược: phát hiện tín hiệu ADR từ dữ liệu lớn']},
+        {note:'AI hỗ trợ quyết định — dược sĩ vẫn chịu trách nhiệm chuyên môn cuối cùng.'}]}],
+    skills:['Tra cứu & EBM','Thống kê & nghiên cứu','Viết học thuật'],
+    quiz:[{q:'Phân loại ATC dựa trên?',o:['Giải phẫu – Điều trị – Hoá học','Màu sắc viên thuốc','Giá bán','Hãng sản xuất'],a:0},
+      {q:'Nguồn tra cứu tương tác thuốc đáng tin?',o:['Dược thư Quốc gia / Micromedex','Mạng xã hội','Quảng cáo','Tin đồn'],a:0},
+      {q:'Tờ HDSD thuốc KHÔNG bắt buộc mục nào?',o:['Giá khuyến mãi','Chỉ định','Liều dùng','Chống chỉ định'],a:0}]},
+
+  hall:{emoji:'🎤',name:'Hội trường',accent:'#8b5cf6',intro:'Sự kiện, hội thảo và học tập đa người trong không gian Metaverse.',
+    rooms:[{ic:'🌐',name:'Metaverse',rd:'Phòng đa người real-time (Quest/Vision Pro).',href:'/metaverse.html'},
+      {ic:'🎓',name:'Hội thảo chuyên đề',rd:'Kỹ năng thuyết trình & báo cáo ca.',panel:[
+        {h:'Báo cáo ca theo cấu trúc SOAP'},
+        {ul:['S – Subjective: lời kể, triệu chứng người bệnh','O – Objective: dấu hiệu, xét nghiệm, thuốc đang dùng','A – Assessment: nhận định vấn đề dùng thuốc','P – Plan: kế hoạch can thiệp & theo dõi']},
+        {h:'Mẹo thuyết trình'},
+        {ul:['Mở đầu nêu rõ thông điệp chính','Một slide – một ý','Giao tiếp bằng mắt, nói chậm rõ','Chuẩn bị trả lời câu hỏi phản biện']},
+        {note:'Lịch hội thảo chuyên đề sẽ được cập nhật.'}]},
+      {ic:'🪧',name:'Hội nghị khoa học SV',rd:'Làm & thuyết minh poster.',panel:[
+        {h:'Báo cáo & poster khoa học'},
+        {ul:['Poster gồm: tiêu đề – mục tiêu – phương pháp – kết quả – kết luận','Một thông điệp chính; hình/biểu đồ rõ ràng','Tập "thuyết minh poster" gọn trong 2–3 phút','Chuẩn bị trả lời câu hỏi của hội đồng']},
+        {note:'Hội nghị khoa học SV là nơi tập trình bày nghiên cứu trước khi bảo vệ khoá luận.'}]}],
+    skills:['Thuyết trình','Làm việc nhóm','Báo cáo khoa học'],
+    quiz:[{q:'Cấu trúc trình bày ca lâm sàng phổ biến?',o:['SOAP (Subjective–Objective–Assessment–Plan)','FIFO','ABCD','PDCA'],a:0},
+      {q:'Để khai thác thông tin người bệnh nên dùng?',o:['Câu hỏi mở','Câu hỏi đóng có/không','Im lặng hoàn toàn','Câu hỏi đánh đố'],a:0},
+      {q:'Lắng nghe tích cực thể hiện rõ nhất qua?',o:['Tóm tắt lại ý người bệnh','Ngắt lời','Nhìn điện thoại','Nói liên tục'],a:0}]},
+
+  lab_org:{emoji:'🧪',name:'PTN Hoá hữu cơ',accent:'#4fc3c7',intro:'Thí nghiệm hoá học: định lượng bằng chuẩn độ, an toàn phòng thí nghiệm.',
+    rooms:[{ic:'⚗️',name:'Chuẩn độ acid–base',rd:'Mô phỏng buret, đường cong chuẩn độ.',href:'/L2-1-titration.html'},
+      {ic:'🥽',name:'An toàn PTN',rd:'Tự kiểm PPE & quy tắc trước khi vào.',panel:[
+        {h:'Checklist trước khi vào phòng thí nghiệm'},
+        {check:['Đeo kính bảo hộ','Mặc áo blouse cài kín','Đeo găng tay phù hợp hoá chất','Buộc gọn tóc, bỏ trang sức lủng lẳng','Xác định vị trí vòi rửa mắt & vòi sen khẩn cấp','Đọc SDS (phiếu an toàn) của hoá chất sẽ dùng']},
+        {h:'Tuyệt đối tránh'},
+        {ul:['KHÔNG hút pipet bằng miệng — dùng quả bóp/propipette','KHÔNG ăn uống trong phòng thí nghiệm','KHÔNG đổ hoá chất thừa trở lại chai gốc']},
+        {note:'Hoá chất bắn vào mắt → rửa ngay ≥15 phút dưới vòi rửa mắt rồi báo người phụ trách.'}]},
+      {ic:'⚗️',name:'Dụng cụ cơ bản',rd:'Lật thẻ nhận biết dụng cụ.',panel:[
+        {p:'Lật thẻ để nhận biết dụng cụ thí nghiệm & công dụng.'},
+        {flash:[{e:'🧪',f:'Ống nghiệm',b:'Đựng & phản ứng lượng nhỏ'},
+          {e:'🥃',f:'Becher (cốc có mỏ)',b:'Đong gần đúng, khuấy trộn'},
+          {e:'⚗️',f:'Bình tam giác (Erlen)',b:'Chuẩn độ, lắc không bắn ra'},
+          {e:'📏',f:'Bình định mức',b:'Pha dung dịch nồng độ CHÍNH XÁC'},
+          {e:'💧',f:'Pipet',b:'Hút thể tích chính xác'},
+          {e:'📉',f:'Buret',b:'Nhỏ giọt định lượng khi chuẩn độ'}]}]},
+      {ic:'🧫',name:'Phản ứng hữu cơ',rd:'Nhóm chức & SAR.',panel:[
+        {h:'Hoá hữu cơ cho dược'},
+        {ul:['Nhóm chức quyết định tính chất & tác dụng của phân tử thuốc','Hay gặp: -OH (hydroxyl), -COOH (carboxyl), -NH₂ (amin)','Đồng phân quang học có thể khác hẳn tác dụng dược lý']},
+        {mcq:[{q:'Vì sao cấu trúc hoá học quan trọng với thuốc?',o:['Quyết định gắn đích tác dụng & dược tính (SAR)','Chỉ để đặt tên','Không liên quan tác dụng','Chỉ ảnh hưởng màu sắc'],a:0,fb:'Quan hệ cấu trúc–tác dụng (SAR): thay đổi nhỏ cấu trúc → thay đổi tác dụng/độc tính.'}]}]}],
+    skills:['Kỹ năng chuẩn độ','An toàn phòng thí nghiệm','Nhận biết dụng cụ'],
+    quiz:[{q:'pH tại điểm tương đương khi chuẩn độ acid mạnh – base mạnh ≈?',o:['7','2','12','4'],a:0},
+      {q:'Chỉ thị phenolphtalein chuyển màu hồng ở khoảng pH?',o:['8–10','0–1','2–4','13–14'],a:0},
+      {q:'Dụng cụ đong & nhỏ chính xác thể tích khi chuẩn độ?',o:['Buret','Cốc có mỏ','Ống nghiệm','Phễu'],a:0}]},
+
+  lab_qc:{emoji:'⚗️',name:'PTN Kiểm nghiệm',accent:'#0ea5e9',intro:'Kiểm nghiệm chất lượng thuốc: sắc ký lớp mỏng (TLC), định tính & độ tinh khiết.',
+    rooms:[{ic:'🧫',name:'Sắc ký TLC 3D',rd:'6 bước chấm – chạy – soi UV – đo Rf.',href:'/sac-ky-3d.html'},
+      {ic:'🖼️',name:'Sắc ký 2D',rd:'Phiên bản nhẹ trên mọi máy.',href:'/sac-ky-2d.html'},
+      {ic:'🥽',name:'Sắc ký VR/XR',rd:'Vào kính Quest chạy TLC bằng tay.',href:'/sac-ky-vr-web.html'},
+      {ic:'🌐',name:'Lab Metaverse',rd:'Phòng lab 3D nhiều người.',href:'/sac-ky-meta.html'},
+      {ic:'🧠',name:'Quiz sắc ký',rd:'Củng cố lý thuyết TLC.',href:'/sac-ky-quiz.html'},
+      {ic:'🔬',name:'Phương pháp định lượng',rd:'HPLC · UV-Vis · GC · IR.',panel:[
+        {h:'Các phương pháp kiểm nghiệm hiện đại'},
+        {cards:[{ic:'💧',t:'HPLC',d:'Sắc ký lỏng hiệu năng cao — định lượng hoạt chất.'},
+          {ic:'🌈',t:'UV-Vis',d:'Quang phổ hấp thụ — định lượng theo độ hấp thụ.'},
+          {ic:'💨',t:'GC',d:'Sắc ký khí — chất bay hơi, dung môi tồn dư.'},
+          {ic:'〰️',t:'IR',d:'Hồng ngoại — định danh nhóm chức / cấu trúc.'}]},
+        {note:'Mỗi phương pháp định danh/định lượng theo Dược điển; chọn theo bản chất chất phân tích.'}]},
+      {ic:'✅',name:'Kiểm tra chất lượng (QC)',rd:'Checklist xuất xưởng.',panel:[
+        {h:'Checklist kiểm nghiệm một lô thuốc'},
+        {check:['Lấy mẫu đại diện đúng quy trình','Kiểm cảm quan (màu, mùi, hình thức)','Định tính – đúng hoạt chất','Định lượng – hàm lượng trong giới hạn','Thử độ hoà tan / độ rã','Kiểm tạp chất & giới hạn vi sinh']},
+        {note:'Đạt tất cả chỉ tiêu Dược điển → lô thuốc mới được phép xuất xưởng.'}]},
+      {ic:'📋',name:'Đảm bảo chất lượng (QA)',rd:'SOP & hồ sơ lô.',panel:[
+        {h:'QA – Đảm bảo chất lượng'},
+        {ul:['QA = hệ thống phòng ngừa lỗi (toàn quy trình); QC = kiểm tra sản phẩm','SOP – quy trình thao tác chuẩn cho từng việc','Hồ sơ lô (batch record) giúp truy xuất nguồn gốc','Đào tạo & audit định kỳ']},
+        {note:'GMP nhấn mạnh: "chất lượng được thiết kế vào quy trình", không chỉ kiểm ở khâu cuối.'}]}],
+    skills:['Chạy & đọc TLC','Phương pháp định lượng','QC/QA theo Dược điển'],
+    quiz:[{q:'Hệ số Rf được tính bằng?',o:['Quãng đường chất / quãng đường dung môi','Quãng dung môi / quãng chất','Khối lượng / thể tích','Thời gian chạy'],a:0},
+      {q:'TLC chủ yếu dùng để?',o:['Định tính & kiểm tra độ tinh khiết','Đo huyết áp','Trồng dược liệu','Tính giá thuốc'],a:0},
+      {q:'Trong TLC, "pha động" là?',o:['Dung môi di chuyển kéo theo chất phân tích','Bản mỏng silica','Đèn UV','Mao quản chấm mẫu'],a:0}]},
+
+  lab_micro:{emoji:'🦠',name:'PTN Vi sinh',accent:'#22c55e',intro:'Vi sinh – ký sinh: kỹ thuật vô khuẩn và thử kháng sinh đồ.',
+    rooms:[{ic:'🧫',name:'Kháng sinh đồ (tương tác)',rd:'Đặt khoanh → ủ → đo vòng → phân loại S/I/R.',href:'/antibiogram-2d.html'},
+      {ic:'🧠',name:'Quiz vi sinh',rd:'Vô khuẩn, tiệt khuẩn.',href:'/quiz.html'},
+      {ic:'🧤',name:'Kỹ thuật vô khuẩn',rd:'Checklist thao tác sạch.',panel:[
+        {h:'Checklist kỹ thuật vô khuẩn'},
+        {check:['Rửa tay & sát khuẩn trước thao tác','Làm việc trong tủ cấy / gần ngọn lửa đèn cồn','Khử trùng que cấy trước & sau khi dùng','Mở nắp ống nghiệm gần ngọn lửa, không đặt nắp xuống bàn','Hấp tiệt trùng dụng cụ trước khi dùng (autoclave)']},
+        {note:'Kỹ thuật vô khuẩn ngăn nhiễm tạp — sống còn trong nuôi cấy & pha chế vô khuẩn (thuốc tiêm).'}]}],
+    skills:['Kỹ thuật vô khuẩn','Đọc kháng sinh đồ'],
+    quiz:[{q:'Tiệt khuẩn bằng hơi nước bão hoà áp suất cao dùng thiết bị?',o:['Nồi hấp (autoclave)','Tủ sấy','Màng lọc','Đèn UV'],a:0},
+      {q:'Vòng vô khuẩn LỚN quanh khoanh kháng sinh nghĩa là?',o:['Vi khuẩn nhạy cảm','Vi khuẩn đề kháng','Không có ý nghĩa','Đĩa bị nhiễm'],a:0},
+      {q:'Môi trường rắn nuôi cấy vi khuẩn phổ biến?',o:['Thạch (agar)','Nước cất','Cồn 90°','Dầu ăn'],a:0}]},
+
+  gmp:{emoji:'🏭',name:'Xưởng Bào chế – GMP',accent:'#9aa6b2',intro:'Bào chế thuốc và tham quan dây chuyền sản xuất đạt GMP.',
+    rooms:[{ic:'🧴',name:'Hub Bào chế',rd:'Danh mục bài bào chế (cao, cồn, viên…).',href:'/bao-che-hub.html'},
+      {ic:'🫙',name:'Bào chế: Cao gừng ngâm',rd:'Quy trình chiết – cô đặc.',href:'/compounding-lab.html?recipe=cao-gung-ngam'},
+      {ic:'🏭',name:'Tour nhà máy GMP',rd:'Tham quan 4 phòng ISO 5/7/8/9.',href:'/PS15-gmp-factory.html'},
+      {ic:'💊',name:'8 dạng bào chế',rd:'Lật thẻ nhận diện dạng thuốc.',panel:[
+        {p:'Lật thẻ để ôn đặc điểm 8 dạng bào chế thường gặp.'},
+        {flash:[{e:'⚪',f:'Viên nén',b:'Bột nén — phổ biến, liều chính xác, dễ bảo quản'},
+          {e:'💊',f:'Viên nang',b:'Bột/lỏng trong vỏ gelatin — che vị, rã nhanh'},
+          {e:'🧴',f:'Dung dịch',b:'Hoạt chất tan hoàn toàn — hấp thu nhanh'},
+          {e:'🥛',f:'Hỗn dịch',b:'Hạt rắn lơ lửng — lắc kỹ trước khi dùng'},
+          {e:'🧈',f:'Nhũ tương',b:'2 pha dầu/nước không trộn + chất nhũ hoá'},
+          {e:'🧯',f:'Thuốc mỡ/kem',b:'Dùng ngoài da — tá dược thân dầu/nước'},
+          {e:'💉',f:'Thuốc tiêm',b:'Vô khuẩn, không chí nhiệt tố — tác dụng nhanh'},
+          {e:'🔵',f:'Thuốc đặt',b:'Đặt trực tràng/âm đạo — tan ở thân nhiệt'}]}]},
+      {ic:'🧬',name:'Sinh dược học',rd:'Dạng bào chế ↔ sinh khả dụng.',panel:[
+        {h:'Sinh dược học (Biopharmaceutics)'},
+        {ul:['Nghiên cứu ảnh hưởng của dạng bào chế tới hấp thu & sinh khả dụng','Tốc độ rã & hoà tan ảnh hưởng tốc độ hấp thu','Tương đương sinh học (bioequivalence) giữa thuốc gốc & generic','Hệ phân loại BCS theo độ tan & tính thấm']},
+        {note:'Cùng hoạt chất nhưng khác dạng/tá dược có thể khác sinh khả dụng → khác hiệu quả điều trị.'}]}],
+    skills:['Quy trình bào chế','Phân biệt 8 dạng thuốc','5 nguyên tắc GMP'],
+    quiz:[{q:'GMP là viết tắt của?',o:['Good Manufacturing Practice','Global Medicine Plan','General Medical Product','Good Marketing Plan'],a:0},
+      {q:'"Cao thuốc" là dạng bào chế?',o:['Cô đặc dịch chiết dược liệu','Viên nén','Dung dịch tiêm','Thuốc khí dung'],a:0},
+      {q:'Phòng sạch ISO 5 so với ISO 8 thì?',o:['Sạch hơn (ít hạt bụi hơn)','Bẩn hơn','Như nhau','Không liên quan'],a:0}]},
+
+  clinpharm:{emoji:'💉',name:'Dược lý – Lâm sàng',accent:'#ec4899',intro:'Cơ chế tác dụng thuốc, tương tác thuốc và tư duy ca lâm sàng.',
+    rooms:[{ic:'⚠️',name:'Tương tác thuốc',rd:'Phát hiện & xử trí tương tác.',href:'/L3-3-tuong-tac.html'},
+      {ic:'🩺',name:'Ca lâm sàng',rd:'Phân tích bệnh án theo SOAP.',panel:[
+        {h:'Khung phân tích SOAP'},
+        {ul:['S (Subjective): triệu chứng & lời kể người bệnh','O (Objective): dấu hiệu, xét nghiệm, thuốc đang dùng','A (Assessment): xác định vấn đề liên quan dùng thuốc (DRP)','P (Plan): đề xuất can thiệp & theo dõi']},
+        {h:'Ca mẫu — phân tích thử'},
+        {cards:[{ic:'🗣️',t:'S',d:'Nam 60t, ĐTĐ type 2, than mệt, hay quên uống thuốc.'},
+          {ic:'📋',t:'O',d:'HbA1c 9%; metformin 850mg×2; mới thêm thuốc cảm chứa pseudoephedrine.'},
+          {ic:'🔎',t:'A',d:'Kiểm soát đường huyết kém + nguy cơ tăng HA/đường do pseudoephedrine.'},
+          {ic:'✅',t:'P',d:'Tư vấn tuân thủ, cân nhắc đổi thuốc cảm, hẹn tái khám & theo dõi HbA1c.'}]},
+        {note:'DRP = Drug-Related Problem: vấn đề liên quan đến thuốc mà dược sĩ cần phát hiện & giải quyết.'}]},
+      {ic:'🧬',name:'Cơ chế tác dụng',rd:'Lật thẻ nhóm thuốc → cơ chế.',panel:[
+        {p:'Lật thẻ để ôn cơ chế tác dụng các nhóm thuốc thường gặp.'},
+        {flash:[{e:'🅱️',f:'Chẹn beta (-olol)',b:'Chặn thụ thể β → giảm nhịp tim, hạ HA'},
+          {e:'💧',f:'Lợi tiểu thiazid',b:'Giảm tái hấp thu Na⁺ ống lượn xa → lợi tiểu, hạ HA'},
+          {e:'🧊',f:'Ức chế bơm proton (-prazol)',b:'Ức chế H⁺/K⁺-ATPase → giảm tiết acid dạ dày'},
+          {e:'🩸',f:'Ức chế men chuyển (-pril)',b:'Giảm Angiotensin II → giãn mạch, hạ HA'},
+          {e:'🦠',f:'Beta-lactam',b:'Ức chế tổng hợp vách tế bào vi khuẩn'},
+          {e:'🧠',f:'SSRI',b:'Ức chế tái hấp thu serotonin → chống trầm cảm'}]}]},
+      {ic:'🔎',name:'Đọc đơn & phát hiện DRP',rd:'Soi đơn tìm vấn đề dùng thuốc.',panel:[
+        {h:'Phát hiện vấn đề trên đơn'},
+        {mcq:[{q:'Đơn kê amoxicillin cho BN ghi rõ "dị ứng penicillin". DRP loại gì?',o:['Chống chỉ định / dị ứng — can thiệp NGAY','Liều quá thấp','Trùng thuốc','Không có vấn đề'],a:0,fb:'Amoxicillin là penicillin → chống chỉ định ở BN dị ứng penicillin. Dược sĩ phải báo bác sĩ đổi thuốc.'},
+          {q:'Đơn có 2 NSAID cùng lúc (ibuprofen + diclofenac). DRP?',o:['Trùng nhóm → tăng nguy cơ loét dạ dày, độc thận','Tốt, tăng hiệu quả','Không sao','Thiếu thuốc'],a:0,fb:'Phối 2 NSAID chỉ tăng độc tính (dạ dày, thận), không tăng lợi ích → nên dùng 1.'}]}]},
+      {ic:'📈',name:'TDM – Theo dõi nồng độ',rd:'Thuốc khoảng điều trị hẹp.',panel:[
+        {h:'TDM – Theo dõi nồng độ thuốc trong máu'},
+        {ul:['Áp dụng cho thuốc "khoảng điều trị hẹp": vancomycin, digoxin, phenytoin, lithium, aminoglycosid','Lấy mẫu đúng thời điểm (nồng độ đáy/đỉnh)','Hiệu chỉnh liều theo nồng độ + đáp ứng lâm sàng']},
+        {note:'Ví dụ: vancomycin theo dõi nồng độ đáy để vừa đủ hiệu quả vừa tránh độc thận.'}]},
+      {ic:'🔬',name:'Dược động học (PK)',rd:'ADME & các thông số.',panel:[
+        {h:'Dược động học – ADME'},
+        {cards:[{ic:'🟢',t:'A – Hấp thu',d:'Thuốc vào tuần hoàn (sinh khả dụng F).'},
+          {ic:'🔵',t:'D – Phân bố',d:'Tới mô đích (thể tích phân bố Vd).'},
+          {ic:'🟠',t:'M – Chuyển hoá',d:'Chủ yếu ở gan (enzyme CYP450).'},
+          {ic:'🔴',t:'E – Thải trừ',d:'Qua thận/mật (độ thanh thải Cl, t½).'}]},
+        {note:'t½ (bán thải) quyết định khoảng cách liều; suy gan/thận → cần chỉnh liều.'}]},
+      {ic:'📈',name:'Đường cong PK/TDM (tương tác)',rd:'Chỉnh liều/khoảng cách → xem nồng độ & cửa sổ điều trị.',href:'/pk-curve.html'}],
+    skills:['Phát hiện tương tác & DRP','Tư duy lâm sàng (SOAP)','Hiểu PK & TDM'],
+    quiz:[{q:'Phối hợp Warfarin + Aspirin làm tăng nguy cơ?',o:['Chảy máu','Tăng huyết áp','Táo bón','Buồn ngủ'],a:0},
+      {q:'Tương tác làm GIẢM tác dụng của nhau gọi là?',o:['Đối kháng','Hiệp đồng','Cộng tính','Dung nạp'],a:0},
+      {q:'Thuốc "khoảng điều trị hẹp" (vd warfarin) đòi hỏi?',o:['Theo dõi nồng độ/đáp ứng chặt chẽ','Dùng tuỳ ý','Không cần theo dõi','Tăng liều liên tục'],a:0}]},
+
+  garden:{emoji:'🌿',name:'Vườn dược liệu',accent:'#5bbd7c',intro:'Nhận diện cây thuốc, bộ phận dùng và công dụng.',
+    rooms:[{ic:'🌱',name:'Nhận diện dược liệu',rd:'Lật thẻ ôn bộ phận dùng + công dụng.',panel:[
+        {p:'Lật từng thẻ để ôn BỘ PHẬN DÙNG & CÔNG DỤNG của 6 dược liệu quen thuộc.'},
+        {flash:[{e:'🫚',f:'Gừng',b:'Thân rễ — ấm bụng, chống nôn'},
+          {e:'🌿',f:'Bạc hà',b:'Lá — giải cảm, sát khuẩn họng'},
+          {e:'🍵',f:'Cam thảo',b:'Rễ — giảm ho, điều vị, giải độc'},
+          {e:'🌺',f:'Nhân sâm',b:'Rễ — bồi bổ khí'},
+          {e:'🌼',f:'Cúc hoa',b:'Hoa — mát gan, sáng mắt'},
+          {e:'🍃',f:'Diếp cá',b:'Lá — kháng khuẩn, lợi tiểu'}]},
+        {note:'Nguyên tắc: dùng đúng bộ phận, đúng liều — sai bộ phận có thể giảm hiệu lực hoặc gây độc.'}]},
+      {ic:'🧠',name:'Quiz dược liệu',rd:'Công dụng & bộ phận dùng.',href:'/quiz.html'},
+      {ic:'🔬',name:'Hoạt chất dược liệu',rd:'Nhóm hoạt chất tự nhiên.',panel:[
+        {h:'Các nhóm hoạt chất chính'},
+        {cards:[{ic:'💊',t:'Alkaloid',d:'VD morphin, quinin — tác dụng mạnh, độc tính cao.'},
+          {ic:'❤️',t:'Glycosid tim',d:'VD digoxin (digitalis) — trợ tim, khoảng điều trị hẹp.'},
+          {ic:'🌼',t:'Flavonoid',d:'Chống oxy hoá, bền thành mạch (rutin).'},
+          {ic:'🌿',t:'Tinh dầu',d:'Bay hơi, kháng khuẩn (bạc hà, tràm).'}]},
+        {note:'Cùng một cây có thể chứa nhiều nhóm hoạt chất — chiết tách & định lượng theo Dược điển.'}]},
+      {ic:'☯️',name:'Y học cổ truyền',rd:'Tứ khí – ngũ vị, phối ngũ.',panel:[
+        {h:'Y học cổ truyền & Đông dược'},
+        {ul:['Tứ khí: hàn – lương – ôn – nhiệt (tính của vị thuốc)','Ngũ vị: toan – khổ – cam – tân – hàm','Phối ngũ: quân – thần – tá – sứ trong một bài thuốc','Kết hợp Đông – Tây y cần thận trọng tương tác']},
+        {note:'Đông dược vẫn cần kiểm soát chất lượng & cảnh giác tương tác với tân dược.'}]}],
+    skills:['Nhận diện dược liệu','Biết hoạt chất & nhóm','Hiểu YHCT cơ bản'],
+    quiz:[{q:'Gừng (Zingiber officinale) thường dùng để?',o:['Chống nôn, ấm bụng','Hạ sốt mạnh','Gây mê','Lợi tiểu mạnh'],a:0},
+      {q:'Bộ phận dùng chính của Nhân sâm?',o:['Rễ','Lá','Hoa','Vỏ thân'],a:0},
+      {q:'Cam thảo thường được dùng để?',o:['Giảm ho, điều vị, giải độc','Gây mê','Hạ sốt mạnh','Lợi tiểu mạnh'],a:0}]},
+
+  clinic:{emoji:'🏥',name:'BV Thực hành',accent:'#6aa0d6',intro:'Bệnh viện thực hành — đi vào từng khoa, phân tích ca thật và ra quyết định dùng thuốc.',
+    rooms:[{ic:'🚑',name:'Cấp cứu (ER)',rd:'Mô phỏng 3D sốc phản vệ — ADRENALIN, BYT 51/2017.',href:'/PS01-er.html'},
+      {ic:'🫀',name:'ICU – Hồi sức',rd:'Vận mạch & truyền tĩnh mạch an toàn.',panel:[
+        {h:'Tình huống ICU'},{p:'Bệnh nhân nặng, nhiều thuốc truyền đồng thời — ra quyết định:'},
+        {mcq:[{q:'Sốc nhiễm khuẩn, tụt HA dù đã bù đủ dịch. Vận mạch đầu tay?',o:['Noradrenalin (norepinephrine)','Dopamin liều thấp','Dobutamin đơn độc','Adrenalin khí dung'],a:0,fb:'Noradrenalin là vận mạch đầu tay trong sốc nhiễm khuẩn (Surviving Sepsis).'},
+          {q:'Truyền kali (KCl) tĩnh mạch sao cho an toàn?',o:['Pha loãng, truyền chậm qua bơm tiêm điện, theo dõi tim','Tiêm bolus nhanh tĩnh mạch','Không cần theo dõi','Trộn chung mọi dịch'],a:0,fb:'KCl bolus nhanh có thể gây ngừng tim — luôn pha loãng & truyền chậm có kiểm soát.'}]},
+        {note:'Dược sĩ ICU rà tương kỵ khi pha truyền & chỉnh liều theo chức năng gan/thận.'}]},
+      {ic:'🩺',name:'Khoa Nội – Tim mạch',rd:'Warfarin/INR, statin, thuốc tim mạch.',panel:[
+        {h:'Ca nội – tim mạch'},
+        {mcq:[{q:'BN dùng warfarin, INR = 5.0 nhưng KHÔNG chảy máu. Xử trí hợp lý?',o:['Tạm ngừng warfarin, theo dõi, cân nhắc vitamin K liều thấp','Tăng liều warfarin','Tiêm heparin liều cao','Bỏ qua — INR 5 là bình thường'],a:0,fb:'INR đích thường 2–3. INR cao + chưa chảy máu: tạm ngừng & theo dõi, vitamin K liều thấp nếu cần.'},
+          {q:'Simvastatin (tác dụng ngắn) uống thời điểm nào tối ưu?',o:['Buổi tối','Sáng sớm lúc đói','Trước khi tập thể dục','Bất kỳ, không ảnh hưởng'],a:0,fb:'Tổng hợp cholesterol nội sinh tăng về đêm → statin tác dụng ngắn uống tối hiệu quả hơn.'}]},
+        {note:'Theo dõi INR định kỳ; cảnh giác tương tác warfarin với kháng sinh, NSAID.'}]},
+      {ic:'🧸',name:'Khoa Nhi',rd:'Tính liều theo cân nặng (mg/kg).',panel:[
+        {h:'Ca nhi khoa'},
+        {mcq:[{q:'Trẻ 15 kg, paracetamol 15 mg/kg/lần. Liều mỗi lần?',o:['225 mg','15 mg','1500 mg','75 mg'],a:0,fb:'15 mg/kg × 15 kg = 225 mg/lần; cách ≥4–6 giờ, tối đa 4 lần/ngày.'},
+          {q:'Vì sao đặc biệt thận trọng khi dùng thuốc cho trẻ?',o:['Gan/thận chưa trưởng thành, liều theo cân nặng/tuổi','Trẻ là người lớn thu nhỏ','Trẻ không hấp thu thuốc','Không cần chỉnh liều'],a:0,fb:'Dược động học ở trẻ khác người lớn — luôn tính liều theo cân nặng/tuổi & chọn dạng phù hợp.'}]},
+        {note:'Ưu tiên dạng lỏng/giọt cho trẻ nhỏ; kiểm tra nồng độ chế phẩm trước khi tính thể tích.'}]},
+      {ic:'🤰',name:'Khoa Sản – Phụ khoa',rd:'Thuốc & thai kỳ, chống chỉ định.',panel:[
+        {h:'Ca sản – phụ khoa'},
+        {mcq:[{q:'Thuốc nào CHỐNG CHỈ ĐỊNH ở phụ nữ có thai (gây quái thai)?',o:['Isotretinoin','Paracetamol','Insulin','Amoxicillin'],a:0,fb:'Isotretinoin (trị mụn) gây quái thai nặng — tuyệt đối tránh khi mang thai.'},
+          {q:'Thai phụ bị cảm, đòi mua kháng sinh. Tư vấn đúng?',o:['Khai thác triệu chứng, khuyên khám, tránh thuốc chưa rõ an toàn','Bán ngay kháng sinh mạnh','Bán thuốc bất kỳ không kê đơn','Từ chối, không tư vấn'],a:0,fb:'Cảm thường do virus — kháng sinh không cần thiết; ưu tiên an toàn thai kỳ & hướng dẫn khám.'}]},
+        {note:'Khi cấp phát cho thai phụ/cho con bú: luôn tra phân loại an toàn & ưu tiên thuốc đã có dữ liệu.'}]},
+      {ic:'🧪',name:'Khoa Ung bướu – Hoá trị',rd:'An toàn pha & xử lý thuốc độc tế bào.',panel:[
+        {h:'An toàn hoá trị'},
+        {mcq:[{q:'Pha thuốc độc tế bào (hoá trị) cần bảo hộ gì?',o:['Tủ an toàn sinh học (BSC) + găng đôi + áo chống thấm','Chỉ khẩu trang vải','Pha trên bàn thường','Không cần bảo hộ'],a:0,fb:'Thuốc gây độc tế bào phải pha trong tủ an toàn sinh học với PPE đầy đủ để tránh phơi nhiễm.'},
+          {q:'Thuốc hoá trị đổ ra ngoài (spill), xử trí?',o:['Dùng bộ xử lý spill chuyên dụng theo quy trình','Lau khăn giấy, vứt sọt thường','Để bay hơi tự nhiên','Rửa bằng thật nhiều nước'],a:0,fb:'Phải dùng spill kit & quy trình chất độc tế bào; chất thải bỏ thùng nguy hại.'}]},
+        {note:'Thải bỏ vật tư hoá trị theo chất thải nguy hại; liều thường theo diện tích da (BSA).'}]},
+      {ic:'🦟',name:'Khoa Truyền nhiễm',rd:'HIV/lao — phác đồ & tuân thủ.',panel:[
+        {h:'Ca truyền nhiễm'},
+        {mcq:[{q:'Nguyên tắc cốt lõi điều trị lao để tránh kháng thuốc?',o:['Phối hợp nhiều thuốc, đủ liều, đủ thời gian, tuân thủ (DOTS)','Một thuốc, ngắn ngày','Ngừng khi hết triệu chứng','Đổi thuốc liên tục'],a:0,fb:'Lao cần phác đồ phối hợp đủ liều/thời gian; DOTS giúp tuân thủ, tránh lao kháng thuốc.'},
+          {q:'Thuốc ARV trong HIV cần dùng thế nào?',o:['Đều đặn suốt đời, tuân thủ cao giữ tải lượng dưới ngưỡng','Khi nào nhớ thì uống','Ngừng khi thấy khoẻ','Chỉ uống lúc ốm'],a:0,fb:'Tuân thủ ARV cao giữ tải lượng virus thấp (U=U) — giảm kháng thuốc & lây truyền.'}]},
+        {note:'Dược sĩ tư vấn tuân thủ & sàng lọc tương tác (vd rifampicin cảm ứng CYP mạnh).'}]}],
+    skills:['Xử trí cấp cứu','Dược lâm sàng theo khoa','An toàn thuốc & liều đặc biệt'],
+    quiz:[{q:'Thuốc ĐẦU TAY trong sốc phản vệ?',o:['Adrenalin (epinephrine) tiêm bắp','Paracetamol','Vitamin C','Kháng sinh'],a:0},
+      {q:'Liều Adrenalin người lớn tiêm bắp (BYT 51/2017)?',o:['0,5 mg (½ ống 1mg/1ml)','5 mg','50 mg','0,01 mg'],a:0},
+      {q:'Sau tiêm Adrenalin xử trí phản vệ, cần?',o:['Theo dõi sát, có thể nhắc lại sau 5–15 phút','Cho về ngay','Ngừng theo dõi','Cho ăn uống'],a:0}]},
+
+  gpp:{emoji:'💊',name:'Nhà thuốc GPP',accent:'#16a34a',intro:'Quầy thuốc đạt chuẩn GPP — sắp xếp, cấp phát đúng, tư vấn OTC và sàng lọc cờ đỏ.',
+    rooms:[{ic:'🗂️',name:'Sắp xếp thuốc ATC',rd:'Phân loại & xếp kệ.',href:'/sap-xep-hub.html'},
+      {ic:'🕹️',name:'Arcade 2D',rd:'Luyện tốc độ phân loại.',href:'/2d-arcade.html'},
+      {ic:'🧊',name:'Kệ thuốc 3D',rd:'Sắp xếp trong không gian 3D.',href:'/3d-shelf.html'},
+      {ic:'💬',name:'Tư vấn OTC',rd:'Bán thuốc không kê đơn an toàn.',panel:[
+        {h:'Quầy tư vấn OTC'},{p:'Khách tới hỏi mua thuốc — bạn tư vấn:'},
+        {mcq:[{q:'Khách ho khan 2 ngày, không sốt. Tư vấn hợp lý?',o:['Thuốc giảm ho + theo dõi, khám nếu kéo dài >1 tuần/khó thở','Bán kháng sinh ngay','Corticoid liều cao','Không tư vấn gì'],a:0,fb:'Ho cấp thường tự khỏi; OTC giảm triệu chứng + dặn cờ đỏ. Kháng sinh không trị ho do virus.'},
+          {q:'Khách đòi kháng sinh trị tiêu chảy thường (không sốt, không máu)?',o:['Bù nước–điện giải (ORS), theo dõi, không cần kháng sinh','Bán kháng sinh ngay','Thuốc cầm tiêu chảy liều cao cho trẻ nhỏ','Nhịn ăn uống hoàn toàn'],a:0,fb:'Tiêu chảy cấp thường do virus → ORS là chính; kháng sinh chỉ khi có chỉ định.'},
+          {q:'Dấu hiệu CỜ ĐỎ cần chuyển khám ngay?',o:['Đau ngực, khó thở, sốt cao kéo dài, triệu chứng thần kinh','Hắt hơi nhẹ','Ngứa mũi thoáng qua','Mệt nhẹ sau thức khuya'],a:0,fb:'Cờ đỏ (red flags) → ngừng tự điều trị, chuyển khám bác sĩ.'}]}]},
+      {ic:'📝',name:'Cấp phát thuốc kê đơn (Rx)',rd:'Quy trình 6 bước an toàn.',panel:[
+        {h:'Checklist cấp phát đơn thuốc'},
+        {check:['Kiểm tra đơn hợp lệ (tên, tuổi BN, chữ ký bác sĩ)','Đối chiếu thuốc – hàm lượng – số lượng','Rà tương tác & chống chỉ định','Dán nhãn & ghi rõ cách dùng','Tư vấn bảo quản & tác dụng phụ thường gặp','Ghi sổ thuốc kê đơn theo quy định']},
+        {note:'Thuốc kê đơn (Rx) chỉ bán khi có đơn hợp lệ; kháng sinh không bán tự do.'}]},
+      {ic:'🩸',name:'Đo HA & đường huyết',rd:'Dịch vụ sàng lọc tại nhà thuốc.',panel:[
+        {h:'Quy trình đo huyết áp đúng'},
+        {ol:['Cho khách nghỉ 5 phút, ngồi tựa lưng, chân chạm đất','Quấn băng đo ngang tim, không nói chuyện khi đo','Đo 2 lần cách 1–2 phút rồi lấy trung bình','Ghi lại kết quả & so với ngưỡng']},
+        {note:'HA ≥140/90 mmHg nhiều lần → khuyên khám. Đường huyết đói ≥126 mg/dL (7.0 mmol/L) gợi ý đái tháo đường, cần xác nhận y tế.'}]},
+      {ic:'🚭',name:'Tư vấn cai thuốc lá',rd:'Mô hình 5A.',panel:[
+        {h:'Mô hình 5A cai thuốc lá'},
+        {ul:['Ask – Hỏi về thói quen hút thuốc','Advise – Khuyên bỏ thuốc rõ ràng','Assess – Đánh giá mức sẵn sàng bỏ','Assist – Hỗ trợ (NRT, tư vấn hành vi)','Arrange – Hẹn theo dõi']},
+        {note:'Liệu pháp thay thế nicotine (NRT) + tư vấn hành vi tăng rõ tỉ lệ cai thành công.'}]}],
+    skills:['Sắp xếp thuốc theo ATC','Cấp phát & tư vấn GPP','Sàng lọc cờ đỏ → chuyển khám'],
+    quiz:[{q:'GPP là viết tắt của?',o:['Good Pharmacy Practice','Global Product Plan','General Pharma Price','Good People Project'],a:0},
+      {q:'Bán thuốc kê đơn (Rx) bắt buộc phải có?',o:['Đơn thuốc hợp lệ','Chỉ cần tiền','Quảng cáo','Lời giới thiệu'],a:0},
+      {q:'Thuốc cần bảo quản lạnh 2–8°C, ví dụ?',o:['Vaccine, insulin','Paracetamol viên','Than hoạt','Oresol gói'],a:0}]},
+
+  sim:{emoji:'🎭',name:'TT Mô phỏng – OSCE',accent:'#f59e0b',intro:'Mô phỏng kỹ năng lâm sàng & giao tiếp dược – bệnh nhân: thi OSCE, đóng vai, sơ cấp cứu.',
+    rooms:[{ic:'🏆',name:'OSCE Championship',rd:'10 trạm, timer, chứng chỉ.',href:'/GC07-osce-championship.html'},
+      {ic:'🌐',name:'Phòng học chung (Metaverse)',rd:'Tình huống đa người real-time.',href:'/metaverse.html'},
+      {ic:'🗣️',name:'Khung giao tiếp SEGUE',rd:'5 bước hội thoại dược – bệnh nhân.',panel:[
+        {h:'Khung SEGUE đánh giá giao tiếp'},
+        {cards:[{ic:'🎬',t:'S – Set the stage',d:'Chào hỏi, tạo bối cảnh, đảm bảo riêng tư.'},
+          {ic:'❓',t:'E – Elicit',d:'Khai thác thông tin bằng câu hỏi mở.'},
+          {ic:'💬',t:'G – Give',d:'Cung cấp thông tin rõ ràng, dễ hiểu.'},
+          {ic:'🤝',t:'U – Understand',d:'Thấu hiểu góc nhìn & lo lắng người bệnh.'},
+          {ic:'✅',t:'E – End',d:'Tóm tắt, kiểm tra hiểu, hẹn theo dõi.'}]},
+        {note:'Bản mô phỏng hội thoại AI NPC (SEGUE AI Sim) đang được triển khai — sẽ chấm điểm tự động thang 100đ.'}]},
+      {ic:'🧑‍⚕️',name:'Đóng vai AI Patient',rd:'Luyện hội thoại tư vấn.',panel:[
+        {h:'Tình huống đóng vai'},
+        {mcq:[{q:'Người bệnh lo lắng tác dụng phụ của statin. Câu mở đầu tốt nhất?',o:['"Anh/chị đang lo lắng điều gì về thuốc ạ?" (câu hỏi mở)','"Thuốc này không sao đâu."','"Cứ uống đi, đừng hỏi nhiều."','Im lặng đưa thuốc'],a:0,fb:'Câu hỏi mở + lắng nghe giúp khai thác mối lo thật sự (bước Elicit của SEGUE).'},
+          {q:'Khi hướng dẫn cách dùng thuốc, nên?',o:['Dùng từ đơn giản, kiểm tra lại bằng teach-back','Dùng nhiều thuật ngữ y khoa','Nói thật nhanh cho xong','Chỉ đưa tờ HDSD, không nói'],a:0,fb:'Teach-back (yêu cầu người bệnh nhắc lại) xác nhận họ hiểu đúng cách dùng.'}]}]},
+      {ic:'❤️',name:'Sơ cấp cứu CPR / AED',rd:'Hồi sinh tim phổi cơ bản.',panel:[
+        {h:'Các bước CPR người lớn'},
+        {ol:['Kiểm tra an toàn hiện trường & đáp ứng nạn nhân','Gọi 115 & lấy AED','Ép tim 30 lần (giữa ngực, sâu 5–6 cm)','Thổi ngạt 2 lần','Gắn AED & làm theo hướng dẫn, tiếp tục CPR']},
+        {mcq:[{q:'Tần số ép tim CPR người lớn khuyến cáo?',o:['100–120 lần/phút','40–60 lần/phút','150–180 lần/phút','Càng nhanh càng tốt'],a:0,fb:'Hướng dẫn AHA: ép 100–120 lần/phút, sâu 5–6 cm, để ngực nảy hoàn toàn.'}]}]}],
+    skills:['Giao tiếp dược – bệnh nhân (SEGUE)','Kỹ năng OSCE','Sơ cấp cứu CPR/AED'],
+    quiz:[{q:'Khung SEGUE dùng để đánh giá?',o:['Kỹ năng giao tiếp y khoa','Phản ứng hoá học','Sổ sách kế toán','Kỹ thuật trồng trọt'],a:0},
+      {q:'Chữ "S" đầu của SEGUE nghĩa là?',o:['Set the stage – chuẩn bị bối cảnh','Stop','Sample','Sell'],a:0},
+      {q:'OSCE đánh giá điều gì?',o:['Kỹ năng thực hành lâm sàng theo trạm','Chỉ lý thuyết','Ngoại hình','Tốc độ gõ phím'],a:0}]},
+
+  canteen:{emoji:'🍜',name:'Căng tin',accent:'#fb7185',intro:'Nghỉ ngơi, nạp năng lượng và thư giãn giữa các giờ học.',
+    rooms:[{ic:'⏱️',name:'Time Attack',rd:'Mini-game ôn nhanh, giải trí.',href:'/time-attack.html'},
+      {ic:'☕',name:'Góc thư giãn',rd:'Mẹo học hiệu quả & giữ sức.',panel:[
+        {h:'Mẹo học hiệu quả'},
+        {ul:['Lặp lại ngắt quãng (spaced repetition) để nhớ lâu','Pomodoro: 25\' học – 5\' nghỉ','Ngủ đủ 7–8 giờ để củng cố trí nhớ','Uống đủ nước, vận động nhẹ giữa giờ']},
+        {note:'Học đều mỗi ngày hiệu quả hơn nhiều so với học dồn sát ngày thi.'}]},
+      {ic:'🥗',name:'Dinh dưỡng & sức khoẻ',rd:'Tự chăm sóc mùa thi.',panel:[
+        {h:'Giữ sức khoẻ mùa thi'},
+        {ul:['Ăn đủ bữa; hạn chế lạm dụng caffeine / nước tăng lực','Uống đủ nước, ngủ đủ giấc','Nghỉ mắt theo quy tắc 20–20–20 khi học màn hình','Vận động nhẹ giữa giờ để tỉnh táo']},
+        {mcq:[{q:'Lạm dụng nước tăng lực để thức học khuya có thể gây?',o:['Mất ngủ, tim đập nhanh, lo âu','Tăng trí nhớ vĩnh viễn','Hoàn toàn không hại','Chữa được bệnh'],a:0,fb:'Caffeine liều cao gây mất ngủ, hồi hộp; nên ngủ đủ thay vì lạm dụng chất kích thích.'}]},
+        {note:'Dược sĩ tương lai cũng cần biết tự chăm sóc & tư vấn lối sống lành mạnh cho người bệnh.'}]}],
+    skills:['Cân bằng học tập – nghỉ ngơi','Tự chăm sóc sức khoẻ'],
+    quiz:[{q:'Phương pháp học giúp nhớ lâu nhất?',o:['Lặp lại ngắt quãng (spaced repetition)','Học dồn 1 đêm','Đọc lướt 1 lần','Chép phạt'],a:0},
+      {q:'Kỹ thuật Pomodoro chia thời gian?',o:['25 phút học – 5 phút nghỉ','3 giờ học liền','Không nghỉ','Ngủ 25 phút'],a:0},
+      {q:'Ngủ đủ giấc giúp?',o:['Củng cố trí nhớ dài hạn','Quên nhanh hơn','Giảm tập trung','Không ảnh hưởng'],a:0}]},
+
+  dorm:{emoji:'🛏️',name:'Ký túc xá',accent:'#e7b98f',intro:'Không gian cá nhân: theo dõi hồ sơ, tiến độ, huy hiệu và đặt mục tiêu.',
+    rooms:[{ic:'🏅',name:'Hồ sơ & huy hiệu',rd:'Sao, coin, streak, huy hiệu.',content:'Xem thành tích cá nhân: số sao mỗi module, coin, chuỗi ngày học (streak) và huy hiệu đạt được. Mở trang chủ để xem đầy đủ.',href:'/'},
+      {ic:'🎯',name:'Mục tiêu học tập',rd:'Đặt & lưu mục tiêu tuần.',panel:[
+        {h:'Đặt mục tiêu theo nguyên tắc SMART'},
+        {p:'Cụ thể – Đo được – Khả thi – Liên quan – Có thời hạn. Ví dụ: "Hoàn thành 3 module bào chế trong tuần này".'},
+        {goal:true},
+        {note:'Duy trì streak (chuỗi ngày học) để nhận thưởng coin & huy hiệu.'}]},
+      {ic:'🧭',name:'Hướng nghiệp ngành Dược',rd:'Các con đường sự nghiệp.',panel:[
+        {h:'Một bằng Dược — nhiều hướng đi'},
+        {cards:[{ic:'🏥',t:'Dược lâm sàng BV',d:'Tư vấn dùng thuốc tại bệnh viện.'},
+          {ic:'🏪',t:'Nhà thuốc cộng đồng',d:'Quản lý & tư vấn tại nhà thuốc.'},
+          {ic:'🏭',t:'Công nghiệp dược',d:'Sản xuất, R&D, đảm bảo chất lượng.'},
+          {ic:'🎓',t:'Học thuật – Giảng viên',d:'Giảng dạy & nghiên cứu.'},
+          {ic:'📋',t:'Quản lý / Đăng ký (RA)',d:'Pháp chế, đăng ký thuốc tại DAV.'},
+          {ic:'🌿',t:'Y học cổ truyền',d:'Đông dược & kết hợp Đông–Tây y.'}]},
+        {note:'Chọn hướng theo thế mạnh & sở thích của bạn — và đặt mục tiêu học phù hợp.'}]}],
+    skills:['Tự quản lý học tập','Duy trì động lực','Định hướng nghề nghiệp'],
+    quiz:[{q:'Cách học hiệu quả & bền vững?',o:['Đều đặn mỗi ngày + nghỉ hợp lý','Thức trắng ôn thi','Bỏ bữa để học','Chỉ học sát ngày thi'],a:0},
+      {q:'Chuỗi ngày học (streak) khuyến khích thói quen?',o:['Học đều mỗi ngày','Học 1 lần/tháng','Bỏ học','Học ngẫu nhiên'],a:0},
+      {q:'Đặt mục tiêu hiệu quả theo nguyên tắc?',o:['SMART (cụ thể, đo được, khả thi, liên quan, có hạn)','Càng mơ hồ càng tốt','Càng nhiều càng tốt','Không cần đo lường'],a:0}]},
+
+  museum:{emoji:'🏺',name:'Bảo tàng Dược',accent:'#d97706',intro:'Lịch sử ngành Dược và những danh nhân dược học Việt Nam.',
+    rooms:[{ic:'🏛️',name:'Lịch sử ngành Dược',rd:'Dòng thời gian & cột mốc.',panel:[
+        {h:'Dòng thời gian ngành Dược Việt Nam'},
+        {timeline:[{t:'Y học cổ truyền',d:'Tuệ Tĩnh nêu tư tưởng "Nam dược trị Nam nhân"; Hải Thượng Lãn Ông để lại "Hải Thượng Y tông tâm lĩnh".'},
+          {t:'Cận đại',d:'Hình thành hệ thống đào tạo Dược chính quy.'},
+          {t:'GS. Đỗ Tất Lợi',d:'Công trình "Những cây thuốc và vị thuốc Việt Nam" — nền tảng dược liệu học nước nhà.'},
+          {t:'Dược điển Việt Nam',d:'Bộ Y tế chuẩn hoá tiêu chuẩn chất lượng thuốc & dược liệu.'},
+          {t:'Ngày nay',d:'Kết hợp dược hiện đại + y học cổ truyền, vận hành theo chuẩn GMP/GPP.'}]}]},
+      {ic:'👤',name:'Danh nhân dược học',rd:'Đóng góp tiêu biểu.',panel:[
+        {h:'Những tên tuổi đặt nền móng'},
+        {cards:[{ic:'🌿',t:'Tuệ Tĩnh',d:'Ông tổ thuốc Nam — "Nam dược trị Nam nhân".'},
+          {ic:'📜',t:'Hải Thượng Lãn Ông',d:'Đại danh y, tác giả "Y tông tâm lĩnh".'},
+          {ic:'📖',t:'GS. Đỗ Tất Lợi',d:'Nhà dược liệu học hàng đầu, công trình cây thuốc VN.'}]},
+        {p:'Cùng nhiều thầy thuốc, dược sĩ đã đặt nền móng cho đào tạo Dược Việt Nam.'}]},
+      {ic:'⚗️',name:'Dụng cụ bào chế xưa',rd:'Hiện vật cổ truyền.',panel:[
+        {h:'Dụng cụ bào chế cổ truyền'},
+        {cards:[{ic:'🧉',t:'Cối & chày',d:'Giã, tán dược liệu thành bột.'},
+          {ic:'🛶',t:'Thuyền tán',d:'Nghiền dược liệu bằng bánh lăn.'},
+          {ic:'⚖️',t:'Cân tiểu ly',d:'Cân lượng nhỏ dược liệu chính xác.'},
+          {ic:'🗄️',t:'Tủ thuốc bắc',d:'Nhiều ngăn kéo đựng vị thuốc.'}]},
+        {note:'Đây là tiền thân của thiết bị bào chế & cân phân tích hiện đại.'}]}],
+    skills:['Hiểu lịch sử & truyền thống ngành','Nhận biết hiện vật ngành Dược'],
+    quiz:[{q:'Tác giả "Những cây thuốc và vị thuốc Việt Nam"?',o:['Đỗ Tất Lợi','Isaac Newton','Louis Pasteur','Tuệ Tĩnh'],a:0},
+      {q:'Dược điển Việt Nam dùng để?',o:['Quy định tiêu chuẩn chất lượng thuốc','Định giá thuốc','Quảng cáo thuốc','Phân phối thuốc'],a:0},
+      {q:'Đại danh y Tuệ Tĩnh nổi tiếng với tư tưởng?',o:['"Nam dược trị Nam nhân"','"Tây dược là nhất"','Không dùng dược liệu','Chỉ châm cứu'],a:0}]},
+};
+
+// ============================================================
+// TRƯỜNG THCS (Lớp 6–9) — nội dung theo Chương trình GDPT 2018
+// Khối lớp = "homeroom" (Toán/Văn nối lộ trình thật); phòng bộ môn dùng panel.
+// ============================================================
+const SPACES_SECONDARY = {
+  grade6:{emoji:'6️⃣',name:'Khối lớp 6',accent:'#38bdf8',intro:'Năm đầu cấp THCS. Vào lớp học Toán, Ngữ văn, Tiếng Anh, Lịch sử–Địa lí và GDCD lớp 6 — vừa học vừa luyện tập có thưởng.',
+    rooms:[{ic:'📐',name:'Toán 6 — Lộ trình',rd:'5 chương: số nguyên, phân số, tỉ số, ƯCLN–BCNN, hình học.',href:'/subject.html?domain=secondary&subject=toan&grade=6'},
+      {ic:'📖',name:'Ngữ văn 6 — Luyện tập',rd:'Truyện dân gian, thơ lục bát, so sánh–nhân hoá.',href:'/module.html?domain=secondary&module=SV6'},
+      {ic:'🇬🇧',name:'Tiếng Anh 6',rd:'Lật thẻ từ vựng chủ đề quen thuộc.',panel:[
+        {p:'Lật thẻ ôn từ vựng tiếng Anh lớp 6 (chủ đề trường lớp & gia đình).'},
+        {flash:[{e:'🏫',f:'school',b:'trường học'},{e:'📚',f:'subject',b:'môn học'},{e:'✏️',f:'pencil',b:'bút chì'},
+          {e:'👨‍👩‍👧',f:'family',b:'gia đình'},{e:'⏰',f:'timetable',b:'thời khoá biểu'},{e:'🧑‍🏫',f:'teacher',b:'giáo viên'}]}]},
+      {ic:'🗺️',name:'Lịch sử & Địa lí 6',rd:'Thời nguyên thuỷ & cách đọc bản đồ.',panel:[
+        {h:'Mở đầu Lịch sử & Địa lí'},
+        {ul:['Lịch sử nghiên cứu quá khứ dựa trên tư liệu (hiện vật, chữ viết, truyền miệng)','Cách tính thời gian: thập kỉ, thế kỉ, thiên niên kỉ; trước & sau Công nguyên','Bản đồ thu nhỏ bề mặt Trái Đất theo tỉ lệ; có phương hướng, kí hiệu, tỉ lệ']},
+        {note:'Người tối cổ → người tinh khôn; biết chế tác công cụ đá, dùng lửa, sống thành bầy.'}]},
+      {ic:'⚖️',name:'GDCD 6',rd:'Tự lập & tự nhận thức bản thân.',panel:[
+        {h:'Tình huống đạo đức lớp 6'},
+        {mcq:[{q:'Bạn quên mang sách, em là người tự lập sẽ?',o:['Tự chuẩn bị đồ dùng tối hôm trước theo thời khoá biểu','Đổ lỗi cho bố mẹ','Mượn của bạn rồi quên trả','Nghỉ học cho xong'],a:0,fb:'Tự lập: tự giác chuẩn bị và chịu trách nhiệm việc của mình, không ỷ lại.'}]}]}],
+    skills:['Làm quen cấp THCS','Tự học có kế hoạch'],
+    quiz:[{q:'Số đối của 7 là?',o:['-7','7','0','1/7'],a:0},
+      {q:'Thơ lục bát có cặp câu gồm?',o:['Một câu 6 chữ & một câu 8 chữ','Hai câu 7 chữ','Câu 5 chữ','Câu tự do'],a:0},
+      {q:'1 thế kỉ bằng bao nhiêu năm?',o:['100 năm','10 năm','1000 năm','50 năm'],a:0}]},
+
+  grade7:{emoji:'7️⃣',name:'Khối lớp 7',accent:'#34d399',intro:'Lớp 7 — nâng cao tư duy. Học Toán, Ngữ văn cùng các môn và luyện đề có phản hồi tức thì.',
+    rooms:[{ic:'📐',name:'Toán 7 — Luyện tập',rd:'Số hữu tỉ, tỉ lệ thức, tam giác, thống kê.',href:'/module.html?domain=secondary&module=S7'},
+      {ic:'📖',name:'Ngữ văn 7 — Luyện tập',rd:'Ca dao, tục ngữ, từ Hán Việt, điệp ngữ.',href:'/module.html?domain=secondary&module=SV7'},
+      {ic:'🇬🇧',name:'Tiếng Anh 7',rd:'Ngữ pháp các thì cơ bản.',panel:[
+        {h:'Các thì thường gặp lớp 7'},
+        {cards:[{ic:'⏱️',t:'Present simple',d:'Thói quen, sự thật: I go / She goes.'},
+          {ic:'🔄',t:'Present continuous',d:'Đang xảy ra: I am going.'},
+          {ic:'⏮️',t:'Past simple',d:'Đã xảy ra & kết thúc: I went.'},
+          {ic:'⏭️',t:'Future (will)',d:'Dự định/tương lai: I will go.'}]},
+        {note:'Ngôi thứ 3 số ít ở thì hiện tại đơn thêm -s/-es cho động từ.'}]},
+      {ic:'🗺️',name:'Lịch sử & Địa lí 7',rd:'Trung đại & các châu lục.',panel:[
+        {h:'Kiến thức trọng tâm'},
+        {ul:['Xã hội phong kiến phương Đông & phương Tây','Đại Việt thời Lý – Trần – Lê sơ: dựng nước & giữ nước','Đặc điểm tự nhiên các châu lục: châu Âu, châu Á, châu Phi']},
+        {note:'Chiến thắng tiêu biểu: ba lần kháng chiến chống quân Mông – Nguyên thời Trần.'}]},
+      {ic:'⚖️',name:'GDCD 7',rd:'Quản lí cảm xúc & ứng phó căng thẳng.',panel:[
+        {mcq:[{q:'Khi căng thẳng trước kì kiểm tra, cách ứng phó tích cực là?',o:['Lập kế hoạch ôn tập, nghỉ ngơi, hít thở sâu','Thức trắng đêm lo lắng','Bỏ thi','Giấu cảm xúc và chịu đựng một mình'],a:0,fb:'Ứng phó tích cực: chia nhỏ việc học, ngủ đủ, vận động, chia sẻ với người tin cậy.'}]}]}],
+    skills:['Tư duy logic','Tự luyện đề có phản hồi'],
+    quiz:[{q:'Số nào sau đây là số hữu tỉ?',o:['Mọi đáp án trên (3, -0,5 và 2/7 đều là số hữu tỉ)','Chỉ 3','Chỉ 2/7','Không số nào'],a:0},
+      {q:'Tổng ba góc trong một tam giác bằng?',o:['180°','90°','360°','100°'],a:0},
+      {q:'"Ăn quả nhớ kẻ trồng cây" là?',o:['Tục ngữ','Truyện cổ tích','Thơ Đường','Tiểu thuyết'],a:0}]},
+
+  grade8:{emoji:'8️⃣',name:'Khối lớp 8',accent:'#a78bfa',intro:'Lớp 8 — củng cố nền tảng vững trước năm cuối cấp. Toán, Ngữ văn và các môn bộ môn.',
+    rooms:[{ic:'📐',name:'Toán 8 — Luyện tập',rd:'Hằng đẳng thức, phương trình, Pythagore.',href:'/module.html?domain=secondary&module=S8'},
+      {ic:'📖',name:'Ngữ văn 8 — Luyện tập',rd:'Truyện hiện thực, thơ Đường luật, câu ghép.',href:'/module.html?domain=secondary&module=SV8'},
+      {ic:'🔬',name:'KHTN 8 — Ghi nhớ nhanh',rd:'Lật thẻ Lí – Hoá – Sinh.',panel:[
+        {p:'Lật thẻ ôn nhanh kiến thức Khoa học tự nhiên lớp 8.'},
+        {flash:[{e:'⚖️',f:'Định luật bảo toàn khối lượng',b:'Tổng khối lượng chất phản ứng = tổng khối lượng sản phẩm'},
+          {e:'💪',f:'Áp suất',b:'p = F/S (lực ép trên một đơn vị diện tích)'},
+          {e:'🫁',f:'Hệ hô hấp',b:'Trao đổi khí O₂ và CO₂ giữa cơ thể & môi trường'},
+          {e:'⚗️',f:'Acid',b:'Dung dịch làm quỳ tím hoá đỏ'}]}]},
+      {ic:'🇬🇧',name:'Tiếng Anh 8',rd:'So sánh hơn – so sánh nhất.',panel:[
+        {h:'So sánh tính từ'},
+        {ul:['So sánh hơn: tall → taller than; good → better than','So sánh nhất: tall → the tallest; good → the best','Tính từ dài dùng more / the most: more beautiful, the most beautiful']},
+        {mcq:[{q:'Câu nào đúng?',o:['She is taller than me.','She is more tall than me.','She is tallest than me.','She is the taller.'],a:0,fb:'Tính từ ngắn "tall" → "taller than" trong so sánh hơn.'}]}]}],
+    skills:['Biến đổi đại số','Đọc – hiểu văn bản'],
+    quiz:[{q:'(a + b)² bằng?',o:['a² + 2ab + b²','a² + b²','a² - b²','2a + 2b'],a:0},
+      {q:'Định lí Pythagore áp dụng cho tam giác?',o:['Tam giác vuông','Mọi tam giác','Tam giác đều','Tam giác tù'],a:0},
+      {q:'Định luật bảo toàn khối lượng do ai phát biểu?',o:['Lavoisier','Newton','Darwin','Mendel'],a:0}]},
+
+  grade9:{emoji:'9️⃣',name:'Khối lớp 9',accent:'#fb7185',intro:'Lớp 9 — năm cuối cấp, tăng tốc ôn thi vào lớp 10. Học chắc Toán, Ngữ văn & lập kế hoạch ôn tập.',
+    rooms:[{ic:'📐',name:'Toán 9 — Luyện tập',rd:'Căn bậc hai, hệ phương trình, đường tròn.',href:'/module.html?domain=secondary&module=S9'},
+      {ic:'📖',name:'Ngữ văn 9 — Luyện tập',rd:'Truyện Kiều, thơ hiện đại, nghĩa hàm ý.',href:'/module.html?domain=secondary&module=SV9'},
+      {ic:'🎯',name:'Kế hoạch ôn thi vào 10',rd:'Tự lập lộ trình ôn tập.',panel:[
+        {h:'Lộ trình ôn thi tuyển sinh lớp 10'},
+        {check:['Lập thời khoá biểu ôn theo 3 môn thi (Toán, Văn, Anh)','Hệ thống lại kiến thức trọng tâm từng môn','Luyện đề theo cấu trúc đề thi của tỉnh/thành','Bấm giờ làm đề & soát lỗi sai','Giữ sức khoẻ: ngủ đủ, ăn uống điều độ']},
+        {goal:true},
+        {note:'Học đều mỗi ngày + luyện đề có soát lỗi hiệu quả hơn nhiều so với học dồn.'}]},
+      {ic:'🧭',name:'Hướng nghiệp sau THCS',rd:'Các con đường sau lớp 9.',panel:[
+        {h:'Sau khi tốt nghiệp THCS'},
+        {cards:[{ic:'🏫',t:'THPT',d:'Học tiếp lớp 10–12 theo định hướng KHTN/KHXH.'},
+          {ic:'🛠️',t:'Trường nghề',d:'Trung cấp nghề + văn hoá: học nghề sớm.'},
+          {ic:'🎓',t:'GDTX',d:'Giáo dục thường xuyên: vừa học vừa làm.'}]},
+        {note:'Chọn hướng theo năng lực, sở thích & điều kiện gia đình — không có con đường nào là duy nhất.'}]}],
+    skills:['Tổng hợp kiến thức','Lập kế hoạch ôn thi'],
+    quiz:[{q:'√16 bằng?',o:['4','8','16','256'],a:0},
+      {q:'Tác giả "Truyện Kiều"?',o:['Nguyễn Du','Nguyễn Trãi','Hồ Xuân Hương','Tố Hữu'],a:0},
+      {q:'Phương trình bậc hai có dạng tổng quát?',o:['ax² + bx + c = 0 (a ≠ 0)','ax + b = 0','ax³ + b = 0','a/x = b'],a:0}]},
+
+  lab:{emoji:'🔬',name:'Phòng thí nghiệm KHTN',accent:'#14b8a6',intro:'Phòng học bộ môn Khoa học tự nhiên (Lí – Hoá – Sinh): thí nghiệm an toàn và khám phá hiện tượng.',
+    rooms:[{ic:'🥽',name:'An toàn phòng thí nghiệm',rd:'Tự kiểm trước khi làm thí nghiệm.',panel:[
+        {h:'Quy tắc an toàn trong phòng thực hành'},
+        {check:['Đeo kính bảo hộ khi làm với hoá chất/đun nóng','Không tự ý nếm, ngửi trực tiếp hoá chất','Đun ống nghiệm: hơ đều, miệng ống hướng ra chỗ không có người','Dùng xong tắt đèn cồn bằng nắp, không thổi','Rửa tay sau khi thực hành']},
+        {note:'Hoá chất bắn vào mắt → rửa ngay bằng nhiều nước sạch và báo giáo viên.'}]},
+      {ic:'🧲',name:'Vật lí',rd:'Lực, năng lượng, điện cơ bản.',panel:[
+        {h:'Hiện tượng vật lí quen thuộc'},
+        {ul:['Lực làm thay đổi tốc độ hoặc hình dạng vật','Trọng lực kéo mọi vật về phía Trái Đất','Mạch điện kín mới có dòng điện chạy qua','Năng lượng không tự sinh ra hay mất đi, chỉ chuyển hoá']},
+        {mcq:[{q:'Bóng đèn sáng được là nhờ dòng điện chuyển hoá điện năng thành?',o:['Quang năng và nhiệt năng','Chỉ âm thanh','Hoá năng','Cơ năng'],a:0,fb:'Đèn sợi đốt: điện năng → quang năng (ánh sáng) + nhiệt năng (toả nhiệt).'}]}]},
+      {ic:'⚗️',name:'Hoá học',rd:'Chất, phản ứng, quỳ tím.',panel:[
+        {p:'Lật thẻ ôn dấu hiệu nhận biết trong Hoá học THCS.'},
+        {flash:[{e:'🔴',f:'Acid + quỳ tím',b:'Quỳ tím hoá đỏ'},{e:'🔵',f:'Base + quỳ tím',b:'Quỳ tím hoá xanh'},
+          {e:'💨',f:'Dấu hiệu phản ứng',b:'Sủi bọt khí, đổi màu, kết tủa, toả/thu nhiệt'},
+          {e:'⚖️',f:'Bảo toàn khối lượng',b:'Khối lượng được bảo toàn trong phản ứng hoá học'}]}]},
+      {ic:'🌿',name:'Sinh học',rd:'Tế bào, cơ thể sống.',panel:[
+        {h:'Cơ sở của sự sống'},
+        {ul:['Tế bào là đơn vị cấu tạo & chức năng cơ bản của cơ thể sống','Thực vật quang hợp tạo chất hữu cơ + nhả khí O₂','Cơ thể người gồm nhiều hệ cơ quan phối hợp hoạt động']},
+        {note:'Quang hợp cần ánh sáng, nước, khí carbonic — tạo glucose và oxygen.'}]}],
+    skills:['Thao tác thí nghiệm an toàn','Quan sát & giải thích hiện tượng'],
+    quiz:[{q:'Dụng cụ đo nhiệt độ chất lỏng?',o:['Nhiệt kế','Cân','Thước','Ống nghiệm'],a:0},
+      {q:'Khí thực vật thải ra khi quang hợp?',o:['Khí oxygen (O₂)','Khí carbonic','Khí nitơ','Hơi nước'],a:0},
+      {q:'Acid làm quỳ tím chuyển sang màu?',o:['Đỏ','Xanh','Vàng','Không đổi'],a:0}]},
+
+  computer:{emoji:'💻',name:'Phòng Tin học',accent:'#8b5cf6',intro:'Phòng bộ môn Tin học: an toàn trên mạng, soạn thảo – trình chiếu và tư duy thuật toán.',
+    rooms:[{ic:'🛡️',name:'An toàn trên không gian mạng',rd:'Ứng xử & bảo vệ bản thân online.',panel:[
+        {h:'Quy tắc an toàn khi dùng Internet'},
+        {mcq:[{q:'Người lạ trên mạng xin số điện thoại & địa chỉ nhà em. Nên?',o:['Không cung cấp & báo cho người lớn tin cậy','Gửi ngay vì họ thân thiện','Cho địa chỉ nhưng giấu số điện thoại','Hẹn gặp để hỏi cho rõ'],a:0,fb:'Không chia sẻ thông tin cá nhân với người lạ trên mạng; gặp tình huống nghi ngờ hãy báo người lớn.'},
+          {q:'Mật khẩu mạnh nên?',o:['Dài, kết hợp chữ hoa, chữ thường, số & kí tự đặc biệt','Là ngày sinh của mình','Là "123456"','Dùng chung cho mọi tài khoản'],a:0,fb:'Mật khẩu mạnh: đủ dài, đa dạng kí tự, không dễ đoán & không dùng chung.'}]}]},
+      {ic:'📄',name:'Soạn thảo & trình chiếu',rd:'Word & PowerPoint cơ bản.',panel:[
+        {h:'Kĩ năng tin học văn phòng'},
+        {ul:['Định dạng văn bản: phông chữ, cỡ chữ, căn lề, in đậm/nghiêng','Chèn hình ảnh, bảng biểu vào văn bản','Bài trình chiếu: mỗi slide một ý chính, chữ to, ít chữ','Lưu file thường xuyên (Ctrl + S) để tránh mất dữ liệu']},
+        {note:'Trình bày đẹp giúp truyền đạt ý tưởng rõ ràng — nhưng nội dung mới là quan trọng nhất.'}]},
+      {ic:'🧩',name:'Thuật toán & Scratch',rd:'Tư duy giải quyết vấn đề.',panel:[
+        {h:'Thuật toán là gì?'},
+        {ol:['Xác định bài toán: đầu vào – đầu ra','Liệt kê các bước thực hiện theo thứ tự','Dùng cấu trúc tuần tự, rẽ nhánh (nếu…thì), lặp','Kiểm thử & sửa lỗi (debug)']},
+        {mcq:[{q:'"Nếu trời mưa thì mang ô" là cấu trúc?',o:['Rẽ nhánh (điều kiện)','Lặp','Tuần tự thuần tuý','Không phải thuật toán'],a:0,fb:'Cấu trúc rẽ nhánh: thực hiện hành động dựa trên một điều kiện đúng/sai.'}]}]},
+      {ic:'🌐',name:'Tư duy số',rd:'Thông tin đáng tin & bản quyền.',panel:[
+        {ul:['Kiểm chứng thông tin từ nhiều nguồn trước khi tin & chia sẻ','Tôn trọng bản quyền: ghi nguồn, không sao chép trái phép','Cân bằng thời gian dùng thiết bị, bảo vệ mắt & sức khoẻ']},
+        {note:'Là công dân số có trách nhiệm: lịch sự, trung thực và an toàn khi lên mạng.'}]}],
+    skills:['An toàn số','Tư duy thuật toán'],
+    quiz:[{q:'Tổ hợp phím lưu văn bản nhanh?',o:['Ctrl + S','Ctrl + P','Ctrl + C','Alt + F4'],a:0},
+      {q:'Khi gặp nội dung xấu/độc trên mạng, em nên?',o:['Không tương tác & báo người lớn/giáo viên','Chia sẻ cho nhiều bạn','Bình luận tranh cãi','Lưu lại để xem tiếp'],a:0},
+      {q:'Cấu trúc "lặp lại 10 lần" trong thuật toán gọi là?',o:['Vòng lặp','Rẽ nhánh','Tuần tự','Biến'],a:0}]},
+
+  english:{emoji:'🗣️',name:'Phòng Ngoại ngữ',accent:'#60a5fa',intro:'Phòng học Tiếng Anh: luyện 4 kĩ năng nghe – nói – đọc – viết qua từ vựng, ngữ pháp và hội thoại.',
+    rooms:[{ic:'🔤',name:'Từ vựng theo chủ đề',rd:'Lật thẻ Anh – Việt.',panel:[
+        {p:'Lật thẻ ôn từ vựng chủ đề đời sống.'},
+        {flash:[{e:'🌦️',f:'weather',b:'thời tiết'},{e:'🏖️',f:'holiday',b:'kì nghỉ'},{e:'⚽',f:'hobby',b:'sở thích'},
+          {e:'🍲',f:'food',b:'thức ăn'},{e:'🚌',f:'transport',b:'phương tiện giao thông'},{e:'🌳',f:'environment',b:'môi trường'}]}]},
+      {ic:'📘',name:'Ngữ pháp trọng tâm',rd:'Thì, câu điều kiện, bị động.',panel:[
+        {h:'Điểm ngữ pháp THCS hay gặp'},
+        {ul:['Các thì: hiện tại đơn/tiếp diễn, quá khứ đơn, tương lai','Câu bị động: be + V3 (The book is read by her.)','Câu điều kiện loại 1: If + hiện tại đơn, will + V','Mệnh đề quan hệ: who, which, that']},
+        {note:'Học ngữ pháp gắn với câu ví dụ cụ thể sẽ nhớ lâu hơn học công thức suông.'}]},
+      {ic:'💬',name:'Hội thoại',rd:'Phản xạ giao tiếp.',panel:[
+        {mcq:[{q:'Đáp lại lịch sự cho "Thank you very much!" là?',o:['You are welcome.','Yes, I do.','Me too.','Good night.'],a:0,fb:'"You are welcome" (Không có gì) là cách đáp lại lời cảm ơn phổ biến.'},
+          {q:'Hỏi đường: "Excuse me, how can I get to the library?" — đây là câu?',o:['Hỏi chỉ đường','Chào hỏi','Đặt món ăn','Xin lỗi vì đến muộn'],a:0,fb:'"How can I get to…?" là mẫu câu hỏi đường tới một địa điểm.'}]}]},
+      {ic:'🎧',name:'Phát âm & trọng âm',rd:'Nói rõ, đúng trọng âm.',panel:[
+        {ul:['Chú ý âm cuối: -s, -es, -ed thường bị bỏ quên khi nói','Mỗi từ nhiều âm tiết có một trọng âm chính','Luyện nghe – nhại lại (shadowing) để cải thiện phản xạ']},
+        {note:'Tự tin nói, sai thì sửa — giao tiếp được quan trọng hơn sợ sai.'}]}],
+    skills:['Mở rộng vốn từ','Phản xạ giao tiếp'],
+    quiz:[{q:'Dạng quá khứ của "go" là?',o:['went','goed','gone','going'],a:0},
+      {q:'Chọn câu bị động đúng của "She writes a letter."',o:['A letter is written by her.','A letter writes by her.','A letter is write by her.','She is written a letter.'],a:0},
+      {q:'"environment" nghĩa là?',o:['môi trường','phương tiện','sở thích','kì nghỉ'],a:0}]},
+
+  artmusic:{emoji:'🎨',name:'Phòng Nghệ thuật',accent:'#f472b6',intro:'Phòng Âm nhạc & Mỹ thuật: cảm thụ cái đẹp, học nhạc lí cơ bản và thực hành sáng tạo.',
+    rooms:[{ic:'🎵',name:'Âm nhạc',rd:'Nhạc lí cơ bản & hát.',panel:[
+        {h:'Kiến thức âm nhạc nền tảng'},
+        {ul:['7 nốt nhạc cơ bản: Đồ – Rê – Mi – Fa – Son – La – Si','Nhịp 2/4, 3/4, 4/4 cho biết số phách trong mỗi ô nhịp','Hát đúng cao độ, trường độ và rõ lời']},
+        {mcq:[{q:'Khuông nhạc có mấy dòng kẻ chính?',o:['5 dòng','4 dòng','7 dòng','3 dòng'],a:0,fb:'Khuông nhạc gồm 5 dòng kẻ song song và 4 khe để ghi nốt.'}]}]},
+      {ic:'🖌️',name:'Mỹ thuật',rd:'Màu sắc, bố cục, tạo hình.',panel:[
+        {h:'Nguyên lí tạo hình'},
+        {cards:[{ic:'🔴',t:'Màu cơ bản',d:'Đỏ, vàng, lam — pha ra các màu khác.'},
+          {ic:'🌈',t:'Màu bổ túc',d:'Cặp màu đối nhau làm nổi bật nhau.'},
+          {ic:'⬛',t:'Đậm – nhạt',d:'Sắc độ tạo khối và chiều sâu.'},
+          {ic:'🧭',t:'Bố cục',d:'Sắp xếp mảng chính – phụ cân đối.'}]},
+        {note:'Đỏ + vàng = cam; lam + vàng = lục; đỏ + lam = tím.'}]},
+      {ic:'👀',name:'Cảm thụ nghệ thuật',rd:'Thưởng thức & nêu cảm nhận.',panel:[
+        {ul:['Quan sát kĩ tác phẩm: chủ đề, màu sắc, đường nét','Nêu cảm xúc & lí do mình thích/không thích','Tôn trọng sự sáng tạo và khác biệt của mỗi người']},
+        {note:'Không có cảm nhận "sai" — quan trọng là biết quan sát và diễn đạt.'}]}],
+    skills:['Cảm thụ thẩm mỹ','Thực hành sáng tạo'],
+    quiz:[{q:'Ba màu cơ bản là?',o:['Đỏ, vàng, lam','Đỏ, lục, lam','Cam, tím, lục','Đen, trắng, xám'],a:0},
+      {q:'Nhịp 4/4 có mấy phách trong một ô nhịp?',o:['4 phách','2 phách','3 phách','1 phách'],a:0},
+      {q:'Pha màu vàng với lam được màu?',o:['Lục (xanh lá)','Cam','Tím','Nâu'],a:0}]},
+
+  admin:{emoji:'🏫',name:'Phòng Hiệu bộ',accent:'#64748b',intro:'Khu điều hành nhà trường: nội quy, bảng tin, sơ đồ trường và nơi gửi ý kiến đề xuất.',
+    rooms:[{ic:'📊',name:'Bảng điều khiển học tập',rd:'Theo dõi tiến độ & thành tích.',href:'/dashboard.html'},
+      {ic:'📜',name:'Nội quy học sinh',rd:'Tự kiểm việc thực hiện nội quy.',panel:[
+        {h:'Nội quy cơ bản của học sinh THCS'},
+        {check:['Đi học đúng giờ, mặc đồng phục đúng quy định','Lễ phép với thầy cô, hoà nhã với bạn bè','Giữ gìn vệ sinh trường lớp, bảo vệ của công','Học bài & làm bài đầy đủ trước khi đến lớp','Không sử dụng điện thoại sai quy định trong giờ học']},
+        {note:'Thực hiện tốt nội quy giúp lớp học kỉ luật, thân thiện và an toàn.'}]},
+      {ic:'🛎️',name:'Gửi ý kiến – đề xuất',rd:'Đề xuất cải tiến cho nhà trường.',panel:[
+        {h:'Hộp thư góp ý'},
+        {p:'Đây là nơi học sinh gửi ý kiến, đề xuất hoạt động hoặc báo lỗi nội dung học tập.'},
+        {ul:['Đề xuất chủ đề/bài học muốn học thêm','Góp ý hoạt động phong trào, câu lạc bộ','Báo lỗi nội dung hoặc giao diện']},
+        {note:'Vào mục "Ban điều hành AI" ở trang trường để gửi đề xuất — nhà trường tiếp nhận mỗi ngày.'}]},
+      {ic:'🗺️',name:'Sơ đồ trường',rd:'Các khu trong khuôn viên.',panel:[
+        {h:'Khuôn viên Trường THCS'},
+        {ul:['Dãy phòng học theo khối lớp 6 – 7 – 8 – 9','Phòng học bộ môn: KHTN, Tin học, Ngoại ngữ, Nghệ thuật, Công nghệ','Khu hỗ trợ: Thư viện, Phòng Y tế, Phòng Đoàn – Đội, Phòng truyền thống','Khu thể chất: Nhà đa năng, sân bóng đá, sân bóng rổ','Sân chào cờ, vườn trường, căng tin & bãi xe đạp']},
+        {note:'Bấm từng toà nhà trên bản đồ khuôn viên để vào không gian học tương ứng.'}]}],
+    skills:['Hiểu nội quy nhà trường','Tham gia xây dựng trường lớp'],
+    quiz:[{q:'Khi đến lớp, học sinh nên?',o:['Đi học đúng giờ, chuẩn bị bài đầy đủ','Đến muộn cũng được','Bỏ đồng phục','Không cần soạn bài'],a:0},
+      {q:'Của công trong trường (bàn ghế, thiết bị) cần được?',o:['Giữ gìn & bảo vệ','Vẽ bậy lên','Dùng tuỳ tiện rồi bỏ','Mang về nhà'],a:0},
+      {q:'Muốn đề xuất hoạt động cho trường, em gửi qua?',o:['Hộp thư góp ý / Ban điều hành','Không thể đề xuất','Tự ý tổ chức','Chỉ than phiền với bạn'],a:0}]},
+
+  library:{emoji:'📚',name:'Thư viện',accent:'#b59b6a',intro:'Không gian đọc và tự học: tra cứu sách, rèn văn hoá đọc và phương pháp học hiệu quả.',
+    rooms:[{ic:'🔎',name:'Kĩ năng đọc sách',rd:'Đọc hiểu & ghi chép.',panel:[
+        {h:'Đọc sách hiệu quả'},
+        {ol:['Đọc lướt tên chương, mục lục để nắm tổng thể','Đọc kĩ, gạch chân ý chính & từ khoá','Ghi chú ngắn theo cách hiểu của mình','Tự đặt câu hỏi & tóm tắt lại sau khi đọc']},
+        {note:'Sơ đồ tư duy (mind map) giúp hệ thống kiến thức một chương chỉ trong một trang.'}]},
+      {ic:'📖',name:'Góc đọc gợi ý',rd:'Sách hay cho tuổi THCS.',panel:[
+        {h:'Một số thể loại nên đọc'},
+        {cards:[{ic:'📕',t:'Văn học',d:'Truyện, thơ trong & ngoài chương trình.'},
+          {ic:'🔬',t:'Khoa học – khám phá',d:'Sách kiến thức tự nhiên, vũ trụ.'},
+          {ic:'🌏',t:'Lịch sử – địa lí',d:'Hiểu thêm về đất nước & thế giới.'},
+          {ic:'🧠',t:'Kĩ năng sống',d:'Giao tiếp, quản lí thời gian, cảm xúc.'}]},
+        {note:'Đọc mỗi ngày 15–20 phút giúp mở rộng vốn từ và vốn sống.'}]},
+      {ic:'🧠',name:'Phương pháp học',rd:'Học ít mà nhớ lâu.',panel:[
+        {h:'Mẹo học hiệu quả'},
+        {ul:['Lặp lại ngắt quãng: ôn lại sau 1 ngày, 1 tuần','Pomodoro: 25 phút học – 5 phút nghỉ','Tự kiểm tra (làm bài) thay vì chỉ đọc lại','Dạy lại cho bạn là cách hiểu sâu nhất']},
+        {note:'Tự kiểm tra (retrieval practice) giúp nhớ lâu hơn đọc đi đọc lại.'}]}],
+    skills:['Đọc – hiểu & ghi chép','Phương pháp tự học'],
+    quiz:[{q:'Công cụ hệ thống kiến thức bằng sơ đồ nhánh gọi là?',o:['Sơ đồ tư duy (mind map)','Bảng cửu chương','Thời khoá biểu','Từ điển'],a:0},
+      {q:'Cách ghi nhớ lâu nhất là?',o:['Tự kiểm tra & ôn ngắt quãng','Đọc lướt một lần','Học dồn trước khi thi','Chép lại thật nhiều'],a:0},
+      {q:'Trong thư viện, học sinh cần?',o:['Giữ trật tự & bảo quản sách','Nói chuyện to','Gấp mép, viết bậy vào sách','Mang sách về không trả'],a:0}]},
+
+  tradition:{emoji:'🏆',name:'Phòng truyền thống',accent:'#d97706',intro:'Nơi lưu giữ lịch sử, thành tích và những tấm gương sáng của nhà trường.',
+    rooms:[{ic:'🏛️',name:'Lịch sử nhà trường',rd:'Dòng thời gian phát triển.',panel:[
+        {h:'Chặng đường nhà trường'},
+        {timeline:[{t:'Thành lập',d:'Trường ra đời, những lớp học sinh đầu tiên.'},
+          {t:'Xây dựng & phát triển',d:'Mở rộng phòng học bộ môn, sân chơi, thư viện.'},
+          {t:'Phong trào thi đua',d:'Học tốt – dạy tốt, các câu lạc bộ và hoạt động Đội.'},
+          {t:'Hôm nay',d:'Trường học thân thiện, học sinh tích cực, chuyển đổi số.'}]}]},
+      {ic:'🥇',name:'Thành tích nổi bật',rd:'Giải thưởng & danh hiệu.',panel:[
+        {cards:[{ic:'🏅',t:'Học sinh giỏi',d:'Giải các kì thi cấp huyện, tỉnh.'},
+          {ic:'⚽',t:'Thể thao',d:'Giải bóng đá, điền kinh học đường.'},
+          {ic:'🎭',t:'Văn nghệ',d:'Hội diễn, các hoạt động phong trào.'},
+          {ic:'🌱',t:'Vì cộng đồng',d:'Kế hoạch nhỏ, bảo vệ môi trường.'}]},
+        {note:'Mỗi tấm huy chương là công sức của thầy trò qua nhiều thế hệ.'}]},
+      {ic:'🌟',name:'Gương sáng',rd:'Học sinh & thầy cô tiêu biểu.',panel:[
+        {ul:['Học sinh vượt khó học giỏi, gương người tốt việc tốt','Thầy cô tận tâm với nghề, hết lòng vì học sinh','Cựu học sinh thành đạt quay về đóng góp cho trường']},
+        {note:'Noi gương người tốt là cách rèn luyện bản thân mỗi ngày.'}]}],
+    skills:['Tự hào truyền thống','Noi gương người tốt'],
+    quiz:[{q:'Phòng truyền thống dùng để?',o:['Lưu giữ lịch sử & thành tích nhà trường','Học thể dục','Ăn trưa','Để xe đạp'],a:0},
+      {q:'"Kế hoạch nhỏ" là phong trào?',o:['Thu gom giấy vụn/phế liệu gây quỹ Đội','Thi chạy','Thi hát','Thi vẽ'],a:0},
+      {q:'Thái độ đúng với truyền thống nhà trường?',o:['Tự hào & giữ gìn, phát huy','Thờ ơ','Chê bai','Quên lãng'],a:0}]},
+
+  youthunion:{emoji:'🚩',name:'Phòng Đoàn – Đội',accent:'#ef4444',intro:'Đội Thiếu niên Tiền phong Hồ Chí Minh: rèn luyện, sinh hoạt tập thể và kĩ năng sống.',
+    rooms:[{ic:'⭐',name:'5 điều Bác Hồ dạy',rd:'Kim chỉ nam của thiếu nhi.',panel:[
+        {h:'5 điều Bác Hồ dạy thiếu niên, nhi đồng'},
+        {ol:['Yêu Tổ quốc, yêu đồng bào','Học tập tốt, lao động tốt','Đoàn kết tốt, kỉ luật tốt','Giữ gìn vệ sinh thật tốt','Khiêm tốn, thật thà, dũng cảm']},
+        {note:'Đây là lời dạy của Bác Hồ dành cho thiếu nhi Việt Nam — đội viên luôn ghi nhớ và làm theo.'}]},
+      {ic:'🎒',name:'Hoạt động Đội',rd:'Phong trào & sinh hoạt.',panel:[
+        {cards:[{ic:'🧹',t:'Kế hoạch nhỏ',d:'Thu gom phế liệu gây quỹ giúp bạn.'},
+          {ic:'🤝',t:'Đôi bạn cùng tiến',d:'Giúp nhau học tập tiến bộ.'},
+          {ic:'🌳',t:'Vì môi trường',d:'Trồng cây, giữ trường xanh – sạch – đẹp.'},
+          {ic:'🏕️',t:'Sinh hoạt tập thể',d:'Trò chơi, cắm trại, văn nghệ.'}]},
+        {note:'Hoạt động Đội rèn tinh thần đoàn kết, trách nhiệm và kĩ năng làm việc nhóm.'}]},
+      {ic:'💪',name:'Kĩ năng sống',rd:'Ứng xử & tự bảo vệ.',panel:[
+        {mcq:[{q:'Thấy bạn bị bắt nạt ở trường, em nên?',o:['Can ngăn nếu an toàn & báo thầy cô','Quay video đăng mạng','Hùa theo trêu chọc','Mặc kệ, không liên quan'],a:0,fb:'Không thờ ơ với bạo lực học đường: hỗ trợ bạn & báo người lớn để được giúp đỡ.'},
+          {q:'Để làm việc nhóm hiệu quả, cần?',o:['Lắng nghe, phân công & tôn trọng ý kiến','Tự làm hết một mình','Ai nói to thì nghe','Tranh cãi cho thắng'],a:0,fb:'Làm việc nhóm tốt: phân công rõ, lắng nghe và tôn trọng lẫn nhau.'}]}]}],
+    skills:['Tinh thần đồng đội','Kĩ năng sống tích cực'],
+    quiz:[{q:'Điều thứ hai trong 5 điều Bác Hồ dạy?',o:['Học tập tốt, lao động tốt','Yêu Tổ quốc, yêu đồng bào','Khiêm tốn, thật thà, dũng cảm','Giữ gìn vệ sinh thật tốt'],a:0},
+      {q:'Tên đầy đủ của Đội?',o:['Đội Thiếu niên Tiền phong Hồ Chí Minh','Đoàn Thanh niên','Hội Sinh viên','Hội Chữ thập đỏ'],a:0},
+      {q:'Khi gặp bạn gặp khó khăn trong học tập, đội viên nên?',o:['Giúp đỡ bạn cùng tiến bộ','Chê bai bạn','Lờ đi','Cười nhạo'],a:0}]},
+
+  gym:{emoji:'🤸',name:'Nhà đa năng',accent:'#f59e0b',intro:'Khu giáo dục thể chất: vận động an toàn, rèn sức khoẻ và tinh thần thể thao.',
+    rooms:[{ic:'🏃',name:'Giáo dục thể chất',rd:'Vận động & rèn luyện.',panel:[
+        {h:'Vì sao cần vận động?'},
+        {ul:['Tập thể dục đều giúp khoẻ mạnh, tăng chiều cao, dẻo dai','Rèn sự nhanh nhẹn, khéo léo và tinh thần kỉ luật','Thể thao đồng đội rèn sự đoàn kết & fair-play']},
+        {note:'Tổ chức Y tế khuyến nghị trẻ vận động ít nhất 60 phút mỗi ngày.'}]},
+      {ic:'🤸',name:'Khởi động an toàn',rd:'Tránh chấn thương khi tập.',panel:[
+        {h:'Trình tự một buổi tập an toàn'},
+        {check:['Khởi động làm nóng 5–10 phút trước khi tập','Uống đủ nước, mặc trang phục thể thao phù hợp','Tập đúng kĩ thuật, tăng cường độ từ từ','Thả lỏng (giãn cơ) sau khi tập','Dừng ngay nếu thấy đau hoặc chóng mặt']},
+        {note:'Bỏ qua khởi động dễ gây căng cơ, bong gân — luôn làm nóng trước khi vận động mạnh.'}]},
+      {ic:'⛑️',name:'Xử lí chấn thương',rd:'Sơ cứu khi tập luyện.',panel:[
+        {mcq:[{q:'Bạn bị bong gân cổ chân khi chơi bóng. Sơ cứu đúng?',o:['Nghỉ, chườm lạnh, băng ép & kê cao chân (R.I.C.E)','Xoa dầu nóng & tập tiếp','Bẻ khớp cho "vào"','Chườm nóng ngay'],a:0,fb:'Nguyên tắc R.I.C.E: Rest – Ice – Compression – Elevation; tránh chườm nóng giai đoạn đầu.'}]}]}],
+    skills:['Vận động an toàn','Tinh thần thể thao'],
+    quiz:[{q:'Trước khi vận động mạnh cần?',o:['Khởi động làm nóng cơ thể','Ăn thật no','Nhịn nước','Tập ngay hết sức'],a:0},
+      {q:'R.I.C.E khi bong gân gồm: Nghỉ, Chườm lạnh, Băng ép và?',o:['Kê cao vùng bị thương','Chườm nóng','Xoa bóp mạnh','Vận động tiếp'],a:0},
+      {q:'Tinh thần "fair-play" nghĩa là?',o:['Chơi đẹp, trung thực, tôn trọng luật & đối thủ','Thắng bằng mọi giá','Chơi xấu','Bỏ cuộc giữa chừng'],a:0}]},
+
+  tech:{emoji:'🔧',name:'Phòng Công nghệ – STEM',accent:'#0891b2',intro:'Môn Công nghệ & hoạt động STEM: kĩ thuật đời sống, an toàn điện và làm dự án sáng tạo.',
+    rooms:[{ic:'🏠',name:'Công nghệ đời sống',rd:'Trồng trọt, gia đình, kĩ thuật.',panel:[
+        {h:'Công nghệ THCS gồm những gì?'},
+        {ul:['Lớp 6–7: trồng trọt, chăn nuôi, nhà ở & đồ dùng gia đình','Lớp 8: vẽ kĩ thuật, cơ khí, vật liệu','Lớp 9: kĩ thuật điện & định hướng nghề nghiệp']},
+        {note:'Công nghệ giúp vận dụng kiến thức vào việc thật trong cuộc sống.'}]},
+      {ic:'⚡',name:'An toàn điện',rd:'Phòng tránh tai nạn điện.',panel:[
+        {mcq:[{q:'Thấy dây điện đứt rơi xuống đường ngập nước, em nên?',o:['Tránh xa & báo người lớn/điện lực, không lại gần','Nhặt dây lên','Lội qua cho nhanh','Lấy tay kéo dây ra'],a:0,fb:'Nước dẫn điện — tuyệt đối tránh xa dây điện đứt và báo ngay người lớn/cơ quan điện lực.'},
+          {q:'Trước khi sửa/chạm thiết bị điện trong nhà cần?',o:['Ngắt nguồn điện (cầu dao/aptomat)','Cứ chạm vì điện yếu','Đi chân trần cho mát','Dùng tay ướt'],a:0,fb:'Luôn ngắt nguồn điện trước khi thao tác; không dùng tay ướt chạm thiết bị điện.'}]}]},
+      {ic:'🛠️',name:'Dự án STEM',rd:'Học qua làm sản phẩm.',panel:[
+        {h:'Quy trình làm dự án STEM'},
+        {ol:['Xác định vấn đề thực tế cần giải quyết','Lên ý tưởng & phác thảo giải pháp','Chế tạo mô hình/sản phẩm thử','Thử nghiệm, đánh giá & cải tiến','Trình bày & chia sẻ kết quả']},
+        {note:'STEM = Science, Technology, Engineering, Math — học gắn với giải quyết vấn đề thật.'}]},
+      {ic:'🌾',name:'Trồng cây ở vườn trường',rd:'Vận dụng kiến thức trồng trọt.',panel:[
+        {ul:['Chọn cây phù hợp khí hậu & mùa vụ','Làm đất, gieo trồng, tưới nước & chăm sóc','Theo dõi sự sinh trưởng, ghi nhật kí cây trồng']},
+        {note:'Vườn trường là nơi thực hành trồng trọt & quan sát thực vật ngoài giờ học.'}]}],
+    skills:['Kĩ thuật đời sống','Tư duy làm dự án (STEM)'],
+    quiz:[{q:'STEM là viết tắt của các lĩnh vực?',o:['Khoa học, Công nghệ, Kĩ thuật, Toán học','Thể thao & Nghệ thuật','Sử & Địa','Văn & Anh'],a:0},
+      {q:'Khi sửa thiết bị điện, việc đầu tiên là?',o:['Ngắt nguồn điện','Dùng tay ướt thử','Bật to công suất','Gọi bạn đến xem'],a:0},
+      {q:'Bước cuối của một dự án STEM thường là?',o:['Trình bày & chia sẻ kết quả','Bỏ dở','Giấu sản phẩm','Không kiểm tra'],a:0}]},
+
+  medical:{emoji:'⛑️',name:'Phòng Y tế',accent:'#e23b3b',intro:'Chăm sóc sức khoẻ học đường: sơ cứu cơ bản, vệ sinh phòng bệnh và dinh dưỡng tuổi học trò.',
+    rooms:[{ic:'🩹',name:'Sơ cứu cơ bản',rd:'Xử lí tình huống thường gặp.',panel:[
+        {h:'Sơ cứu vết thương nhỏ'},
+        {ol:['Rửa tay sạch trước khi sơ cứu','Rửa vết thương dưới vòi nước sạch','Sát khuẩn nhẹ quanh vết thương','Băng lại bằng gạc/băng cá nhân','Vết thương sâu/chảy nhiều máu → báo người lớn, tới cơ sở y tế']},
+        {mcq:[{q:'Bạn bị chảy máu cam (máu mũi). Xử lí đúng?',o:['Ngồi cúi nhẹ đầu về trước, bóp cánh mũi 5–10 phút','Ngửa cổ ra sau','Nhét giấy thật sâu vào mũi','Nằm ngửa ngay'],a:0,fb:'Chảy máu cam: cúi nhẹ về trước & bóp cánh mũi; ngửa cổ khiến máu chảy xuống họng.'}]}]},
+      {ic:'🧼',name:'Vệ sinh & phòng bệnh',rd:'Thói quen giữ sức khoẻ.',panel:[
+        {h:'Thói quen tốt mỗi ngày'},
+        {check:['Rửa tay bằng xà phòng trước khi ăn & sau khi đi vệ sinh','Ăn chín, uống sôi, ăn đủ chất','Ngủ đủ 8–10 tiếng mỗi đêm','Vận động & nghỉ mắt khi học lâu','Đeo khẩu trang khi bị ho/sốt để tránh lây cho bạn']},
+        {note:'Rửa tay đúng cách là biện pháp đơn giản mà hiệu quả nhất để phòng nhiều bệnh.'}]},
+      {ic:'🥗',name:'Dinh dưỡng tuổi học trò',rd:'Ăn đúng để học tốt.',panel:[
+        {ul:['Ăn đủ 4 nhóm: bột đường, đạm, béo, vitamin & khoáng','Ăn sáng đầy đủ giúp tập trung học buổi sáng','Hạn chế đồ ngọt, nước có ga & đồ ăn nhanh','Uống đủ nước (khoảng 1,5–2 lít/ngày)']},
+        {note:'Bỏ bữa sáng khiến mệt mỏi, khó tập trung — đây là bữa quan trọng với học sinh.'}]},
+      {ic:'🧠',name:'Sức khoẻ tâm lí',rd:'Khi thấy buồn, lo lắng.',panel:[
+        {mcq:[{q:'Khi gặp chuyện buồn/áp lực kéo dài, em nên?',o:['Chia sẻ với bố mẹ, thầy cô hoặc người tin cậy','Giữ kín & một mình chịu đựng','Bỏ học','Trút giận lên người khác'],a:0,fb:'Chia sẻ cảm xúc với người tin cậy giúp giải toả và tìm được hướng giải quyết.'}]}]}],
+    skills:['Sơ cứu & tự chăm sóc','Lối sống lành mạnh'],
+    quiz:[{q:'Khi chảy máu cam, tư thế đúng là?',o:['Cúi nhẹ đầu về phía trước','Ngửa cổ ra sau','Nằm ngửa','Nhảy lên xuống'],a:0},
+      {q:'Bữa ăn quan trọng giúp tập trung buổi sáng?',o:['Bữa sáng','Bữa khuya','Ăn vặt','Không cần ăn'],a:0},
+      {q:'Cách phòng bệnh đơn giản & hiệu quả nhất?',o:['Rửa tay bằng xà phòng','Nhịn ăn','Thức khuya','Ít vận động'],a:0}]},
+
+  canteen:{emoji:'🍜',name:'Căng tin',accent:'#fb7185',intro:'Nơi nghỉ ngơi, ăn uống giữa giờ và rèn nếp sống văn minh, lành mạnh.',
+    rooms:[{ic:'⏱️',name:'Mini-game ôn nhanh',rd:'Giải trí & ôn bài.',href:'/time-attack.html'},
+      {ic:'🥪',name:'Ăn uống lành mạnh',rd:'Chọn món tốt cho sức khoẻ.',panel:[
+        {h:'Ăn vặt thông minh'},
+        {ul:['Ưu tiên trái cây, sữa, bánh mì thay vì đồ chiên/ngọt nhiều','Hạn chế nước ngọt có ga, đồ ăn nhanh','Không bỏ bữa chính để ăn quà vặt','Giữ vệ sinh: rửa tay trước khi ăn']},
+        {note:'Ăn uống cân bằng giúp đủ năng lượng học cả ngày mà không mệt mỏi.'}]},
+      {ic:'☕',name:'Góc thư giãn',rd:'Nghỉ ngơi & mẹo học.',panel:[
+        {h:'Nghỉ giải lao đúng cách'},
+        {ul:['Đứng dậy vận động nhẹ, nhìn xa cho đỡ mỏi mắt (quy tắc 20–20–20)','Trò chuyện vui vẻ với bạn bè','Uống nước, hít thở sâu để thư giãn']},
+        {note:'Nghỉ ngơi hợp lí giữa giờ giúp tiết học sau tiếp thu tốt hơn.'}]},
+      {ic:'🤝',name:'Văn minh nơi công cộng',rd:'Ứng xử nơi đông người.',panel:[
+        {mcq:[{q:'Ở căng tin đông người, hành vi văn minh là?',o:['Xếp hàng, giữ trật tự & bỏ rác đúng nơi','Chen lấn cho nhanh','Vứt rác xuống sàn','Nói to, đùa giỡn quá mức'],a:0,fb:'Xếp hàng, giữ vệ sinh và tôn trọng người khác là nếp sống văn minh nơi công cộng.'}]}]}],
+    skills:['Ăn uống lành mạnh','Ứng xử văn minh'],
+    quiz:[{q:'Đồ ăn vặt nên ưu tiên?',o:['Trái cây, sữa','Nước ngọt có ga','Đồ chiên rán','Kẹo ngọt'],a:0},
+      {q:'Quy tắc nghỉ mắt khi học/nhìn màn hình lâu?',o:['20–20–20 (mỗi 20 phút nhìn xa 20 feet trong 20 giây)','Nhìn liên tục không nghỉ','Nhắm mắt cả buổi','Dụi mắt thật mạnh'],a:0},
+      {q:'Sau khi ăn ở căng tin, em nên?',o:['Dọn & bỏ rác đúng nơi quy định','Để rác lại trên bàn','Vứt xuống sàn','Đổ thức ăn thừa bừa bãi'],a:0}]},
+};
+
+const SPACE_SETS = { pharmacy: SPACES_PHARMACY, secondary: SPACES_SECONDARY };
+const DOMAIN_TITLES = { pharmacy: 'Trường Dược', secondary: 'Trường THCS' };
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),4200); }
+
+const params=new URLSearchParams(location.search);
+const id=params.get('b')||'admin';
+const dom=params.get('domain')||'pharmacy';
+const SPACES=SPACE_SETS[dom]||SPACES_PHARMACY;
+const S=SPACES[id]||SPACES[Object.keys(SPACES)[0]];
+document.title=`${S.emoji} ${S.name} · ${DOMAIN_TITLES[dom]||'EduVerse'}`;
+
+const wrap=document.getElementById('wrap');
+const roomCard=(r,idx)=> r.href
+  ? `<a class="room" href="${r.href}"><div class="ri">${r.ic}</div><h3>${r.name}</h3><div class="rd">${r.rd}</div><span class="tag">Vào trải nghiệm →</span></a>`
+  : `<div class="room" data-room="${idx}"><div class="ri">${r.ic}</div><h3>${r.name}</h3><div class="rd">${r.rd}</div><span class="tag soon">Khám phá →</span></div>`;
+
+wrap.style.setProperty('--accent', S.accent);
+wrap.innerHTML = `
+  <div class="top"><a class="back" href="/school.html?domain=${dom}#campus-hero">← Khuôn viên trường</a></div>
+  <div class="banner" style="background:linear-gradient(120deg, ${S.accent}33, rgba(255,255,255,.04));--accent:${S.accent}">
+    <div class="ic">${S.emoji}</div><h1>${S.name}</h1><p>${S.intro}</p>
+  </div>
+  <div class="sec-title">🚪 Không gian & hoạt động</div>
+  <div class="rooms">${S.rooms.map(roomCard).join('')}</div>
+  <div class="sec-title">🎯 Kỹ năng đạt được tại đây</div>
+  <div class="skills">${S.skills.map(s=>`<span class="chip">✔️ ${s}</span>`).join('')}</div>
+  <div class="sec-title">🧠 Củng cố kiến thức</div>
+  <div class="quiz" id="quiz"></div>
+`;
+document.documentElement.style.setProperty('--accent', S.accent);
+[...document.querySelectorAll('.room[data-room]')].forEach(el=>el.addEventListener('click',()=>openRoom(S.rooms[+el.dataset.room])));
+
+// ---- room detail modal ----
+const modal=document.getElementById('modal');
+const mClose=()=>modal.classList.remove('show');
+document.getElementById('m-x').addEventListener('click',mClose);
+modal.addEventListener('click',e=>{ if(e.target===modal) mClose(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') mClose(); });
+function esc(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function renderBlocks(blocks){
+  return blocks.map(b=>{
+    if(typeof b==='string') return `<p>${esc(b)}</p>`;
+    if(b.h) return `<h4>${esc(b.h)}</h4>`;
+    if(b.p) return `<p>${esc(b.p)}</p>`;
+    if(b.note) return `<div class="mb-note">${esc(b.note)}</div>`;
+    if(b.ul) return `<ul>${b.ul.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+    if(b.ol) return `<ol>${b.ol.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`;
+    if(b.cards) return `<div class="mb-cards">${b.cards.map(c=>`<div class="mb-card"><div class="ci">${c.ic||''}</div><div class="ct">${esc(c.t)}</div><div class="cd">${esc(c.d)}</div></div>`).join('')}</div>`;
+    if(b.timeline) return `<ul class="timeline">${b.timeline.map(t=>`<li><div class="tl-t">${esc(t.t)}</div><div class="tl-d">${esc(t.d)}</div></li>`).join('')}</ul>`;
+    if(b.flash) return `<div class="flash-grid">${b.flash.map(f=>`<div class="flash"><div class="flash-inner"><div class="flash-face flash-front"><div class="fe">${f.e||''}</div><div class="fn">${esc(f.f)}</div></div><div class="flash-face flash-back">${esc(f.b)}</div></div></div>`).join('')}</div><div class="flash-hint">Bấm vào thẻ để lật xem đáp án</div>`;
+    if(b.check) return `<ul class="checklist">${b.check.map((x,i)=>`<li><label><input type="checkbox" data-ck="${i}"> <span>${esc(x)}</span></label></li>`).join('')}</ul><div class="ck-prog">0/${b.check.length} hoàn thành</div>`;
+    if(b.goal) return `<div class="goal-in"><input id="goal-input" placeholder="VD: Hoàn thành 3 module bào chế tuần này" /><button id="goal-save">Lưu</button></div><div class="goal-saved" id="goal-saved"></div>`;
+    if(b.mcq) return b.mcq.map(m=>`<div class="mcq" data-a="${m.a}"><div class="mcq-q">${esc(m.q)}</div>${m.o.map((o,j)=>`<button class="mcq-o" data-i="${j}">${esc(o)}</button>`).join('')}<div class="mcq-fb">${esc(m.fb||'')}</div></div>`).join('');
+    return '';
+  }).join('');
+}
+function openRoom(r){
+  if(!r) return;
+  document.getElementById('m-ic').textContent=r.ic||'📌';
+  document.getElementById('m-title').textContent=r.name||'';
+  const body=document.getElementById('m-body');
+  body.innerHTML = renderBlocks(r.panel || [r.content || 'Nội dung đang được biên soạn.']);
+  body.querySelectorAll('.flash').forEach(f=>f.addEventListener('click',()=>f.classList.toggle('flipped')));
+  body.querySelectorAll('.mcq').forEach(mc=>{ const a=+mc.dataset.a; mc.querySelectorAll('.mcq-o').forEach(o=>o.addEventListener('click',()=>{ if(mc.dataset.done) return; mc.dataset.done='1'; const pick=+o.dataset.i; mc.querySelectorAll('.mcq-o').forEach(x=>{ const xi=+x.dataset.i; if(xi===a) x.classList.add('correct'); else if(xi===pick) x.classList.add('wrong'); }); const fb=mc.querySelector('.mcq-fb'); if(fb&&fb.textContent.trim()) fb.classList.add('show'); })); });
+  const prog=body.querySelector('.ck-prog');
+  if(prog){ const boxes=[...body.querySelectorAll('input[data-ck]')];
+    const upd=()=>{ const n=boxes.filter(b=>b.checked).length; prog.textContent=`${n}/${boxes.length} hoàn thành`;
+      prog.classList.toggle('full',n===boxes.length); boxes.forEach(b=>b.closest('label').classList.toggle('done',b.checked)); };
+    boxes.forEach(b=>b.addEventListener('change',upd)); }
+  const gIn=body.querySelector('#goal-input');
+  if(gIn){ const gKey='eduverse:goal:'+dom, saved=body.querySelector('#goal-saved');
+    const show=v=>{ if(v){ saved.textContent='🎯 Mục tiêu hiện tại: '+v; saved.classList.add('show'); } };
+    try{ show(localStorage.getItem(gKey)||''); }catch(e){}
+    body.querySelector('#goal-save').addEventListener('click',()=>{ const v=gIn.value.trim(); if(!v) return;
+      try{ localStorage.setItem(gKey,v); }catch(e){} show(v); gIn.value=''; toast('Đã lưu mục tiêu!'); }); }
+  modal.classList.add('show'); body.scrollTop=0;
+}
+
+// quiz
+const quizEl=document.getElementById('quiz');
+quizEl.innerHTML = S.quiz.map((q,i)=>`<div class="q" data-i="${i}"><div class="qt">${i+1}. ${q.q}</div>${q.o.map((o,j)=>`<button class="opt" data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div>`).join('')
+  + `<button class="submit" id="qs">Nộp & xem kết quả</button><div class="result" id="qr"></div>`;
+const picked={};
+quizEl.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+  const qi=+b.dataset.q; picked[qi]=+b.dataset.o;
+  quizEl.querySelectorAll(`.opt[data-q="${qi}"]`).forEach(x=>x.style.outline='none');
+  b.style.outline='2px solid '+S.accent; }));
+document.getElementById('qs').addEventListener('click',()=>{
+  let correct=0;
+  S.quiz.forEach((q,i)=>{ quizEl.querySelectorAll(`.opt[data-q="${i}"]`).forEach(b=>{ const o=+b.dataset.o;
+    b.classList.remove('correct','wrong'); if(o===q.a) b.classList.add('correct'); else if(picked[i]===o) b.classList.add('wrong'); });
+    if(picked[i]===q.a) correct++; });
+  const r=document.getElementById('qr'); r.classList.add('show');
+  r.innerHTML = `Bạn đúng <b>${correct}/${S.quiz.length}</b> câu. ${correct===S.quiz.length?'Xuất sắc! ':''}Kỹ năng được củng cố: <b>${S.skills.join(' · ')}</b>.`;
+  try{ const k='eduverse:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d[id]=Math.max(d[id]||0, correct); localStorage.setItem(k, JSON.stringify(d)); }catch(e){}
+});
+</script>
+</body>
+</html>
