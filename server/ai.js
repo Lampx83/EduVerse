@@ -22,6 +22,8 @@
 //   - Tiếng Việt chuẩn (qwen2.5 multilingual mạnh)
 // ============================================================
 
+import { aiQuotaGate, recordAiCall } from './ai-quota.js';
+
 const OLLAMA_URL = (process.env.OLLAMA_URL || 'http://101.96.66.232:8037/ollama/api').replace(/\/+$/, '');
 const OLLAMA_SECKEY = process.env.OLLAMA_SECKEY || 'pharmasim';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:14b-instruct-ctx16k';
@@ -34,20 +36,25 @@ console.log(`[ai] Ollama backend = ${OLLAMA_URL} (model=${OLLAMA_MODEL})`);
  * @param {import('express').Router} r
  */
 export function attachAi(r) {
-  r.post('/api/ai/grade-soap',        wrap(handleGradeSoap));
-  r.post('/api/ai/patient-turn',      wrap(handlePatientTurn));
-  r.post('/api/ai/evaluate-roleplay', wrap(handleEvaluateRoleplay));
-  r.post('/api/ai/tutor-chat',        wrap(handleTutorChat));
-  r.post('/api/ai/sim-patient',       wrap(handleSimPatient));
-  r.post('/api/ai/sim-grade',         wrap(handleSimGrade));
-  r.post('/api/ai/history-chat',      wrap(handleHistoryChat));
-  r.post('/api/ai/negotiate',         wrap(handleNegotiate));
-  r.post('/api/ai/negotiate-grade',   wrap(handleNegotiateGrade));
-  r.post('/api/ai/pdf-explain',       wrap(handlePdfExplain));
-  r.post('/api/ai/pdf-quiz',          wrap(handlePdfQuiz));
+  // Mỗi endpoint AI đi qua aiQuotaGate (chặn 429 nếu vượt) + recordAiCall (log usage).
+  // Health endpoint KHÔNG gate vì là probe hạ tầng, không tiêu AI capacity.
+  r.post('/api/ai/grade-soap',        ...wrapAi('grade-soap',        handleGradeSoap));
+  r.post('/api/ai/patient-turn',      ...wrapAi('patient-turn',      handlePatientTurn));
+  r.post('/api/ai/evaluate-roleplay', ...wrapAi('evaluate-roleplay', handleEvaluateRoleplay));
+  r.post('/api/ai/tutor-chat',        ...wrapAi('tutor-chat',        handleTutorChat));
+  r.post('/api/ai/sim-patient',       ...wrapAi('sim-patient',       handleSimPatient));
+  r.post('/api/ai/sim-grade',         ...wrapAi('sim-grade',         handleSimGrade));
+  r.post('/api/ai/history-chat',      ...wrapAi('history-chat',      handleHistoryChat));
+  r.post('/api/ai/negotiate',         ...wrapAi('negotiate',         handleNegotiate));
+  r.post('/api/ai/negotiate-grade',   ...wrapAi('negotiate-grade',   handleNegotiateGrade));
+  r.post('/api/ai/pdf-explain',       ...wrapAi('pdf-explain',       handlePdfExplain));
+  r.post('/api/ai/pdf-quiz',          ...wrapAi('pdf-quiz',          handlePdfQuiz));
+  r.post('/api/ai/practice-more',     ...wrapAi('practice-more',     handlePracticeMore));
+  r.post('/api/ai/lesson-coach',      ...wrapAi('lesson-coach',      handleLessonCoach));
   r.get( '/api/ai/health',            wrap(handleHealth));
 }
 
+// wrap: cho health probe — không quota, không log usage.
 function wrap(handler) {
   return async (req, res) => {
     try {
@@ -58,6 +65,33 @@ function wrap(handler) {
       res.status(500).json({ error: 'AI request failed', detail: String(e?.message || e) });
     }
   };
+}
+
+// wrapAi: gate quota trước handler (429 nếu vượt), log usage sau handler.
+// Handler có thể attach `_usage: { prompt_tokens, completion_tokens }` vào result
+// để log token thật; nếu không có, log 0 tokens (request count vẫn được track).
+function wrapAi(endpoint, handler) {
+  return [
+    aiQuotaGate(endpoint),
+    async (req, res) => {
+      try {
+        const result = await handler(req.body || {}, req);
+        const u = result?._usage || {};
+        recordAiCall(req, {
+          provider: 'ollama', model: OLLAMA_MODEL,
+          prompt_tokens:     u.prompt_tokens     || 0,
+          completion_tokens: u.completion_tokens || 0,
+          status: 'ok',
+        });
+        if (result && '_usage' in result) delete result._usage;
+        res.json(result);
+      } catch (e) {
+        recordAiCall(req, { provider: 'ollama', model: OLLAMA_MODEL, status: 'error' });
+        console.error('[ai] handler error:', e?.message || e);
+        res.status(500).json({ error: 'AI request failed', detail: String(e?.message || e) });
+      }
+    },
+  ];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -872,6 +906,97 @@ Hãy viết phản hồi NGẮN (1–2 câu, tối đa ~60 từ): xác nhận đ
     console.warn('[board-ai] triage fallback:', e?.message || e);
     return fallback;
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// PRACTICE MORE — "Học thêm" vô hạn cho 1 tuần học (Tiểu học)
+// Sinh thêm câu hỏi trắc nghiệm bám chủ đề tuần, KHÁC các câu đã có.
+// ─────────────────────────────────────────────────────────────
+
+const GRADE_LEVEL_VN = {
+  2: 'học sinh lớp 2 (7-8 tuổi) — câu chữ thật đơn giản, số nhỏ, ví dụ gần gũi (kẹo, bút, con vật, gia đình)',
+};
+
+async function handlePracticeMore({ grade = 2, subjectLabel = '', topic = '', sampleStems = [], numQuestions = 5 }) {
+  if (!topic) throw new Error('topic required');
+  const n = Math.max(3, Math.min(8, Number(numQuestions) || 5));
+  const levelHint = GRADE_LEVEL_VN[grade] || `học sinh lớp ${grade}`;
+  const avoid = (Array.isArray(sampleStems) ? sampleStems : []).slice(0, 8)
+    .map(s => `- ${s}`).join('\n');
+
+  const sys = `Bạn là giáo viên Tiểu học Việt Nam, dạy theo Chương trình GDPT 2018.
+Soạn ${n} câu hỏi trắc nghiệm MỚI cho ${levelHint}.
+Môn: ${subjectLabel}. Chủ đề tuần: "${topic}".
+
+QUY TẮC:
+1. Câu hỏi vừa sức lớp ${grade}, vui, gần gũi đời sống Việt Nam.
+2. Mỗi câu đúng 4 lựa chọn, chỉ 1 đáp án đúng.
+3. KHÔNG lặp lại các câu mẫu đã có (xem danh sách tránh).
+4. Lời giải thích ngắn gọn, dễ hiểu, khích lệ.
+5. CHỈ TRẢ JSON, không viết gì khác.
+
+Format JSON BẮT BUỘC:
+{
+  "questions": [
+    { "stem": "câu hỏi", "choices": ["A","B","C","D"], "answer": 0, "explanation": "giải thích ngắn" }
+  ]
+}`;
+
+  const prompt = `CHỦ ĐỀ: ${topic}
+${avoid ? `\nCÁC CÂU ĐÃ CÓ (TRÁNH LẶP LẠI):\n${avoid}` : ''}
+
+Soạn ${n} câu hỏi MỚI. CHỈ JSON.`;
+
+  let parsed = {};
+  try {
+    const raw = await ollamaGenerate({ prompt, system: sys, temperature: 0.8, json: true, maxTokens: 1300 });
+    parsed = safeParseJson(raw);
+  } catch (e) {
+    console.warn('[practice-more] AI failed:', e?.message);
+    return { questions: [], error: String(e?.message || e) };
+  }
+  // Validate: chỉ giữ câu đúng cấu trúc + answer hợp lệ
+  const questions = (Array.isArray(parsed.questions) ? parsed.questions : [])
+    .filter(q => q && typeof q.stem === 'string'
+      && Array.isArray(q.choices) && q.choices.length === 4
+      && Number.isInteger(q.answer) && q.answer >= 0 && q.answer <= 3)
+    .slice(0, n);
+  return { questions, topic, model: OLLAMA_MODEL };
+}
+
+// ─────────────────────────────────────────────────────────────
+// LESSON COACH — "Hỏi gia sư" cho 1 tuần học (giảng lại theo cách khác)
+// ─────────────────────────────────────────────────────────────
+
+async function handleLessonCoach({ grade = 2, subjectLabel = '', topic = '', theory = '', history = [], message }) {
+  if (!message) throw new Error('message required');
+  const levelHint = GRADE_LEVEL_VN[grade] || `học sinh lớp ${grade}`;
+  const sys = `Bạn là thầy/cô giáo Tiểu học Việt Nam thân thiện, đang kèm riêng cho ${levelHint}.
+Môn: ${subjectLabel}. Bài tuần này: "${topic}".
+${theory ? `\nNỘI DUNG BÀI HỌC TUẦN NÀY:\n${String(theory).slice(0, 2000)}` : ''}
+
+QUY TẮC:
+1. Trả lời TIẾNG VIỆT, câu ngắn, từ đơn giản, ấm áp như cô giáo nói với em nhỏ.
+2. Khi em chưa hiểu, giảng lại bằng VÍ DỤ KHÁC, gần gũi (kẹo, bút, con vật, đồ chơi).
+3. Khích lệ ("Giỏi lắm!", "Em thử lại nhé!"). KHÔNG chê bai.
+4. Không dùng thuật ngữ khó. Mỗi lượt 2-5 câu.
+5. Nếu em hỏi lạc đề, nhẹ nhàng kéo về bài tuần này.`;
+
+  const messages = [
+    { role: 'system', content: sys },
+    ...((Array.isArray(history) ? history : []).slice(-10).map(h => ({
+      role: h.role === 'assistant' ? 'assistant' : 'user',
+      content: String(h.content || '').slice(0, 1200),
+    }))),
+    { role: 'user', content: String(message).slice(0, 1200) },
+  ];
+  let reply = '';
+  try {
+    reply = await ollamaChat({ messages, temperature: 0.6, maxTokens: 400 });
+  } catch (e) {
+    reply = `Cô tạm thời chưa kết nối được, em thử lại sau ít phút nhé! (${e?.message || e})`;
+  }
+  return { reply: reply.trim(), model: OLLAMA_MODEL };
 }
 
 // ─────────────────────────────────────────────────────────────

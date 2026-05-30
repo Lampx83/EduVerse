@@ -104,6 +104,20 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
   CREATE INDEX IF NOT EXISTS idx_oauth_user ON oauth_identities(user_id);
+
+  -- Multi-tenancy (Phase 0 foundation): mỗi trường là 1 tenant.
+  -- Mặc định school_id=1 ('eduverse-default') chứa legacy data trước khi mở multi-tenant.
+  -- SSO email domain → school auto-map (vd '*@neu.edu.vn' → NEU). Phase 1 sẽ enforce
+  -- Postgres RLS theo school_id; hiện tại SQLite, isolation enforce ở app layer.
+  CREATE TABLE IF NOT EXISTS schools (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    code        TEXT    NOT NULL UNIQUE,
+    name        TEXT    NOT NULL,
+    domain      TEXT,                          -- email domain để map SSO auto, có thể NULL
+    created_at  INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_schools_code   ON schools(code);
+  CREATE INDEX IF NOT EXISTS idx_schools_domain ON schools(domain);
 `);
 
 // Step 4: upgrade `users` cho OAuth — email/avatar có thể đến sau khi đã có DB cũ.
@@ -119,6 +133,19 @@ try { db.exec(`ALTER TABLE attempts ADD COLUMN level_n INTEGER`); } catch {}
 
 // Step 3: create indexes that depend on the v5 columns (now guaranteed to exist)
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_class ON attempts(class_code, created_at DESC)`); } catch {}
+
+// Step 5: multi-tenancy migration (Phase 0). Thêm school_id vào 4 entity table top-level.
+// Additive với DEFAULT 1 → legacy row tự backfill về school 'eduverse-default'.
+// SQLite KHÔNG cho phép ALTER ADD COLUMN với non-constant DEFAULT, nên dùng hằng 1.
+try { db.prepare(`INSERT OR IGNORE INTO schools (id, code, name, created_at) VALUES (1, 'eduverse-default', 'EduVerse', ?)`).run(Date.now()); } catch {}
+try { db.exec(`ALTER TABLE users    ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
+try { db.exec(`ALTER TABLE classes  ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
+try { db.exec(`ALTER TABLE attempts ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
+try { db.exec(`ALTER TABLE requests ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_school    ON users(school_id)`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_classes_school  ON classes(school_id)`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_school ON attempts(school_id, created_at DESC)`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_requests_school ON requests(school_id, votes DESC, created_at DESC)`); } catch {}
 
 const insertAttemptStmt = db.prepare(`
   INSERT INTO attempts (version, player_name, score, correct, total, duration_ms, details, created_at, class_code, level_n)
@@ -440,6 +467,46 @@ export function updateUserProfile(id, { display_name, email, avatar_url } = {}) 
 }
 export function isUsernameTaken(username) {
   return (countUsernameStmt.get(String(username))?.n || 0) > 0;
+}
+
+// --- Schools (multi-tenancy Phase 0) ---
+// Mỗi trường là 1 tenant. Default school id=1 'eduverse-default' giữ legacy data.
+// Phase 1 sẽ wire createUser/SSO auto-map theo resolveSchoolByEmail và enforce
+// Postgres RLS theo school_id. Hiện tại helpers ready, callers chưa migrate.
+const getSchoolByIdStmt     = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE id = ?`);
+const getSchoolByCodeStmt   = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE code = ?`);
+const getSchoolByDomainStmt = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE domain = ?`);
+const listSchoolsStmt       = db.prepare(`SELECT id, code, name, domain, created_at FROM schools ORDER BY id ASC`);
+const createSchoolStmt      = db.prepare(`INSERT INTO schools (code, name, domain, created_at) VALUES (@code, @name, @domain, @created_at)`);
+
+export function getSchoolById(id) {
+  return getSchoolByIdStmt.get(Number(id)) || null;
+}
+export function getSchoolByCode(code) {
+  return getSchoolByCodeStmt.get(String(code || '').trim()) || null;
+}
+export function getSchoolByDomain(domain) {
+  if (!domain) return null;
+  return getSchoolByDomainStmt.get(String(domain).trim().toLowerCase()) || null;
+}
+export function listSchools() {
+  return listSchoolsStmt.all();
+}
+export function createSchool({ code, name, domain }) {
+  const info = createSchoolStmt.run({
+    code:   String(code || '').trim().slice(0, 40),
+    name:   String(name || '').trim().slice(0, 120),
+    domain: domain ? String(domain).trim().toLowerCase().slice(0, 80) : null,
+    created_at: Date.now(),
+  });
+  return { id: info.lastInsertRowid };
+}
+// Phân giải tenant từ email SSO: 'lan@neu.edu.vn' → school có domain='neu.edu.vn'.
+// Trả null nếu admin chưa cấu hình domain cho trường — caller fallback school_id=1.
+export function resolveSchoolByEmail(email) {
+  const m = String(email || '').match(/@([^@]+)$/);
+  if (!m) return null;
+  return getSchoolByDomain(m[1].toLowerCase());
 }
 
 console.log(`[db] SQLite open at ${dbPath}`);
