@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🗄️ SQL Playground · Trường CNTT · EduVerse</title>
+<style>
+  :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#60a5fa; --card:rgba(255,255,255,.05); --border:rgba(255,255,255,.12); --ok:#22c55e; --bad:#ef4444; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; font-family:'Inter',system-ui,sans-serif; color:#e5edf7;
+    background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(96,165,250,.15), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); }
+  .top { display:flex; align-items:center; gap:14px; padding:12px 18px; border-bottom:1px solid var(--border); background:rgba(0,0,0,.2); position:sticky; top:0; z-index:5; }
+  .back { color:#fff; text-decoration:none; opacity:.85; font-size:13.5px; background:rgba(255,255,255,.08); padding:7px 12px; border-radius:9px; }
+  .back:hover { opacity:1; background:rgba(255,255,255,.16); }
+  .top h1 { margin:0; font-size:17px; font-weight:800; }
+  .top .sub { font-size:12.5px; opacity:.6; font-weight:500; }
+  .top .prog { margin-left:auto; font-size:13px; font-weight:700; background:rgba(96,165,250,.16); border:1px solid rgba(96,165,250,.45); color:#bfdbfe; padding:6px 12px; border-radius:20px; }
+  .layout { display:grid; grid-template-columns:300px 1fr; gap:0; min-height:calc(100vh - 58px); }
+  @media (max-width:880px){ .layout{ grid-template-columns:1fr; } }
+  .side { border-right:1px solid var(--border); padding:14px; overflow:auto; }
+  .side h2 { font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.5; margin:14px 4px 8px; }
+  .tbl { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:9px 11px; margin-bottom:9px; }
+  .tbl .nm { font-weight:800; font-size:13.5px; color:#bfdbfe; }
+  .tbl .cols { font-size:11.5px; opacity:.7; font-family:ui-monospace,monospace; margin-top:3px; line-height:1.5; }
+  .ch { display:flex; align-items:flex-start; gap:9px; padding:9px 10px; border-radius:10px; cursor:pointer; font-size:13px; border:1px solid transparent; }
+  .ch:hover { background:rgba(255,255,255,.06); }
+  .ch.active { background:rgba(96,165,250,.13); border-color:rgba(96,165,250,.4); }
+  .ch .st { width:17px; height:17px; border-radius:50%; border:2px solid rgba(255,255,255,.25); flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; font-size:10px; }
+  .ch.solved .st { background:var(--ok); border-color:var(--ok); color:#04210f; }
+  .work { padding:16px 18px 30px; display:flex; flex-direction:column; gap:12px; }
+  .task { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:13px 15px; }
+  .task .lbl { font-size:11px; text-transform:uppercase; letter-spacing:.5px; opacity:.5; }
+  .task .q { font-size:15px; font-weight:700; margin-top:3px; }
+  textarea#sql { width:100%; min-height:120px; resize:vertical; background:#0a0f1d; color:#bfe3ff; border:1px solid var(--border);
+    border-radius:11px; padding:13px 15px; font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace; font-size:14px; line-height:1.6; }
+  textarea#sql:focus { outline:2px solid var(--accent); border-color:transparent; }
+  .controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .btn { border:none; border-radius:10px; font-weight:800; font-size:13.5px; padding:10px 17px; cursor:pointer; font-family:inherit; }
+  .btn.run { background:var(--accent); color:#04203e; } .btn.run:hover{ filter:brightness(1.08); }
+  .btn.ghost { background:rgba(255,255,255,.08); color:#fff; } .btn.ghost:hover{ background:rgba(255,255,255,.16); }
+  .hint { font-size:12px; opacity:.55; }
+  .out { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+  .out .msg { font-size:13.5px; font-weight:700; margin-bottom:8px; }
+  .out .msg.ok { color:#86efac; } .out .msg.bad { color:#fca5a5; }
+  table.res { border-collapse:collapse; width:100%; font-size:13px; font-family:ui-monospace,monospace; }
+  table.res th, table.res td { border:1px solid var(--border); padding:6px 10px; text-align:left; }
+  table.res th { background:rgba(96,165,250,.14); color:#bfdbfe; font-weight:700; }
+  table.res tr:nth-child(even) td { background:rgba(255,255,255,.025); }
+  .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px); background:var(--ok); color:#04210f; font-weight:800;
+    padding:12px 22px; border-radius:13px; box-shadow:0 12px 30px rgba(0,0,0,.4); opacity:0; transition:.3s; z-index:20; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="back" id="back" href="/school.html?domain=it#campus-hero">← Khuôn viên trường</a>
+  <div><h1>🗄️ SQL Playground <span class="sub">— viết truy vấn &amp; xem kết quả thật</span></h1></div>
+  <div class="prog" id="prog">0/5 thử thách</div>
+</div>
+<div class="layout">
+  <div class="side">
+    <h2>Lược đồ CSDL</h2>
+    <div id="schema"></div>
+    <h2>Thử thách</h2>
+    <div id="chList"></div>
+  </div>
+  <div class="work">
+    <div class="task">
+      <div class="lbl">Thử thách</div>
+      <div class="q" id="taskQ">—</div>
+    </div>
+    <textarea id="sql" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <div class="controls">
+      <button class="btn run" id="runBtn">▶ Chạy truy vấn</button>
+      <button class="btn ghost" id="solBtn">Xem gợi ý</button>
+      <span class="hint" id="hint">Hỗ trợ: SELECT · WHERE · AND/OR · ORDER BY · GROUP BY · COUNT/SUM/AVG/MIN/MAX · JOIN…ON · LIKE · LIMIT</span>
+    </div>
+    <div class="out" id="out" style="display:none"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const domain = new URLSearchParams(location.search).get('domain') || 'it';
+$('back').href = '/school.html?domain=' + encodeURIComponent(domain) + '#campus-hero';
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// ─────────── CSDL trong bộ nhớ ───────────
+const DB = {
+  sinhvien: [
+    {id:1, ten:'An',    tuoi:19, lop_id:1, gpa:3.6, que:'Hà Nội'},
+    {id:2, ten:'Bình',  tuoi:20, lop_id:1, gpa:2.8, que:'Hải Phòng'},
+    {id:3, ten:'Chi',   tuoi:19, lop_id:2, gpa:3.9, que:'Hà Nội'},
+    {id:4, ten:'Dũng',  tuoi:21, lop_id:2, gpa:3.2, que:'Đà Nẵng'},
+    {id:5, ten:'Hoa',   tuoi:20, lop_id:3, gpa:3.5, que:'Huế'},
+    {id:6, ten:'Khánh', tuoi:22, lop_id:1, gpa:2.5, que:'Hà Nội'},
+    {id:7, ten:'Lan',   tuoi:19, lop_id:3, gpa:3.8, que:'Cần Thơ'},
+    {id:8, ten:'Minh',  tuoi:20, lop_id:2, gpa:3.0, que:'Đà Nẵng'},
+  ],
+  lop: [
+    {id:1, ten_lop:'CNTT01', nganh:'Khoa học máy tính'},
+    {id:2, ten_lop:'CNTT02', nganh:'Kỹ thuật phần mềm'},
+    {id:3, ten_lop:'CNTT03', nganh:'An toàn thông tin'},
+  ],
+};
+
+// ─────────── Bộ thông dịch SQL (tập con để dạy học) ───────────
+function qualify(r, t){ const o={}; for(const k in r){ o[k]=r[k]; o[t+'.'+k]=r[k]; } return o; }
+function getVal(tok, row){
+  tok = tok.trim();
+  if (/^'.*'$/.test(tok) || /^".*"$/.test(tok)) return tok.slice(1,-1);
+  if (/^-?\d+(\.\d+)?$/.test(tok)) return parseFloat(tok);
+  if (Object.prototype.hasOwnProperty.call(row, tok)) return row[tok];
+  throw new Error("Không tìm thấy cột hoặc giá trị: " + tok);
+}
+function evalTerm(t, row){
+  const m = t.trim().match(/^(.+?)\s*(>=|<=|!=|<>|=|>|<|\blike\b)\s*(.+)$/i);
+  if (!m) throw new Error("Điều kiện không hợp lệ: " + t);
+  const L = getVal(m[1], row), op = m[2].toLowerCase(), R = getVal(m[3], row);
+  switch(op){
+    case '=': return L == R;
+    case '!=': case '<>': return L != R;
+    case '>': return L > R; case '<': return L < R;
+    case '>=': return L >= R; case '<=': return L <= R;
+    case 'like': { const re = new RegExp('^' + String(R).replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/%/g,'.*').replace(/_/g,'.') + '$','i'); return re.test(String(L)); }
+  }
+}
+function evalCond(expr, row){
+  return expr.split(/\bor\b/i).some(or => or.split(/\band\b/i).every(a => evalTerm(a, row)));
+}
+function runSQL(sqlRaw){
+  let s = sqlRaw.trim().replace(/;+\s*$/,'').replace(/\s+/g,' ');
+  if (!/^select /i.test(s)) throw new Error("Phòng thực hành chỉ chạy câu lệnh SELECT.");
+  const tokens = s.split(/\b(from|where|group\s+by|order\s+by|limit)\b/i);
+  const clause = { select: tokens[0].replace(/^select/i,'').trim() };
+  for (let i=1;i<tokens.length;i+=2){ const kw = tokens[i].toLowerCase().replace(/\s+/g,' ');
+    clause[kw==='group by'?'group':kw==='order by'?'order':kw] = (tokens[i+1]||'').trim(); }
+  if (!clause.from) throw new Error("Thiếu mệnh đề FROM.");
+
+  // FROM + JOIN
+  let fromTable, join=null;
+  const jm = clause.from.match(/^(\S+)\s+join\s+(\S+)\s+on\s+(.+)$/i);
+  if (jm){ fromTable=jm[1]; join={table:jm[2], on:jm[3]}; }
+  else fromTable = clause.from.split(/\s+/)[0];
+  if (!DB[fromTable]) throw new Error("Không có bảng '"+fromTable+"'. Bảng hiện có: " + Object.keys(DB).join(', '));
+
+  let rows = DB[fromTable].map(r => qualify(r, fromTable));
+  if (join){
+    if (!DB[join.table]) throw new Error("Không có bảng '"+join.table+"'.");
+    const right = DB[join.table].map(r => qualify(r, join.table));
+    const out=[]; for (const a of rows) for (const b of right){ const m={...a,...b}; if (evalCond(join.on, m)) out.push(m); }
+    rows = out;
+  }
+  if (clause.where) rows = rows.filter(r => evalCond(clause.where, r));
+
+  const selItems = clause.select.split(',').map(x=>x.trim());
+  const groupCols = clause.group ? clause.group.split(',').map(x=>x.trim()) : null;
+  const isAgg = selItems.some(it => /^(count|sum|avg|min|max)\s*\(/i.test(it));
+
+  let columns, outRows;
+  if (groupCols || isAgg){
+    let groups;
+    if (groupCols){ const map=new Map();
+      for (const r of rows){ const key=groupCols.map(c=>getVal(c,r)).join(''); if(!map.has(key)) map.set(key,[]); map.get(key).push(r); }
+      groups=[...map.values()];
+    } else groups=[rows];
+    columns = selItems.slice();
+    outRows = groups.map(g => selItems.map(it => {
+      const am = it.match(/^(count|sum|avg|min|max)\s*\(\s*(.+?)\s*\)$/i);
+      if (am){ const fn=am[1].toLowerCase(), arg=am[2].trim();
+        if (fn==='count') return arg==='*' ? g.length : g.filter(r=>getVal(arg,r)!=null).length;
+        const nums = g.map(r=>Number(getVal(arg,r)));
+        if (fn==='sum') return nums.reduce((a,b)=>a+b,0);
+        if (fn==='avg') return +(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(2);
+        if (fn==='min') return Math.min(...nums);
+        if (fn==='max') return Math.max(...nums);
+      }
+      return getVal(it, g[0]);
+    }));
+  } else {
+    const expanded=[];
+    for (const it of selItems){
+      if (it==='*') expanded.push(...Object.keys(DB[fromTable][0]));
+      else if (/\.\*$/.test(it)){ const tb=it.slice(0,-2); expanded.push(...Object.keys(DB[tb][0]).map(c=>tb+'.'+c)); }
+      else expanded.push(it);
+    }
+    if (clause.order){
+      const ob = clause.order.split(',').map(x => { const mm=x.trim().match(/^(.+?)(\s+(asc|desc))?$/i); return {col:mm[1].trim(), dir:(mm[3]||'asc').toLowerCase()}; });
+      rows.sort((a,b)=>{ for(const o of ob){ const va=getVal(o.col,a), vb=getVal(o.col,b); if(va<vb) return o.dir==='desc'?1:-1; if(va>vb) return o.dir==='desc'?-1:1; } return 0; });
+    }
+    columns = expanded;
+    outRows = rows.map(r => expanded.map(c => getVal(c, r)));
+  }
+  if (clause.limit){ const n=parseInt(clause.limit,10); if(!isNaN(n)) outRows = outRows.slice(0,n); }
+  return { columns, rows: outRows };
+}
+
+// ─────────── Thử thách ───────────
+const CH = [
+  { id:'all',  q:'Liệt kê mã (id), tên (ten) và GPA của tất cả sinh viên.', sol:"SELECT id, ten, gpa FROM sinhvien", ordered:false },
+  { id:'filt', q:'Tên và GPA các sinh viên có GPA ≥ 3.5, sắp xếp GPA giảm dần.', sol:"SELECT ten, gpa FROM sinhvien WHERE gpa >= 3.5 ORDER BY gpa DESC", ordered:true },
+  { id:'cnt',  q:'Có bao nhiêu sinh viên quê ở Hà Nội?', sol:"SELECT COUNT(*) FROM sinhvien WHERE que = 'Hà Nội'", ordered:false },
+  { id:'grp',  q:'Đếm số sinh viên trong mỗi lớp (theo lop_id).', sol:"SELECT lop_id, COUNT(*) FROM sinhvien GROUP BY lop_id", ordered:false },
+  { id:'join', q:'Hiển thị tên sinh viên kèm tên lớp tương ứng (JOIN hai bảng).', sol:"SELECT sinhvien.ten, lop.ten_lop FROM sinhvien JOIN lop ON sinhvien.lop_id = lop.id", ordered:false },
+];
+const DONE_KEY='eduverse:it:sql:solved';
+let solved; try { solved=new Set(JSON.parse(localStorage.getItem(DONE_KEY)||'[]')); } catch(e){ solved=new Set(); }
+let current = CH[0];
+
+function sig(res, ordered){
+  const rs = res.rows.map(r => JSON.stringify(r));
+  if (!ordered) rs.sort();
+  return JSON.stringify({ n: res.columns.length, rows: rs });
+}
+const solCache = {};
+function solSig(ch){ if(!(ch.id in solCache)) solCache[ch.id]=sig(runSQL(ch.sol), ch.ordered); return solCache[ch.id]; }
+
+function renderSchema(){
+  $('schema').innerHTML = Object.keys(DB).map(t =>
+    `<div class="tbl"><div class="nm">${t}</div><div class="cols">${Object.keys(DB[t][0]).join(', ')}</div></div>`).join('');
+}
+function renderCh(){
+  $('chList').innerHTML = CH.map((c,i) =>
+    `<div class="ch ${solved.has(c.id)?'solved':''} ${c.id===current.id?'active':''}" data-id="${c.id}">
+      <span class="st">${solved.has(c.id)?'✓':(i+1)}</span><span>${esc(c.q)}</span></div>`).join('');
+  $('chList').querySelectorAll('.ch').forEach(el => el.addEventListener('click', () => select(el.dataset.id)));
+  $('prog').textContent = `${solved.size}/${CH.length} thử thách`;
+}
+function select(id){
+  current = CH.find(c=>c.id===id) || CH[0];
+  $('taskQ').textContent = current.q;
+  $('hint').textContent = 'Hỗ trợ: SELECT · WHERE · AND/OR · ORDER BY · GROUP BY · COUNT/SUM/AVG/MIN/MAX · JOIN…ON · LIKE · LIMIT';
+  $('hint').dataset.shown='';
+  renderCh();
+}
+function renderResult(res){
+  return `<table class="res"><thead><tr>${res.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
+    <tbody>${res.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function run(){
+  const out=$('out'); out.style.display='block';
+  let res;
+  try { res = runSQL($('sql').value); }
+  catch(e){ out.innerHTML = `<div class="msg bad">⛔ ${esc(e.message)}</div>`; return; }
+  const rowWord = res.rows.length===1?'1 dòng':res.rows.length+' dòng';
+  let head;
+  const correct = sig(res, current.ordered) === solSig(current);
+  if (correct){
+    head = `<div class="msg ok">✅ Đúng yêu cầu thử thách! (${rowWord})</div>`;
+    if (!solved.has(current.id)){
+      solved.add(current.id); try{ localStorage.setItem(DONE_KEY, JSON.stringify([...solved])); }catch(e){}
+      try { const k='eduverse:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d.dblab=Math.max(d.dblab||0, solved.size); localStorage.setItem(k, JSON.stringify(d)); }catch(e){}
+      renderCh(); showToast(solved.size===CH.length ? '🏆 Hoàn thành mọi thử thách SQL!' : '✓ Giải đúng thử thách!');
+    }
+  } else {
+    head = `<div class="msg">📊 Kết quả truy vấn (${rowWord}). So với yêu cầu của thử thách hiện tại thì chưa khớp — kiểm tra lại cột/điều kiện.</div>`;
+  }
+  out.innerHTML = head + renderResult(res);
+}
+
+let toastT; function showToast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2500); }
+
+$('runBtn').addEventListener('click', run);
+$('solBtn').addEventListener('click', () => {
+  if ($('hint').dataset.shown==='1'){ $('sql').value = current.sol; $('hint').textContent='Đã chèn truy vấn mẫu — đọc hiểu rồi thử sửa lại theo ý mình.'; }
+  else { $('hint').dataset.shown='1'; $('hint').textContent='Bấm lần nữa để chèn truy vấn mẫu vào ô soạn thảo.'; }
+});
+$('sql').addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey) && e.key==='Enter') run(); });
+
+// init
+renderSchema(); select(CH[0].id);
+$('sql').value = "SELECT id, ten, gpa FROM sinhvien";
+if (new URLSearchParams(location.search).get('auto')==='1'){ $('sql').value = current.sol; run(); }
+</script>
+</body>
+</html>

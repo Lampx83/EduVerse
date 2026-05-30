@@ -13,6 +13,8 @@ export const SUBJECTS = {
   'dao-duc':     { label: 'Đạo đức',              icon: '🤝', color: '#ec4899' },
   'my-thuat':    { label: 'Mĩ thuật',             icon: '🎨', color: '#f472b6' },
   'am-nhac':     { label: 'Âm nhạc',              icon: '🎵', color: '#a855f7' },
+  'gdtc':        { label: 'Giáo dục thể chất',    icon: '⚽', color: '#16a34a' },
+  'htn':         { label: 'Hoạt động trải nghiệm', icon: '🎪', color: '#fb923c' },
 };
 export function getSubject(id) {
   return SUBJECTS[id] || { label: id, icon: '📘', color: '#94a3b8' };

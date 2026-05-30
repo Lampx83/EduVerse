@@ -20,7 +20,8 @@ window.SPACES_HIGHSCHOOL = {
       {ic:'🎓',name:'Thông tin tuyển sinh ĐH',rd:'Các phương thức xét tuyển.',panel:[
         {h:'Các phương thức xét tuyển đại học'},
         {ul:['Xét điểm thi tốt nghiệp THPT','Xét học bạ THPT','Thi đánh giá năng lực / tư duy','Xét tuyển kết hợp (chứng chỉ ngoại ngữ…)','Tuyển thẳng theo quy chế']},
-        {note:'Theo dõi đề án tuyển sinh của từng trường để biết tổ hợp & điểm chuẩn các năm.'}]}],
+        {note:'Theo dõi đề án tuyển sinh của từng trường để biết tổ hợp & điểm chuẩn các năm.'}]},
+      {ic:'🏛️',name:'Ban điều hành AI',rd:'Đề xuất cải tiến cho nhà trường & bình chọn.',board:true}],
     skills:['Hiểu cơ cấu trường','Chọn phân ban phù hợp','Định hướng nghề nghiệp'],
     quiz:[{q:'Cấp THPT ở Việt Nam gồm những lớp nào?',o:['Lớp 10, 11, 12','Lớp 6–9','Lớp 1–5','Lớp 10–13'],a:0},
       {q:'Theo GDPT 2018, từ lớp 10 học sinh bắt đầu?',o:['Chọn môn theo định hướng nghề (phân ban)','Học tất cả mọi môn như nhau','Chỉ học 3 môn','Nghỉ học các môn xã hội'],a:0},
@@ -41,7 +42,7 @@ window.SPACES_HIGHSCHOOL = {
         {check:['Lập thời gian biểu mỗi tuần','Học bài ngay sau buổi học','Tự đặt câu hỏi khi đọc','Ôn lại trước khi ngủ']}]},
       {ic:'🎯',name:'Đặt mục tiêu học kì',rd:'Ghi mục tiêu của bạn.',panel:[
         {h:'Mục tiêu học kì của em'},{p:'Mục tiêu rõ ràng giúp em học có động lực hơn.'},{goal:true}]},
-      {ic:'🧠',name:'Quiz nhanh lớp 10',rd:'Ôn kiến thức nền.',href:'/quiz.html'}],
+      {ic:'📈',name:'Vẽ đồ thị hàm số (tương tác)',rd:'Hàm bậc nhất & bậc hai: kéo hệ số, xem đỉnh – nghiệm – tính đơn điệu ngay.',href:'/grapher.html?domain=highschool&type=quad'}],
     skills:['Học chủ động','Định hướng phân ban'],
     quiz:[{q:'Mệnh đề "Mọi số tự nhiên đều lớn hơn 0" là?',o:['Mệnh đề sai (vì 0 không lớn hơn 0)','Mệnh đề đúng','Không phải mệnh đề','Câu hỏi'],a:0},
       {q:'Tập hợp A = {1;2;3}. Số tập con của A là?',o:['8','3','6','9'],a:0},
@@ -55,8 +56,9 @@ window.SPACES_HIGHSCHOOL = {
       {ic:'🗂️',name:'Kĩ năng làm dự án (HĐTN)',rd:'Học qua dự án & trải nghiệm.',panel:[
         {h:'Quy trình thực hiện dự án học tập'},
         {ol:['Xác định vấn đề / chủ đề','Lập kế hoạch & phân công','Thực hiện, thu thập dữ liệu','Tạo sản phẩm & báo cáo','Đánh giá – rút kinh nghiệm']},
+        {order:{title:'Sắp xếp 5 bước làm dự án học tập (HĐTN)',items:['Xác định vấn đề / chủ đề','Lập kế hoạch & phân công','Thực hiện, thu thập dữ liệu','Tạo sản phẩm & báo cáo','Đánh giá – rút kinh nghiệm']}},
         {note:'Hoạt động trải nghiệm – hướng nghiệp giúp em rèn kĩ năng làm việc nhóm & giải quyết vấn đề.'}]},
-      {ic:'🧠',name:'Quiz lớp 11',rd:'Ôn kiến thức.',href:'/quiz.html'}],
+      {ic:'📈',name:'Đồ thị lượng giác (tương tác)',rd:'Hàm y=a·sin(bx+c): biên độ, chu kì, dịch pha — kéo hệ số xem ngay.',href:'/grapher.html?domain=highschool&type=sin'}],
     skills:['Học chuyên sâu','Làm dự án & làm việc nhóm'],
     quiz:[{q:'Đạo hàm của hàm số y = x² là?',o:['2x','x','x²/2','2'],a:0},
       {q:'Giá trị của sin90° bằng?',o:['1','0','0,5','-1'],a:0},
@@ -70,6 +72,7 @@ window.SPACES_HIGHSCHOOL = {
       {ic:'📝',name:'Đăng kí nguyện vọng ĐH',rd:'Quy trình & cách sắp xếp NV.',panel:[
         {h:'Đăng kí xét tuyển đại học'},
         {ol:['Tìm hiểu ngành – trường phù hợp năng lực & sở thích','Đối chiếu điểm chuẩn các năm gần đây','Sắp xếp nguyện vọng yêu thích nhất lên trên','Đăng kí trên hệ thống tuyển sinh của Bộ GD&ĐT','Nộp lệ phí & xác nhận nhập học']},
+        {order:{title:'Sắp xếp 5 bước đăng kí xét tuyển đại học',items:['Tìm hiểu ngành – trường phù hợp năng lực & sở thích','Đối chiếu điểm chuẩn các năm gần đây','Sắp xếp nguyện vọng yêu thích nhất lên trên','Đăng kí trên hệ thống tuyển sinh của Bộ GD&ĐT','Nộp lệ phí & xác nhận nhập học']}},
         {note:'Không giới hạn số nguyện vọng — nên có NV "cao", "vừa sức" và "an toàn".'}]},
       {ic:'⏱️',name:'Luyện đề bấm giờ',rd:'Rèn tốc độ & tâm lí phòng thi.',href:'/time-attack.html'},
       {ic:'🎯',name:'Đặt mục tiêu thi',rd:'Ghi mục tiêu điểm số.',panel:[{h:'Mục tiêu kì thi của em'},{goal:true}]}],
@@ -108,6 +111,7 @@ window.SPACES_HIGHSCHOOL = {
           {e:'💎',f:'C (Z = 6)',b:'Phi kim, nền của hoá hữu cơ'}]}]},
       {ic:'⚖️',name:'Cân bằng phương trình',rd:'Định luật bảo toàn khối lượng.',panel:[
         {ol:['Viết đúng công thức các chất','Cân bằng số nguyên tử mỗi nguyên tố hai vế','Kiểm tra lại điện tích (nếu là ion)','Tối giản hệ số']},
+        {order:{title:'Sắp xếp 4 bước cân bằng phương trình hoá học',items:['Viết đúng công thức các chất','Cân bằng số nguyên tử mỗi nguyên tố hai vế','Kiểm tra lại điện tích (nếu là ion)','Tối giản hệ số']}},
         {mcq:[{q:'Cân bằng: H₂ + O₂ → H₂O. Hệ số đúng lần lượt là?',o:['2 ; 1 ; 2','1 ; 1 ; 1','2 ; 2 ; 2','1 ; 2 ; 1'],a:0,fb:'2H₂ + O₂ → 2H₂O — số nguyên tử H và O cân bằng hai vế.'}]}]}],
     skills:['Thí nghiệm hoá học','An toàn hoá chất','Đọc bảng tuần hoàn'],
     quiz:[{q:'Trong phản ứng oxi hoá – khử, chất khử là chất?',o:['Nhường electron','Nhận electron','Không thay đổi','Luôn là kim loại quý'],a:0},
@@ -117,10 +121,12 @@ window.SPACES_HIGHSCHOOL = {
   lab_bio:{emoji:'🧬',name:'Phòng bộ môn Sinh học',accent:'#22c55e',intro:'Phòng thí nghiệm Sinh học: dùng kính hiển vi, tìm hiểu tế bào, di truyền và sinh thái.',
     rooms:[{ic:'🔬',name:'Thực hành kính hiển vi',rd:'Quan sát tế bào & mô.',panel:[
         {h:'Các bước dùng kính hiển vi'},
-        {ol:['Đặt tiêu bản lên bàn kính, cố định','Chọn vật kính nhỏ (×10) trước','Điều chỉnh ốc thô để thấy ảnh, rồi ốc tinh cho rõ','Chuyển sang vật kính lớn khi cần','Vẽ và chú thích hình quan sát được']}]},
+        {ol:['Đặt tiêu bản lên bàn kính, cố định','Chọn vật kính nhỏ (×10) trước','Điều chỉnh ốc thô để thấy ảnh, rồi ốc tinh cho rõ','Chuyển sang vật kính lớn khi cần','Vẽ và chú thích hình quan sát được']},
+        {order:{title:'Sắp xếp 5 bước dùng kính hiển vi',items:['Đặt tiêu bản lên bàn kính, cố định','Chọn vật kính nhỏ (×10) trước','Điều chỉnh ốc thô để thấy ảnh, rồi ốc tinh cho rõ','Chuyển sang vật kính lớn khi cần','Vẽ và chú thích hình quan sát được']}}]},
       {ic:'🧫',name:'Tế bào & cơ thể',rd:'Cấu trúc tế bào nhân thực.',panel:[
         {cards:[{ic:'🧱',t:'Màng sinh chất',d:'Bao bọc, kiểm soát ra vào.'},{ic:'🧠',t:'Nhân',d:'Chứa ADN, điều khiển tế bào.'},
           {ic:'🔥',t:'Ti thể',d:'Hô hấp tế bào, tạo năng lượng (ATP).'},{ic:'🌿',t:'Lục lạp',d:'Quang hợp ở tế bào thực vật.'}]},
+        {match:{title:'Nối bào quan với chức năng',pairs:[['Màng sinh chất','Bao bọc, kiểm soát ra vào tế bào'],['Nhân','Chứa ADN, điều khiển hoạt động tế bào'],['Ti thể','Hô hấp tế bào, tạo năng lượng ATP'],['Lục lạp','Quang hợp ở tế bào thực vật'],['Ribosome','Tổng hợp protein']]}},
         {p:'Tế bào là đơn vị cấu trúc & chức năng cơ bản của mọi cơ thể sống.'}]},
       {ic:'🧬',name:'Di truyền học',rd:'ADN, gen và quy luật Mendel.',panel:[
         {h:'Cơ sở di truyền'},
@@ -141,9 +147,10 @@ window.SPACES_HIGHSCHOOL = {
       {ic:'🔐',name:'An toàn không gian mạng',rd:'Bảo mật & ứng xử số.',panel:[
         {check:['Đặt mật khẩu mạnh, không dùng lại nhiều nơi','Bật xác thực 2 lớp (2FA)','Không bấm link lạ, không tải file không rõ nguồn','Không chia sẻ thông tin cá nhân tuỳ tiện','Tôn trọng bản quyền & văn hoá ứng xử trên mạng']},
         {mcq:[{q:'Nhận email lạ báo trúng thưởng, yêu cầu nhập mật khẩu. Em nên?',o:['Không bấm, xoá và báo cáo lừa đảo','Nhập thử xem sao','Gửi cho bạn cùng nhập','Trả lời xin thêm thông tin'],a:0,fb:'Đây là lừa đảo (phishing) — tuyệt đối không cung cấp mật khẩu/thông tin.'}]}]},
-      {ic:'🧮',name:'Tư duy thuật toán',rd:'Các thuật toán cơ bản.',panel:[
+      {ic:'🧮',name:'Tư duy thuật toán',rd:'Nối thuật toán với cách làm.',panel:[
         {cards:[{ic:'🔎',t:'Tìm kiếm tuần tự',d:'Duyệt lần lượt đến khi gặp.'},{ic:'⚡',t:'Tìm kiếm nhị phân',d:'Chia đôi dãy đã sắp xếp.'},
-          {ic:'🫧',t:'Sắp xếp nổi bọt',d:'Đổi chỗ cặp kề nhau nhiều lượt.'},{ic:'📌',t:'Sắp xếp chọn',d:'Chọn phần tử nhỏ nhất mỗi lượt.'}]}]}],
+          {ic:'🫧',t:'Sắp xếp nổi bọt',d:'Đổi chỗ cặp kề nhau nhiều lượt.'},{ic:'📌',t:'Sắp xếp chọn',d:'Chọn phần tử nhỏ nhất mỗi lượt.'}]},
+        {match:{title:'Nối tên thuật toán với cách làm',pairs:[['Tìm kiếm tuần tự','Duyệt lần lượt đến khi gặp phần tử cần tìm'],['Tìm kiếm nhị phân','Chia đôi dãy đã sắp xếp để thu hẹp vùng tìm'],['Sắp xếp nổi bọt','Đổi chỗ cặp kề nhau nhiều lượt cho tới khi xong'],['Sắp xếp chọn','Mỗi lượt chọn phần tử nhỏ nhất đưa về đầu']]}}]}],
     skills:['Lập trình Python cơ bản','An toàn mạng','Tư duy thuật toán'],
     quiz:[{q:'Số nhị phân 1010 bằng số thập phân nào?',o:['10','8','12','5'],a:0},
       {q:'Trong Python, lệnh in ra màn hình là?',o:['print()','echo()','printf()','write()'],a:0},
@@ -159,8 +166,14 @@ window.SPACES_HIGHSCHOOL = {
           {ic:'🍚',t:'Vợ nhặt',d:'Kim Lân — tình người trong nạn đói.'},{ic:'🛶',t:'Người lái đò Sông Đà',d:'Nguyễn Tuân — tuỳ bút tài hoa.'}]}]},
       {ic:'✍️',name:'Phương pháp đọc – ghi chú',rd:'Đọc hiểu hiệu quả (SQ3R).',panel:[
         {h:'Phương pháp đọc SQ3R'},
-        {ol:['Survey – khảo sát tổng quan','Question – đặt câu hỏi','Read – đọc kĩ','Recite – thuật lại bằng lời mình','Review – ôn lại']}]},
-      {ic:'🧠',name:'Quiz ôn tập',rd:'Kiểm tra kiến thức.',href:'/quiz.html'}],
+        {ol:['Survey – khảo sát tổng quan','Question – đặt câu hỏi','Read – đọc kĩ','Recite – thuật lại bằng lời mình','Review – ôn lại']},
+        {order:{title:'Sắp xếp 5 bước phương pháp đọc SQ3R',items:['Survey – khảo sát tổng quan','Question – đặt câu hỏi','Read – đọc kĩ','Recite – thuật lại bằng lời mình','Review – ôn lại']}}]},
+      {ic:'📖',name:'Luyện đọc hiểu',rd:'Rèn ý chính, suy luận & đoán nghĩa qua ngữ cảnh.',panel:[
+        {h:'Rèn kĩ năng đọc hiểu văn bản'},
+        {p:'Khi đọc một đoạn trích, hãy xác định: ý chính, các chi tiết hỗ trợ, và thông điệp tác giả gửi gắm (có thể không nói thẳng).'},
+        {mcq:[{q:'"Ý chính" của một đoạn văn là gì?',o:['Nội dung bao trùm, quan trọng nhất của đoạn','Câu dài nhất trong đoạn','Câu cuối cùng của đoạn','Từ được lặp lại nhiều nhất'],a:0,fb:'Ý chính là thông tin cốt lõi mà cả đoạn hướng tới — không phụ thuộc độ dài câu.'},
+          {q:'Gặp một từ chưa biết khi đang đọc, cách xử lí tốt nhất?',o:['Đoán nghĩa qua ngữ cảnh rồi tra từ điển để xác nhận','Bỏ qua hoàn toàn','Dừng đọc ngay','Thay đại bằng một từ bất kì'],a:0,fb:'Suy luận theo ngữ cảnh rồi tra cứu giúp vừa hiểu bài, vừa mở rộng vốn từ.'},
+          {q:'"Đọc suy luận" (inference) nghĩa là?',o:['Rút ra điều tác giả ngụ ý dù không nói thẳng','Đọc thật to thành tiếng','Chỉ đọc mỗi tiêu đề','Học thuộc lòng cả đoạn'],a:0,fb:'Suy luận là "đọc giữa những dòng chữ" để hiểu hàm ý, thái độ của tác giả.'}]}]}],
     skills:['Tra cứu & đánh giá nguồn','Đọc hiểu hiệu quả'],
     quiz:[{q:'Tác giả của Truyện Kiều là?',o:['Nguyễn Du','Nguyễn Trãi','Hồ Xuân Hương','Nam Cao'],a:0},
       {q:'Bước đầu tiên trong phương pháp SQ3R là?',o:['Survey (khảo sát)','Review','Read','Recite'],a:0},
@@ -196,15 +209,20 @@ window.SPACES_HIGHSCHOOL = {
       {q:'Công dân đủ 18 tuổi có quyền?',o:['Bầu cử','Không có quyền nào','Miễn mọi nghĩa vụ','Tự đặt ra luật'],a:0},
       {q:'Hoạt động "Tiếp sức mùa thi" gắn với tổ chức nào?',o:['Đoàn Thanh niên','Hội Phụ huynh','Công đoàn giáo viên','Hội Chữ thập đỏ quốc tế'],a:0}]},
 
-  arts:{emoji:'🎨',name:'Phòng Nghệ thuật',accent:'#f472b6',intro:'Môn Âm nhạc & Mĩ thuật ở THPT (GDPT 2018): nuôi dưỡng cảm thụ và tư duy thẩm mĩ – sáng tạo.',
-    rooms:[{ic:'🎵',name:'Âm nhạc',rd:'Cảm thụ & lí thuyết.',panel:[
+  arts:{emoji:'🎨',name:'Phòng Nghệ thuật',accent:'#f472b6',intro:'Môn Âm nhạc & Mĩ thuật ở THPT (GDPT 2018): chơi đàn, gõ nhịp, pha màu và vẽ tự do.',
+    rooms:[{ic:'🎵',name:'Âm nhạc',rd:'Chơi đàn, gõ nhịp & nhạc lí.',panel:[
         {h:'Kiến thức âm nhạc cơ bản'},
-        {ul:['Cao độ – trường độ của âm thanh','Các loại nhịp: 2/4, 3/4, 4/4','Dân ca ba miền Bắc – Trung – Nam','Nhạc cụ dân tộc: đàn bầu, đàn tranh, sáo trúc']}]},
-      {ic:'🖼️',name:'Mĩ thuật',rd:'Bố cục, màu sắc, thiết kế.',panel:[
+        {ul:['Cao độ – trường độ của âm thanh','Các loại nhịp: 2/4, 3/4, 4/4','Dân ca ba miền Bắc – Trung – Nam','Nhạc cụ dân tộc: đàn bầu, đàn tranh, sáo trúc']},
+        {piano:true},
+        {rhythm:true}]},
+      {ic:'🖼️',name:'Mĩ thuật',rd:'Pha màu & vẽ tự do.',panel:[
         {cards:[{ic:'🌈',t:'Màu nóng – lạnh',d:'Tạo cảm xúc & chiều sâu.'},{ic:'🧩',t:'Bố cục',d:'Sắp xếp mảng chính – phụ.'},
-          {ic:'📐',t:'Phối cảnh',d:'Diễn tả không gian xa – gần.'},{ic:'✏️',t:'Thiết kế',d:'Mĩ thuật ứng dụng, đồ hoạ.'}]}]},
-      {ic:'💡',name:'Sáng tạo & thẩm mĩ',rd:'Mĩ thuật trong đời sống.',panel:[
-        {p:'Nghệ thuật giúp em thể hiện ý tưởng, cảm xúc và nhìn cái đẹp quanh mình — nền tảng cho thiết kế, truyền thông, kiến trúc.'}]}],
+          {ic:'📐',t:'Phối cảnh',d:'Diễn tả không gian xa – gần.'},{ic:'✏️',t:'Thiết kế',d:'Mĩ thuật ứng dụng, đồ hoạ.'}]},
+        {mixer:true},
+        {draw:true}]},
+      {ic:'💡',name:'Sáng tạo & thẩm mĩ',rd:'Quy trình thiết kế sáng tạo.',panel:[
+        {p:'Nghệ thuật giúp em thể hiện ý tưởng, cảm xúc và nhìn cái đẹp quanh mình — nền tảng cho thiết kế, truyền thông, kiến trúc.'},
+        {order:{title:'Sắp xếp 5 bước quy trình thiết kế sáng tạo',items:['Thấu hiểu vấn đề & người dùng','Lên ý tưởng đa dạng (brainstorm)','Phác thảo & chọn phương án','Làm mẫu thử (prototype) & thử nghiệm','Hoàn thiện & chia sẻ tác phẩm']}}]}],
     skills:['Cảm thụ nghệ thuật','Tư duy thẩm mĩ'],
     quiz:[{q:'Nhịp 2/4 có mấy phách trong một ô nhịp?',o:['2 phách','4 phách','3 phách','1 phách'],a:0},
       {q:'Đàn bầu là nhạc cụ?',o:['Dân tộc Việt Nam','Phương Tây','Điện tử hiện đại','Của Ấn Độ'],a:0},

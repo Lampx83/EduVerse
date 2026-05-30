@@ -1302,19 +1302,18 @@ const SPACES_PRIMARY = {
       {q:'5 + 3 = ?',o:['8','7','9','6'],a:0},
       {q:'Hình nào có 3 cạnh?',o:['Hình tam giác','Hình tròn','Hình vuông','Hình chữ nhật'],a:0}]},
 
-  g2:{emoji:'2️⃣',name:'Lớp 2',accent:'#f59e0b',intro:'Lớp 2 — cộng trừ có nhớ, làm quen bảng nhân và đọc hiểu câu chuyện ngắn.',
-    rooms:[{ic:'➗',name:'Toán lớp 2',rd:'Cộng trừ có nhớ, bảng nhân/chia 2–5, số đến 1000.',href:'/module.html?domain=primary&module=P2'},
-      {ic:'📖',name:'Tiếng Việt 2 — Đọc hiểu',rd:'Đọc đoạn ngắn và viết câu.',panel:[
-        {h:'Đọc hiểu & viết câu'},
-        {ul:['Đọc trôi chảy một đoạn văn ngắn','Trả lời câu hỏi về nội dung vừa đọc','Viết câu có đủ ý, đầu câu viết hoa, cuối câu có dấu chấm']},
-        {note:'Dấu chấm (.) kết thúc câu kể; dấu chấm hỏi (?) đặt cuối câu hỏi.'}]},
-      {ic:'🔤',name:'Tiếng Anh 2 — Lật thẻ',rd:'Đồ vật và số đếm.',panel:[
-        {flash:[{e:'📕',f:'Book',b:'Quyển sách'},{e:'✏️',f:'Pen',b:'Cái bút'},{e:'🪑',f:'Chair',b:'Cái ghế'},{e:'2️⃣',f:'Two',b:'Số hai'},{e:'🍎',f:'Apple',b:'Quả táo'},{e:'🏠',f:'House',b:'Ngôi nhà'}]}]},
-      {ic:'🌳',name:'TN&XH — Cây cối & con vật',rd:'Thế giới quanh em & an toàn.',panel:[
-        {h:'Quanh em có gì?'},
-        {ul:['Cây cối cần đất, nước và ánh sáng để lớn','Con vật nuôi và con vật sống hoang dã','Đi bộ đúng phần đường, đội mũ bảo hiểm khi ngồi xe máy']},
-        {mcq:[{q:'Khi qua đường, em nên?',o:['Quan sát và đi trên vạch kẻ dành cho người đi bộ','Chạy thật nhanh qua đường','Vừa đi vừa xem điện thoại','Qua đường ở chỗ khuất'],a:0,fb:'Qua đường ở vạch kẻ, quan sát hai phía và đi cùng người lớn cho an toàn.'}]}]}],
-    skills:['Bảng nhân 2–5','Đọc hiểu đoạn ngắn'],
+  g2:{emoji:'2️⃣',name:'Lớp 2',accent:'#f59e0b',intro:'Lớp 2 — Đầy đủ 9 môn theo GDPT 2018 · Mỗi môn có HK1 + HK2 · Bám sát kiến thức một năm học.',
+    rooms:[
+      {ic:'➗',name:'Toán lớp 2',rd:'HK1: Cộng trừ có nhớ, bảng nhân 2-5. HK2: Bảng chia, đơn vị đo, số đến 1000, tiền VN, chu vi.',href:'/module.html?domain=primary&module=P2'},
+      {ic:'📖',name:'Tiếng Việt lớp 2',rd:'HK1: Đọc-hiểu, từ chỉ sự vật/hoạt động/đặc điểm, mẫu câu Ai là gì?. HK2: Dấu câu, mở rộng vốn từ, viết đoạn 3-5 câu.',href:'/module.html?domain=primary&module=P2TV'},
+      {ic:'🇬🇧',name:'Tiếng Anh lớp 2',rd:'HK1: Greetings, numbers 1-10, colors, body, family. HK2: Animals, food, classroom, weekdays, weather.',href:'/module.html?domain=primary&module=P2TA'},
+      {ic:'⚽',name:'Giáo dục thể chất lớp 2',rd:'HK1: Đội hình đội ngũ, bài thể dục phát triển chung, đi-chạy-nhảy. HK2: Ném-bắt bóng, tâng cầu, trò chơi dân gian.',href:'/module.html?domain=primary&module=P2GDTC'},
+      {ic:'🎵',name:'Âm nhạc lớp 2',rd:'HK1: Bài hát thiếu nhi, cao độ-trường độ, tiết tấu. HK2: Đọc nhạc Đô-Rê-Mi, vận động theo nhạc, trống-mõ-thanh phách.',href:'/module.html?domain=primary&module=P2AN'},
+      {ic:'🎨',name:'Mĩ thuật lớp 2',rd:'HK1: Màu cơ bản, trang trí, vẽ gia đình-trường học, nặn đất. HK2: Xé dán, tranh dân gian Đông Hồ, đề tài lễ hội.',href:'/module.html?domain=primary&module=P2MT'},
+      {ic:'🎪',name:'Hoạt động trải nghiệm lớp 2',rd:'HK1: Tự phục vụ, vệ sinh cá nhân, ứng xử trong gia đình-nhà trường. HK2: An toàn giao thông, môi trường, làm việc nhà, định hướng nghề.',href:'/module.html?domain=primary&module=P2HDTN'},
+      {ic:'🌍',name:'Tự nhiên & Xã hội lớp 2',rd:'HK1: Gia đình (thế hệ, nghề người thân), trường học, cộng đồng địa phương. HK2: Thực-động vật, cơ thể người, Mặt Trời-Mặt Trăng.',href:'/module.html?domain=primary&module=P2TNXH'},
+      {ic:'🤝',name:'Đạo đức lớp 2',rd:'HK1: Yêu lao động, kính trọng thầy cô, yêu ông bà cha mẹ, giúp bạn. HK2: Trung thực, bảo vệ của công, yêu quê hương, vệ sinh công cộng.',href:'/module.html?domain=primary&module=P2DD'}],
+    skills:['9 môn GDPT 2018 đầy đủ','Mỗi môn tách HK1 + HK2','Quiz tổng > 200 câu'],
     quiz:[{q:'2 × 4 = ?',o:['8','6','10','24'],a:0},
       {q:'27 + 5 = ?',o:['32','22','31','37'],a:0},
       {q:'Từ nào chỉ con vật?',o:['Con gà','Cái bàn','Chạy','Xanh'],a:0}]},

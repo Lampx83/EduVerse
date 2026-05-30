@@ -51,7 +51,7 @@ const idCol=i=>`rgb(${(i+1)*7%256},${(i+1)*53%256},${(i+1)*97%256})`;
 const colId=(r,g,b)=>{ for(let i=0;i<40;i++){ const n=i+1; if((n*7%256)===r&&(n*53%256)===g&&(n*97%256)===b) return i; } return -1; };
 const KAY=f=>encodeURI(`assets/kaykit/${f}.gltf`);
 // resolver nhiều pack: "name" → KayKit (.gltf) · "sub:building-type-a" → Kenney Suburban (.glb, nhà thấp tầng) · "com:building-a" → Kenney Commercial
-const PACK={ kay:KAY, sub:f=>encodeURI(`assets/suburban/Models/GLB format/${f}.glb`), com:f=>encodeURI(`assets/commercial/Models/GLB format/${f}.glb`) };
+const PACK={ kay:KAY, sub:f=>encodeURI(`assets/suburban/Models/GLB format/${f}.glb`), com:f=>encodeURI(`assets/commercial/Models/GLB format/${f}.glb`), pp:f=>encodeURI(`assets/pp/${f}.glb`) };
 const ASSET=spec=>{ const i=String(spec).indexOf(':'); const p=i<0?'kay':spec.slice(0,i), f=i<0?spec:spec.slice(i+1); return (PACK[p]||KAY)(f); };
 const B=(id,name,emoji,gx,gy,model,s,rot,extra)=>({id,name,emoji,gx,gy,url:ASSET(model),s:s||1,rot:rot||0,...(extra||{})});
 
@@ -187,7 +187,10 @@ const CAMPUSES = {
     // BỐ CỤC RIÊNG (khác hẳn lưới 2×2 của Dược): hai DÃY LỚP HỌC trái–phải ÔM lấy
     // SÂN TRƯỜNG ở GIỮA (sân chào cờ + cột cờ → sân chơi → vườn hoa xếp dọc). Sân
     // bóng mini + nhà xe đạp ở dải trái. Dãy lớp 1–5 cùng kiểu nhà, sơn cầu vồng.
-    vroads:[9.25,23.25], hroads:[{a:8.6,b:9.9},{a:15.9,b:17.1}],
+    // 1 trục ngang lối vào (gy~16, nối cổng) + 2 trục dọc ôm 2 cánh. Bỏ trục
+    // ngang giữa (gy~9) vì lọt giữa các dãy lớp xếp sát (gap 1.16<đường 1.3) →
+    // đè nhà; trục dọc phải lùi 23.25→23.0 để cánh phục vụ (gx 25) không đè.
+    vroads:[9.25,23.0], hroads:[{a:15.9,b:17.1}],
     buildings:[
       // CÁNH TRÁI-trong (ôm sân) — DÃY LỚP 1–5 THẲNG HÀNG, cùng kiểu nhà, sơn cầu vồng
       B('g1','Lớp 1','1️⃣',11.5,2.6,'sub:building-type-b',1.0,90,{pin:'#ef4444'}),
@@ -206,9 +209,9 @@ const CAMPUSES = {
       B('doi','Phòng Đội & Sao Nhi đồng','🧣',7,8.5,'sub:building-type-e',1.0,90,{pin:'#ef4444'}),
       B('gym','Nhà đa năng (Thể chất)','🤸',7,13.5,'sub:building-type-h',1.05,90,{pin:'#0ea5e9'}),
       // CÁNH PHẢI-ngoài — điều hành & sinh hoạt
-      B('admin','Ban giám hiệu','🏫',24.5,3.5,'sub:building-type-u',1.15,270,{flag:true,pin:'#f59e0b'}),
-      B('health','Phòng Y tế','⛑️',24.5,8.5,'sub:building-type-f',0.95,270,{pin:'#e23b3b'}),
-      B('canteen','Nhà ăn bán trú','🍱',24.5,13.5,'sub:building-type-g',1.0,270,{pin:'#f59e0b'}),
+      B('admin','Ban giám hiệu','🏫',25.0,3.5,'sub:building-type-u',1.15,270,{flag:true,pin:'#f59e0b'}),
+      B('health','Phòng Y tế','⛑️',25.0,8.5,'sub:building-type-f',0.95,270,{pin:'#e23b3b'}),
+      B('canteen','Nhà ăn bán trú','🍱',25.0,13.5,'sub:building-type-g',1.0,270,{pin:'#f59e0b'}),
     ],
     facilities:[
       {id:'flagyard',name:'Sân chào cờ',emoji:'🚩',gx:16.1,gy:4},
@@ -253,9 +256,9 @@ const CAMPUSES = {
       B('bike','Nhà xe học sinh','🚲',2.8,15.8,'sub:building-type-h',1.0,90),
       // Cột trong-trái (gx 7.2): Nhà Hiệu bộ + KHỐI LỚP HỌC (khối dài, nhìn ra sân cờ)
       B('admin','Nhà Hiệu bộ – BGH','🏫',7.2,2.6,'com:building-m',1.1,0,{flag:true}),
-      B('grade10','Khối lớp 10','🔟',7.2,6.0,'com:low-detail-building-wide-a',1.05,0),
-      B('grade11','Khối lớp 11','📗',7.2,12.4,'com:low-detail-building-wide-b',1.05,0),
-      B('grade12','Khối lớp 12','📕',7.2,15.8,'com:low-detail-building-wide-a',1.05,0),
+      B('grade10','Khối lớp 10','🔟',7.2,6.0,'com:building-a',1.05,0),
+      B('grade11','Khối lớp 11','📗',7.2,12.4,'com:building-b',1.05,0),
+      B('grade12','Khối lớp 12','📕',7.2,15.8,'com:building-c',1.05,0),
       // Cột trong-phải (gx 12.8): PHÒNG BỘ MÔN (mid-rise, nhìn ra sân cờ)
       B('computer','Phòng Tin học','💻',12.8,2.6,'com:building-e',1.0,180),
       B('lab_phys','Phòng bộ môn Vật lí','🧲',12.8,6.0,'com:building-f',1.0,180),
@@ -272,17 +275,22 @@ const CAMPUSES = {
       {id:'football',name:'Sân bóng đá',emoji:'⚽',gx:23,gy:4},
       {id:'court',name:'Sân bóng rổ',emoji:'🏀',gx:21.5,gy:10.5},
       {id:'parking',name:'Bãi để xe',emoji:'🅿️',gx:22,gy:16},
-      {id:'gate',name:'Cổng trường',emoji:'🚪',gx:10,gy:1.2},
+      {id:'gate',name:'Cổng trường',emoji:'🚪',gx:10.2,gy:18.4},
     ],
     fields:[
-      {type:'plaza', gx:8.7,gy:3, w:2.6,d:13.6},
+      {type:'plaza', gx:8.1,gy:3, w:3.9,d:13.6},
       {type:'football', gx:19.4,gy:2, w:7.4,d:4.2},
       {type:'court', gx:19.8,gy:8.2, w:4,d:5},
       {type:'parking', gx:19.4,gy:14.4, w:6,d:3.4},
     ],
     sportTargets:{ football:'/time-attack.html', court:'/time-attack.html' },
-    trees:[[1,2],[1,6],[1,10],[1,14],[1,18],[5,4.4],[5,11],[10.9,4.4],[10.9,8],[10.9,13.8],
-      [15,4.4],[15,11],[19,1],[27,2],[18.6,7],[27.5,8],[18.6,13.4],[27.5,13.6],[18.6,18.4],[27.5,18]],
+    props:(()=>{ const p=[];
+      // (Đã BỎ tường rào quanh khuôn viên theo yêu cầu — không còn fenceA/fenceB)
+      p.push({k:'light',gx:7.2,gy:18.0},{k:'light',gx:12.6,gy:18.0});   // 2 trụ đèn ở cổng/lối vào
+      p.push({k:'bench',gx:8.4,gy:11},{k:'bench',gx:11.6,gy:11});       // ghế trong sân chào cờ
+      return p; })(),
+    trees:[[1.6,3],[1.6,9],[1.6,15],[4.8,4.3],[4.8,9.5],[4.8,16.2],[15,4.3],[15,9.5],[15,16.2],
+      [18.6,4],[18.6,9.5],[18.6,13.5],[26,8],[26,13.5],[5,17.4],[15,17.4]],
     cars:[[5,9],[15,9],[20.4,15],[22.8,15],[20.4,16.6],[22.8,16.6]],
     tints:{ admin:0xffe0a3, grade10:0xfff0c2, grade11:0xfff0c2, grade12:0xfde2c2, library:0xcfe3f7, hall:0xe9d5ff, gym:0xffd0c2 },
   },
@@ -335,6 +343,67 @@ const CAMPUSES = {
     cars:[[9,11],[21,11],[9,15],[21,15],[12,6.0],[18,6.0],[11,20.6],[13,20.6],[11,22],[13,22]],
     tints:{ library:0x93c5fd, ailab:0xc4b5fd, cloudcenter:0x7dd3fc, seclab:0xfca5a5, startuphub:0xa7f3d0 },
   },
+
+  // ─────────────────────── TRƯỜNG MẦM NON (3–5 tuổi) ───────────────────────
+  // Trường NHỎ & DỄ THƯƠNG: chỉ 4 ngôi nhà thấp (Kenney Suburban) sơn pastel ôm
+  // lấy KHU VUI CHƠI TO ở giữa (cầu trượt, xích đu, bập bênh, đu quay, nhà cổ
+  // tích) + góc cát-nước (trái) + vườn thú nhỏ với con vật (phải). KHÔNG đường
+  // phố xám — chỉ lối đi be + cổng "MN Hoa Sen". Khác hẳn mọi trường: bé, tròn,
+  // nhiều màu. Thiết bị vui chơi & con vật vẽ tay (playthings/critters).
+  preschool: {
+    title:'Trường Mầm non Hoa Sen', credit:'3D: Kenney Suburban (CC0) · khu vui chơi vẽ tay',
+    grass:['#aef08f','#c4f7ae'],
+    vroads:[], hroads:[], autoPaths:false,
+    // 4 nhà nhỏ ÔM khu vui chơi: 2 nhà cánh TRÁI + 2 nhà cánh PHẢI, sân chơi ở giữa
+    buildings:[
+      B('mam','Lớp Mầm · 3 tuổi','🐣',7.0,5.4,'sub:building-type-b',0.9,90,{pin:'#fb7185'}),
+      B('la','Lớp Lá · 5 tuổi','🦋',7.0,9.6,'sub:building-type-d',0.9,90,{pin:'#22c55e'}),
+      B('choi','Lớp Chồi · 4 tuổi','🐤',17.6,5.4,'sub:building-type-c',0.9,270,{pin:'#f59e0b',flag:true}),
+      B('canteen','Nhà ăn & Bán trú','🍱',17.6,9.6,'sub:building-type-g',0.95,270,{pin:'#f97316'}),
+    ],
+    facilities:[
+      {id:'playground',name:'Khu vui chơi',emoji:'🎠',gx:12.6,gy:7.4},
+      {id:'sandwater',name:'Góc cát & nước',emoji:'🏖️',gx:10.4,gy:11.8},
+      {id:'petgarden',name:'Vườn thú nhỏ',emoji:'🐰',gx:16.0,gy:11.0},
+      {id:'gate',name:'Cổng trường',emoji:'🚪',gx:15.6,gy:13.8},
+    ],
+    fields:[
+      {type:'playmat', gx:8.6,gy:4.6, w:8.2, d:5.9},     // thảm chơi to ở giữa
+      {type:'pool',    cx:9.6,cy:11.9, rx:1.2,ry:0.85},   // hồ nghịch nước (trước-trái)
+      {type:'sandbox', gx:12.4,gy:11.3, w:2.3,d:1.7},     // hố cát (trước-giữa)
+      {type:'gate',    gx:15.5,gy:12.8, label:'MN HOA SEN'},
+    ],
+    playthings:[
+      {k:'carousel', gx:12.6,gy:7.4},   // đu quay ngựa (ngôi sao giữa)
+      {k:'slide',    gx:10.4,gy:5.6},   // cầu trượt
+      {k:'swing',    gx:14.6,gy:5.8},   // xích đu
+      {k:'playhouse',gx:10.4,gy:9.2},   // nhà cổ tích
+      {k:'seesaw',   gx:14.6,gy:9.2},   // bập bênh
+    ],
+    critters:[
+      // vườn thú nhỏ (trước-phải)
+      {e:'🐰',gx:16.2,gy:10.8},{e:'🐢',gx:16.9,gy:11.7},{e:'🐤',gx:15.4,gy:11.6},{e:'🦆',gx:17.0,gy:10.0},{e:'🐱',gx:15.7,gy:10.2},
+      // vịt & gà con cạnh hồ nước (trước-trái)
+      {e:'🦆',gx:8.7,gy:12.2},{e:'🐥',gx:10.4,gy:12.4},
+      // bướm & ong bay quanh sân
+      {e:'🦋',gx:13.0,gy:4.0,s:0.85},{e:'🐝',gx:9.2,gy:7.6,s:0.8},
+      // hoa rải mép sân cho dễ thương
+      {e:'🌷',gx:6.0,gy:7.4,s:0.7},{e:'🌻',gx:19.6,gy:7.2,s:0.75},{e:'🌼',gx:5.8,gy:11.6,s:0.7},{e:'🌸',gx:19.8,gy:11.8,s:0.7},
+      {e:'🌷',gx:11.6,gy:13.6,s:0.7},{e:'🌼',gx:18.0,gy:13.0,s:0.7},
+    ],
+    // ring bụi cây ôm khuôn viên, chừa khe giữa-trước (gx~15.5, gy~13) làm cổng
+    trees:[[5.0,5.0],[6.4,3.6],[9.0,2.8],[12.0,2.6],[15.0,2.8],[18.2,3.4],[20.0,5.0],[20.8,7.2],
+      [20.6,9.6],[20.0,12.0],[4.6,7.4],[4.4,9.8],[4.8,12.2],[6.6,13.6],[9.2,14.2],[12.6,14.4],[18.8,12.8]],
+    cars:[],
+    tints:{ mam:0xffa6c6, choi:0xffd773, la:0xa9eab2, canteen:0xffba90 },   // pastel rực hơn cho dễ thương
+    walkways:[
+      {along:'y',a:15.1,b:15.9,lo:11.6,hi:13.0},   // lối từ cổng vào khu chơi
+      {along:'y',a:6.7, b:7.3, lo:5.4,hi:7.0},      // stub Lớp Mầm
+      {along:'y',a:6.7, b:7.3, lo:8.0,hi:9.6},      // stub Lớp Lá
+      {along:'y',a:17.3,b:17.9,lo:5.4,hi:7.0},      // stub Lớp Chồi
+      {along:'y',a:17.3,b:17.9,lo:8.0,hi:9.6},      // stub Nhà ăn
+    ],
+  },
 };
 
 const params=new URLSearchParams(location.search);
@@ -352,6 +421,8 @@ const ROADS=[
 const BUILDINGS=C.buildings;
 const FACILITIES=C.facilities;
 const FIELDS=C.fields;
+const PLAYS=C.playthings||[];     // thiết bị vui chơi đứng (cầu trượt, xích đu…) — mầm non
+const CRITTERS=C.critters||[];    // con vật / hoa / đồ chơi nhỏ (emoji) — mầm non
 const SPORT_TARGETS=C.sportTargets||{};
 const TINTS=C.tints||{};   // tô màu toà nhà (vd lớp 1–5 màu cầu vồng ở Tiểu học)
 
@@ -362,9 +433,11 @@ const PATHS = (C.autoPaths===false) ? [] : BUILDINGS.map(b=>{ let rx=VROADS[0]; 
 const WALKS = [...PATHS, ...(C.walkways||[])];
 
 // cây ở dải cỏ trống + xe trên đường/bãi
-const EXTRAS={ tree:KAY('bush'), car:KAY('car_hatchback'), light:KAY('streetlight'), bench:KAY('bench') };
-const PREP={ tree:2.2, car:1.0, light:1.5, bench:1.1 };   // scale lúc dựng sprite
-const BLIT={ tree:0.92, car:0.8, light:0.85, bench:0.7 }; // scale lúc vẽ lên map
+const EXTRAS={ tree:KAY('bush'), car:KAY('car_hatchback'), light:KAY('streetlight'), bench:KAY('bench'),
+  fenceA:PACK.sub('fence-1x4'), fenceB:PACK.sub('fence-1x4'), stand:PACK.pp('grandstand') };
+const PREP={ tree:2.2, car:1.0, light:1.5, bench:1.1, fenceA:1.5, fenceB:1.5, stand:0.4 };   // scale lúc dựng sprite
+const BLIT={ tree:0.92, car:0.8, light:0.85, bench:0.7, fenceA:1.0, fenceB:1.0, stand:0.85 }; // scale lúc vẽ lên map
+const ROT={ fenceB:90 };   // fenceB xoay 90° để chạy theo cạnh vuông góc (tường rào)
 // props (đèn/ghế…) đặt tay qua C.props=[{k,gx,gy}]; cây/xe qua trees/cars
 const DECOR=[ ...(C.trees||[]).map(([gx,gy])=>({k:'tree',gx,gy})),
   ...(C.cars||[]).map(([gx,gy])=>({k:'car',gx,gy})),
@@ -412,7 +485,7 @@ const bsprite={}, esprite={}, modelCache={};
   rcam.left=-FH; rcam.right=FH; rcam.top=FH; rcam.bottom=-FH; rcam.lookAt(0, maxDim*0.34, 0); rcam.updateProjectionMatrix(); rcam.updateMatrixWorld(true);
   const o=new THREE.Vector3(0,0,0).project(rcam); ANCHOR={x:(o.x*0.5+0.5)*rt.domElement.width, y:(-o.y*0.5+0.5)*rt.domElement.height};
   let i=0; for(const it of items){ it.sc.rotation.y=(it.b.rot||0)*Math.PI/180; const spr=renderSprite(it.sc); bsprite[it.b.id]={spr, tint:tint(spr,idCol(i)), idx:i}; i++; }
-  for(const [k,url] of Object.entries(EXTRAS)){ try{ const m=await load(url); prep(m,GS*(PREP[k]||1.0)); esprite[k]=renderSprite(m); }catch(e){} }
+  for(const [k,url] of Object.entries(EXTRAS)){ try{ const m=await load(url); prep(m,GS*(PREP[k]||1.0)); m.rotation.y=(ROT[k]||0)*Math.PI/180; esprite[k]=renderSprite(m); }catch(e){} }
   buildLegend();
   document.getElementById('loading').style.display='none';
   draw();
@@ -459,6 +532,21 @@ function garden(gx,gy,w,d){ poly(tileRect(gx,gy,w,d),'#8a6a44','rgba(0,0,0,.12)'
 function pond(cx,cy,rx,ry){ poly(ellipsePts(cx,cy,rx,ry),'#4aa6d8','rgba(0,0,0,.12)',1.5);
   poly(ellipsePts(cx,cy,rx*0.72,ry*0.72),'#6fc6ec',null);
   poly(ellipsePts(cx-rx*0.26,cy-ry*0.22,rx*0.3,ry*0.18),'rgba(255,255,255,.45)',null); }
+// ══════ MẦM NON · khu vui chơi (vẽ phẳng, dễ thương) ══════
+// thảm chơi cao su bo góc + ô màu xen kẽ pastel (nền "khu vui chơi")
+function playmat(gx,gy,w,d){ const cols=['#ffc7df','#bfe7fb','#cdf0b8','#ffe39a'];
+  const pts=[P(gx+0.7,gy),P(gx+w-0.7,gy),P(gx+w,gy+0.7),P(gx+w,gy+d-0.7),P(gx+w-0.7,gy+d),P(gx+0.7,gy+d),P(gx,gy+d-0.7),P(gx,gy+0.7)];
+  poly(pts,'#ffeccb','rgba(0,0,0,.05)',1.5);
+  for(let i=0;i<w;i++)for(let j=0;j<d;j++){ if((i+j)&1) poly(tileRect(gx+i+0.14,gy+j+0.14,0.72,0.72),cols[(i+j*2)%4],null); } }
+// hố cát — viền gỗ + cát vàng + gò nhỏ
+function sandbox(gx,gy,w,d){ poly(tileRect(gx,gy,w,d),'#c89b5b','rgba(90,60,20,.3)',2.5);
+  poly(tileRect(gx+0.18,gy+0.18,w-0.36,d-0.36),'#f1d99c',null);
+  poly(ellipsePts(gx+w*0.52,gy+d*0.56,0.5,0.32),'#e6c882',null); }
+// hồ bơi nông / nghịch nước — xanh nhạt, lõi sáng + đốm phản chiếu
+function pool(cx,cy,rx,ry){ poly(ellipsePts(cx,cy,rx,ry),'#7fcdee','rgba(0,0,0,.12)',2);
+  poly(ellipsePts(cx,cy,rx-0.18,ry-0.14),'#aee3f6',null);
+  poly(ellipsePts(cx,cy,rx*0.55,ry*0.55),'#79c7ec',null);
+  poly(ellipsePts(cx-rx*0.32,cy-ry*0.26,rx*0.22,ry*0.14),'rgba(255,255,255,.55)',null); }
 function drawField(f){ switch(f.type){
   case 'football': return football(f.gx,f.gy,f.w,f.d);
   case 'baseball': return baseball(f.gx,f.gy,f.sz);
@@ -468,7 +556,70 @@ function drawField(f){ switch(f.type){
   case 'plaza': return plaza(f.gx,f.gy,f.w,f.d);
   case 'garden': return garden(f.gx,f.gy,f.w,f.d);
   case 'pond': return pond(f.cx,f.cy,f.rx,f.ry);
+  case 'playmat': return playmat(f.gx,f.gy,f.w,f.d);
+  case 'sandbox': return sandbox(f.gx,f.gy,f.w,f.d);
+  case 'pool': return pool(f.cx,f.cy,f.rx,f.ry);
 } }
+// ── thiết bị vui chơi ĐỨNG (screen-space tại điểm chạm đất p, vẽ hướng lên) ──
+function softShadow(px,py,rx,ry){ ctx.fillStyle='rgba(0,0,0,.13)'; ctx.beginPath(); ctx.ellipse(px,py,rx,ry,0,0,7); ctx.fill(); }
+// CẦU TRƯỢT — thang đỏ + sàn xanh + máng vàng cong + mái đỏ
+function slide(px,py){ softShadow(px,py,36,9); const H=60;
+  ctx.fillStyle='#ffd23f'; ctx.strokeStyle='#e9a90c'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(px+15,py-H+4); ctx.quadraticCurveTo(px-20,py-H+12,px-38,py-3);
+  ctx.lineTo(px-30,py-2); ctx.quadraticCurveTo(px-12,py-H+24,px+20,py-H+10); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle='#ff7a59'; ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(px+17,py-H+2); ctx.quadraticCurveTo(px-20,py-H+8,px-40,py-7); ctx.stroke();
+  ctx.fillStyle='#5cc6ff'; rr(px+9,py-H-1,18,6,2); ctx.fill();
+  ctx.strokeStyle='#3aa0e0'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(px+13,py-H+2); ctx.lineTo(px+13,py-2); ctx.moveTo(px+26,py-H+2); ctx.lineTo(px+26,py-2); ctx.stroke();
+  ctx.strokeStyle='#ff5d7a'; ctx.lineWidth=2.4;
+  for(let i=0;i<4;i++){ const yy=py-9-i*12; ctx.beginPath(); ctx.moveTo(px+13,yy); ctx.lineTo(px+26,yy); ctx.stroke(); }
+  ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.moveTo(px+5,py-H-1); ctx.lineTo(px+31,py-H-1); ctx.lineTo(px+18,py-H-16); ctx.closePath(); ctx.fill();
+  ctx.lineCap='butt'; }
+// XÍCH ĐU — 2 khung chữ A + thanh ngang + 2 ghế treo
+function swing(px,py){ softShadow(px,py,40,9); const H=54;
+  ctx.strokeStyle='#16a34a'; ctx.lineWidth=4; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(px-30,py-2); ctx.lineTo(px-6,py-H); ctx.moveTo(px-16,py-2); ctx.lineTo(px-2,py-H);
+  ctx.moveTo(px+30,py-2); ctx.lineTo(px+6,py-H); ctx.moveTo(px+16,py-2); ctx.lineTo(px+2,py-H); ctx.stroke();
+  ctx.strokeStyle='#0e7a36'; ctx.beginPath(); ctx.moveTo(px-9,py-H); ctx.lineTo(px+9,py-H); ctx.stroke();
+  ctx.lineCap='butt';
+  for(const sx of [-8,8]){ ctx.strokeStyle='#9aa0a6'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(px+sx-3,py-H+1); ctx.lineTo(px+sx-3,py-17); ctx.moveTo(px+sx+3,py-H+1); ctx.lineTo(px+sx+3,py-17); ctx.stroke();
+    ctx.fillStyle=sx<0?'#f59e0b':'#ef4444'; rr(px+sx-6,py-17,12,4,2); ctx.fill(); } }
+// BẬP BÊNH — trụ đỏ + ván nghiêng xanh + 2 ghế tròn vàng + tay nắm
+function seesaw(px,py){ softShadow(px,py,40,8);
+  ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.moveTo(px,py-24); ctx.lineTo(px-9,py-2); ctx.lineTo(px+9,py-2); ctx.closePath(); ctx.fill();
+  ctx.save(); ctx.translate(px,py-22); ctx.rotate(-0.17);
+  ctx.fillStyle='#3b82f6'; rr(-40,-4,80,7,3.5); ctx.fill();
+  ctx.fillStyle='#fde047'; ctx.beginPath(); ctx.arc(-36,-5,5.5,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(36,-5,5.5,0,7); ctx.fill();
+  ctx.strokeStyle='#16a34a'; ctx.lineWidth=2.6; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-31,-5); ctx.lineTo(-31,-16); ctx.moveTo(31,-5); ctx.lineTo(31,-16); ctx.stroke(); ctx.lineCap='butt'; ctx.restore(); }
+// ĐU QUAY NGỰA — bệ tròn + cột + mái dù sọc + 2 thú cưỡi
+function carousel(px,py){ softShadow(px,py,44,13);
+  ctx.fillStyle='#bfe3c6'; ctx.strokeStyle='#7cc18a'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(px,py-2,41,13,0,0,7); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle='#aab0b6'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(px,py-8); ctx.lineTo(px,py-56); ctx.stroke();
+  const cols=['#ef4444','#ffffff','#3b82f6','#ffffff','#22c55e','#ffffff','#f59e0b','#ffffff']; const R=36, topY=py-56, baseY=py-34;
+  for(let i=0;i<8;i++){ const a0=i/8*Math.PI*2,a1=(i+1)/8*Math.PI*2; ctx.fillStyle=cols[i];
+    ctx.beginPath(); ctx.moveTo(px,topY); ctx.lineTo(px+R*Math.cos(a0),baseY+8*Math.sin(a0)); ctx.lineTo(px+R*Math.cos(a1),baseY+8*Math.sin(a1)); ctx.closePath(); ctx.fill(); }
+  ctx.strokeStyle='#7cc18a'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.ellipse(px,baseY+4,R,9,0,0,Math.PI); ctx.stroke();
+  ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.arc(px,topY-1,3.5,0,7); ctx.fill();
+  ctx.font='17px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🐴',px-23,py-13); ctx.fillText('🦄',px+23,py-13); }
+// NHÀ CỔ TÍCH — nhà chơi nhỏ: thân vàng + mái hồng + cửa vòm
+function playhouse(px,py){ softShadow(px,py,26,7);
+  ctx.fillStyle='#fff1bf'; ctx.strokeStyle='#e6c46a'; ctx.lineWidth=1.5; rr(px-18,py-30,36,28,3); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#f9a8d4'; ctx.beginPath(); ctx.moveTo(px-23,py-30); ctx.lineTo(px+23,py-30); ctx.lineTo(px,py-50); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#fce7f3'; ctx.beginPath(); ctx.arc(px,py-39,3.4,0,7); ctx.fill();
+  ctx.fillStyle='#8b5e34'; ctx.beginPath(); ctx.moveTo(px-8,py-2); ctx.lineTo(px-8,py-16); ctx.arc(px,py-16,8,Math.PI,0,true); ctx.lineTo(px+8,py-2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#fcd34d'; ctx.beginPath(); ctx.arc(px+4,py-12,1.6,0,7); ctx.fill(); }
+function drawPlay(o){ const p=P(o.gx,o.gy); switch(o.k){
+  case 'slide': return slide(p.x,p.y); case 'swing': return swing(p.x,p.y);
+  case 'seesaw': return seesaw(p.x,p.y); case 'carousel': return carousel(p.x,p.y);
+  case 'playhouse': return playhouse(p.x,p.y); } }
+// con vật / hoa / đồ chơi nhỏ = emoji đứng trên bóng đổ (sort theo độ sâu)
+function critter(px,py,e,scale){ scale=scale||1; softShadow(px,py,8*scale,3*scale);
+  ctx.font=`${Math.round(23*scale)}px serif`; ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.fillText(e,px,py-1); }
 function flagpole(cx,cy){ const p=P(cx,cy); ctx.strokeStyle='#8a8f96'; ctx.lineWidth=2.4;
   ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x,p.y-46); ctx.stroke();
   ctx.fillStyle='#da251d'; ctx.beginPath(); ctx.moveTo(p.x,p.y-46); ctx.lineTo(p.x+22,p.y-40); ctx.lineTo(p.x,p.y-32); ctx.closePath(); ctx.fill();
@@ -519,10 +670,14 @@ function draw(){
   const items=[];
   BUILDINGS.forEach((b,i)=>items.push({d:b.gx+b.gy, b, i, p:P(b.gx,b.gy)}));
   DECOR.forEach(o=>{ if(esprite[o.k]) items.push({d:o.gx+o.gy-0.05, deco:o, p:P(o.gx,o.gy)}); });
+  PLAYS.forEach(o=>items.push({d:o.gx+o.gy, play:o, p:P(o.gx,o.gy)}));
+  CRITTERS.forEach(o=>items.push({d:o.gx+o.gy-0.02, crit:o, p:P(o.gx,o.gy)}));
   items.sort((a,b)=>a.d-b.d);
   const pins=[];
   for(const it of items){
     if(it.deco){ blit(ctx, esprite[it.deco.k], it.p, DS*(BLIT[it.deco.k]||0.8)); continue; }
+    if(it.play){ drawPlay(it.play); continue; }
+    if(it.crit){ critter(it.p.x, it.p.y, it.crit.e, it.crit.s); continue; }
     const sp=bsprite[it.b.id]; if(!sp) continue; const sc=DS*it.b.s; const hl=it.i===hovered;
     shadowAt(it.p, it.b.s);
     if(hl){ ctx.fillStyle='rgba(255,206,84,.5)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5*it.b.s,TH*0.5*it.b.s,0,0,7); ctx.fill(); ctx.filter='brightness(1.13)'; }
