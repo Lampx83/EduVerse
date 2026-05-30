@@ -9,6 +9,8 @@ import { attachAppProxies } from './app-proxy.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
+import { attachUser, makeAuthGate, requireAuth, attachAuth } from './auth.js';
+import { attachOAuth, listEnabledProviders } from './oauth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -106,6 +108,13 @@ function checkAndUnlockBadges(playerName, attempt) {
 const app = express();
 app.disable('x-powered-by');
 
+// Đăng nhập là điều kiện tiên quyết để dùng EduVerse.
+// attachUser luôn gắn req.user (nullable). makeAuthGate redirect HTML chưa login về /login.html
+// và trả 401 cho /api/* (trừ /api/auth/*, /api/health). Phải nằm TRƯỚC attachAppProxies để
+// các app anh em (/scoreup, /codelab, …) cũng được gate trên cùng origin.
+app.use((req, _res, next) => { attachUser(req, _res, next); });
+app.use(makeAuthGate({ basePath: BASE_PATH }));
+
 // Integrated sibling apps — each reverse-proxied under its own sub-path so the
 // whole suite is reachable on EduVerse's single origin (iframe + cookie/auth
 // friendly). Targets are configurable per deployment via *_TARGET env vars;
@@ -150,7 +159,12 @@ r.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'eduverse', port: PORT, basePath: BASE_PATH, time: Date.now() });
 });
 
-r.post('/api/attempts', (req, res) => {
+// Đăng ký / đăng nhập / logout / me
+attachAuth(r);
+// SSO/OAuth providers (Google/Microsoft/GitHub). Chỉ bật những provider có env CLIENT_ID/SECRET.
+attachOAuth(r, { basePath: BASE_PATH });
+
+r.post('/api/attempts', requireAuth, (req, res) => {
   const b = req.body ?? {};
   const version = String(b.version || '');
   if (!isValidVersion(version)) {
@@ -162,8 +176,8 @@ r.post('/api/attempts', (req, res) => {
   if (score === null || correct === null || total === null) {
     return res.status(400).json({ error: 'score, correct, total are required numbers' });
   }
-  const playerName = (typeof b.playerName === 'string' && b.playerName.trim())
-    ? b.playerName.trim().slice(0, 40) : 'Ẩn danh';
+  // playerName lấy từ session — client không thể giả mạo. Không login → 401 ở requireAuth.
+  const playerName = String(req.user.display_name || req.user.username || 'Ẩn danh').slice(0, 60);
   const durationMs = Number.isFinite(b.durationMs) ? Math.floor(b.durationMs) : null;
   const details = b.details != null ? JSON.stringify(b.details).slice(0, 4000) : null;
   const classCode = (typeof b.classCode === 'string' && b.classCode.trim())
@@ -295,7 +309,9 @@ r.get('/api/players/:name/attempts', (req, res) => {
 });
 
 r.get('/api/achievements', (req, res) => {
-  const player = String(req.query.player || '').trim();
+  // Mặc định trả huy hiệu của user đang đăng nhập; cho phép override ?player=
+  // (giáo viên xem học sinh — sau có thể gate theo role).
+  const player = String(req.query.player || req.user?.display_name || '').trim();
   if (!player) return res.status(400).json({ error: 'player required' });
   const rows = getAchievements(player);
   res.json(rows.map(row => ({ ...row, badge: BADGES.find(b => b.id === row.badge_id) })));
@@ -389,4 +405,10 @@ const httpServer = http.createServer(app);
 attachRoom(httpServer, BASE_PATH);
 httpServer.listen(PORT, HOST, () => {
   console.log(`[eduverse] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
+  const oauthList = listEnabledProviders();
+  if (oauthList.length) {
+    console.log(`[oauth] enabled providers: ${oauthList.map(p => p.label).join(', ')}`);
+  } else {
+    console.log('[oauth] no providers configured (set GOOGLE_/MICROSOFT_/GITHUB_CLIENT_ID+SECRET to enable)');
+  }
 });

@@ -38,22 +38,41 @@ export function setPlayerName(name) {
 }
 
 export async function ensurePlayerName() {
+  // Hệ thống yêu cầu đăng nhập — tên hiển thị lấy từ session, đã được lsSet bởi auth.js.
+  // Nếu cache rỗng (mới mở tab khác), fetch /api/auth/me rồi sync; nếu vẫn rỗng → redirect login.
   let name = getPlayerName();
   if (name) return name;
-  name = prompt('Nhập tên của bạn để lưu lên bảng xếp hạng:', '')?.trim() || 'Ẩn danh';
-  setPlayerName(name);
-  return name;
+  try {
+    const r = await fetch('api/auth/me', { credentials: 'same-origin' });
+    if (r.ok) {
+      const data = await r.json();
+      if (data?.user?.display_name) {
+        setPlayerName(data.user.display_name);
+        return data.user.display_name;
+      }
+    }
+  } catch {}
+  const ret = encodeURIComponent(location.pathname + location.search);
+  location.replace('login.html?return=' + ret);
+  return '';
 }
 
 export async function submitAttempt(payload) {
   try {
-    const playerName = getPlayerName() || 'Ẩn danh';
     const classCode = getClassCode() || undefined;
+    // KHÔNG truyền playerName: server lấy từ session (req.user.display_name).
+    // Người dùng chưa đăng nhập → server trả 401, ta đưa về trang login.
     const res = await fetch('api/attempts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, playerName, classCode }),
+      credentials: 'same-origin',
+      body: JSON.stringify({ ...payload, classCode }),
     });
+    if (res.status === 401) {
+      const ret = encodeURIComponent(location.pathname + location.search);
+      location.replace('login.html?return=' + ret);
+      return null;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const result = await res.json();
     if (result.newBadges?.length) showBadgePopup(result.newBadges);

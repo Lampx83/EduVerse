@@ -68,7 +68,50 @@ db.exec(`
     updated_at  INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_requests_domain ON requests(domain, votes DESC, created_at DESC);
+
+  -- Tài khoản người dùng (SV + GV). password_hash dạng scrypt$salt$hash.
+  CREATE TABLE IF NOT EXISTS users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    username      TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    display_name  TEXT    NOT NULL,
+    password_hash TEXT    NOT NULL,
+    role          TEXT    NOT NULL DEFAULT 'student',
+    created_at    INTEGER NOT NULL,
+    last_login    INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+  -- Phiên đăng nhập. Token là chuỗi ngẫu nhiên 32 byte hex (server cấp).
+  CREATE TABLE IF NOT EXISTS sessions (
+    token       TEXT    PRIMARY KEY,
+    user_id     INTEGER NOT NULL,
+    created_at  INTEGER NOT NULL,
+    expires_at  INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+  CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
+  -- OAuth/SSO identities. Một user có thể có nhiều liên kết (Google + MS chẳng hạn).
+  CREATE TABLE IF NOT EXISTS oauth_identities (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    provider    TEXT    NOT NULL,            -- google | microsoft | github | ...
+    subject     TEXT    NOT NULL,            -- 'sub' ổn định do provider cấp
+    email       TEXT,
+    created_at  INTEGER NOT NULL,
+    UNIQUE(provider, subject),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_oauth_user ON oauth_identities(user_id);
 `);
+
+// Step 4: upgrade `users` cho OAuth — email/avatar có thể đến sau khi đã có DB cũ.
+try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN avatar_url TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN age INTEGER`); } catch {}
+// Cho phép password_hash NULL cho user thuần SSO. SQLite không drop được NOT NULL,
+// nhưng ta vẫn cài giá trị '' (empty) khi tạo user SSO — verifyPassword luôn trả false.
 
 // Step 2: add v5 columns to attempts if upgrading from older DB
 try { db.exec(`ALTER TABLE attempts ADD COLUMN class_code TEXT`); } catch {}
@@ -288,6 +331,115 @@ export function getConfusion(version) {
     }
   }
   return { categories: [...categories].sort(), matrix };
+}
+
+// --- Users & sessions ---
+const insertUserStmt = db.prepare(`
+  INSERT INTO users (username, display_name, password_hash, role, age, created_at)
+  VALUES (@username, @display_name, @password_hash, @role, @age, @created_at)
+`);
+const getUserByUsernameStmt = db.prepare(`
+  SELECT id, username, display_name, password_hash, role, age, email, avatar_url, created_at, last_login
+  FROM users WHERE username = ? COLLATE NOCASE
+`);
+const getUserByIdStmt = db.prepare(`
+  SELECT id, username, display_name, role, age, email, avatar_url, created_at, last_login
+  FROM users WHERE id = ?
+`);
+const touchLoginStmt = db.prepare(`UPDATE users SET last_login = @t WHERE id = @id`);
+const updateDisplayNameStmt = db.prepare(`UPDATE users SET display_name = @name WHERE id = @id`);
+
+const insertSessionStmt = db.prepare(`
+  INSERT INTO sessions (token, user_id, created_at, expires_at)
+  VALUES (@token, @user_id, @created_at, @expires_at)
+`);
+const getSessionStmt = db.prepare(`
+  SELECT s.token, s.user_id, s.expires_at,
+         u.username, u.display_name, u.role
+  FROM sessions s JOIN users u ON u.id = s.user_id
+  WHERE s.token = ? AND s.expires_at > @now
+`);
+const deleteSessionStmt = db.prepare(`DELETE FROM sessions WHERE token = ?`);
+const purgeExpiredSessionsStmt = db.prepare(`DELETE FROM sessions WHERE expires_at <= ?`);
+
+const ALLOWED_ROLES = new Set(['pupil', 'student', 'teacher']);
+export function createUser({ username, display_name, password_hash, role, age }) {
+  const info = insertUserStmt.run({
+    username, display_name, password_hash,
+    role: ALLOWED_ROLES.has(role) ? role : 'student',
+    age: Number.isFinite(age) ? Math.floor(age) : null,
+    created_at: Date.now(),
+  });
+  return { id: info.lastInsertRowid };
+}
+export function getUserByUsername(username) {
+  return getUserByUsernameStmt.get(String(username || '').trim()) || null;
+}
+export function getUserById(id) {
+  return getUserByIdStmt.get(Number(id)) || null;
+}
+export function touchLogin(id) {
+  touchLoginStmt.run({ id: Number(id), t: Date.now() });
+}
+export function updateDisplayName(id, name) {
+  updateDisplayNameStmt.run({ id: Number(id), name: String(name).slice(0, 60) });
+}
+export function createSession({ token, user_id, ttlMs }) {
+  const now = Date.now();
+  insertSessionStmt.run({ token, user_id, created_at: now, expires_at: now + ttlMs });
+  return { token, expires_at: now + ttlMs };
+}
+export function getSession(token) {
+  if (!token) return null;
+  return getSessionStmt.get(String(token), { now: Date.now() }) || null;
+}
+export function deleteSession(token) {
+  deleteSessionStmt.run(String(token || ''));
+}
+export function purgeExpiredSessions() {
+  purgeExpiredSessionsStmt.run(Date.now());
+}
+// Quét rác phiên hết hạn mỗi giờ (nhẹ nhàng — bảng nhỏ).
+setInterval(purgeExpiredSessions, 60 * 60 * 1000).unref?.();
+
+// --- OAuth identities ---
+const findOAuthStmt = db.prepare(`
+  SELECT u.id, u.username, u.display_name, u.role, u.email, u.avatar_url,
+         oi.id AS oauth_id, oi.provider, oi.subject
+  FROM oauth_identities oi JOIN users u ON u.id = oi.user_id
+  WHERE oi.provider = ? AND oi.subject = ?
+`);
+const insertOAuthStmt = db.prepare(`
+  INSERT INTO oauth_identities (user_id, provider, subject, email, created_at)
+  VALUES (@user_id, @provider, @subject, @email, @created_at)
+`);
+const updateUserProfileStmt = db.prepare(`
+  UPDATE users SET
+    display_name = COALESCE(@display_name, display_name),
+    email        = COALESCE(@email, email),
+    avatar_url   = COALESCE(@avatar_url, avatar_url)
+  WHERE id = @id
+`);
+const countUsernameStmt = db.prepare(`SELECT COUNT(*) AS n FROM users WHERE username = ? COLLATE NOCASE`);
+
+export function findUserByOAuth(provider, subject) {
+  return findOAuthStmt.get(String(provider), String(subject)) || null;
+}
+export function linkOAuth({ user_id, provider, subject, email }) {
+  insertOAuthStmt.run({
+    user_id, provider, subject,
+    email: email ? String(email).slice(0, 120) : null,
+    created_at: Date.now(),
+  });
+}
+export function updateUserProfile(id, { display_name, email, avatar_url } = {}) {
+  updateUserProfileStmt.run({
+    id, display_name: display_name || null,
+    email: email || null, avatar_url: avatar_url || null,
+  });
+}
+export function isUsernameTaken(username) {
+  return (countUsernameStmt.get(String(username))?.n || 0) > 0;
 }
 
 console.log(`[db] SQLite open at ${dbPath}`);
