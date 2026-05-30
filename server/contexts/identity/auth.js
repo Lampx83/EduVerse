@@ -5,6 +5,7 @@ import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   createUser, getUserByUsername, getUserById, touchLogin, updateDisplayName,
   createSession, getSession, deleteSession,
+  resolveSchoolByEmail, getSchoolByCode,
 } from '../../db.js';
 
 const COOKIE_NAME = 'eduverse_sid';
@@ -72,6 +73,7 @@ export function getCurrentUser(req) {
     username: sess.username,
     display_name: sess.display_name,
     role: sess.role,
+    school_id: sess.school_id,   // cần cho attachTenant (multi-tenant enforcement)
     token: sess.token,
   };
 }
@@ -103,6 +105,8 @@ const PUBLIC_PATH_PREFIXES = [
 ];
 const PUBLIC_PATH_EXACT = new Set([
   '/login.html', '/register.html', '/login', '/register',
+  // SEO: trang công khai crawlable cho Googlebot (xem contexts/seo).
+  '/welcome', '/robots.txt', '/sitemap.xml',
 ]);
 
 function isPublicPath(p) {
@@ -161,16 +165,23 @@ export function attachAuth(r) {
       return res.status(409).json({ error: 'username đã tồn tại' });
     }
 
+    // Phân giải trường (tenant): ưu tiên schoolCode SV nhập → email domain → mặc định 1.
+    const email = String(b.email || '').trim().toLowerCase();
+    const schoolCode = String(b.schoolCode || '').trim();
+    let school_id = 1;
+    if (schoolCode) { school_id = getSchoolByCode(schoolCode)?.id || 1; }
+    else if (email) { school_id = resolveSchoolByEmail(email)?.id || 1; }
+
     const { id } = createUser({
       username, display_name,
       password_hash: hashPassword(password),
-      role, age,
+      role, age, school_id,
     });
     const token = randomBytes(32).toString('hex');
     const { expires_at } = createSession({ token, user_id: id, ttlMs: SESSION_TTL_MS });
     touchLogin(id);
     setSessionCookie(res, token, expires_at);
-    res.json({ ok: true, user: { id, username, display_name, role, age } });
+    res.json({ ok: true, user: { id, username, display_name, role, age, school_id } });
   });
 
   // POST /api/auth/login

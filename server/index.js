@@ -4,13 +4,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats } from './db.js';
 import { attachRoom } from './room.js';
-import { attachAi, aiReviewRequest } from './ai.js';
+import { attachAi } from './ai.js';
+import { reviewAndDecideRequest, getDecisionsForRequest, getRecentDecisions } from './contexts/ai-agent/decisions.js';
 import { attachAppProxies } from './app-proxy.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
 import { attachUser, makeAuthGate, requireAuth, attachAuth } from './contexts/identity/auth.js';
 import { attachOAuth, listEnabledProviders } from './contexts/identity/oauth.js';
+import { attachTenant } from './contexts/identity/tenant.js';
+import { attachSeo } from './contexts/seo/index.js';
 // Payment context — chỉ nạp khi PAYMENT_ENABLED=1 (dynamic import bên dưới) để bảng
 // payment + route KHÔNG xuất hiện ở deployment chưa bật thanh toán.
 const PAYMENT_ENABLED = process.env.PAYMENT_ENABLED === '1';
@@ -117,6 +120,8 @@ app.disable('x-powered-by');
 // các app anh em (/scoreup, /codelab, …) cũng được gate trên cùng origin.
 app.use((req, _res, next) => { attachUser(req, _res, next); });
 app.use(makeAuthGate({ basePath: BASE_PATH }));
+// Gắn req.schoolId (multi-tenant) — SAU attachUser để đọc được user.school_id.
+app.use(attachTenant);
 
 // Integrated sibling apps — each reverse-proxied under its own sub-path so the
 // whole suite is reachable on EduVerse's single origin (iframe + cookie/auth
@@ -162,6 +167,9 @@ r.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'eduverse', port: PORT, basePath: BASE_PATH, time: Date.now() });
 });
 
+// SEO public (robots.txt, sitemap.xml, /welcome) — crawlable, ngoài auth gate.
+attachSeo(r, { basePath: BASE_PATH });
+
 // Đăng ký / đăng nhập / logout / me
 attachAuth(r);
 // SSO/OAuth providers (Google/Microsoft/GitHub). Chỉ bật những provider có env CLIENT_ID/SECRET.
@@ -187,6 +195,7 @@ r.post('/api/attempts', requireAuth, (req, res) => {
     ? b.classCode.trim().slice(0, 16) : null;
   const levelN = Number.isFinite(b.level) ? Math.floor(b.level) : null;
   const result = insertAttempt({
+    school_id: req.schoolId,
     version, player_name: playerName, score, correct, total,
     duration_ms: durationMs, details, created_at: Date.now(),
     class_code: classCode, level_n: levelN,
@@ -199,24 +208,24 @@ r.get('/api/leaderboard', (req, res) => {
   const version = String(req.query.version || '');
   if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
-  res.json(getLeaderboard(version, limit));
+  res.json(getLeaderboard(version, limit, req.schoolId));
 });
 
 r.get('/api/stats', (req, res) => {
   const version = String(req.query.version || '');
   if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
-  res.json(getStats(version));
+  res.json(getStats(version, req.schoolId));
 });
 
 r.get('/api/recent', (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
-  res.json(getRecent(limit));
+  res.json(getRecent(limit, req.schoolId));
 });
 
 r.get('/api/histogram', (req, res) => {
   const version = String(req.query.version || '');
   if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
-  res.json(getHistogram(version));
+  res.json(getHistogram(version, req.schoolId));
 });
 
 r.get('/api/confusion', (req, res) => {
@@ -276,11 +285,11 @@ r.post('/api/classes', (req, res) => {
     if (!getClassByCode(c)) { code = c; break; }
   }
   if (!code) return res.status(500).json({ error: 'could not generate code' });
-  const result = createClass({ code, name, teacher_name: teacherName });
+  const result = createClass({ code, name, teacher_name: teacherName, school_id: req.schoolId });
   res.json({ id: result.id, code, name, teacherName });
 });
 
-r.get('/api/classes', (_req, res) => res.json(listClasses()));
+r.get('/api/classes', (req, res) => res.json(listClasses(req.schoolId)));
 
 r.get('/api/classes/:code', (req, res) => {
   const cls = getClassByCode(req.params.code);
@@ -337,22 +346,26 @@ r.post('/api/requests', (req, res) => {
   if (!domain) return res.status(400).json({ error: 'domain required' });
   if (title.length < 4) return res.status(400).json({ error: 'title quá ngắn (≥4 ký tự)' });
   const row = createRequest({
+    school_id: req.schoolId,
     domain, type: b.type, title, detail: b.detail, student: b.student,
   });
   res.json({ ok: true, ...row });
 
-  // Ban điều hành AI xem xét ngay (nền, không chặn response). Cập nhật
-  // admin_note + status khi xong; client tự reload để thấy phản hồi.
-  aiReviewRequest({ domain, type: b.type, title, detail: b.detail })
-    .then(r => setRequestStatus(row.id, r.status, r.note))
-    .catch(err => console.warn('[requests] AI review failed:', err?.message || err));
+  // Ban điều hành AI tự QUYẾT ĐỊNH ngay (nền, không chặn response): approve /
+  // reject / defer / priority kèm lý do, ghi audit trail vào ai_decisions, rồi
+  // áp dụng vào status request. Client reload để thấy phản hồi.
+  reviewAndDecideRequest({
+    requestId: row.id, schoolId: req.schoolId,
+    domain, type: b.type, title, detail: b.detail,
+    votes: 1, student: b.student,
+  }).catch(err => console.warn('[requests] AI decision failed:', err?.message || err));
 });
 
 r.get('/api/requests', (req, res) => {
   const domain = String(req.query.domain || '').trim();
   if (!domain) return res.status(400).json({ error: 'domain required' });
   const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
-  res.json({ items: listRequests(domain, limit), stats: getRequestStats(domain) });
+  res.json({ items: listRequests(domain, limit, req.schoolId), stats: getRequestStats(domain, req.schoolId) });
 });
 
 r.post('/api/requests/:id/vote', (req, res) => {
@@ -365,6 +378,16 @@ r.post('/api/requests/:id/status', (req, res) => {
   const b = req.body ?? {};
   const ok = setRequestStatus(req.params.id, String(b.status || ''), b.note);
   res.json({ ok });
+});
+
+// Audit trail quyết định của AI Agent cho 1 góp ý (minh bạch + cho phép xem lại).
+r.get('/api/requests/:id/decisions', (req, res) => {
+  res.json({ decisions: getDecisionsForRequest(req.params.id) });
+});
+// Bảng quyết định AI gần đây của trường (cho dashboard "Ban điều hành AI").
+r.get('/api/ai-decisions', (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+  res.json({ decisions: getRecentDecisions(req.schoolId, limit) });
 });
 
 r.get('/api/export.csv', (_req, res) => {
