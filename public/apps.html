@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🔌 Ứng dụng tích hợp · EduVerse</title>
+<style>
+  :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#38bdf8; --card:rgba(255,255,255,.05);
+    --border:rgba(255,255,255,.12); --muted:#94a3b8; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; font-family:'Inter',system-ui,sans-serif; color:#e5edf7;
+    background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(56,189,248,.16), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2)); }
+  body { display:flex; flex-direction:column; min-height:100vh; }
+  a { color:inherit; }
+  .top { display:flex; align-items:center; gap:14px; padding:12px 18px; border-bottom:1px solid var(--border);
+    background:rgba(0,0,0,.25); position:sticky; top:0; z-index:5; }
+  .top .home { color:#fff; text-decoration:none; opacity:.85; font-size:13.5px; background:rgba(255,255,255,.08);
+    padding:7px 12px; border-radius:9px; }
+  .top .home:hover { opacity:1; background:rgba(255,255,255,.16); }
+  .top h1 { margin:0; font-size:17px; font-weight:800; }
+  .top h1 .dim { opacity:.55; font-weight:600; font-size:13.5px; }
+  .top .right { margin-left:auto; display:flex; gap:10px; align-items:center; }
+  .top .right a { font-size:13px; text-decoration:none; opacity:.8; }
+  .top .right a:hover { opacity:1; }
+
+  /* ---- grid view ---- */
+  .wrap { max-width:1040px; margin:0 auto; padding:30px 20px 48px; width:100%; }
+  .lead { font-size:14.5px; color:var(--muted); line-height:1.6; max-width:680px; margin:0 0 26px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px; }
+  .app { display:flex; flex-direction:column; background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:20px; text-decoration:none; transition:transform .12s, border-color .12s, background .12s;
+    border-top:3px solid var(--c); }
+  .app:hover { transform:translateY(-3px); border-color:var(--c); background:rgba(255,255,255,.08); }
+  .app .ico { font-size:34px; line-height:1; margin-bottom:12px; }
+  .app h3 { margin:0 0 4px; font-size:18px; }
+  .app .tag { font-size:12.5px; font-weight:700; color:var(--c); margin-bottom:10px; }
+  .app p { margin:0 0 14px; font-size:13px; color:var(--muted); line-height:1.55; flex:1; }
+  .app .go { font-size:13px; font-weight:700; color:var(--c); }
+  .app .badge { display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px;
+    padding:2px 8px; border-radius:7px; background:rgba(255,255,255,.08); color:var(--muted); margin-left:8px; }
+
+  /* ---- embed view ---- */
+  body.embed #root { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+  .embedbar { display:flex; align-items:center; gap:12px; padding:9px 18px; border-bottom:1px solid var(--border);
+    background:rgba(0,0,0,.18); font-size:13px; flex:none; }
+  .embedbar .nm { font-weight:700; }
+  .embedbar .nm .ico { margin-right:7px; }
+  .embedbar .sp { margin-left:auto; display:flex; gap:14px; }
+  .embedbar a { text-decoration:none; opacity:.82; }
+  .embedbar a:hover { opacity:1; }
+  iframe.app-frame { flex:1; width:100%; border:0; background:#fff; min-height:0; }
+  .hint { padding:9px 18px; font-size:12px; color:var(--muted); background:rgba(0,0,0,.12); border-bottom:1px solid var(--border); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+  // Catalog + URL công khai khai trong public/js/integrations.js (1 nguồn dữ liệu
+  // dùng chung cả apps.html và khối "Ứng dụng" trên trang chủ).
+  import { INTEGRATIONS as APPS } from './js/integrations.js';
+
+  const params = new URLSearchParams(location.search);
+  const active = APPS.find(a => a.id === params.get('app'));
+  const root = document.getElementById('root');
+
+  if (active) renderEmbed(active);
+  else renderGrid();
+
+  function renderGrid() {
+    document.body.style.display = 'block';
+    root.innerHTML = `
+      <div class="top">
+        <a class="home" href="index.html">← EduVerse</a>
+        <h1>🔌 Ứng dụng tích hợp <span class="dim">· EduVerse</span></h1>
+      </div>
+      <div class="wrap">
+        <p class="lead">Các hệ thống đồng hành được nhúng thẳng vào EduVerse qua cùng một origin.
+          Mỗi ứng dụng mở trong khung nhúng có thanh điều hướng quay lại. Nếu một ứng dụng chưa chạy,
+          bạn sẽ thấy hướng dẫn khởi động ngay trong khung.</p>
+        <div class="grid">
+          ${APPS.map(a => `
+            <a class="app" style="--c:${a.color}" href="?app=${a.id}">
+              <div class="ico">${a.icon}</div>
+              <h3>${a.name}</h3>
+              <div class="tag">${a.tag}</div>
+              <p>${a.desc}</p>
+              <div class="go">Mở ứng dụng →</div>
+            </a>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function renderEmbed(a) {
+    document.title = `${a.icon} ${a.name} · EduVerse`;
+    document.body.classList.add('embed');
+    const src = a.url || a.path;   // URL công khai nếu có, ngược lại proxy cùng origin
+    root.innerHTML = `
+      <div class="embedbar">
+        <a class="home" href="apps.html" style="text-decoration:none;background:rgba(255,255,255,.08);padding:6px 11px;border-radius:8px">← Ứng dụng</a>
+        <span class="nm" style="color:${a.color}"><span class="ico">${a.icon}</span>${a.name}</span>
+        <span style="opacity:.6">${a.tag}</span>
+        <span class="sp">
+          <a href="index.html">🏠 EduVerse</a>
+          <a href="${src}" target="_blank" rel="noopener">↗ Mở tab mới</a>
+        </span>
+      </div>
+      <iframe class="app-frame" src="${src}"
+        allow="camera; microphone; clipboard-read; clipboard-write; fullscreen; autoplay"
+        referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+  }
+</script>
+<script src="./js/pwa-register.js" defer></script>
+<script src="./js/tutor-floating.js" data-domain="general" defer></script>
+</body>
+</html>

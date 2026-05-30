@@ -1,0 +1,32 @@
+{
+  "name": "EduVerse · Vũ trụ giáo dục",
+  "short_name": "EduVerse",
+  "description": "Hub học tập đa cấp Dược/Y/CNTT theo GDPT 2018 — học mọi lúc, kể cả khi mất mạng.",
+  "lang": "vi",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#fbbf24",
+  "background_color": "#0f172a",
+  "categories": ["education", "productivity", "games"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22%3E%3Crect width=%22192%22 height=%22192%22 rx=%2236%22 fill=%22%230f172a%22/%3E%3Ctext x=%2296%22 y=%22124%22 font-size=%22112%22 text-anchor=%22middle%22%3E%F0%9F%8C%8C%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%2296%22 fill=%22%230f172a%22/%3E%3Ctext x=%22256%22 y=%22336%22 font-size=%22300%22 text-anchor=%22middle%22%3E%F0%9F%8C%8C%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Vào lớp học", "url": "./school.html", "icons": [{ "src": "data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22%3E%3Ctext x=%2248%22 y=%2272%22 font-size=%2272%22 text-anchor=%22middle%22%3E%F0%9F%8F%AB%3C/text%3E%3C/svg%3E", "sizes": "96x96", "type": "image/svg+xml" }] },
+    { "name": "Bảng giáo viên", "url": "./teacher.html", "icons": [{ "src": "data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22%3E%3Ctext x=%2248%22 y=%2272%22 font-size=%2272%22 text-anchor=%22middle%22%3E%F0%9F%91%A9%E2%80%8D%F0%9F%8F%AB%3C/text%3E%3C/svg%3E", "sizes": "96x96", "type": "image/svg+xml" }] },
+    { "name": "Cast trình chiếu", "url": "./cast.html", "icons": [{ "src": "data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22%3E%3Ctext x=%2248%22 y=%2272%22 font-size=%2272%22 text-anchor=%22middle%22%3E%F0%9F%93%BA%3C/text%3E%3C/svg%3E", "sizes": "96x96", "type": "image/svg+xml" }] }
+  ]
+}

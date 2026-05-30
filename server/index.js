@@ -5,7 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi, aiReviewRequest } from './ai.js';
-import { attachSegueProxy } from './segue-proxy.js';
+import { attachAppProxies } from './app-proxy.js';
+import { attachAssets } from './assets.js';
+import { attachAdaptive } from './adaptive.js';
+import { attachLessons } from './lessons.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -103,12 +106,38 @@ function checkAndUnlockBadges(playerName, attempt) {
 const app = express();
 app.disable('x-powered-by');
 
-// Reverse-proxy the embedded Pharmacy-AI (Next.js) app at <BASE_PATH>/segue.
-// MUST come before express.json so POST bodies stream through untouched.
-// SEGUE_PUBLIC_PATH = Next's built basePath; set it (e.g. /ps/segue) only when a
-// front proxy strips a prefix this app doesn't see — otherwise defaults to mount.
-const SEGUE_MOUNT = `${BASE_PATH}/segue`;
-attachSegueProxy(app, SEGUE_MOUNT, process.env.SEGUE_PUBLIC_PATH || SEGUE_MOUNT);
+// Integrated sibling apps — each reverse-proxied under its own sub-path so the
+// whole suite is reachable on EduVerse's single origin (iframe + cookie/auth
+// friendly). Targets are configurable per deployment via *_TARGET env vars;
+// *_PUBLIC_PATH only when the upstream was built with a basePath != its mount.
+// Apps that aren't running degrade to a graceful "chưa chạy" page. Surfaced to
+// users via public/apps.html. MUST stay before express.json (stream POST bodies).
+attachAppProxies(app, [
+  {
+    id: 'scoreup', label: 'ScoreUp', mount: `${BASE_PATH}/scoreup`,
+    target: process.env.SCOREUP_TARGET || 'http://127.0.0.1:3000',
+    publicPath: process.env.SCOREUP_PUBLIC_PATH || undefined,
+    startHint: 'cd ScoreUp && ./scripts/dev.sh up',
+  },
+  {
+    id: 'codelab', label: 'Codelab (NEU OJ)', mount: `${BASE_PATH}/codelab`,
+    target: process.env.CODELAB_TARGET || 'http://127.0.0.1:8024',
+    publicPath: process.env.CODELAB_PUBLIC_PATH || undefined,
+    startHint: 'cd Codelab && docker compose up -d',
+  },
+  {
+    id: 'smartdoc', label: 'Smartdoc', mount: `${BASE_PATH}/smartdoc`,
+    target: process.env.SMARTDOC_TARGET || 'http://127.0.0.1:8017',
+    publicPath: process.env.SMARTDOC_PUBLIC_PATH || undefined,
+    startHint: 'cd Smartdoc && docker compose up -d',
+  },
+  {
+    id: 'feedback', label: 'FeedBackMe', mount: `${BASE_PATH}/feedback`,
+    target: process.env.FEEDBACK_TARGET || 'http://127.0.0.1:3300',
+    publicPath: process.env.FEEDBACK_PUBLIC_PATH || undefined,
+    startHint: 'cd FeedBackMe && pnpm db:up && pnpm dev',
+  },
+].map((c) => ({ ...c, publicPath: c.publicPath || c.mount, backHref: `${BASE_PATH || ''}/apps.html` })));
 
 app.use(express.json({ limit: '64kb' }));
 
@@ -182,9 +211,24 @@ r.get('/api/confusion', (req, res) => {
 r.get('/api/badges', (_req, res) => res.json(BADGES));
 
 // ============================================================
-// AI TUTOR — Claude API endpoints (grade-soap, patient-turn, evaluate-roleplay)
+// AI TUTOR — Claude API endpoints (grade-soap, patient-turn, evaluate-roleplay, tutor-chat)
 // ============================================================
 attachAi(r);
+
+// ============================================================
+// ASSET LIBRARY (GAP 4) — quét tự động 3D model, trả JSON catalogue
+// ============================================================
+attachAssets(r, PUBLIC_DIR);
+
+// ============================================================
+// ADAPTIVE QUIZ (GAP 11) — BKT-lite + Limio passthrough
+// ============================================================
+attachAdaptive(r);
+
+// ============================================================
+// LESSON BUILDER + MARKETPLACE (GAP 3 + 5)
+// ============================================================
+attachLessons(r);
 
 // ============================================================
 // CLASS MANAGEMENT

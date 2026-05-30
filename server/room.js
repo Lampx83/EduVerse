@@ -3,6 +3,7 @@
 // players send cursor updates + grab/move/release/snap requests.
 
 import { WebSocketServer } from 'ws';
+import { attachOrchestration } from './orchestration.js';
 
 const ROOM_MEDICINES = [
   { id: 'amox', name: 'AMOXICILLIN', category: 'Kháng sinh', color: '#43a047', dose: '500mg', form: 'Viên nang' },
@@ -324,6 +325,7 @@ export function attachRoom(httpServer, basePath = '') {
   const raceWss = attachRaceWS(httpServer, basePath);
   const sackyWss = attachSackyMetaWS(httpServer, basePath);
   const labWss = attachLabWS(httpServer, basePath);
+  const orchestrate = attachOrchestration(httpServer, basePath);
   const wss = new WebSocketServer({ noServer: true });
   const players = new Map();   // id → { id, ws, name, color, cursor }
   let state = freshState();
@@ -468,6 +470,8 @@ export function attachRoom(httpServer, basePath = '') {
       sackyWss.handleUpgrade(req, socket, head, (ws) => sackyWss.emit('connection', ws, req));
     } else if (pathname === LAB_PATH) {
       labWss.handleUpgrade(req, socket, head, (ws) => labWss.emit('connection', ws, req));
+    } else if (pathname === orchestrate.PATH) {
+      orchestrate.wss.handleUpgrade(req, socket, head, (ws) => orchestrate.wss.emit('connection', ws, req));
     } else {
       socket.destroy();
     }

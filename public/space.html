@@ -107,6 +107,60 @@
   .mcq .mcq-o.wrong { background:rgba(239,68,68,.28); border-color:#ef4444; }
   .mcq .mcq-fb { font-size:13px; margin-top:8px; padding:10px 13px; border-radius:9px; background:rgba(251,191,36,.12); border-left:3px solid var(--accent); display:none; }
   .mcq .mcq-fb.show { display:block; }
+  /* ===== Interactive practice widgets ===== */
+  .pr { background:rgba(124,92,246,.09); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin:6px 0 16px; }
+  .pr-h { font-weight:800; font-size:14px; margin-bottom:4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .pr-badge { font-size:9.5px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; background:var(--accent); color:#1f1147; padding:2px 8px; border-radius:7px; }
+  .pr-sub { font-size:12.5px; opacity:.82; margin-bottom:10px; line-height:1.5; }
+  .pr-msg { font-size:13px; margin-top:10px; min-height:18px; font-weight:700; }
+  .pr-msg.ok { color:#34d399; } .pr-msg.bad { color:#fca5a5; }
+  .pr-btn { background:var(--accent); border:none; color:#1f1147; font-weight:800; padding:8px 15px; border-radius:9px; cursor:pointer; font-family:inherit; font-size:13px; }
+  .pr-btn:hover { filter:brightness(1.08); }
+  .pr-btn.ghost { background:rgba(255,255,255,.1); color:#fff; }
+  .pr-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .seg { display:inline-flex; gap:4px; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:10px; padding:4px; }
+  .seg button { background:transparent; border:none; color:#fff; font-family:inherit; font-weight:700; font-size:13px; padding:6px 12px; border-radius:7px; cursor:pointer; }
+  .seg button.on { background:var(--accent); color:#1f1147; }
+  /* piano */
+  .piano { display:flex; gap:4px; margin:2px 0 10px; }
+  .pk { flex:1; min-width:0; height:90px; border-radius:0 0 8px 8px; border:1px solid rgba(0,0,0,.3); background:linear-gradient(#fff,#e8eaf0); color:#1f2937; font-weight:800; font-size:12px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:9px; cursor:pointer; user-select:none; transition:background .07s,transform .07s; }
+  .pk:hover { background:linear-gradient(#fff,#d6dae6); }
+  .pk.down { background:linear-gradient(var(--accent),#fff); transform:translateY(2px); }
+  .pk.target { box-shadow:inset 0 0 0 3px var(--accent); }
+  /* rhythm */
+  .beats { display:flex; gap:10px; margin:10px 0; justify-content:center; }
+  .beat { width:40px; height:40px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-weight:800; opacity:.45; transition:.08s; }
+  .beat.strong { border-color:var(--accent); border-width:3px; }
+  .beat.on { opacity:1; background:var(--accent); color:#1f1147; transform:scale(1.15); }
+  .tap-pad { width:100%; padding:18px; border-radius:12px; border:2px dashed var(--border); background:rgba(255,255,255,.04); font-weight:800; cursor:pointer; text-align:center; margin-top:8px; color:#fff; font-family:inherit; font-size:14px; }
+  .tap-pad:active { background:rgba(255,255,255,.14); }
+  /* mixer */
+  .mix-prim { display:flex; gap:8px; margin:4px 0 10px; }
+  .mix-c { flex:1; height:48px; border-radius:10px; border:2px solid transparent; cursor:pointer; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .mix-c.sel { border-color:#fff; box-shadow:0 0 0 2px var(--accent); }
+  .mix-out { height:66px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; border:1px solid var(--border); color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.6); font-size:15px; }
+  /* draw */
+  .draw-c { width:100%; height:230px; background:#fff; border-radius:12px; border:1px solid var(--border); touch-action:none; cursor:crosshair; display:block; }
+  .draw-tools { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+  .sw { width:27px; height:27px; border-radius:50%; border:2px solid rgba(255,255,255,.3); cursor:pointer; padding:0; }
+  .sw.sel { border-color:#fff; transform:scale(1.14); }
+  .brush { min-width:30px; height:28px; padding:0 7px; border-radius:7px; background:rgba(255,255,255,.1); border:1px solid var(--border); color:#fff; cursor:pointer; font-family:inherit; font-weight:700; font-size:12px; }
+  .brush.sel { background:var(--accent); color:#1f1147; }
+  /* order */
+  .ord-list { display:flex; flex-direction:column; gap:8px; margin:4px 0 10px; }
+  .ord-it { display:flex; align-items:center; gap:11px; text-align:left; width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); color:#fff; padding:11px 13px; border-radius:10px; cursor:pointer; font-family:inherit; font-size:13.5px; }
+  .ord-it:hover { background:rgba(255,255,255,.1); }
+  .ord-it .num { width:25px; height:25px; flex-shrink:0; border-radius:50%; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; }
+  .ord-it.picked .num { background:var(--accent); color:#1f1147; }
+  .ord-it.correct { background:rgba(16,185,129,.22); border-color:#10b981; }
+  .ord-it.wrong { background:rgba(239,68,68,.2); border-color:#ef4444; }
+  /* match */
+  .match-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:4px 0 10px; }
+  .mt { text-align:left; background:rgba(255,255,255,.05); border:1px solid var(--border); color:#fff; padding:10px 12px; border-radius:10px; cursor:pointer; font-family:inherit; font-size:13px; }
+  .mt:hover { background:rgba(255,255,255,.1); }
+  .mt.sel { border-color:var(--accent); background:rgba(124,92,246,.2); }
+  .mt.done { background:rgba(16,185,129,.2); border-color:#10b981; opacity:.65; cursor:default; pointer-events:none; }
+  .mt.bad { background:rgba(239,68,68,.25); border-color:#ef4444; }
 </style>
 <script src="/js/spaces-highschool.js" charset="utf-8"></script>
 </head>
@@ -122,11 +176,7 @@
 const SPACES_PHARMACY = {
   admin:{emoji:'⚙️',name:'Hành chính – Hiệu bộ',accent:'#94a3b8',intro:'Trung tâm điều hành & thông tin của Trường Dược: theo dõi tiến độ, tiếp nhận yêu cầu cải tiến, tìm hiểu về trường.',
     rooms:[{ic:'📊',name:'Bảng điều khiển',rd:'Thống kê tiến độ học tập, phổ điểm, huy hiệu.',href:'/dashboard.html'},
-      {ic:'🛎️',name:'Phòng tiếp nhận yêu cầu',rd:'Gửi đề xuất để trường (AI) cải tiến.',panel:[
-        {h:'Ban điều hành AI'},
-        {p:'Đây là nơi sinh viên gửi yêu cầu/đề xuất cải tiến môn học và hoạt động thực hành.'},
-        {ul:['Đề xuất thêm bài thực hành / ca lâm sàng','Báo lỗi nội dung hoặc góp ý giao diện','Xin mở thêm chủ đề muốn học']},
-        {note:'Ban điều hành AI tiếp nhận mỗi ngày & cập nhật nội dung. Vào mục "Ban điều hành AI" ở trang trường để gửi.'}]},
+      {ic:'🏛️',name:'Ban điều hành AI',rd:'Gửi đề xuất để trường (AI) cải tiến & bình chọn.',board:true},
       {ic:'📜',name:'Sảnh giới thiệu',rd:'Cơ cấu & chương trình đào tạo Dược.',panel:[
         {h:'Chương trình đào tạo Dược sĩ đại học'},
         {p:'Đào tạo 5 năm theo Dược điển Việt Nam (Bộ Y tế ban hành).'},
@@ -613,6 +663,7 @@ const SPACES_SECONDARY = {
 
   grade9:{emoji:'9️⃣',name:'Khối lớp 9',accent:'#fb7185',intro:'Lớp 9 — năm cuối cấp, tăng tốc ôn thi vào lớp 10. Học chắc Toán, Ngữ văn & lập kế hoạch ôn tập.',
     rooms:[{ic:'📐',name:'Toán 9 — Luyện tập',rd:'Căn bậc hai, hệ phương trình, đường tròn.',href:'/module.html?domain=secondary&module=S9'},
+      {ic:'📈',name:'Đồ thị hàm số bậc nhất (tương tác)',rd:'Vẽ y=ax+b: kéo hệ số góc, xem đồng biến/nghịch biến & giao trục.',href:'/grapher.html?domain=secondary&type=linear'},
       {ic:'📖',name:'Ngữ văn 9 — Luyện tập',rd:'Truyện Kiều, thơ hiện đại, nghĩa hàm ý.',href:'/module.html?domain=secondary&module=SV9'},
       {ic:'🎯',name:'Kế hoạch ôn thi vào 10',rd:'Tự lập lộ trình ôn tập.',panel:[
         {h:'Lộ trình ôn thi tuyển sinh lớp 10'},
@@ -665,6 +716,7 @@ const SPACES_SECONDARY = {
       {ic:'🧩',name:'Thuật toán & Scratch',rd:'Tư duy giải quyết vấn đề.',panel:[
         {h:'Thuật toán là gì?'},
         {ol:['Xác định bài toán: đầu vào – đầu ra','Liệt kê các bước thực hiện theo thứ tự','Dùng cấu trúc tuần tự, rẽ nhánh (nếu…thì), lặp','Kiểm thử & sửa lỗi (debug)']},
+        {order:{title:'Sắp xếp 4 bước xây dựng thuật toán',items:['Xác định bài toán: đầu vào – đầu ra','Liệt kê các bước thực hiện theo thứ tự','Dùng cấu trúc tuần tự, rẽ nhánh (nếu…thì), lặp','Kiểm thử & sửa lỗi (debug)']}},
         {mcq:[{q:'"Nếu trời mưa thì mang ô" là cấu trúc?',o:['Rẽ nhánh (điều kiện)','Lặp','Tuần tự thuần tuý','Không phải thuật toán'],a:0,fb:'Cấu trúc rẽ nhánh: thực hiện hành động dựa trên một điều kiện đúng/sai.'}]}]},
       {ic:'🌐',name:'Tư duy số',rd:'Thông tin đáng tin & bản quyền.',panel:[
         {ul:['Kiểm chứng thông tin từ nhiều nguồn trước khi tin & chia sẻ','Tôn trọng bản quyền: ghi nguồn, không sao chép trái phép','Cân bằng thời gian dùng thiết bị, bảo vệ mắt & sức khoẻ']},
@@ -694,22 +746,24 @@ const SPACES_SECONDARY = {
       {q:'Chọn câu bị động đúng của "She writes a letter."',o:['A letter is written by her.','A letter writes by her.','A letter is write by her.','She is written a letter.'],a:0},
       {q:'"environment" nghĩa là?',o:['môi trường','phương tiện','sở thích','kì nghỉ'],a:0}]},
 
-  artmusic:{emoji:'🎨',name:'Phòng Nghệ thuật',accent:'#f472b6',intro:'Phòng Âm nhạc & Mỹ thuật: cảm thụ cái đẹp, học nhạc lí cơ bản và thực hành sáng tạo.',
-    rooms:[{ic:'🎵',name:'Âm nhạc',rd:'Nhạc lí cơ bản & hát.',panel:[
+  artmusic:{emoji:'🎨',name:'Phòng Nghệ thuật',accent:'#f472b6',intro:'Phòng Âm nhạc & Mỹ thuật: học nhạc lí qua đàn phím & nhịp gõ, thực hành pha màu và vẽ tự do.',
+    rooms:[{ic:'🎵',name:'Âm nhạc',rd:'Chơi đàn, gõ nhịp & nhạc lí.',panel:[
         {h:'Kiến thức âm nhạc nền tảng'},
-        {ul:['7 nốt nhạc cơ bản: Đồ – Rê – Mi – Fa – Son – La – Si','Nhịp 2/4, 3/4, 4/4 cho biết số phách trong mỗi ô nhịp','Hát đúng cao độ, trường độ và rõ lời']},
+        {ul:['7 nốt cơ bản: Đồ – Rê – Mi – Fa – Son – La – Si – Đố','Khuông nhạc có 5 dòng kẻ song song và 4 khe','Số nhịp 2/4, 3/4, 4/4 cho biết số phách trong một ô nhịp']},
+        {piano:true},
+        {rhythm:true},
+        {match:{title:'Nối tên nốt tiếng Việt với kí hiệu quốc tế',pairs:[['Đồ','C'],['Rê','D'],['Mi','E'],['Fa','F'],['Son','G'],['La','A'],['Si','B']]}},
         {mcq:[{q:'Khuông nhạc có mấy dòng kẻ chính?',o:['5 dòng','4 dòng','7 dòng','3 dòng'],a:0,fb:'Khuông nhạc gồm 5 dòng kẻ song song và 4 khe để ghi nốt.'}]}]},
-      {ic:'🖌️',name:'Mỹ thuật',rd:'Màu sắc, bố cục, tạo hình.',panel:[
-        {h:'Nguyên lí tạo hình'},
-        {cards:[{ic:'🔴',t:'Màu cơ bản',d:'Đỏ, vàng, lam — pha ra các màu khác.'},
-          {ic:'🌈',t:'Màu bổ túc',d:'Cặp màu đối nhau làm nổi bật nhau.'},
-          {ic:'⬛',t:'Đậm – nhạt',d:'Sắc độ tạo khối và chiều sâu.'},
-          {ic:'🧭',t:'Bố cục',d:'Sắp xếp mảng chính – phụ cân đối.'}]},
-        {note:'Đỏ + vàng = cam; lam + vàng = lục; đỏ + lam = tím.'}]},
-      {ic:'👀',name:'Cảm thụ nghệ thuật',rd:'Thưởng thức & nêu cảm nhận.',panel:[
-        {ul:['Quan sát kĩ tác phẩm: chủ đề, màu sắc, đường nét','Nêu cảm xúc & lí do mình thích/không thích','Tôn trọng sự sáng tạo và khác biệt của mỗi người']},
-        {note:'Không có cảm nhận "sai" — quan trọng là biết quan sát và diễn đạt.'}]}],
-    skills:['Cảm thụ thẩm mỹ','Thực hành sáng tạo'],
+      {ic:'🖌️',name:'Mỹ thuật',rd:'Pha màu & vẽ tự do.',panel:[
+        {h:'Nguyên lí màu sắc'},
+        {ul:['3 màu cơ bản: Đỏ – Vàng – Lam (không pha từ màu khác)','Pha 2 màu cơ bản tạo ra màu thứ cấp: Cam, Lục, Tím','Đậm – nhạt tạo khối và chiều sâu cho tác phẩm']},
+        {mixer:true},
+        {draw:true}]},
+      {ic:'👀',name:'Cảm thụ nghệ thuật',rd:'Quan sát & cảm nhận tác phẩm.',panel:[
+        {h:'Cách quan sát một tác phẩm'},
+        {order:{title:'Sắp xếp 4 bước quan sát một tác phẩm nghệ thuật',items:['Quan sát tổng thể: chủ đề, bố cục, không khí chung','Phân tích chi tiết: màu sắc, đường nét, sắc độ','Cảm nhận cảm xúc tác phẩm gợi lên trong em','Diễn đạt cảm nhận bằng lời của chính em']}},
+        {note:'Không có cảm nhận "sai" — quan trọng là biết quan sát kĩ và diễn đạt được suy nghĩ riêng.'}]}],
+    skills:['Chơi đàn cơ bản','Cảm thụ thẩm mỹ','Pha màu & vẽ tự do'],
     quiz:[{q:'Ba màu cơ bản là?',o:['Đỏ, vàng, lam','Đỏ, lục, lam','Cam, tím, lục','Đen, trắng, xám'],a:0},
       {q:'Nhịp 4/4 có mấy phách trong một ô nhịp?',o:['4 phách','2 phách','3 phách','1 phách'],a:0},
       {q:'Pha màu vàng với lam được màu?',o:['Lục (xanh lá)','Cam','Tím','Nâu'],a:0}]},
@@ -720,11 +774,7 @@ const SPACES_SECONDARY = {
         {h:'Nội quy cơ bản của học sinh THCS'},
         {check:['Đi học đúng giờ, mặc đồng phục đúng quy định','Lễ phép với thầy cô, hoà nhã với bạn bè','Giữ gìn vệ sinh trường lớp, bảo vệ của công','Học bài & làm bài đầy đủ trước khi đến lớp','Không sử dụng điện thoại sai quy định trong giờ học']},
         {note:'Thực hiện tốt nội quy giúp lớp học kỉ luật, thân thiện và an toàn.'}]},
-      {ic:'🛎️',name:'Gửi ý kiến – đề xuất',rd:'Đề xuất cải tiến cho nhà trường.',panel:[
-        {h:'Hộp thư góp ý'},
-        {p:'Đây là nơi học sinh gửi ý kiến, đề xuất hoạt động hoặc báo lỗi nội dung học tập.'},
-        {ul:['Đề xuất chủ đề/bài học muốn học thêm','Góp ý hoạt động phong trào, câu lạc bộ','Báo lỗi nội dung hoặc giao diện']},
-        {note:'Vào mục "Ban điều hành AI" ở trang trường để gửi đề xuất — nhà trường tiếp nhận mỗi ngày.'}]},
+      {ic:'🏛️',name:'Ban điều hành AI',rd:'Đề xuất cải tiến cho nhà trường & bình chọn.',board:true},
       {ic:'🗺️',name:'Sơ đồ trường',rd:'Các khu trong khuôn viên.',panel:[
         {h:'Khuôn viên Trường THCS'},
         {ul:['Dãy phòng học theo khối lớp 6 – 7 – 8 – 9','Phòng học bộ môn: KHTN, Tin học, Ngoại ngữ, Nghệ thuật, Công nghệ','Khu hỗ trợ: Thư viện, Phòng Y tế, Phòng Đoàn – Đội, Phòng truyền thống','Khu thể chất: Nhà đa năng, sân bóng đá, sân bóng rổ','Sân chào cờ, vườn trường, căng tin & bãi xe đạp']},
@@ -821,7 +871,7 @@ const SPACES_SECONDARY = {
           {q:'Trước khi sửa/chạm thiết bị điện trong nhà cần?',o:['Ngắt nguồn điện (cầu dao/aptomat)','Cứ chạm vì điện yếu','Đi chân trần cho mát','Dùng tay ướt'],a:0,fb:'Luôn ngắt nguồn điện trước khi thao tác; không dùng tay ướt chạm thiết bị điện.'}]}]},
       {ic:'🛠️',name:'Dự án STEM',rd:'Học qua làm sản phẩm.',panel:[
         {h:'Quy trình làm dự án STEM'},
-        {ol:['Xác định vấn đề thực tế cần giải quyết','Lên ý tưởng & phác thảo giải pháp','Chế tạo mô hình/sản phẩm thử','Thử nghiệm, đánh giá & cải tiến','Trình bày & chia sẻ kết quả']},
+        {order:{title:'Sắp xếp 5 bước quy trình làm dự án STEM',items:['Xác định vấn đề thực tế cần giải quyết','Lên ý tưởng & phác thảo giải pháp','Chế tạo mô hình/sản phẩm thử','Thử nghiệm, đánh giá & cải tiến','Trình bày & chia sẻ kết quả']}},
         {note:'STEM = Science, Technology, Engineering, Math — học gắn với giải quyết vấn đề thật.'}]},
       {ic:'🌾',name:'Trồng cây ở vườn trường',rd:'Vận dụng kiến thức trồng trọt.',panel:[
         {ul:['Chọn cây phù hợp khí hậu & mùa vụ','Làm đất, gieo trồng, tưới nước & chăm sóc','Theo dõi sự sinh trưởng, ghi nhật kí cây trồng']},
@@ -835,6 +885,7 @@ const SPACES_SECONDARY = {
     rooms:[{ic:'🩹',name:'Sơ cứu cơ bản',rd:'Xử lí tình huống thường gặp.',panel:[
         {h:'Sơ cứu vết thương nhỏ'},
         {ol:['Rửa tay sạch trước khi sơ cứu','Rửa vết thương dưới vòi nước sạch','Sát khuẩn nhẹ quanh vết thương','Băng lại bằng gạc/băng cá nhân','Vết thương sâu/chảy nhiều máu → báo người lớn, tới cơ sở y tế']},
+        {order:{title:'Sắp xếp 5 bước sơ cứu vết thương nhỏ',items:['Rửa tay sạch trước khi sơ cứu','Rửa vết thương dưới vòi nước sạch','Sát khuẩn nhẹ quanh vết thương','Băng lại bằng gạc/băng cá nhân','Vết thương sâu/chảy nhiều máu → báo người lớn, tới cơ sở y tế']}},
         {mcq:[{q:'Bạn bị chảy máu cam (máu mũi). Xử lí đúng?',o:['Ngồi cúi nhẹ đầu về trước, bóp cánh mũi 5–10 phút','Ngửa cổ ra sau','Nhét giấy thật sâu vào mũi','Nằm ngửa ngay'],a:0,fb:'Chảy máu cam: cúi nhẹ về trước & bóp cánh mũi; ngửa cổ khiến máu chảy xuống họng.'}]}]},
       {ic:'🧼',name:'Vệ sinh & phòng bệnh',rd:'Thói quen giữ sức khoẻ.',panel:[
         {h:'Thói quen tốt mỗi ngày'},
@@ -875,11 +926,7 @@ const SPACES_SECONDARY = {
 const SPACES_IT = {
   admin:{emoji:'⚙️',name:'Hành chính – Hiệu bộ',accent:'#94a3b8',intro:'Trung tâm điều hành Trường CNTT: theo dõi tiến độ, chương trình đào tạo 4 năm, hướng nghiệp và tiếp nhận yêu cầu cải tiến.',
     rooms:[{ic:'📊',name:'Bảng điều khiển',rd:'Tiến độ, điểm, huy hiệu.',href:'/dashboard.html'},
-      {ic:'🛎️',name:'Phòng tiếp nhận yêu cầu',rd:'Gửi đề xuất cải tiến môn học/lab.',panel:[
-        {h:'Ban điều hành AI'},
-        {p:'Nơi sinh viên gửi yêu cầu, đề xuất cải tiến môn học, lab và hoạt động thực hành.'},
-        {ul:['Đề xuất thêm bài lab, đề CTF, dataset','Báo lỗi nội dung hoặc góp ý giao diện','Xin mở thêm chủ đề (Rust, Go, LLMOps…)']},
-        {note:'Vào mục "Ban điều hành AI" ở trang trường để gửi — nội dung được cập nhật mỗi ngày.'}]},
+      {ic:'🏛️',name:'Ban điều hành AI',rd:'Gửi đề xuất cải tiến môn học/lab & bình chọn.',board:true},
       {ic:'🎓',name:'Chương trình đào tạo',rd:'Lộ trình Cử nhân CNTT 4 năm.',panel:[
         {h:'Cử nhân Công nghệ thông tin — 4 năm'},
         {timeline:[{t:'Năm 1 — Đại cương',d:'Python, Toán rời rạc, Kiến trúc máy tính, Hệ điều hành, Tiếng Anh CNTT.'},
@@ -1010,7 +1057,8 @@ const SPACES_IT = {
       {q:'Duyệt đồ thị theo chiều rộng (BFS) dùng cấu trúc?',o:['Queue','Stack','Heap','Cây nhị phân'],a:0}]},
 
   dblab:{emoji:'🗄️',name:'Trung tâm CSDL',accent:'#60a5fa',intro:'Cơ sở dữ liệu quan hệ: thiết kế bảng, viết SQL, chuẩn hoá và phòng tránh SQL injection.',
-    rooms:[{ic:'🔎',name:'SQL căn bản',rd:'Các câu lệnh truy vấn cốt lõi.',panel:[
+    rooms:[{ic:'⌨️',name:'SQL Playground — viết & chạy truy vấn',rd:'Bảng thật trong bộ nhớ: viết SELECT/WHERE/JOIN/GROUP BY, 5 thử thách chấm tự động.',href:'/it-sql-playground.html?domain=it'},
+      {ic:'🔎',name:'SQL căn bản',rd:'Các câu lệnh truy vấn cốt lõi.',panel:[
         {h:'Bộ lệnh SQL thường dùng'},
         {cards:[{ic:'📤',t:'SELECT',d:'Lấy dữ liệu từ bảng.'},{ic:'🔗',t:'JOIN',d:'Nối nhiều bảng theo khoá.'},
           {ic:'🧮',t:'GROUP BY',d:'Gom nhóm & tổng hợp (COUNT, SUM).'},{ic:'🎯',t:'WHERE',d:'Lọc theo điều kiện.'},
@@ -1049,7 +1097,8 @@ const SPACES_IT = {
       {q:'TCP khác UDP ở điểm chính?',o:['TCP tin cậy, có thứ tự; UDP nhanh, không đảm bảo','UDP an toàn hơn','TCP không cần kết nối','Giống hệt nhau'],a:0}]},
 
   seclab:{emoji:'🔒',name:'TT An toàn thông tin – CTF',accent:'#ef4444',intro:'An toàn thông tin theo hướng phòng thủ: OWASP Top 10, mật mã cơ bản và sân chơi Capture The Flag có đạo đức.',
-    rooms:[{ic:'🚩',name:'Các dạng đề CTF',rd:'Làm quen sân chơi CTF.',panel:[
+    rooms:[{ic:'🔓',name:'Mật mã & CTF — giải cờ tương tác',rd:'Bàn làm việc Caesar, phân tích tần suất & 3 thử thách bắt cờ (mã cổ điển).',href:'/it-cipher-ctf.html?domain=it'},
+      {ic:'🚩',name:'Các dạng đề CTF',rd:'Làm quen sân chơi CTF.',panel:[
         {h:'Các thể loại Capture The Flag'},
         {cards:[{ic:'🌐',t:'Web',d:'Lỗ hổng ứng dụng web (XSS, SQLi…).'},
           {ic:'🔐',t:'Crypto',d:'Phá/hiểu sơ đồ mã hoá yếu.'},
@@ -1370,13 +1419,11 @@ const SPACES_PRIMARY = {
         {h:'Nội quy học sinh'},
         {check:['Đi học đúng giờ, mặc đồng phục gọn gàng','Lễ phép với thầy cô, hoà nhã với bạn bè','Giữ gìn vệ sinh chung, không vứt rác bừa bãi','Học bài và làm bài đầy đủ']},
         {note:'Thực hiện tốt nội quy giúp lớp em đoàn kết và trường thêm đẹp.'}]},
-      {ic:'⭐',name:'5 điều Bác Hồ dạy',rd:'Lời dạy cho thiếu niên, nhi đồng.',panel:[
+      {ic:'⭐',name:'5 điều Bác Hồ dạy',rd:'Sắp xếp lại đúng thứ tự 5 điều.',panel:[
         {ol:['Yêu Tổ quốc, yêu đồng bào','Học tập tốt, lao động tốt','Đoàn kết tốt, kỷ luật tốt','Giữ gìn vệ sinh thật tốt','Khiêm tốn, thật thà, dũng cảm']},
+        {order:{title:'Sắp xếp đúng thứ tự 5 điều Bác Hồ dạy',items:['Yêu Tổ quốc, yêu đồng bào','Học tập tốt, lao động tốt','Đoàn kết tốt, kỷ luật tốt','Giữ gìn vệ sinh thật tốt','Khiêm tốn, thật thà, dũng cảm']}},
         {note:'Em hãy chọn một điều để cố gắng thực hiện trong tuần này nhé!'}]},
-      {ic:'🛎️',name:'Gửi ý kiến cho trường',rd:'Điều em mong muốn ở trường.',panel:[
-        {p:'Đây là nơi em nói lên mong muốn của mình về lớp học và hoạt động.'},
-        {goal:true},
-        {note:'Thầy cô (và trợ lý AI của trường) sẽ đọc và cố gắng giúp em.'}]}],
+      {ic:'🏛️',name:'Ban điều hành AI',rd:'Nói điều em mong muốn ở trường & bình chọn.',board:true}],
     skills:['Hiểu nội quy trường','Ghi nhớ 5 điều Bác Hồ dạy'],
     quiz:[{q:'5 điều Bác Hồ dạy, điều đầu tiên là?',o:['Yêu Tổ quốc, yêu đồng bào','Giữ gìn vệ sinh','Khiêm tốn, thật thà','Học tập tốt'],a:0},
       {q:'Đến trường, em nên?',o:['Đi học đúng giờ, lễ phép','Đi muộn cũng được','Nói chuyện riêng trong giờ','Vứt rác ra sân'],a:0},
@@ -1399,9 +1446,10 @@ const SPACES_PRIMARY = {
       {q:'Nhặt được của rơi, em nên?',o:['Trả lại người mất hoặc nhờ thầy cô','Giữ làm của mình','Giấu đi','Vứt bỏ'],a:0}]},
 
   health:{emoji:'⛑️',name:'Phòng Y tế',accent:'#e23b3b',intro:'Chăm sóc sức khoẻ học đường: rửa tay, ăn uống lành mạnh và sơ cứu vết thương nhỏ.',
-    rooms:[{ic:'🧼',name:'Rửa tay đúng cách',rd:'6 bước rửa tay sạch.',panel:[
+    rooms:[{ic:'🧼',name:'Rửa tay đúng cách',rd:'Tập sắp xếp 6 bước rửa tay.',panel:[
         {h:'Em rửa tay sạch'},
         {ol:['Làm ướt tay, xoa xà phòng','Chà lòng bàn tay vào nhau','Chà mu bàn tay & kẽ ngón','Chà ngón tay & móng tay','Rửa sạch dưới vòi nước','Lau khô bằng khăn sạch']},
+        {order:{title:'Sắp xếp 6 bước rửa tay đúng cách',items:['Làm ướt tay, xoa xà phòng','Chà lòng bàn tay vào nhau','Chà mu bàn tay & kẽ ngón','Chà ngón tay & móng tay','Rửa sạch dưới vòi nước','Lau khô bằng khăn sạch']}},
         {note:'Rửa tay trước khi ăn, sau khi đi vệ sinh và sau khi chơi ngoài sân.'}]},
       {ic:'🥗',name:'Ăn uống lành mạnh',rd:'Tháp dinh dưỡng cho em.',panel:[
         {cards:[{ic:'🍚',t:'Tinh bột',d:'Cơm, bánh mì — ăn đủ.'},{ic:'🥦',t:'Rau & quả',d:'Ăn nhiều mỗi ngày.'},{ic:'🍗',t:'Đạm',d:'Thịt, cá, trứng, đậu.'},{ic:'🍬',t:'Đồ ngọt',d:'Hạn chế bánh kẹo.'}]},
@@ -1413,27 +1461,31 @@ const SPACES_PRIMARY = {
       {q:'Nhóm thức ăn nào nên hạn chế?',o:['Bánh kẹo, nước ngọt','Rau xanh','Cơm','Cá'],a:0},
       {q:'Để khoẻ mạnh, mỗi ngày em cần?',o:['Ngủ đủ giấc & vận động','Thức khuya xem tivi','Bỏ bữa sáng','Ăn thật nhiều kẹo'],a:0}]},
 
-  art:{emoji:'🎨',name:'Phòng Mĩ thuật',accent:'#f472b6',intro:'Phòng Mĩ thuật — làm quen màu sắc, tập vẽ và nặn để thoả sức sáng tạo.',
-    rooms:[{ic:'🌈',name:'Màu sắc & pha màu',rd:'Ba màu cơ bản và cách pha.',panel:[
+  art:{emoji:'🎨',name:'Phòng Mĩ thuật',accent:'#f472b6',intro:'Phòng Mĩ thuật — pha màu, vẽ tự do và thoả sức sáng tạo.',
+    rooms:[{ic:'🌈',name:'Màu sắc & pha màu',rd:'Pha 3 màu cơ bản thành màu mới.',panel:[
         {h:'Thế giới màu sắc'},
         {cards:[{ic:'🔴',t:'Đỏ',d:'Màu cơ bản.'},{ic:'🟡',t:'Vàng',d:'Màu cơ bản.'},{ic:'🔵',t:'Lam',d:'Màu cơ bản.'}]},
         {ul:['Đỏ + Vàng = Cam','Vàng + Lam = Lục (xanh lá)','Đỏ + Lam = Tím']},
+        {mixer:true},
         {note:'Từ 3 màu cơ bản, em pha ra rất nhiều màu mới!'}]},
-      {ic:'🖍️',name:'Tập vẽ & nặn',rd:'Vẽ tranh, nặn đất.',panel:[
+      {ic:'🖍️',name:'Tập vẽ & nặn',rd:'Vẽ tranh trên máy.',panel:[
         {ul:['Vẽ những gì em yêu thích: gia đình, trường lớp, thiên nhiên','Tô màu gọn trong nét, không lem ra ngoài','Nặn đất tạo hình con vật, đồ vật ngộ nghĩnh']},
+        {draw:true},
         {note:'Không có bức tranh nào là sai — quan trọng là em sáng tạo và vui!'}]}],
     skills:['Nhận biết & pha màu','Sáng tạo nghệ thuật'],
     quiz:[{q:'Đỏ pha với Vàng ra màu gì?',o:['Cam','Tím','Xanh lá','Đen'],a:0},
       {q:'Đâu là ba màu cơ bản?',o:['Đỏ, Vàng, Lam','Cam, Lục, Tím','Đen, Trắng, Xám','Hồng, Nâu, Be'],a:0},
       {q:'Vàng pha với Lam (xanh dương) ra màu gì?',o:['Xanh lá','Cam','Tím','Đỏ'],a:0}]},
 
-  music:{emoji:'🎵',name:'Phòng Âm nhạc',accent:'#a855f7',intro:'Phòng Âm nhạc — học 7 nốt nhạc, hát và gõ nhịp theo bài hát em yêu thích.',
-    rooms:[{ic:'🎼',name:'Bảy nốt nhạc',rd:'Đồ Rê Mi Fa Sol La Si.',panel:[
+  music:{emoji:'🎵',name:'Phòng Âm nhạc',accent:'#a855f7',intro:'Phòng Âm nhạc — chơi đàn, gõ nhịp và hát theo bài hát em yêu thích.',
+    rooms:[{ic:'🎼',name:'Bảy nốt nhạc',rd:'Bấm phím để nghe Đồ Rê Mi...',panel:[
         {h:'7 nốt nhạc cơ bản'},
         {p:'Đồ – Rê – Mi – Fa – Sol – La – Si, rồi lại trở về Đố (Đồ cao).'},
+        {piano:true},
         {note:'Hát đúng cao độ và rõ lời giúp bài hát hay hơn.'}]},
-      {ic:'🥁',name:'Hát & gõ nhịp',rd:'Giữ nhịp theo bài hát.',panel:[
+      {ic:'🥁',name:'Hát & gõ nhịp',rd:'Tập gõ phách 2/4, 3/4, 4/4.',panel:[
         {ul:['Vỗ tay hoặc gõ thanh phách theo phách mạnh – nhẹ','Hát rõ lời, lấy hơi đúng chỗ','Biểu diễn tự tin, vui tươi']},
+        {rhythm:true},
         {mcq:[{q:'Có bao nhiêu nốt nhạc cơ bản?',o:['7 nốt','5 nốt','10 nốt','3 nốt'],a:0,fb:'Có 7 nốt: Đồ, Rê, Mi, Fa, Sol, La, Si.'}]}]}],
     skills:['Biết 7 nốt nhạc','Hát & giữ nhịp'],
     quiz:[{q:'Nốt nhạc đầu tiên là?',o:['Đồ','Sol','La','Si'],a:0},
@@ -1473,6 +1525,7 @@ const SPACES_PRIMARY = {
     rooms:[{ic:'🤸',name:'Khởi động trước khi chơi',rd:'Làm nóng cơ thể.',panel:[
         {h:'Khởi động đúng cách'},
         {ol:['Xoay cổ tay, cổ chân nhẹ nhàng','Xoay khớp vai, khớp gối','Chạy bước nhỏ tại chỗ','Hít thở sâu vài lần']},
+        {order:{title:'Sắp xếp 4 bước khởi động đúng',items:['Xoay cổ tay, cổ chân nhẹ nhàng','Xoay khớp vai, khớp gối','Chạy bước nhỏ tại chỗ','Hít thở sâu vài lần']}},
         {note:'Khởi động giúp em tránh bị đau cơ hay trẹo chân khi vận động.'}]},
       {ic:'🪀',name:'Trò chơi vận động',rd:'Vận động vui & đoàn kết.',panel:[
         {cards:[{ic:'🤾',t:'Nhảy dây',d:'Khoẻ chân, bền bỉ.'},{ic:'🏸',t:'Đá cầu',d:'Khéo léo, nhanh nhẹn.'},{ic:'🪢',t:'Kéo co',d:'Đoàn kết cả đội.'}]},
@@ -1485,8 +1538,119 @@ const SPACES_PRIMARY = {
       {q:'Vận động mỗi ngày giúp em?',o:['Khoẻ mạnh & nhanh nhẹn','Mệt nên đừng chơi','Học kém đi','Hay ốm hơn'],a:0}]},
 };
 
-const SPACE_SETS = { pharmacy: SPACES_PHARMACY, secondary: SPACES_SECONDARY, it: SPACES_IT, primary: SPACES_PRIMARY };
-const DOMAIN_TITLES = { pharmacy: 'Trường Dược', secondary: 'Trường THCS', it: 'Trường Công nghệ thông tin', primary: 'Trường Tiểu học' };
+// ============================================================
+// TRƯỜNG MẦM NON · 3 lớp tuổi (Mầm/Chồi/Lá) + Nhà ăn Bán trú
+// ============================================================
+// Hoạt động cho bé 3–5 tuổi: học mà chơi qua hình ảnh, bài hát, trò vận động,
+// lật thẻ. Mỗi lớp link MODULE THẬT của domain preschool (N1/N2/N3 — quiz +
+// ghép cặp đếm/màu/hình). Câu chữ ngắn, dễ thương, xưng "bé" — không học thuật.
+const SPACES_PRESCHOOL = {
+  mam:{emoji:'🐣',name:'Lớp Mầm · 3 tuổi',accent:'#fb7185',
+    intro:'Lớp Mầm — các bé 3 tuổi mới đến trường. Cô và các bạn cùng học qua hình ảnh, bài hát và những trò ngộ nghĩnh.',
+    rooms:[
+      {ic:'🔢',name:'Làm quen Toán · Đếm & Màu',rd:'Đếm 1–5 và nhận biết màu sắc qua đồ vật.',
+        href:'/module.html?domain=preschool&module=N1'},
+      {ic:'🃏',name:'Lật thẻ con vật',rd:'Bé bấm thẻ để gọi tên con vật.',panel:[
+        {p:'Bấm vào thẻ để xem tên con vật và bé bắt chước tiếng kêu của chúng nhé!'},
+        {flash:[{e:'🐶',f:'Con chó',b:'Kêu "gâu gâu"'},{e:'🐱',f:'Con mèo',b:'Kêu "meo meo"'},{e:'🐤',f:'Gà con',b:'Kêu "chiếp chiếp"'},{e:'🦆',f:'Con vịt',b:'Kêu "cạp cạp"'},{e:'🐰',f:'Con thỏ',b:'Có hai tai dài'},{e:'🐢',f:'Con rùa',b:'Bò chậm rãi'}]}]},
+      {ic:'🌈',name:'Màu sắc quanh bé',rd:'Nhận biết các màu cơ bản.',panel:[
+        {h:'Bé học màu'},
+        {flash:[{e:'🍎',f:'Đỏ',b:'Quả táo, lá cờ'},{e:'🍌',f:'Vàng',b:'Quả chuối, mặt trời'},{e:'🍃',f:'Xanh lá',b:'Lá cây'},{e:'🟦',f:'Xanh dương',b:'Bầu trời, biển'},{e:'🍇',f:'Tím',b:'Chùm nho'},{e:'🥕',f:'Cam',b:'Củ cà rốt'}]},
+        {note:'Bé chỉ tay quanh lớp tìm thêm đồ vật cùng màu nhé!'}]},
+      {ic:'🎵',name:'Hát & vận động',rd:'Bài hát kèm động tác cho bé.',panel:[
+        {h:'Cùng cô hát'},
+        {ul:['🐤 "Một con vịt" — vẫy hai tay làm cánh vịt','🌟 "Sao chiếu sáng" — giơ hai tay lấp lánh','🐰 "Chú thỏ con" — nhảy lò cò tại chỗ','✋ "Năm ngón tay ngoan" — đếm từng ngón cùng cô']},
+        {note:'Hát to, vỗ tay theo nhịp và làm động tác cô làm mẫu.'}]},
+      {ic:'✅',name:'Bé ngoan mỗi ngày',rd:'Việc nhỏ bé tự làm được.',panel:[
+        {check:['Chào cô khi đến lớp','Rửa tay trước khi ăn','Cất giày dép gọn gàng','Đi vệ sinh đúng nơi','Ngủ trưa không nói chuyện']},
+        {note:'Mỗi việc tốt cô sẽ tặng bé một bông hoa bé ngoan!'}]}],
+    skills:['Đếm 1–5','Nhận biết màu sắc'],
+    quiz:[
+      {q:'🍎🍎🍎 — Có mấy quả táo?',o:['2','3','4','5'],a:1},
+      {q:'Quả chuối 🍌 có màu gì?',o:['Đỏ','Vàng','Xanh dương','Đen'],a:1},
+      {q:'Một bàn tay ✋ có mấy ngón?',o:['3','4','5','6'],a:2}]},
+
+  choi:{emoji:'🐤',name:'Lớp Chồi · 4 tuổi',accent:'#f59e0b',
+    intro:'Lớp Chồi — các bé 4 tuổi đã đếm được tới 10, nhận biết hình tròn–vuông–tam giác và bắt đầu kể chuyện cùng cô.',
+    rooms:[
+      {ic:'🔟',name:'Đếm tới 10 & Hình khối',rd:'Đếm tới 10 và nhận biết các hình cơ bản.',
+        href:'/module.html?domain=preschool&module=N2'},
+      {ic:'⭕',name:'Lật thẻ hình khối',rd:'Bé bấm để gọi tên hình.',panel:[
+        {flash:[{e:'⭕',f:'Hình tròn',b:'Quả bóng, ông mặt trời'},{e:'⬛',f:'Hình vuông',b:'Quân xúc xắc, bánh chưng'},{e:'🔺',f:'Hình tam giác',b:'Cái nón, miếng dưa hấu'},{e:'⭐',f:'Ngôi sao',b:'Trên lá cờ Tổ quốc'},{e:'❤️',f:'Trái tim',b:'Yêu thương cô và bạn'}]},
+        {note:'Bé tìm thử quanh lớp xem có đồ vật nào giống các hình này không.'}]},
+      {ic:'🦊',name:'Kể chuyện · Rùa và Thỏ',rd:'Câu chuyện ngắn và bài học.',panel:[
+        {h:'Rùa và Thỏ chạy thi'},
+        {p:'Thỏ chạy nhanh nên chủ quan ngủ quên giữa đường. Rùa tuy chậm nhưng chăm chỉ bước đều, cuối cùng về đích trước Thỏ.'},
+        {note:'Bài học: chăm chỉ và kiên trì sẽ thành công nhé bé!'},
+        {mcq:[{q:'Ai về đích trước trong câu chuyện?',o:['Thỏ','Rùa','Cả hai cùng về'],a:1,fb:'Rùa chăm chỉ về đích trước. Bé cũng cố gắng mỗi ngày như Rùa nhé!'}]}]},
+      {ic:'🎨',name:'Tô màu & nặn đất',rd:'Tạo hình cùng cô.',panel:[
+        {h:'Cùng bé sáng tạo'},
+        {ul:['Tô màu đồ vật quen thuộc, không để màu lem ra ngoài','Nặn đất tạo hình quả táo, ông mặt trời, con vật ngộ nghĩnh','Trang trí thêm cho bức tranh thật vui']},
+        {note:'Mọi bức tranh của bé đều đẹp — quan trọng là bé sáng tạo và vui!'}]},
+      {ic:'🤸',name:'Trò chơi vận động',rd:'Vận động vui cùng các bạn.',panel:[
+        {cards:[{ic:'🦘',t:'Nhảy lò cò',d:'Một chân nhảy theo ô.'},{ic:'🐰',t:'Bắt chước thỏ',d:'Hai tay làm tai, nhún nhảy.'},{ic:'🚂',t:'Đoàn tàu chạy',d:'Xếp hàng nối đuôi nhau.'},{ic:'🎵',t:'Đi vòng tròn',d:'Nắm tay đi theo nhạc.'}]},
+        {note:'Chơi vui nhưng không xô đẩy bạn nhé!'}]}],
+    skills:['Đếm tới 10','Nhận biết hình tròn–vuông–tam giác'],
+    quiz:[
+      {q:'🚗🚗🚗🚗 — Có mấy chiếc ô tô?',o:['3','4','5','6'],a:1},
+      {q:'Quả bóng ⚽ có dạng hình gì?',o:['Hình vuông','Hình tròn','Hình tam giác','Ngôi sao'],a:1},
+      {q:'Hình tam giác 🔺 có mấy cạnh?',o:['2','3','4','5'],a:1}]},
+
+  la:{emoji:'🦋',name:'Lớp Lá · 5 tuổi',accent:'#22c55e',
+    intro:'Lớp Lá — các bé 5 tuổi đã lớn, sẵn sàng vào lớp 1! So sánh nhiều–ít, tập tô chữ-số và biết tự lập những việc nhỏ.',
+    rooms:[
+      {ic:'🎒',name:'Sẵn sàng vào lớp 1 · Toán',rd:'So sánh nhiều/ít, đếm tới 20, ghép số với số lượng.',
+        href:'/module.html?domain=preschool&module=N3'},
+      {ic:'✏️',name:'Tập tô chữ & số',rd:'Bé tập cầm bút và tô theo nét.',panel:[
+        {h:'Bé cầm bút đúng cách'},
+        {ol:['Cầm bút bằng 3 ngón tay (cái – trỏ – giữa)','Đặt tay nhẹ trên bàn, lưng thẳng','Tô từ trên xuống, từ trái sang phải','Tô chậm theo nét đứt rồi đậm dần']},
+        {note:'Mỗi ngày bé tô 5–10 phút là tay sẽ khéo léo và quen với bút.'}]},
+      {ic:'⚖️',name:'So sánh nhiều/ít',rd:'Bé tập so sánh số lượng đồ vật.',panel:[
+        {h:'Nhiều hơn hay ít hơn?'},
+        {mcq:[
+          {q:'🍬🍬🍬 và 🍬🍬 — bên nào NHIỀU kẹo hơn?',o:['Bên 3 kẹo','Bên 2 kẹo','Bằng nhau'],a:0,fb:'3 nhiều hơn 2. Bé đếm để chắc nhé!'},
+          {q:'🖐️🖐️ — Hai bàn tay có tất cả mấy ngón?',o:['5','8','10','15'],a:2,fb:'5 + 5 = 10 ngón. Bé thử đếm theo cô!'},
+          {q:'Sau số 9 là số mấy?',o:['8','10','11','19'],a:1,fb:'Sau 9 là 10. Bé giỏi quá!'}]}]},
+      {ic:'🧣',name:'Tự lập việc nhỏ',rd:'Việc bé tự làm được rồi.',panel:[
+        {check:['Tự xếp dép vào đúng vị trí','Tự cài cúc áo, kéo khoá','Tự cất chén bát sau khi ăn','Tự gấp khăn, gấp chiếu ngủ','Tự cất đồ chơi vào hộp']},
+        {note:'Bé tự làm được những việc này → sẵn sàng vào lớp 1 rồi đó!'}]},
+      {ic:'💭',name:'Ước mơ của bé',rd:'Lớn lên bé muốn làm gì?',panel:[
+        {p:'Lớn lên bé muốn làm nghề gì? Bé hãy kể cho cô và bố mẹ nghe nhé!'},
+        {goal:true},
+        {note:'Cô sẽ nhớ ước mơ của bé và động viên bé học giỏi mỗi ngày.'}]}],
+    skills:['Đếm tới 20 · So sánh nhiều/ít','Sẵn sàng vào lớp 1'],
+    quiz:[
+      {q:'Sau số 9 là số mấy?',o:['8','10','11','19'],a:1},
+      {q:'🖐️🖐️ — Hai bàn tay có tất cả mấy ngón?',o:['5','8','10','15'],a:2},
+      {q:'Số 0 có nghĩa là gì?',o:['Rất nhiều','Một','Không có gì','Mười'],a:2}]},
+
+  canteen:{emoji:'🍱',name:'Nhà ăn & Bán trú',accent:'#f97316',
+    intro:'Nhà ăn bán trú — bé ăn trưa đủ chất, rửa tay sạch và ngủ trưa ngoan để chiều có sức học và chơi.',
+    rooms:[
+      {ic:'🍚',name:'Bữa ăn ngon',rd:'Bé ăn đủ 4 nhóm chất.',panel:[
+        {h:'Bé ăn gì cho khoẻ?'},
+        {cards:[{ic:'🍚',t:'Cơm',d:'Cho bé năng lượng cả ngày.'},{ic:'🍗',t:'Đạm',d:'Thịt, cá, trứng, đậu.'},{ic:'🥦',t:'Rau – Canh',d:'Nhiều rau xanh và canh.'},{ic:'🍎',t:'Trái cây',d:'Tráng miệng, nhiều vitamin.'}]},
+        {note:'Ăn đủ và đa dạng để bé cao lớn, khoẻ mạnh nhé!'}]},
+      {ic:'🧼',name:'Rửa tay sạch (6 bước)',rd:'Bé rửa tay trước khi ăn.',panel:[
+        {h:'6 bước rửa tay của bé'},
+        {ol:['Làm ướt tay, xoa xà phòng','Chà hai lòng bàn tay vào nhau','Chà mu bàn tay và kẽ các ngón','Chà ngón tay và móng tay','Rửa sạch dưới vòi nước','Lau khô bằng khăn sạch']},
+        {note:'Bé nhớ rửa tay TRƯỚC khi ăn và SAU khi đi vệ sinh.'}]},
+      {ic:'😴',name:'Giờ ngủ trưa',rd:'Bé ngủ ngoan để chiều khoẻ.',panel:[
+        {h:'Bé ngủ trưa ngoan'},
+        {ul:['Nằm ngay ngắn trên chiếu hoặc giường','Không nói chuyện làm ồn bạn','Nhắm mắt, thở đều và thật nhẹ','Ngủ một giấc thật ngon']},
+        {note:'Ngủ trưa 60–90 phút giúp bé tỉnh táo và vui chơi cả buổi chiều.'}]},
+      {ic:'🙏',name:'Lễ phép với cô bác',rd:'Cảm ơn người nấu cơm cho bé.',panel:[
+        {mcq:[{q:'Khi nhận cơm từ cô bác cấp dưỡng, bé nên nói gì?',o:['"Cháu cảm ơn cô (bác) ạ"','Không cần nói gì','"Đưa nhanh lên"','Chạy đi luôn'],a:0,fb:'Bé lễ phép cảm ơn cô bác đã chuẩn bị bữa ăn ngon cho mình nhé!'}]},
+        {note:'Cảm ơn người lớn là một thói quen rất đẹp của bé ngoan.'}]}],
+    skills:['Ăn uống đủ chất','Vệ sinh & nề nếp'],
+    quiz:[
+      {q:'Trước khi ăn cơm, bé cần làm gì?',o:['Rửa tay sạch','Ăn ngay không cần rửa','Xem tivi','Chạy nhảy'],a:0},
+      {q:'Một bữa ăn cân đối nên có?',o:['Chỉ toàn bánh kẹo','Cơm, đạm, rau và canh','Chỉ nước ngọt','Chỉ cơm trắng'],a:1},
+      {q:'Khi nhận cơm từ cô bác, bé nên?',o:['"Cháu cảm ơn cô ạ"','Không nói gì','"Đưa nhanh"','Chạy đi'],a:0}]},
+};
+
+const SPACE_SETS = { pharmacy: SPACES_PHARMACY, secondary: SPACES_SECONDARY, it: SPACES_IT, primary: SPACES_PRIMARY, preschool: SPACES_PRESCHOOL };
+const DOMAIN_TITLES = { pharmacy: 'Trường Dược', secondary: 'Trường THCS', it: 'Trường Công nghệ thông tin', primary: 'Trường Tiểu học', preschool: 'Trường Mầm non' };
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),4200); }
 
@@ -1501,7 +1665,7 @@ document.title=`${S.emoji} ${S.name} · ${DOMAIN_TITLES[dom]||'EduVerse'}`;
 const wrap=document.getElementById('wrap');
 const roomCard=(r,idx)=> r.href
   ? `<a class="room" href="${r.href}"><div class="ri">${r.ic}</div><h3>${r.name}</h3><div class="rd">${r.rd}</div><span class="tag">Vào trải nghiệm →</span></a>`
-  : `<div class="room" data-room="${idx}"><div class="ri">${r.ic}</div><h3>${r.name}</h3><div class="rd">${r.rd}</div><span class="tag soon">Khám phá →</span></div>`;
+  : `<div class="room" data-room="${idx}"><div class="ri">${r.ic}</div><h3>${r.name}</h3><div class="rd">${r.rd}</div><span class="tag${r.board?'':' soon'}">${r.board?'Vào Ban điều hành →':'Khám phá →'}</span></div>`;
 
 wrap.style.setProperty('--accent', S.accent);
 wrap.innerHTML = `
@@ -1526,7 +1690,10 @@ document.getElementById('m-x').addEventListener('click',mClose);
 modal.addEventListener('click',e=>{ if(e.target===modal) mClose(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') mClose(); });
 function esc(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+let _pr=[];
+function prShell(i,icon,title,sub){ return '<div class="pr" data-pr="'+i+'"><div class="pr-h">'+icon+' '+esc(title)+' <span class="pr-badge">Thực hành</span></div>'+(sub?'<div class="pr-sub">'+esc(sub)+'</div>':'')+'<div class="pr-body"></div></div>'; }
 function renderBlocks(blocks){
+  _pr=[];
   return blocks.map(b=>{
     if(typeof b==='string') return `<p>${esc(b)}</p>`;
     if(b.h) return `<h4>${esc(b.h)}</h4>`;
@@ -1540,6 +1707,12 @@ function renderBlocks(blocks){
     if(b.check) return `<ul class="checklist">${b.check.map((x,i)=>`<li><label><input type="checkbox" data-ck="${i}"> <span>${esc(x)}</span></label></li>`).join('')}</ul><div class="ck-prog">0/${b.check.length} hoàn thành</div>`;
     if(b.goal) return `<div class="goal-in"><input id="goal-input" placeholder="VD: Hoàn thành 3 module bào chế tuần này" /><button id="goal-save">Lưu</button></div><div class="goal-saved" id="goal-saved"></div>`;
     if(b.mcq) return b.mcq.map(m=>`<div class="mcq" data-a="${m.a}"><div class="mcq-q">${esc(m.q)}</div>${m.o.map((o,j)=>`<button class="mcq-o" data-i="${j}">${esc(o)}</button>`).join('')}<div class="mcq-fb">${esc(m.fb||'')}</div></div>`).join('');
+    if(b.piano){ const o=(typeof b.piano==='object')?b.piano:{}; const i=_pr.push({t:'piano',b:b})-1; return prShell(i,'🎹', o.title||'Đàn phím — chơi thử', o.sub||'Bấm phím để nghe nốt nhạc. Bấm ▶ để nghe câu mẫu rồi tự chơi theo.'); }
+    if(b.rhythm){ const o=(typeof b.rhythm==='object')?b.rhythm:{}; const i=_pr.push({t:'rhythm',b:b})-1; return prShell(i,'🥁', o.title||'Tập gõ nhịp', o.sub||'Chọn nhịp 2/4, 3/4 hay 4/4 — bấm Bắt đầu rồi gõ theo phách (phách 1 là phách mạnh).'); }
+    if(b.mixer){ const o=(typeof b.mixer==='object')?b.mixer:{}; const i=_pr.push({t:'mixer',b:b})-1; return prShell(i,'🎨', o.title||'Pha màu cơ bản', o.sub||'Bấm 2 màu cơ bản (Đỏ – Vàng – Lam) để xem màu pha ra. Thử pha đúng màu được yêu cầu.'); }
+    if(b.draw){ const o=(typeof b.draw==='object')?b.draw:{}; const i=_pr.push({t:'draw',b:b})-1; return prShell(i,'🖌️', o.title||'Vẽ tự do', o.sub||'Chọn màu, cỡ bút rồi vẽ trực tiếp lên giấy. Tự do sáng tạo!'); }
+    if(b.order){ const i=_pr.push({t:'order',b:b})-1; return prShell(i,'🔢', b.order.title||'Sắp xếp đúng thứ tự', b.order.sub||'Bấm các bước lần lượt theo thứ tự em cho là đúng, rồi bấm Kiểm tra.'); }
+    if(b.match){ const i=_pr.push({t:'match',b:b})-1; return prShell(i,'🔗', b.match.title||'Nối cặp đúng', b.match.sub||'Bấm một ô bên trái rồi ô tương ứng bên phải để nối.'); }
     return '';
   }).join('');
 }
@@ -1548,6 +1721,15 @@ function openRoom(r){
   document.getElementById('m-ic').textContent=r.ic||'📌';
   document.getElementById('m-title').textContent=r.name||'';
   const body=document.getElementById('m-body');
+  // Phòng "Ban điều hành AI": nạp bảng tiếp nhận yêu cầu tương tác (live) vào modal
+  if(r.board){
+    body.innerHTML = '<p style="opacity:.7">Đang mở Ban điều hành AI…</p>';
+    modal.classList.add('show'); body.scrollTop=0;
+    import('/js/request-board.js')
+      .then(m=>{ body.innerHTML=''; m.renderRequestBoard({ host: body, domain: dom, domainName: DOMAIN_TITLES[dom]||'EduVerse' }); })
+      .catch(()=>{ body.innerHTML='<p>Không tải được Ban điều hành (cần backend chạy).</p>'; });
+    return;
+  }
   body.innerHTML = renderBlocks(r.panel || [r.content || 'Nội dung đang được biên soạn.']);
   body.querySelectorAll('.flash').forEach(f=>f.addEventListener('click',()=>f.classList.toggle('flipped')));
   body.querySelectorAll('.mcq').forEach(mc=>{ const a=+mc.dataset.a; mc.querySelectorAll('.mcq-o').forEach(o=>o.addEventListener('click',()=>{ if(mc.dataset.done) return; mc.dataset.done='1'; const pick=+o.dataset.i; mc.querySelectorAll('.mcq-o').forEach(x=>{ const xi=+x.dataset.i; if(xi===a) x.classList.add('correct'); else if(xi===pick) x.classList.add('wrong'); }); const fb=mc.querySelector('.mcq-fb'); if(fb&&fb.textContent.trim()) fb.classList.add('show'); })); });
@@ -1562,7 +1744,195 @@ function openRoom(r){
     try{ show(localStorage.getItem(gKey)||''); }catch(e){}
     body.querySelector('#goal-save').addEventListener('click',()=>{ const v=gIn.value.trim(); if(!v) return;
       try{ localStorage.setItem(gKey,v); }catch(e){} show(v); gIn.value=''; toast('Đã lưu mục tiêu!'); }); }
+  body.querySelectorAll('.pr[data-pr]').forEach(el=>initPractice(el, _pr[+el.dataset.pr]));
   modal.classList.add('show'); body.scrollTop=0;
+}
+
+// ===== Interactive practice widgets =====
+const NOTES=[{n:'Đồ',f:261.63},{n:'Rê',f:293.66},{n:'Mi',f:329.63},{n:'Fa',f:349.23},{n:'Son',f:392.00},{n:'La',f:440.00},{n:'Si',f:493.88},{n:'Đố',f:523.25}];
+function getAudio(){ try{ if(!window._ac) window._ac=new (window.AudioContext||window.webkitAudioContext)(); if(window._ac.state==='suspended') window._ac.resume(); return window._ac; }catch(e){ return null; } }
+function playTone(freq,dur){ const ac=getAudio(); if(!ac) return; dur=dur||0.45;
+  const o=ac.createOscillator(),g=ac.createGain(); o.type='triangle'; o.frequency.value=freq;
+  const t=ac.currentTime; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.28,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t+dur+0.05); }
+function playClick(strong){ const ac=getAudio(); if(!ac) return;
+  const o=ac.createOscillator(),g=ac.createGain(); o.type='square'; o.frequency.value=strong?1500:900;
+  const t=ac.currentTime; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(strong?0.22:0.13,t+0.005); g.gain.exponentialRampToValueAtTime(0.0001,t+0.06);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t+0.08); }
+function shuf(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function initPractice(host,d){ const body=host.querySelector('.pr-body');
+  if(d.t==='piano') initPiano(body,d.b);
+  else if(d.t==='rhythm') initRhythm(body,d.b);
+  else if(d.t==='mixer') initMixer(body,d.b);
+  else if(d.t==='draw') initDraw(body,d.b);
+  else if(d.t==='order') initOrder(body,d.b);
+  else if(d.t==='match') initMatch(body,d.b); }
+
+function initPiano(body,b){
+  const o=(typeof b.piano==='object')?b.piano:{};
+  const notes=NOTES.slice(0,8);
+  const song=o.song||['Đồ','Đồ','Son','Son','La','La','Son'];
+  const songName=o.songName||'Ngôi sao lấp lánh';
+  let pos=-1;
+  const piano=document.createElement('div'); piano.className='piano';
+  const keyByName={};
+  notes.forEach(nt=>{ const k=document.createElement('div'); k.className='pk'; k.textContent=nt.n; keyByName[nt.n]=k;
+    k.addEventListener('click',()=>{ playTone(nt.f); k.classList.add('down'); setTimeout(()=>k.classList.remove('down'),140); onPress(nt.n); });
+    piano.appendChild(k); });
+  body.appendChild(piano);
+  const row=document.createElement('div'); row.className='pr-row';
+  const tgt=document.createElement('div'); tgt.style.flex='1'; tgt.style.fontSize='13px'; tgt.innerHTML='🎼 Câu mẫu (<b>'+esc(songName)+'</b>): '+song.map(n=>'<span style="display:inline-block;margin:0 2px;padding:1px 7px;border-radius:7px;background:rgba(255,255,255,.08);font-weight:700">'+esc(n)+'</span>').join('');
+  const btnPlay=document.createElement('button'); btnPlay.className='pr-btn'; btnPlay.textContent='▶ Nghe mẫu';
+  const btnTry=document.createElement('button'); btnTry.className='pr-btn ghost'; btnTry.textContent='🎯 Tập chơi';
+  row.appendChild(tgt); row.appendChild(btnPlay); row.appendChild(btnTry);
+  body.appendChild(row);
+  const msg=document.createElement('div'); msg.className='pr-msg'; body.appendChild(msg);
+  function freqOf(n){ const x=NOTES.find(z=>z.n===n); return x?x.f:440; }
+  function resetTargets(){ Object.values(keyByName).forEach(k=>k.classList.remove('target')); }
+  function setTarget(n){ resetTargets(); const k=keyByName[n]; if(k) k.classList.add('target'); }
+  btnPlay.addEventListener('click',()=>{ pos=-1; resetTargets(); msg.className='pr-msg'; msg.textContent='';
+    let i=0; const dt=420;
+    const tick=()=>{ if(i>=song.length) return; const n=song[i]; playTone(freqOf(n),0.35); const k=keyByName[n]; if(k){ k.classList.add('down'); setTimeout(()=>k.classList.remove('down'),200); } i++; setTimeout(tick,dt); };
+    tick(); });
+  btnTry.addEventListener('click',()=>{ pos=0; msg.className='pr-msg'; msg.textContent='Chơi nốt: '+song[0]; setTarget(song[0]); });
+  function onPress(n){ if(pos<0) return;
+    if(n===song[pos]){ pos++;
+      if(pos>=song.length){ msg.className='pr-msg ok'; msg.textContent='🎉 Bạn đã chơi đúng cả câu nhạc!'; pos=-1; resetTargets(); }
+      else { msg.className='pr-msg ok'; msg.textContent='Đúng! Nốt tiếp: '+song[pos]; setTarget(song[pos]); }
+    } else { msg.className='pr-msg bad'; msg.textContent='Chưa đúng (em vừa chơi '+n+', cần '+song[pos]+'). Bấm 🎯 Tập chơi để bắt đầu lại.'; pos=-1; resetTargets(); } }
+}
+
+function initRhythm(body,b){
+  const sigs=[[2,4],[3,4],[4,4]];
+  let beatsCount=4, bpm=90, timer=null, beatIdx=-1, lastBeat=0, interval=0, total=0, good=0;
+  const segRow=document.createElement('div'); segRow.className='pr-row';
+  const seg=document.createElement('div'); seg.className='seg';
+  sigs.forEach(s=>{ const bn=document.createElement('button'); bn.textContent=s[0]+'/'+s[1]; if(s[0]===4) bn.classList.add('on'); bn.addEventListener('click',()=>{ stop(); seg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); bn.classList.add('on'); beatsCount=s[0]; buildBeats(); }); seg.appendChild(bn); });
+  segRow.appendChild(seg);
+  const btnStart=document.createElement('button'); btnStart.className='pr-btn'; btnStart.textContent='▶ Bắt đầu';
+  const btnStop=document.createElement('button'); btnStop.className='pr-btn ghost'; btnStop.textContent='■ Dừng';
+  segRow.appendChild(btnStart); segRow.appendChild(btnStop); body.appendChild(segRow);
+  const beatsRow=document.createElement('div'); beatsRow.className='beats'; body.appendChild(beatsRow);
+  const tap=document.createElement('button'); tap.className='tap-pad'; tap.textContent='👆 GÕ ở đây (hoặc nhấn phím cách)'; body.appendChild(tap);
+  const msg=document.createElement('div'); msg.className='pr-msg'; body.appendChild(msg);
+  function buildBeats(){ beatsRow.innerHTML=''; for(let i=0;i<beatsCount;i++){ const d=document.createElement('div'); d.className='beat'+(i===0?' strong':''); d.textContent=(i+1); beatsRow.appendChild(d); } }
+  buildBeats();
+  function tick(){ beatIdx=(beatIdx+1)%beatsCount;
+    [...beatsRow.children].forEach((d,i)=>d.classList.toggle('on', i===beatIdx));
+    playClick(beatIdx===0); lastBeat=performance.now(); }
+  function start(){ if(timer) return; total=0; good=0; msg.className='pr-msg'; msg.textContent='Cảm nhận số phách và gõ theo nhé!'; interval=60000/bpm; beatIdx=-1; tick(); timer=setInterval(tick,interval); }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; } [...beatsRow.children].forEach(d=>d.classList.remove('on')); beatIdx=-1; }
+  btnStart.addEventListener('click',start);
+  btnStop.addEventListener('click',()=>{ stop(); if(total>0){ const pct=Math.round(100*good/total); msg.className='pr-msg ok'; msg.textContent='Đã gõ '+total+' lần — '+good+' đúng nhịp ('+pct+'%).'; } });
+  function onTap(){ if(!timer) return;
+    const now=performance.now(); const predicted=lastBeat+Math.round((now-lastBeat)/interval)*interval; const delta=Math.abs(now-predicted); total++;
+    if(delta<90){ good++; msg.className='pr-msg ok'; msg.textContent='Chuẩn! ('+Math.round(delta)+' ms)'; }
+    else if(delta<200){ good++; msg.className='pr-msg'; msg.textContent='Tạm ổn ('+Math.round(delta)+' ms)'; }
+    else { msg.className='pr-msg bad'; msg.textContent='Hơi lệch ('+Math.round(delta)+' ms) — chú ý phách 1 mạnh.'; } }
+  tap.addEventListener('click',onTap);
+  const keyH=e=>{ if(e.code==='Space' && modal.classList.contains('show')){ e.preventDefault(); onTap(); } };
+  document.addEventListener('keydown', keyH);
+  const mo=new MutationObserver(()=>{ if(!modal.classList.contains('show')){ stop(); document.removeEventListener('keydown', keyH); mo.disconnect(); } });
+  mo.observe(modal,{attributes:true,attributeFilter:['class']});
+}
+
+function initMixer(body,b){
+  const prims=[{n:'Đỏ',c:'#e23b3b',k:'r'},{n:'Vàng',c:'#f5c518',k:'y'},{n:'Lam',c:'#2563eb',k:'b'}];
+  const mixes={'r':{c:'#e23b3b',n:'Đỏ'},'y':{c:'#f5c518',n:'Vàng'},'b':{c:'#2563eb',n:'Lam'},'r+y':{c:'#f97316',n:'Cam'},'y+b':{c:'#16a34a',n:'Lục (xanh lá)'},'b+r':{c:'#7c3aed',n:'Tím'},'b+r+y':{c:'#5b3a1a',n:'Nâu (gần đen)'}};
+  const challenges=[{target:'Cam'},{target:'Lục (xanh lá)'},{target:'Tím'}];
+  let sel=new Set(); let chIdx=0;
+  const row=document.createElement('div'); row.className='mix-prim';
+  prims.forEach(p=>{ const el=document.createElement('button'); el.className='mix-c'; el.style.background=p.c; el.textContent=p.n; el.addEventListener('click',()=>{ if(sel.has(p.k)) sel.delete(p.k); else sel.add(p.k); el.classList.toggle('sel'); update(); }); row.appendChild(el); });
+  body.appendChild(row);
+  const out=document.createElement('div'); out.className='mix-out'; out.style.background='rgba(255,255,255,.05)'; out.textContent='Chưa chọn màu'; body.appendChild(out);
+  const ch=document.createElement('div'); ch.className='pr-row'; ch.style.marginTop='8px';
+  const lbl=document.createElement('div'); lbl.style.flex='1'; lbl.style.fontSize='13px';
+  const btn=document.createElement('button'); btn.className='pr-btn ghost'; btn.textContent='↺ Đổi yêu cầu';
+  ch.appendChild(lbl); ch.appendChild(btn); body.appendChild(ch);
+  const msg=document.createElement('div'); msg.className='pr-msg'; body.appendChild(msg);
+  function key(){ return ['r','y','b'].filter(k=>sel.has(k)).join('+'); }
+  function update(){ const k=key(); const m=mixes[k];
+    if(m){ out.style.background=m.c; out.textContent=m.n; } else { out.style.background='rgba(255,255,255,.05)'; out.textContent='Chưa chọn màu'; }
+    const c=challenges[chIdx]; if(m && m.n===c.target){ msg.className='pr-msg ok'; msg.textContent='🎉 Đúng rồi! Em vừa pha ra '+c.target+'.'; } else { msg.className='pr-msg'; msg.textContent=''; } }
+  function setCh(){ const c=challenges[chIdx]; lbl.innerHTML='🎯 Pha cho ra màu: <b>'+esc(c.target)+'</b>'; }
+  setCh();
+  btn.addEventListener('click',()=>{ chIdx=(chIdx+1)%challenges.length; setCh(); update(); });
+}
+
+function initDraw(body,b){
+  const colors=['#1f2937','#e11d48','#f59e0b','#16a34a','#2563eb','#7c3aed','#ffffff'];
+  const sizes=[3,6,12];
+  let color=colors[0], size=sizes[1];
+  const tools=document.createElement('div'); tools.className='draw-tools';
+  colors.forEach((c,i)=>{ const s=document.createElement('button'); s.className='sw'+(i===0?' sel':''); s.style.background=c; s.addEventListener('click',()=>{ color=c; tools.querySelectorAll('.sw').forEach(x=>x.classList.remove('sel')); s.classList.add('sel'); }); tools.appendChild(s); });
+  sizes.forEach((sz,i)=>{ const s=document.createElement('button'); s.className='brush'+(i===1?' sel':''); s.textContent=sz+'px'; s.addEventListener('click',()=>{ size=sz; tools.querySelectorAll('.brush').forEach(x=>x.classList.remove('sel')); s.classList.add('sel'); }); tools.appendChild(s); });
+  const clr=document.createElement('button'); clr.className='pr-btn ghost'; clr.textContent='🧹 Xoá'; tools.appendChild(clr);
+  body.appendChild(tools);
+  const c=document.createElement('canvas'); c.className='draw-c'; body.appendChild(c);
+  function fit(){ const r=c.getBoundingClientRect(); c.width=Math.max(2,Math.round(r.width)); c.height=Math.max(2,Math.round(r.height)); }
+  setTimeout(fit,30);
+  const ctx=c.getContext('2d'); let drawing=false, lx=0, ly=0;
+  function pos(e){ const r=c.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; }
+  function down(e){ e.preventDefault(); drawing=true; [lx,ly]=pos(e); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle=color; ctx.lineWidth=size; ctx.beginPath(); ctx.moveTo(lx,ly); }
+  function move(e){ if(!drawing) return; e.preventDefault(); const [x,y]=pos(e); ctx.strokeStyle=color; ctx.lineWidth=size; ctx.lineTo(x,y); ctx.stroke(); lx=x; ly=y; }
+  function up(){ drawing=false; }
+  c.addEventListener('pointerdown',down); c.addEventListener('pointermove',move); c.addEventListener('pointerup',up); c.addEventListener('pointerleave',up); c.addEventListener('pointercancel',up);
+  clr.addEventListener('click',()=>{ ctx.clearRect(0,0,c.width,c.height); });
+}
+
+function initOrder(body,b){
+  const items=b.order.items.slice();
+  const display=shuf(items.map((t,i)=>({t:t,i:i})));
+  const list=document.createElement('div'); list.className='ord-list';
+  const picks=[]; const btns=[];
+  display.forEach(it=>{
+    const el=document.createElement('button'); el.className='ord-it'; el.dataset.i=it.i;
+    const num=document.createElement('span'); num.className='num'; num.textContent='–';
+    const tx=document.createElement('span'); tx.textContent=it.t;
+    el.appendChild(num); el.appendChild(tx);
+    el.addEventListener('click',()=>{ if(el.dataset.done) return; if(el.classList.contains('picked')) return; picks.push(+el.dataset.i); el.classList.add('picked'); num.textContent=picks.length; });
+    list.appendChild(el); btns.push(el);
+  });
+  body.appendChild(list);
+  const row=document.createElement('div'); row.className='pr-row';
+  const ck=document.createElement('button'); ck.className='pr-btn'; ck.textContent='✅ Kiểm tra';
+  const rs=document.createElement('button'); rs.className='pr-btn ghost'; rs.textContent='↺ Làm lại';
+  row.appendChild(ck); row.appendChild(rs); body.appendChild(row);
+  const msg=document.createElement('div'); msg.className='pr-msg'; body.appendChild(msg);
+  ck.addEventListener('click',()=>{
+    if(picks.length!==items.length){ msg.className='pr-msg bad'; msg.textContent='Em chưa chọn đủ '+items.length+' bước.'; return; }
+    let ok=0;
+    btns.forEach(btn=>{ const correct=+btn.dataset.i+1; const got=picks.indexOf(+btn.dataset.i)+1; if(got===correct){ btn.classList.add('correct'); ok++; } else btn.classList.add('wrong'); btn.dataset.done='1'; });
+    if(ok===items.length){ msg.className='pr-msg ok'; msg.textContent='🎉 Hoàn hảo — đúng cả '+ok+'/'+items.length+' bước!'; }
+    else { msg.className='pr-msg bad'; msg.textContent='Đúng '+ok+'/'+items.length+' bước. Bấm Làm lại để thử.'; }
+  });
+  rs.addEventListener('click',()=>{ picks.length=0; btns.forEach(btn=>{ btn.classList.remove('picked','correct','wrong'); delete btn.dataset.done; btn.querySelector('.num').textContent='–'; }); msg.className='pr-msg'; msg.textContent=''; });
+}
+
+function initMatch(body,b){
+  const pairs=b.match.pairs;
+  const grid=document.createElement('div'); grid.className='match-grid';
+  const L=document.createElement('div'); L.style.display='flex'; L.style.flexDirection='column'; L.style.gap='8px';
+  const R=document.createElement('div'); R.style.display='flex'; R.style.flexDirection='column'; R.style.gap='8px';
+  pairs.forEach((p,i)=>{ const l=document.createElement('button'); l.className='mt'; l.textContent=p[0]; l.dataset.p=i; L.appendChild(l); });
+  shuf(pairs.map((_,i)=>i)).forEach(i=>{ const r=document.createElement('button'); r.className='mt'; r.textContent=pairs[i][1]; r.dataset.p=i; R.appendChild(r); });
+  grid.appendChild(L); grid.appendChild(R); body.appendChild(grid);
+  const msg=document.createElement('div'); msg.className='pr-msg'; body.appendChild(msg);
+  let sel=null, done=0;
+  L.querySelectorAll('.mt').forEach(el=>el.addEventListener('click',()=>{
+    if(el.classList.contains('done')) return;
+    L.querySelectorAll('.mt').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel'); sel=el;
+  }));
+  R.querySelectorAll('.mt').forEach(el=>el.addEventListener('click',()=>{
+    if(el.classList.contains('done')) return;
+    if(!sel){ msg.className='pr-msg'; msg.textContent='Chọn một ô bên trái trước nhé.'; return; }
+    if(sel.dataset.p===el.dataset.p){
+      sel.classList.remove('sel'); sel.classList.add('done'); el.classList.add('done'); sel=null; done++;
+      if(done===pairs.length){ msg.className='pr-msg ok'; msg.textContent='🎉 Em đã nối đúng tất cả '+done+' cặp!'; }
+      else { msg.className='pr-msg ok'; msg.textContent='Đúng rồi! Đã nối '+done+'/'+pairs.length+' cặp.'; }
+    } else { el.classList.add('bad'); setTimeout(()=>el.classList.remove('bad'),420); msg.className='pr-msg bad'; msg.textContent='Chưa đúng, thử lại.'; }
+  }));
 }
 
 // quiz
@@ -1584,5 +1954,8 @@ document.getElementById('qs').addEventListener('click',()=>{
   try{ const k='eduverse:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d[id]=Math.max(d[id]||0, correct); localStorage.setItem(k, JSON.stringify(d)); }catch(e){}
 });
 </script>
+<script src="./js/pwa-register.js" defer></script>
+<script src="./js/tutor-floating.js" data-domain="general" defer></script>
+<script src="./js/orchestrate-bridge.js" defer></script>
 </body>
 </html>

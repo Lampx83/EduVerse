@@ -4,6 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>EduVerse · Vũ trụ giáo dục</title>
+<!-- PWA: offline-first cho mạng yếu (GAP 14) -->
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#fbbf24" />
+<meta name="application-name" content="EduVerse" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="EduVerse" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <style>
   :root {
     --bg-1: #0f172a;
@@ -256,8 +263,58 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     <span class="pill">🔧 Tự cải tiến theo yêu cầu SV</span>
     <span class="pill">🥽 VR · XR · Metaverse multiplayer</span>
     <span class="pill">🎮 Stars · Coin · Streak · Achievements</span>
+    <a href="./assets.html" class="pill" style="text-decoration:none;color:inherit;">🧱 Thư viện Asset 3D</a>
+    <a href="./cast.html" class="pill" style="text-decoration:none;color:inherit;">📺 Cast trình chiếu</a>
+    <a href="./patient-sim.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(220,38,38,0.15);border-color:rgba(220,38,38,0.4);color:#fca5a5;">🩺 Mô phỏng bệnh nhân VN</a>
+    <a href="./history-vn.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(14,165,233,0.15);border-color:rgba(14,165,233,0.4);color:#7dd3fc;">👤 Gặp danh nhân VN</a>
+    <a href="./negotiation.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.4);color:#fbbf24;">🤝 Đàm phán Game Theory</a>
+    <a href="./teacher-live.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(139,92,246,0.15);border-color:rgba(139,92,246,0.4);color:#c4b5fd;">🎛 GV điều khiển live</a>
+    <a href="./pdf-tutor.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#a5b4fc;">📖 Học SGK bằng AI</a>
+    <a href="./lesson-builder.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.4);color:#6ee7b7;">✏️ Soạn bài no-code</a>
+    <a href="./marketplace.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(236,72,153,0.15);border-color:rgba(236,72,153,0.4);color:#f9a8d4;">📚 Chợ bài giảng</a>
+    <a href="./voice-demo.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(6,182,212,0.15);border-color:rgba(6,182,212,0.4);color:#67e8f9;">🎙 Spatial VoIP</a>
+    <a href="./math-fun.html" class="pill" style="text-decoration:none;color:inherit;background:linear-gradient(135deg,rgba(251,191,36,0.25),rgba(236,72,153,0.25));border-color:rgba(251,191,36,0.5);color:#fbbf24;font-weight:700;">🎮 Toán vui (lớp 2 & 6)</a>
+    <span class="pill" id="hero-tutor-cta" style="cursor:pointer;background:rgba(251,191,36,0.18);border-color:rgba(251,191,36,0.5);color:#fbbf24;font-weight:600;" title="Mở AI Tutor">🦉 Hỏi AI Tutor</span>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cta = document.getElementById('hero-tutor-cta');
+      if (cta) cta.addEventListener('click', () => window.EduTutor?.open());
+    });
+  </script>
 </div>
+
+<!-- ============ ỨNG DỤNG TÍCH HỢP (theo trường) ============ -->
+<!-- Render theo active domain. App cho từng trường khai trong js/integrations.js
+     (DOMAIN_APPS). Trường không khai app → khối ẩn hoàn toàn. -->
+<div class="section" id="integrations" style="display:none">
+  <div class="section-title">
+    <h2>🔌 <span id="int-title">Ứng dụng tích hợp</span></h2>
+    <span class="hint"><span id="int-sub">Hệ thống đồng hành nhúng thẳng vào EduVerse</span> — <a href="apps.html" style="color:#38bdf8">xem tất cả →</a></span>
+  </div>
+  <div class="modes" id="int-grid"></div>
+</div>
+<script type="module">
+  import { getAppsForDomain } from './js/integrations.js';
+  import { loadActiveDomain } from './js/engine/domain.js';
+  try {
+    const { DOMAIN } = await loadActiveDomain();
+    const apps = getAppsForDomain(DOMAIN.id);
+    if (!apps.length) throw 0;   // trường chưa khai app → ẩn khối
+    document.getElementById('int-title').textContent = `Ứng dụng · ${DOMAIN.name}`;
+    document.getElementById('int-sub').textContent = `Hệ thống đồng hành dành cho ${DOMAIN.shortName || DOMAIN.name}`;
+    document.getElementById('int-grid').innerHTML = apps.map(a => `
+      <div class="mode" style="--mode-color: ${a.color}">
+        <div class="mode-head">
+          <div class="mode-icon">${a.icon}</div>
+          <div class="mode-info"><h3>${a.name}</h3><span class="tag" style="background:${a.color}">${a.tag}</span></div>
+        </div>
+        <p class="desc">${a.desc}</p>
+        <a class="btn dark" href="apps.html?app=${a.id}">${a.icon} Mở ${a.name}</a>
+      </div>`).join('');
+    document.getElementById('integrations').style.display = '';
+  } catch {}
+</script>
 
 <!-- ============ DASHBOARD — core loop entry ============ -->
 <div class="section" id="dashboard" style="display:none">
@@ -598,5 +655,11 @@ async function loadBadges() {
 }
 loadBadges();
 </script>
+<!-- PWA register (GAP 14) -->
+<script src="./js/pwa-register.js" defer></script>
+<!-- AI Tutor floating (GAP 1) — Web Speech + Ollama qwen2.5 tiếng Việt -->
+<script src="./js/tutor-floating.js" data-domain="general" defer></script>
+<!-- Orchestrate bridge (GAP 6) — tự bind nếu URL có ?room= hoặc localStorage class.code -->
+<script src="./js/orchestrate-bridge.js" defer></script>
 </body>
 </html>
