@@ -93,6 +93,10 @@ export function requireAuth(req, res, next) {
 // Whitelist các path không cần login (login/register, asset chung, health, /api/auth, PWA).
 const PUBLIC_PATH_PREFIXES = [
   '/api/auth/', '/api/health',
+  // Cổng thanh toán callback (VNPay return + IPN). Xác thực bằng chữ ký HMAC,
+  // KHÔNG bằng cookie — VNPay gọi server-to-server không kèm session. create-order
+  // KHÔNG nằm ở đây nên vẫn yêu cầu đăng nhập.
+  '/api/payment/vnpay/',
   '/js/auth.js', '/js/sso.js', '/js/auth-header.js', '/js/engine/storage.js',
   '/manifest.webmanifest', '/sw.js', '/favicon',
   '/vendor/', '/models/',

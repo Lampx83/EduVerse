@@ -11,6 +11,9 @@ import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
 import { attachUser, makeAuthGate, requireAuth, attachAuth } from './contexts/identity/auth.js';
 import { attachOAuth, listEnabledProviders } from './contexts/identity/oauth.js';
+// Payment context — chỉ nạp khi PAYMENT_ENABLED=1 (dynamic import bên dưới) để bảng
+// payment + route KHÔNG xuất hiện ở deployment chưa bật thanh toán.
+const PAYMENT_ENABLED = process.env.PAYMENT_ENABLED === '1';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
@@ -228,6 +231,15 @@ r.get('/api/badges', (_req, res) => res.json(BADGES));
 // AI TUTOR — Claude API endpoints (grade-soap, patient-turn, evaluate-roleplay, tutor-chat)
 // ============================================================
 attachAi(r);
+
+// ============================================================
+// PAYMENT (Phase 1) — chỉ bật khi PAYMENT_ENABLED=1. Dynamic import để bảng
+// payment + routes không tồn tại ở deployment chưa cần thanh toán.
+// ============================================================
+if (PAYMENT_ENABLED) {
+  const { attachPayment } = await import('./contexts/payment/index.js');
+  attachPayment(r, { basePath: BASE_PATH });
+}
 
 // ============================================================
 // ASSET LIBRARY (GAP 4) — quét tự động 3D model, trả JSON catalogue
