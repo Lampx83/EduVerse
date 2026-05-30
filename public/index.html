@@ -15,7 +15,7 @@
   :root {
     --bg-1: #0f172a;
     --bg-2: #1e293b;
-    --bg-3: #312e81;
+    --bg-3: #0f172a;
     --accent: #fbbf24;
     --accent-2: #f59e0b;
     --success: #10b981;
@@ -28,12 +28,20 @@
     --border: rgba(255,255,255,0.12);
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   html, body { margin: 0; min-height: 100vh; font-family: 'Inter', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  /* Tránh sticky header che mục khi nhảy tới #schools */
+  #schools { scroll-margin-top: 64px; }
   button, a, input { touch-action: manipulation; }
   @media (max-width: 720px) {
-    body { padding: 20px 14px !important; }
-    .hero .logo { font-size: 52px !important; }
-    .hero h1 { font-size: 34px !important; }
+    body { padding: 0 0 20px !important; }
+    .hero-inner { grid-template-columns: 1fr !important; padding: 22px 16px 26px !important; gap: 8px !important; text-align: center; }
+    .hero-left { text-align: center !important; order: 2; }
+    .hero-right { order: 1; }
+    .hero-left .tagline { margin-left: auto !important; margin-right: auto !important; }
+    .hero-left .cta-row { justify-content: center !important; }
+    .stage { transform: scale(0.82); width: 300px !important; height: 260px !important; }
+    .hero .greet { font-size: 26px !important; }
     .hero .tagline { font-size: 14px !important; }
     .pill { font-size: 11px !important; padding: 5px 10px !important; }
     .section-title h2 { font-size: 18px !important; }
@@ -52,33 +60,183 @@
       radial-gradient(ellipse 60% 50% at 80% 30%, rgba(14,165,233,0.18), transparent),
       radial-gradient(ellipse 80% 50% at 0% 80%, rgba(236,72,153,0.15), transparent),
       linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
-    min-height: 100vh; padding: 32px 20px 32px;
+    min-height: 100vh; padding: 0 0 40px;
+    overflow-x: clip; /* aurora hero tràn ra cũng không gây cuộn ngang (sticky header vẫn ok) */
+  }
+  /* Gutter cho nội dung (body padding=0 để header flush full-width). */
+  .hero, .section, .top-bar, footer { padding-left: 20px; padding-right: 20px; }
+
+  /* ============ HERO (full-width, KHÔNG card, liền mạch với body) ============ */
+  /* Trong suốt — chỉ 1 vầng tím rất nhẹ làm điểm nhấn. KHÔNG nền đặc / viền / bóng,
+     để bầu trời sao #skyfield chạy liền mạch từ hero xuống toàn bộ body. */
+  .hero {
+    position: relative; max-width: none;
+    margin: 0 0 24px; padding: 0;
+    text-align: left;
+  }
+  /* Nội dung canh giữa trong khung rộng tối đa; bố cục 2 cột: chữ trái · vũ trụ phải */
+  .hero-inner {
+    position: relative; z-index: 2;
+    max-width: 1340px; margin: 0 auto; padding: 40px 28px 34px;
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 28px; align-items: center;
+  }
+  .hero-left { text-align: left; }
+  .hero-right { display: flex; align-items: center; justify-content: center; }
+
+  /* Bầu trời sao phủ TOÀN TRANG: lớp fixed sau mọi nội dung (giữ nguyên khi cuộn).
+     inset âm + drift nhẹ để cả bầu trời "thở", không lộ mép.
+     will-change + translateZ ép thành layer riêng để không repaint khi body cuộn. */
+  /* Khung đúng viewport + overflow:hidden → KHÔNG gây cuộn ngang (fixed thoát khỏi clip của body).
+     Drift đặt ở lớp con (inset âm) nên "thở" mà mép vẫn được cắt gọn trong khung. */
+  #skyfield { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+              contain: layout paint style; }
+  #skyfield .star-layer { position: absolute; inset: -40px; will-change: opacity, transform; }
+  /* 3 lớp lấp lánh lệch pha + tốc độ khác nhau + drift nhẹ → nhấp nháy sống động */
+  #skyfield .tw-a { animation: twA 2.7s ease-in-out infinite, skydrift 80s ease-in-out infinite alternate; }
+  #skyfield .tw-b { animation: twB 4.3s ease-in-out infinite -1.4s, skydrift 80s ease-in-out infinite alternate; }
+  #skyfield .tw-c { animation: twA 3.5s ease-in-out infinite -2.1s, skydrift 80s ease-in-out infinite alternate; }
+  @keyframes twA { 0%,100% { opacity: 0.18; } 50% { opacity: 1; } }
+  @keyframes twB { 0%,100% { opacity: 0.5; } 35% { opacity: 1; } 70% { opacity: 0.22; } }
+  @keyframes skydrift { from { transform: translate3d(-14px,-10px,0); } to { transform: translate3d(14px,10px,0); } }
+  .aurora { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.45; z-index: 0; pointer-events: none;
+            will-change: transform; transform: translateZ(0); contain: layout paint style; }
+  .aurora.a1 { width: 380px; height: 380px; background: rgba(139,92,246,0.55); top: -170px; right: 18%; animation: drift1 17s ease-in-out infinite; }
+  .aurora.a2 { width: 320px; height: 320px; background: rgba(14,165,233,0.45); top: -120px; right: 4%;  animation: drift2 21s ease-in-out infinite; }
+  .aurora.a3 { width: 300px; height: 300px; background: rgba(236,72,153,0.35); bottom: -190px; left: 8%;  animation: drift1 24s ease-in-out infinite reverse; }
+  @keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(28px,18px) scale(1.12); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-24px,16px) scale(1.1); } }
+  .shoot { position: absolute; width: 140px; height: 2px; background: linear-gradient(90deg, transparent, #fff); top: 14%; left: -160px; border-radius: 2px; opacity: 0; transform: rotate(16deg); z-index: 1; animation: shoot 9s linear infinite; }
+  @keyframes shoot { 0%{left:-160px;opacity:0} 5%{opacity:.9} 13%{left:120%;opacity:0} 100%{left:120%;opacity:0} }
+
+  /* ===== Hệ mặt trời thống nhất: quỹ đạo elip nghiêng + hành tinh đôi là 1 node ===== */
+  .stage { position: relative; width: 440px; height: 440px; max-width: 100%; margin: 0 auto; overflow: hidden; }
+  .solar { position: absolute; inset: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Mặt trời: quả cầu phát sáng, KHÔNG icon */
+  .core {
+    position: absolute; inset: 0; margin: auto; width: 64px; height: 64px; border-radius: 50%;
+    background: radial-gradient(circle at 36% 32%, #fff7da 0%, #ffd166 38%, #fbbf24 60%, #f97316 88%);
+    box-shadow: 0 0 30px 8px rgba(251,191,36,0.6), 0 0 72px 20px rgba(249,115,22,0.34);
+    z-index: 3; animation: corePulse 7.5s ease-in-out infinite;
+  }
+  /* Sáng chậm & mượt: đổi quầng sáng + độ chói, scale rất nhẹ */
+  @keyframes corePulse {
+    0%,100% { transform: scale(1);     filter: brightness(0.94); box-shadow: 0 0 26px 7px rgba(251,191,36,0.5),  0 0 64px 18px rgba(249,115,22,0.26); }
+    50%     { transform: scale(1.035); filter: brightness(1.12); box-shadow: 0 0 44px 13px rgba(251,191,36,0.78), 0 0 104px 30px rgba(249,115,22,0.44); }
   }
 
-  /* ============ HERO ============ */
-  .hero { max-width: 1200px; margin: 0 auto 36px; text-align: center; position: relative; }
-  .hero .logo { font-size: 72px; line-height: 1; margin-bottom: 12px; filter: drop-shadow(0 8px 16px rgba(251,191,36,0.4)); animation: float 4s ease-in-out infinite; display: inline-block; }
-  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-  .hero h1 {
-    font-size: 52px; margin: 0 0 8px; font-weight: 800;
-    background: linear-gradient(135deg, #ffffff 0%, #fbbf24 50%, #f97316 100%);
+  /* Quỹ đạo elip nghiêng (w≠h tạo elip, --tilt nghiêng, --dur tốc độ, --dir chiều) */
+  .osys { position: absolute; inset: 0; margin: auto; width: var(--w); height: var(--h); transform: rotate(var(--tilt)); }
+  .osys .ring { position: absolute; inset: 0; border: 1px dashed rgba(255,255,255,var(--ring-a, 0.15)); border-radius: 50%; }
+  .osys .rot { position: absolute; inset: 0; animation: spin var(--dur) linear infinite; animation-delay: var(--delay, 0s); }
+  .osys[data-dir="rev"] .rot { animation-direction: reverse; }
+  /* Icon kiến thức: KHÔNG vòng tròn nền — chỉ emoji nổi, có bóng đổ cho rõ */
+  .osys .planet {
+    position: absolute; left: 50%; margin-left: -16px; width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 23px;
+    background: transparent; border: none; box-shadow: none;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.55));
+    animation: spin var(--dur) linear infinite reverse;
+    animation-delay: var(--delay, 0s);
+    transition: opacity 0.4s;
+  }
+  /* Sao Hỏa: quả cầu đỏ gỉ (CSS gradient) — hành tinh thật, icon cố định không đổi */
+  .osys .planet.mars {
+    width: 20px; height: 20px; margin-left: -10px;
+    background: radial-gradient(circle at 35% 30%, #ffcaa6 0%, #e2683c 46%, #b23a1e 80%, #7c2410 100%);
+    box-shadow: 0 0 10px 2px rgba(226,104,60,0.4); filter: none;
+  }
+  .osys .planet.mars.top { top: -10px; }
+  .osys[data-dir="rev"] .planet { animation-direction: normal; }
+  .osys .planet.top { top: -16px; }
+  .osys .planet.bot { bottom: -16px; }
+  .osys .planet.rt  { top: calc(50% - 16px); right: -16px; left: auto; margin-left: 0; }
+  .osys .planet.lf  { top: calc(50% - 16px); left: -16px; margin-left: 0; }
+  .osys .planet.swap { opacity: 0; }
+
+  /* Node Trái đất–Mặt trăng: Trái đất ở giữa (cố định), Mặt trăng xoay quanh */
+  .osys .binode { width: 72px; height: 72px; margin-left: -36px; background: transparent; border: none; box-shadow: none; }
+  .osys .binode.bot { bottom: -36px; }
+  .osys .binode.top { top: -36px; }
+  .binode .bring { position: absolute; inset: 8px; border: 1px dashed rgba(255,255,255,0.28); border-radius: 50%; }
+  /* Trái đất: tâm node, không quay quanh mặt trời-con, chỉ đứng yên ở giữa */
+  .binode .earth { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-size: 27px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.55)); z-index: 2; }
+  /* Vành xoay của Mặt trăng + bản thân Mặt trăng (counter-rotate để glyph thẳng) */
+  .binode .bspin { position: absolute; inset: 0; animation: spin 4.5s linear infinite; }
+  .binode .moon { position: absolute; top: 50%; right: 1px; margin-top: -8px;
+    font-size: 15px; animation: spin 4.5s linear infinite reverse;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5)); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .osys .rot, .osys .planet, .binode .bspin, .binode .moon, .aurora, .shoot, .core,
+    #skyfield, #skyfield .star-layer,
+    .hero .greet, .hero .greet b, .hero .tagline, .hero .cta-row, .hero .greet .wave { animation: none !important; }
+  }
+
+  /* Entrance trượt lên (stagger) + chuyển động liên tục cho CẢ khối chữ lời chào */
+  @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes floatSoft { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .hero .greet {
+    font-size: 38px; margin: 0 0 10px; font-weight: 800; line-height: 1.12; letter-spacing: -0.6px;
+    animation: riseIn 0.7s cubic-bezier(.2,.7,.2,1) both, greetFloat 5s ease-in-out 0.8s infinite;
+  }
+  @keyframes greetFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .hero .greet .wave { display: inline-block; animation: wave 2.2s ease-in-out infinite; transform-origin: 70% 70%; }
+  @keyframes wave { 0%,55%,100% { transform: rotate(0); } 10% { transform: rotate(18deg); } 22% { transform: rotate(-10deg); } 34% { transform: rotate(14deg); } 46% { transform: rotate(-6deg); } }
+  .hero .greet b {
+    background: linear-gradient(110deg, #ffffff 0%, #fbbf24 28%, #f97316 48%, #ffd166 64%, #ffffff 100%);
+    background-size: 220% auto;
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    letter-spacing: -1px;
+    animation: shimmer 4s linear infinite;
   }
+  @keyframes shimmer { to { background-position: -220% center; } }
   .hero .tagline {
-    font-size: 18px; opacity: 0.85; max-width: 720px; margin: 0 auto 20px; line-height: 1.5;
+    font-size: 16px; opacity: 0.82; max-width: 520px; margin: 0 0 22px; line-height: 1.55;
+    animation: riseIn 0.7s cubic-bezier(.2,.7,.2,1) 0.12s both, floatSoft 6.5s ease-in-out 0.9s infinite;
   }
-  .hero .pills { display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 920px; }
+  .hero .cta-row {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-start;
+    animation: riseIn 0.7s cubic-bezier(.2,.7,.2,1) 0.24s both;
+  }
+  .hero .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 999px; font-size: 15px; font-weight: 700;
+    text-decoration: none; cursor: pointer; border: 1px solid transparent;
+    font-family: inherit; transition: transform 0.12s, box-shadow 0.15s, background 0.15s;
+  }
+  .hero .cta.primary { background: linear-gradient(135deg, #fbbf24, #f97316); color: #3e2723; }
+  .hero .cta.primary:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(251,191,36,0.35); }
+  .hero .cta.ghost { background: rgba(255,255,255,0.07); border-color: var(--border); color: #fff; }
+  .hero .cta.ghost:hover { background: rgba(255,255,255,0.13); transform: translateY(-2px); }
+
+  /* ============ FEATURE MARQUEE (băng chuyền lối tắt, full-width) ============ */
+  .feature-strip {
+    margin: 0; padding: 0 0 22px; overflow: hidden; position: relative; z-index: 2;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    contain: layout paint style;
+  }
+  .feature-track {
+    display: inline-flex; gap: 10px; white-space: nowrap; will-change: transform;
+    transform: translateZ(0);
+    animation: marquee 46s linear infinite;
+  }
+  .feature-strip:hover .feature-track { animation-play-state: paused; }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .feature-track { animation: none; } .feature-strip { overflow-x: auto; } }
   .pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
-    padding: 6px 12px; border-radius: 20px; font-size: 12px;
-    backdrop-filter: blur(8px);
+    display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    padding: 8px 14px; border-radius: 20px; font-size: 12.5px; color: inherit; text-decoration: none;
+    transition: transform 0.12s, background 0.15s, border-color 0.15s;
   }
+  a.pill:hover { transform: translateY(-2px); background: rgba(255,255,255,0.14); border-color: rgba(251,191,36,0.5); }
   .pill.featured { background: linear-gradient(135deg, #fbbf24, #f97316); border-color: transparent; color: #3e2723; font-weight: 700; }
 
   /* ============ TOP BAR ============ */
-  .top-bar { max-width: 1200px; margin: 0 auto 28px; display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .top-bar { max-width: 1340px; margin: 0 auto 28px; display: grid; grid-template-columns: 1fr; gap: 14px; }
   @media (min-width: 720px) { .top-bar { grid-template-columns: 2fr 1fr; } }
   .top-bar > div {
     background: var(--card); border: 1px solid var(--border);
@@ -102,7 +260,9 @@
   .saved { font-size: 12px; opacity: 0.7; }
 
   /* ============ SECTION TITLES ============ */
-  .section { max-width: 1200px; margin: 0 auto 36px; }
+  /* content-visibility: auto cho phép browser skip render section nằm ngoài viewport
+     → giảm paint cost khi cuộn, mỗi section trở thành đơn vị containment độc lập. */
+  .section { max-width: 1340px; margin: 0 auto 36px; content-visibility: auto; contain-intrinsic-size: 1px 600px; }
   .section-title {
     display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px;
   }
@@ -219,11 +379,18 @@
   .b-chip.unlocked { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #3e2723; opacity: 1; border-color: #f59e0b; font-weight: 700; box-shadow: 0 4px 12px rgba(251,191,36,0.3); }
   .b-chip .icon { font-size: 16px; }
 
-  footer { max-width: 1100px; margin: 36px auto 0; opacity: 0.6; font-size: 12px; text-align: center; line-height: 1.7; }
+  footer { max-width: 1340px; margin: 36px auto 0; opacity: 0.6; font-size: 12px; text-align: center; line-height: 1.7; }
   footer code { background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px; }
 </style>
 </head>
 <body>
+
+<!-- Bầu trời sao phủ toàn trang (fixed, sau mọi nội dung) -->
+<div id="skyfield" aria-hidden="true"></div>
+
+<!-- Header chung: logo trái, tài khoản phải. Tự fetch /api/auth/me và render. -->
+<header id="auth-header"></header>
+<script type="module" src="./js/auth-header.js"></script>
 
 <script>
 // Show banner if not secure context (LAN HTTP) — webcam modes won't work
@@ -254,67 +421,135 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 </script>
 
 <div class="hero">
-  <div class="logo">🌌</div>
-  <h1>EduVerse</h1>
-  <p class="tagline">Vũ trụ giáo dục nơi <b>mỗi trường do AI điều hành</b> — cung cấp học liệu, môi trường học tập, tiếp nhận yêu cầu và <b>tự cải tiến mỗi ngày</b> cho sinh viên học · thực hành · trải nghiệm. Học bằng 2D · 3D · VR · XR · Metaverse.</p>
-  <div class="pills">
-    <span class="pill featured">🏛️ Trường do AI điều hành</span>
-    <span class="pill">📚 Học liệu + môi trường thực hành</span>
-    <span class="pill">🔧 Tự cải tiến theo yêu cầu SV</span>
-    <span class="pill">🥽 VR · XR · Metaverse multiplayer</span>
-    <span class="pill">🎮 Stars · Coin · Streak · Achievements</span>
-    <a href="./assets.html" class="pill" style="text-decoration:none;color:inherit;">🧱 Thư viện Asset 3D</a>
-    <a href="./cast.html" class="pill" style="text-decoration:none;color:inherit;">📺 Cast trình chiếu</a>
-    <a href="./patient-sim.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(220,38,38,0.15);border-color:rgba(220,38,38,0.4);color:#fca5a5;">🩺 Mô phỏng bệnh nhân VN</a>
-    <a href="./history-vn.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(14,165,233,0.15);border-color:rgba(14,165,233,0.4);color:#7dd3fc;">👤 Gặp danh nhân VN</a>
-    <a href="./negotiation.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.4);color:#fbbf24;">🤝 Đàm phán Game Theory</a>
-    <a href="./teacher-live.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(139,92,246,0.15);border-color:rgba(139,92,246,0.4);color:#c4b5fd;">🎛 GV điều khiển live</a>
-    <a href="./pdf-tutor.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#a5b4fc;">📖 Học SGK bằng AI</a>
-    <a href="./lesson-builder.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.4);color:#6ee7b7;">✏️ Soạn bài no-code</a>
-    <a href="./marketplace.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(236,72,153,0.15);border-color:rgba(236,72,153,0.4);color:#f9a8d4;">📚 Chợ bài giảng</a>
-    <a href="./voice-demo.html" class="pill" style="text-decoration:none;color:inherit;background:rgba(6,182,212,0.15);border-color:rgba(6,182,212,0.4);color:#67e8f9;">🎙 Spatial VoIP</a>
-    <a href="./math-fun.html" class="pill" style="text-decoration:none;color:inherit;background:linear-gradient(135deg,rgba(251,191,36,0.25),rgba(236,72,153,0.25));border-color:rgba(251,191,36,0.5);color:#fbbf24;font-weight:700;">🎮 Toán vui (lớp 2 & 6)</a>
-    <span class="pill" id="hero-tutor-cta" style="cursor:pointer;background:rgba(251,191,36,0.18);border-color:rgba(251,191,36,0.5);color:#fbbf24;font-weight:600;" title="Mở AI Tutor">🦉 Hỏi AI Tutor</span>
+  <!-- Nền aurora + sao băng (sao đã chuyển ra #skyfield phủ toàn trang) -->
+  <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div>
+  <div class="shoot"></div>
+
+  <div class="hero-inner">
+    <!-- Cột trái: lời chào -->
+    <div class="hero-left">
+      <h2 class="greet" id="hero-greet">Chào mừng đến EduVerse <span class="wave">👋</span></h2>
+      <p class="tagline">Vũ trụ giáo dục <b>do AI điều hành</b> — học liệu, môi trường thực hành và <b>tự cải tiến mỗi ngày</b>. Học bằng 2D · 3D · VR · XR · Metaverse.</p>
+      <div class="cta-row">
+        <a class="cta primary" id="hero-enter" href="#schools">🏫 Vào trường của bạn</a>
+        <button class="cta ghost" id="hero-tutor-cta" type="button">🦉 Hỏi AI Tutor</button>
+      </div>
+    </div>
+
+    <!-- Cột phải: HỆ MẶT TRỜI — mặt trời (không icon) + quỹ đạo elip nghiêng rộng,
+         kiến thức/môn học bay quanh, có 1 node là hành tinh đôi quay quanh nhau -->
+    <div class="hero-right">
+      <div class="stage" id="stage" aria-hidden="true">
+        <div class="solar">
+          <div class="core"></div>
+          <!-- Quỹ đạo TRÒN đồng tâm: icon LUÔN nằm đúng trên vạch (1 đường = 1 icon).
+               Bán kính tăng dần (trong→ngoài); --ring-a (đậm nhạt) + tốc độ/chiều/lệch pha khác nhau. -->
+          <div class="osys" style="--w:130px;--h:130px;--tilt:0deg;--dur:14s;--delay:0s;--ring-a:0.34">
+            <div class="ring"></div><div class="rot"><span class="planet top" data-rot="1">💊</span></div>
+          </div>
+          <div class="osys" data-dir="rev" style="--w:185px;--h:185px;--tilt:0deg;--dur:18s;--delay:-5s;--ring-a:0.20">
+            <div class="ring"></div><div class="rot"><span class="planet top" data-rot="1">💻</span></div>
+          </div>
+          <div class="osys" style="--w:240px;--h:240px;--tilt:0deg;--dur:23s;--delay:-11s;--ring-a:0.13">
+            <div class="ring"></div><div class="rot"><span class="planet top" data-rot="1">⚖️</span></div>
+          </div>
+          <div class="osys" data-dir="rev" style="--w:295px;--h:295px;--tilt:0deg;--dur:30s;--delay:-17s;--ring-a:0.26">
+            <div class="ring"></div><div class="rot"><span class="planet top" data-rot="1">📐</span></div>
+          </div>
+          <!-- Trái đất + Mặt trăng (icon cố định) -->
+          <div class="osys" style="--w:345px;--h:345px;--tilt:0deg;--dur:37s;--delay:-9s;--ring-a:0.18">
+            <div class="ring"></div><div class="rot">
+              <span class="planet binode top">
+                <span class="bring"></span>
+                <span class="earth">🌍</span>
+                <span class="bspin"><span class="moon">🌙</span></span>
+              </span>
+            </div>
+          </div>
+          <!-- Sao Hỏa: nhỏ + quỹ đạo NGOÀI Trái đất (xa mặt trời hơn), icon cố định -->
+          <div class="osys" data-dir="rev" style="--w:392px;--h:392px;--tilt:0deg;--dur:46s;--delay:-15s;--ring-a:0.11">
+            <div class="ring"></div><div class="rot"><span class="planet mars top"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const cta = document.getElementById('hero-tutor-cta');
-      if (cta) cta.addEventListener('click', () => window.EduTutor?.open());
-    });
+    // Hero solar system: đảo icon ngẫu nhiên từ pool lớn, không lặp tức thời.
+    (function rotatePlanetIcons() {
+      const POOL = ['📚','📐','💊','💻','🧪','🎨','⚖️','🩺','🔬','🧬','🌱','🎼','🏛️','📜','🧮','🚀','🤖','🧠','🎭','⚗️','📊','🔭','🌐','✏️','🎯','🧩','🗺️','⚙️','🔢','🌟','🎲','📖','🖋️','🎤','🏥','💡','🪄','🧭'];
+      const BINODE = ['🪐','🌍','🌕','☄️','🌑','🌎','🌏','✨'];
+      const nodes = Array.from(document.querySelectorAll('[data-rot="1"]'));
+      if (!nodes.length) return;
+      let i = 0;
+      setInterval(() => {
+        const el = nodes[i++ % nodes.length];
+        if (!el) return;
+        const pool = el.classList.contains('bp') ? BINODE : POOL;
+        let next; let tries = 0;
+        do { next = pool[Math.floor(Math.random() * pool.length)]; tries++; }
+        while (next === el.textContent.trim() && tries < 6);
+        el.classList.add('swap');
+        setTimeout(() => { el.textContent = next; el.classList.remove('swap'); }, 400);
+      }, 2200);
+    })();
+  </script>
+
+  <script type="module">
+    // Lối tắt feature — render 2 lần liền nhau để marquee chạy vô tận mượt.
+    const FEATURES = [
+      { href: 'assets.html',         icon: '🧱', label: 'Thư viện Asset 3D' },
+      { href: 'cast.html',           icon: '📺', label: 'Cast trình chiếu' },
+      { href: 'patient-sim.html',    icon: '🩺', label: 'Mô phỏng bệnh nhân VN', tint: '220,38,38' },
+      { href: 'nha-thuoc-3d.html',   icon: '💊', label: 'Nhà thuốc 3D GPP',      tint: '13,148,136' },
+      { href: 'history-vn.html',     icon: '👤', label: 'Gặp danh nhân VN',     tint: '14,165,233' },
+      { href: 'negotiation.html',    icon: '🤝', label: 'Đàm phán Game Theory', tint: '245,158,11' },
+      { href: 'teacher-live.html',   icon: '🎛', label: 'GV điều khiển live',   tint: '139,92,246' },
+      { href: 'pdf-tutor.html',      icon: '📖', label: 'Học SGK bằng AI',      tint: '99,102,241' },
+      { href: 'lesson-builder.html', icon: '✏️', label: 'Soạn bài no-code',     tint: '16,185,129' },
+      { href: 'marketplace.html',    icon: '📚', label: 'Chợ bài giảng',        tint: '236,72,153' },
+      { href: 'voice-demo.html',     icon: '🎙', label: 'Spatial VoIP',         tint: '6,182,212' },
+      { href: 'math-fun.html',       icon: '🎮', label: 'Toán vui (lớp 2 & 6)', tint: '251,191,36' },
+    ];
+    const pill = (f) => {
+      const style = f.tint
+        ? ` style="background:rgba(${f.tint},0.15);border-color:rgba(${f.tint},0.4)"`
+        : '';
+      return `<a class="pill" href="${f.href}"${style}>${f.icon} ${f.label}</a>`;
+    };
+    const once = FEATURES.map(pill).join('');
+    const track = document.getElementById('feature-track');
+    if (track) track.innerHTML = once + once; // x2 cho loop liền mạch
+
+    // --- Bầu trời sao TOÀN TRANG: 3 lớp box-shadow lệch pha → lấp lánh sống động ---
+    const sky = document.getElementById('skyfield');
+    if (sky) {
+      const W = Math.ceil(window.innerWidth) + 280;   // +inset(-40)*2 + dư
+      const H = Math.ceil(window.innerHeight) + 280;
+      const gen = (n, color) => {
+        const s = [];
+        for (let i = 0; i < n; i++) s.push(`${Math.floor(Math.random()*W)}px ${Math.floor(Math.random()*H)}px ${color}`);
+        return s.join(',');
+      };
+      const base = Math.round((W * H) / 9000); // ~ tỉ lệ diện tích
+      const mk = (cls, n, size, color) => {
+        const d = document.createElement('div');
+        d.className = `star-layer ${cls}`;
+        d.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;box-shadow:${gen(n, color)}`;
+        return d;
+      };
+      sky.append(
+        mk('tw-a', base,                1, '#ffffff'),                  // sao nhỏ, nhấp nháy nhanh
+        mk('tw-b', Math.round(base/2),  2, 'rgba(255,255,255,0.9)'),   // sao vừa, nhịp khác
+        mk('tw-c', Math.round(base/5),  2, 'rgba(191,219,254,0.95)'),  // sao xanh nhạt, lấp lánh chậm
+      );
+    }
   </script>
 </div>
 
-<!-- ============ ỨNG DỤNG TÍCH HỢP (theo trường) ============ -->
-<!-- Render theo active domain. App cho từng trường khai trong js/integrations.js
-     (DOMAIN_APPS). Trường không khai app → khối ẩn hoàn toàn. -->
-<div class="section" id="integrations" style="display:none">
-  <div class="section-title">
-    <h2>🔌 <span id="int-title">Ứng dụng tích hợp</span></h2>
-    <span class="hint"><span id="int-sub">Hệ thống đồng hành nhúng thẳng vào EduVerse</span> — <a href="apps.html" style="color:#38bdf8">xem tất cả →</a></span>
-  </div>
-  <div class="modes" id="int-grid"></div>
-</div>
-<script type="module">
-  import { getAppsForDomain } from './js/integrations.js';
-  import { loadActiveDomain } from './js/engine/domain.js';
-  try {
-    const { DOMAIN } = await loadActiveDomain();
-    const apps = getAppsForDomain(DOMAIN.id);
-    if (!apps.length) throw 0;   // trường chưa khai app → ẩn khối
-    document.getElementById('int-title').textContent = `Ứng dụng · ${DOMAIN.name}`;
-    document.getElementById('int-sub').textContent = `Hệ thống đồng hành dành cho ${DOMAIN.shortName || DOMAIN.name}`;
-    document.getElementById('int-grid').innerHTML = apps.map(a => `
-      <div class="mode" style="--mode-color: ${a.color}">
-        <div class="mode-head">
-          <div class="mode-icon">${a.icon}</div>
-          <div class="mode-info"><h3>${a.name}</h3><span class="tag" style="background:${a.color}">${a.tag}</span></div>
-        </div>
-        <p class="desc">${a.desc}</p>
-        <a class="btn dark" href="apps.html?app=${a.id}">${a.icon} Mở ${a.name}</a>
-      </div>`).join('');
-    document.getElementById('integrations').style.display = '';
-  } catch {}
-</script>
+<!-- Khối "Ứng dụng tích hợp" tạm bỏ khỏi homepage — sẽ nhúng bên trong
+     từng trường ở giai đoạn sau, không trưng thành section riêng. -->
 
 <!-- ============ DASHBOARD — core loop entry ============ -->
 <div class="section" id="dashboard" style="display:none">
@@ -381,8 +616,10 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   <style>
     .school-grid {
       display: grid; gap: 14px;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
     }
+    @media (min-width: 640px)  { .school-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 1024px) { .school-grid { grid-template-columns: repeat(4, 1fr); } }
     .school-card {
       position: relative; overflow: hidden;
       background: var(--card); border: 2px solid var(--border);
@@ -574,6 +811,14 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   <div class="badges-card"><div class="badges-list" id="badges-list">đang tải...</div></div>
 </div>
 
+<!-- ============ LỐI TẮT TÍNH NĂNG (băng chuyền, cuối trang) ============ -->
+<div class="section" style="margin-bottom:20px">
+  <div class="section-title"><h2>✨ Khám phá thêm</h2><span class="hint">Công cụ &amp; trải nghiệm xuyên suốt EduVerse</span></div>
+  <div class="feature-strip" aria-label="Lối tắt tính năng">
+    <div class="feature-track" id="feature-track"></div>
+  </div>
+</div>
+
 <footer>
   Backend: Node.js + Express + SQLite + WebSocket trên cổng <code>8041</code> ·
   Chạy: <code>npm install &amp;&amp; npm start</code> ·
@@ -583,23 +828,25 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
 <script type="module">
 import { getPlayerName, setPlayerName, getBadges, getMyAchievements, getClassCode, setClassCode, joinClassByCode } from './js/api.js';
-import { bootstrapMe, logout } from './js/auth.js';
+import { bootstrapMe } from './js/auth.js';
 
-// Hệ thống đăng nhập — fetch /me, hiện tên + role, lộ công cụ giáo viên nếu role=teacher.
+// Header (logo trái, tài khoản phải) gắn ở './js/auth-header.js' (auto-mount).
+// Ở đây dùng me để chào cá nhân hoá + lộ công cụ giáo viên đúng người.
 const me = await bootstrapMe();
 if (me) {
-  document.getElementById('me-name').textContent = me.display_name;
-  document.getElementById('me-meta').textContent =
-    (me.role === 'teacher' ? '👨‍🏫 Giảng viên' : '🎓 Sinh viên') + ' · @' + me.username;
-  if (me.role === 'teacher') {
-    const t = document.getElementById('teacher-tools');
-    if (t) t.style.display = '';
-  }
+  // Lời chào theo vai trò + tên (rút gọn còn tên gọi đầu/cuối cho thân thiện).
+  const greetEl = document.getElementById('hero-greet');
+  const hi = me.role === 'teacher' ? 'Chào Thầy/Cô' : 'Chào';
+  greetEl.innerHTML = `${hi} <b>${me.display_name}</b> <span class="wave">👋</span>`;
 }
-document.getElementById('logout-btn').addEventListener('click', (e) => {
-  e.preventDefault();
-  logout();
-});
+if (me?.role === 'teacher') {
+  const t = document.getElementById('teacher-tools');
+  if (t) t.style.display = '';
+}
+
+// "Vào trường" dùng anchor #schools native (cuộn mượt qua CSS scroll-behavior).
+// "AI Tutor" mở trợ lý nổi.
+document.getElementById('hero-tutor-cta')?.addEventListener('click', () => window.EduTutor?.open());
 
 // Auto-join from URL ?class=XXXX
 const urlClass = new URLSearchParams(location.search).get('class');

@@ -3,7 +3,7 @@
 
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
-  createUser, getUserByUsername, getUserById, touchLogin, updateDisplayName,
+  createUser, getUserByUsername, getUserById, touchLogin, updateDisplayName, updateUserEditable,
   createSession, getSession, deleteSession,
   resolveSchoolByEmail, getSchoolByCode,
 } from '../../db.js';
@@ -230,13 +230,35 @@ export function attachAuth(r) {
     });
   });
 
-  // POST /api/auth/me — cập nhật display_name (tiện cho SV đổi tên hiển thị)
+  // POST /api/auth/me — người dùng tự sửa hồ sơ (tên hiển thị + tuổi + email)
   r.post('/api/auth/me', (req, res) => {
     if (!req.user) req.user = getCurrentUser(req);
     if (!req.user) return res.status(401).json({ error: 'unauthorized' });
-    const name = String(req.body?.displayName || '').trim().slice(0, 60);
-    if (!name) return res.status(400).json({ error: 'tên hiển thị trống' });
-    updateDisplayName(req.user.id, name);
-    res.json({ ok: true, display_name: name });
+    const b = req.body ?? {};
+    const name = String(b.displayName || '').trim().slice(0, 60);
+    if (!name) return res.status(400).json({ error: 'tên hiển thị không được trống' });
+
+    // age: bắt buộc hợp lệ nếu có gửi (giữ ràng buộc giống đăng ký 3–100)
+    const ageRaw = Number(b.age);
+    const age = Number.isFinite(ageRaw) ? Math.floor(ageRaw) : null;
+    if (age == null || age < 3 || age > 100) {
+      return res.status(400).json({ error: 'tuổi phải từ 3 đến 100' });
+    }
+
+    // email: tuỳ chọn; nếu có phải đúng định dạng cơ bản
+    let email = b.email == null ? '' : String(b.email).trim().slice(0, 120);
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return res.status(400).json({ error: 'email không hợp lệ' });
+    }
+
+    updateUserEditable(req.user.id, { display_name: name, age, email });
+    const full = getUserById(req.user.id);
+    res.json({
+      ok: true,
+      user: full ? {
+        id: full.id, username: full.username, display_name: full.display_name,
+        role: full.role, age: full.age, email: full.email, avatar_url: full.avatar_url,
+      } : null,
+    });
   });
 }

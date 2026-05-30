@@ -52,6 +52,23 @@ export async function logout() {
   location.replace('login.html');
 }
 
+// Người dùng tự sửa hồ sơ (tên hiển thị + tuổi + email). Cập nhật cache _me khi thành công.
+export async function updateProfile({ displayName, age, email }) {
+  const r = await fetch(`${A}/me`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ displayName, age, email }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (r.ok && data?.user) {
+    _me = data.user;
+    syncToLocal(_me);
+    return { ok: true, user: data.user };
+  }
+  return { ok: false, error: data?.error || `Lỗi ${r.status}` };
+}
+
 export async function fetchMe() {
   if (_mePromise) return _mePromise;
   _mePromise = (async () => {

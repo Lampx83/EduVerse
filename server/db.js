@@ -581,6 +581,19 @@ export function updateUserProfile(id, { display_name, email, avatar_url } = {}) 
     email: email || null, avatar_url: avatar_url || null,
   });
 }
+// Người dùng tự sửa hồ sơ (display_name + age + email). Set trực tiếp (không COALESCE)
+// vì form cung cấp đủ; email rỗng → null.
+const updateEditableStmt = db.prepare(`
+  UPDATE users SET display_name = @display_name, age = @age, email = @email WHERE id = @id
+`);
+export function updateUserEditable(id, { display_name, age, email }) {
+  updateEditableStmt.run({
+    id: Number(id),
+    display_name: String(display_name).slice(0, 60),
+    age: Number.isFinite(age) ? Math.floor(age) : null,
+    email: email ? String(email).slice(0, 120) : null,
+  });
+}
 export function isUsernameTaken(username) {
   return (countUsernameStmt.get(String(username))?.n || 0) > 0;
 }

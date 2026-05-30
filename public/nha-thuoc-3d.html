@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<meta name="theme-color" content="#0d9488" />
+<title>EduVerse · Nhà thuốc 3D GPP</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<style>
+  :root {
+    --bg: #0f172a; --bg-2: #1e293b;
+    --card: #111827; --card-h: #1e293b;
+    --border: #334155; --border-h: #475569;
+    --text: #e2e8f0; --muted: #94a3b8;
+    --accent: #38bdf8; --accent-2: #0d9488;
+    --green: #22c55e; --amber: #fbbf24; --red: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+  .app {
+    display: grid; grid-template-columns: 1.45fr 1fr; gap: 12px;
+    height: 100vh; padding: 12px;
+  }
+  @media (max-width: 980px) { .app { grid-template-columns: 1fr; grid-template-rows: 60vh 1fr; overflow-y: auto; height: auto; } }
+
+  .scene-wrap {
+    position: relative; background: #e8eef5; border-radius: 14px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  #scene-canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  .scene-overlay {
+    position: absolute; top: 10px; left: 10px; right: 10px;
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    pointer-events: none;
+  }
+  .scene-overlay > * { pointer-events: auto; }
+  .scene-overlay .back {
+    background: rgba(15,23,42,0.85); color: white; padding: 6px 12px;
+    border-radius: 999px; text-decoration: none; font-size: 12px; border: 1px solid var(--border);
+  }
+  .scene-overlay h1 {
+    margin: 0; font-size: 14px; color: #0f172a; background: rgba(255,255,255,0.9);
+    padding: 6px 12px; border-radius: 999px; font-weight: 700;
+  }
+  .scene-overlay .hint {
+    font-size: 11px; color: #334155; background: rgba(255,255,255,0.85);
+    padding: 5px 10px; border-radius: 999px;
+  }
+  .pending-label {
+    position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+    background: var(--amber); color: #3e2723;
+    padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  }
+  .cam-bar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    background: rgba(15,23,42,0.78); border: 1px solid rgba(56,189,248,0.35);
+    border-radius: 10px; padding: 6px 12px;
+    backdrop-filter: blur(8px);
+  }
+  .cam-bar-label { font-size: 11px; color: #94a3b8; }
+  .cam-bar-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cam-btn {
+    padding: 5px 10px; font-size: 11px; font-weight: 600;
+    border-radius: 6px; border: 1px solid rgba(148,163,184,0.4);
+    background: rgba(30,41,59,0.85); color: #e2e8f0; cursor: pointer;
+    font-family: inherit; white-space: nowrap;
+    transition: background 0.12s;
+  }
+  .cam-btn:hover:not(.active) { background: rgba(56,189,248,0.2); }
+  .cam-btn.active { background: var(--accent); color: #0f172a; border-color: var(--accent); cursor: default; }
+
+  .side {
+    display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
+  }
+  .side h2 { margin: 0 0 4px; font-size: 16px; }
+  .side h3 { margin: 6px 0 4px; font-size: 14px; color: var(--accent); }
+  .side .sub { font-size: 12px; color: var(--muted); }
+  .scenario-box { padding: 10px; background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.25); border-radius: 10px; }
+  .scenario-box .role { color: var(--accent); font-weight: 700; font-size: 12px; }
+  .scenario-box .title { font-weight: 700; font-size: 14px; margin: 2px 0; }
+  .scenario-box .setting { font-size: 12px; opacity: 0.85; line-height: 1.5; }
+
+  .chat {
+    flex: 1; min-height: 220px; max-height: 360px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+    background: rgba(15,23,42,0.6); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px;
+  }
+  .bubble {
+    max-width: 86%; padding: 8px 12px; border-radius: 12px;
+    font-size: 13px; line-height: 1.4; word-wrap: break-word;
+  }
+  .bubble.user { background: var(--accent); color: #0f172a; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .bubble.npc { background: var(--card-h); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
+
+  .chat-input { display: flex; gap: 6px; }
+  .chat-input textarea {
+    flex: 1; padding: 8px 10px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); color: var(--text);
+    border: 1px solid var(--border); font-family: inherit; font-size: 13px;
+    resize: none; min-height: 38px;
+  }
+  .chat-input textarea:focus { outline: 2px solid var(--accent); }
+  .btn {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card-h); color: var(--text); cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    transition: background 0.12s, transform 0.1s;
+  }
+  .btn:hover:not(:disabled) { background: var(--border-h); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+  .btn.primary:hover { background: #7dd3fc; }
+  .btn.success { background: var(--green); color: white; border-color: var(--green); }
+  .btn.success:hover { background: #4ade80; }
+
+  .quick-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .rx-line { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .rx-line input { width: 16px; height: 16px; }
+
+  .hints { padding-left: 18px; margin: 4px 0; font-size: 12px; color: var(--muted); }
+  .hints li { margin: 3px 0; }
+  .hints b { color: var(--text); }
+
+  /* Score panel */
+  #score-panel { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.3); border-radius: 10px; padding: 12px; }
+  #score-panel .total { font-size: 18px; }
+  #score-panel .total.fail { color: var(--red); }
+  #score-panel .fail-tag { background: var(--red); color: white; padding: 2px 8px; border-radius: 999px; font-size: 11px; margin-left: 8px; }
+  #score-panel .breakdown { font-size: 12px; color: var(--muted); margin: 4px 0 10px; }
+  #score-panel .fatals .fatal { background: rgba(239,68,68,0.15); border-left: 3px solid var(--red); padding: 6px 10px; margin: 4px 0; font-size: 12px; }
+  #score-panel .stages { display: grid; gap: 4px; margin-top: 8px; }
+  #score-panel .st { font-size: 12px; display: flex; align-items: center; gap: 8px; }
+  #score-panel .sc { padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+  #score-panel .sc0 { background: rgba(239,68,68,0.2); color: #fca5a5; }
+  #score-panel .sc1 { background: rgba(251,191,36,0.2); color: #fcd34d; }
+  #score-panel .sc2 { background: rgba(34,197,94,0.2); color: #86efac; }
+  #score-panel pre { white-space: pre-wrap; font-size: 11px; color: var(--muted); margin: 6px 0 0; }
+
+  /* POS modal */
+  .pos-overlay, .label-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+    z-index: 100; display: flex; align-items: center; justify-content: center;
+  }
+  .pos-modal {
+    width: min(960px, 96vw); max-height: 92vh; overflow: hidden;
+    background: var(--card); border-radius: 14px; border: 1px solid var(--border);
+    display: flex; flex-direction: column;
+  }
+  .pos-head { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .pos-title { font-weight: 700; }
+  .pos-close { margin-left: auto; background: transparent; border: 1px solid var(--border); color: var(--text); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .pos-body { display: grid; grid-template-columns: 280px 1fr; gap: 12px; padding: 12px; overflow: auto; }
+  .pos-left { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; }
+  .pos-search { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); font-size: 13px; }
+  .pos-catalog { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .cat-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 6px 8px; background: var(--card-h); border-radius: 6px; font-size: 12px; }
+  .cat-name small { color: var(--muted); }
+  .cat-add { padding: 4px 8px; background: var(--accent); border: none; color: #0f172a; border-radius: 4px; cursor: pointer; font-size: 11px; }
+  .cat-add:disabled { background: var(--border-h); cursor: not-allowed; color: var(--muted); }
+  .pos-right { display: flex; flex-direction: column; gap: 10px; }
+  .pos-rx-warn { background: rgba(239,68,68,0.15); border-left: 3px solid var(--red); padding: 8px 12px; font-size: 12px; border-radius: 6px; }
+  .pos-cart { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pos-cart th, .pos-cart td { padding: 6px 4px; border-bottom: 1px solid var(--border); text-align: left; }
+  .pos-cart input { width: 60px; padding: 4px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 4px; color: var(--text); }
+  .pos-cart .empty { text-align: center; color: var(--muted); padding: 16px; }
+  .pos-cart .del { background: transparent; border: 1px solid var(--border); color: var(--red); padding: 2px 8px; border-radius: 4px; cursor: pointer; }
+  .rx-tag { background: var(--red); color: white; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; }
+  .abx-tag { background: var(--amber); color: #3e2723; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; }
+  .pos-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+  .pos-meta input, .pos-meta select { padding: 5px 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; }
+  .rx-toggle { display: flex; align-items: center; gap: 6px; }
+  .pos-totals { background: rgba(34,197,94,0.08); padding: 8px 12px; border-radius: 8px; font-size: 13px; }
+  .pos-totals .grand { font-size: 16px; margin-top: 4px; color: var(--green); }
+  .pos-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* Label editor modal */
+  .label-modal { width: min(560px, 96vw); max-height: 92vh; overflow: auto; background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 0; }
+  .label-head { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .label-title { font-weight: 700; }
+  .label-close { margin-left: auto; background: transparent; border: 1px solid var(--border); color: var(--text); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; }
+  .label-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+  .label-body label { display: flex; flex-direction: column; gap: 4px; }
+  .label-body select, .label-body input, .label-body textarea { padding: 6px 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: inherit; font-size: 13px; }
+  .le-doses { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+  .le-doses input { width: 100%; }
+  .le-quicks { display: flex; gap: 6px; flex-wrap: wrap; }
+  .le-quick { padding: 4px 10px; border: 1px solid var(--border); background: var(--card-h); color: var(--text); border-radius: 999px; font-size: 11px; cursor: pointer; }
+  .le-quick:hover { background: var(--border-h); }
+  .le-preview { background: #fefce8; color: #422006; border-radius: 8px; padding: 10px; font-family: 'Courier New', monospace; font-size: 12px; }
+  .le-sticker > div { padding: 2px 0; border-bottom: 1px dashed #d4d4aa; }
+  .le-sticker > div:last-child { border-bottom: none; }
+  .le-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+  .le-actions button { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; }
+  .le-cancel { background: var(--border-h); color: var(--text); }
+  .le-create { background: var(--accent); color: #0f172a; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="scene-wrap">
+    <canvas id="scene-canvas"></canvas>
+    <div class="scene-overlay">
+      <a href="./index.html" class="back">← Trang chủ</a>
+      <h1 id="scenario-title">Nhà thuốc GPP 3D</h1>
+      <span class="hint">Click hộp thuốc để bỏ vào khay · click POS (màn xanh) · click "RA LẺ" (khay vàng)</span>
+    </div>
+    <div id="pending-label" class="pending-label" hidden>🏷️ <span id="pending-label-text"></span></div>
+    <div class="cam-bar" id="cam-bar">
+      <span class="cam-bar-label">📷 Góc nhìn:</span>
+      <div class="cam-bar-buttons" id="cam-buttons"></div>
+    </div>
+  </div>
+
+  <aside class="side">
+    <div class="scenario-box">
+      <div class="role">Đối thoại với: <span id="npc-role">—</span></div>
+      <div class="title" id="scenario-subtitle">Đang khởi tạo…</div>
+      <div class="setting" id="scenario-setting"></div>
+    </div>
+
+    <h3>💬 Hội thoại</h3>
+    <div class="chat" id="chat"></div>
+    <div class="chat-input">
+      <textarea id="ta" placeholder="Nhập câu trả lời… (Enter để gửi)" rows="2"></textarea>
+      <button class="btn primary" id="send">Gửi</button>
+    </div>
+
+    <h3>🛠️ Công cụ</h3>
+    <div class="quick-tools">
+      <button class="btn" id="btn-pos" type="button">💳 Mở POS</button>
+      <button class="btn" id="btn-label" type="button">🏷️ Soạn nhãn HDSD</button>
+      <label class="rx-line"><input type="checkbox" id="rx-toggle"/> Có đơn hợp lệ (Rx)</label>
+    </div>
+
+    <h3>🎯 Gợi ý SEGUE</h3>
+    <ul class="hints" id="hints"></ul>
+
+    <button class="btn success" id="finish" type="button">🏁 Kết phiên & chấm điểm</button>
+    <div id="score-panel" hidden></div>
+  </aside>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import { startSimulation } from './js/pharmacy/simulation.js';
+  const params = new URLSearchParams(location.search);
+  const moduleId = params.get('module') || 'gpp';
+  document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Cộng đồng GPP' : moduleId;
+  startSimulation({ moduleId });
+</script>
+</body>
+</html>

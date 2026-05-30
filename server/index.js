@@ -1,10 +1,12 @@
 import express from 'express';
 import http from 'node:http';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
+import { attachPharmacy } from './pharmacy.js';
 import { reviewAndDecideRequest, getDecisionsForRequest, getRecentDecisions } from './contexts/ai-agent/decisions.js';
 import { attachAppProxies } from './app-proxy.js';
 import { attachAssets } from './assets.js';
@@ -14,6 +16,11 @@ import { attachUser, makeAuthGate, requireAuth, attachAuth } from './contexts/id
 import { attachOAuth, listEnabledProviders } from './contexts/identity/oauth.js';
 import { attachTenant } from './contexts/identity/tenant.js';
 import { attachSeo } from './contexts/seo/index.js';
+import { attachAnalytics } from './contexts/analytics/index.js';
+import { attachBilling } from './contexts/billing/index.js';
+import { attachIntegration } from './contexts/integration/index.js';
+import { attachAdmin } from './contexts/admin/index.js';
+import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
 // Payment context — chỉ nạp khi PAYMENT_ENABLED=1 (dynamic import bên dưới) để bảng
 // payment + route KHÔNG xuất hiện ở deployment chưa bật thanh toán.
 const PAYMENT_ENABLED = process.env.PAYMENT_ENABLED === '1';
@@ -114,6 +121,10 @@ function checkAndUnlockBadges(playerName, attempt) {
 const app = express();
 app.disable('x-powered-by');
 
+// Security headers (R6) — an toàn áp mọi response. Rate-limit auth (pre-auth, theo IP).
+app.use(securityHeaders);
+app.use(['/api/auth/login', '/api/auth/register'], sensitiveAuthLimiter);
+
 // Đăng nhập là điều kiện tiên quyết để dùng EduVerse.
 // attachUser luôn gắn req.user (nullable). makeAuthGate redirect HTML chưa login về /login.html
 // và trả 401 cho /api/* (trừ /api/auth/*, /api/health). Phải nằm TRƯỚC attachAppProxies để
@@ -122,6 +133,8 @@ app.use((req, _res, next) => { attachUser(req, _res, next); });
 app.use(makeAuthGate({ basePath: BASE_PATH }));
 // Gắn req.schoolId (multi-tenant) — SAU attachUser để đọc được user.school_id.
 app.use(attachTenant);
+// Rate-limit CHỈ /api/* (không tính static asset) + key theo user (R5) — SAU attachUser.
+app.use('/api', apiLimiter);
 
 // Integrated sibling apps — each reverse-proxied under its own sub-path so the
 // whole suite is reachable on EduVerse's single origin (iframe + cookie/auth
@@ -157,6 +170,9 @@ attachAppProxies(app, [
 ].map((c) => ({ ...c, publicPath: c.publicPath || c.mount, backHref: `${BASE_PATH || ''}/apps.html` })));
 
 app.use(express.json({ limit: '64kb' }));
+// CSRF double-submit (R4) — sau express.json (cần req.body cho fallback _csrf).
+// Log-only mặc định; CSRF_ENFORCE=1 để chặn (khi FE đã gửi header X-CSRF-Token).
+app.use(csrf);
 
 // All routes attached to this Router. The Router is then mounted at
 // BASE_PATH (defaults to '/') so the same code serves either at root
@@ -174,6 +190,13 @@ attachSeo(r, { basePath: BASE_PATH });
 attachAuth(r);
 // SSO/OAuth providers (Google/Microsoft/GitHub). Chỉ bật những provider có env CLIENT_ID/SECRET.
 attachOAuth(r, { basePath: BASE_PATH });
+// Analytics (#6 pipeline + #5 funnel), Billing (#5 gói/entitlement), Integration (#3 outbox).
+attachAnalytics(r);
+attachBilling(r);
+attachIntegration(r);
+// Security token endpoint (/api/csrf) + Admin xuyên tenant (role=admin).
+attachSecurity(r);
+attachAdmin(r);
 
 r.post('/api/attempts', requireAuth, (req, res) => {
   const b = req.body ?? {};
@@ -240,6 +263,12 @@ r.get('/api/badges', (_req, res) => res.json(BADGES));
 // AI TUTOR — Claude API endpoints (grade-soap, patient-turn, evaluate-roleplay, tutor-chat)
 // ============================================================
 attachAi(r);
+
+// ============================================================
+// PHARMACY-AI — port từ github.com/Lampx83/Pharmacy-AI (nhà thuốc 3D GPP).
+// Session + chat + action + SEGUE scoring + fatal-error detection.
+// ============================================================
+attachPharmacy(r);
 
 // ============================================================
 // PAYMENT (Phase 1) — chỉ bật khi PAYMENT_ENABLED=1. Dynamic import để bảng
@@ -407,6 +436,30 @@ r.get('/api/export.csv', (_req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="eduverse-attempts-${new Date().toISOString().slice(0,10)}.csv"`);
   res.send('﻿' + lines.join('\n'));
+});
+
+// HTML injection middleware — gắn <script suggestion-fab.js> vào mọi trang HTML
+// để nút "🏛️ Đề nghị" tự xuất hiện ở mọi page (không phải sửa thủ công 59 file).
+const SGF_TAG = `<script type="module" src="js/suggestion-fab.js"></script>`;
+r.get(/.*/, async (req, res, next) => {
+  const u = req.path;
+  if (u.startsWith('/api/') || u.startsWith('/vendor/')) return next();
+  let rel;
+  if (u === '/' || u.endsWith('/')) rel = (u + 'index.html').slice(1);
+  else if (u.endsWith('.html')) rel = u.slice(1);
+  else if (/\.[a-z0-9]+$/i.test(u)) return next();        // không phải HTML
+  else rel = u.slice(1) + '.html';                         // express.static({extensions:['html']})
+  const file = path.resolve(PUBLIC_DIR, rel);
+  if (!file.startsWith(PUBLIC_DIR + path.sep)) return next(); // chống path traversal
+  try {
+    const html = await fs.readFile(file, 'utf8');
+    const idx = html.lastIndexOf('</body>');
+    const out = idx >= 0 ? html.slice(0, idx) + SGF_TAG + '\n' + html.slice(idx) : html + SGF_TAG;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(out);
+  } catch {
+    next();
+  }
 });
 
 // Vendored MediaPipe (mounted as relative path inside the Router)
