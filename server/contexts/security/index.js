@@ -53,10 +53,13 @@ setInterval(() => {
   for (const [k, arr] of buckets) { if (!arr.length || arr[arr.length - 1] <= now - 600000) buckets.delete(k); }
 }, 300000).unref?.();
 
-/** Tạo middleware rate-limit. opts: { windowMs, max, bucket }. */
-export function rateLimit({ windowMs = 60000, max = 120, bucket = 'g' } = {}) {
+/** Tạo middleware rate-limit. opts: { windowMs, max, bucket, keyFn }.
+ *  keyFn(req) cho phép key theo USER thay vì IP — quan trọng vì cả trường thường
+ *  chung 1 IP công cộng (NAT); key theo IP sẽ chặn nhầm cả lớp. */
+export function rateLimit({ windowMs = 60000, max = 120, bucket = 'g', keyFn = null } = {}) {
   return (req, res, next) => {
-    const r = hit(`${bucket}:${clientIp(req)}`, windowMs, max);
+    const id = keyFn ? keyFn(req) : clientIp(req);
+    const r = hit(`${bucket}:${id}`, windowMs, max);
     if (!r.ok) {
       res.setHeader('Retry-After', String(r.retryAfter || 60));
       return res.status(429).json({ error: 'rate_limited', retry_after_seconds: r.retryAfter });
@@ -126,6 +129,15 @@ export function attachSecurity(r) {
   console.log(`[security] headers + rate-limit ON; CSRF enforce=${CSRF_ENFORCE ? 'ON' : 'log-only'}; CSP=${process.env.CSP_ENFORCE === '1' ? 'ON' : 'off'}`);
 }
 
-// Tiện ích export cho index.js gắn app-level (trước router).
-export const sensitiveAuthLimiter = rateLimit({ windowMs: 60000, max: 20, bucket: 'auth' });   // login/register
-export const globalLimiter = rateLimit({ windowMs: 60000, max: 240, bucket: 'global' });
+// Tiện ích export cho index.js gắn app-level.
+// apiLimiter: CHỈ áp cho /api/* (mount app.use('/api', apiLimiter)), KHÔNG đụng
+// static asset (1 lần tải trang giàu asset không được tính). Key theo user khi đã
+// đăng nhập → 1 student spam không chặn cả lớp cùng IP trường. PHẢI mount SAU attachUser.
+export const apiLimiter = rateLimit({
+  windowMs: 60000, max: 600, bucket: 'api',
+  keyFn: (req) => (req.user?.id ? `u${req.user.id}` : `ip${clientIp(req)}`),
+});
+// login/register: pre-auth nên key theo IP; nới đủ cho 1 lớp đăng nhập cùng lúc (60/phút).
+export const sensitiveAuthLimiter = rateLimit({ windowMs: 60000, max: 60, bucket: 'auth' });
+// Giữ alias cũ để không vỡ import (deprecated — dùng apiLimiter).
+export const globalLimiter = apiLimiter;
