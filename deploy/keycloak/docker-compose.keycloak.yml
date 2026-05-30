@@ -1,0 +1,47 @@
+# ============================================================
+# Keycloak IdP cho EduVerse — chạy trên Server #3 (Analytics+Obs+IdP)
+# ============================================================
+# Keycloak là Identity Provider trung tâm + SSO broker: gom Google, Microsoft
+# Entra ID (Azure AD), SAML của 3 ĐH về một chỗ. EduVerse chỉ tin Keycloak
+# (1 OIDC provider duy nhất) thay vì tự quản lý từng provider trong oauth.js.
+#
+# DB dùng chung Postgres ở Server #2 (schema riêng 'keycloak'). KHÔNG dùng H2.
+#
+# Khởi động:  docker compose -f docker-compose.keycloak.yml up -d
+# Sau đó cấu hình realm theo docs/IDP-SETUP.md (hoặc import realm-eduverse.example.json).
+# ============================================================
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: eduverse-keycloak
+    restart: unless-stopped
+    command: start --optimized --import-realm
+    environment:
+      # ── Hostname (đặt theo domain thật khi production) ──
+      KC_HOSTNAME: ${KC_HOSTNAME:-https://id.eduverse.vn}
+      KC_HTTP_ENABLED: "true"           # TLS terminate ở Caddy phía trước
+      KC_PROXY_HEADERS: xforwarded
+      # ── DB: Postgres Server #2 (schema riêng) ──
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://10.0.0.11:5432/keycloak
+      KC_DB_USERNAME: ${KC_DB_USERNAME:-keycloak}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?đặt qua secrets manager, KHÔNG hardcode}
+      # ── Admin bootstrap (đổi ngay sau lần đăng nhập đầu) ──
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?đặt qua secrets manager}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    ports:
+      - "127.0.0.1:8080:8080"           # chỉ localhost; Caddy reverse-proxy ra ngoài
+    volumes:
+      - ./realm-eduverse.example.json:/opt/keycloak/data/import/realm-eduverse.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+# Ghi chú: KHÔNG mở 8080 ra Internet trực tiếp. Caddy (Server #1) reverse-proxy
+# https://id.eduverse.vn → 10.0.0.x:8080 với TLS. Xem Caddyfile.

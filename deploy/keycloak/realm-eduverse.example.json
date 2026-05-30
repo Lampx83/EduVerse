@@ -1,0 +1,85 @@
+{
+  "//": "Realm template EduVerse cho Keycloak. Copy → realm-eduverse.json, thay <PLACEHOLDER>.",
+  "//secrets": "KHÔNG commit file đã điền secret thật. Dùng env-substitution hoặc Vault.",
+  "realm": "eduverse",
+  "enabled": true,
+  "displayName": "EduVerse",
+  "loginTheme": "keycloak",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "rememberMe": true,
+  "verifyEmail": false,
+  "resetPasswordAllowed": true,
+  "sslRequired": "external",
+  "//roles": "Map sang role nội bộ EduVerse: pupil | student | teacher",
+  "roles": {
+    "realm": [
+      { "name": "pupil",   "description": "Học sinh phổ thông" },
+      { "name": "student", "description": "Sinh viên đại học" },
+      { "name": "teacher", "description": "Giảng viên / giáo viên" },
+      { "name": "admin",   "description": "Quản trị trường (Ban điều hành AI)" }
+    ]
+  },
+  "//clients": "EduVerse là confidential OIDC client. redirectUris đặt theo domain thật.",
+  "clients": [
+    {
+      "clientId": "eduverse-web",
+      "name": "EduVerse Web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "<EDUVERSE_OIDC_CLIENT_SECRET>",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "https://eduverse.vn/api/auth/oidc/callback",
+        "https://limio.vn/ps/api/auth/oidc/callback"
+      ],
+      "webOrigins": ["https://eduverse.vn", "https://limio.vn"],
+      "attributes": {
+        "post.logout.redirect.uris": "https://eduverse.vn/+https://limio.vn/ps/"
+      },
+      "defaultClientScopes": ["openid", "profile", "email", "roles"]
+    }
+  ],
+  "//identityProviders": "SSO broker — gom Google + Azure AD + (SAML ĐH) về Keycloak.",
+  "identityProviders": [
+    {
+      "alias": "google",
+      "providerId": "google",
+      "enabled": true,
+      "trustEmail": true,
+      "config": {
+        "clientId": "<GOOGLE_CLIENT_ID>",
+        "clientSecret": "<GOOGLE_CLIENT_SECRET>",
+        "hostedDomain": "",
+        "syncMode": "IMPORT"
+      }
+    },
+    {
+      "alias": "microsoft-entra",
+      "providerId": "oidc",
+      "enabled": true,
+      "trustEmail": true,
+      "config": {
+        "clientId": "<AZURE_APP_CLIENT_ID>",
+        "clientSecret": "<AZURE_APP_CLIENT_SECRET>",
+        "authorizationUrl": "https://login.microsoftonline.com/<TENANT_ID>/oauth2/v2.0/authorize",
+        "tokenUrl": "https://login.microsoftonline.com/<TENANT_ID>/oauth2/v2.0/token",
+        "userInfoUrl": "https://graph.microsoft.com/oidc/userinfo",
+        "issuer": "https://login.microsoftonline.com/<TENANT_ID>/v2.0",
+        "defaultScope": "openid profile email",
+        "syncMode": "IMPORT"
+      }
+    }
+  ],
+  "//mappers": "Map email domain → role/group + map provider claim → username/displayName.",
+  "//note-domain-mapping": "Dùng Authentication Flow + Identity Provider Mapper: hd/email domain *@neu.edu.vn → group /neu, set role student.",
+  "groups": [
+    { "name": "neu",  "attributes": { "school_code": ["neu"] } },
+    { "name": "hust", "attributes": { "school_code": ["hust"] } },
+    { "name": "k12",  "attributes": { "school_code": ["k12"] } }
+  ],
+  "//passwordPolicy": "Tối thiểu — siết thêm cho teacher/admin ở production.",
+  "passwordPolicy": "length(8) and notUsername()"
+}
