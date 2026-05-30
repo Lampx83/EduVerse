@@ -23,6 +23,7 @@
 // ============================================================
 
 import { aiQuotaGate, recordAiCall } from './ai-quota.js';
+import { saveAiQuestions, saveAiQa, getAiQuestions, getAiQa, getAiContentCounts } from './db.js';
 
 const OLLAMA_URL = (process.env.OLLAMA_URL || 'http://101.96.66.232:8037/ollama/api').replace(/\/+$/, '');
 const OLLAMA_SECKEY = process.env.OLLAMA_SECKEY || 'pharmasim';
@@ -51,6 +52,7 @@ export function attachAi(r) {
   r.post('/api/ai/pdf-quiz',          ...wrapAi('pdf-quiz',          handlePdfQuiz));
   r.post('/api/ai/practice-more',     ...wrapAi('practice-more',     handlePracticeMore));
   r.post('/api/ai/lesson-coach',      ...wrapAi('lesson-coach',      handleLessonCoach));
+  r.get( '/api/ai/lesson-bank',       wrap(handleLessonBank));   // đọc kho — không gọi AI, không quota
   r.get( '/api/ai/health',            wrap(handleHealth));
 }
 
@@ -108,7 +110,7 @@ function wrapAi(endpoint, handler) {
  * @param {number}  [opt.maxTokens] - num_predict
  * @returns {Promise<string>}
  */
-async function ollamaGenerate({ prompt, system, temperature = 0.3, json = false, maxTokens = 1500 }) {
+export async function ollamaGenerate({ prompt, system, temperature = 0.3, json = false, maxTokens = 1500 }) {
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), OLLAMA_TIMEOUT_MS);
   try {
@@ -917,12 +919,14 @@ const GRADE_LEVEL_VN = {
   2: 'học sinh lớp 2 (7-8 tuổi) — câu chữ thật đơn giản, số nhỏ, ví dụ gần gũi (kẹo, bút, con vật, gia đình)',
 };
 
-async function handlePracticeMore({ grade = 2, subjectLabel = '', topic = '', sampleStems = [], numQuestions = 5 }) {
+async function handlePracticeMore({ grade = 2, subjectLabel = '', topic = '', sampleStems = [], numQuestions = 5, weekId = '' }, req) {
   if (!topic) throw new Error('topic required');
   const n = Math.max(3, Math.min(8, Number(numQuestions) || 5));
   const levelHint = GRADE_LEVEL_VN[grade] || `học sinh lớp ${grade}`;
-  const avoid = (Array.isArray(sampleStems) ? sampleStems : []).slice(0, 8)
-    .map(s => `- ${s}`).join('\n');
+  // Tránh trùng: gộp stem mẫu (quiz lõi) + stem AI đã tích luỹ trong kho của tuần này.
+  const bankStems = weekId ? getAiQuestions(weekId, 40).map(q => q.stem) : [];
+  const avoidList = [...(Array.isArray(sampleStems) ? sampleStems : []), ...bankStems];
+  const avoid = avoidList.slice(0, 16).map(s => `- ${s}`).join('\n');
 
   const sys = `Bạn là giáo viên Tiểu học Việt Nam, dạy theo Chương trình GDPT 2018.
 Soạn ${n} câu hỏi trắc nghiệm MỚI cho ${levelHint}.
@@ -933,12 +937,19 @@ QUY TẮC:
 2. Mỗi câu đúng 4 lựa chọn, chỉ 1 đáp án đúng.
 3. KHÔNG lặp lại các câu mẫu đã có (xem danh sách tránh).
 4. Lời giải thích ngắn gọn, dễ hiểu, khích lệ.
-5. CHỈ TRẢ JSON, không viết gì khác.
+5. ĐA DẠNG: ${n} câu phải KHÁC NHAU hoàn toàn — khác số liệu, khác tình huống,
+   khác phép tính. TUYỆT ĐỐI không ra 2 câu cùng một phép tính/đáp án.
+6. ĐỘ CHÍNH XÁC LÀ TỐI QUAN TRỌNG: TỰ TÍNH LẠI mỗi câu trước khi chọn đáp án.
+   - "answer" là CHỈ SỐ (0,1,2,3) của lựa chọn ĐÚNG trong mảng "choices".
+   - Kiểm tra: choices[answer] PHẢI là kết quả đúng. Phép tính trong "explanation"
+     PHẢI khớp với choices[answer]. Nếu lệch, sửa lại answer cho khớp.
+   - KHÔNG đánh số thứ tự (A. B. C.) vào trong choices — chỉ ghi nội dung đáp án.
+7. CHỈ TRẢ JSON, không viết gì khác.
 
 Format JSON BẮT BUỘC:
 {
   "questions": [
-    { "stem": "câu hỏi", "choices": ["A","B","C","D"], "answer": 0, "explanation": "giải thích ngắn" }
+    { "stem": "câu hỏi", "choices": ["12", "15", "18", "20"], "answer": 1, "explanation": "giải thích ngắn, khớp choices[answer]" }
   ]
 }`;
 
@@ -949,26 +960,61 @@ Soạn ${n} câu hỏi MỚI. CHỈ JSON.`;
 
   let parsed = {};
   try {
-    const raw = await ollamaGenerate({ prompt, system: sys, temperature: 0.8, json: true, maxTokens: 1300 });
+    // temp thấp (0.4) → ưu tiên độ chính xác đáp án hơn sáng tạo; đề tiểu học
+    // cần answer key đúng tuyệt đối (model 14b dễ sai số học ở temp cao).
+    const raw = await ollamaGenerate({ prompt, system: sys, temperature: 0.4, json: true, maxTokens: 1300 });
     parsed = safeParseJson(raw);
   } catch (e) {
     console.warn('[practice-more] AI failed:', e?.message);
     return { questions: [], error: String(e?.message || e) };
   }
-  // Validate: chỉ giữ câu đúng cấu trúc + answer hợp lệ
+  // Validate + làm sạch: bỏ tiền tố "A. "/"B) " model đôi khi tự chèn,
+  // chỉ giữ câu đúng cấu trúc + answer hợp lệ.
+  const stripPrefix = s => String(s).replace(/^\s*[A-Da-d][.)\]]\s+/, '').trim();
+  // Tự sửa answer index: model 14b đôi khi tính ĐÚNG trong "explanation" nhưng
+  // trỏ SAI index. Lấy con số kết quả cuối cùng trong lời giải; nếu khớp DUY NHẤT
+  // một lựa chọn → chỉnh answer cho khớp (an toàn nhờ ràng buộc khớp tuyệt đối + duy nhất).
+  const reconcile = (choices, answer, explanation) => {
+    const nums = String(explanation).match(/-?\d+(?:[.,]\d+)?/g);
+    if (!nums) return answer;
+    const last = nums[nums.length - 1].replace(',', '.');
+    const norm = c => String(c).replace(/\s/g, '').replace(',', '.');
+    const hits = choices.map((c, i) => norm(c) === last ? i : -1).filter(i => i >= 0);
+    return hits.length === 1 ? hits[0] : answer;  // chỉ sửa khi khớp duy nhất
+  };
   const questions = (Array.isArray(parsed.questions) ? parsed.questions : [])
     .filter(q => q && typeof q.stem === 'string'
       && Array.isArray(q.choices) && q.choices.length === 4
       && Number.isInteger(q.answer) && q.answer >= 0 && q.answer <= 3)
+    .map(q => {
+      const choices = q.choices.map(stripPrefix);
+      return {
+        stem: String(q.stem),
+        choices,
+        answer: reconcile(choices, q.answer, q.explanation || ''),
+        explanation: String(q.explanation || ''),
+      };
+    })
     .slice(0, n);
-  return { questions, topic, model: OLLAMA_MODEL };
+
+  // Lưu vào kho để bài học giàu dần + tái sử dụng. Best-effort, không chặn response.
+  let saved = 0;
+  if (weekId && questions.length) {
+    try {
+      ({ saved } = saveAiQuestions({
+        week_id: weekId, subject: subjectLabel, topic,
+        student: req?.user?.display_name || null, questions,
+      }));
+    } catch (e) { console.warn('[practice-more] save failed:', e?.message); }
+  }
+  return { questions, topic, saved, model: OLLAMA_MODEL };
 }
 
 // ─────────────────────────────────────────────────────────────
 // LESSON COACH — "Hỏi gia sư" cho 1 tuần học (giảng lại theo cách khác)
 // ─────────────────────────────────────────────────────────────
 
-async function handleLessonCoach({ grade = 2, subjectLabel = '', topic = '', theory = '', history = [], message }) {
+async function handleLessonCoach({ grade = 2, subjectLabel = '', topic = '', theory = '', history = [], message, weekId = '' }, req) {
   if (!message) throw new Error('message required');
   const levelHint = GRADE_LEVEL_VN[grade] || `học sinh lớp ${grade}`;
   const sys = `Bạn là thầy/cô giáo Tiểu học Việt Nam thân thiện, đang kèm riêng cho ${levelHint}.
@@ -991,12 +1037,43 @@ QUY TẮC:
     { role: 'user', content: String(message).slice(0, 1200) },
   ];
   let reply = '';
+  let ok = false;
   try {
     reply = await ollamaChat({ messages, temperature: 0.6, maxTokens: 400 });
+    ok = !!reply.trim();
   } catch (e) {
     reply = `Cô tạm thời chưa kết nối được, em thử lại sau ít phút nhé! (${e?.message || e})`;
   }
-  return { reply: reply.trim(), model: OLLAMA_MODEL };
+  reply = reply.trim();
+
+  // Lưu cặp hỏi-đáp vào kho (chỉ khi AI trả lời thành công) để bài học giàu dần.
+  let saved = 0;
+  if (ok && weekId) {
+    try {
+      ({ saved } = saveAiQa({
+        week_id: weekId, subject: subjectLabel, topic,
+        student: req?.user?.display_name || null,
+        question: message, answer: reply,
+      }));
+    } catch (e) { console.warn('[lesson-coach] save failed:', e?.message); }
+  }
+  return { reply, saved, model: OLLAMA_MODEL };
+}
+
+// ─────────────────────────────────────────────────────────────
+// LESSON BANK — đọc kho học liệu AI đã tích luỹ của 1 tuần (không gọi AI)
+// ─────────────────────────────────────────────────────────────
+
+async function handleLessonBank(_body, req) {
+  const weekId = String(req?.query?.weekId || '').trim();
+  if (!weekId) throw new Error('weekId required');
+  const counts = getAiContentCounts(weekId);
+  return {
+    weekId,
+    counts,
+    questions: getAiQuestions(weekId, 50),  // để luyện lại không cần gọi Ollama
+    qa: getAiQa(weekId, 30),                // hỏi-đáp đã có để ôn lại
+  };
 }
 
 // ─────────────────────────────────────────────────────────────

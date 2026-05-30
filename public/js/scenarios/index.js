@@ -15,7 +15,7 @@ import { SKILL_QUIZZES } from './skill-quizzes.js';
 import { LIBRARY_CAREER_GAMES_SCENARIOS } from './library-career-games.js';
 import { BAO_CHE_LAB_SCENARIOS } from './bao-che-labs.js';
 import { PRIMARY_MATH_SCENARIOS } from './primary-math.js';
-import { PRIMARY_LOP2_SCENARIOS } from './primary-lop2.js';
+import { PRIMARY_LOP2_SCENARIOS } from './lop2/_index.js';
 import { SECONDARY_MATH_SCENARIOS } from './secondary-math.js';
 import { SECONDARY_LIT_SCENARIOS } from './secondary-literature.js';
 import { MATH6_LESSON_SCENARIOS } from './secondary-math6-lessons.js';

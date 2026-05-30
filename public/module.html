@@ -130,6 +130,49 @@
     background: rgba(239,68,68,0.1); border: 1px solid var(--danger);
     padding: 24px; border-radius: 12px; text-align: center;
   }
+
+  /* ── Weekly lesson (Tiểu học) ── */
+  .wl { display: flex; flex-direction: column; gap: 14px; }
+  .wl-card { background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 20px; line-height: 1.6; }
+  .wl-intro { background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(139,92,246,0.08));
+    border-color: rgba(251,191,36,0.3); }
+  .wl-lead { font-size: 16px; margin: 0 0 8px; }
+  .wl-obj { font-size: 14px; }
+  .wl-sec { font-size: 15px; font-weight: 800; margin-bottom: 10px; opacity: 0.95; }
+  .wl-h { margin: 14px 0 6px; font-size: 15px; color: var(--accent); }
+  .wl-p { margin: 6px 0; }
+  .wl-ul { margin: 6px 0; padding-left: 22px; }
+  .wl-ul li { margin: 4px 0; }
+  .wl-note { background: rgba(14,165,233,0.12); border-left: 3px solid var(--info);
+    padding: 8px 12px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
+  .wl-ex { background: rgba(255,255,255,0.04); border-radius: 10px;
+    padding: 10px 14px; margin: 8px 0; }
+  .wl-ex-q { margin-bottom: 4px; }
+  .wl-ex-a { color: var(--success); font-size: 14px; }
+  .wl-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+  .wl-btn { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 700; }
+  .wl-btn:disabled { opacity: 0.6; cursor: progress; }
+  .wl-btn-primary { background: var(--success); color: #06281f; }
+  .wl-btn-primary:hover { background: #34d399; }
+  .wl-btn-ai { background: rgba(139,92,246,0.22); color: #ddd6fe;
+    border: 1px solid rgba(139,92,246,0.5); }
+  .wl-btn-ai:hover { background: rgba(139,92,246,0.4); }
+  .wl-btn-bank { background: rgba(14,165,233,0.18); color: #bae6fd;
+    border: 1px solid rgba(14,165,233,0.5); }
+  .wl-btn-bank:hover { background: rgba(14,165,233,0.36); }
+  .wl-ai-msg { font-size: 14px; }
+  .wl-chat-log { display: flex; flex-direction: column; gap: 8px; max-height: 320px;
+    overflow-y: auto; margin: 8px 0; padding: 4px; }
+  .wl-msg { padding: 8px 12px; border-radius: 12px; font-size: 14px; max-width: 85%; line-height: 1.5; }
+  .wl-msg-ai { background: rgba(139,92,246,0.18); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .wl-msg-me { background: rgba(16,185,129,0.18); align-self: flex-end; border-bottom-right-radius: 4px; }
+  .wl-typing { opacity: 0.6; font-style: italic; }
+  .wl-chat-row { display: flex; gap: 8px; }
+  .wl-chat-input { flex: 1; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.95);
+    color: #1f2937; font-size: 14px; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -155,6 +198,7 @@
 <script type="module">
   import { ScenarioEngine } from './js/engine/index.js';
   import { getScenariosForModule } from './js/scenarios/index.js';
+  import { renderWeeklyLesson } from './js/engine/weekly-lesson.js';
   import { MODULES as PHARMACY_MODULES } from './js/engine/learning-path.js';
   import { getPlayerName, getClassCode } from './js/api.js';
   import { loadActiveDomain, getActiveDomainId, isGamifiedDomain } from './js/engine/domain.js';
@@ -181,15 +225,20 @@
 
   // Load the ACTIVE domain so module metadata + achievement catalog match
   // the school the student came from (falls back to pharmacy modules).
-  let DOMAIN_MODULES = PHARMACY_MODULES, ACHIEVEMENTS = [];
+  let DOMAIN_MODULES = PHARMACY_MODULES, ACHIEVEMENTS = [], GET_SUBJECT = null;
   try {
     const dom = await loadActiveDomain();
     DOMAIN_MODULES = dom.MODULES || PHARMACY_MODULES;
     ACHIEVEMENTS = dom.ACHIEVEMENTS || [];
+    GET_SUBJECT = dom.getSubject || null;
   } catch {}
   const MODULES = DOMAIN_MODULES;
   const moduleMeta = MODULES.find(m => m.id === moduleId)
     || PHARMACY_MODULES.find(m => m.id === moduleId);
+  // Nhãn môn (cho AI "Học thêm" / "Hỏi cô giáo") — fallback về key nếu thiếu.
+  const SUBJECT_LABEL = (GET_SUBJECT && moduleMeta?.subject)
+    ? (GET_SUBJECT(moduleMeta.subject)?.label || moduleMeta.subject)
+    : (moduleMeta?.subject || '');
 
   // Game hoá (XP/reward/quiz phản hồi tức thì) CHỈ cho Tiểu học + THCS.
   const GAMIFIED = isGamifiedDomain(getActiveDomainId());
@@ -321,12 +370,10 @@
       </a>`;
   }
 
-  function startScenario(id) {
+  function runEngine(scenario) {
     picker.innerHTML = '';
     app.innerHTML = '';
-    const scenarios = getScenariosForModule(moduleId);
-    const scenario = scenarios.find(s => s.id === id);
-    if (!scenario) return renderPicker();
+    _completed = false;
     const engine = new ScenarioEngine({
       host: app,
       scenario,
@@ -336,6 +383,30 @@
       onComplete: (result) => handleComplete(result, scenario),
     });
     engine.start();
+  }
+
+  function startScenario(id) {
+    picker.innerHTML = '';
+    app.innerHTML = '';
+    const scenarios = getScenariosForModule(moduleId);
+    const scenario = scenarios.find(s => s.id === id);
+    if (!scenario) return renderPicker();
+
+    // Tuần học có lý thuyết (Tiểu học) → hiện màn bài giảng + nút AI trước,
+    // bấm "Làm bài kiểm tra" mới chạy quiz. Bài AI "Học thêm" chạy như quiz
+    // bonus (không ghi điểm để tránh farm).
+    if (scenario.lesson && GAMIFIED) {
+      renderWeeklyLesson({
+        host: app,
+        scenario,
+        grade: moduleMeta?.yearLevel || 2,
+        subjectLabel: SUBJECT_LABEL,
+        onStartQuiz: () => runEngine(scenario),
+        onStartBonus: (bonus) => runEngine(bonus),
+      });
+      return;
+    }
+    runEngine(scenario);
   }
 
   // Chống nộp/“Hoàn thành” nhiều lần để farm điểm: chỉ xử lý 1 lần.

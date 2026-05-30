@@ -1,9 +1,11 @@
 // ============================================================
 // Trường Tiểu học — Module list
 // ============================================================
-// yearLevel = lớp (1–5). Mỗi lớp đủ 9–10 môn theo GDPT 2018.
-// knowledgeQuiz trỏ tới scenario trong scenarios/primary-math.js
-// hoặc scenarios/primary-lop2.js (cho Lớp 2 đầy đủ 2 học kỳ).
+// yearLevel = lớp (1–5). Lớp 2 đầy đủ 9 môn × 36 tuần (HK1: T1-18,
+// HK2: T19-36, T22 nghỉ Tết) theo GDPT 2018.
+// Module loader tự liệt scenarios theo prefix ID, không cần liệt
+// tất cả 36 IDs vào scenarioIds. knowledgeQuiz trỏ tuần 1 để mở
+// khoá module.
 // ============================================================
 
 /** @type {import('../../engine/types.js').CourseModule[]} */
@@ -13,60 +15,60 @@ export const MODULES = [
     scenarioIds: ['P1-toan-quiz'], knowledgeQuiz: 'P1-toan-quiz', minStarsToUnlock: 0,
     description: 'Đếm, so sánh số trong 100; cộng trừ không nhớ; hình cơ bản.' },
 
-  // ─────────── Lớp 2 — Đầy đủ 9 môn × 2 học kỳ ───────────
-  // 1. Toán
+  // ─────────── Lớp 2 — Đầy đủ 9 môn × 36 tuần ───────────
+  // 1. Toán (5 tiết/tuần)
   { category: 'curriculum', id: 'P2', title: 'Toán lớp 2', yearLevel: 2, subject: 'toan',
-    scenarioIds: ['P2-toan-quiz'], knowledgeQuiz: 'P2-toan-quiz',
+    scenarioIds: ['P2-w01-quiz'], knowledgeQuiz: 'P2-w01-quiz',
     minStarsToUnlock: 3, prerequisites: ['P1'],
-    description: 'HK1: Cộng trừ có nhớ; bảng nhân 2-5. HK2: Bảng chia; đơn vị đo; số đến 1000; tiền VN; chu vi.' },
+    description: '36 tuần (HK1: số đến 100, cộng-trừ có nhớ, dm-m-kg, hình tứ giác. HK2: bảng nhân/chia 2-5, số đến 1000, lít, tiền VN, chu vi).' },
 
-  // 2. Tiếng Việt
+  // 2. Tiếng Việt (10 tiết/tuần — nhiều tiết nhất)
   { category: 'curriculum', id: 'P2TV', title: 'Tiếng Việt lớp 2', yearLevel: 2, subject: 'tieng-viet',
-    scenarioIds: ['P2TV-hk1-quiz', 'P2TV-hk2-quiz'], knowledgeQuiz: 'P2TV-hk1-quiz',
+    scenarioIds: ['P2TV-w01-quiz'], knowledgeQuiz: 'P2TV-w01-quiz',
     minStarsToUnlock: 0,
-    description: 'HK1: Đọc-hiểu, từ chỉ sự vật/hoạt động/đặc điểm, câu Ai là gì?. HK2: Dấu câu, mở rộng vốn từ, viết đoạn 3-5 câu.' },
+    description: '36 tuần (HK1: ôn âm vần, tập đọc, từ loại, mẫu câu Ai-là-gì/làm-gì/thế-nào. HK2: dấu câu, vốn từ thời tiết-Bác Hồ-cây cối-quê hương, viết đoạn 3-5 câu).' },
 
-  // 3. Tiếng Anh
+  // 3. Tiếng Anh (tự chọn, 2-4 tiết/tuần)
   { category: 'curriculum', id: 'P2TA', title: 'Tiếng Anh lớp 2', yearLevel: 2, subject: 'tieng-anh',
-    scenarioIds: ['P2TA-hk1-quiz', 'P2TA-hk2-quiz'], knowledgeQuiz: 'P2TA-hk1-quiz',
+    scenarioIds: ['P2TA-w01-quiz'], knowledgeQuiz: 'P2TA-w01-quiz',
     minStarsToUnlock: 0,
-    description: 'HK1: Greetings, numbers 1-10, colors, body, family. HK2: Animals, food, classroom, weekdays, weather.' },
+    description: '36 tuần (HK1: greetings, numbers, colors, body, family, classroom. HK2: animals, food, weather, days, toys, routines, likes).' },
 
-  // 4. Giáo dục thể chất
+  // 4. Giáo dục thể chất (2 tiết/tuần)
   { category: 'curriculum', id: 'P2GDTC', title: 'GDTC lớp 2', yearLevel: 2, subject: 'gdtc',
-    scenarioIds: ['P2GDTC-hk1-quiz', 'P2GDTC-hk2-quiz'], knowledgeQuiz: 'P2GDTC-hk1-quiz',
+    scenarioIds: ['P2GDTC-w01-quiz'], knowledgeQuiz: 'P2GDTC-w01-quiz',
     minStarsToUnlock: 0,
-    description: 'HK1: Đội hình đội ngũ, bài thể dục phát triển chung, đi-chạy-nhảy. HK2: Ném-bắt bóng, tâng cầu, trò chơi dân gian, an toàn tập luyện.' },
+    description: '36 tuần (HK1: đội hình đội ngũ, bài thể dục PTC, đi-chạy-nhảy, trò chơi. HK2: nhảy dây, tâng cầu, ném-bắt bóng, trò chơi dân gian, an toàn).' },
 
-  // 5. Âm nhạc
+  // 5. Âm nhạc (1 tiết/tuần)
   { category: 'curriculum', id: 'P2AN', title: 'Âm nhạc lớp 2', yearLevel: 2, subject: 'am-nhac',
-    scenarioIds: ['P2AN-hk1-quiz', 'P2AN-hk2-quiz'], knowledgeQuiz: 'P2AN-hk1-quiz',
+    scenarioIds: ['P2AN-w01-quiz'], knowledgeQuiz: 'P2AN-w01-quiz',
     minStarsToUnlock: 0,
-    description: 'HK1: Bài hát thiếu nhi, cao độ-trường độ, tiết tấu. HK2: Đọc nhạc Đô-Rê-Mi, vận động theo nhạc, dụng cụ trống-mõ.' },
+    description: '36 tuần (HK1: bài hát thiếu nhi, cao độ-trường độ, tiết tấu, nhạc cụ gõ. HK2: đọc nhạc Đô-Rê-Mi-Pha-Son, nhịp 2/4, nhạc cụ dân tộc).' },
 
-  // 6. Mỹ thuật
+  // 6. Mỹ thuật (1 tiết/tuần)
   { category: 'curriculum', id: 'P2MT', title: 'Mĩ thuật lớp 2', yearLevel: 2, subject: 'my-thuat',
-    scenarioIds: ['P2MT-hk1-quiz', 'P2MT-hk2-quiz'], knowledgeQuiz: 'P2MT-hk1-quiz',
+    scenarioIds: ['P2MT-w01-quiz'], knowledgeQuiz: 'P2MT-w01-quiz',
     minStarsToUnlock: 0,
-    description: 'HK1: Màu cơ bản, trang trí, vẽ đề tài gia đình-trường học, nặn đất. HK2: Xé dán giấy, tranh dân gian Đông Hồ, đề tài thiên nhiên.' },
+    description: '36 tuần (HK1: yếu tố tạo hình, màu cơ bản, pha màu, vẽ đề tài quen thuộc, trang trí. HK2: xé dán, tranh Đông Hồ, vẽ phong cảnh, nặn đất, đề tài lễ).' },
 
-  // 7. Hoạt động trải nghiệm
+  // 7. Hoạt động trải nghiệm (3 tiết/tuần)
   { category: 'curriculum', id: 'P2HDTN', title: 'Hoạt động trải nghiệm lớp 2', yearLevel: 2, subject: 'htn',
-    scenarioIds: ['P2HDTN-hk1-quiz', 'P2HDTN-hk2-quiz'], knowledgeQuiz: 'P2HDTN-hk1-quiz',
+    scenarioIds: ['P2HDTN-w01-quiz'], knowledgeQuiz: 'P2HDTN-w01-quiz',
     minStarsToUnlock: 0,
-    description: 'HK1: Tự phục vụ, ứng xử trong gia đình-nhà trường. HK2: An toàn giao thông, môi trường, làm việc nhà, định hướng nghề.' },
+    description: '36 tuần (HK1: bản thân, gia đình, nhà trường, lễ phép. HK2: an toàn giao thông, môi trường, tiết kiệm, định hướng nghề nghiệp).' },
 
-  // 8. Tự nhiên & Xã hội
+  // 8. Tự nhiên & Xã hội (2 tiết/tuần)
   { category: 'curriculum', id: 'P2TNXH', title: 'Tự nhiên & Xã hội lớp 2', yearLevel: 2, subject: 'tnxh',
-    scenarioIds: ['P2TNXH-hk1-quiz', 'P2TNXH-hk2-quiz'], knowledgeQuiz: 'P2TNXH-hk1-quiz',
+    scenarioIds: ['P2TNXH-w01-quiz'], knowledgeQuiz: 'P2TNXH-w01-quiz',
     minStarsToUnlock: 0,
-    description: 'HK1: Gia đình, trường học, cộng đồng địa phương. HK2: Thực-động vật, cơ thể người (vận động-hô hấp-tiêu hoá), Mặt Trời-Mặt Trăng.' },
+    description: '36 tuần (HK1: gia đình, trường học, cộng đồng địa phương, ATGT. HK2: thực-động vật, cơ thể người, Trái Đất-Mặt Trời-Mặt Trăng, phương hướng).' },
 
-  // 9. Đạo đức
+  // 9. Đạo đức (1 tiết/tuần)
   { category: 'curriculum', id: 'P2DD', title: 'Đạo đức lớp 2', yearLevel: 2, subject: 'dao-duc',
-    scenarioIds: ['P2DD-hk1-quiz', 'P2DD-hk2-quiz'], knowledgeQuiz: 'P2DD-hk1-quiz',
+    scenarioIds: ['P2DD-w01-quiz'], knowledgeQuiz: 'P2DD-w01-quiz',
     minStarsToUnlock: 0,
-    description: 'HK1: Yêu lao động, kính trọng thầy cô, yêu ông bà cha mẹ, giúp bạn. HK2: Trung thực, bảo vệ của công, yêu quê hương, vệ sinh công cộng.' },
+    description: '36 tuần (HK1: quý thời gian, lễ phép, yêu gia đình, giúp bạn, yêu lao động. HK2: trung thực, bảo vệ của công, yêu quê hương, lịch sự công cộng, tự lập).' },
 
   // ─────────── Lớp 3-5 ───────────
   { category: 'curriculum', id: 'P3', title: 'Toán lớp 3', yearLevel: 3, subject: 'toan',
