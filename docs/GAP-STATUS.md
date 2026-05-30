@@ -8,10 +8,10 @@
 |---|---|---|---|---|
 | 1 | Multi-tenant (30k MAU, nhiều trường) | 🔴 trang trí | 🟢 **enforce runtime** | Test 2 trường: leaderboard/requests/attempts cô lập; SSO email domain → school. Postgres RLS verify trên PG16. |
 | 2 | Thanh toán | 🟡 | 🟡 scaffold | VNPay HMAC + ledger + IPN idempotency verify thật (OFF mặc định). Cần reconciliation/e-invoice. |
-| 3 | Nhiều API tích hợp | 🟡 | 🟡 | Proxy 4 app + webhook inbox (payment). Cần outbox + adapter generic. |
+| 3 | Nhiều API tích hợp | 🟡 | 🟢 **outbox + hub** | Proxy 4 app + webhook inbox (IN) + **outbox dispatcher (OUT)**: đăng ký endpoint, fan-out, retry backoff, chữ ký HMAC-SHA256. Verify webhook delivered + chữ ký valid. |
 | 4 | SEO tốt | 🔴 | 🟢 **foundation** | /robots.txt + /sitemap.xml động + /welcome crawlable (OG + JSON-LD), ngoài auth gate; app vẫn gated. |
-| 5 | Mô hình KD lợi nhuận cao | 🟡 | 🟡 | AI cost quota + token log per-tenant. Cần funnel analytics (PostHog) + billing/subscription. |
-| 6 | Data cực lớn | 🟡 | 🟡 | Thiết kế 4-tier (Postgres/PostHog/MinIO). Cần pipeline event (Phase 2). |
+| 5 | Mô hình KD lợi nhuận cao | 🟡 | 🟢 **funnel + billing** | AI cost quota + **analytics funnel** (welcome→register→…→payment) + **billing**: plans free/pro/school + subscription + entitlement gating per-tenant (requireFeature 402). Verify funnel + nâng gói → 11 features. |
+| 6 | Data cực lớn | 🟡 | 🟢 **event pipeline** | **analytics_events** (track + funnel + overview, gắn school_id) — điểm thu, sẵn CDC sang ClickHouse/MinIO ở scale. Verify ingest + query. |
 | 7 | AI Agent tự quyết định | 🔴 | 🟢 **decision + audit** | reviewAndDecideRequest: approve/reject/defer/priority + guardrail + ai_decisions audit trail. Verify end-to-end (rule fallback khi Ollama offline). |
 | 8 | 3D/2D/XR/VR | 🟢 | 🟢 | Three.js + WebXR sẵn có. |
 
