@@ -18,6 +18,7 @@ import {
   buildPaymentUrl, verifyCallback, isSuccessCode, isVnpayConfigured, IPN_RESPONSES,
 } from './gateways/vnpay.js';
 import { recordPaymentSettled } from './ledger.js';
+import { reconcile, refundPayment } from './reconcile.js';
 
 // ── Data access ──
 const insertInvoiceStmt = db.prepare(`
@@ -161,5 +162,25 @@ export function attachPayment(r, { basePath = '' } = {}) {
     });
   });
 
-  console.log('[payment] routes mounted: /api/payment/* (vnpay)');
+  // ── Hoàn tiền (teacher/admin) — ghi refund + bút toán đảo ──
+  r.post('/api/payment/refunds', requireAuth, (req, res) => {
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'forbidden', message: 'Chỉ giáo viên/quản trị được hoàn tiền.' });
+    }
+    try {
+      const out = refundPayment({ payment_id: req.body?.paymentId, amount: req.body?.amount, reason: req.body?.reason });
+      res.json(out);
+    } catch (e) { res.status(400).json({ error: 'refund_failed', detail: String(e.message) }); }
+  });
+
+  // ── Đối soát ledger ↔ payments (admin) — phát hiện lệch sổ ──
+  r.get('/api/payment/reconcile', requireAuth, (req, res) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+    const sid = req.query.school_id ? Number(req.query.school_id) : (req.user.role === 'admin' ? null : req.schoolId);
+    res.json(reconcile(sid));
+  });
+
+  console.log('[payment] routes mounted: /api/payment/* (vnpay + refund + reconcile)');
 }

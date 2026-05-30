@@ -7,7 +7,9 @@
 | # | Yêu cầu | Trước | Sau | Bằng chứng |
 |---|---|---|---|---|
 | 1 | Multi-tenant (30k MAU, nhiều trường) | 🔴 trang trí | 🟢 **enforce runtime** | Test 2 trường: leaderboard/requests/attempts cô lập; SSO email domain → school. Postgres RLS verify trên PG16. |
-| 2 | Thanh toán | 🟡 | 🟡 scaffold | VNPay HMAC + ledger + IPN idempotency verify thật (OFF mặc định). Cần reconciliation/e-invoice. |
+| 2 | Thanh toán | 🟡 | 🟢 **+ reconcile/refund** | VNPay HMAC + ledger + IPN idempotency + **reconciliation (ledger↔payments) + refund API (đảo bút toán, guard over-refund)** verify thật. Còn PCI/e-invoice (stub) cho go-live thật. |
+| 9 | Bảo mật (no-framework) | 🔴 | 🟢 **headers+ratelimit+CSRF** | security headers + rate-limit (verify 429) + CSRF double-submit (verify block/allow). Xem NO-FRAMEWORK-REVIEW.md. |
+| 10 | Trang quản trị | 🔴 | 🟢 **foundation** | contexts/admin xuyên tenant (schools/users/requests/ai-decisions/content/billing) + public/admin.html, gate role=admin. Verify cross-tenant + 403. |
 | 3 | Nhiều API tích hợp | 🟡 | 🟢 **outbox + hub** | Proxy 4 app + webhook inbox (IN) + **outbox dispatcher (OUT)**: đăng ký endpoint, fan-out, retry backoff, chữ ký HMAC-SHA256. Verify webhook delivered + chữ ký valid. |
 | 4 | SEO tốt | 🔴 | 🟢 **foundation** | /robots.txt + /sitemap.xml động + /welcome crawlable (OG + JSON-LD), ngoài auth gate; app vẫn gated. |
 | 5 | Mô hình KD lợi nhuận cao | 🟡 | 🟢 **funnel + billing** | AI cost quota + **analytics funnel** (welcome→register→…→payment) + **billing**: plans free/pro/school + subscription + entitlement gating per-tenant (requireFeature 402). Verify funnel + nâng gói → 11 features. |
