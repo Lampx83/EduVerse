@@ -6,10 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
-    "segue:install": "cd pharmacy-ai && npm install",
-    "segue:build": "cd pharmacy-ai && npm run build",
-    "segue:start": "cd pharmacy-ai && npx next start -p 3100"
+    "dev": "node --watch server/index.js"
   },
   "engines": {
     "node": ">=20"
