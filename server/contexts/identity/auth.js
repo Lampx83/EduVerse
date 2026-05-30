@@ -5,7 +5,7 @@ import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   createUser, getUserByUsername, getUserById, touchLogin, updateDisplayName,
   createSession, getSession, deleteSession,
-} from './db.js';
+} from '../../db.js';
 
 const COOKIE_NAME = 'eduverse_sid';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 ngày
@@ -93,7 +93,7 @@ export function requireAuth(req, res, next) {
 // Whitelist các path không cần login (login/register, asset chung, health, /api/auth, PWA).
 const PUBLIC_PATH_PREFIXES = [
   '/api/auth/', '/api/health',
-  '/js/auth.js', '/js/sso.js', '/js/engine/storage.js',
+  '/js/auth.js', '/js/sso.js', '/js/auth-header.js', '/js/engine/storage.js',
   '/manifest.webmanifest', '/sw.js', '/favicon',
   '/vendor/', '/models/',
 ];

@@ -9,8 +9,8 @@ import { attachAppProxies } from './app-proxy.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
-import { attachUser, makeAuthGate, requireAuth, attachAuth } from './auth.js';
-import { attachOAuth, listEnabledProviders } from './oauth.js';
+import { attachUser, makeAuthGate, requireAuth, attachAuth } from './contexts/identity/auth.js';
+import { attachOAuth, listEnabledProviders } from './contexts/identity/oauth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');

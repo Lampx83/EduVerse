@@ -7,7 +7,7 @@ import { randomBytes, createHash } from 'node:crypto';
 import {
   findUserByOAuth, linkOAuth, createUser, updateUserProfile, isUsernameTaken,
   createSession,
-} from './db.js';
+} from '../../db.js';
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const STATE_TTL_MS = 10 * 60 * 1000;     // 10 phút cho luồng login
