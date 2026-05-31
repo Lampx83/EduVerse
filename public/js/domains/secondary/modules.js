@@ -83,4 +83,8 @@ export const MODULES = [
   { category: 'curriculum', id: 'S6HDTN', title: 'HĐ trải nghiệm – hướng nghiệp lớp 6 (36 tuần)', yearLevel: 1, subject: 'hdtn',
     scenarioIds: ['S6HDTN-w01-quiz'], knowledgeQuiz: 'S6HDTN-w01-quiz', minStarsToUnlock: 0,
     description: '36 tuần · 4 mạch GDPT 2018 (Hướng vào bản thân · Hướng đến xã hội · Hướng đến tự nhiên · Hướng nghiệp).' },
+
+  { category: 'curriculum', id: 'S6GDDP', title: 'Giáo dục địa phương Hà Nội lớp 6 (36 tuần)', yearLevel: 1, subject: 'gd-dia-phuong',
+    scenarioIds: ['S6GDDP-w01-quiz'], knowledgeQuiz: 'S6GDDP-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần GDĐP Hà Nội (HK1: vị trí–dân cư–lịch sử Thăng Long, danh nhân, khởi nghĩa. HK2: ẩm thực–làng nghề–lễ hội–đô thị thông minh).' },
 ];

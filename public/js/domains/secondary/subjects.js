@@ -14,6 +14,7 @@ export const SUBJECTS = {
   'gdtc':        { label: 'Giáo dục thể chất',    icon: '⚽', color: '#22c55e' },
   'nghe-thuat':  { label: 'Nghệ thuật',           icon: '🎨', color: '#ec4899' },
   'hdtn':        { label: 'Trải nghiệm – hướng nghiệp', icon: '🧭', color: '#f97316' },
+  'gd-dia-phuong': { label: 'Giáo dục địa phương',  icon: '🏯', color: '#a855f7' },
 };
 export function getSubject(id) {
   return SUBJECTS[id] || { label: id, icon: '📘', color: '#94a3b8' };
