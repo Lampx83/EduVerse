@@ -122,12 +122,14 @@
     <div id="tab-inspector" class="tab-pane active">
       <div id="inspectorEmpty" class="hint" style="text-align:center; padding:20px 0;">
         <div style="font-size:32px; margin-bottom:8px;">🖱️</div>
-        Click toà nhà trên bản đồ để chọn.<br>
-        <span style="color:var(--muted); font-size:11px;">Drag để di chuyển · <code>R</code> xoay · <code>Del</code> xoá</span>
+        Click toà nhà hoặc hàng rào/cây trên bản đồ để chọn.<br>
+        <span style="color:var(--muted); font-size:11px;">Drag di chuyển · nút xoay · <code>Del</code> xoá</span>
       </div>
+
+      <!-- Building inspector -->
       <div id="inspector" style="display:none;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-          <span id="iEmoji" style="font-size:32px;"></span>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+          <span id="iEmoji" style="font-size:28px;"></span>
           <div style="flex:1;">
             <div id="iName" style="font-weight:700; font-size:14px;"></div>
             <div id="iId" style="color:var(--muted); font-size:11px; font-family:ui-monospace,Menlo,monospace;"></div>
@@ -138,12 +140,38 @@
         <div class="row"><label>Vị trí gx</label><input id="fGx" type="number" step="0.5"></div>
         <div class="row"><label>Vị trí gy</label><input id="fGy" type="number" step="0.5"></div>
         <div class="row"><label>Scale</label><input id="fScale" type="number" step="0.05" min="0.3" max="2"></div>
-        <div class="row"><label>Xoay</label>
-          <select id="fRot"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
+        <div class="row">
+          <label>Xoay</label>
+          <div style="display:flex; gap:6px; flex:1;">
+            <button class="btn" id="bRotCCW" style="flex:1; font-size:16px;" title="Xoay ngược chiều kim đồng hồ">⟲</button>
+            <span id="bRotVal" style="min-width:40px; text-align:center; line-height:32px; font-size:13px; color:var(--muted);">90°</span>
+            <button class="btn" id="bRotCW"  style="flex:1; font-size:16px;" title="Xoay chiều kim đồng hồ">⟳</button>
+          </div>
         </div>
         <div class="row"><label>Pin màu</label><input id="fPin" type="color"></div>
         <div class="row"><label>Cờ trường</label><input id="fFlag" type="checkbox"></div>
         <button class="btn bad" id="iDelete" style="width:100%; margin-top:12px;">🗑️ Xoá toà nhà</button>
+      </div>
+
+      <!-- Decor inspector (hàng rào, cây, xe, prop) -->
+      <div id="inspectorDecor" style="display:none;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+          <span style="font-size:28px;">🧱</span>
+          <div style="flex:1;">
+            <div id="dName" style="font-weight:700; font-size:14px;"></div>
+            <div id="dPos" style="color:var(--muted); font-size:11px; font-family:ui-monospace,Menlo,monospace;"></div>
+          </div>
+        </div>
+        <div class="row">
+          <label>Xoay</label>
+          <div style="display:flex; gap:6px; flex:1;">
+            <button class="btn" id="dRotCCW" style="flex:1; font-size:16px;" title="Xoay ngược chiều kim đồng hồ">⟲</button>
+            <span id="dRotVal" style="min-width:40px; text-align:center; line-height:32px; font-size:13px; color:var(--muted);">0°</span>
+            <button class="btn" id="dRotCW"  style="flex:1; font-size:16px;" title="Xoay chiều kim đồng hồ">⟳</button>
+          </div>
+        </div>
+        <div class="hint" style="margin-top:8px;">Drag để di chuyển. Rotate để thay đổi hướng hàng rào / đèn / ghế.</div>
+        <button class="btn bad" id="dDelete" style="width:100%; margin-top:12px;">🗑️ Xoá</button>
       </div>
     </div>
 
@@ -286,10 +314,29 @@ $('#palSearch').addEventListener('input',e=>renderPalette(e.target.value));
 function toast(msg, kind='ok'){ toastEl.textContent=msg; toastEl.className='toast show '+kind; clearTimeout(toast._t); toast._t=setTimeout(()=>toastEl.classList.remove('show'),2200); }
 function reloadIframe(){ iframe.src=`/campus-proto/b-iso-canvas.html?domain=${dom.value}&edit=1&_t=${Date.now()}`; setDirty(false); closeInspector(); }
 function setDirty(on){ $('#dirtyDot').style.display = on ? '' : 'none'; }
-function closeInspector(){ $('#inspector').style.display='none'; $('#inspectorEmpty').style.display=''; currentIdx=-1; }
+function closeInspector(){
+  $('#inspector').style.display='none';
+  $('#inspectorDecor').style.display='none';
+  $('#inspectorEmpty').style.display='';
+  currentIdx=-1; currentDecorIdx=-1;
+}
+let currentDecorIdx=-1;
+
+function openDecorInspector(idx, item){
+  currentDecorIdx=idx; currentIdx=-1;
+  $('#inspectorEmpty').style.display='none';
+  $('#inspector').style.display='none';
+  $('#inspectorDecor').style.display='';
+  $('#dName').textContent=item.k||'(decor)';
+  $('#dPos').textContent=`gx:${item.gx} gy:${item.gy}  ·  idx ${idx}`;
+  $('#dRotVal').textContent=(item.rot||0)+'°';
+}
+
 function openInspector(idx, item){
-  currentIdx=idx;
-  $('#inspectorEmpty').style.display='none'; $('#inspector').style.display='';
+  currentIdx=idx; currentDecorIdx=-1;
+  $('#inspectorEmpty').style.display='none';
+  $('#inspectorDecor').style.display='none';
+  $('#inspector').style.display='';
   $('#iEmoji').textContent=item.emoji||'🏢';
   $('#iName').textContent=item.name||'(không tên)';
   $('#iId').textContent='#'+(item.id||'?')+'  ·  idx '+idx;
@@ -298,7 +345,7 @@ function openInspector(idx, item){
   $('#fGx').value=item.gx??0;
   $('#fGy').value=item.gy??0;
   $('#fScale').value=item.s??1;
-  $('#fRot').value=String(((item.rot||0)%360+360)%360);
+  $('#bRotVal').textContent=(((item.rot||0)%360+360)%360)+'°';
   $('#fPin').value=item.pin||'#c0392b';
   $('#fFlag').checked=!!item.flag;
 }
@@ -391,19 +438,50 @@ $('#loadFromServer').addEventListener('click', loadFromServer);
 $('#pickFile').addEventListener('click',()=>$('#file').click());
 $('#file').addEventListener('change',e=>{ const f=e.target.files?.[0]; if(f) importFile(f); e.target.value=''; });
 
-// ── Inspector field → iframe ──
+// ── Inspector building ──
 $('#fName').addEventListener('input', e=>sendCmd('name', e.target.value));
 $('#fEmoji').addEventListener('input', e=>sendCmd('emoji', e.target.value));
 $('#fGx').addEventListener('input', e=>sendCmd('gx', Number(e.target.value)));
 $('#fGy').addEventListener('input', e=>sendCmd('gy', Number(e.target.value)));
 $('#fScale').addEventListener('input', e=>sendCmd('s', Number(e.target.value)));
-$('#fRot').addEventListener('change', e=>sendCmd('rot', Number(e.target.value)));
 $('#fPin').addEventListener('input', e=>sendCmd('pin', e.target.value));
 $('#fFlag').addEventListener('change', e=>sendCmd('flag', e.target.checked));
+
+// Nút xoay building
+$('#bRotCW').addEventListener('click',()=>{
+  if(currentIdx<0) return;
+  iframe.contentWindow?.postMessage({type:'campus-cmd-set', idx:currentIdx, key:'rot-delta', value:90},'*');
+  // Không cần sendCmd vì rot-delta xử lý riêng
+  setDirty(true);
+});
+$('#bRotCCW').addEventListener('click',()=>{
+  if(currentIdx<0) return;
+  iframe.contentWindow?.postMessage({type:'campus-cmd-set', idx:currentIdx, key:'rot-delta', value:-90},'*');
+  setDirty(true);
+});
+
 $('#iDelete').addEventListener('click', ()=>{
   if(currentIdx<0) return;
   if(!confirm('Xoá toà nhà này khỏi map?')) return;
   iframe.contentWindow?.postMessage({type:'campus-cmd-delete', idx:currentIdx},'*');
+  closeInspector(); setDirty(true);
+});
+
+// ── Inspector decor ──
+$('#dRotCW').addEventListener('click',()=>{
+  if(currentDecorIdx<0) return;
+  iframe.contentWindow?.postMessage({type:'campus-cmd-rotate-decor', idx:currentDecorIdx, delta:90},'*');
+  setDirty(true);
+});
+$('#dRotCCW').addEventListener('click',()=>{
+  if(currentDecorIdx<0) return;
+  iframe.contentWindow?.postMessage({type:'campus-cmd-rotate-decor', idx:currentDecorIdx, delta:-90},'*');
+  setDirty(true);
+});
+$('#dDelete').addEventListener('click',()=>{
+  if(currentDecorIdx<0) return;
+  if(!confirm('Xoá item này khỏi map?')) return;
+  iframe.contentWindow?.postMessage({type:'campus-cmd-delete-decor', idx:currentDecorIdx},'*');
   closeInspector(); setDirty(true);
 });
 
@@ -414,6 +492,8 @@ window.addEventListener('message', e=>{
     console.log('[campus-editor] iframe ready', m.domain, m.buildings?.length, 'buildings');
   } else if(m.type==='campus-select'){
     openInspector(m.idx, m.item);
+  } else if(m.type==='campus-select-decor'){
+    openDecorInspector(m.idx, m.item);
   } else if(m.type==='campus-deselect'){
     closeInspector();
   } else if(m.type==='campus-move'){
@@ -422,14 +502,19 @@ window.addEventListener('message', e=>{
     toast(`📍 ${m.item.emoji||''} ${m.item.name||''}: (${m.gx}, ${m.gy})`,'ok');
   } else if(m.type==='campus-rotate'){
     setDirty(true);
-    if(currentIdx===m.idx) $('#fRot').value=String(m.rot);
+    if(currentIdx===m.idx) $('#bRotVal').textContent=m.rot+'°';
     toast(`↻ ${m.item.emoji||''} xoay ${m.rot}°`,'ok');
+  } else if(m.type==='campus-decor-rotate'){
+    setDirty(true);
+    if(currentDecorIdx===m.idx) $('#dRotVal').textContent=m.rot+'°';
+    toast(`↻ ${m.k} xoay ${m.rot}°`,'ok');
   } else if(m.type==='campus-delete'){
     setDirty(true); closeInspector();
     toast(`🗑️ Đã xoá ${m.item.emoji||''} ${m.item.name||''}`,'ok');
   } else if(m.type==='campus-decor-move'){
     setDirty(true);
-    toast(`📍 ${m.k} ở ${m.src}[${m.srcIdx}] → (${m.gx}, ${m.gy})`,'ok');
+    if(currentDecorIdx===m.idx){ $('#dPos').textContent=`gx:${m.gx} gy:${m.gy}  ·  idx ${m.idx}`; }
+    toast(`📍 ${m.k} → (${m.gx}, ${m.gy})`,'ok');
   } else if(m.type==='campus-placed'){
     setDirty(true);
     if(placingCard){ placingCard.classList.remove('placing'); placingCard=null; }

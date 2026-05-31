@@ -471,7 +471,7 @@ function rebuildDecor(){
   DECOR = [
     ...((C.trees||[]).map(([gx,gy],i)=>({k:'tree', gx, gy, _src:'trees', _idx:i}))),
     ...((C.cars ||[]).map(([gx,gy],i)=>({k:'car',  gx, gy, _src:'cars',  _idx:i}))),
-    ...((C.props||[]).map((p,i)    =>({k:p.k,     gx:p.gx, gy:p.gy, _src:'props', _idx:i}))),
+    ...((C.props||[]).map((p,i)    =>({k:p.k, gx:p.gx, gy:p.gy, rot:p.rot||0, _src:'props', _idx:i}))),
   ];
 }
 rebuildDecor();
@@ -507,6 +507,18 @@ function tint(spr,color){ const cv=document.createElement('canvas'); cv.width=sp
 
 let DS=0.215;
 const bsprite={}, esprite={}, modelCache={};
+// esprite cache key = "k:rot" (vd "fenceLowH:90") để mỗi góc xoay 1 sprite riêng
+const espriteCacheKey=(k,rot)=>`${k}:${(rot||0)%360}`;
+async function getDecorSprite(k, rot=0){
+  const cacheKey=espriteCacheKey(k,rot);
+  if(esprite[cacheKey]) return esprite[cacheKey];
+  // Lấy URL từ EXTRAS hoặc tìm theo tên file
+  const url = EXTRAS[k] || PACK.sub(k);
+  const m = await load(url); prep(m, __GS*(PREP[k]||1.0));
+  m.rotation.y = (rot||0)*Math.PI/180;
+  esprite[cacheKey]=renderSprite(m);
+  return esprite[cacheKey];
+}
 let __GS = 1;   // global scale của model, dùng cho re-render sprite (rotate/recolor)
 
 // Re-render sprite của 1 building (gọi khi đổi rot/tint trong edit mode). idx = index trong BUILDINGS.
@@ -818,7 +830,15 @@ function draw(){
   items.sort((a,b)=>a.d-b.d);
   const pins=[];
   for(const it of items){
-    if(it.deco){ blit(ctx, esprite[it.deco.k], it.p, DS*(BLIT[it.deco.k]||0.8)); continue; }
+    if(it.deco){
+      const dk=espriteCacheKey(it.deco.k, it.deco.rot||0);
+      const sp=esprite[dk]||esprite[it.deco.k];   // fallback về sprite không xoay nếu cache chưa có
+      const selD=EDIT && it.deco===DECOR[selectedDecor];
+      if(selD){ ctx.fillStyle='rgba(251,191,36,.45)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5,TH*0.5,0,0,7); ctx.fill();
+                ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2; ctx.stroke(); }
+      if(sp) blit(ctx, sp, it.p, DS*(BLIT[it.deco.k]||0.8));
+      continue;
+    }
     if(it.play){ drawPlay(it.play); continue; }
     if(it.crit){ critter(it.p.x, it.p.y, it.crit.e, it.crit.s); continue; }
     const sp=bsprite[it.b.id]; if(!sp) continue; const sc=DS*it.b.s; const hl=it.i===hovered; const sel=EDIT && it.i===selected;
@@ -911,18 +931,16 @@ canvas.addEventListener('pointerleave', ()=>{ tip.style.opacity = 0; if(hovered 
 
 // Tap/click: tự hit-test tại điểm chạm thay vì dựa vào `hovered` (vì touch không có hover)
 function handleTap(cx, cy){
-  // Place mode — đặt item xuống tại vị trí ghost
-  if(_placeMode) {
-    if(_ghostPos) placeItem(_ghostPos.gx, _ghostPos.gy);
-    return;
-  }
+  if(_placeMode) { if(_ghostPos) placeItem(_ghostPos.gx, _ghostPos.gy); return; }
   const h = hitAt(cx, cy);
   if(EDIT){
     if(h && h.kind==='building'){
-      selected = h.idx; draw();
-      postToParent({type:'campus-select', idx:selected, item: BUILDINGS[selected]});
+      selected=h.idx; selectedDecor=-1; draw();
+      postToParent({type:'campus-select', idx:selected, item:BUILDINGS[selected]});
+    } else if(h && h.kind==='decor'){
+      selectDecor(h.idx);
     } else if(!h){
-      selected = -1; draw(); postToParent({type:'campus-deselect'});
+      deselectAll();
     }
     return;
   }
@@ -947,11 +965,49 @@ const snap=(v,step=0.5)=>Math.round(v/step)*step;
 
 if(EDIT){
 
-  // Propagate vị trí decor về C.{trees|cars|props} — chỗ duy nhất được serialize khi save.
+  // selectedDecor — index trong DECOR array (building dùng `selected`).
+  // Chỉ 1 trong 2 active cùng lúc.
+  let selectedDecor = -1;
+  window.__selectedDecor = () => selectedDecor;
+
+  function selectDecor(idx){
+    selectedDecor = idx; selected = -1; draw();
+    const d = DECOR[idx];
+    postToParent({type:'campus-select-decor', idx, item:d});
+  }
+  function deselectAll(){ selected=-1; selectedDecor=-1; draw(); postToParent({type:'campus-deselect'}); }
+
+  async function rotateDecor(idx, delta){
+    const d = DECOR[idx]; if(!d) return;
+    d.rot = (((d.rot||0)+delta)%360+360)%360;
+    syncDecorBack(d);
+    await getDecorSprite(d.k, d.rot).catch(()=>{});
+    draw();
+    postToParent({type:'campus-decor-rotate', idx, k:d.k, rot:d.rot, src:d._src, srcIdx:d._idx});
+    postToParent({type:'campus-dirty'});
+  }
+
+  function deleteDecor(idx){
+    const d = DECOR[idx]; if(!d) return;
+    if(d._src==='trees') C.trees.splice(d._idx,1);
+    else if(d._src==='cars') C.cars.splice(d._idx,1);
+    else if(d._src==='props') C.props.splice(d._idx,1);
+    rebuildDecor(); selectedDecor=-1; draw();
+    postToParent({type:'campus-decor-delete', k:d.k, src:d._src, srcIdx:d._idx});
+    postToParent({type:'campus-dirty'});
+  }
+
+  window.__rotateDecor = (idx,delta) => rotateDecor(idx,delta);
+  window.__deleteDecor = (idx) => deleteDecor(idx);
+
+  // Propagate vị trí + rot decor về C.props
   function syncDecorBack(d){
     if(d._src==='trees') C.trees[d._idx] = [d.gx, d.gy];
     else if(d._src==='cars') C.cars[d._idx] = [d.gx, d.gy];
-    else if(d._src==='props'){ C.props[d._idx].gx = d.gx; C.props[d._idx].gy = d.gy; }
+    else if(d._src==='props'){
+      C.props[d._idx].gx = d.gx; C.props[d._idx].gy = d.gy;
+      if(d.rot != null) C.props[d._idx].rot = d.rot;
+    }
   }
 
   let drag=null;   // {kind, idx, startGx, startGy, offGx, offGy}
@@ -995,25 +1051,23 @@ if(EDIT){
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
 
-  // Keyboard: R xoay 90°, Del/Backspace xoá, Esc bỏ chọn
+  // Keyboard: Del/Backspace xoá (building hoặc decor), Esc bỏ chọn
   document.addEventListener('keydown', e=>{
-    if(selected<0) return;
     if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
-    const b=BUILDINGS[selected];
-    if(e.key==='r' || e.key==='R'){
-      b.rot=((b.rot||0)+90)%360;
-      window.__rerenderBuilding && window.__rerenderBuilding(selected);
-      draw();
-      postToParent({type:'campus-rotate', idx:selected, rot:b.rot, item:b});
-      e.preventDefault();
-    } else if(e.key==='Delete' || e.key==='Backspace'){
-      const removed=BUILDINGS.splice(selected,1)[0];
-      postToParent({type:'campus-delete', idx:selected, item:removed});
-      selected=-1; draw();
-      e.preventDefault();
-    } else if(e.key==='Escape'){
+    if(e.key==='Escape'){
       if(_placeMode){ window.__cancelPlaceMode(); draw(); }
-      else { selected=-1; draw(); postToParent({type:'campus-deselect'}); }
+      else deselectAll();
+      e.preventDefault(); return;
+    }
+    if(e.key==='Delete' || e.key==='Backspace'){
+      if(selected>=0){
+        const removed=BUILDINGS.splice(selected,1)[0];
+        postToParent({type:'campus-delete', idx:selected, item:removed});
+        selected=-1; draw();
+      } else if(selectedDecor>=0){
+        deleteDecor(selectedDecor);
+      }
+      e.preventDefault();
     }
   });
 
@@ -1025,8 +1079,14 @@ if(EDIT){
       const b=BUILDINGS[i];
       // chỉ cho sửa các field an toàn — không cho đổi url/model qua đây (Phase 2.2 dùng palette)
       const allowed=new Set(['name','emoji','pin','s','rot','flag','gx','gy']);
-      if(allowed.has(m.key)){ b[m.key]=m.value;
-        // rot baked vào sprite lúc render — phải re-render khi đổi
+      if(m.key==='rot-delta'){
+        b.rot=(((b.rot||0)+(m.value||90))%360+360)%360;
+        window.__rerenderBuilding && window.__rerenderBuilding(i);
+        draw();
+        postToParent({type:'campus-rotate', idx:i, rot:b.rot, item:b});
+        postToParent({type:'campus-dirty'});
+      } else if(allowed.has(m.key)){
+        b[m.key]=m.value;
         if(m.key==='rot' && window.__rerenderBuilding) window.__rerenderBuilding(i);
         draw();
         postToParent({type:'campus-dirty'});
@@ -1044,6 +1104,10 @@ if(EDIT){
     } else if(m.type==='campus-cmd-place'){
       // parent chọn model từ palette → bắt đầu place mode
       window.__startPlaceMode(m); draw();
+    } else if(m.type==='campus-cmd-rotate-decor'){
+      rotateDecor(m.idx, m.delta||90);
+    } else if(m.type==='campus-cmd-delete-decor'){
+      deleteDecor(m.idx);
     } else if(m.type==='campus-cmd-cancel-place'){
       window.__cancelPlaceMode(); draw();
     } else if(m.type==='campus-cmd-thumb'){
