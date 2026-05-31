@@ -20,16 +20,64 @@ import {
 const WALLET_KEY = KEYS.WALLET;
 const PROGRESS_KEY = KEYS.PROGRESS;
 
+// ── Anti-regression guard (fix bug #5 Enderboy: "đang làm bài thì bị giảm
+// xuống lv1") ─────────────────────────────────────────────────────────────
+// Bug: trong session, XP/coins/streak có thể TỤT về 0 nếu localStorage bị
+// đọc lúc chưa sync xong hoặc bị race condition với syncToLocal(). Hệ quả:
+// HUD hiển thị Lv 1 trong khi DB vẫn nguyên 10k+ XP. Data trên server không
+// mất; chỉ là display tearing.
+//
+// Fix: nhớ giá trị MAX đã thấy trong session, không bao giờ trả về thấp
+// hơn. Reset khi: (a) đăng xuất (page reload), (b) user_id thay đổi (cùng
+// tab nhưng đổi tài khoản — đặt session.uid). Nếu phát hiện regression →
+// console.warn + (tuỳ chọn) tiziaTrack để debug sau.
+let _sessionMaxXp     = 0;
+let _sessionMaxCoins  = 0;
+let _sessionUid       = null;
+
+function _applySessionGuard(w) {
+  // Xác định user hiện tại để invalidate guard nếu đổi account
+  let curUid = null;
+  try {
+    const me = JSON.parse(localStorage.getItem('tizia:me') || 'null');
+    curUid = me?.id ?? null;
+  } catch {}
+  if (curUid !== _sessionUid) {
+    _sessionUid = curUid;
+    _sessionMaxXp = 0;
+    _sessionMaxCoins = 0;
+  }
+
+  const xp    = Number(w.xp || 0);
+  const coins = Number(w.coins || 0);
+
+  if (xp < _sessionMaxXp - 5) {       // tolerance 5 để tránh false positive do làm tròn
+    console.warn(`[wallet] XP regression in session: ${xp} < ${_sessionMaxXp} → giữ max (anti-bug #5)`);
+    try { window.tiziaTrack?.('wallet_regression', { kind:'xp', cur:xp, max:_sessionMaxXp }); } catch {}
+    w.xp = _sessionMaxXp;
+  } else if (xp > _sessionMaxXp) {
+    _sessionMaxXp = xp;
+  }
+  if (coins < _sessionMaxCoins - 5) {
+    console.warn(`[wallet] Coins regression in session: ${coins} < ${_sessionMaxCoins} → giữ max`);
+    try { window.tiziaTrack?.('wallet_regression', { kind:'coins', cur:coins, max:_sessionMaxCoins }); } catch {}
+    w.coins = _sessionMaxCoins;
+  } else if (coins > _sessionMaxCoins) {
+    _sessionMaxCoins = coins;
+  }
+  return w;
+}
+
 /** @returns {import('./types.js').Wallet} */
 export function getWallet() {
   try {
     const raw = lsGet(WALLET_KEY);
     if (raw) {
       const w = JSON.parse(raw);
-      return _normalizeWallet(w);
+      return _applySessionGuard(_normalizeWallet(w));
     }
   } catch {}
-  return _normalizeWallet({});
+  return _applySessionGuard(_normalizeWallet({}));
 }
 
 function _normalizeWallet(w) {
