@@ -864,7 +864,13 @@ function flag(p,scale){ const x=p.x,y=p.y-ANCHOR.y*scale; ctx.strokeStyle='#7a7a
   ctx.beginPath(); ctx.moveTo(x,y-2); ctx.lineTo(x,y-24); ctx.stroke(); ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.moveTo(x,y-24); ctx.lineTo(x+12,y-20); ctx.lineTo(x,y-16); ctx.fill(); }
 
 function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height); hctx.clearRect(0,0,hit.width,hit.height);
+  // Reset về identity để clearRect + background fill phủ toàn canvas (kể cả khi zoom out)
+  ctx.save(); ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=(GRASS||['#a2d983'])[0]; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.restore();
+  hctx.save(); hctx.setTransform(1,0,0,1,0,0);
+  hctx.clearRect(0,0,hit.width,hit.height); hctx.restore();
   ground();
   const items=[];
   BUILDINGS.forEach((b,i)=>items.push({d:b.gx+b.gy, b, i, p:P(b.gx,b.gy)}));
