@@ -604,20 +604,20 @@ const SPACES_PHARMACY = {
 // Khối lớp = "homeroom" (Toán/Văn nối lộ trình thật); phòng bộ môn dùng panel.
 // ============================================================
 const SPACES_SECONDARY = {
-  grade6:{emoji:'6️⃣',name:'Khối lớp 6',accent:'#38bdf8',intro:'Năm đầu cấp THCS. Vào lớp học Toán, Ngữ văn, Tiếng Anh, Lịch sử–Địa lí và GDCD lớp 6 — vừa học vừa luyện tập có thưởng.',
-    rooms:[{ic:'📐',name:'Toán 6 — Lộ trình',rd:'5 chương: số nguyên, phân số, tỉ số, ƯCLN–BCNN, hình học.',href:'/subject.html?domain=secondary&subject=toan&grade=6'},
-      {ic:'📖',name:'Ngữ văn 6 — Luyện tập',rd:'Truyện dân gian, thơ lục bát, so sánh–nhân hoá.',href:'/module.html?domain=secondary&module=SV6'},
-      {ic:'🇬🇧',name:'Tiếng Anh 6',rd:'Lật thẻ từ vựng chủ đề quen thuộc.',panel:[
-        {p:'Lật thẻ ôn từ vựng tiếng Anh lớp 6 (chủ đề trường lớp & gia đình).'},
-        {flash:[{e:'🏫',f:'school',b:'trường học'},{e:'📚',f:'subject',b:'môn học'},{e:'✏️',f:'pencil',b:'bút chì'},
-          {e:'👨‍👩‍👧',f:'family',b:'gia đình'},{e:'⏰',f:'timetable',b:'thời khoá biểu'},{e:'🧑‍🏫',f:'teacher',b:'giáo viên'}]}]},
-      {ic:'🗺️',name:'Lịch sử & Địa lí 6',rd:'Thời nguyên thuỷ & cách đọc bản đồ.',panel:[
-        {h:'Mở đầu Lịch sử & Địa lí'},
-        {ul:['Lịch sử nghiên cứu quá khứ dựa trên tư liệu (hiện vật, chữ viết, truyền miệng)','Cách tính thời gian: thập kỉ, thế kỉ, thiên niên kỉ; trước & sau Công nguyên','Bản đồ thu nhỏ bề mặt Trái Đất theo tỉ lệ; có phương hướng, kí hiệu, tỉ lệ']},
-        {note:'Người tối cổ → người tinh khôn; biết chế tác công cụ đá, dùng lửa, sống thành bầy.'}]},
-      {ic:'⚖️',name:'GDCD 6',rd:'Tự lập & tự nhận thức bản thân.',panel:[
-        {h:'Tình huống đạo đức lớp 6'},
-        {mcq:[{q:'Bạn quên mang sách, em là người tự lập sẽ?',o:['Tự chuẩn bị đồ dùng tối hôm trước theo thời khoá biểu','Đổ lỗi cho bố mẹ','Mượn của bạn rồi quên trả','Nghỉ học cho xong'],a:0,fb:'Tự lập: tự giác chuẩn bị và chịu trách nhiệm việc của mình, không ỷ lại.'}]}]}],
+  grade6:{emoji:'6️⃣',name:'Khối lớp 6',accent:'#38bdf8',intro:'Năm đầu cấp THCS — 12 môn × 36 tuần theo Chương trình GDPT 2018. Mỗi tuần: lý thuyết + ví dụ + quiz có thưởng.',
+    rooms:[
+      {ic:'📐',name:'Toán 6',rd:'36 tuần: số tự nhiên, lũy thừa, ƯCLN-BCNN, số nguyên, phân số, tỉ số %, hình học cơ bản.',href:'/module.html?domain=secondary&module=S6TOAN'},
+      {ic:'📖',name:'Ngữ văn 6',rd:'36 tuần: truyện đồng thoại, cổ tích, truyền thuyết, thơ lục bát, biện pháp tu từ, từ Hán Việt.',href:'/module.html?domain=secondary&module=S6NV'},
+      {ic:'🇬🇧',name:'Tiếng Anh 6',rd:'36 tuần CEFR A1-A2: school, family, neighbourhood, modal verbs, past simple, future, sports, cities.',href:'/module.html?domain=secondary&module=S6TA'},
+      {ic:'🔬',name:'Khoa học tự nhiên 6',rd:'36 tuần tích hợp Vật lý-Hoá-Sinh: dụng cụ đo, chất, tế bào, lực, năng lượng, Trái Đất-Mặt Trời.',href:'/module.html?domain=secondary&module=S6KHTN'},
+      {ic:'🗺️',name:'Lịch sử & Địa lí 6',rd:'36 tuần (HK1 Lịch sử nguyên thuỷ→Bắc thuộc; HK2 Địa lí bản đồ, Trái Đất, địa hình, khí hậu).',href:'/module.html?domain=secondary&module=S6LSDL'},
+      {ic:'⚖️',name:'GDCD 6',rd:'36 tuần · 12 chủ đề: truyền thống, yêu thương, tự lập, quyền-nghĩa vụ công dân, quyền trẻ em.',href:'/module.html?domain=secondary&module=S6GDCD'},
+      {ic:'⚙️',name:'Công nghệ 6',rd:'36 tuần · 4 chương: Nhà ở · Bảo quản-chế biến thực phẩm · Trang phục · Đồ dùng điện gia đình.',href:'/module.html?domain=secondary&module=S6CN'},
+      {ic:'💻',name:'Tin học 6',rd:'36 tuần · 6 chủ đề A-F: máy tính, Internet, file, đạo đức số, Word-PowerPoint, thuật toán.',href:'/module.html?domain=secondary&module=S6TH'},
+      {ic:'⚽',name:'Giáo dục thể chất 6',rd:'36 tuần: đội hình, TD liên hoàn, chạy ngắn-bền, nhảy xa, ném bóng, bóng đá-rổ-cầu lông, sơ cứu.',href:'/module.html?domain=secondary&module=S6GDTC'},
+      {ic:'🎨',name:'Nghệ thuật 6',rd:'36 tuần (HK1 Âm nhạc nốt-nhịp-dân ca; HK2 Mỹ thuật yếu tố tạo hình, màu, tranh Đông Hồ).',href:'/module.html?domain=secondary&module=S6NT'},
+      {ic:'🧭',name:'Trải nghiệm — hướng nghiệp',rd:'36 tuần · 4 mạch: Bản thân · Xã hội · Tự nhiên · Hướng nghiệp.',href:'/module.html?domain=secondary&module=S6HDTN'},
+      {ic:'🏯',name:'GD địa phương Hà Nội',rd:'36 tuần: Thăng Long-Hà Nội từ Lý Thái Tổ đến đô thị thông minh; phố cổ, làng nghề, danh nhân.',href:'/module.html?domain=secondary&module=S6GDDP'}],
     skills:['Làm quen cấp THCS','Tự học có kế hoạch'],
     quiz:[{q:'Số đối của 7 là?',o:['-7','7','0','1/7'],a:0},
       {q:'Thơ lục bát có cặp câu gồm?',o:['Một câu 6 chữ & một câu 8 chữ','Hai câu 7 chữ','Câu 5 chữ','Câu tự do'],a:0},
