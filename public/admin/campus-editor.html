@@ -119,6 +119,7 @@
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="inspector">🔍 Inspector</button>
       <button class="tab-btn" data-tab="palette">🧱 Thư viện</button>
+      <button class="tab-btn" data-tab="walls">🧱 Tường</button>
       <button class="tab-btn" data-tab="json">📝 JSON</button>
     </div>
 
@@ -198,6 +199,28 @@
       </div>
       <input class="palette-search" type="search" id="palSearch" placeholder="🔍 Tìm model...">
       <div id="palGrid" style="font-size:12px; color:var(--muted); padding:20px 0; text-align:center;">Đang tải...</div>
+    </div>
+
+    <!-- Walls tab -->
+    <div id="tab-walls" class="tab-pane">
+      <div id="wallBanner" style="display:none; background:#0d2a1a; border:1px solid var(--ok); border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:12px; color:var(--ok);">
+        ✏️ Đang vẽ tường — click 2 điểm để tạo 1 đoạn, có thể chain liên tục.
+        <span style="float:right; cursor:pointer; color:var(--muted);" onclick="stopWallMode()" title="Dừng vẽ (Esc)">✕</span>
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <button class="btn primary" id="wallStartBtn" style="flex:1; font-size:13px;">✏️ Bắt đầu vẽ</button>
+        <button class="btn bad" id="wallClearBtn" style="font-size:12px;" title="Xoá hết tường">🗑️ Xoá tất cả</button>
+      </div>
+      <div class="hint">
+        <b>Cách dùng:</b> bấm <code>Bắt đầu vẽ</code> → click điểm <b>A</b> trên map → click điểm <b>B</b> → tự ra 1 đoạn tường thẳng (snap 0.5 grid, auto axis-align). Click tiếp để chain. <code>Esc</code> bỏ điểm A; <code>Esc</code> lần 2 dừng vẽ.<br>
+        <b>Chọn/xoá:</b> click tường để chọn (viền vàng) → <code>Del</code> để xoá.
+      </div>
+      <div style="margin-top:14px;">
+        <div class="pack-label" style="display:flex; align-items:center; gap:6px;">
+          Danh sách tường <span id="wallCount" style="color:var(--muted);">(0)</span>
+        </div>
+        <div id="wallList" style="font-size:12px; color:var(--muted);">Chưa có tường nào.</div>
+      </div>
     </div>
 
     <!-- JSON tab -->
@@ -569,6 +592,81 @@ window.addEventListener('message', e=>{
   } else if(m.type==='campus-dirty'){
     setDirty(true);
   }
+});
+
+// ── Wall mode (tường bao) ───────────────────────────────────────────────
+let wallModeOn = false;
+function startWallMode(){
+  wallModeOn = true;
+  $('#wallBanner').style.display = '';
+  $('#wallStartBtn').textContent = '⏸ Dừng vẽ';
+  $('#wallStartBtn').classList.remove('primary');
+  iframe.contentWindow?.postMessage({type:'campus-cmd-wall-start'},'*');
+  // Auto-switch sang tab Tường để thấy banner + danh sách realtime
+  document.querySelector('.tab-btn[data-tab="walls"]').click();
+}
+function stopWallMode(){
+  wallModeOn = false;
+  $('#wallBanner').style.display = 'none';
+  $('#wallStartBtn').textContent = '✏️ Bắt đầu vẽ';
+  $('#wallStartBtn').classList.add('primary');
+  iframe.contentWindow?.postMessage({type:'campus-cmd-wall-stop'},'*');
+}
+function toggleWallMode(){ wallModeOn ? stopWallMode() : startWallMode(); }
+function clearAllWalls(){
+  if(!confirm('Xoá toàn bộ tường bao trên map?')) return;
+  iframe.contentWindow?.postMessage({type:'campus-cmd-wall-clear'},'*');
+}
+function deleteWallAt(idx){
+  iframe.contentWindow?.postMessage({type:'campus-cmd-wall-delete', idx},'*');
+}
+function refreshWallList(){
+  const w = iframe.contentWindow;
+  const walls = (w && w.__getWalls) ? w.__getWalls() : [];
+  $('#wallCount').textContent = `(${walls.length})`;
+  if(!walls.length){
+    $('#wallList').innerHTML = '<div style="opacity:.6;font-size:11.5px;padding:6px 0;">Chưa có tường nào.</div>';
+    return;
+  }
+  $('#wallList').innerHTML = walls.map((wl,i)=>{
+    const lenX = (wl.w||0).toFixed(1), lenY = (wl.d||0).toFixed(1);
+    const orient = wl.w > wl.d ? '↔ ngang' : '↕ dọc';
+    return `<div style="display:flex; align-items:center; gap:8px; padding:5px 6px; border:1px solid var(--border); border-radius:6px; margin-bottom:4px; background:var(--bg3);">
+      <span style="flex:1; font-size:11.5px;">
+        #${i} <b>${orient}</b> · <span style="color:var(--muted)">${wl.gx.toFixed(1)},${wl.gy.toFixed(1)} · ${lenX}×${lenY}</span>
+      </span>
+      <button class="btn" onclick="iframe.contentWindow?.postMessage({type:'campus-cmd-wall-select',idx:${i}},'*')" style="padding:3px 8px; font-size:11px;" title="Highlight">👁</button>
+      <button class="btn bad" onclick="deleteWallAt(${i})" style="padding:3px 8px; font-size:11px;">🗑</button>
+    </div>`;
+  }).join('');
+}
+$('#wallStartBtn').addEventListener('click', toggleWallMode);
+$('#wallClearBtn').addEventListener('click', clearAllWalls);
+
+// Bắt sự kiện wall từ iframe → refresh list
+window.addEventListener('message', e=>{
+  const m=e.data; if(!m||!m.type) return;
+  if (m.type==='campus-wall-added' || m.type==='campus-wall-deleted' || m.type==='campus-walls-cleared') {
+    setDirty(true);
+    refreshWallList();
+    if (m.type==='campus-wall-added') toast(`🧱 Đã thêm tường #${m.idx} — tổng ${m.total}`, 'ok');
+    else if (m.type==='campus-wall-deleted') toast(`🗑 Đã xoá tường #${m.idx}`, 'ok');
+    else toast(`🗑 Đã xoá ${m.cleared} tường`, 'ok');
+  } else if (m.type==='campus-wall-mode-stopped') {
+    if (wallModeOn) {  // được iframe stop (do Esc trong canvas)
+      wallModeOn = false;
+      $('#wallBanner').style.display = 'none';
+      $('#wallStartBtn').textContent = '✏️ Bắt đầu vẽ';
+      $('#wallStartBtn').classList.add('primary');
+    }
+  } else if (m.type==='campus-wall-anchor') {
+    toast(`📌 Điểm A: (${m.gx}, ${m.gy}) — click điểm B để tạo đoạn`, 'ok');
+  }
+});
+
+// Khi iframe reload xong → refresh list
+window.addEventListener('message', e=>{
+  if (e.data?.type==='campus-ready') setTimeout(refreshWallList, 200);
 });
 
 // init

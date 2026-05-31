@@ -6,57 +6,27 @@
 <title>Campus 2.5D · Tizia</title>
 <style>
   * { box-sizing: border-box; }
-  /* Day/Night theme (req #1 Enderboy mục 10 + mục 9 ánh sáng) ------------------
-     :root vars cho phép swap nền + legend + tip giữa day/night chỉ bằng class
-     body.night. Canvas (cỏ, đường) đọc qua biến JS riêng (xem __NIGHT).         */
-  :root {
-    --bg-grad: linear-gradient(180deg, #cfeecb 0%, #d9f3d2 60%, #eafff0 100%);
-    --legend-bg: rgba(255,255,255,.92);
-    --legend-text: #1f2937;
-    --legend-head: #0f172a;
-    --legend-hover: rgba(192,57,43,.12);
-    --legend-cat: rgba(15,23,42,.55);
-    --tip-bg: #fff;
-    --tip-text: #1f2937;
-    --credit-text: #33506a;
-  }
-  body.night {
-    --bg-grad: linear-gradient(180deg, #0b1228 0%, #14223c 55%, #1e2e52 100%);
-    --legend-bg: rgba(15,23,42,.85);
-    --legend-text: #e2e8f0;
-    --legend-head: #f8fafc;
-    --legend-hover: rgba(99,102,241,.22);
-    --legend-cat: rgba(226,232,240,.55);
-    --tip-bg: rgba(15,23,42,.92);
-    --tip-text: #f1f5f9;
-    --credit-text: #94a3b8;
-  }
   html, body { margin: 0; height: 100%; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg-grad); transition: background .4s ease; }
+    background: linear-gradient(180deg, #cfeecb 0%, #d9f3d2 60%, #eafff0 100%); }
   #c { display: block; }
   /* Legend dạng CARD phân nhóm (req #1 Enderboy mục 7) ------------------------
      Mỗi nhóm có heading nhỏ + danh sách dòng. Glassmorphism nhẹ qua backdrop. */
-  #legend { position:fixed; left:16px; bottom:16px; z-index:12; background:var(--legend-bg); border-radius:14px; padding:10px 14px 11px; box-shadow:0 8px 24px rgba(0,0,0,.2); color:var(--legend-text); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); max-height:62vh; overflow:auto; min-width: 220px; transition: background .4s, color .4s; }
-  #legend h4 { margin:0 0 8px; font-size:12px; letter-spacing:1px; color:var(--legend-head); font-weight:800; display:flex; align-items:center; gap:6px; }
-  #legend .cat { font-size:10px; letter-spacing:1.2px; color:var(--legend-cat); font-weight:700; text-transform:uppercase; margin:8px 0 3px; padding:0 5px; display:flex; align-items:center; gap:5px; }
+  #legend { position:fixed; left:16px; bottom:16px; z-index:12; background:rgba(255,255,255,.92); border-radius:14px; padding:10px 14px 11px; box-shadow:0 8px 24px rgba(0,0,0,.2); color:#1f2937; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); max-height:62vh; overflow:auto; min-width: 220px; }
+  #legend h4 { margin:0 0 8px; font-size:12px; letter-spacing:1px; color:#0f172a; font-weight:800; display:flex; align-items:center; gap:6px; }
+  #legend .cat { font-size:10px; letter-spacing:1.2px; color:rgba(15,23,42,.55); font-weight:700; text-transform:uppercase; margin:8px 0 3px; padding:0 5px; display:flex; align-items:center; gap:5px; }
   #legend .cat:first-child { margin-top:0; }
   #legend .cat::after { content:''; flex:1; height:1px; background:currentColor; opacity:.18; }
   #legend .lr { display:flex; align-items:center; gap:8px; font-size:12px; padding:3px 6px; border-radius:7px; cursor:pointer; transition:background .12s, transform .12s; }
-  #legend .lr:hover { background:var(--legend-hover); transform:translateX(2px); }
-  #legend .lr.active { background:var(--legend-hover); box-shadow: inset 2px 0 0 currentColor; }
+  #legend .lr:hover { background:rgba(192,57,43,.12); transform:translateX(2px); }
+  #legend .lr.active { background:rgba(192,57,43,.12); box-shadow: inset 2px 0 0 currentColor; }
   #legend .lr .e { width:18px; text-align:center; font-size:14px; }
   .back { position:fixed; left:18px; top:16px; z-index:11; background:rgba(15,23,42,.7); color:#fff; text-decoration:none; padding:7px 13px; border-radius:20px; font-size:12.5px; backdrop-filter:blur(8px); }
-  /* Nút Day/Night (req #1 Enderboy mục 10) ---------------------------------- */
-  #theme-toggle { position:fixed; right:16px; top:16px; z-index:11; background:rgba(15,23,42,.7); color:#fff; border:0; cursor:pointer; padding:7px 11px; border-radius:20px; font-size:13px; backdrop-filter:blur(8px); display:flex; align-items:center; gap:5px; transition: transform .15s; }
-  #theme-toggle:hover { transform: scale(1.06); }
-  #theme-toggle:active { transform: scale(0.95); }
-  .credit { position:fixed; right:16px; bottom:16px; z-index:11; color:var(--credit-text); font-size:11px; opacity:.7; transition: color .4s; }
-  #tip { position:fixed; z-index:20; background:var(--tip-bg); color:var(--tip-text); font-weight:800; font-size:13px; padding:6px 11px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.25); pointer-events:none; opacity:0; transition:opacity .12s, background .4s, color .4s; transform:translate(-50%,-130%); white-space:nowrap; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  .credit { position:fixed; right:16px; bottom:16px; z-index:11; color:#33506a; font-size:11px; opacity:.7; }
+  #tip { position:fixed; z-index:20; background:#fff; color:#1f2937; font-weight:800; font-size:13px; padding:6px 11px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.25); pointer-events:none; opacity:0; transition:opacity .12s; transform:translate(-50%,-130%); white-space:nowrap; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
   #toast { position:fixed; left:50%; top:24px; transform:translateX(-50%) translateY(-10px); z-index:21; background:#16a34a; color:#fff; font-weight:800; padding:10px 18px; border-radius:12px; opacity:0; transition:opacity .25s, transform .25s; box-shadow:0 8px 24px rgba(0,0,0,.25); pointer-events:none; }
   #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
   #loading { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:30; background:rgba(220,245,255,.92); color:#23506a; font-weight:800; font-size:15px; }
   @media (prefers-reduced-motion: reduce) {
-    html, body, #legend, #tip, #theme-toggle, .credit { transition: none !important; }
     #legend .lr { transition: none !important; }
   }
 </style>
@@ -71,7 +41,6 @@
 <canvas id="c"></canvas>
 <div id="legend"><h4>📍 CHÚ GIẢI</h4><div id="legend-rows"></div></div>
 <a class="back" href="/">← Tizia</a>
-<button id="theme-toggle" type="button" title="Chuyển ngày/đêm — phím D" aria-label="Chuyển chế độ ngày/đêm"><span id="theme-icon">🌙</span><span id="theme-label">Đêm</span></button>
 <div class="credit">3D: KayKit (CC0)</div>
 <div id="tip"></div>
 <div id="toast"></div>
@@ -495,6 +464,7 @@ const PLAYS=C.playthings||[];     // thiết bị vui chơi đứng (cầu trư�
 const CRITTERS=C.critters||[];    // con vật / hoa / đồ chơi nhỏ (emoji) — mầm non
 const SPORT_TARGETS=C.sportTargets||{};
 const TINTS=C.tints||{};   // tô màu toà nhà (vd lớp 1–5 màu cầu vồng ở Tiểu học)
+const WALLS = Array.isArray(C.walls) ? C.walls : (C.walls = []);   // tường bao do admin vẽ
 
 // lối đi: tự sinh (nối mỗi toà ra trục dọc gần nhất) HOẶC campus tự khai báo mạng
 // lối đi thiết kế tay qua `walkways` (+ tắt auto bằng `autoPaths:false`).
@@ -653,6 +623,76 @@ window.__deleteDecor = (idx) => deleteDecor(idx);
 const EDIT_PARAMS = new URLSearchParams(location.search);
 const EDIT = EDIT_PARAMS.get('edit')==='1';
 let selected=-1;   // building index đang chọn (-1 = không)
+let selectedWall=-1; // wall index đang chọn (-1 = không) — chỉ ở EDIT mode
+
+// ── Wall draw mode (tường bao) ──────────────────────────────────────────────
+// User bấm "Bắt đầu vẽ" trong admin → __startWallMode(). Click 1 trên canvas
+// chốt điểm A, click 2 chốt điểm B → tạo 1 đoạn tường (auto axis-align nếu
+// gần). Sau khi tạo, B trở thành A mới → có thể chain nhiều đoạn liên tiếp.
+// ESC hoặc bấm "Dừng vẽ" để thoát.
+let _wallMode = false;       // true = đang vẽ
+let _wallStart = null;       // {gx,gy} điểm A đã chốt | null = đang chờ A
+let _wallHover = null;       // {gx,gy} con trỏ hiện tại (preview)
+const WALL_THICK = 0.16;     // độ dày tường (grid)
+const WALL_SNAP  = 0.5;      // snap đến nửa ô
+
+function _snapGrid(v) { return Math.round(v / WALL_SNAP) * WALL_SNAP; }
+function _snapPoint(gx, gy) { return { gx: _snapGrid(gx), gy: _snapGrid(gy) }; }
+
+window.__startWallMode = function() {
+  _wallMode = true; _wallStart = null; _wallHover = null;
+  canvas.style.cursor = 'crosshair';
+  postToParent({ type: 'campus-wall-mode-started' });
+  draw();
+};
+window.__stopWallMode = function() {
+  _wallMode = false; _wallStart = null; _wallHover = null;
+  canvas.style.cursor = 'default';
+  postToParent({ type: 'campus-wall-mode-stopped' });
+  draw();
+};
+// Build wall segment from A → B với auto axis-align
+function _buildWallSegment(a, b) {
+  const dx = Math.abs(b.gx - a.gx), dy = Math.abs(b.gy - a.gy);
+  // Nếu rất ngắn → bỏ qua
+  if (dx < 0.3 && dy < 0.3) return null;
+  // Auto axis-align: chiếu B lên trục có magnitude lớn hơn
+  let bx = b.gx, by = b.gy;
+  if (dx > dy) by = a.gy; else bx = a.gx;
+  const gx = Math.min(a.gx, bx), gx1 = Math.max(a.gx, bx);
+  const gy = Math.min(a.gy, by), gy1 = Math.max(a.gy, by);
+  const lenX = gx1 - gx, lenY = gy1 - gy;
+  // Cho thickness vào trục NGẮN. Nếu cả 2 = 0 (cùng điểm) → bỏ.
+  const w = lenX > lenY ? lenX : WALL_THICK;
+  const d = lenY > lenX ? lenY : WALL_THICK;
+  return { gx: lenX > lenY ? gx : gx - WALL_THICK/2,
+           gy: lenY > lenX ? gy : gy - WALL_THICK/2, w, d };
+}
+window.__addWall = function(w) {
+  if (!w) return;
+  WALLS.push(w);
+  draw();
+  postToParent({ type: 'campus-wall-added', idx: WALLS.length-1, wall: w, total: WALLS.length });
+  postToParent({ type: 'campus-dirty' });
+};
+window.__deleteWall = function(idx) {
+  if (idx<0 || idx>=WALLS.length) return;
+  WALLS.splice(idx, 1);
+  if (selectedWall === idx) selectedWall = -1;
+  else if (selectedWall > idx) selectedWall--;
+  draw();
+  postToParent({ type: 'campus-wall-deleted', idx, total: WALLS.length });
+  postToParent({ type: 'campus-dirty' });
+};
+window.__clearWalls = function() {
+  const n = WALLS.length;
+  WALLS.length = 0;
+  selectedWall = -1;
+  draw();
+  postToParent({ type: 'campus-walls-cleared', cleared: n });
+  postToParent({ type: 'campus-dirty' });
+};
+window.__getWalls = () => WALLS.slice();
 function postToParent(msg){ try{ window.parent && window.parent!==window && window.parent.postMessage(msg,'*'); }catch{} }
 
 // Expose ra window để admin/campus-editor.html đọc state (module script không tự gắn vào window).
@@ -693,6 +733,41 @@ function drawGhost() {
   ctx.globalAlpha = 1;
   ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.ellipse(p.x, p.y, TW*0.45, TH*0.45, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+// Preview khi đang vẽ tường — anchor A xanh, hover B xanh nhạt, đoạn tường
+// preview iso giữa A và B (auto axis-align).
+function drawWallPreview() {
+  if (!_wallMode) return;
+  ctx.save();
+  if (_wallHover) {
+    const ph = P(_wallHover.gx, _wallHover.gy);
+    ctx.fillStyle = 'rgba(96,165,250,.6)';
+    ctx.beginPath(); ctx.ellipse(ph.x, ph.y, 7, 4, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  if (_wallStart) {
+    const pa = P(_wallStart.gx, _wallStart.gy);
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath(); ctx.ellipse(pa.x, pa.y, 7, 4, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+  }
+  if (_wallStart && _wallHover) {
+    const seg = _buildWallSegment(_wallStart, _wallHover);
+    if (seg) {
+      ctx.globalAlpha = 0.55;
+      isoBox(seg.gx, seg.gy, seg.gx+seg.w, seg.gy+seg.d, 0, WALL_H,
+        '#bef0d3', '#86d3a3', '#5cae7e');
+      ctx.globalAlpha = 1;
+      const a=P(seg.gx,seg.gy), b=P(seg.gx+seg.w,seg.gy),
+            c=P(seg.gx+seg.w,seg.gy+seg.d), d=P(seg.gx,seg.gy+seg.d);
+      ctx.strokeStyle='#10b981'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      ctx.lineTo(c.x,c.y); ctx.lineTo(d.x,d.y); ctx.closePath(); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
   ctx.restore();
 }
 
@@ -741,6 +816,36 @@ async function placeItem(gx, gy) {
 }
 function poly(pts,color,stroke,lw=1){ ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y); ctx.closePath();
   if(color){ctx.fillStyle=color;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();} }
+
+// Helper top-level: vẽ 1 hộp 3D iso (3 mặt visible: top, east, south) ----------
+// Dùng cho schoolGate, drawWall, và bất kỳ box-like primitive nào sau này.
+function isoBox(gx0, gy0, gx1, gy1, hBot, hTop, cTop, cRight, cFront) {
+  const A = P(gx0, gy0), B = P(gx1, gy0), C = P(gx1, gy1), D = P(gx0, gy1);
+  const At = { x: A.x, y: A.y - hTop }, Bt = { x: B.x, y: B.y - hTop },
+        Ct = { x: C.x, y: C.y - hTop }, Dt = { x: D.x, y: D.y - hTop };
+  const Db = { x: D.x, y: D.y - hBot }, Cb = { x: C.x, y: C.y - hBot },
+        Bb = { x: B.x, y: B.y - hBot };
+  poly([Db, Cb, Ct, Dt], cFront, 'rgba(0,0,0,.22)', 1);  // south
+  poly([Bb, Cb, Ct, Bt], cRight, 'rgba(0,0,0,.15)', 1);  // east
+  poly([At, Bt, Ct, Dt], cTop,   'rgba(0,0,0,.10)', 1);  // top
+}
+
+// Tường bao — hộp 3D mỏng, thấp. Mỗi entry { gx, gy, w, d } trong layout
+// .walls — w là chiều dài theo X, d theo Y; thường 1 trong 2 ~0.15 (mỏng)
+// còn cái kia lớn (đoạn tường). Height cố định để mọi tường đồng nhất.
+const WALL_H = 16;
+function drawWall(w) {
+  if (!w || !Number.isFinite(w.gx) || !Number.isFinite(w.gy)) return;
+  const W = Math.max(0.1, Number(w.w) || 0.15);
+  const D = Math.max(0.1, Number(w.d) || 0.15);
+  isoBox(
+    w.gx, w.gy, w.gx + W, w.gy + D,
+    0, WALL_H,
+    '#d8d3c8',   // top — xám kem sáng
+    '#b6afa1',   // east — xám trung
+    '#8e887a',   // south — xám đậm có bóng
+  );
+}
 const tileRect=(gx,gy,w,d)=>[P(gx,gy),P(gx+w,gy),P(gx+w,gy+d),P(gx,gy+d)];
 function ellipsePts(cx,cy,rx,ry,seg=44){ const a=[]; for(let i=0;i<seg;i++){ const t=i/seg*Math.PI*2; a.push(P(cx+rx*Math.cos(t), cy+ry*Math.sin(t))); } return a; }
 function isoSeg(ax,ay,bx,by,col,lw){ const a=P(ax,ay),b=P(bx,by); ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
@@ -870,17 +975,26 @@ function flagpole(cx,cy){ const p=P(cx,cy); ctx.strokeStyle='#8a8f96'; ctx.lineW
   ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x,p.y-46); ctx.stroke();
   ctx.fillStyle='#da251d'; ctx.beginPath(); ctx.moveTo(p.x,p.y-46); ctx.lineTo(p.x+22,p.y-40); ctx.lineTo(p.x,p.y-32); ctx.closePath(); ctx.fill();
   ctx.fillStyle='#ffe017'; ctx.font='10px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★',p.x+8,p.y-39); }
-// cổng trường có mái + bảng tên (vẽ billboard hướng camera ở mặt trước)
-function schoolGate(gx,gy,label){ const p=P(gx,gy), span=58, postH=40, pw=7;
-  ctx.fillStyle='rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(p.x,p.y+2,span/2+10,6,0,0,7); ctx.fill();
-  ctx.fillStyle='#d8c39a'; ctx.strokeStyle='rgba(90,70,40,.35)'; ctx.lineWidth=1;
-  ctx.fillRect(p.x-span/2-pw,p.y-postH,pw,postH); ctx.strokeRect(p.x-span/2-pw,p.y-postH,pw,postH);
-  ctx.fillRect(p.x+span/2,p.y-postH,pw,postH);     ctx.strokeRect(p.x+span/2,p.y-postH,pw,postH);
-  const bw=span+pw*2+8, bh=18, by=p.y-postH-2;
-  ctx.fillStyle='#b23b3b'; ctx.beginPath(); ctx.moveTo(p.x-bw/2-6,by-bh); ctx.lineTo(p.x+bw/2+6,by-bh); ctx.lineTo(p.x+bw/2-2,by-bh-9); ctx.lineTo(p.x-bw/2+2,by-bh-9); ctx.closePath(); ctx.fill();
-  ctx.fillStyle='#2563a8'; rr(p.x-bw/2,by-bh,bw,bh,4); ctx.fill();
-  ctx.fillStyle='#fff'; ctx.font='bold 10px Inter, system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(label||'TRƯỜNG', p.x, by-bh/2+1); }
+// Cổng trường — THUẦN ISOMETRIC, không billboard 2D, không chữ. Chỉ có
+// kiến trúc khối: 2 cột vuông + 1 xà ngang slab mỏng nằm trên đỉnh. Tên
+// trường đã có ở pin marker facility nên không cần in lên cổng.
+// `label` arg giữ để không vỡ call-site nhưng không dùng.
+function schoolGate(gx, gy /*, label */) {
+  const SPAN=1.7, POST_W=0.30, POST_D=0.30, POST_H=58, LINTEL_H=14, LINTEL_D=0.18;
+  // Bóng nền
+  const gp = P(gx, gy);
+  ctx.fillStyle = 'rgba(0,0,0,.16)';
+  ctx.beginPath(); ctx.ellipse(gp.x, gp.y + 6, SPAN*TW*0.5 + 12, TH*0.5, 0, 0, 7); ctx.fill();
+  // 2 cột
+  for (const dir of [-1, +1]) {
+    const cx = gx + dir*SPAN/2;
+    isoBox(cx-POST_W, gy-POST_D, cx+POST_W, gy+POST_D, 0, POST_H,
+      '#e8d5a4', '#cdb98a', '#a8946b');
+  }
+  // Xà ngang
+  isoBox(gx-SPAN/2-POST_W, gy-LINTEL_D, gx+SPAN/2+POST_W, gy+LINTEL_D,
+    POST_H, POST_H+LINTEL_H, '#b23b3b', '#962f2f', '#7e2525');
+}
 function ground(){
   const w=innerWidth, h=innerHeight;
   const ivx=(x,y)=>((x-ox)/TW + (y-oy)/TH), ivy=(x,y)=>((y-oy)/TH - (x-ox)/TW);
@@ -924,6 +1038,12 @@ function draw(){
   DECOR.forEach(o=>{ if(esprite[o.k]) items.push({d:o.gx+o.gy-0.05, deco:o, p:P(o.gx,o.gy)}); });
   PLAYS.forEach(o=>items.push({d:o.gx+o.gy, play:o, p:P(o.gx,o.gy)}));
   CRITTERS.forEach(o=>items.push({d:o.gx+o.gy-0.02, crit:o, p:P(o.gx,o.gy)}));
+  // Tường bao: depth = max(gx+gy) tại góc xa-camera; vẽ trước nhà cùng vị trí
+  WALLS.forEach((w,i)=>{
+    if(!w||!Number.isFinite(w.gx)||!Number.isFinite(w.gy)) return;
+    const W=Math.max(0.1,Number(w.w)||0.15), D=Math.max(0.1,Number(w.d)||0.15);
+    items.push({d:(w.gx+W/2)+(w.gy+D/2)-0.03, wall:w, wallIdx:i});
+  });
   items.sort((a,b)=>a.d-b.d);
   const pins=[];
   for(const it of items){
@@ -945,6 +1065,17 @@ function draw(){
     }
     if(it.play){ drawPlay(it.play); continue; }
     if(it.crit){ critter(it.p.x, it.p.y, it.crit.e, it.crit.s); continue; }
+    if(it.wall){ drawWall(it.wall);
+      // EDIT mode: highlight wall đang được chọn
+      if(EDIT && selectedWall===it.wallIdx){
+        const w=it.wall;
+        const W=Math.max(0.1,Number(w.w)||0.15), D=Math.max(0.1,Number(w.d)||0.15);
+        const a=P(w.gx,w.gy),b=P(w.gx+W,w.gy),c=P(w.gx+W,w.gy+D),d=P(w.gx,w.gy+D);
+        ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2.5; ctx.beginPath();
+        ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.lineTo(c.x,c.y); ctx.lineTo(d.x,d.y); ctx.closePath(); ctx.stroke();
+      }
+      continue;
+    }
     const sp=bsprite[it.b.id]; if(!sp) continue; const sc=DS*it.b.s; const hl=it.i===hovered; const sel=EDIT && it.i===selected;
     // Shadow chỉ cho model cao (building-type-*). Path/fence/driveway/planter → bỏ qua.
     const _flatModel = it.b.url && /fence|path|driveway|planter/i.test(it.b.url);
@@ -1033,31 +1164,6 @@ function buildLegend(){ const host=document.getElementById('legend-rows');
   });
 }
 
-// ── Day/Night toggle (req #1 Enderboy mục 10) -------------------------------
-// Lưu trong localStorage để giữ preference giữa các session. Phím tắt: D.
-// Canvas vẫn render màu cỏ ngày (KayKit không có texture đêm); chỉ làm tối
-// nền + UI overlay — đủ giảm mỏi mắt khi học buổi tối, không phá visual map.
-(function initThemeToggle(){
-  const btn = document.getElementById('theme-toggle');
-  const icon = document.getElementById('theme-icon');
-  const label = document.getElementById('theme-label');
-  function apply(night){
-    document.body.classList.toggle('night', night);
-    icon.textContent = night ? '☀️' : '🌙';
-    label.textContent = night ? 'Ngày' : 'Đêm';
-    try { localStorage.setItem('tizia.campus.night', night ? '1' : '0'); } catch {}
-  }
-  // restore
-  let initNight = false;
-  try { initNight = localStorage.getItem('tizia.campus.night') === '1'; } catch {}
-  apply(initNight);
-  btn.addEventListener('click', ()=> apply(!document.body.classList.contains('night')));
-  // Phím tắt D
-  window.addEventListener('keydown', e=>{
-    if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
-    if (e.key === 'd' || e.key === 'D') apply(!document.body.classList.contains('night'));
-  });
-})();
 
 let _zoom=1.0;   // zoom scale hiện tại (0.4 – 2.5)
 let _panOx=0, _panOy=0;   // pan offset thêm vào ox/oy
@@ -1141,6 +1247,20 @@ function logicalToScreen(lx, ly){
 }
 
 function hitAt(cx, cy){
+  // Wall hit-test (chỉ ở EDIT mode) — kiểm tra grid coords có nằm trong
+  // footprint wall nào không. Walls thường mỏng → check trước building để
+  // ưu tiên click wall khi user nhắm vào tường nằm sát nhà.
+  if(EDIT && WALLS.length){
+    const g = pxToGrid(cx, cy);
+    // Duyệt ngược: wall vẽ sau cùng (depth lớn hơn) được ưu tiên hit
+    for(let i=WALLS.length-1; i>=0; i--){
+      const w=WALLS[i]; if(!w) continue;
+      const W=Math.max(0.1,Number(w.w)||0.15), D=Math.max(0.1,Number(w.d)||0.15);
+      if(g.gx>=w.gx && g.gx<=w.gx+W && g.gy>=w.gy && g.gy<=w.gy+D){
+        return {kind:'wall', idx:i, item:w};
+      }
+    }
+  }
   // Building: pixel hit-canvas — đọc physical pixel. Zoom transform đã được baked vào hctx.
   // Cần tính physical pixel coords: clientXY → chia zoom+pan ngược.
   const lp=clientToCanvas(cx,cy);
@@ -1185,6 +1305,12 @@ canvas.addEventListener('pointermove', e=>{
     _ghostPos = {gx: Math.round(g.gx*2)/2, gy: Math.round(g.gy*2)/2};
     draw(); drawGhost(); return;
   }
+  // Wall mode — update hover preview
+  if(_wallMode) {
+    const g = pxToGrid(e.clientX, e.clientY);
+    _wallHover = _snapPoint(g.gx, g.gy);
+    draw(); drawWallPreview(); return;
+  }
   const h = hitAt(e.clientX, e.clientY);
   const id = (h && h.kind === 'building') ? h.idx : -1;
   if(id !== hovered){ hovered = id; draw(); }
@@ -1199,15 +1325,38 @@ canvas.addEventListener('pointerleave', ()=>{ tip.style.opacity = 0; if(hovered 
 // Tap/click: tự hit-test tại điểm chạm thay vì dựa vào `hovered` (vì touch không có hover)
 function handleTap(cx, cy){
   if(_placeMode) { if(_ghostPos) placeItem(_ghostPos.gx, _ghostPos.gy); return; }
+  // Wall mode: click 1 chốt A, click 2 chốt B → tạo wall, B trở thành A mới
+  if(_wallMode) {
+    const g = pxToGrid(cx, cy);
+    const pt = _snapPoint(g.gx, g.gy);
+    if(!_wallStart){
+      _wallStart = pt;
+      postToParent({type:'campus-wall-anchor', gx:pt.gx, gy:pt.gy});
+      draw(); drawWallPreview();
+    } else {
+      const seg = _buildWallSegment(_wallStart, pt);
+      if(seg){
+        WALLS.push(seg);
+        postToParent({type:'campus-wall-added', idx:WALLS.length-1, wall:seg, total:WALLS.length});
+        postToParent({type:'campus-dirty'});
+      }
+      _wallStart = pt;  // chain: B → next A
+      draw(); drawWallPreview();
+    }
+    return;
+  }
   const h = hitAt(cx, cy);
   if(EDIT){
     if(h && h.kind==='building'){
-      selected=h.idx; selectedDecor=-1; draw();
+      selected=h.idx; selectedDecor=-1; selectedWall=-1; draw();
       postToParent({type:'campus-select', idx:selected, item:BUILDINGS[selected]});
     } else if(h && h.kind==='decor'){
-      selectDecor(h.idx);
+      selectedWall=-1; selectDecor(h.idx);
+    } else if(h && h.kind==='wall'){
+      selectedWall=h.idx; selected=-1; selectedDecor=-1; draw();
+      postToParent({type:'campus-wall-select', idx:h.idx, wall:WALLS[h.idx]});
     } else if(!h){
-      deselectAll();
+      selectedWall=-1; deselectAll();
     }
     return;
   }
@@ -1236,6 +1385,7 @@ if(EDIT){
   canvas.addEventListener('pointerdown', e=>{
     if(e.button!==0) return;
     if(_placeMode) return;   // place mode: pointerdown không kéo
+    if(_wallMode) return;    // wall mode: handleTap đảm nhiệm
     const h=hitAt(e.clientX, e.clientY);
     if(!h || (h.kind!=='building' && h.kind!=='decor')) return;
     const g=pxToGrid(e.clientX, e.clientY);
@@ -1277,9 +1427,17 @@ if(EDIT){
   document.addEventListener('keydown', e=>{
     if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
     if(e.key==='Escape'){
-      if(_placeMode){ window.__cancelPlaceMode(); draw(); }
+      if(_wallMode){
+        // 1st ESC: huỷ anchor A; 2nd ESC: thoát wall mode
+        if(_wallStart){ _wallStart=null; draw(); drawWallPreview(); }
+        else window.__stopWallMode();
+      }
+      else if(_placeMode){ window.__cancelPlaceMode(); draw(); }
       else deselectAll();
       e.preventDefault(); return;
+    }
+    if(e.key==='Delete' || e.key==='Backspace'){
+      if(selectedWall>=0){ window.__deleteWall(selectedWall); e.preventDefault(); return; }
     }
     if(e.key==='Delete' || e.key==='Backspace'){
       if(selected>=0){
@@ -1336,6 +1494,24 @@ if(EDIT){
       deleteDecor(m.idx);
     } else if(m.type==='campus-cmd-cancel-place'){
       window.__cancelPlaceMode(); draw();
+    } else if(m.type==='campus-cmd-wall-start'){
+      window.__startWallMode();
+    } else if(m.type==='campus-cmd-wall-stop'){
+      window.__stopWallMode();
+    } else if(m.type==='campus-cmd-wall-delete'){
+      window.__deleteWall(Number(m.idx));
+    } else if(m.type==='campus-cmd-wall-clear'){
+      window.__clearWalls();
+    } else if(m.type==='campus-cmd-wall-select'){
+      selectedWall = Number(m.idx); selected = -1; selectedDecor = -1;
+      draw();
+    } else if(m.type==='campus-cmd-wall-update'){
+      // Update wall attr (gx/gy/w/d) — sửa số trong inspector
+      const i=Number(m.idx); const w=WALLS[i]; if(!w) return;
+      const allowed=new Set(['gx','gy','w','d']);
+      if(allowed.has(m.key)){
+        const v=Number(m.value); if(Number.isFinite(v)){ w[m.key]=v; draw(); postToParent({type:'campus-dirty'}); }
+      }
     } else if(m.type==='campus-cmd-thumb'){
       // Render sprite cho 1 model URL và trả DataURL về parent (dùng cho palette thumbnail)
       (async()=>{
