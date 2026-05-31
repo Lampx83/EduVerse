@@ -10,8 +10,18 @@
 // Đây là foundation; UI ở public/admin.html.
 // ============================================================
 
-import { db, createNotification, setUserPlan } from '../../db.js';
+import { scryptSync, randomBytes } from 'node:crypto';
+import { db, createNotification, setUserPlan, createUser, getUserById, getUserByUsername, updateUserEditable } from '../../db.js';
 import { VALID_USER_PLANS, expiresAtFor } from '../billing/user-plans.js';
+
+// Scrypt hash — đồng bộ format với contexts/identity/auth.js (scrypt$salt$hash)
+function hashPassword(password) {
+  const salt = randomBytes(16);
+  const hash = scryptSync(String(password), salt, 64);
+  return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
+}
+const USERNAME_RE = /^[a-z0-9_.-]{3,32}$/i;
+const DEFAULT_SCHOOL_ID = 1; // tizia-default — không cho xoá
 
 // ── Bootstrap admin từ env (an toàn: chỉ promote user đã tồn tại) ──
 export function ensureAdminBootstrap() {
@@ -355,5 +365,170 @@ export function attachAdmin(r) {
     res.json({ ...base, ...extra, delta });
   });
 
-  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin) + dashboard endpoints');
+  // ─────────────────────────────────────────────────────────────
+  // CRUD: Users (thêm Create / Edit / Reset password / Delete)
+  // ─────────────────────────────────────────────────────────────
+
+  // POST /api/admin/users — tạo user mới (admin có thể chọn mọi role kể cả admin)
+  r.post('/api/admin/users', requireAdmin, (req, res) => {
+    const b = req.body ?? {};
+    const username = String(b.username || '').trim();
+    const password = String(b.password || '');
+    const display_name = String(b.display_name || b.displayName || username).trim().slice(0, 60);
+    const role = ['pupil', 'student', 'teacher', 'admin'].includes(b.role) ? b.role : 'student';
+    const age = b.age != null && Number.isFinite(Number(b.age)) ? Math.floor(Number(b.age)) : null;
+    const school_id = Number(b.school_id) || DEFAULT_SCHOOL_ID;
+    const email = b.email ? String(b.email).trim().toLowerCase() : null;
+
+    if (!USERNAME_RE.test(username)) return res.status(400).json({ error: 'invalid_username', message: 'username 3–32 ký tự a-z0-9_.- (case-insensitive)' });
+    if (password.length < 6) return res.status(400).json({ error: 'weak_password', message: 'password tối thiểu 6 ký tự' });
+    if (!display_name) return res.status(400).json({ error: 'missing_display_name' });
+    if (getUserByUsername(username)) return res.status(409).json({ error: 'username_exists' });
+    if (age != null && (age < 3 || age > 100)) return res.status(400).json({ error: 'invalid_age', message: 'tuổi 3–100' });
+
+    try {
+      // createUser() chỉ cho role pupil/student/teacher → tạo trước rồi promote nếu cần admin.
+      const safeRole = ['pupil','student','teacher'].includes(role) ? role : 'student';
+      const { id } = createUser({
+        username, display_name, password_hash: hashPassword(password),
+        role: safeRole, age, school_id,
+      });
+      if (role === 'admin') db.prepare(`UPDATE users SET role='admin' WHERE id=?`).run(id);
+      if (email) db.prepare(`UPDATE users SET email=? WHERE id=?`).run(email, id);
+      res.json({ ok: true, id, username, display_name, role, school_id });
+    } catch (e) { res.status(500).json({ error: 'create_failed', detail: String(e.message) }); }
+  });
+
+  // PATCH /api/admin/users/:id — sửa thông tin partial (display_name/email/age/school_id)
+  // Dùng dynamic SQL thay vì updateUserEditable() vì cái kia yêu cầu nguyên trường profile.
+  r.patch('/api/admin/users/:id', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const u = getUserById(id);
+    if (!u) return res.status(404).json({ error: 'user_not_found' });
+    const sets = [], vals = {};
+    if (req.body?.display_name != null) {
+      const v = String(req.body.display_name).trim().slice(0, 60);
+      if (!v) return res.status(400).json({ error: 'empty_display_name' });
+      sets.push('display_name = @display_name'); vals.display_name = v;
+    }
+    if (req.body?.email != null) {
+      sets.push('email = @email');
+      vals.email = req.body.email ? String(req.body.email).trim().toLowerCase().slice(0, 120) : null;
+    }
+    if (req.body?.age != null) {
+      const a = Number(req.body.age);
+      if (req.body.age === '' || a === 0) { sets.push('age = NULL'); }
+      else if (!Number.isFinite(a) || a < 3 || a > 100) return res.status(400).json({ error: 'invalid_age', message: 'tuổi 3–100' });
+      else { sets.push('age = @age'); vals.age = Math.floor(a); }
+    }
+    if (req.body?.school_id != null) {
+      const sid = Number(req.body.school_id);
+      if (!Number.isFinite(sid) || sid < 1) return res.status(400).json({ error: 'invalid_school_id' });
+      const exists = db.prepare(`SELECT 1 FROM schools WHERE id = ?`).get(sid);
+      if (!exists) return res.status(400).json({ error: 'school_not_exist' });
+      sets.push('school_id = @school_id'); vals.school_id = sid;
+    }
+    if (!sets.length) return res.status(400).json({ error: 'no_changes' });
+    vals.id = id;
+    try {
+      db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = @id`).run(vals);
+      res.json({ ok: true, user: getUserById(id) });
+    } catch (e) { res.status(500).json({ error: 'update_failed', detail: String(e.message) }); }
+  });
+
+  // POST /api/admin/users/:id/password — reset mật khẩu (admin override)
+  r.post('/api/admin/users/:id/password', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const password = String(req.body?.password || '');
+    if (password.length < 6) return res.status(400).json({ error: 'weak_password', message: 'password tối thiểu 6 ký tự' });
+    const u = getUserById(id);
+    if (!u) return res.status(404).json({ error: 'user_not_found' });
+    db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`).run(hashPassword(password), id);
+    // Invalidate mọi session hiện tại của user → buộc login lại
+    db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(id);
+    res.json({ ok: true, message: 'password đã đổi, đã invalidate mọi session' });
+  });
+
+  // DELETE /api/admin/users/:id — xoá user (cascade sessions + oauth_identities)
+  // Bảo vệ: không cho admin tự xoá; không cho xoá admin cuối cùng.
+  r.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const u = getUserById(id);
+    if (!u) return res.status(404).json({ error: 'user_not_found' });
+    if (id === req.user.id) return res.status(400).json({ error: 'cannot_delete_self', message: 'không thể xoá chính mình' });
+    if (u.role === 'admin') {
+      const adminCount = db.prepare(`SELECT COUNT(*) c FROM users WHERE role='admin'`).get().c;
+      if (adminCount <= 1) return res.status(400).json({ error: 'last_admin', message: 'không thể xoá admin cuối cùng' });
+    }
+    const tx = db.transaction((uid) => {
+      db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(uid);
+      if (tableExists('oauth_identities')) db.prepare(`DELETE FROM oauth_identities WHERE user_id = ?`).run(uid);
+      if (tableExists('subscriptions')) db.prepare(`DELETE FROM subscriptions WHERE user_id = ?`).run(uid);
+      if (tableExists('notifications')) db.prepare(`DELETE FROM notifications WHERE user_id = ?`).run(uid);
+      db.prepare(`DELETE FROM users WHERE id = ?`).run(uid);
+    });
+    try { tx(id); res.json({ ok: true, deleted: u.username }); }
+    catch (e) { res.status(500).json({ error: 'delete_failed', detail: String(e.message) }); }
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // CRUD: Schools (thêm Edit / Delete; Create đã có ở trên)
+  // ─────────────────────────────────────────────────────────────
+
+  // PATCH /api/admin/schools/:id — đổi name/domain/code
+  r.patch('/api/admin/schools/:id', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const cur = db.prepare(`SELECT * FROM schools WHERE id = ?`).get(id);
+    if (!cur) return res.status(404).json({ error: 'school_not_found' });
+    const sets = [], vals = {};
+    if (req.body?.name != null) { sets.push('name = @name'); vals.name = String(req.body.name).trim().slice(0, 120); }
+    if (req.body?.domain != null) { sets.push('domain = @domain'); vals.domain = req.body.domain ? String(req.body.domain).toLowerCase().slice(0, 80) : null; }
+    if (req.body?.code != null) { sets.push('code = @code'); vals.code = String(req.body.code).trim().slice(0, 40); }
+    if (!sets.length) return res.status(400).json({ error: 'no_changes' });
+    vals.id = id;
+    try {
+      db.prepare(`UPDATE schools SET ${sets.join(', ')} WHERE id = @id`).run(vals);
+      res.json({ ok: true, school: db.prepare(`SELECT * FROM schools WHERE id = ?`).get(id) });
+    } catch (e) { res.status(400).json({ error: 'update_failed', detail: String(e.message) }); }
+  });
+
+  // DELETE /api/admin/schools/:id — xoá trường (cấm xoá tizia-default; cấm khi còn user)
+  r.delete('/api/admin/schools/:id', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (id === DEFAULT_SCHOOL_ID) return res.status(400).json({ error: 'protected_default', message: 'không thể xoá trường mặc định Tizia (id=1)' });
+    const cur = db.prepare(`SELECT * FROM schools WHERE id = ?`).get(id);
+    if (!cur) return res.status(404).json({ error: 'school_not_found' });
+    const uCount = db.prepare(`SELECT COUNT(*) c FROM users WHERE school_id = ?`).get(id).c;
+    if (uCount > 0) return res.status(400).json({ error: 'has_users', message: `trường còn ${uCount} user — chuyển họ qua trường khác trước khi xoá` });
+    try {
+      db.prepare(`DELETE FROM schools WHERE id = ?`).run(id);
+      res.json({ ok: true, deleted: cur.code });
+    } catch (e) { res.status(500).json({ error: 'delete_failed', detail: String(e.message) }); }
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // CRUD: Requests + Content — chỉ thêm DELETE (status/reply đã có)
+  // ─────────────────────────────────────────────────────────────
+
+  r.delete('/api/admin/requests/:id', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const cur = db.prepare(`SELECT id FROM requests WHERE id = ?`).get(id);
+    if (!cur) return res.status(404).json({ error: 'request_not_found' });
+    const tx = db.transaction((rid) => {
+      if (tableExists('ai_decisions')) db.prepare(`DELETE FROM ai_decisions WHERE request_id = ?`).run(rid);
+      db.prepare(`DELETE FROM requests WHERE id = ?`).run(rid);
+    });
+    try { tx(id); res.json({ ok: true, deleted: id }); }
+    catch (e) { res.status(500).json({ error: 'delete_failed', detail: String(e.message) }); }
+  });
+
+  r.delete('/api/admin/content/:id', requireAdmin, (req, res) => {
+    if (!tableExists('ai_lesson_content')) return res.status(404).json({ error: 'no_content_table' });
+    const id = Number(req.params.id);
+    const info = db.prepare(`DELETE FROM ai_lesson_content WHERE id = ?`).run(id);
+    if (info.changes === 0) return res.status(404).json({ error: 'content_not_found' });
+    res.json({ ok: true, deleted: id });
+  });
+
+  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin) + dashboard + CRUD');
 }

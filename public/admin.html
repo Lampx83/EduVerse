@@ -240,6 +240,87 @@
       <button class="btn primary" id="modal-role-submit">Đổi vai trò</button>
     </div>
   </div>
+
+  <!-- Create user -->
+  <div class="modal" id="modal-createUser" style="display:none">
+    <h3>➕ Tạo người dùng mới</h3>
+    <p class="sub">Admin có thể tạo trực tiếp account với mọi role (kể cả admin).</p>
+    <div class="grp"><label>Username (3-32 ký tự a-z0-9_.-)</label><input id="cu-username" placeholder="vd: thanha"></div>
+    <div class="grp"><label>Mật khẩu (≥6 ký tự)</label><input id="cu-password" type="text" placeholder="vd: 125678"></div>
+    <div class="grp"><label>Tên hiển thị</label><input id="cu-display" placeholder="Họ và tên"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="grp"><label>Vai trò</label>
+        <select id="cu-role">
+          <option value="student" selected>student</option>
+          <option value="pupil">pupil</option>
+          <option value="teacher">teacher</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+      <div class="grp"><label>Tuổi (tuỳ chọn)</label><input id="cu-age" type="number" min="3" max="100" placeholder="3-100"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="grp"><label>Email (tuỳ chọn)</label><input id="cu-email" type="email" placeholder="…@…"></div>
+      <div class="grp"><label>Trường</label><select id="cu-school"></select></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="cu-cancel">Huỷ</button>
+      <button class="btn primary" id="cu-submit">➕ Tạo</button>
+    </div>
+  </div>
+
+  <!-- Edit user -->
+  <div class="modal" id="modal-editUser" style="display:none">
+    <h3>✏️ Sửa thông tin người dùng</h3>
+    <p class="sub" id="eu-sub"></p>
+    <div class="grp"><label>Tên hiển thị</label><input id="eu-display"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="grp"><label>Email</label><input id="eu-email" type="email"></div>
+      <div class="grp"><label>Tuổi</label><input id="eu-age" type="number" min="3" max="100"></div>
+    </div>
+    <div class="grp"><label>Trường</label><select id="eu-school"></select></div>
+    <div class="actions">
+      <button class="btn" id="eu-cancel">Huỷ</button>
+      <button class="btn primary" id="eu-submit">💾 Lưu</button>
+    </div>
+  </div>
+
+  <!-- Reset password -->
+  <div class="modal" id="modal-resetPwd" style="display:none">
+    <h3>🔑 Đặt lại mật khẩu</h3>
+    <p class="sub" id="rp-sub"></p>
+    <div class="ctx" style="background:rgba(239,68,68,0.08);border-left-color:var(--bad)">⚠️ Mọi session hiện tại của user sẽ bị huỷ, buộc login lại.</div>
+    <div class="grp"><label>Mật khẩu mới (≥6 ký tự)</label><input id="rp-password" type="text" placeholder="paste hoặc gõ"></div>
+    <div class="actions">
+      <button class="btn" id="rp-gen">🎲 Sinh ngẫu nhiên 16 ký tự</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="rp-cancel">Huỷ</button>
+      <button class="btn primary" id="rp-submit">🔑 Đổi</button>
+    </div>
+  </div>
+
+  <!-- Confirm delete (chung cho mọi entity) -->
+  <div class="modal" id="modal-confirm" style="display:none;border-color:rgba(239,68,68,0.4)">
+    <h3 id="cf-title">⚠️ Xác nhận xoá</h3>
+    <p class="sub" id="cf-msg"></p>
+    <div class="ctx" id="cf-ctx" style="border-left-color:var(--bad);background:rgba(239,68,68,0.08)"></div>
+    <div class="actions">
+      <button class="btn" id="cf-cancel">Huỷ</button>
+      <button class="btn danger" id="cf-submit">🗑 Xoá</button>
+    </div>
+  </div>
+
+  <!-- Create / Edit school -->
+  <div class="modal" id="modal-school" style="display:none">
+    <h3 id="sch-title">🏫 Tạo trường</h3>
+    <div class="grp"><label>Mã trường (code) — vd "neu-cntt"</label><input id="sch-code" placeholder="duy nhất, slug"></div>
+    <div class="grp"><label>Tên trường</label><input id="sch-name"></div>
+    <div class="grp"><label>Domain email (tuỳ chọn — auto-map khi user đăng ký)</label><input id="sch-domain" placeholder="vd: neu.edu.vn"></div>
+    <div class="actions">
+      <button class="btn" id="sch-cancel">Huỷ</button>
+      <button class="btn primary" id="sch-submit">💾 Lưu</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>

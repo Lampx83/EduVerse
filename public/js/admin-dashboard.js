@@ -302,9 +302,10 @@ function renderRequests() {
           <td><span class="pill ${r.status}">${r.status}</span></td>
           <td>${r.votes}</td>
           <td style="font-size:12px;opacity:.7">${fmt(r.created_at)}</td>
-          <td class="actions">
-            <button class="btn" data-act="detail" data-rid="${r.id}">👁 Xem</button>
-            <button class="btn primary" data-act="reply" data-rid="${r.id}">💬 Trả lời</button>
+          <td class="actions" style="white-space:nowrap">
+            <button class="btn" data-act="detail" data-rid="${r.id}" title="Xem chi tiết">👁</button>
+            <button class="btn primary" data-act="reply" data-rid="${r.id}" title="Trả lời + đổi trạng thái">💬</button>
+            <button class="btn danger" data-act="delreq" data-rid="${r.id}" title="Xoá yêu cầu">🗑</button>
           </td>
         </tr>
       `).join('')}
@@ -319,6 +320,21 @@ function renderRequests() {
     b.addEventListener('click', () => {
       const id = Number(b.dataset.rid);
       if (b.dataset.act === 'reply') openReplyModal(id);
+      else if (b.dataset.act === 'delreq') {
+        const r = reqCache.find(x => x.id === id);
+        openConfirm({
+          title: '🗑 Xoá yêu cầu?',
+          msg: 'Hành động không thể undo. Cascade xoá: ai_decisions liên quan.',
+          ctx: `#${r.id} · ${r.student} · ${r.title}`.slice(0, 100),
+          onConfirm: async () => {
+            const dr = await api(`/api/admin/requests/${id}`, { method:'DELETE' });
+            if (!dr.ok) return toast('Lỗi: ' + (dr.data?.message || dr.data?.error || dr.status), 'err');
+            toast('✓ Đã xoá');
+            closeModal();
+            await loadRequests();
+          },
+        });
+      }
       else toggleDetail(id);
     });
   });
@@ -389,10 +405,16 @@ async function loadUsers() {
 function renderUsers() {
   const host = $('#tabbody');
   host.innerHTML = `
+    <div class="toolbar">
+      <span style="font-size:12px;opacity:.6">Tổng: <b>${userCache.length}</b> user</span>
+      <div class="spacer"></div>
+      <button class="btn primary" id="userCreate">➕ Tạo user mới</button>
+      <button class="btn" id="userRefresh">↻ Tải lại</button>
+    </div>
     <table>
       <thead><tr>
         <th>#</th><th>Username</th><th>Tên hiển thị</th><th>Vai trò</th>
-        <th>Gói</th><th>Trường</th><th>Đăng nhập gần nhất</th><th></th>
+        <th>Gói</th><th>Trường</th><th>Email</th><th>Tuổi</th><th>Đăng nhập gần nhất</th><th></th>
       </tr></thead>
       <tbody>
       ${userCache.map(u => `
@@ -403,15 +425,246 @@ function renderUsers() {
           <td><span class="pill ${u.role}">${u.role}</span></td>
           <td><span class="pill">${esc(u.plan || 'free')}</span></td>
           <td>${u.school_id}</td>
+          <td style="font-size:12px;opacity:.7">${u.email ? esc(u.email) : '—'}</td>
+          <td style="font-size:12px;opacity:.7">${u.age || '—'}</td>
           <td style="font-size:12px;opacity:.7">${fmt(u.last_login)}</td>
-          <td class="actions"><button class="btn" data-uid="${u.id}" data-role="${u.role}">👥 Đổi vai trò</button></td>
+          <td class="actions" style="white-space:nowrap">
+            <button class="btn" data-act="role" data-uid="${u.id}" data-role="${u.role}" title="Đổi vai trò">👥</button>
+            <button class="btn" data-act="edit" data-uid="${u.id}" title="Sửa thông tin">✏️</button>
+            <button class="btn" data-act="pwd" data-uid="${u.id}" title="Đặt lại mật khẩu">🔑</button>
+            <button class="btn danger" data-act="del" data-uid="${u.id}" title="Xoá user">🗑</button>
+          </td>
         </tr>
       `).join('')}
       </tbody>
     </table>
   `;
-  host.querySelectorAll('[data-uid]').forEach(b => {
-    b.addEventListener('click', () => openRoleModal(Number(b.dataset.uid), b.dataset.role));
+  $('#userCreate').addEventListener('click', openCreateUserModal);
+  $('#userRefresh').addEventListener('click', loadUsers);
+  host.querySelectorAll('[data-act][data-uid]').forEach(b => {
+    b.addEventListener('click', () => {
+      const id = Number(b.dataset.uid);
+      const u = userCache.find(x => x.id === id);
+      if (!u) return;
+      if (b.dataset.act === 'role') openRoleModal(id, b.dataset.role);
+      else if (b.dataset.act === 'edit') openEditUserModal(u);
+      else if (b.dataset.act === 'pwd') openResetPwdModal(u);
+      else if (b.dataset.act === 'del') confirmDeleteUser(u);
+    });
+  });
+}
+
+// ─── CRUD Users ───
+let schoolsCache = [];
+async function refreshSchoolsCache() {
+  const r = await api('/api/admin/schools');
+  schoolsCache = r.data.schools || [];
+}
+function fillSchoolSelect(sel, currentId = null) {
+  sel.innerHTML = schoolsCache.map(s =>
+    `<option value="${s.id}" ${s.id === currentId ? 'selected' : ''}>${esc(s.name)} (${esc(s.code)})</option>`
+  ).join('');
+}
+async function openCreateUserModal() {
+  await refreshSchoolsCache();
+  fillSchoolSelect($('#cu-school'), 1);
+  ['cu-username','cu-password','cu-display','cu-email','cu-age'].forEach(id => $('#' + id).value = '');
+  $('#cu-role').value = 'student';
+  hideAllModals(); $('#modal-createUser').style.display = '';
+  $('#modal-bg').classList.add('show');
+  $('#cu-username').focus();
+}
+async function submitCreateUser() {
+  const body = {
+    username: $('#cu-username').value.trim(),
+    password: $('#cu-password').value,
+    display_name: $('#cu-display').value.trim(),
+    role: $('#cu-role').value,
+    email: $('#cu-email').value.trim() || null,
+    age: Number($('#cu-age').value) || null,
+    school_id: Number($('#cu-school').value) || 1,
+  };
+  const r = await api('/api/admin/users', { method:'POST', body: JSON.stringify(body) });
+  if (!r.ok) return toast('Lỗi: ' + (r.data?.message || r.data?.error || r.status), 'err');
+  toast('✓ Đã tạo @' + body.username);
+  closeModal();
+  await loadUsers();
+}
+async function openEditUserModal(u) {
+  await refreshSchoolsCache();
+  fillSchoolSelect($('#eu-school'), u.school_id);
+  $('#eu-sub').textContent = `@${u.username} · id=${u.id} · role=${u.role}`;
+  $('#eu-display').value = u.display_name || '';
+  $('#eu-email').value = u.email || '';
+  $('#eu-age').value = u.age || '';
+  $('#modal-bg').dataset.uid = u.id;
+  hideAllModals(); $('#modal-editUser').style.display = '';
+  $('#modal-bg').classList.add('show');
+  $('#eu-display').focus();
+}
+async function submitEditUser() {
+  const uid = Number($('#modal-bg').dataset.uid);
+  const body = {
+    display_name: $('#eu-display').value.trim(),
+    email: $('#eu-email').value.trim() || null,
+    age: $('#eu-age').value || null,
+    school_id: Number($('#eu-school').value) || 1,
+  };
+  const r = await api(`/api/admin/users/${uid}`, { method:'PATCH', body: JSON.stringify(body) });
+  if (!r.ok) return toast('Lỗi: ' + (r.data?.message || r.data?.error || r.status), 'err');
+  toast('✓ Đã cập nhật');
+  closeModal();
+  await loadUsers();
+}
+function openResetPwdModal(u) {
+  $('#rp-sub').textContent = `@${u.username} · ${u.display_name} (id=${u.id})`;
+  $('#rp-password').value = '';
+  $('#modal-bg').dataset.uid = u.id;
+  hideAllModals(); $('#modal-resetPwd').style.display = '';
+  $('#modal-bg').classList.add('show');
+  $('#rp-password').focus();
+}
+function genPassword(n = 16) {
+  const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const arr = new Uint8Array(n);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => charset[b % charset.length]).join('');
+}
+async function submitResetPwd() {
+  const uid = Number($('#modal-bg').dataset.uid);
+  const password = $('#rp-password').value;
+  if (password.length < 6) return toast('Mật khẩu ≥6 ký tự', 'err');
+  const r = await api(`/api/admin/users/${uid}/password`, { method:'POST', body: JSON.stringify({ password }) });
+  if (!r.ok) return toast('Lỗi: ' + (r.data?.message || r.data?.error || r.status), 'err');
+  toast('✓ Đã đổi mật khẩu + huỷ mọi session');
+  closeModal();
+  await loadUsers();
+}
+function confirmDeleteUser(u) {
+  openConfirm({
+    title: '🗑 Xoá người dùng?',
+    msg: 'Hành động không thể undo. Cascade xoá: sessions, oauth_identities, subscriptions, notifications. Attempts/achievements giữ nguyên (link bằng tên hiển thị, không phải user_id).',
+    ctx: `@${u.username} · ${u.display_name} · role=${u.role}`,
+    onConfirm: async () => {
+      const r = await api(`/api/admin/users/${u.id}`, { method:'DELETE' });
+      if (!r.ok) return toast('Lỗi: ' + (r.data?.message || r.data?.error || r.status), 'err');
+      toast('✓ Đã xoá @' + r.data.deleted);
+      closeModal();
+      await loadUsers();
+    },
+  });
+}
+
+// ─── CRUD Schools ───
+async function loadSchools() {
+  const r = await api('/api/admin/schools');
+  const schools = r.data.schools || [];
+  schoolsCache = schools;
+  const host = $('#tabbody');
+  host.innerHTML = `
+    <div class="toolbar">
+      <span style="font-size:12px;opacity:.6">Tổng: <b>${schools.length}</b> trường</span>
+      <div class="spacer"></div>
+      <button class="btn primary" id="schoolCreate">➕ Tạo trường</button>
+      <button class="btn" id="schoolRefresh">↻ Tải lại</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Code</th><th>Tên</th><th>Domain</th>
+        <th>Users</th><th>Lượt học</th><th>Góp ý</th><th>Tạo lúc</th><th></th>
+      </tr></thead>
+      <tbody>
+      ${schools.map(s => `
+        <tr>
+          <td>${s.id}</td>
+          <td><span class="pill">${esc(s.code)}</span></td>
+          <td>${esc(s.name)}</td>
+          <td style="font-size:12px;opacity:.7">${s.domain ? esc(s.domain) : '—'}</td>
+          <td>${s.users}</td>
+          <td>${s.attempts}</td>
+          <td>${s.requests}</td>
+          <td style="font-size:12px;opacity:.7">${fmt(s.created_at)}</td>
+          <td class="actions" style="white-space:nowrap">
+            <button class="btn" data-act="edit" data-sid="${s.id}" title="Sửa">✏️</button>
+            <button class="btn danger" data-act="del" data-sid="${s.id}" ${s.id === 1 ? 'disabled style="opacity:.3;cursor:not-allowed"' : ''} title="${s.id === 1 ? 'Không thể xoá trường mặc định' : 'Xoá'}">🗑</button>
+          </td>
+        </tr>
+      `).join('')}
+      </tbody>
+    </table>
+  `;
+  $('#schoolCreate').addEventListener('click', () => openSchoolModal(null));
+  $('#schoolRefresh').addEventListener('click', loadSchools);
+  host.querySelectorAll('[data-act][data-sid]').forEach(b => {
+    if (b.hasAttribute('disabled')) return;
+    b.addEventListener('click', () => {
+      const id = Number(b.dataset.sid);
+      const s = schools.find(x => x.id === id);
+      if (!s) return;
+      if (b.dataset.act === 'edit') openSchoolModal(s);
+      else if (b.dataset.act === 'del') confirmDeleteSchool(s);
+    });
+  });
+}
+function openSchoolModal(school) {
+  $('#sch-title').textContent = school ? '✏️ Sửa trường' : '🏫 Tạo trường';
+  $('#sch-code').value = school?.code || '';
+  $('#sch-code').disabled = !!school; // không cho đổi code khi edit
+  $('#sch-name').value = school?.name || '';
+  $('#sch-domain').value = school?.domain || '';
+  $('#modal-bg').dataset.sid = school?.id || '';
+  hideAllModals(); $('#modal-school').style.display = '';
+  $('#modal-bg').classList.add('show');
+  ($('#sch-name')).focus();
+}
+async function submitSchool() {
+  const sid = $('#modal-bg').dataset.sid;
+  const body = {
+    code: $('#sch-code').value.trim(),
+    name: $('#sch-name').value.trim(),
+    domain: $('#sch-domain').value.trim() || null,
+  };
+  if (!body.name) return toast('Tên trường bắt buộc', 'err');
+  const isEdit = !!sid;
+  if (!isEdit && !body.code) return toast('Code bắt buộc khi tạo mới', 'err');
+  const path = isEdit ? `/api/admin/schools/${sid}` : '/api/admin/schools';
+  const method = isEdit ? 'PATCH' : 'POST';
+  const r = await api(path, { method, body: JSON.stringify(body) });
+  if (!r.ok) return toast('Lỗi: ' + (r.data?.message || r.data?.error || r.status), 'err');
+  toast(isEdit ? '✓ Đã cập nhật trường' : '✓ Đã tạo trường');
+  closeModal();
+  if (currentTab === 'schools') await loadSchools();
+}
+function confirmDeleteSchool(s) {
+  openConfirm({
+    title: '🗑 Xoá trường?',
+    msg: 'Chỉ xoá được trường KHÔNG còn user nào (chuyển user qua trường khác trước). Trường mặc định Tizia (id=1) không thể xoá.',
+    ctx: `${s.name} (${s.code}) · ${s.users} user · ${s.attempts} lượt học`,
+    onConfirm: async () => {
+      const r = await api(`/api/admin/schools/${s.id}`, { method:'DELETE' });
+      if (!r.ok) return toast('Lỗi: ' + (r.data?.message || r.data?.error || r.status), 'err');
+      toast('✓ Đã xoá trường ' + r.data.deleted);
+      closeModal();
+      await loadSchools();
+    },
+  });
+}
+
+// ─── Generic confirm modal ───
+function openConfirm({ title, msg, ctx, onConfirm }) {
+  $('#cf-title').textContent = title || 'Xác nhận';
+  $('#cf-msg').textContent = msg || '';
+  $('#cf-ctx').textContent = ctx || '';
+  $('#cf-ctx').style.display = ctx ? '' : 'none';
+  hideAllModals(); $('#modal-confirm').style.display = '';
+  $('#modal-bg').classList.add('show');
+  $('#cf-submit').onclick = async () => { try { await onConfirm(); } catch(e) { toast('Lỗi: ' + e.message, 'err'); } };
+}
+
+function hideAllModals() {
+  ['modal-replyReq','modal-setRole','modal-createUser','modal-editUser','modal-resetPwd','modal-confirm','modal-school'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
   });
 }
 function openRoleModal(uid, currentRole) {
@@ -450,15 +703,46 @@ async function loadSimple(path, key, cols, fmtMap = {}) {
 const TABS = {
   requests:  { label:'💡 Góp ý', load: loadRequests, badge: () => reqCache.filter(r => r.status === 'pending').length },
   users:     { label:'👥 Người dùng', load: loadUsers },
-  schools:   { label:'🏫 Trường', load: () => loadSimple('/api/admin/schools', 'schools',
-    ['id','code','name','users','attempts','requests']) },
+  schools:   { label:'🏫 Trường', load: loadSchools },
   decisions: { label:'🤖 Quyết định AI', load: () => loadSimple('/api/admin/ai-decisions?limit=200', 'decisions',
     ['id','request_id','action','status_applied','decided_by','confidence','created_at'], { created_at: fmt }) },
-  content:   { label:'📚 Học liệu AI', load: () => loadSimple('/api/admin/content?limit=200', 'content',
-    ['id','school_id','subject','kind','flagged','created_at'], { created_at: fmt }) },
+  content:   { label:'📚 Học liệu AI', load: () => loadSimpleWithDelete('/api/admin/content?limit=200', 'content',
+    ['id','school_id','subject','kind','flagged','created_at'], { created_at: fmt }, '/api/admin/content', 'content') },
   billing:   { label:'💳 Gói cước', load: () => loadSimple('/api/admin/billing', 'subscriptions',
     ['school_id','school','plan','status','current_period_end'], { current_period_end: fmt }) },
 };
+
+// loadSimple variant có cột "Xoá" cuối row (dùng cho content)
+async function loadSimpleWithDelete(path, key, cols, fmtMap = {}, deleteBase, entityLabel) {
+  const r = await api(path);
+  const rows = r.data[key] || [];
+  if (!rows.length) { $('#tabbody').innerHTML = '<div class="empty">Chưa có dữ liệu.</div>'; return; }
+  const head = cols.map(c=>`<th>${c}</th>`).join('') + '<th></th>';
+  const body = rows.map(row => '<tr>' + cols.map(c => {
+    let v = row[c]; if (fmtMap[c]) v = fmtMap[c](v);
+    if (['status','plan','role','action','decided_by'].includes(c)) v = `<span class="pill ${row[c]||''}">${v??''}</span>`;
+    return `<td>${v ?? '—'}</td>`;
+  }).join('') + `<td class="actions"><button class="btn danger" data-rid="${row.id}" title="Xoá">🗑</button></td>` + '</tr>').join('');
+  $('#tabbody').innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  $$('[data-rid]').forEach(b => {
+    b.addEventListener('click', () => {
+      const id = Number(b.dataset.rid);
+      const row = rows.find(x => x.id === id);
+      openConfirm({
+        title: `🗑 Xoá ${entityLabel}?`,
+        msg: 'Hành động không thể undo.',
+        ctx: `id=${row.id}` + (row.title ? ' · ' + row.title.slice(0, 80) : ''),
+        onConfirm: async () => {
+          const dr = await api(`${deleteBase}/${id}`, { method:'DELETE' });
+          if (!dr.ok) return toast('Lỗi: ' + (dr.data?.message || dr.data?.error || dr.status), 'err');
+          toast('✓ Đã xoá');
+          closeModal();
+          await TABS[currentTab].load();
+        },
+      });
+    });
+  });
+}
 
 async function showTab(key) {
   currentTab = key;
@@ -623,6 +907,18 @@ async function init() {
   $('#modal-submit').addEventListener('click', submitReply);
   $('#modal-role-cancel').addEventListener('click', closeModal);
   $('#modal-role-submit').addEventListener('click', submitRole);
+
+  // CRUD modals
+  $('#cu-cancel').addEventListener('click', closeModal);
+  $('#cu-submit').addEventListener('click', submitCreateUser);
+  $('#eu-cancel').addEventListener('click', closeModal);
+  $('#eu-submit').addEventListener('click', submitEditUser);
+  $('#rp-cancel').addEventListener('click', closeModal);
+  $('#rp-submit').addEventListener('click', submitResetPwd);
+  $('#rp-gen').addEventListener('click', () => { $('#rp-password').value = genPassword(16); });
+  $('#cf-cancel').addEventListener('click', closeModal);
+  $('#sch-cancel').addEventListener('click', closeModal);
+  $('#sch-submit').addEventListener('click', submitSchool);
 
   // Logout
   $('#logoutBtn').addEventListener('click', async (e) => {
