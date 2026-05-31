@@ -1,4 +1,4 @@
-# EduVerse — Trạng thái 8 yêu cầu (gap status)
+# Tizia — Trạng thái 8 yêu cầu (gap status)
 
 > Ánh xạ 8 yêu cầu anh đề xuất → trạng thái thực tế trong code, sau các đợt
 > Phase 0 + Phase 1 (scaffold) + Phase 1-real (tenant/AI/SEO).

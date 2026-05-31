@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hub Sắp xếp thuốc — EduVerse</title>
+<title>Hub Sắp xếp thuốc — Tizia</title>
 <style>
   :root {
     --bg-1: #0f172a;
@@ -170,7 +170,7 @@
 <body>
 
 <div class="container">
-  <a class="back" href="index.html">← Quay lại EduVerse</a>
+  <a class="back" href="index.html">← Quay lại Tizia</a>
 
   <div class="hero">
     <div class="logo">💊</div>
@@ -218,6 +218,7 @@
   <div id="topic-card"></div>
 
   <footer>
+    <b>Tizia</b> — The Intelligent Zone for Interactive Academy<br>
     Cùng 16 thuốc, cùng nhóm điều trị, khác công nghệ — chọn phiên bản phù hợp với thiết bị & mục đích.
     Tất cả phiên bản web ghi điểm về cùng 1 dashboard giảng viên.
   </footer>
@@ -261,8 +262,8 @@ renderLevels();
 document.getElementById('reset-progress').addEventListener('click', (e) => {
   e.preventDefault();
   if (!confirm('Xoá toàn bộ tiến độ + sao đã đạt?')) return;
-  localStorage.removeItem('eduverse:progress');
-  localStorage.removeItem('eduverse:level');
+  localStorage.removeItem('tizia:progress');
+  localStorage.removeItem('tizia:level');
   renderLevels();
 });
 </script>

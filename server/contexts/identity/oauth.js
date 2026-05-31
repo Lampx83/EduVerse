@@ -1,4 +1,4 @@
-// SSO/OAuth 2.0 (Authorization Code + PKCE) cho EduVerse.
+// SSO/OAuth 2.0 (Authorization Code + PKCE) cho Tizia.
 // Hỗ trợ Google, Microsoft Entra ID (Azure AD), GitHub. Mỗi provider chỉ bật khi
 // có CLIENT_ID/SECRET trong env — UI chỉ render những nút đã cấu hình.
 // Không thêm thư viện ngoài: dùng `fetch` global của Node 20+.
@@ -11,8 +11,8 @@ import {
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const STATE_TTL_MS = 10 * 60 * 1000;     // 10 phút cho luồng login
-const STATE_COOKIE = 'eduverse_oauth';
-const SESSION_COOKIE = 'eduverse_sid';
+const STATE_COOKIE = 'tizia_oauth';
+const SESSION_COOKIE = 'tizia_sid';
 
 // ── Providers ──────────────────────────────────────────────────────────────
 // `enabled` chỉ true khi env đầy đủ. `profile` map từ JSON userinfo → record chuẩn.
@@ -91,7 +91,7 @@ function buildProviders() {
       fetchExtraEmail: async (accessToken) => {
         try {
           const r = await fetch('https://api.github.com/user/emails', {
-            headers: { Authorization: `token ${accessToken}`, 'User-Agent': 'EduVerse' },
+            headers: { Authorization: `token ${accessToken}`, 'User-Agent': 'Tizia' },
           });
           if (!r.ok) return null;
           const emails = await r.json();
@@ -261,7 +261,7 @@ export function attachOAuth(r, { basePath = '' } = {}) {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           Accept: 'application/json',
-          'User-Agent': 'EduVerse',
+          'User-Agent': 'Tizia',
         },
       });
       if (!userResp.ok) {

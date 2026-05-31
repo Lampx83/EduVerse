@@ -1,7 +1,7 @@
 // ============================================================
 // AI usage quota & token log — multi-tenant rate limit (Phase 0 foundation)
 // ============================================================
-// Hiện tại EduVerse dùng Ollama on-prem (qwen2.5:14b) → miễn phí token, nhưng
+// Hiện tại Tizia dùng Ollama on-prem (qwen2.5:14b) → miễn phí token, nhưng
 // vẫn cần infrastructure này để:
 //   1. Tracking: school nào dùng nhiều capacity (Ollama GPU/CPU)
 //   2. Rate limit: 1 school không nghẽn Ollama cho schools khác

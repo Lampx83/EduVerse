@@ -1,6 +1,6 @@
-# EduVerse — "Không dùng framework" có vấn đề gì không?
+# Tizia — "Không dùng framework" có vấn đề gì không?
 
-> Câu hỏi: EduVerse dùng **Express thuần + better-sqlite3 + vanilla JS** (không Nest/
+> Câu hỏi: Tizia dùng **Express thuần + better-sqlite3 + vanilla JS** (không Nest/
 > Next/Fastify, không ORM, không validation lib). Ở quy mô 30k MAU thì có sao không?
 > **Kết luận ngắn: KHÔNG cần đổi sang framework nặng. Nhưng "thiếu kỷ luật framework"
 > đã tạo ra vài rủi ro THẬT — vá bằng vài middleware mỏng, không cần rewrite.**
@@ -76,7 +76,7 @@ với `index.js` đang được sửa.)
 | Cần SSR React phức tạp + SEO động nhiều | Next.js cho 1 phần FE marketing |
 | API cực nhiều + cần type-safe e2e | tRPC / Fastify + TypeBox |
 
-Hiện EduVerse **chưa chạm** ngưỡng nào. Express + context pattern + middleware vá là đủ
+Hiện Tizia **chưa chạm** ngưỡng nào. Express + context pattern + middleware vá là đủ
 tới ~vài chục nghìn DAU.
 
 ## 6. Anchors

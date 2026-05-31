@@ -14,7 +14,7 @@
 //   VNPAY_TMN_CODE     — mã website merchant
 //   VNPAY_HASH_SECRET  — secret ký (KHÔNG commit, đặt trong secrets manager)
 //   VNPAY_PAY_URL      — mặc định sandbox https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-//   VNPAY_RETURN_URL   — URL EduVerse nhận callback browser
+//   VNPAY_RETURN_URL   — URL Tizia nhận callback browser
 // ============================================================
 
 import { createHmac } from 'node:crypto';

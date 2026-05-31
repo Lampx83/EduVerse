@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🗄️ SQL Playground · Trường CNTT · EduVerse</title>
+<title>🗄️ SQL Playground · Trường CNTT · Tizia</title>
 <style>
   :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#60a5fa; --card:rgba(255,255,255,.05); --border:rgba(255,255,255,.12); --ok:#22c55e; --bad:#ef4444; }
   * { box-sizing:border-box; }
@@ -204,7 +204,7 @@ const CH = [
   { id:'grp',  q:'Đếm số sinh viên trong mỗi lớp (theo lop_id).', sol:"SELECT lop_id, COUNT(*) FROM sinhvien GROUP BY lop_id", ordered:false },
   { id:'join', q:'Hiển thị tên sinh viên kèm tên lớp tương ứng (JOIN hai bảng).', sol:"SELECT sinhvien.ten, lop.ten_lop FROM sinhvien JOIN lop ON sinhvien.lop_id = lop.id", ordered:false },
 ];
-const DONE_KEY='eduverse:it:sql:solved';
+const DONE_KEY='tizia:it:sql:solved';
 let solved; try { solved=new Set(JSON.parse(localStorage.getItem(DONE_KEY)||'[]')); } catch(e){ solved=new Set(); }
 let current = CH[0];
 
@@ -250,7 +250,7 @@ function run(){
     head = `<div class="msg ok">✅ Đúng yêu cầu thử thách! (${rowWord})</div>`;
     if (!solved.has(current.id)){
       solved.add(current.id); try{ localStorage.setItem(DONE_KEY, JSON.stringify([...solved])); }catch(e){}
-      try { const k='eduverse:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d.dblab=Math.max(d.dblab||0, solved.size); localStorage.setItem(k, JSON.stringify(d)); }catch(e){}
+      try { const k='tizia:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d.dblab=Math.max(d.dblab||0, solved.size); localStorage.setItem(k, JSON.stringify(d)); }catch(e){}
       renderCh(); showToast(solved.size===CH.length ? '🏆 Hoàn thành mọi thử thách SQL!' : '✓ Giải đúng thử thách!');
     }
   } else {

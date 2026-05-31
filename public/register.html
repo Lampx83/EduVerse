@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Đăng ký · EduVerse</title>
+<title>Đăng ký · Tizia</title>
 <link rel="manifest" href="./manifest.webmanifest" />
 <meta name="theme-color" content="#fbbf24" />
 <style>
@@ -149,7 +149,7 @@
     </label>
   </div>
 
-  <button class="primary" type="submit" id="submit-btn">Đăng ký & vào EduVerse</button>
+  <button class="primary" type="submit" id="submit-btn">Đăng ký & vào Tizia</button>
   <div class="err" id="err"></div>
 
   <!-- SSO providers — rỗng nếu chưa cấu hình env. -->
@@ -194,13 +194,13 @@
         errEl.textContent = res?.error || 'Đăng ký thất bại';
         errEl.classList.add('show');
         btn.disabled = false;
-        btn.textContent = 'Đăng ký & vào EduVerse';
+        btn.textContent = 'Đăng ký & vào Tizia';
       }
     } catch (err) {
       errEl.textContent = 'Lỗi mạng. Thử lại.';
       errEl.classList.add('show');
       btn.disabled = false;
-      btn.textContent = 'Đăng ký & vào EduVerse';
+      btn.textContent = 'Đăng ký & vào Tizia';
     }
   });
 </script>

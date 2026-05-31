@@ -1,25 +1,25 @@
 # ============================================================
-# Keycloak IdP cho EduVerse — chạy trên Server #3 (Analytics+Obs+IdP)
+# Keycloak IdP cho Tizia — chạy trên Server #3 (Analytics+Obs+IdP)
 # ============================================================
 # Keycloak là Identity Provider trung tâm + SSO broker: gom Google, Microsoft
-# Entra ID (Azure AD), SAML của 3 ĐH về một chỗ. EduVerse chỉ tin Keycloak
+# Entra ID (Azure AD), SAML của 3 ĐH về một chỗ. Tizia chỉ tin Keycloak
 # (1 OIDC provider duy nhất) thay vì tự quản lý từng provider trong oauth.js.
 #
 # DB dùng chung Postgres ở Server #2 (schema riêng 'keycloak'). KHÔNG dùng H2.
 #
 # Khởi động:  docker compose -f docker-compose.keycloak.yml up -d
-# Sau đó cấu hình realm theo docs/IDP-SETUP.md (hoặc import realm-eduverse.example.json).
+# Sau đó cấu hình realm theo docs/IDP-SETUP.md (hoặc import realm-tizia.example.json).
 # ============================================================
 
 services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
-    container_name: eduverse-keycloak
+    container_name: tizia-keycloak
     restart: unless-stopped
     command: start --optimized --import-realm
     environment:
       # ── Hostname (đặt theo domain thật khi production) ──
-      KC_HOSTNAME: ${KC_HOSTNAME:-https://id.eduverse.vn}
+      KC_HOSTNAME: ${KC_HOSTNAME:-https://id.tizia.vn}
       KC_HTTP_ENABLED: "true"           # TLS terminate ở Caddy phía trước
       KC_PROXY_HEADERS: xforwarded
       # ── DB: Postgres Server #2 (schema riêng) ──
@@ -35,7 +35,7 @@ services:
     ports:
       - "127.0.0.1:8080:8080"           # chỉ localhost; Caddy reverse-proxy ra ngoài
     volumes:
-      - ./realm-eduverse.example.json:/opt/keycloak/data/import/realm-eduverse.json:ro
+      - ./realm-tizia.example.json:/opt/keycloak/data/import/realm-tizia.json:ro
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
       interval: 30s
@@ -44,4 +44,4 @@ services:
       start_period: 60s
 
 # Ghi chú: KHÔNG mở 8080 ra Internet trực tiếp. Caddy (Server #1) reverse-proxy
-# https://id.eduverse.vn → 10.0.0.x:8080 với TLS. Xem Caddyfile.
+# https://id.tizia.vn → 10.0.0.x:8080 với TLS. Xem Caddyfile.

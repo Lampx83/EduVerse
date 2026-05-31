@@ -1,5 +1,5 @@
 // ============================================================
-// EduVerse Engine — Central type definitions (JSDoc)
+// Tizia Engine — Central type definitions (JSDoc)
 // ============================================================
 // Tất cả schema cho DrugDB, HerbDB, CaseDB, Scenario, Rubric…
 // được định nghĩa ở đây để 38 module dùng chung.

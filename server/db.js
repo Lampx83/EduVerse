@@ -106,7 +106,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_oauth_user ON oauth_identities(user_id);
 
   -- Multi-tenancy (Phase 0 foundation): mỗi trường là 1 tenant.
-  -- Mặc định school_id=1 ('eduverse-default') chứa legacy data trước khi mở multi-tenant.
+  -- Mặc định school_id=1 ('tizia-default') chứa legacy data trước khi mở multi-tenant.
   -- SSO email domain → school auto-map (vd '*@neu.edu.vn' → NEU). Phase 1 sẽ enforce
   -- Postgres RLS theo school_id; hiện tại SQLite, isolation enforce ở app layer.
   CREATE TABLE IF NOT EXISTS schools (
@@ -135,9 +135,9 @@ try { db.exec(`ALTER TABLE attempts ADD COLUMN level_n INTEGER`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_class ON attempts(class_code, created_at DESC)`); } catch {}
 
 // Step 5: multi-tenancy migration (Phase 0). Thêm school_id vào 4 entity table top-level.
-// Additive với DEFAULT 1 → legacy row tự backfill về school 'eduverse-default'.
+// Additive với DEFAULT 1 → legacy row tự backfill về school 'tizia-default'.
 // SQLite KHÔNG cho phép ALTER ADD COLUMN với non-constant DEFAULT, nên dùng hằng 1.
-try { db.prepare(`INSERT OR IGNORE INTO schools (id, code, name, created_at) VALUES (1, 'eduverse-default', 'EduVerse', ?)`).run(Date.now()); } catch {}
+try { db.prepare(`INSERT OR IGNORE INTO schools (id, code, name, created_at) VALUES (1, 'tizia-default', 'Tizia', ?)`).run(Date.now()); } catch {}
 try { db.exec(`ALTER TABLE users    ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
 try { db.exec(`ALTER TABLE classes  ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
 try { db.exec(`ALTER TABLE attempts ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
@@ -709,7 +709,7 @@ export function isUsernameTaken(username) {
 }
 
 // --- Schools (multi-tenancy Phase 0) ---
-// Mỗi trường là 1 tenant. Default school id=1 'eduverse-default' giữ legacy data.
+// Mỗi trường là 1 tenant. Default school id=1 'tizia-default' giữ legacy data.
 // Phase 1 sẽ wire createUser/SSO auto-map theo resolveSchoolByEmail và enforce
 // Postgres RLS theo school_id. Hiện tại helpers ready, callers chưa migrate.
 const getSchoolByIdStmt     = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE id = ?`);

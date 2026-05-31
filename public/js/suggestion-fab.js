@@ -40,7 +40,7 @@ function inferDomain() {
 function pageContext() {
   const url = location.pathname + location.search;
   let title = document.title || '';
-  title = title.replace(/\s*[·|—-]\s*EduVerse.*$/i, '').trim();
+  title = title.replace(/\s*[·|—-]\s*Tizia.*$/i, '').trim();
   return { url, title };
 }
 

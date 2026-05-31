@@ -7,7 +7,7 @@
 //   enqueueForSchool(school_id, type, payload) → fan-out tới webhook_endpoints
 //   dispatcher: poll pending → POST (HMAC-SHA256) → delivered | retry | dead
 //
-// Đây là chiều OUT (EduVerse → vendor). Chiều IN (vendor → EduVerse) đã có
+// Đây là chiều OUT (Tizia → vendor). Chiều IN (vendor → Tizia) đã có
 // webhook_inbox ở payment context (idempotency). Hai chiều tạo Integration Hub.
 // ============================================================
 
@@ -116,9 +116,9 @@ export async function dispatchOutboxOnce(limit = 20, fetchImpl = fetch) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-EduVerse-Event': ev.event_type,
-            'X-EduVerse-Signature': `sha256=${sig}`,
-            'X-EduVerse-Delivery': String(ev.id),
+            'X-Tizia-Event': ev.event_type,
+            'X-Tizia-Signature': `sha256=${sig}`,
+            'X-Tizia-Delivery': String(ev.id),
           },
           body: ev.payload, signal: ctrl.signal,
         }).finally(() => clearTimeout(tid));
@@ -156,7 +156,7 @@ export function attachIntegration(r) {
     const url = String(req.body?.url || '').trim();
     if (!/^https?:\/\//.test(url)) return res.status(400).json({ error: 'invalid_url' });
     const { id, secret } = registerEndpoint({ school_id: req.schoolId, url, event_types: req.body?.eventTypes || null });
-    res.json({ ok: true, id, secret, note: 'Lưu secret để xác minh X-EduVerse-Signature (HMAC-SHA256).' });
+    res.json({ ok: true, id, secret, note: 'Lưu secret để xác minh X-Tizia-Signature (HMAC-SHA256).' });
   });
   r.get('/api/integrations/endpoints', (req, res) => {
     res.json({ endpoints: listEndpointsAllStmt.all(req.schoolId) });

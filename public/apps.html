@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🔌 Ứng dụng tích hợp · EduVerse</title>
+<title>🔌 Ứng dụng tích hợp · Tizia</title>
 <style>
   :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#38bdf8; --card:rgba(255,255,255,.05);
     --border:rgba(255,255,255,.12); --muted:#94a3b8; }
@@ -71,11 +71,11 @@
     document.body.style.display = 'block';
     root.innerHTML = `
       <div class="top">
-        <a class="home" href="index.html">← EduVerse</a>
-        <h1>🔌 Ứng dụng tích hợp <span class="dim">· EduVerse</span></h1>
+        <a class="home" href="index.html">← Tizia</a>
+        <h1>🔌 Ứng dụng tích hợp <span class="dim">· Tizia</span></h1>
       </div>
       <div class="wrap">
-        <p class="lead">Các hệ thống đồng hành được nhúng thẳng vào EduVerse qua cùng một origin.
+        <p class="lead">Các hệ thống đồng hành được nhúng thẳng vào Tizia qua cùng một origin.
           Mỗi ứng dụng mở trong khung nhúng có thanh điều hướng quay lại. Nếu một ứng dụng chưa chạy,
           bạn sẽ thấy hướng dẫn khởi động ngay trong khung.</p>
         <div class="grid">
@@ -92,7 +92,7 @@
   }
 
   function renderEmbed(a) {
-    document.title = `${a.icon} ${a.name} · EduVerse`;
+    document.title = `${a.icon} ${a.name} · Tizia`;
     document.body.classList.add('embed');
     const src = a.url || a.path;   // URL công khai nếu có, ngược lại proxy cùng origin
     root.innerHTML = `
@@ -101,7 +101,7 @@
         <span class="nm" style="color:${a.color}"><span class="ico">${a.icon}</span>${a.name}</span>
         <span style="opacity:.6">${a.tag}</span>
         <span class="sp">
-          <a href="index.html">🏠 EduVerse</a>
+          <a href="index.html">🏠 Tizia</a>
           <a href="${src}" target="_blank" rel="noopener">↗ Mở tab mới</a>
         </span>
       </div>

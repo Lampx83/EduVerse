@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>EduVerse · Lesson Builder no-code</title>
+<title>Tizia · Lesson Builder no-code</title>
 <link rel="manifest" href="./manifest.webmanifest" />
 <meta name="theme-color" content="#fbbf24" />
 <style>
@@ -289,7 +289,7 @@ try {
 // PALETTE drag
 document.querySelectorAll('.palette-item').forEach(el => {
   el.addEventListener('dragstart', (e) => {
-    e.dataTransfer.setData('text/eduverse-block-type', el.dataset.type);
+    e.dataTransfer.setData('text/tizia-block-type', el.dataset.type);
     e.dataTransfer.effectAllowed = 'copy';
   });
   // Mobile: bấm để thêm
@@ -301,7 +301,7 @@ dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('o
 dz.addEventListener('dragleave', () => dz.classList.remove('over'));
 dz.addEventListener('drop', (e) => {
   e.preventDefault(); dz.classList.remove('over');
-  const type = e.dataTransfer.getData('text/eduverse-block-type');
+  const type = e.dataTransfer.getData('text/tizia-block-type');
   if (type) addBlock(type);
 });
 

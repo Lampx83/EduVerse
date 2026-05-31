@@ -1,4 +1,4 @@
-# EduVerse — Kiến trúc đích
+# Tizia — Kiến trúc đích
 
 > **Phục vụ:** ~30,000 MAU / 1,000 concurrent (peak 2,000) / 100GB DB-năm
 > cho các trường phổ thông + 3 đại học.
@@ -8,7 +8,7 @@
 
 ## 0. Stack chính xác (framework vs thư viện vs vanilla)
 
-Để không hiểu nhầm "không framework": EduVerse **CÓ** dùng framework ở backend —
+Để không hiểu nhầm "không framework": Tizia **CÓ** dùng framework ở backend —
 là loại **micro**, không phải frameworkless.
 
 | Tầng | Thành phần | Phân loại |
@@ -83,7 +83,7 @@ framework **nặng/opinionated** (NestJS/Next.js/Django) — xem [NO-FRAMEWORK-R
 ## 5. Multi-tenancy
 
 - **Model:** Shared DB + `school_id INTEGER NOT NULL` trên mọi bảng entity + **Postgres RLS** (Phase 1).
-- **Default school:** `id=1 'eduverse-default'` để legacy data có chỗ.
+- **Default school:** `id=1 'tizia-default'` để legacy data có chỗ.
 - **Tenant assignment:**
   - SSO: email domain → school (auto map, vd `*@neu.edu.vn` → NEU)
   - Local register: dropdown chọn trường + verify class-code

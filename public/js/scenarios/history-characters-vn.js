@@ -1,7 +1,7 @@
 /* GAP 9 — 6 nhân vật AI lịch sử/khoa học Việt Nam
  *
  * Mỗi nhân vật có persona riêng + biết kiến thức tham chiếu (knownFacts).
- * Dùng cho metaverse campus EduVerse: HS gặp nhân vật trong space, click vào,
+ * Dùng cho metaverse campus Tizia: HS gặp nhân vật trong space, click vào,
  * mở chat box; AI Ollama đóng vai theo system prompt.
  *
  * Tham chiếu chương trình GDPT 2018:

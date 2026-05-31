@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Module · EduVerse</title>
+<title>Module · Tizia</title>
 <style>
   :root {
     --bg-1: #0f172a; --bg-2: #1e293b; --bg-3: #312e81;
@@ -268,7 +268,7 @@
     title.textContent = `${moduleId} · ${moduleMeta.title}`;
     subtitle.textContent = `Năm ${moduleMeta.yearLevel} · Môn: ${moduleMeta.subject}`;
     breadcrumb.textContent = `Năm ${moduleMeta.yearLevel} · ${moduleMeta.title}`;
-    document.title = `${moduleId} · ${moduleMeta.title} — EduVerse`;
+    document.title = `${moduleId} · ${moduleMeta.title} — Tizia`;
     info.style.display = 'block';
     infoText.innerHTML = `<b>Yêu cầu mở khoá:</b> ${moduleMeta.minStarsToUnlock} sao tích luỹ${moduleMeta.prerequisites?.length ? ` · <b>Tiền đề:</b> ${moduleMeta.prerequisites.join(', ')}` : ''}`;
     infoChips.innerHTML = `
@@ -285,7 +285,7 @@
       const bits = [s0.chapter && `📂 ${s0.chapter}`, s0.boss && '👑 Boss', s0.difficulty && `⭐ Độ khó ${s0.difficulty}/5`].filter(Boolean);
       subtitle.textContent = bits.join(' · ');
       breadcrumb.textContent = s0.chapter || s0.title;
-      document.title = `${s0.title} — EduVerse`;
+      document.title = `${s0.title} — Tizia`;
     } else {
       title.textContent = moduleId;
       subtitle.textContent = 'Bài học';

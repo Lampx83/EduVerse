@@ -3,13 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>EduVerse · Vũ trụ giáo dục</title>
+<title>Tizia · Vũ trụ giáo dục</title>
+<meta name="description" content="Tizia — The Intelligent Zone for Interactive Academy. Vũ trụ giáo dục do AI điều hành, học bằng 2D · 3D · VR · XR · Metaverse." />
+<meta property="og:title" content="Tizia · Vũ trụ giáo dục" />
+<meta property="og:description" content="Tizia — The Intelligent Zone for Interactive Academy." />
+<meta property="og:type" content="website" />
 <!-- PWA: offline-first cho mạng yếu (GAP 14) -->
 <link rel="manifest" href="./manifest.webmanifest" />
 <meta name="theme-color" content="#fbbf24" />
-<meta name="application-name" content="EduVerse" />
+<meta name="application-name" content="Tizia" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="EduVerse" />
+<meta name="apple-mobile-web-app-title" content="Tizia" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <style>
   :root {
@@ -411,7 +415,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 }
 </script>
 
-<!-- One-time migration của localStorage keys cũ pharmacysim:* → eduverse:* -->
+<!-- One-time migration của localStorage keys cũ pharmacysim:* → tizia:* -->
 <script type="module">
   import { migrateAllKnown, KEYS, lsGet, lsSet } from './js/engine/storage.js';
   migrateAllKnown();
@@ -435,7 +439,8 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   <div class="hero-inner">
     <!-- Cột trái: lời chào -->
     <div class="hero-left">
-      <h2 class="greet" id="hero-greet">Chào mừng đến EduVerse <span class="wave">👋</span></h2>
+      <h2 class="greet" id="hero-greet">Chào mừng đến Tizia <span class="wave">👋</span></h2>
+      <p class="tagline" style="opacity:.85;font-style:italic;font-size:13px;margin-top:-4px;letter-spacing:.3px;">The Intelligent Zone for Interactive Academy</p>
       <p class="tagline">Vũ trụ giáo dục <b>do AI điều hành</b> — học liệu, môi trường thực hành và <b>tự cải tiến mỗi ngày</b>. Học bằng 2D · 3D · VR · XR · Metaverse.</p>
       <div class="cta-row">
         <a class="cta primary" id="hero-enter" href="#schools">🏫 Vào trường của bạn</a>
@@ -890,13 +895,14 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
 <!-- ============ LỐI TẮT TÍNH NĂNG (băng chuyền, cuối trang) ============ -->
 <div class="section" style="margin-bottom:20px">
-  <div class="section-title"><h2>✨ Khám phá thêm</h2><span class="hint">Công cụ &amp; trải nghiệm xuyên suốt EduVerse</span></div>
+  <div class="section-title"><h2>✨ Khám phá thêm</h2><span class="hint">Công cụ &amp; trải nghiệm xuyên suốt Tizia</span></div>
   <div class="feature-strip" aria-label="Lối tắt tính năng">
     <div class="feature-track" id="feature-track"></div>
   </div>
 </div>
 
 <footer>
+  <b>Tizia</b> — The Intelligent Zone for Interactive Academy<br>
   Backend: Node.js + Express + SQLite + WebSocket trên cổng <code>8041</code> ·
   Chạy: <code>npm install &amp;&amp; npm start</code> ·
   Deploy: Docker / Portainer (xem README)<br>
@@ -918,7 +924,7 @@ if (me) {
   const hi = me.role === 'teacher' ? 'Chào Thầy/Cô' : 'Chào';
   greetEl.innerHTML = `${hi} <b>${me.display_name}</b> <span class="wave">👋</span>`;
 } else {
-  greetEl.innerHTML = `Chào <b>khách</b> ghé EduVerse <span class="wave">👋</span>`;
+  greetEl.innerHTML = `Chào <b>khách</b> ghé Tizia <span class="wave">👋</span>`;
   // Banner guest + CTA login (chèn ngay dưới hero, trước section #schools).
   const banner = document.createElement('div');
   banner.id = 'guest-banner';

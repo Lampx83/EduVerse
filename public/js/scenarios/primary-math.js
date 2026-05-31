@@ -1,7 +1,7 @@
 // ============================================================
 // Trường Tiểu học — Toán lớp 1–5 (câu hỏi GỐC)
 // ============================================================
-// Nội dung do EduVerse tự soạn, bám Chương trình GDPT 2018 môn Toán
+// Nội dung do Tizia tự soạn, bám Chương trình GDPT 2018 môn Toán
 // Tiểu học (tham khảo SGK chứ KHÔNG sao chép). Mỗi lớp 1 quiz.
 // id theo prefix module: P1-, P2-, ... để module loader nhận.
 // ============================================================

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>📈 Đồ thị hàm số · EduVerse</title>
+<title>📈 Đồ thị hàm số · Tizia</title>
 <style>
   :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#f59e0b; --card:rgba(255,255,255,.05); --border:rgba(255,255,255,.12); --ok:#22c55e; }
   * { box-sizing:border-box; }
@@ -185,7 +185,7 @@ function answer(qi,oi,btn){
   const fb=box.querySelector('.fb'); fb.textContent=(correct?'✓ Đúng! ':'✗ Chưa đúng. ')+it.fb; fb.classList.add('show');
   answered.add(qi); $('prog').textContent=`${answered.size}/3 củng cố`;
   if(correct) showToast('✓ Củng cố: +1');
-  if(answered.size===QUIZ.length){ try{ const k='eduverse:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d.grapher=Math.max(d.grapher||0,QUIZ.length); localStorage.setItem(k,JSON.stringify(d)); }catch(e){} showToast('🏆 Hoàn thành phần củng cố đồ thị!'); }
+  if(answered.size===QUIZ.length){ try{ const k='tizia:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d.grapher=Math.max(d.grapher||0,QUIZ.length); localStorage.setItem(k,JSON.stringify(d)); }catch(e){} showToast('🏆 Hoàn thành phần củng cố đồ thị!'); }
 }
 let toastT; function showToast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2400); }
 

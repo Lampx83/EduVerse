@@ -66,11 +66,11 @@ export function attachPayment(r, { basePath = '' } = {}) {
         return res.status(400).json({ error: 'free_plan_not_payable', detail: 'Gói miễn phí không cần thanh toán.' });
       }
       const planName = USER_PLANS[planReq]?.name || planReq;
-      description = `EduVerse ${planName} — ${cycle === 'year' ? '1 năm' : '1 tháng'}`;
+      description = `Tizia ${planName} — ${cycle === 'year' ? '1 năm' : '1 tháng'}`;
       metadata = JSON.stringify({ kind: 'user_plan', plan: planReq, cycle, user_id: req.user.id });
     } else {
       amount = Math.round(Number(req.body?.amount));
-      description = String(req.body?.description || '').slice(0, 200) || 'Thanh toán EduVerse';
+      description = String(req.body?.description || '').slice(0, 200) || 'Thanh toán Tizia';
       if (!Number.isFinite(amount) || amount < 1000) {
         return res.status(400).json({ error: 'invalid_amount', detail: 'amount tối thiểu 1000 VND' });
       }

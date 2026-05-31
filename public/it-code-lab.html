@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>💻 Code Lab · Trường CNTT · EduVerse</title>
+<title>💻 Code Lab · Trường CNTT · Tizia</title>
 <style>
   :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#38bdf8; --accent-2:#22c55e;
     --card:rgba(255,255,255,.05); --border:rgba(255,255,255,.12); --ok:#22c55e; --bad:#ef4444; }
@@ -104,7 +104,7 @@ const CHALLENGES = [
   { id:'reverseString', cat:'Cơ bản', title:'Đảo ngược chuỗi', fnName:'reverseString',
     desc:'Viết hàm <code>reverseString(s)</code> trả về chuỗi đảo ngược.',
     starter:'function reverseString(s) {\n  \n}',
-    tests:[{args:['abc'],expected:'cba'},{args:['EduVerse'],expected:'esreVudE'},{args:[''],expected:''},{args:['a'],expected:'a'}],
+    tests:[{args:['abc'],expected:'cba'},{args:['Tizia'],expected:'esreVudE'},{args:[''],expected:''},{args:['a'],expected:'a'}],
     sol:'function reverseString(s) {\n  return s.split("").reverse().join("");\n}' },
 
   { id:'isEven', cat:'Cơ bản', title:'Kiểm tra số chẵn', fnName:'isEven',
@@ -116,7 +116,7 @@ const CHALLENGES = [
   { id:'countVowels', cat:'Cơ bản', title:'Đếm nguyên âm', fnName:'countVowels',
     desc:'Viết hàm <code>countVowels(s)</code> đếm số nguyên âm (a, e, i, o, u — không phân biệt hoa thường) trong chuỗi.',
     starter:'function countVowels(s) {\n  \n}',
-    tests:[{args:['hello'],expected:2},{args:['EduVerse'],expected:4},{args:['xyz'],expected:0},{args:['AEIOU'],expected:5}],
+    tests:[{args:['hello'],expected:2},{args:['Tizia'],expected:4},{args:['xyz'],expected:0},{args:['AEIOU'],expected:5}],
     sol:'function countVowels(s) {\n  return (s.match(/[aeiou]/gi) || []).length;\n}' },
 
   { id:'fizzbuzz', cat:'Giải thuật', title:'FizzBuzz', fnName:'fizzbuzz',
@@ -150,8 +150,8 @@ const CHALLENGES = [
     sol:'function sortAsc(arr) {\n  return [...arr].sort((a, b) => a - b);\n}' },
 ];
 
-const DONE_KEY = 'eduverse:it:codelab:solved';
-const codeKey = id => 'eduverse:it:codelab:code:' + id;
+const DONE_KEY = 'tizia:it:codelab:solved';
+const codeKey = id => 'tizia:it:codelab:code:' + id;
 function loadSolved(){ try { return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]')); } catch(e){ return new Set(); } }
 function saveSolved(set){ try { localStorage.setItem(DONE_KEY, JSON.stringify([...set])); } catch(e){} }
 let solved = loadSolved();
@@ -250,7 +250,7 @@ async function run(){
   if (allPass && !solved.has(current.id)){
     solved.add(current.id); saveSolved(solved); renderList();
     showToast(solved.size === CHALLENGES.length ? '🏆 Hoàn thành toàn bộ Code Lab!' : '✓ Đã giải: ' + current.title);
-    try { const k='eduverse:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}');
+    try { const k='tizia:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}');
       d.codelab=Math.max(d.codelab||0, solved.size); d.algolab=Math.max(d.algolab||0, solved.size);
       localStorage.setItem(k, JSON.stringify(d)); } catch(e){}
   } else if (allPass){ renderList(); }

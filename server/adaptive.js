@@ -5,7 +5,7 @@
 // Mục đích:
 //   - Nhận sự kiện học tập (LearningEvent) từ FE: HS làm 1 câu quiz đúng/sai.
 //   - Cập nhật xác suất "đã thông thạo" cho từng skill bằng Bayesian Knowledge
-//     Tracing (BKT) — implement local trong process EduVerse, KHÔNG cần backend.
+//     Tracing (BKT) — implement local trong process Tizia, KHÔNG cần backend.
 //   - Khi đến lúc chọn câu tiếp theo, FE gọi /api/adaptive/next?learner=X&skill=Y
 //     → trả về gợi ý: tiếp tục skill cũ, đổi sang skill yếu hơn, hoặc remediate.
 //
@@ -126,7 +126,7 @@ function forwardToLimio(event) {
     correct: !!event.correct,
     durationMs: event.duration_ms || null,
     questionId: event.question_id || null,
-    source: 'eduverse',
+    source: 'tizia',
     occurredAt: event.created_at,
   });
   fetch(`${LIMIO_URL}/api/learning-events`, {

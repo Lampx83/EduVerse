@@ -1,4 +1,4 @@
-# EduVerse — Chiến lược SEO
+# Tizia — Chiến lược SEO
 
 > Mục tiêu: Google index được nội dung giới thiệu (trường, khoá học) để thu hút
 > người học, trong khi khu vực ứng dụng (game, mô phỏng) vẫn yêu cầu đăng nhập.
@@ -38,7 +38,7 @@ trên `/welcome` mới dẫn tới app (kích hoạt login).
 ## 4. Cấu hình
 
 ```bash
-PUBLIC_ORIGIN=https://eduverse.vn   # origin tuyệt đối cho canonical/sitemap
+PUBLIC_ORIGIN=https://tizia.vn   # origin tuyệt đối cho canonical/sitemap
                                      # (nếu trống → suy từ header request)
 ```
 

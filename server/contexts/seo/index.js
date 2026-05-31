@@ -48,7 +48,7 @@ function jsonLd(origin, school) {
   const org = {
     '@context': 'https://schema.org',
     '@type': 'EducationalOrganization',
-    name: school ? `EduVerse · ${school.name}` : 'EduVerse',
+    name: school ? `Tizia · ${school.name}` : 'Tizia',
     url: origin + (school ? `/welcome?school=${school.code}` : '/welcome'),
     description: 'Vũ trụ giáo dục ảo: nhiều trường ảo (Dược, CNTT, Kinh tế, phổ thông) với 2D · 3D · VR · XR · Metaverse · gamification, do AI điều hành.',
     inLanguage: 'vi-VN',
@@ -85,8 +85,8 @@ export function attachSeo(r, { basePath = '' } = {}) {
     const code = String(req.query.school || '').trim();
     let school = null;
     if (code) { try { school = listSchools().find((s) => s.code === code) || null; } catch {} }
-    const title = school ? `EduVerse · ${school.name} — Học tương tác 3D/VR do AI điều hành`
-                         : 'EduVerse — Vũ trụ giáo dục ảo 3D · VR · AI';
+    const title = school ? `Tizia · ${school.name} — Học tương tác 3D/VR do AI điều hành`
+                         : 'Tizia — Vũ trụ giáo dục ảo 3D · VR · AI';
     const desc = 'Nền tảng giáo dục ảo: trường Dược, CNTT, Kinh tế và phổ thông với mô phỏng 2D/3D/VR/XR, gamification, gia sư AI và Ban điều hành AI tự cải tiến theo góp ý người học.';
     const canonical = school ? `${origin}/welcome?school=${school.code}` : `${origin}/welcome`;
     res.type('html').send(`<!DOCTYPE html>
@@ -107,7 +107,7 @@ export function attachSeo(r, { basePath = '' } = {}) {
 </head>
 <body>
 <main>
-<h1>${htmlEscape(school ? `EduVerse · ${school.name}` : 'EduVerse — Vũ trụ giáo dục ảo')}</h1>
+<h1>${htmlEscape(school ? `Tizia · ${school.name}` : 'Tizia — Vũ trụ giáo dục ảo')}</h1>
 <p>${htmlEscape(desc)}</p>
 <p><a href="${basePath}/login.html?return=${encodeURIComponent(basePath + '/')}">Vào học ngay →</a></p>
 <nav><a href="${basePath}/welcome">Trang chủ</a></nav>

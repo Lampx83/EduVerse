@@ -1,4 +1,4 @@
-# EduVerse — Kế hoạch Migration 4 Phase
+# Tizia — Kế hoạch Migration 4 Phase
 
 > **Phương châm:** KHÔNG rewrite, migrate từng "trần" gặp phải.
 > Mỗi phase deploy độc lập, có rollback path, có exit criteria rõ ràng.
@@ -122,7 +122,7 @@ Mỗi commit nhỏ, độc lập. `git revert <sha>` nếu lỗi. Không có DB 
   - [ ] Resume khi worker crash
 - [ ] **Per-tenant AI cost cap** enforce hard limit, alert 80%
 - [ ] **MinIO self-host** trên Server #1:
-  - [ ] Bucket structure: `eduverse/{school_id}/models/`, `eduverse/{school_id}/user-uploads/`
+  - [ ] Bucket structure: `tizia/{school_id}/models/`, `tizia/{school_id}/user-uploads/`
   - [ ] Offload `/public/models/*.glb` (lift từ Node static)
   - [ ] Presigned URL cho user upload
 - [ ] **PostHog self-host** trên Server #3:

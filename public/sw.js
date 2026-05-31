@@ -1,4 +1,4 @@
-/* EduVerse Service Worker — offline-first cho mạng yếu / vùng sâu.
+/* Tizia Service Worker — offline-first cho mạng yếu / vùng sâu.
  *
  * Chiến lược:
  *   - HTML/navigations  → Network-first, fallback cache → fallback /index.html.
@@ -11,7 +11,7 @@
  * offline. Versioning theo SW_VERSION — bump khi đổi shell danh sách.
  */
 
-const SW_VERSION = 'eduverse-2026-05-31-guest-mode';
+const SW_VERSION = 'tizia-2026-05-31-guest-mode';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const IMAGE_CACHE = `${SW_VERSION}-img`;

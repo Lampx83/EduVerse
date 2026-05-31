@@ -1,4 +1,4 @@
-// Header dùng chung — logo EduVerse bên trái, tài khoản đăng nhập bên phải.
+// Header dùng chung — logo Tizia bên trái, tài khoản đăng nhập bên phải.
 // Bấm vào chip tài khoản → mở dialog hồ sơ (thông tin + nút Đăng xuất).
 // Trang chỉ cần `<script type="module" src="./js/auth-header.js"></script>` là tự gắn.
 
@@ -173,7 +173,7 @@ function fmtExpire(ms) {
 function render(host, user) {
   if (!user) {
     host.innerHTML = `
-      <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">EduVerse</span></a>
+      <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
       <span class="ev-spacer"></span>
       <a href="pricing.html" class="ev-plan-pill" style="background:rgba(168,85,247,.22);color:#a855f7;text-decoration:none">✨ Xem gói</a>
       <span class="ev-anon" style="margin-left:10px">Chưa đăng nhập · <a href="login.html">Đăng nhập</a></span>
@@ -200,7 +200,7 @@ function render(host, user) {
     : `<a class="ev-plan-cta" href="pricing.html">✨ Nâng cấp ${planId === 'plus' ? 'Pro' : 'Plus/Pro'}</a>`;
 
   host.innerHTML = `
-    <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">EduVerse</span></a>
+    <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
     <span class="ev-spacer"></span>
     <div class="ev-user-wrap" id="ev-user-wrap">
       <button class="ev-user" id="ev-user-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Xem hồ sơ">

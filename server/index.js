@@ -125,7 +125,7 @@ app.disable('x-powered-by');
 app.use(securityHeaders);
 app.use(['/api/auth/login', '/api/auth/register'], sensitiveAuthLimiter);
 
-// Đăng nhập là điều kiện tiên quyết để dùng EduVerse.
+// Đăng nhập là điều kiện tiên quyết để dùng Tizia.
 // attachUser luôn gắn req.user (nullable). makeAuthGate redirect HTML chưa login về /login.html
 // và trả 401 cho /api/* (trừ /api/auth/*, /api/health). Phải nằm TRƯỚC attachAppProxies để
 // các app anh em (/scoreup, /codelab, …) cũng được gate trên cùng origin.
@@ -137,7 +137,7 @@ app.use(attachTenant);
 app.use('/api', apiLimiter);
 
 // Integrated sibling apps — each reverse-proxied under its own sub-path so the
-// whole suite is reachable on EduVerse's single origin (iframe + cookie/auth
+// whole suite is reachable on Tizia's single origin (iframe + cookie/auth
 // friendly). Targets are configurable per deployment via *_TARGET env vars;
 // *_PUBLIC_PATH only when the upstream was built with a basePath != its mount.
 // Apps that aren't running degrade to a graceful "chưa chạy" page. Surfaced to
@@ -180,7 +180,7 @@ app.use(csrf);
 const r = express.Router();
 
 r.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'eduverse', port: PORT, basePath: BASE_PATH, time: Date.now() });
+  res.json({ ok: true, service: 'tizia', port: PORT, basePath: BASE_PATH, time: Date.now() });
 });
 
 // SEO public (robots.txt, sitemap.xml, /welcome) — crawlable, ngoài auth gate.
@@ -457,7 +457,7 @@ r.get('/api/export.csv', (_req, res) => {
     ].join(','));
   }
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="eduverse-attempts-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.setHeader('Content-Disposition', `attachment; filename="tizia-attempts-${new Date().toISOString().slice(0,10)}.csv"`);
   res.send('﻿' + lines.join('\n'));
 });
 
@@ -517,7 +517,7 @@ if (BASE_PATH) {
 const httpServer = http.createServer(app);
 attachRoom(httpServer, BASE_PATH);
 httpServer.listen(PORT, HOST, () => {
-  console.log(`[eduverse] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
+  console.log(`[tizia] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
   const oauthList = listEnabledProviders();
   if (oauthList.length) {
     console.log(`[oauth] enabled providers: ${oauthList.map(p => p.label).join(', ')}`);

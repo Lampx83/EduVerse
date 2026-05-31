@@ -14,13 +14,13 @@
 #
 # Ports:
 #   80 → Caddy (HTTP → HTTPS redirect)
-#   443 → Caddy (HTTPS, terminates TLS, proxies to eduverse:8041)
+#   443 → Caddy (HTTPS, terminates TLS, proxies to tizia:8041)
 #   8041 → still exposed for direct access if needed
 
 services:
   caddy:
     image: caddy:2-alpine
-    container_name: eduverse-caddy
+    container_name: tizia-caddy
     restart: unless-stopped
     ports:
       - "80:80"
@@ -31,10 +31,10 @@ services:
       - caddy-data:/data
       - caddy-config:/config
     environment:
-      DOMAIN: ${DOMAIN:-eduverse.local}
+      DOMAIN: ${DOMAIN:-tizia.local}
       EMAIL:  ${ACME_EMAIL:-admin@example.com}
     depends_on:
-      - eduverse
+      - tizia
 
 volumes:
   caddy-data:

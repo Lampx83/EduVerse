@@ -1,4 +1,4 @@
-// Đăng nhập cho EduVerse: scrypt password + opaque session token (cookie httpOnly).
+// Đăng nhập cho Tizia: scrypt password + opaque session token (cookie httpOnly).
 // Không thêm thư viện ngoài — dùng node:crypto + better-sqlite3 sẵn có.
 
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
@@ -9,7 +9,7 @@ import {
 } from '../../db.js';
 import { effectivePlan, meetsPlan, USER_PLANS } from '../billing/user-plans.js';
 
-const COOKIE_NAME = 'eduverse_sid';
+const COOKIE_NAME = 'tizia_sid';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 ngày
 const SCRYPT_KEYLEN = 64;
 

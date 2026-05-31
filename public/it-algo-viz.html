@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🌳 Trực quan giải thuật · Trường CNTT · EduVerse</title>
+<title>🌳 Trực quan giải thuật · Trường CNTT · Tizia</title>
 <style>
   :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#4ade80; --card:rgba(255,255,255,.05); --border:rgba(255,255,255,.12);
     --base:#64748b; --cmp:#fbbf24; --swap:#ef4444; --write:#22d3ee; --pivot:#a78bfa; --sorted:#4ade80; }
@@ -273,7 +273,7 @@ function answer(qi,oi,btn){
   $('prog').textContent=`${answered.size}/3 củng cố`;
   if(correct) showToast('✓ Củng cố: +1');
   if(answered.size===QUIZ.length){
-    try{ const k='eduverse:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}');
+    try{ const k='tizia:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}');
       d.algolab=Math.max(d.algolab||0, QUIZ.length); localStorage.setItem(k,JSON.stringify(d)); }catch(e){}
     showToast('🏆 Hoàn thành phần củng cố giải thuật!');
   }

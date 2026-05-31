@@ -1,4 +1,4 @@
-// Shared API client + player name management cho EduVerse.
+// Shared API client + player name management cho Tizia.
 
 import { KEYS, lsGet, lsSet, lsRemove } from './engine/storage.js';
 

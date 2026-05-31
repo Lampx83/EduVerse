@@ -70,7 +70,7 @@ export function rateLimit({ windowMs = 60000, max = 120, bucket = 'g', keyFn = n
 }
 
 // ── R4: CSRF double-submit ──
-const CSRF_COOKIE = 'eduverse_csrf';
+const CSRF_COOKIE = 'tizia_csrf';
 const CSRF_SECRET = process.env.CSRF_SECRET || 'dev-csrf-secret-change-me';
 const CSRF_ENFORCE = process.env.CSRF_ENFORCE === '1';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -110,7 +110,7 @@ export function csrf(req, res, next) {
   if (SAFE_METHODS.has(req.method)) return next();
   if (CSRF_EXEMPT_PREFIX.some((p) => req.path.startsWith(p))) return next();
   // Chỉ kiểm khi request dùng cookie session (API gọi bằng Bearer/HMAC không cần).
-  const hasSession = !!getCookie(req, 'eduverse_sid');
+  const hasSession = !!getCookie(req, 'tizia_sid');
   if (!hasSession) return next();
 
   const sent = req.headers['x-csrf-token'] || req.body?._csrf;

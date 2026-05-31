@@ -1,9 +1,9 @@
 {
-  "//": "Realm template EduVerse cho Keycloak. Copy → realm-eduverse.json, thay <PLACEHOLDER>.",
+  "//": "Realm template Tizia cho Keycloak. Copy → realm-tizia.json, thay <PLACEHOLDER>.",
   "//secrets": "KHÔNG commit file đã điền secret thật. Dùng env-substitution hoặc Vault.",
-  "realm": "eduverse",
+  "realm": "tizia",
   "enabled": true,
-  "displayName": "EduVerse",
+  "displayName": "Tizia",
   "loginTheme": "keycloak",
   "registrationAllowed": true,
   "registrationEmailAsUsername": false,
@@ -11,7 +11,7 @@
   "verifyEmail": false,
   "resetPasswordAllowed": true,
   "sslRequired": "external",
-  "//roles": "Map sang role nội bộ EduVerse: pupil | student | teacher",
+  "//roles": "Map sang role nội bộ Tizia: pupil | student | teacher",
   "roles": {
     "realm": [
       { "name": "pupil",   "description": "Học sinh phổ thông" },
@@ -20,11 +20,11 @@
       { "name": "admin",   "description": "Quản trị trường (Ban điều hành AI)" }
     ]
   },
-  "//clients": "EduVerse là confidential OIDC client. redirectUris đặt theo domain thật.",
+  "//clients": "Tizia là confidential OIDC client. redirectUris đặt theo domain thật.",
   "clients": [
     {
-      "clientId": "eduverse-web",
-      "name": "EduVerse Web",
+      "clientId": "tizia-web",
+      "name": "Tizia Web",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": false,
@@ -32,12 +32,12 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
-        "https://eduverse.vn/api/auth/oidc/callback",
+        "https://tizia.vn/api/auth/oidc/callback",
         "https://limio.vn/ps/api/auth/oidc/callback"
       ],
-      "webOrigins": ["https://eduverse.vn", "https://limio.vn"],
+      "webOrigins": ["https://tizia.vn", "https://limio.vn"],
       "attributes": {
-        "post.logout.redirect.uris": "https://eduverse.vn/+https://limio.vn/ps/"
+        "post.logout.redirect.uris": "https://tizia.vn/+https://limio.vn/ps/"
       },
       "defaultClientScopes": ["openid", "profile", "email", "roles"]
     }

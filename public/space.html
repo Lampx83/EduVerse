@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Không gian · Trường Dược · EduVerse</title>
+<title>Không gian · Trường Dược · Tizia</title>
 <style>
   :root { --bg-1:#0f172a; --bg-2:#1e293b; --bg-3:#312e81; --card:rgba(255,255,255,.06); --border:rgba(255,255,255,.12); }
   * { box-sizing: border-box; }
@@ -238,7 +238,7 @@ const SPACES_PHARMACY = {
         {ul:['Dược thư Quốc gia Việt Nam','Dược điển Việt Nam (tiêu chuẩn chất lượng)','Tờ Hướng dẫn sử dụng (HDSD) trong hộp thuốc','CSDL tương tác: Micromedex, Drugs.com']},
         {h:'Quy trình tra cứu'},
         {ol:['Xác định hoạt chất (tên gốc), không chỉ tên thương mại','Tra phân loại ATC: Giải phẫu – Điều trị – Hoá học','Đối chiếu chỉ định, liều, chống chỉ định, tương tác','Ghi lại nguồn & ngày tra cứu']},
-        {note:'Tránh nguồn không chính thống (mạng xã hội, quảng cáo). CSDL nội bộ EduVerse: 81 thuốc, 30 dược liệu.'}]},
+        {note:'Tránh nguồn không chính thống (mạng xã hội, quảng cáo). CSDL nội bộ Tizia: 81 thuốc, 30 dược liệu.'}]},
       {ic:'🧠',name:'Quiz ôn tập',rd:'Củng cố kiến thức đã học.',href:'/quiz.html'},
       {ic:'📊',name:'Thống kê y học',rd:'p-value, CI, chọn test.',panel:[
         {h:'Thống kê y học cơ bản'},
@@ -949,7 +949,7 @@ const SPACES_IT = {
       {q:'Khoá luận tốt nghiệp thường nằm ở năm nào?',o:['Năm 1','Năm 2','Năm 4','Không có'],a:2}]},
 
   lecture:{emoji:'🏛️',name:'Giảng đường',accent:'#c2703d',intro:'Học lý thuyết nền tảng ngành CNTT: bài giảng, thuật ngữ tiếng Anh và kiểm tra nhanh.',
-    rooms:[{ic:'🐍',name:'Thực hành Python',rd:'Đọc code & đoán kết quả.',panel:[{h:'Đọc hiểu code Python'},{p:'Chọn kết quả đúng cho từng đoạn code.'},{mcq:[{q:'print(2 ** 3) in ra gì?',o:['8','6','9','23'],a:0,fb:'** là phép luỹ thừa: 2^3 = 8.'},{q:'len("EduVerse") trả về?',o:['8','7','9','Báo lỗi'],a:0,fb:'Chuỗi "EduVerse" có 8 ký tự.'},{q:'[1,2,3][-1] trả về?',o:['3','1','-1','Báo lỗi'],a:0,fb:'Chỉ số âm đếm từ cuối: [-1] là phần tử cuối = 3.'}]}]},
+    rooms:[{ic:'🐍',name:'Thực hành Python',rd:'Đọc code & đoán kết quả.',panel:[{h:'Đọc hiểu code Python'},{p:'Chọn kết quả đúng cho từng đoạn code.'},{mcq:[{q:'print(2 ** 3) in ra gì?',o:['8','6','9','23'],a:0,fb:'** là phép luỹ thừa: 2^3 = 8.'},{q:'len("Tizia") trả về?',o:['8','7','9','Báo lỗi'],a:0,fb:'Chuỗi "Tizia" có 8 ký tự.'},{q:'[1,2,3][-1] trả về?',o:['3','1','-1','Báo lỗi'],a:0,fb:'Chỉ số âm đếm từ cuối: [-1] là phần tử cuối = 3.'}]}]},
       {ic:'📽️',name:'Bài giảng nền tảng',rd:'Các môn cốt lõi năm 1–2.',panel:[
         {h:'Các môn nền tảng'},
         {cards:[{ic:'🐍',t:'Lập trình (Python)',d:'Biến, vòng lặp, hàm, cấu trúc cơ bản.'},
@@ -1660,7 +1660,7 @@ const dom=params.get('domain')||'pharmacy';
 if(window.SPACES_HIGHSCHOOL){ SPACE_SETS.highschool=window.SPACES_HIGHSCHOOL; DOMAIN_TITLES.highschool='Trường THPT'; }
 const SPACES=SPACE_SETS[dom]||SPACES_PHARMACY;
 const S=SPACES[id]||SPACES[Object.keys(SPACES)[0]];
-document.title=`${S.emoji} ${S.name} · ${DOMAIN_TITLES[dom]||'EduVerse'}`;
+document.title=`${S.emoji} ${S.name} · ${DOMAIN_TITLES[dom]||'Tizia'}`;
 
 const wrap=document.getElementById('wrap');
 const roomCard=(r,idx)=> r.href
@@ -1726,7 +1726,7 @@ function openRoom(r){
     body.innerHTML = '<p style="opacity:.7">Đang mở Ban điều hành AI…</p>';
     modal.classList.add('show'); body.scrollTop=0;
     import('/js/request-board.js')
-      .then(m=>{ body.innerHTML=''; m.renderRequestBoard({ host: body, domain: dom, domainName: DOMAIN_TITLES[dom]||'EduVerse' }); })
+      .then(m=>{ body.innerHTML=''; m.renderRequestBoard({ host: body, domain: dom, domainName: DOMAIN_TITLES[dom]||'Tizia' }); })
       .catch(()=>{ body.innerHTML='<p>Không tải được Ban điều hành (cần backend chạy).</p>'; });
     return;
   }
@@ -1739,7 +1739,7 @@ function openRoom(r){
       prog.classList.toggle('full',n===boxes.length); boxes.forEach(b=>b.closest('label').classList.toggle('done',b.checked)); };
     boxes.forEach(b=>b.addEventListener('change',upd)); }
   const gIn=body.querySelector('#goal-input');
-  if(gIn){ const gKey='eduverse:goal:'+dom, saved=body.querySelector('#goal-saved');
+  if(gIn){ const gKey='tizia:goal:'+dom, saved=body.querySelector('#goal-saved');
     const show=v=>{ if(v){ saved.textContent='🎯 Mục tiêu hiện tại: '+v; saved.classList.add('show'); } };
     try{ show(localStorage.getItem(gKey)||''); }catch(e){}
     body.querySelector('#goal-save').addEventListener('click',()=>{ const v=gIn.value.trim(); if(!v) return;
@@ -1951,7 +1951,7 @@ document.getElementById('qs').addEventListener('click',()=>{
     if(picked[i]===q.a) correct++; });
   const r=document.getElementById('qr'); r.classList.add('show');
   r.innerHTML = `Bạn đúng <b>${correct}/${S.quiz.length}</b> câu. ${correct===S.quiz.length?'Xuất sắc! ':''}Kỹ năng được củng cố: <b>${S.skills.join(' · ')}</b>.`;
-  try{ const k='eduverse:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d[id]=Math.max(d[id]||0, correct); localStorage.setItem(k, JSON.stringify(d)); }catch(e){}
+  try{ const k='tizia:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d[id]=Math.max(d[id]||0, correct); localStorage.setItem(k, JSON.stringify(d)); }catch(e){}
 });
 </script>
 <script src="./js/pwa-register.js" defer></script>
