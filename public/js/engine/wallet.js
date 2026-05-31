@@ -70,7 +70,7 @@ function _normalizeDaily(d, today) {
 
 function _save(w) {
   try { localStorage.setItem(WALLET_KEY, JSON.stringify(w)); } catch {}
-  _schedulePushToServer(w);
+  _schedulePushToServer();
 }
 
 // ── Server sync ──
@@ -81,10 +81,14 @@ function _save(w) {
 let _pushTimer = null;
 let _serverSyncEnabled = false;
 
-function _schedulePushToServer(w) {
+// Đọc wallet MỚI NHẤT từ localStorage rồi push — KHÔNG capture snapshot tại
+// lúc schedule. Tránh race: nếu trong khoảng 500ms loadWalletFromServer ghi
+// đè localStorage bằng giá trị merge (XP cao hơn), push sau cùng vẫn dùng
+// giá trị mới — không tụt level về lại snapshot cũ.
+function _schedulePushToServer() {
   if (!_serverSyncEnabled) return;
   clearTimeout(_pushTimer);
-  _pushTimer = setTimeout(() => _pushToServer(w), 500);
+  _pushTimer = setTimeout(() => _pushToServer(getWallet()), 500);
 }
 
 async function _pushToServer(w) {
