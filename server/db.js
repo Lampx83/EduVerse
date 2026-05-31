@@ -793,6 +793,54 @@ export async function upsertUserWallet(user_id, w = {}, { monotonic = true } = {
   return getUserWallet(user_id);
 }
 
+// --- Scenario runs (đếm số lần hoàn thành theo familyId per-user) ---
+// Cross-device qua DB. UPSERT monotonic: runs++, best_stars/best_score = MAX.
+
+export async function getScenarioRunsForUser(user_id) {
+  const rows = await many(
+    `SELECT family_id, runs, best_stars, best_score, last_ts
+     FROM scenario_runs WHERE user_id = @uid`,
+    { uid: Number(user_id) }
+  );
+  const out = {};
+  for (const r of rows) {
+    out[r.family_id] = {
+      runs: r.runs | 0,
+      bestStars: r.best_stars | 0,
+      bestScore: r.best_score | 0,
+      lastTs: Number(r.last_ts) || 0,
+    };
+  }
+  return out;
+}
+
+export async function recordScenarioRunDb(user_id, family_id, stars = 0, score = 0) {
+  const fid = String(family_id || '').slice(0, 64);
+  if (!fid) return null;
+  const s = Math.max(0, Math.min(3, Math.floor(Number(stars) || 0)));
+  const sc = Math.max(0, Math.min(1000, Math.floor(Number(score) || 0)));
+  await exec(`
+    INSERT INTO scenario_runs (user_id, family_id, runs, best_stars, best_score, last_ts)
+    VALUES (@uid, @fid, 1, @stars, @score, @ts)
+    ON CONFLICT (user_id, family_id) DO UPDATE SET
+      runs       = scenario_runs.runs + 1,
+      best_stars = GREATEST(scenario_runs.best_stars, EXCLUDED.best_stars),
+      best_score = GREATEST(scenario_runs.best_score, EXCLUDED.best_score),
+      last_ts    = EXCLUDED.last_ts
+  `, { uid: Number(user_id), fid, stars: s, score: sc, ts: Date.now() });
+  const row = await one(
+    `SELECT runs, best_stars, best_score, last_ts FROM scenario_runs
+     WHERE user_id = @uid AND family_id = @fid`,
+    { uid: Number(user_id), fid }
+  );
+  return row ? {
+    runs: row.runs | 0,
+    bestStars: row.best_stars | 0,
+    bestScore: row.best_score | 0,
+    lastTs: Number(row.last_ts) || 0,
+  } : null;
+}
+
 // Legacy exports để code cũ chưa migrate không nổ ở runtime:
 export const DB_PATH = null;          // không còn ý nghĩa với Postgres
 export const DB_DATA_DIR = null;

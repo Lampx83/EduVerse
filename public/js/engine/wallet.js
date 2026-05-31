@@ -603,4 +603,49 @@ export function recordScenarioRun(familyId, stars, score) {
     m[familyId] = cur;
     localStorage.setItem(SCN_RUNS_KEY, JSON.stringify(m));
   } catch {}
+  // Fire-and-forget gửi server để cross-device. Khi response về, replace local
+  // bằng số liệu DB (nguồn chân lý) — chống lệch nếu user dùng nhiều tab/máy.
+  try {
+    fetch('/api/scenario-runs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ familyId, stars: stars || 0, score: score || 0 }),
+    }).then(r => r.ok ? r.json() : null).then(server => {
+      if (!server || !server.familyId) return;
+      try {
+        const m2 = getScenarioRunsMap();
+        m2[server.familyId] = {
+          runs: server.runs | 0,
+          bestStars: server.bestStars | 0,
+          bestScore: server.bestScore | 0,
+          lastTs: Number(server.lastTs) || Date.now(),
+        };
+        localStorage.setItem(SCN_RUNS_KEY, JSON.stringify(m2));
+      } catch {}
+    }).catch(() => {}); // guest / network lỗi → bỏ qua, cache local vẫn dùng được
+  } catch {}
+}
+
+/** Pull bản DB về và merge MAX vào localStorage (gọi khi mở module.html). */
+export async function loadScenarioRunsFromServer() {
+  try {
+    const r = await fetch('/api/scenario-runs', { credentials: 'same-origin' });
+    if (!r.ok) return null;                                     // 401 guest → bỏ qua
+    const server = await r.json();
+    if (!server || typeof server !== 'object') return null;
+    const local = getScenarioRunsMap();
+    const merged = { ...local };
+    for (const [fid, sv] of Object.entries(server)) {
+      const lc = local[fid] || { runs: 0, bestStars: 0, bestScore: 0, lastTs: 0 };
+      merged[fid] = {
+        runs:      Math.max(lc.runs | 0,      sv.runs | 0),
+        bestStars: Math.max(lc.bestStars | 0, sv.bestStars | 0),
+        bestScore: Math.max(lc.bestScore | 0, sv.bestScore | 0),
+        lastTs:    Math.max(Number(lc.lastTs) || 0, Number(sv.lastTs) || 0),
+      };
+    }
+    localStorage.setItem(SCN_RUNS_KEY, JSON.stringify(merged));
+    return merged;
+  } catch { return null; }
 }

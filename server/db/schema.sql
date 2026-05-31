@@ -495,3 +495,18 @@ CREATE TABLE IF NOT EXISTS user_wallets (
   quests_claimed   JSONB NOT NULL DEFAULT '{}'::jsonb,
   updated_at       BIGINT NOT NULL
 );
+
+-- ── scenario_runs (đếm số lần hoàn thành theo familyId mỗi user) ──
+-- Hiển thị badge "✅ N lần · ⭐⭐⭐ · 100đ" trên picker. Cross-device qua DB,
+-- localStorage chỉ là cache. family_id ổn định (vd 'P3-prac-mul', 'P2-toan-quiz')
+-- kể cả khi scenario id thay đổi (bài thực hành sinh random mỗi lần).
+CREATE TABLE IF NOT EXISTS scenario_runs (
+  user_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  family_id   TEXT   NOT NULL,
+  runs        INTEGER NOT NULL DEFAULT 0,
+  best_stars  INTEGER NOT NULL DEFAULT 0,
+  best_score  INTEGER NOT NULL DEFAULT 0,
+  last_ts     BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, family_id)
+);
+CREATE INDEX IF NOT EXISTS idx_scn_runs_user ON scenario_runs(user_id);
