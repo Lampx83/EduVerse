@@ -3,7 +3,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
@@ -419,6 +419,29 @@ r.get('/api/ai-decisions', (req, res) => {
   res.json({ decisions: getRecentDecisions(req.schoolId, limit) });
 });
 
+// ── Notifications — hộp thư cá nhân của HS (phản hồi từ Ban điều hành AI) ──
+// Key theo display_name (vì requests lưu tên HS, có cả guest gửi → user_id chưa
+// có lúc tạo). Guest chưa đăng nhập → trả 401 mượt để FE ẩn bell.
+r.get('/api/notifications', (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'unauthorized', items: [], unread: 0 });
+  const u = req.user.display_name;
+  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+  res.json({
+    items: listNotifications(u, req.schoolId, limit),
+    unread: countUnreadNotifications(u, req.schoolId),
+  });
+});
+r.post('/api/notifications/:id/read', (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+  const ok = markNotificationRead(req.params.id, req.user.display_name);
+  res.json({ ok });
+});
+r.post('/api/notifications/read-all', (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+  const n = markAllNotificationsRead(req.user.display_name, req.schoolId);
+  res.json({ ok: true, marked: n });
+});
+
 r.get('/api/export.csv', (_req, res) => {
   const rows = getAllAttempts();
   const esc = v => {
@@ -438,9 +461,11 @@ r.get('/api/export.csv', (_req, res) => {
   res.send('﻿' + lines.join('\n'));
 });
 
-// HTML injection middleware — gắn <script suggestion-fab.js> vào mọi trang HTML
-// để nút "🏛️ Đề nghị" tự xuất hiện ở mọi page (không phải sửa thủ công 59 file).
-const SGF_TAG = `<script type="module" src="js/suggestion-fab.js"></script>`;
+// HTML injection middleware — gắn các widget global vào mọi trang HTML:
+//   • suggestion-fab.js: nút "🏛️ Đề nghị" góc dưới phải
+//   • notifications-bell.js: chuông phản hồi từ Ban điều hành AI góc trên phải
+// Tránh phải sửa thủ công 59+ file.
+const SGF_TAG = `<script type="module" src="js/suggestion-fab.js"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
 r.get(/.*/, async (req, res, next) => {
   const u = req.path;
   if (u.startsWith('/api/') || u.startsWith('/vendor/')) return next();

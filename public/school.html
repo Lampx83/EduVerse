@@ -92,14 +92,31 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 <!-- Load domain + render path (curriculum + các cụm thực hành/kỹ năng/…) -->
 <script type="module">
   import { CATEGORIES } from './js/engine/learning-path.js';
-  import { loadActiveDomain, getActiveDomainId, isDomainOpen, isGamifiedDomain } from './js/engine/domain.js';
+  import { loadActiveDomain, getActiveDomainId, isDomainOpen, isGamifiedDomain, isGuestDomain, canEnterDomain, getRequiredPlan } from './js/engine/domain.js';
   import { renderPath, renderWalletPills, renderDailyQuests, showAchievementToast } from './js/engine/path-renderer.js';
   import { onLogin, getProgress, checkAchievements, getDailyQuests, streakAtRisk } from './js/engine/wallet.js';
   import { primeModulesCache, ALL_SCENARIOS } from './js/scenarios/index.js';
+  import { fetchMe } from './js/auth.js';
 
   // Trường đang khoá / không tồn tại → quay về trang chọn trường
   const requested = new URLSearchParams(location.search).get('domain');
   if (requested && !isDomainOpen(requested)) location.replace('index.html');
+
+  // Gate truy cập theo gói cước:
+  //   - chưa login + trường ≠ Mầm non → redirect login (giữ return URL)
+  //   - đã login nhưng gói chưa đủ (vd Free vào trường yêu cầu Plus) → redirect /pricing
+  // Cả 2 trường hợp đều giữ ngữ cảnh để user quay lại đúng trường sau khi đăng nhập/mua.
+  const me = await fetchMe();
+  const activeId = requested || getActiveDomainId();
+  if (!canEnterDomain(activeId, me)) {
+    const ret = encodeURIComponent(location.pathname + location.search);
+    if (!me) {
+      location.replace('login.html?return=' + ret);
+    } else {
+      const required = getRequiredPlan(activeId);
+      location.replace(`pricing.html?want=${encodeURIComponent(required)}&domain=${encodeURIComponent(activeId)}&return=${ret}`);
+    }
+  }
 
   const dom = await loadActiveDomain();
   const { MODULES, SUBJECTS, ACHIEVEMENTS, DOMAIN } = dom;

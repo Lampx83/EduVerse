@@ -407,7 +407,12 @@ async function handleTutorChat({ domain = 'general', grade, context, history = [
   const styleLine = styleNote ? `Lưu ý phong cách: ${styleNote}` : '';
 
   const fullSystem = [sys, contextLine, gradeLine, styleLine].filter(Boolean).join('\n\n')
-    + '\n\nLUẬT QUAN TRỌNG: trả lời TIẾNG VIỆT, ngắn gọn (3–6 câu cho câu hỏi thông thường, dài hơn nếu cần giải thuật/code). KHÔNG mở đầu bằng "Tất nhiên rồi!" hay "Tôi sẽ giúp bạn". Vào thẳng nội dung.';
+    + '\n\nLUẬT NGÔN NGỮ (TUYỆT ĐỐI):'
+    + '\n- Người dùng hỏi bằng ngôn ngữ nào, trả lời bằng đúng ngôn ngữ đó (mặc định TIẾNG VIỆT).'
+    + '\n- TUYỆT ĐỐI KHÔNG trả lời bằng tiếng Trung (中文), tiếng Nhật, tiếng Hàn, hay bất kỳ ngôn ngữ nào khác trừ khi người dùng yêu cầu rõ ràng.'
+    + '\n- KHÔNG tự ý dịch câu hỏi của người dùng sang ngôn ngữ khác. Nếu họ viết "22*6 bằng mấy" thì trả lời thẳng bằng tiếng Việt (ví dụ: "22 × 6 = 132"), không lặp lại câu hỏi bằng ngôn ngữ khác.'
+    + '\n- Với câu hỏi tính toán/số học, trả lời trực tiếp kết quả + giải thích ngắn, KHÔNG diễn giải dài dòng.'
+    + '\n\nLUẬT TRÌNH BÀY: ngắn gọn (3–6 câu cho câu hỏi thông thường, dài hơn nếu cần giải thuật/code). KHÔNG mở đầu bằng "Tất nhiên rồi!" hay "Tôi sẽ giúp bạn". Vào thẳng nội dung.';
 
   // Multi-turn — đưa history vào, sau đó message hiện tại
   const messages = [

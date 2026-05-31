@@ -227,21 +227,22 @@ function injectStyles() {
   stylesInjected = true;
   const css = `
     #sgf-fab {
-      position: fixed; right: 18px; bottom: 18px; z-index: 2147483000;
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 11px 16px 11px 13px; border: 0; border-radius: 999px; cursor: pointer;
+      position: fixed; left: 18px; bottom: 18px; z-index: 2147483000;
+      width: 60px; height: 60px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0; border: 0; cursor: pointer;
       background: linear-gradient(135deg,#7c3aed,#4f46e5); color: #fff;
       font: 600 14px/1 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-      box-shadow: 0 10px 24px rgba(79,70,229,.45), 0 2px 6px rgba(0,0,0,.18);
-      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      box-shadow: 0 8px 24px rgba(79,70,229,.45), 0 2px 6px rgba(0,0,0,.18);
+      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
     }
-    #sgf-fab:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 14px 30px rgba(79,70,229,.55); }
-    #sgf-fab:active { transform: translateY(0); }
-    .sgf-fab-ico { font-size: 18px; line-height: 1; }
-    .sgf-fab-lbl { letter-spacing: .2px; }
+    #sgf-fab:hover { transform: scale(1.08); filter: brightness(1.05); box-shadow: 0 14px 30px rgba(79,70,229,.55); }
+    #sgf-fab:active { transform: scale(1); }
+    .sgf-fab-ico { font-size: 28px; line-height: 1; }
+    .sgf-fab-lbl { display: none; }
     @media (max-width: 540px) {
-      #sgf-fab { right: 12px; bottom: 12px; padding: 11px 13px; }
-      .sgf-fab-lbl { display: none; }
+      #sgf-fab { left: 12px; bottom: 12px; width: 54px; height: 54px; }
+      .sgf-fab-ico { font-size: 24px; }
     }
 
     .sgf-modal { position: fixed; inset: 0; z-index: 2147483001; display: grid; place-items: center; }

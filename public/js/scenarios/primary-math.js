@@ -7,7 +7,7 @@
 // ============================================================
 
 export const P1_TOAN = {
-  id: 'P1-toan-quiz', title: 'Lớp 1 · Toán — Số và phép tính trong 100',
+  id: 'P1-toan-quiz', title: 'Toán — Số và phép tính trong 100',
   kind: 'quiz', yearLevel: 1, subject: 'toan', difficulty: 1,
   skillsTrained: ['dem-so', 'cong-tru-khong-nho', 'so-sanh', 'hinh-co-ban'],
   questions: [
@@ -25,7 +25,7 @@ export const P1_TOAN = {
 };
 
 export const P2_TOAN = {
-  id: 'P2-toan-quiz', title: 'Lớp 2 · Toán — Cộng trừ có nhớ, bảng nhân chia',
+  id: 'P2-toan-quiz', title: 'Toán — Cộng trừ có nhớ, bảng nhân chia',
   kind: 'quiz', yearLevel: 2, subject: 'toan', difficulty: 1,
   skillsTrained: ['cong-tru-co-nho', 'bang-nhan-chia', 'don-vi-do', 'so-den-1000'],
   questions: [
@@ -43,7 +43,7 @@ export const P2_TOAN = {
 };
 
 export const P3_TOAN = {
-  id: 'P3-toan-quiz', title: 'Lớp 3 · Toán — Nhân chia, chu vi, số đến 100 000',
+  id: 'P3-toan-quiz', title: 'Toán — Nhân chia, chu vi, số đến 100 000',
   kind: 'quiz', yearLevel: 3, subject: 'toan', difficulty: 2,
   skillsTrained: ['bang-nhan-chia-6-9', 'nhan-chia-ngoai-bang', 'chu-vi', 'so-lon'],
   questions: [
@@ -61,7 +61,7 @@ export const P3_TOAN = {
 };
 
 export const P4_TOAN = {
-  id: 'P4-toan-quiz', title: 'Lớp 4 · Toán — Phân số, dấu hiệu chia hết, diện tích',
+  id: 'P4-toan-quiz', title: 'Toán — Phân số, dấu hiệu chia hết, diện tích',
   kind: 'quiz', yearLevel: 4, subject: 'toan', difficulty: 2,
   skillsTrained: ['phan-so', 'chia-het', 'dien-tich', 'goc'],
   questions: [
@@ -79,7 +79,7 @@ export const P4_TOAN = {
 };
 
 export const P5_TOAN = {
-  id: 'P5-toan-quiz', title: 'Lớp 5 · Toán — Số thập phân, tỉ số %, thể tích',
+  id: 'P5-toan-quiz', title: 'Toán — Số thập phân, tỉ số %, thể tích',
   kind: 'quiz', yearLevel: 5, subject: 'toan', difficulty: 3,
   skillsTrained: ['so-thap-phan', 'ti-so-phan-tram', 'the-tich', 'van-toc'],
   questions: [
@@ -110,40 +110,40 @@ const fill = (id, title, yearLevel, stem, target, tolerance = 0) => ({
   inputs: [{ name: 'answer', label: stem, unit: '' }], target, tolerance,
 });
 
-export const P1_MATCH = match('P1-toan-match', 'Lớp 1 · Ghép phép tính với kết quả', 1,
+export const P1_MATCH = match('P1-toan-match', 'Ghép phép tính với kết quả', 1,
   [{ id: 'a', label: '3 + 4' }, { id: 'b', label: '10 − 2' }, { id: 'c', label: '5 + 5' }, { id: 'd', label: '9 − 6' }, { id: 'e', label: '4 + 5' }],
   [{ id: 'r7', label: '7' }, { id: 'r8', label: '8' }, { id: 'r10', label: '10' }, { id: 'r3', label: '3' }, { id: 'r9', label: '9' }],
   [['a', 'r7'], ['b', 'r8'], ['c', 'r10'], ['d', 'r3'], ['e', 'r9']],
   'Kéo–ghép mỗi phép tính với kết quả đúng (cộng trừ trong 10).');
-export const P1_FILL = fill('P1-toan-fill', 'Lớp 1 · Tự tính: 25 + 13', 1, '25 + 13 = ?', 38);
+export const P1_FILL = fill('P1-toan-fill', 'Tự tính: 25 + 13', 1, '25 + 13 = ?', 38);
 
-export const P2_MATCH = match('P2-toan-match', 'Lớp 2 · Ghép phép nhân với kết quả', 2,
+export const P2_MATCH = match('P2-toan-match', 'Ghép phép nhân với kết quả', 2,
   [{ id: 'a', label: '2 × 6' }, { id: 'b', label: '3 × 6' }, { id: 'c', label: '5 × 5' }, { id: 'd', label: '4 × 7' }, { id: 'e', label: '3 × 9' }],
   [{ id: 'r12', label: '12' }, { id: 'r18', label: '18' }, { id: 'r25', label: '25' }, { id: 'r28', label: '28' }, { id: 'r27', label: '27' }],
   [['a', 'r12'], ['b', 'r18'], ['c', 'r25'], ['d', 'r28'], ['e', 'r27']],
   'Ghép phép nhân (bảng 2–5) với kết quả.');
-export const P2_FILL = fill('P2-toan-fill', 'Lớp 2 · Tự tính: 6 × 7', 2, '6 × 7 = ?', 42);
+export const P2_FILL = fill('P2-toan-fill', 'Tự tính: 6 × 7', 2, '6 × 7 = ?', 42);
 
-export const P3_MATCH = match('P3-toan-match', 'Lớp 3 · Ghép nhân/chia với kết quả', 3,
+export const P3_MATCH = match('P3-toan-match', 'Ghép nhân/chia với kết quả', 3,
   [{ id: 'a', label: '7 × 8' }, { id: 'b', label: '63 : 9' }, { id: 'c', label: '6 × 9' }, { id: 'd', label: '48 : 6' }, { id: 'e', label: '9 × 9' }],
   [{ id: 'r56', label: '56' }, { id: 'r7', label: '7' }, { id: 'r54', label: '54' }, { id: 'r8', label: '8' }, { id: 'r81', label: '81' }],
   [['a', 'r56'], ['b', 'r7'], ['c', 'r54'], ['d', 'r8'], ['e', 'r81']],
   'Ghép phép nhân/chia (bảng 6–9) với kết quả.');
-export const P3_FILL = fill('P3-toan-fill', 'Lớp 3 · Chu vi hình vuông cạnh 7 cm', 3, 'Chu vi hình vuông cạnh 7 cm = ? (cm)', 28);
+export const P3_FILL = fill('P3-toan-fill', 'Chu vi hình vuông cạnh 7 cm', 3, 'Chu vi hình vuông cạnh 7 cm = ? (cm)', 28);
 
-export const P4_MATCH = match('P4-toan-match', 'Lớp 4 · Ghép phân số với giá trị', 4,
+export const P4_MATCH = match('P4-toan-match', 'Ghép phân số với giá trị', 4,
   [{ id: 'a', label: '1/2' }, { id: 'b', label: '1/4' }, { id: 'c', label: '3/4' }, { id: 'd', label: '6/8 (rút gọn)' }, { id: 'e', label: '2/3 của 9' }],
   [{ id: 'r05', label: '0,5' }, { id: 'r025', label: '0,25' }, { id: 'r075', label: '0,75' }, { id: 'r34', label: '3/4' }, { id: 'r6', label: '6' }],
   [['a', 'r05'], ['b', 'r025'], ['c', 'r075'], ['d', 'r34'], ['e', 'r6']],
   'Ghép phân số với giá trị thập phân / kết quả tương ứng.');
-export const P4_FILL = fill('P4-toan-fill', 'Lớp 4 · Diện tích HCN 7 × 5', 4, 'Diện tích hình chữ nhật dài 7 cm, rộng 5 cm = ? (cm²)', 35);
+export const P4_FILL = fill('P4-toan-fill', 'Diện tích HCN 7 × 5', 4, 'Diện tích hình chữ nhật dài 7 cm, rộng 5 cm = ? (cm²)', 35);
 
-export const P5_MATCH = match('P5-toan-match', 'Lớp 5 · Ghép thập phân ↔ phần trăm', 5,
+export const P5_MATCH = match('P5-toan-match', 'Ghép thập phân ↔ phần trăm', 5,
   [{ id: 'a', label: '0,5' }, { id: 'b', label: '0,25' }, { id: 'c', label: '0,75' }, { id: 'd', label: '1/5' }, { id: 'e', label: '1,0' }],
   [{ id: 'r50', label: '50%' }, { id: 'r25', label: '25%' }, { id: 'r75', label: '75%' }, { id: 'r20', label: '20%' }, { id: 'r100', label: '100%' }],
   [['a', 'r50'], ['b', 'r25'], ['c', 'r75'], ['d', 'r20'], ['e', 'r100']],
   'Ghép số thập phân / phân số với tỉ số phần trăm tương ứng.');
-export const P5_FILL = fill('P5-toan-fill', 'Lớp 5 · 20% của 150', 5, '20% của 150 = ?', 30);
+export const P5_FILL = fill('P5-toan-fill', '20% của 150', 5, '20% của 150 = ?', 30);
 
 export const PRIMARY_MATH_SCENARIOS = {
   [P1_TOAN.id]: P1_TOAN, [P1_MATCH.id]: P1_MATCH, [P1_FILL.id]: P1_FILL,

@@ -17,6 +17,7 @@
 // ============================================================
 
 import { KEYS, lsGet, lsSet } from './storage.js';
+import { meetsPlan as _meetsPlan, getRequiredPlanForDomain as _getRequiredPlanForDomain, effectivePlanId } from '../plans.js';
 
 // Chỉ những trường ở đây mới VÀO được. Trường khoá KHÔNG đăng ký.
 const DOMAIN_REGISTRY = {
@@ -139,6 +140,27 @@ export function isDomainOpen(id) {
  */
 export const GAMIFIED_DOMAINS = new Set(['primary', 'secondary']);
 export function isGamifiedDomain(id) { return GAMIFIED_DOMAINS.has(id); }
+
+/**
+ * Trường mà KHÁCH (chưa đăng nhập) được phép vào để dùng thử. Hiện chỉ Mầm non
+ * — nội dung nhẹ, không cần lưu tiến độ. Các trường khác bị khoá cho khách,
+ * yêu cầu đăng nhập để mở khoá.
+ *
+ * Phase B2C: ngoài 'guest', mỗi trường còn gắn min plan (free/plus/pro) — xem
+ * [public/js/plans.js]. Lookup: getRequiredPlan(id) → 'guest'|'free'|'plus'.
+ */
+export const GUEST_DOMAINS = new Set(['preschool']);
+export function isGuestDomain(id) { return GUEST_DOMAINS.has(id); }
+
+/** Plan tối thiểu để vào 1 trường (mirror của BE getRequiredPlanForDomain). */
+export function getRequiredPlan(id) { return _getRequiredPlanForDomain(id); }
+
+/** True nếu user (object từ /api/auth/me hoặc null cho khách) được vào trường id. */
+export function canEnterDomain(id, me) {
+  const required = getRequiredPlan(id);
+  const userPlan = effectivePlanId(me);
+  return _meetsPlan(userPlan, required);
+}
 
 /** Active domain ID (đọc từ URL hoặc localStorage). Trường khoá → fallback pharmacy. */
 export function getActiveDomainId() {

@@ -15,6 +15,7 @@
 // ============================================================
 
 import { db } from './db.js';
+import { effectivePlan, dailyAiQuota } from './contexts/billing/user-plans.js';
 
 // ─────────────── Schema ───────────────
 db.exec(`
@@ -97,6 +98,7 @@ export function logAiUsage({
 
 // ─────────────── Quota check ───────────────
 const HOUR_MS = 3600 * 1000;
+const DAY_MS = 24 * HOUR_MS;
 const userUsageStmt = db.prepare(`
   SELECT COUNT(*) AS req, COALESCE(SUM(prompt_tokens + completion_tokens), 0) AS tokens
   FROM ai_token_usage
@@ -108,16 +110,24 @@ const schoolUsageStmt = db.prepare(`
   WHERE school_id = ? AND created_at > ? AND status != 'blocked'
 `);
 
-export function checkAiQuota({ school_id, user_id }) {
-  const since = Date.now() - HOUR_MS;
-  const userU   = user_id ? userUsageStmt.get(Number(user_id), since)       : { req: 0, tokens: 0 };
-  const schoolU =           schoolUsageStmt.get(Number(school_id) || 1, since);
+// Per-user quota theo PLAN (window 24h, đếm ai_calls_day). School-level vẫn dùng
+// hour window để chống burst nghẽn Ollama cho 1 tenant. Guest (rank 0) → chặn cứng.
+export function checkAiQuota({ school_id, user_id, user_plan }) {
+  const now = Date.now();
+  const userU   = user_id ? userUsageStmt.get(Number(user_id), now - DAY_MS)        : { req: 0, tokens: 0 };
+  const schoolU =           schoolUsageStmt.get(Number(school_id) || 1, now - HOUR_MS);
 
-  if (user_id && userU.req >= QUOTA.perUserPerHour) {
-    return { allowed: false, reason: `user_req_cap (${QUOTA.perUserPerHour}/giờ)`, retry_after: 3600 };
-  }
-  if (user_id && userU.tokens >= QUOTA.perUserTokensHour) {
-    return { allowed: false, reason: `user_token_cap (${QUOTA.perUserTokensHour}/giờ)`, retry_after: 3600 };
+  if (user_id) {
+    const dayCap = dailyAiQuota(user_plan || 'free');
+    if (dayCap <= 0) {
+      return { allowed: false, reason: 'plan_no_ai', retry_after: 60, upgrade_url: '/pricing.html' };
+    }
+    if (userU.req >= dayCap) {
+      return { allowed: false, reason: `user_day_cap (${dayCap}/ngày, gói ${user_plan})`, retry_after: 3600, upgrade_url: '/pricing.html' };
+    }
+    if (userU.tokens >= QUOTA.perUserTokensHour * 4) {  // 4× hour cap ≈ day token cap (sanity)
+      return { allowed: false, reason: 'user_token_day_cap', retry_after: 3600 };
+    }
   }
   if (schoolU.req >= QUOTA.perSchoolPerHour) {
     return { allowed: false, reason: `school_req_cap (${QUOTA.perSchoolPerHour}/giờ)`, retry_after: 3600 };
@@ -130,12 +140,13 @@ export function checkAiQuota({ school_id, user_id }) {
 
 // ─────────────── Express middleware ───────────────
 // Dùng trước handler AI: chặn 429 nếu vượt quota, log lý do.
-// Yêu cầu attachUser middleware đã chạy trước → req.user có id + school_id.
+// Yêu cầu attachUser middleware đã chạy trước → req.user có id + school_id + plan.
 export function aiQuotaGate(endpoint) {
   return (req, res, next) => {
     const user_id   = req.user?.id || null;
     const school_id = req.user?.school_id || 1;
-    const verdict = checkAiQuota({ school_id, user_id });
+    const user_plan = req.user ? effectivePlan(req.user).id : 'guest';
+    const verdict = checkAiQuota({ school_id, user_id, user_plan });
     if (!verdict.allowed) {
       logAiUsage({
         school_id, user_id,
@@ -147,6 +158,8 @@ export function aiQuotaGate(endpoint) {
         error: 'AI quota exceeded',
         reason: verdict.reason,
         retry_after_seconds: verdict.retry_after,
+        upgrade_url: verdict.upgrade_url || null,
+        current_plan: user_plan,
       });
     }
     // Stash context cho recordAiCall sau khi handler xong.

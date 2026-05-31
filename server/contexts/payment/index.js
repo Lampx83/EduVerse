@@ -12,18 +12,19 @@
 // ============================================================
 
 import './schema.js'; // side-effect: tạo bảng payment khi context được nạp
-import { db } from '../../db.js';
+import { db, setUserPlan } from '../../db.js';
 import { requireAuth } from '../identity/auth.js';
 import {
   buildPaymentUrl, verifyCallback, isSuccessCode, isVnpayConfigured, IPN_RESPONSES,
 } from './gateways/vnpay.js';
 import { recordPaymentSettled } from './ledger.js';
 import { reconcile, refundPayment } from './reconcile.js';
+import { VALID_USER_PLANS, priceFor, expiresAtFor, USER_PLANS } from '../billing/user-plans.js';
 
 // ── Data access ──
 const insertInvoiceStmt = db.prepare(`
-  INSERT INTO invoices (school_id, user_id, order_ref, amount, currency, description, status, gateway, created_at, updated_at)
-  VALUES (@school_id, @user_id, @order_ref, @amount, @currency, @description, 'pending', @gateway, @t, @t)
+  INSERT INTO invoices (school_id, user_id, order_ref, amount, currency, description, status, gateway, metadata, created_at, updated_at)
+  VALUES (@school_id, @user_id, @order_ref, @amount, @currency, @description, 'pending', @gateway, @metadata, @t, @t)
 `);
 const getInvoiceByRefStmt = db.prepare(`SELECT * FROM invoices WHERE order_ref = ?`);
 const markInvoicePaidStmt = db.prepare(`UPDATE invoices SET status = 'paid', paid_at = @t, updated_at = @t WHERE id = @id`);
@@ -49,26 +50,42 @@ function clientIp(req) {
 
 export function attachPayment(r, { basePath = '' } = {}) {
   // ── Tạo đơn + lấy URL thanh toán ──
+  // Hỗ trợ 2 mode:
+  //   - upgrade gói cá nhân: body={plan,cycle} → amount tự tính theo bảng giá
+  //   - generic: body={amount,description} (giữ tương thích cũ)
   r.post('/api/payment/create-order', requireAuth, (req, res) => {
     if (!isVnpayConfigured()) {
       return res.status(503).json({ error: 'payment_unconfigured', detail: 'VNPay chưa cấu hình TMN_CODE/HASH_SECRET' });
     }
-    const amount = Math.round(Number(req.body?.amount));
-    const description = String(req.body?.description || '').slice(0, 200);
-    if (!Number.isFinite(amount) || amount < 1000) {
-      return res.status(400).json({ error: 'invalid_amount', detail: 'amount tối thiểu 1000 VND' });
+    const planReq = String(req.body?.plan || '').toLowerCase();
+    const cycle = ['month', 'year'].includes(req.body?.cycle) ? req.body.cycle : 'month';
+    let amount, description, metadata = null;
+    if (planReq && VALID_USER_PLANS.has(planReq)) {
+      amount = priceFor(planReq, cycle);
+      if (amount < 1000) {
+        return res.status(400).json({ error: 'free_plan_not_payable', detail: 'Gói miễn phí không cần thanh toán.' });
+      }
+      const planName = USER_PLANS[planReq]?.name || planReq;
+      description = `EduVerse ${planName} — ${cycle === 'year' ? '1 năm' : '1 tháng'}`;
+      metadata = JSON.stringify({ kind: 'user_plan', plan: planReq, cycle, user_id: req.user.id });
+    } else {
+      amount = Math.round(Number(req.body?.amount));
+      description = String(req.body?.description || '').slice(0, 200) || 'Thanh toán EduVerse';
+      if (!Number.isFinite(amount) || amount < 1000) {
+        return res.status(400).json({ error: 'invalid_amount', detail: 'amount tối thiểu 1000 VND' });
+      }
     }
     const school_id = req.user.school_id || 1;
     const order_ref = genOrderRef();
     const now = Date.now();
     insertInvoiceStmt.run({
       school_id, user_id: req.user.id, order_ref, amount, currency: 'VND',
-      description: description || `Thanh toán EduVerse`, gateway: 'vnpay', t: now,
+      description, gateway: 'vnpay', metadata, t: now,
     });
     try {
       const { url } = buildPaymentUrl({
         orderRef: order_ref, amount,
-        orderInfo: description || `Thanh toan don ${order_ref}`,
+        orderInfo: description,
         ipAddr: clientIp(req),
       });
       res.json({ ok: true, orderRef: order_ref, amount, payUrl: url });
@@ -118,6 +135,17 @@ export function attachPayment(r, { basePath = '' } = {}) {
       if (success) {
         markInvoicePaidStmt.run({ id: invoice.id, t: now });
         recordPaymentSettled({ school_id: invoice.school_id, gateway: 'vnpay', amount: v.amount, invoice_id: invoice.id });
+        // Kích hoạt gói cá nhân nếu invoice gắn metadata kind=user_plan.
+        try {
+          const meta = invoice.metadata ? JSON.parse(invoice.metadata) : null;
+          if (meta?.kind === 'user_plan' && meta.user_id && VALID_USER_PLANS.has(meta.plan)) {
+            setUserPlan(meta.user_id, {
+              plan: meta.plan,
+              expires_at: expiresAtFor(meta.cycle || 'month'),
+              cycle: meta.cycle || 'month',
+            });
+          }
+        } catch (e) { console.warn('[payment] activate user_plan failed:', e?.message); }
       } else {
         markInvoiceFailedStmt.run({ id: invoice.id, t: now });
       }

@@ -3,6 +3,7 @@
 // Trang chỉ cần `<script type="module" src="./js/auth-header.js"></script>` là tự gắn.
 
 import { bootstrapMe, currentUser, logout, updateProfile } from './auth.js';
+import { PLAN_BADGES, USER_PLANS, effectivePlanId } from './plans.js';
 
 const ROLE_LABEL = {
   pupil:   { ico: '🎒', label: 'Học sinh' },
@@ -114,6 +115,24 @@ const CSS = `
 
   .ev-header .ev-anon { font-size: 13px; opacity: 0.8; }
   .ev-header .ev-anon a { color: #fbbf24; text-decoration: none; font-weight: 700; }
+
+  /* Plan badge (Free/Plus/Pro) — hiển thị cạnh tên trong chip user và trong dialog */
+  .ev-plan-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 7px; border-radius: 7px;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .2px;
+    margin-left: 6px; vertical-align: middle;
+  }
+  .ev-plan-cta {
+    display: inline-block; margin-top: 12px; width: 100%;
+    text-align: center; padding: 9px 12px; border-radius: 10px;
+    background: linear-gradient(135deg, #a855f7, #ec4899); color: #fff;
+    font-weight: 800; font-size: 12.5px; text-decoration: none;
+    box-shadow: 0 4px 14px rgba(168,85,247,.35);
+    transition: transform .12s, box-shadow .15s;
+  }
+  .ev-plan-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(168,85,247,.5); }
+  .ev-plan-cta.muted { background: rgba(255,255,255,.08); color: #fff; box-shadow: none; }
   @media (max-width: 540px) {
     .ev-header { padding: 8px 12px; gap: 8px; }
     .ev-header .ev-brand .name { display: none; }
@@ -138,12 +157,26 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
+function planPill(planId) {
+  const b = PLAN_BADGES[planId] || PLAN_BADGES.free;
+  return `<span class="ev-plan-pill" style="background:${b.bg};color:${b.color}" title="Gói cước hiện tại">${b.label}</span>`;
+}
+
+function fmtExpire(ms) {
+  if (!ms) return '';
+  try {
+    const d = new Date(ms);
+    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch { return ''; }
+}
+
 function render(host, user) {
   if (!user) {
     host.innerHTML = `
       <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">EduVerse</span></a>
       <span class="ev-spacer"></span>
-      <span class="ev-anon">Chưa đăng nhập · <a href="login.html">Đăng nhập</a></span>
+      <a href="pricing.html" class="ev-plan-pill" style="background:rgba(168,85,247,.22);color:#a855f7;text-decoration:none">✨ Xem gói</a>
+      <span class="ev-anon" style="margin-left:10px">Chưa đăng nhập · <a href="login.html">Đăng nhập</a></span>
     `;
     return;
   }
@@ -156,6 +189,15 @@ function render(host, user) {
     ? `<div class="pf-row"><span class="k">Email</span><span class="v">${esc(user.email)}</span></div>` : '';
   const ageRow = user.age != null
     ? `<div class="pf-row"><span class="k">Tuổi</span><span class="v">${user.age}</span></div>` : '';
+  const planId = effectivePlanId(user);
+  const planDef = USER_PLANS[planId];
+  const planRow = `<div class="pf-row"><span class="k">Gói cước</span><span class="v">${planPill(planId)}</span></div>`;
+  const expireRow = (planId !== 'free' && planId !== 'guest' && user.plan_expires_at)
+    ? `<div class="pf-row"><span class="k">Hết hạn</span><span class="v">${fmtExpire(user.plan_expires_at)}</span></div>` : '';
+  // CTA: free/guest → Nâng cấp Pro; plus → lên Pro; pro → chỉ "Quản lý gói"
+  const planCta = planId === 'pro'
+    ? `<a class="ev-plan-cta muted" href="pricing.html">Quản lý gói cước</a>`
+    : `<a class="ev-plan-cta" href="pricing.html">✨ Nâng cấp ${planId === 'plus' ? 'Pro' : 'Plus/Pro'}</a>`;
 
   host.innerHTML = `
     <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">EduVerse</span></a>
@@ -164,7 +206,7 @@ function render(host, user) {
       <button class="ev-user" id="ev-user-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Xem hồ sơ">
         <span class="ev-avatar">${avatarInner}</span>
         <span class="ev-user-text">
-          <span class="ev-user-name">${esc(user.display_name)}</span>
+          <span class="ev-user-name">${esc(user.display_name)}${planPill(planId)}</span>
           <span class="ev-user-meta">${r.ico} ${r.label}${ageStr}</span>
         </span>
         <span class="ev-caret">▾</span>
@@ -185,8 +227,11 @@ function render(host, user) {
             <div class="pf-row"><span class="k">Vai trò</span><span class="v">${r.label}</span></div>
             ${ageRow}
             ${emailRow}
+            ${planRow}
+            ${expireRow}
           </div>
-          <div class="pf-divider"></div>
+          ${planCta}
+          <div class="pf-divider" style="margin-top:14px"></div>
           <div class="pf-actions">
             <button class="pf-btn pf-edit-btn" id="ev-edit-btn" type="button">✏️ Chỉnh sửa</button>
             <button class="pf-btn pf-logout" id="ev-logout-btn" type="button">🚪 Đăng xuất</button>

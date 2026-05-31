@@ -51,6 +51,15 @@
   }
   button.primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(251,191,36,0.3); }
   button.primary[disabled] { opacity: 0.6; cursor: progress; }
+  button.guest {
+    width: 100%; margin-top: 10px; padding: 11px;
+    border: 1px dashed rgba(255,255,255,0.35); border-radius: 10px; cursor: pointer;
+    background: transparent; color: rgba(255,255,255,0.9);
+    font-weight: 600; font-size: 13.5px; font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  button.guest:hover { background: rgba(255,255,255,0.08); border-color: rgba(251,191,36,0.5); }
+  button.guest[disabled] { opacity: 0.6; cursor: progress; }
   .err {
     margin-top: 14px; padding: 10px 12px; border-radius: 8px;
     background: rgba(244,63,94,0.18); border: 1px solid rgba(244,63,94,0.4);
@@ -103,6 +112,7 @@
          placeholder="≥ 6 ký tự" />
 
   <button class="primary" type="submit" id="submit-btn">Đăng nhập</button>
+  <button class="guest" type="button" id="guest-btn">👤 Tiếp tục với tài khoản khách</button>
   <div class="err" id="err"></div>
 
   <!-- SSO providers — rỗng nếu chưa cấu hình env CLIENT_ID/SECRET. -->
@@ -128,6 +138,13 @@
     document.getElementById('register-link').href = 'register.html' + rq;
   }
   renderSso({ returnQuery: rq });
+
+  // Chế độ khách: không tạo user, không cookie. Trang chủ + trường Mầm non là public
+  // (xem PUBLIC_PATH trong server/contexts/identity/auth.js + isGuestDomain).
+  const guestBtn = document.getElementById('guest-btn');
+  guestBtn.addEventListener('click', () => {
+    location.replace('./');
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

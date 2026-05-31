@@ -38,8 +38,10 @@ export function setPlayerName(name) {
 }
 
 export async function ensurePlayerName() {
-  // Hệ thống yêu cầu đăng nhập — tên hiển thị lấy từ session, đã được lsSet bởi auth.js.
-  // Nếu cache rỗng (mới mở tab khác), fetch /api/auth/me rồi sync; nếu vẫn rỗng → redirect login.
+  // Tên hiển thị lấy từ session, đã được lsSet bởi auth.js. Nếu cache rỗng
+  // (mở tab mới), fetch /api/auth/me rồi sync. Guest (401) → trả 'Khách' để
+  // các game vẫn chạy được, không cắt ngang điều hướng. Pages bắt buộc login
+  // đã được gate ở server-side authGate.
   let name = getPlayerName();
   if (name) return name;
   try {
@@ -52,16 +54,27 @@ export async function ensurePlayerName() {
       }
     }
   } catch {}
-  const ret = encodeURIComponent(location.pathname + location.search);
-  location.replace('login.html?return=' + ret);
-  return '';
+  return 'Khách';
+}
+
+let _guestToastShown = false;
+function showGuestSaveToast() {
+  if (_guestToastShown) return;
+  _guestToastShown = true;
+  const t = document.createElement('div');
+  t.textContent = '🧸 Khách dùng thử — tiến độ không được lưu. Đăng nhập để giữ điểm.';
+  t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:rgba(15,23,42,0.96);color:#fde68a;border:1px solid rgba(251,191,36,0.5);padding:10px 18px;border-radius:999px;font:600 13px/1.4 Inter,system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:90vw';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 5000);
 }
 
 export async function submitAttempt(payload) {
   try {
     const classCode = getClassCode() || undefined;
     // KHÔNG truyền playerName: server lấy từ session (req.user.display_name).
-    // Người dùng chưa đăng nhập → server trả 401, ta đưa về trang login.
+    // Guest (chưa đăng nhập) → 401: KHÔNG redirect (tránh cắt ngang trải nghiệm
+    // ở trường Mầm non), chỉ hiện toast một lần. Pages bắt buộc login đã được
+    // gate ở authGate; ở đây chỉ là gracefully degrade.
     const res = await fetch('api/attempts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -69,8 +82,7 @@ export async function submitAttempt(payload) {
       body: JSON.stringify({ ...payload, classCode }),
     });
     if (res.status === 401) {
-      const ret = encodeURIComponent(location.pathname + location.search);
-      location.replace('login.html?return=' + ret);
+      showGuestSaveToast();
       return null;
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
