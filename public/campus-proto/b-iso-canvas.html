@@ -471,7 +471,7 @@ function rebuildDecor(){
   DECOR = [
     ...((C.trees||[]).map(([gx,gy],i)=>({k:'tree', gx, gy, _src:'trees', _idx:i}))),
     ...((C.cars ||[]).map(([gx,gy],i)=>({k:'car',  gx, gy, _src:'cars',  _idx:i}))),
-    ...((C.props||[]).map((p,i)    =>({k:p.k, gx:p.gx, gy:p.gy, rot:p.rot||0, pin:p.pin||null, _src:'props', _idx:i}))),
+    ...((C.props||[]).map((p,i)    =>({k:p.k, gx:p.gx, gy:p.gy, rot:p.rot||0, s:p.s||1, pin:p.pin||null, _src:'props', _idx:i}))),
   ];
 }
 rebuildDecor();
@@ -564,6 +564,7 @@ function syncDecorBack(d){
   else if(d._src==='props'){
     C.props[d._idx].gx = d.gx; C.props[d._idx].gy = d.gy;
     if(d.rot != null) C.props[d._idx].rot = d.rot;
+    if(d.s   != null) C.props[d._idx].s   = d.s;
     if(d.pin != null) C.props[d._idx].pin = d.pin; else if(!d.pin) delete C.props[d._idx].pin;
   }
 }
@@ -879,9 +880,10 @@ function draw(){
       const selD=EDIT && it.deco===DECOR[selectedDecor];
       if(selD){ ctx.fillStyle='rgba(251,191,36,.45)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5,TH*0.5,0,0,7); ctx.fill();
                 ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2; ctx.stroke(); }
-      if(sp) blit(ctx, sp, it.p, DS*(BLIT[it.deco.k]||0.8));
-      // Pin màu: chấm tròn nhỏ bên trên item (dùng toạ độ sprite gốc)
-      if(it.deco.pin){ const sc=DS*(BLIT[it.deco.k]||0.8);
+      const _dsc = DS*(BLIT[it.deco.k]||0.8)*(it.deco.s||1);
+      if(sp) blit(ctx, sp, it.p, _dsc);
+      // Pin màu: chấm tròn nhỏ bên trên item
+      if(it.deco.pin){ const sc=_dsc;
         const py=it.p.y-sp.height*sc+ANCHOR.y*sc - 4;
         ctx.save(); ctx.fillStyle=it.deco.pin;
         ctx.beginPath(); ctx.arc(it.p.x, py, 5, 0, Math.PI*2); ctx.fill();
@@ -1169,7 +1171,7 @@ if(EDIT){
       window.__startPlaceMode(m); draw();
     } else if(m.type==='campus-cmd-set-decor'){
       const d=DECOR[m.idx]; if(!d) return;
-      const allowed=new Set(['pin','rot','gx','gy']);
+      const allowed=new Set(['pin','rot','s','gx','gy']);
       if(allowed.has(m.key)){ d[m.key]=m.value; syncDecorBack(d); draw(); postToParent({type:'campus-dirty'}); }
     } else if(m.type==='campus-cmd-rotate-decor'){
       rotateDecor(m.idx, m.delta||90);

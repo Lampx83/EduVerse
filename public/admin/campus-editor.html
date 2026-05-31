@@ -174,7 +174,10 @@
             <button class="btn" id="dRotCW"  style="flex:1; font-size:16px;" title="Xoay chiều kim đồng hồ">⟳</button>
           </div>
         </div>
-        <div class="row" style="margin-top:8px;"><label>Pin màu</label>
+        <div class="row"><label>Scale</label>
+          <input id="dScale" type="number" step="0.1" min="0.2" max="4" value="1" style="flex:1; background:#020617; color:var(--txt); border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:13px;">
+        </div>
+        <div class="row" style="margin-top:4px;"><label>Pin màu</label>
           <input id="dPin" type="color" value="#94a3b8" style="width:50px; height:30px; border:1px solid var(--border); border-radius:6px; background:transparent; cursor:pointer;">
           <button class="btn" id="dPinClear" style="font-size:11px; padding:4px 8px; color:var(--muted);">Xoá pin</button>
         </div>
@@ -348,6 +351,7 @@ function openDecorInspector(idx, item){
   $('#dName').textContent=item.k||'(decor)';
   $('#dPos').textContent=`gx:${item.gx} gy:${item.gy}  ·  idx ${idx}`;
   $('#dRotVal').textContent=(item.rot||0)+'°';
+  $('#dScale').value=item.s||1;
   $('#dPin').value=item.pin||'#94a3b8';
 }
 
@@ -503,6 +507,7 @@ function sendDecorCmd(key, value){
   iframe.contentWindow?.postMessage({type:'campus-cmd-set-decor', idx:currentDecorIdx, key, value},'*');
   setDirty(true);
 }
+$('#dScale').addEventListener('input', e=>sendDecorCmd('s', Number(e.target.value)));
 $('#dPin').addEventListener('input', e=>sendDecorCmd('pin', e.target.value));
 $('#dPinClear').addEventListener('click',()=>{ sendDecorCmd('pin', null); $('#dPin').value='#94a3b8'; });
 
