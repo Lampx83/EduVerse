@@ -30,6 +30,21 @@ async function api(path, opts = {}) {
   return { ok: r.ok, status: r.status, data: r.ok ? await r.json().catch(() => ({})) : null };
 }
 
+// Đợi auth-header dựng xong slot #ev-bell-slot; nếu không có (page opt-out / lỗi),
+// trả về null sau ~2.5s để fallback sang chế độ floating cũ.
+function waitForHeaderSlot(timeoutMs = 2500) {
+  return new Promise((resolve) => {
+    const found = document.getElementById('ev-bell-slot');
+    if (found) return resolve(found);
+    if (document.body?.dataset?.noAuthHeader !== undefined) return resolve(null);
+    let done = false;
+    const finish = (val) => { if (done) return; done = true; document.removeEventListener('ev-header-mounted', onReady); resolve(val); };
+    const onReady = () => finish(document.getElementById('ev-bell-slot'));
+    document.addEventListener('ev-header-mounted', onReady);
+    setTimeout(() => finish(document.getElementById('ev-bell-slot')), timeoutMs);
+  });
+}
+
 async function autoMount() {
   if (document.getElementById('nbell-root')) return;
   if (document.body?.dataset?.noNotificationsBell !== undefined) return;
@@ -40,8 +55,10 @@ async function autoMount() {
   if (!probe.ok) return;
 
   injectStylesOnce();
+  const slot = await waitForHeaderSlot();
   const root = document.createElement('div');
   root.id = 'nbell-root';
+  if (slot) root.classList.add('nbell-root--in-header');
   root.innerHTML = `
     <button class="nbell-btn" id="nbell-btn" aria-label="Phản hồi từ Ban điều hành AI" title="Phản hồi từ Ban điều hành AI">
       <span class="nbell-ico">🔔</span>
@@ -55,7 +72,7 @@ async function autoMount() {
       <div class="nbell-list" id="nbell-list">Đang tải…</div>
     </div>
   `;
-  document.body.appendChild(root);
+  (slot || document.body).appendChild(root);
 
   const btn = root.querySelector('#nbell-btn');
   const panel = root.querySelector('#nbell-panel');
@@ -139,6 +156,22 @@ function injectStylesOnce() {
       position: fixed; top: 14px; right: 14px; z-index: 9998;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
+    /* Khi mount vào header: bỏ fixed, giảm cỡ nút, panel xổ xuống tương đối */
+    #nbell-root.nbell-root--in-header {
+      position: relative; top: auto; right: auto; display: inline-flex;
+    }
+    .nbell-root--in-header .nbell-btn {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14);
+      box-shadow: none;
+    }
+    .nbell-root--in-header .nbell-btn:hover {
+      background: rgba(255,255,255,0.14); border-color: rgba(251,191,36,0.5);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .nbell-root--in-header .nbell-ico { font-size: 18px; }
+    .nbell-root--in-header .nbell-badge { border-color: rgba(15,23,42,0.95); }
+    .nbell-root--in-header .nbell-panel { top: 46px; }
     .nbell-btn {
       position: relative; width: 42px; height: 42px; border-radius: 50%;
       border: 1px solid rgba(255,255,255,0.25); cursor: pointer;
@@ -163,6 +196,10 @@ function injectStylesOnce() {
       border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4); backdrop-filter: blur(10px);
     }
+    /* HTML attribute [hidden] = display:none, nhưng .nbell-panel { display:flex }
+       cùng specificity (0,1,0) và ghi đè rule user-agent → panel luôn hiện sai.
+       Selector kết hợp dưới đây bump specificity lên (0,2,0) + !important để chắc. */
+    .nbell-panel[hidden] { display: none !important; }
     .nbell-head {
       display: flex; align-items: center; gap: 8px; padding: 10px 12px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
