@@ -35,13 +35,18 @@ let _sessionMaxXp     = 0;
 let _sessionMaxCoins  = 0;
 let _sessionUid       = null;
 
-function _applySessionGuard(w) {
-  // Xác định user hiện tại để invalidate guard nếu đổi account
-  let curUid = null;
+// Đọc uid hiện tại từ cache `tizia:me` (set khi login / bootstrapMe). Trả về
+// null nếu chưa có — caller phải xử lý: chưa biết user thì KHÔNG trả ví local
+// (vì có thể là ví của user trước còn sót trong localStorage).
+function _currentUid() {
   try {
     const me = JSON.parse(localStorage.getItem('tizia:me') || 'null');
-    curUid = me?.id ?? null;
-  } catch {}
+    return me?.id ?? null;
+  } catch { return null; }
+}
+
+function _applySessionGuard(w) {
+  const curUid = _currentUid();
   if (curUid !== _sessionUid) {
     _sessionUid = curUid;
     _sessionMaxXp = 0;
@@ -74,14 +79,34 @@ export function getWallet() {
     const raw = lsGet(WALLET_KEY);
     if (raw) {
       const w = JSON.parse(raw);
+      // ── Cross-user pollution guard (fix bug "ví admin lẫn với enderman")
+      // Trước đây WALLET_KEY là 1 slot dùng chung mọi user trên browser →
+      // đổi account, localStorage còn ví cũ → loadWalletFromServer merge max
+      // rồi push ngược lên DB user mới. Stamp `_uid` lúc save; lúc load nếu
+      // ví trong localStorage thuộc UID khác current → vứt, dùng remote.
+      const curUid = _currentUid();
+      if (curUid != null && w._uid != null && w._uid !== curUid) {
+        console.warn(`[wallet] discard local wallet of uid=${w._uid} (current=${curUid}) — cross-user pollution prevented`);
+        try { localStorage.removeItem(WALLET_KEY); } catch {}
+        return _applySessionGuard(_normalizeWallet({}));
+      }
       return _applySessionGuard(_normalizeWallet(w));
     }
   } catch {}
   return _applySessionGuard(_normalizeWallet({}));
 }
 
+/** Clear toàn bộ ví trong localStorage. Gọi khi logout, đổi account. */
+export function clearLocalWallet() {
+  try { localStorage.removeItem(WALLET_KEY); } catch {}
+  _sessionMaxXp = 0;
+  _sessionMaxCoins = 0;
+  _sessionUid = null;
+}
+
 function _normalizeWallet(w) {
   return {
+    _uid: w._uid ?? null,                  // stamp uid (cross-user pollution guard)
     coins: w.coins ?? 0,
     xp: w.xp ?? 0,
     streak: w.streak ?? 0,
@@ -117,6 +142,12 @@ function _normalizeDaily(d, today) {
 }
 
 function _save(w) {
+  // Stamp uid hiện tại để getWallet() biết ví này thuộc về ai. Nếu chưa biết
+  // uid (chưa login xong) → KHÔNG ghi vào localStorage; tránh tạo ví "vô chủ"
+  // sau này bị merge nhầm khi user thật vừa login xong.
+  const curUid = _currentUid();
+  if (curUid == null) return;
+  w._uid = curUid;
   try { localStorage.setItem(WALLET_KEY, JSON.stringify(w)); } catch {}
   _schedulePushToServer();
 }
@@ -169,6 +200,21 @@ export async function loadWalletFromServer() {
     // dùng local để render; lần _save kế (server-side monotonic guard) sẽ sync.
     return getWallet();
   }
+  // Cross-user guard: nếu localStorage còn ví của UID khác (vd vừa logout
+  // admin → login enderman) → vứt sạch, KHÔNG merge max. Phải làm TRƯỚC khi
+  // gọi getWallet() vì getWallet đã tự discard nếu _uid mismatch — nhưng nó
+  // trả về ví rỗng có _uid=null. Để chắc chắn, gọi clearLocalWallet trực
+  // tiếp khi uid hiện tại đã biết và khác _uid local.
+  try {
+    const curUid = _currentUid();
+    const rawLocal = lsGet(WALLET_KEY);
+    if (rawLocal) {
+      const w = JSON.parse(rawLocal);
+      if (curUid != null && w._uid != null && w._uid !== curUid) {
+        clearLocalWallet();
+      }
+    }
+  } catch {}
   if (!remote) {
     // Server xác nhận chưa có ví (200 + null) → đẩy local lên lần đầu. An toàn vì
     // server chưa có gì để mất. Monotonic guard phía server vẫn bảo vệ về sau.
@@ -523,4 +569,38 @@ export function recordModuleStars(moduleId, stars) {
     setProgress(p);
   }
   return p;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Scenario-runs — đếm số lần hoàn thành theo familyId
+// (familyId ổn định kể cả khi scenario id được random hoá mỗi lần)
+// ─────────────────────────────────────────────────────────────
+
+const SCN_RUNS_KEY = KEYS.SCN_RUNS;
+
+export function getScenarioRunsMap() {
+  try {
+    const raw = lsGet(SCN_RUNS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+export function getScenarioRuns(familyId) {
+  if (!familyId) return null;
+  const m = getScenarioRunsMap();
+  return m[familyId] || null;
+}
+
+export function recordScenarioRun(familyId, stars, score) {
+  if (!familyId) return;
+  try {
+    const m = getScenarioRunsMap();
+    const cur = m[familyId] || { runs: 0, bestStars: 0, bestScore: 0, lastTs: 0 };
+    cur.runs = (cur.runs || 0) + 1;
+    if ((stars || 0) > (cur.bestStars || 0)) cur.bestStars = stars || 0;
+    if ((score || 0) > (cur.bestScore || 0)) cur.bestScore = score || 0;
+    cur.lastTs = Date.now();
+    m[familyId] = cur;
+    localStorage.setItem(SCN_RUNS_KEY, JSON.stringify(m));
+  } catch {}
 }

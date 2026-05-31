@@ -3,7 +3,7 @@
 // chỉ cần helpers gọi API + cache user (đồng bộ) cho UI.
 
 import { KEYS, lsGet, lsSet } from './engine/storage.js';
-import { loadWalletFromServer } from './engine/wallet.js';
+import { loadWalletFromServer, clearLocalWallet } from './engine/wallet.js';
 
 let _me = null;      // { id, username, display_name, role } hoặc null
 let _mePromise = null;
@@ -86,7 +86,11 @@ export async function logout() {
   } catch {}
   _me = null;
   _mePromise = null;
+  // Clear ví + uid cache trong localStorage để user kế tiếp login trên cùng
+  // browser không bị "kế thừa" số liệu (fix cross-user wallet pollution).
   // KHÔNG xoá class code — học sinh đăng nhập lại vẫn ở lớp cũ.
+  try { localStorage.removeItem('tizia:me'); } catch {}
+  clearLocalWallet();
   location.replace('login.html');
 }
 
@@ -127,6 +131,20 @@ export async function fetchMe() {
 // nên đổi máy / clear cache = mất level. Kéo bất đồng bộ, không block UI.
 function syncToLocal(user) {
   if (!user) return;
+  // Phát hiện đổi tài khoản trên cùng browser: nếu `tizia:me.id` trước đó
+  // khác id mới → wipe ví local của user cũ trước khi pull ví user mới về.
+  // Tránh loadWalletFromServer() merge max(local_user_cũ, remote_user_mới).
+  try {
+    const prev = JSON.parse(localStorage.getItem('tizia:me') || 'null');
+    if (prev && prev.id !== user.id) clearLocalWallet();
+  } catch {}
+  // Set `tizia:me` để wallet.js (_currentUid) biết user hiện tại — trước đây
+  // chưa từng được set, khiến `_applySessionGuard` thấy curUid=null hoài.
+  try {
+    localStorage.setItem('tizia:me', JSON.stringify({
+      id: user.id, username: user.username, role: user.role,
+    }));
+  } catch {}
   lsSet(KEYS.PLAYER_NAME, user.display_name);
   lsSet(KEYS.ROLE, user.role);
   loadWalletFromServer().catch(() => {});
