@@ -884,7 +884,9 @@ function draw(){
     if(it.play){ drawPlay(it.play); continue; }
     if(it.crit){ critter(it.p.x, it.p.y, it.crit.e, it.crit.s); continue; }
     const sp=bsprite[it.b.id]; if(!sp) continue; const sc=DS*it.b.s; const hl=it.i===hovered; const sel=EDIT && it.i===selected;
-    shadowAt(it.p, it.b.s);
+    // Shadow chỉ cho model cao (building-type-*). Path/fence/driveway/planter → bỏ qua.
+    const _flatModel = it.b.url && /fence|path|driveway|planter/i.test(it.b.url);
+    if(!_flatModel) shadowAt(it.p, it.b.s);
     if(sel){ ctx.fillStyle='rgba(96,165,250,.55)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.62*it.b.s,TH*0.62*it.b.s,0,0,7); ctx.fill();
              ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2.5; ctx.stroke(); ctx.filter='brightness(1.13)'; }
     if(hl && !sel){ ctx.fillStyle='rgba(255,206,84,.5)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5*it.b.s,TH*0.5*it.b.s,0,0,7); ctx.fill(); ctx.filter='brightness(1.13)'; }
@@ -929,24 +931,30 @@ if(EMBED){ const bk=document.querySelector('.back'); if(bk) bk.style.display='no
 function hitAt(cx, cy){
   const px = hctx.getImageData(cx*DPR, cy*DPR, 1, 1).data;
   if(px[3] > 10){ const id = colId(px[0], px[1], px[2]); if(id >= 0) return {kind:'building', idx:id, item:BUILDINGS[id]}; }
-  let best = null, bestD = Infinity;
-  // Facility pins (cả 2 mode)
-  for(let i=0; i<FACILITIES.length; i++){
-    const f = FACILITIES[i], p = P(f.gx, f.gy);
-    const dx = cx - p.x, dy = cy - (p.y - 12);
-    const d = dx*dx + dy*dy;
-    if(d < bestD){ bestD = d; best = {kind:'facility', idx:i, item:f}; }
-  }
-  // Decor (chỉ edit mode — để view bình thường không vô tình chọn cây)
+
+  // Edit mode: decor được ưu tiên riêng, dùng radius lớn hơn facility.
+  // Tách 2 vòng để decor không bị facility wins do bestD chung.
   if(EDIT){
+    let bestDecor=null, bestDecorD=Infinity;
     for(let i=0; i<DECOR.length; i++){
-      const d0 = DECOR[i], p = P(d0.gx, d0.gy);
-      const dx = cx - p.x, dy = cy - p.y;
-      const d = dx*dx + dy*dy;
-      if(d < bestD){ bestD = d; best = {kind:'decor', idx:i, item:d0}; }
+      const d0=DECOR[i]; if(!esprite[d0.k] && !esprite[espriteCacheKey(d0.k,d0.rot||0)]) continue; // chỉ hit visible decor
+      const p=P(d0.gx,d0.gy);
+      const dx=cx-p.x, dy=cy-(p.y-4);   // shift lên 4px để khớp với visual center sprite
+      const d=dx*dx+dy*dy;
+      if(d<bestDecorD){ bestDecorD=d; bestDecor={kind:'decor',idx:i,item:d0}; }
     }
+    if(bestDecor && bestDecorD<=48*48) return bestDecor;  // radius 48px cho decor
   }
-  if(best && bestD <= 26*26) return best;
+
+  // Facility pins (cả 2 mode) — radius 26px
+  let best=null, bestD=Infinity;
+  for(let i=0; i<FACILITIES.length; i++){
+    const f=FACILITIES[i], p=P(f.gx,f.gy);
+    const dx=cx-p.x, dy=cy-(p.y-12);
+    const d=dx*dx+dy*dy;
+    if(d<bestD){ bestD=d; best={kind:'facility',idx:i,item:f}; }
+  }
+  if(best && bestD<=26*26) return best;
   return null;
 }
 

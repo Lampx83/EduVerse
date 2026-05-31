@@ -291,14 +291,24 @@ function handleThumb(m){
   img.src=m.dataUrl;
 }
 
+// Auto-detect kind từ tên model: fence/path/driveway/planter/tree → decor; còn lại → building
+function autoKind(name, url){
+  return /fence|path|driveway|planter|tree/i.test(name+url) ? 'decor' : 'building';
+}
+
 function startPlace(card){
   if(placingCard) placingCard.classList.remove('placing');
   placingCard=card; card.classList.add('placing');
+  // Auto-switch kind based on model name
+  const detected = autoKind(card.dataset.name, card.dataset.url);
+  if(detected !== placeKind){
+    const btn = document.querySelector(`.kind-btn[data-kind="${detected}"]`);
+    if(btn) setKind(detected, btn);
+  }
   const opts={type:'campus-cmd-place', url:card.dataset.url, pack:card.dataset.pack, name:card.dataset.name, kind:placeKind};
   iframe.contentWindow?.postMessage(opts,'*');
   $('#placingBanner').style.display='';
-  $('#placingName').textContent=card.dataset.name;
-  // Switch to inspector tab so user can see the map
+  $('#placingName').textContent=card.dataset.name+` (${placeKind==='building'?'Toà nhà':'Trang trí'})`;
   document.querySelector('.tab-btn[data-tab="inspector"]').click();
   toast(`🎯 Click vào map để đặt "${card.dataset.name}" — Esc để huỷ`,'ok');
 }
