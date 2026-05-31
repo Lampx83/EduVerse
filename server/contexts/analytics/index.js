@@ -109,8 +109,31 @@ export function getOverview(school_id = 1, sinceMs = 7 * 24 * 3600 * 1000) {
   };
 }
 
+// ── Bootstrap: trả cấu hình GA4 + user info cho client init gtag.js ──
+// Public (kể cả guest) — measurementId không phải bí mật, đã lộ trong source HTML.
+// User info chỉ trả về nếu đã đăng nhập (req.user). Guest → isGuest: true.
+const GA_MEASUREMENT_ID = process.env.GA_MEASUREMENT_ID || '';
+export function getAnalyticsBootstrap(req) {
+  const u = req.user || null;
+  return {
+    measurementId: GA_MEASUREMENT_ID || null,
+    userId: u?.id || null,
+    schoolId: u?.school_id || req.schoolId || null,
+    schoolCode: req.schoolCode || null,
+    role: u?.role || null,
+    plan: u?.plan || (u ? 'free' : null),
+    isGuest: !u,
+  };
+}
+
 // ── Routes ──
 export function attachAnalytics(r) {
+  // GET /api/analytics/bootstrap — public, dùng req.user nếu có.
+  r.get('/api/analytics/bootstrap', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(getAnalyticsBootstrap(req));
+  });
+
   // Thu sự kiện từ client (đã đăng nhập — gate /api/* yêu cầu login). school_id +
   // user_id lấy từ server, client KHÔNG tự khai (chống giả mạo tenant).
   r.post('/api/events', (req, res) => {
