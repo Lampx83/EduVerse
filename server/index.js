@@ -3,7 +3,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
@@ -341,6 +341,18 @@ r.get('/api/confusion', (req, res) => {
   const version = String(req.query.version || '');
   if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
   res.json(getConfusion(version));
+});
+
+// Ví XP/coin/streak per-user. Trước đây ví chỉ ở localStorage → mất khi đổi máy.
+// GET trả ví hiện tại (rỗng nếu chưa có row); PUT ghi đè bằng payload client gửi
+// lên. Last-write-wins — chấp nhận vì 1 user thường chỉ chơi 1 tab tại 1 thời điểm,
+// và FE merge với local trước khi PUT (lấy MAX để tránh tab cũ ghi đè ngược).
+r.get('/api/wallet', requireAuth, (req, res) => {
+  res.json(getUserWallet(req.user.id) || null);
+});
+r.put('/api/wallet', requireAuth, (req, res) => {
+  const w = upsertUserWallet(req.user.id, req.body || {});
+  res.json(w);
 });
 
 // Trục 3: ?role=pupil|student|teacher → trả về badge phù hợp audience + 'all'.

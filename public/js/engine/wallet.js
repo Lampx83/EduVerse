@@ -70,6 +70,109 @@ function _normalizeDaily(d, today) {
 
 function _save(w) {
   try { localStorage.setItem(WALLET_KEY, JSON.stringify(w)); } catch {}
+  _schedulePushToServer(w);
+}
+
+// ── Server sync ──
+// localStorage là cache; nguồn chân lý là DB. Sau login, loadWalletFromServer()
+// kéo ví về và merge MAX với local (xử lý trường hợp client đã có XP cao hơn
+// trước khi bản fix sync lên server). Mỗi _save() schedule push 500ms — gộp
+// các update gần nhau (vd lên Lv → unlock achievement → quest claim).
+let _pushTimer = null;
+let _serverSyncEnabled = false;
+
+function _schedulePushToServer(w) {
+  if (!_serverSyncEnabled) return;
+  clearTimeout(_pushTimer);
+  _pushTimer = setTimeout(() => _pushToServer(w), 500);
+}
+
+async function _pushToServer(w) {
+  try {
+    await fetch('/api/wallet', {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(w),
+    });
+  } catch {}     // offline → cứ giữ trong localStorage, lần save sau retry
+}
+
+/**
+ * Pull ví từ server và merge với local (lấy MAX từng field). Gọi sau khi
+ * `bootstrapMe()` xác nhận có user — trước thời điểm này không biết user_id
+ * nào nên không thể fetch. Nếu cả 2 cùng rỗng → giữ ví rỗng mặc định.
+ */
+export async function loadWalletFromServer() {
+  _serverSyncEnabled = true;
+  let remote = null;
+  try {
+    const r = await fetch('/api/wallet', { credentials: 'same-origin' });
+    if (r.ok) remote = await r.json();
+  } catch {}
+  if (!remote) {
+    // Lần đầu sau khi triển khai: server chưa có ví, đẩy local lên để không
+    // mất XP đang có (tab hiện tại đang chạy).
+    const local = getWallet();
+    if (local.xp > 0 || local.coins > 0) _pushToServer(local);
+    return local;
+  }
+  // Merge MAX: nếu local có XP cao hơn (vd user vừa chơi offline), giữ local;
+  // ngược lại nhận remote. Field non-numeric (achievements, modulesByDay) ưu
+  // tiên remote vì là cumulative state — local chỉ có khi từng được _save().
+  const local = getWallet();
+  const merged = _normalizeWallet({
+    coins:         Math.max(local.coins, remote.coins || 0),
+    xp:            Math.max(local.xp, remote.xp || 0),
+    streak:        Math.max(local.streak, remote.streak || 0),
+    longestStreak: Math.max(local.longestStreak, remote.longestStreak || 0),
+    streakShields: Math.max(local.streakShields, remote.streakShields || 0),
+    // lastVisitDay lấy theo bản gần nhất (chuỗi YYYY-MM-DD so sánh được)
+    lastVisitDay:  (remote.lastVisitDay || '') > (local.lastVisitDay || '')
+                     ? remote.lastVisitDay : local.lastVisitDay,
+    achievements:  [...new Set([...(local.achievements || []), ...(remote.achievements || [])])],
+    vrSessions:    Math.max(local.vrSessions, remote.vrSessions || 0),
+    metaSessions:  Math.max(local.metaSessions, remote.metaSessions || 0),
+    quizzesPassed: Math.max(local.quizzesPassed, remote.quizzesPassed || 0),
+    modulesByDay:  { ...(remote.modulesByDay || {}), ...(local.modulesByDay || {}) },
+    // daily + questsClaimed của hôm nay: ưu tiên cái có date khớp today
+    daily:         _pickDaily(local.daily, remote.daily),
+    questsClaimed: _pickQuestsClaimed(local.questsClaimed, remote.questsClaimed),
+  });
+  try { localStorage.setItem(WALLET_KEY, JSON.stringify(merged)); } catch {}
+  // Nếu merge ra giá trị khác remote → đẩy ngay lên server để DB cũng có bản mới.
+  if (merged.xp > (remote.xp || 0) || merged.coins > (remote.coins || 0)) {
+    _pushToServer(merged);
+  }
+  // Báo cho UI biết ví đã được hydrate từ server (dashboard re-render).
+  try { window.dispatchEvent(new CustomEvent('tizia:wallet-synced', { detail: merged })); } catch {}
+  return merged;
+}
+
+function _pickDaily(a, b) {
+  const today = _today();
+  if (a?.date === today && b?.date !== today) return a;
+  if (b?.date === today && a?.date !== today) return b;
+  // Cùng ngày → max từng counter. Khác ngày → cái mới hơn.
+  if (a?.date === b?.date) {
+    return {
+      date: a?.date || today,
+      checkin:       Math.max(a?.checkin || 0, b?.checkin || 0),
+      modulesPassed: Math.max(a?.modulesPassed || 0, b?.modulesPassed || 0),
+      minutes:       Math.max(a?.minutes || 0, b?.minutes || 0),
+      bestCorrect:   Math.max(a?.bestCorrect || 0, b?.bestCorrect || 0),
+      threeStars:    Math.max(a?.threeStars || 0, b?.threeStars || 0),
+      quizzesPassed: Math.max(a?.quizzesPassed || 0, b?.quizzesPassed || 0),
+    };
+  }
+  return (a?.date || '') > (b?.date || '') ? a : b;
+}
+
+function _pickQuestsClaimed(a, b) {
+  if (a?.date !== b?.date) {
+    return (a?.date || '') > (b?.date || '') ? a : b;
+  }
+  return { date: a.date, ids: [...new Set([...(a?.ids || []), ...(b?.ids || [])])] };
 }
 
 /** Public save (used by gamification UI flows). */

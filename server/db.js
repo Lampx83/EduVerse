@@ -10,7 +10,22 @@ const DATA_DIR = process.env.DATA_DIR
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
-const dbPath = path.join(DATA_DIR, 'pharmacy.db');
+// Đổi tên 2026-05-31: pharmacy.db → tizia.db (rebrand). Nếu file mới chưa có
+// nhưng pharmacy.db legacy còn → rename atomic để giữ data. Cả prod & local
+// đều rename trước khi deploy code này.
+const dbPath = path.join(DATA_DIR, 'tizia.db');
+try {
+  const legacy = path.join(DATA_DIR, 'pharmacy.db');
+  if (!fs.existsSync(dbPath) && fs.existsSync(legacy)) {
+    fs.renameSync(legacy, dbPath);
+    // Đổi tên cả WAL/SHM file để SQLite không lock vào file cũ.
+    for (const ext of ['-wal', '-shm']) {
+      const oldF = legacy + ext, newF = dbPath + ext;
+      if (fs.existsSync(oldF)) fs.renameSync(oldF, newF);
+    }
+    console.log(`[db] migrated ${legacy} → ${dbPath}`);
+  }
+} catch (e) { console.warn('[db] legacy rename failed', e.message); }
 export const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
@@ -920,6 +935,123 @@ export function redeemSchoolCode({ code_id, user_id, outcome }) {
 }
 export function listRedemptionsForUser(user_id) {
   return listRedemptionsForUserStmt.all(Number(user_id));
+}
+
+// ── User wallets ──
+// Ví XP/coin/streak/daily-quest per-user. Trước đây toàn bộ state nằm ở localStorage
+// (key tizia:wallet:v1) → mất ngay khi đổi máy / clear cache / dùng cửa sổ ẩn danh,
+// và nhiều user trên cùng máy dùng chung 1 ví. Bảng này khoá theo user_id để
+// XP/level theo người, không theo trình duyệt. Các trường JSON (achievements,
+// modules_by_day, daily, quests_claimed) lưu nguyên payload từ client để giữ
+// engine pure-client; server chỉ là kho đồng bộ + clamp số.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_wallets (
+    user_id          INTEGER PRIMARY KEY,
+    coins            INTEGER NOT NULL DEFAULT 0,
+    xp               INTEGER NOT NULL DEFAULT 0,
+    streak           INTEGER NOT NULL DEFAULT 0,
+    longest_streak   INTEGER NOT NULL DEFAULT 0,
+    streak_shields   INTEGER NOT NULL DEFAULT 0,
+    last_visit_day   TEXT    NOT NULL DEFAULT '',
+    achievements     TEXT    NOT NULL DEFAULT '[]',
+    vr_sessions      INTEGER NOT NULL DEFAULT 0,
+    meta_sessions    INTEGER NOT NULL DEFAULT 0,
+    quizzes_passed   INTEGER NOT NULL DEFAULT 0,
+    modules_by_day   TEXT    NOT NULL DEFAULT '{}',
+    daily            TEXT    NOT NULL DEFAULT '{}',
+    quests_claimed   TEXT    NOT NULL DEFAULT '{}',
+    updated_at       INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+`);
+
+const getUserWalletStmt = db.prepare(`SELECT * FROM user_wallets WHERE user_id = ?`);
+const upsertUserWalletStmt = db.prepare(`
+  INSERT INTO user_wallets (user_id, coins, xp, streak, longest_streak, streak_shields,
+                            last_visit_day, achievements, vr_sessions, meta_sessions,
+                            quizzes_passed, modules_by_day, daily, quests_claimed, updated_at)
+  VALUES (@user_id, @coins, @xp, @streak, @longest_streak, @streak_shields,
+          @last_visit_day, @achievements, @vr_sessions, @meta_sessions,
+          @quizzes_passed, @modules_by_day, @daily, @quests_claimed, @updated_at)
+  ON CONFLICT(user_id) DO UPDATE SET
+    coins          = excluded.coins,
+    xp             = excluded.xp,
+    streak         = excluded.streak,
+    longest_streak = excluded.longest_streak,
+    streak_shields = excluded.streak_shields,
+    last_visit_day = excluded.last_visit_day,
+    achievements   = excluded.achievements,
+    vr_sessions    = excluded.vr_sessions,
+    meta_sessions  = excluded.meta_sessions,
+    quizzes_passed = excluded.quizzes_passed,
+    modules_by_day = excluded.modules_by_day,
+    daily          = excluded.daily,
+    quests_claimed = excluded.quests_claimed,
+    updated_at     = excluded.updated_at
+`);
+
+/** Đọc ví của 1 user. Trả null nếu chưa có row (caller fallback ví rỗng). */
+export function getUserWallet(user_id) {
+  const row = getUserWalletStmt.get(Number(user_id));
+  if (!row) return null;
+  // Parse các trường JSON; lỗi parse → giá trị mặc định an toàn.
+  const parse = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
+  return {
+    coins:          row.coins | 0,
+    xp:             row.xp | 0,
+    streak:         row.streak | 0,
+    longestStreak:  row.longest_streak | 0,
+    streakShields:  row.streak_shields | 0,
+    lastVisitDay:   row.last_visit_day || '',
+    achievements:   parse(row.achievements, []),
+    vrSessions:     row.vr_sessions | 0,
+    metaSessions:   row.meta_sessions | 0,
+    quizzesPassed:  row.quizzes_passed | 0,
+    modulesByDay:   parse(row.modules_by_day, {}),
+    daily:          parse(row.daily, {}),
+    questsClaimed:  parse(row.quests_claimed, {}),
+    // KHÔNG dùng `| 0` cho timestamp ms — vượt 2^31 sẽ bị truncate về 32-bit signed.
+    updatedAt:      Number(row.updated_at) || 0,
+  };
+}
+
+const _toInt = (v, max = 1e9) => Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
+const _toStr = (v, max = 32) => String(v || '').slice(0, max);
+const _toJson = (v, fallback) => {
+  // Accept either object/array hoặc JSON string. Re-serialize để chuẩn hoá + giới hạn size.
+  try {
+    const obj = (typeof v === 'string') ? JSON.parse(v) : (v ?? fallback);
+    const s = JSON.stringify(obj);
+    return s.length > 64_000 ? JSON.stringify(fallback) : s;     // 64KB cap — đủ rộng cho modulesByDay
+  } catch { return JSON.stringify(fallback); }
+};
+
+/**
+ * Ghi đè ví của user. Server không tự tính XP — chỉ persist payload từ client.
+ * Clamp số nguyên để chống abuse cơ bản (XP/coin không âm, ≤1 tỷ).
+ * Field undefined → giữ giá trị hiện có (merge với row cũ nếu có).
+ */
+export function upsertUserWallet(user_id, w = {}) {
+  const cur = getUserWallet(user_id) || {};
+  const pick = (k, def = 0) => (w[k] !== undefined ? w[k] : (cur[k] ?? def));
+  upsertUserWalletStmt.run({
+    user_id:        Number(user_id),
+    coins:          _toInt(pick('coins'), 1e12),
+    xp:             _toInt(pick('xp'), 1e12),
+    streak:         _toInt(pick('streak'), 10000),
+    longest_streak: _toInt(pick('longestStreak'), 10000),
+    streak_shields: _toInt(pick('streakShields'), 1000),
+    last_visit_day: _toStr(pick('lastVisitDay', ''), 16),
+    achievements:   _toJson(pick('achievements', []), []),
+    vr_sessions:    _toInt(pick('vrSessions'), 1e9),
+    meta_sessions:  _toInt(pick('metaSessions'), 1e9),
+    quizzes_passed: _toInt(pick('quizzesPassed'), 1e9),
+    modules_by_day: _toJson(pick('modulesByDay', {}), {}),
+    daily:          _toJson(pick('daily', {}), {}),
+    quests_claimed: _toJson(pick('questsClaimed', {}), {}),
+    updated_at:     Date.now(),
+  });
+  return getUserWallet(user_id);
 }
 
 console.log(`[db] SQLite open at ${dbPath}`);

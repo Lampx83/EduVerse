@@ -1,7 +1,7 @@
 // Dev proxy: chạy localhost:8041 nhưng mọi API/auth/app động đẩy thẳng sang
 // https://tizia.vn — dùng để chỉnh sửa FE trong public/ và thấy ngay data
 // (DB + session + AI) của prod. KHÔNG dùng cho prod, KHÔNG đụng tới
-// data/pharmacy.db local. Chạy: `npm run dev:prod`.
+// data/tizia.db local. Chạy: `npm run dev:prod`.
 //
 // Nguyên tắc proxy:
 //   - file tồn tại trong public/ hoặc node_modules/@mediapipe/tasks-vision/

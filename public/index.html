@@ -606,8 +606,14 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     const milestone = nextMilestone(MODULES, progress, hasContent, subjectLabels);
 
     document.getElementById('dashboard').style.display = '';
-    renderWalletPills(document.getElementById('dash-identity'), {
-      wallet: loginEvent.wallet, progress, modules: MODULES, atRisk: streakAtRisk(),
+    const renderPills = (w) => renderWalletPills(document.getElementById('dash-identity'), {
+      wallet: w, progress, modules: MODULES, atRisk: streakAtRisk(),
+    });
+    renderPills(loginEvent.wallet);
+    // Ví được hydrate từ server sau khi auth.js gọi loadWalletFromServer() —
+    // re-render khi xong để hiển thị đúng XP/level từ DB.
+    window.addEventListener('tizia:wallet-synced', (e) => {
+      try { renderPills(e.detail); renderDailyQuests(document.getElementById('dash-quests'), getDailyQuests()); } catch {}
     });
     renderContinueCard(document.getElementById('dash-continue'), { rec, domain: DOMAIN, milestone });
     renderDailyQuests(document.getElementById('dash-quests'), getDailyQuests());

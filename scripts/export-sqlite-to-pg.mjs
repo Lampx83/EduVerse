@@ -7,7 +7,7 @@
 // KHÔNG sửa SQLite — chỉ xuất file để review trước khi cutover Phase 1.
 //
 // Dùng:
-//   node scripts/export-sqlite-to-pg.mjs [--db data/pharmacy.db] [--out migrations/postgres/data-export.sql]
+//   node scripts/export-sqlite-to-pg.mjs [--db data/tizia.db] [--out migrations/postgres/data-export.sql]
 //
 // Sau khi review, nạp vào Postgres:
 //   psql -d eduverse -f migrations/postgres/001_schema.sql
@@ -33,7 +33,7 @@ function argVal(flag, dflt) {
   const i = args.indexOf(flag);
   return i >= 0 && args[i + 1] ? args[i + 1] : dflt;
 }
-const DB_PATH  = path.resolve(argVal('--db', 'data/pharmacy.db'));
+const DB_PATH  = path.resolve(argVal('--db', 'data/tizia.db'));
 const OUT_PATH = path.resolve(argVal('--out', 'migrations/postgres/data-export.sql'));
 
 if (!fs.existsSync(DB_PATH)) {

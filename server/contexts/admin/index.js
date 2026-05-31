@@ -295,7 +295,7 @@ export function attachAdmin(r) {
     let dbSize = null;
     try {
       const { statSync } = await import('node:fs');
-      const dbPath = process.env.DATA_DIR ? `${process.env.DATA_DIR}/pharmacy.db` : null;
+      const dbPath = process.env.DATA_DIR ? `${process.env.DATA_DIR}/tizia.db` : null;
       if (dbPath) dbSize = statSync(dbPath).size;
     } catch {}
     res.json({

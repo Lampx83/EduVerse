@@ -3,6 +3,7 @@
 // chỉ cần helpers gọi API + cache user (đồng bộ) cho UI.
 
 import { KEYS, lsGet, lsSet } from './engine/storage.js';
+import { loadWalletFromServer } from './engine/wallet.js';
 
 let _me = null;      // { id, username, display_name, role } hoặc null
 let _mePromise = null;
@@ -122,10 +123,13 @@ export async function fetchMe() {
 }
 
 // Đồng bộ sang storage để code cũ (api.js: getPlayerName) đọc được mà không cần await.
+// Đồng thời kéo ví (XP/coin/streak) từ server về — trước đây ví chỉ ở localStorage
+// nên đổi máy / clear cache = mất level. Kéo bất đồng bộ, không block UI.
 function syncToLocal(user) {
   if (!user) return;
   lsSet(KEYS.PLAYER_NAME, user.display_name);
   lsSet(KEYS.ROLE, user.role);
+  loadWalletFromServer().catch(() => {});
 }
 
 // Truy cập đồng bộ — chỉ khả dụng sau khi fetchMe() đã chạy hoặc sau login().
