@@ -128,6 +128,9 @@ const PUBLIC_PATH_PREFIXES = [
   '/js/',
   // Bản đồ khuôn viên (iframe nhúng vào school.html) — không có bí mật, là HTML/JS thuần.
   '/campus-proto/',
+  // Layout override của bản đồ — guest cũng cần fetch để render đúng map đã chỉnh.
+  // POST (super-admin sửa) ở /api/admin/campus-layout — đã có requireAdmin riêng.
+  '/api/campus-layout/',
   '/manifest.webmanifest', '/sw.js', '/favicon',
   '/vendor/', '/models/',
 ];

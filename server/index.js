@@ -20,7 +20,8 @@ import { attachAnalytics } from './contexts/analytics/index.js';
 import { sendGA4Event } from './contexts/analytics/ga4-mp.js';
 import { attachBilling } from './contexts/billing/index.js';
 import { attachIntegration } from './contexts/integration/index.js';
-import { attachAdmin } from './contexts/admin/index.js';
+import { attachAdmin, requireAdmin } from './contexts/admin/index.js';
+import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
 // Payment context — chỉ nạp khi PAYMENT_ENABLED=1 (dynamic import bên dưới) để bảng
 // payment + route KHÔNG xuất hiện ở deployment chưa bật thanh toán.
@@ -272,6 +273,7 @@ attachIntegration(r);
 // Security token endpoint (/api/csrf) + Admin xuyên tenant (role=admin).
 attachSecurity(r);
 attachAdmin(r);
+attachCampusLayout(r, requireAdmin);
 
 r.post('/api/attempts', requireAuth, (req, res) => {
   const b = req.body ?? {};

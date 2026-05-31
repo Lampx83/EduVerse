@@ -395,6 +395,17 @@ const CAMPUSES = {
     trees:[[5.0,5.0],[6.4,3.6],[9.0,2.8],[12.0,2.6],[15.0,2.8],[18.2,3.4],[20.0,5.0],[20.8,7.2],
       [20.6,9.6],[20.0,12.0],[4.6,7.4],[4.4,9.8],[4.8,12.2],[6.6,13.6],[9.2,14.2],[12.6,14.4],[18.8,12.8]],
     cars:[],
+    // hàng rào THẤP bao quanh khuôn viên — chừa khe ở gx~15.5, gy~13 làm cổng (đã có {type:'gate'})
+    props:[
+      // cạnh TRÊN (gy=2.2): 4 đoạn ngang
+      {k:'fenceLowH',gx:6.5,gy:2.2},{k:'fenceLowH',gx:10.5,gy:2.2},{k:'fenceLowH',gx:14.5,gy:2.2},{k:'fenceLowH',gx:18.5,gy:2.2},
+      // cạnh DƯỚI (gy=14.2): bỏ khoảng gx 14–17 làm cổng
+      {k:'fenceLowH',gx:6.5,gy:14.2},{k:'fenceLowH',gx:10.5,gy:14.2},{k:'fenceLowH',gx:19.0,gy:14.2},
+      // cạnh TRÁI (gx=4.0): 3 đoạn dọc
+      {k:'fenceLowV',gx:4.0,gy:4.5},{k:'fenceLowV',gx:4.0,gy:8.5},{k:'fenceLowV',gx:4.0,gy:12.5},
+      // cạnh PHẢI (gx=21.0): 3 đoạn dọc
+      {k:'fenceLowV',gx:21.0,gy:4.5},{k:'fenceLowV',gx:21.0,gy:8.5},{k:'fenceLowV',gx:21.0,gy:12.5},
+    ],
     tints:{ mam:0xffa6c6, choi:0xffd773, la:0xa9eab2, canteen:0xffba90 },   // pastel rực hơn cho dễ thương
     walkways:[
       {along:'y',a:15.1,b:15.9,lo:11.6,hi:13.0},   // lối từ cổng vào khu chơi
@@ -408,6 +419,18 @@ const CAMPUSES = {
 
 const params=new URLSearchParams(location.search);
 const _dom=params.get('domain')||'pharmacy';
+
+// ─ Override layout từ /api/campus-layout/:domain (super-admin lưu qua /admin/campus-editor) ─
+// Top-level await OK vì script type="module". Im lặng fallback nếu không có override.
+try{
+  const _r=await fetch(`/api/campus-layout/${_dom}`,{credentials:'same-origin'});
+  if(_r.ok){ const _j=await _r.json();
+    if(_j&&_j.layout&&typeof _j.layout==='object'){
+      CAMPUSES[_dom]=Object.assign(CAMPUSES[_dom]||{}, _j.layout);
+      console.log('[campus] override applied for',_dom);
+    } }
+}catch(e){ /* fallback im lặng — dùng default hardcoded */ }
+
 const C=CAMPUSES[_dom]||CAMPUSES.pharmacy;
 document.title=`Campus 2.5D · ${C.title}`;
 { const _cr=document.querySelector('.credit'); if(_cr&&C.credit) _cr.textContent=C.credit; }
@@ -434,14 +457,24 @@ const WALKS = [...PATHS, ...(C.walkways||[])];
 
 // cây ở dải cỏ trống + xe trên đường/bãi
 const EXTRAS={ tree:KAY('bush'), car:KAY('car_hatchback'), light:KAY('streetlight'), bench:KAY('bench'),
-  fenceA:PACK.sub('fence-1x4'), fenceB:PACK.sub('fence-1x4'), stand:PACK.pp('grandstand') };
-const PREP={ tree:2.2, car:1.0, light:1.5, bench:1.1, fenceA:1.5, fenceB:1.5, stand:0.4 };   // scale lúc dựng sprite
-const BLIT={ tree:0.92, car:0.8, light:0.85, bench:0.7, fenceA:1.0, fenceB:1.0, stand:0.85 }; // scale lúc vẽ lên map
-const ROT={ fenceB:90 };   // fenceB xoay 90° để chạy theo cạnh vuông góc (tường rào)
-// props (đèn/ghế…) đặt tay qua C.props=[{k,gx,gy}]; cây/xe qua trees/cars
-const DECOR=[ ...(C.trees||[]).map(([gx,gy])=>({k:'tree',gx,gy})),
-  ...(C.cars||[]).map(([gx,gy])=>({k:'car',gx,gy})),
-  ...(C.props||[]).map(p=>({k:p.k,gx:p.gx,gy:p.gy})) ];
+  fenceA:PACK.sub('fence-1x4'), fenceB:PACK.sub('fence-1x4'), stand:PACK.pp('grandstand'),
+  // rào THẤP cho Mầm non — bé nhìn được ra ngoài, người lớn vẫn thấy bé bên trong
+  fenceLowH:PACK.sub('fence-low'), fenceLowV:PACK.sub('fence-low') };
+const PREP={ tree:2.2, car:1.0, light:1.5, bench:1.1, fenceA:1.5, fenceB:1.5, stand:0.4, fenceLowH:1.4, fenceLowV:1.4 };
+const BLIT={ tree:0.92, car:0.8, light:0.85, bench:0.7, fenceA:1.0, fenceB:1.0, stand:0.85, fenceLowH:1.0, fenceLowV:1.0 };
+const ROT={ fenceB:90, fenceLowV:90 };   // *V xoay 90° để chạy theo cạnh vuông góc (tường rào)
+// props (đèn/ghế…) đặt tay qua C.props=[{k,gx,gy}]; cây/xe qua trees/cars.
+// Trong EDIT mode, mỗi item DECOR mang `_src` (trees/cars/props) + `_idx` để khi drag/delete
+// còn biết đường update ngược lại C.{trees|cars|props} — chỗ thực sự được serialize khi save.
+let DECOR=[];
+function rebuildDecor(){
+  DECOR = [
+    ...((C.trees||[]).map(([gx,gy],i)=>({k:'tree', gx, gy, _src:'trees', _idx:i}))),
+    ...((C.cars ||[]).map(([gx,gy],i)=>({k:'car',  gx, gy, _src:'cars',  _idx:i}))),
+    ...((C.props||[]).map((p,i)    =>({k:p.k,     gx:p.gx, gy:p.gy, _src:'props', _idx:i}))),
+  ];
+}
+rebuildDecor();
 
 // ====== OFFSCREEN ISO SPRITE RENDERER ======
 const SPR=380;
@@ -474,12 +507,27 @@ function tint(spr,color){ const cv=document.createElement('canvas'); cv.width=sp
 
 let DS=0.215;
 const bsprite={}, esprite={}, modelCache={};
+let __GS = 1;   // global scale của model, dùng cho re-render sprite (rotate/recolor)
+
+// Re-render sprite của 1 building (gọi khi đổi rot/tint trong edit mode). idx = index trong BUILDINGS.
+window.__rerenderBuilding = function(idx){
+  const b = BUILDINGS[idx]; if(!b || !modelCache[b.url]) return false;
+  const sc = modelCache[b.url].clone(true);
+  prep(sc, __GS);
+  if(TINTS[b.id]!=null) recolor(sc, TINTS[b.id]);
+  sc.rotation.y = ((b.rot||0)*Math.PI/180);
+  const spr = renderSprite(sc);
+  const prev = bsprite[b.id] || { idx };
+  bsprite[b.id] = { spr, tint: tint(spr, idCol(prev.idx)), idx: prev.idx };
+  return true;
+};
 
 (async function build(){
   const items=[];
   for(const b of BUILDINGS){ try{ if(!modelCache[b.url]) modelCache[b.url]=await load(b.url); items.push({b, sc:modelCache[b.url].clone(true)}); }catch(e){} }
   let maxFoot=0; for(const it of items) maxFoot=Math.max(maxFoot, footOf(it.sc));
   const GS = maxFoot? 4/maxFoot : 1;
+  __GS = GS;
   let maxDim=0; for(const it of items){ const bb=prep(it.sc,GS); if(TINTS[it.b.id]!=null) recolor(it.sc, TINTS[it.b.id]); const v=bb.getSize(new THREE.Vector3()); maxDim=Math.max(maxDim,v.x,v.y,v.z); }
   const FH=maxDim*0.62;
   rcam.left=-FH; rcam.right=FH; rcam.top=FH; rcam.bottom=-FH; rcam.lookAt(0, maxDim*0.34, 0); rcam.updateProjectionMatrix(); rcam.updateMatrixWorld(true);
@@ -493,6 +541,22 @@ const bsprite={}, esprite={}, modelCache={};
 
 // ====== VẼ MẶT ĐẤT ======
 let hovered=-1;
+
+// ====== EDIT MODE (super-admin chỉnh map qua /admin/campus-editor.html) ======
+// Bật khi ?edit=1 + được nhúng trong iframe (parent là admin page). Thông tin trao đổi
+// qua window.postMessage: iframe → parent (select/move/delete/dirty), parent → iframe
+// (set field, delete, rotate). Mục đích: tách logic UI editor ra parent, iframe chỉ lo
+// canvas + mutation tại chỗ + redraw. Khi không EDIT thì code dưới không chạy.
+const EDIT_PARAMS = new URLSearchParams(location.search);
+const EDIT = EDIT_PARAMS.get('edit')==='1';
+let selected=-1;   // building index đang chọn (-1 = không)
+function postToParent(msg){ try{ window.parent && window.parent!==window && window.parent.postMessage(msg,'*'); }catch{} }
+
+// Expose ra window để admin/campus-editor.html đọc state (module script không tự gắn vào window).
+window.CAMPUSES = CAMPUSES;
+window.__campusDomain = _dom;
+window.__getBuildings = () => BUILDINGS;
+window.__campusP = (gx,gy) => P(gx,gy);   // grid → pixel cho test/verify từ ngoài
 function poly(pts,color,stroke,lw=1){ ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y); ctx.closePath();
   if(color){ctx.fillStyle=color;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();} }
 const tileRect=(gx,gy,w,d)=>[P(gx,gy),P(gx+w,gy),P(gx+w,gy+d),P(gx,gy+d)];
@@ -678,9 +742,11 @@ function draw(){
     if(it.deco){ blit(ctx, esprite[it.deco.k], it.p, DS*(BLIT[it.deco.k]||0.8)); continue; }
     if(it.play){ drawPlay(it.play); continue; }
     if(it.crit){ critter(it.p.x, it.p.y, it.crit.e, it.crit.s); continue; }
-    const sp=bsprite[it.b.id]; if(!sp) continue; const sc=DS*it.b.s; const hl=it.i===hovered;
+    const sp=bsprite[it.b.id]; if(!sp) continue; const sc=DS*it.b.s; const hl=it.i===hovered; const sel=EDIT && it.i===selected;
     shadowAt(it.p, it.b.s);
-    if(hl){ ctx.fillStyle='rgba(255,206,84,.5)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5*it.b.s,TH*0.5*it.b.s,0,0,7); ctx.fill(); ctx.filter='brightness(1.13)'; }
+    if(sel){ ctx.fillStyle='rgba(96,165,250,.55)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.62*it.b.s,TH*0.62*it.b.s,0,0,7); ctx.fill();
+             ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2.5; ctx.stroke(); ctx.filter='brightness(1.13)'; }
+    if(hl && !sel){ ctx.fillStyle='rgba(255,206,84,.5)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5*it.b.s,TH*0.5*it.b.s,0,0,7); ctx.fill(); ctx.filter='brightness(1.13)'; }
     blit(ctx, sp.spr, it.p, sc); ctx.filter='none'; blit(hctx, sp.tint, it.p, sc);
     if(it.b.flag) flag(it.p, sc);
     pins.push({x:it.p.x, y:it.p.y-ANCHOR.y*sc+4, e:it.b.emoji, c:it.b.pin||'#c0392b'}); }
@@ -716,20 +782,30 @@ function resize(){ const w=innerWidth,h=innerHeight;
 addEventListener('resize', resize); resize();
 if(EMBED){ const bk=document.querySelector('.back'); if(bk) bk.style.display='none'; }
 
-// Hit-test tại toạ độ client → {kind:'building'|'facility', idx, item} | null
-// Toà nhà: đọc pixel từ hit-canvas (id-color). Facility: tìm pin gần nhất trong bán kính chạm.
+// Hit-test tại toạ độ client → {kind:'building'|'facility'|'decor', idx, item} | null
+// Building: đọc pixel hit-canvas. Facility/Decor: nearest neighbour trong bán kính.
+// Edit mode (super-admin): bật cả decor (cây/prop/xe). View mode: chỉ building + facility.
 function hitAt(cx, cy){
   const px = hctx.getImageData(cx*DPR, cy*DPR, 1, 1).data;
   if(px[3] > 10){ const id = colId(px[0], px[1], px[2]); if(id >= 0) return {kind:'building', idx:id, item:BUILDINGS[id]}; }
-  // Facility pins: tâm pin nằm cao hơn điểm chân ~ (h/2+6) = ~18.5px; ta dùng bán kính chạm ≈ 24px
   let best = null, bestD = Infinity;
+  // Facility pins (cả 2 mode)
   for(let i=0; i<FACILITIES.length; i++){
     const f = FACILITIES[i], p = P(f.gx, f.gy);
     const dx = cx - p.x, dy = cy - (p.y - 12);
     const d = dx*dx + dy*dy;
     if(d < bestD){ bestD = d; best = {kind:'facility', idx:i, item:f}; }
   }
-  if(best && bestD <= 28*28) return best;
+  // Decor (chỉ edit mode — để view bình thường không vô tình chọn cây)
+  if(EDIT){
+    for(let i=0; i<DECOR.length; i++){
+      const d0 = DECOR[i], p = P(d0.gx, d0.gy);
+      const dx = cx - p.x, dy = cy - p.y;
+      const d = dx*dx + dy*dy;
+      if(d < bestD){ bestD = d; best = {kind:'decor', idx:i, item:d0}; }
+    }
+  }
+  if(best && bestD <= 26*26) return best;
   return null;
 }
 
@@ -740,14 +816,28 @@ canvas.addEventListener('pointermove', e=>{
   const h = hitAt(e.clientX, e.clientY);
   const id = (h && h.kind === 'building') ? h.idx : -1;
   if(id !== hovered){ hovered = id; draw(); }
-  if(h){ tip.textContent = `${h.item.emoji} ${h.item.name}`; tip.style.left = e.clientX+'px'; tip.style.top = e.clientY+'px'; tip.style.opacity = 1; canvas.style.cursor = 'pointer'; }
-  else { tip.style.opacity = 0; canvas.style.cursor = 'default'; }
+  if(h){
+    const label = (h.kind==='decor') ? `${h.item.k} (${h.item.gx}, ${h.item.gy})` : `${h.item.emoji} ${h.item.name}`;
+    tip.textContent = label; tip.style.left = e.clientX+'px'; tip.style.top = e.clientY+'px'; tip.style.opacity = 1;
+    canvas.style.cursor = (EDIT && h.kind==='decor') ? 'grab' : 'pointer';
+  } else { tip.style.opacity = 0; canvas.style.cursor = 'default'; }
 });
 canvas.addEventListener('pointerleave', ()=>{ tip.style.opacity = 0; if(hovered !== -1){ hovered = -1; draw(); } });
 
 // Tap/click: tự hit-test tại điểm chạm thay vì dựa vào `hovered` (vì touch không có hover)
 function handleTap(cx, cy){
   const h = hitAt(cx, cy);
+  if(EDIT){
+    // Click building → select + báo parent (mở inspector). Click decor → KHÔNG select
+    // (decor sửa qua drag, không có inspector). Click nền → bỏ chọn building.
+    if(h && h.kind==='building'){
+      selected = h.idx; draw();
+      postToParent({type:'campus-select', idx:selected, item: BUILDINGS[selected]});
+    } else if(!h){
+      selected = -1; draw(); postToParent({type:'campus-deselect'});
+    }
+    return;
+  }
   if(!h) return;
   if(h.kind === 'building') enter(h.item, h.idx);
   else enter(h.item, null);
@@ -761,6 +851,113 @@ canvas.addEventListener('touchend', e=>{
     handleTap(t.clientX, t.clientY);
   }
 }, {passive:false});
+
+// ====== EDIT MODE: drag-to-move + keyboard + lệnh từ parent ======
+if(EDIT){
+  const pxToGrid=(cx,cy)=>({ gx:(cx-ox)/TW + (cy-oy)/TH, gy:(cy-oy)/TH - (cx-ox)/TW });
+  const snap=(v,step=0.5)=>Math.round(v/step)*step;
+
+  // Propagate vị trí decor về C.{trees|cars|props} — chỗ duy nhất được serialize khi save.
+  function syncDecorBack(d){
+    if(d._src==='trees') C.trees[d._idx] = [d.gx, d.gy];
+    else if(d._src==='cars') C.cars[d._idx] = [d.gx, d.gy];
+    else if(d._src==='props'){ C.props[d._idx].gx = d.gx; C.props[d._idx].gy = d.gy; }
+  }
+
+  let drag=null;   // {kind, idx, startGx, startGy, offGx, offGy}
+  canvas.addEventListener('pointerdown', e=>{
+    if(e.button!==0) return;
+    const h=hitAt(e.clientX, e.clientY);
+    if(!h || (h.kind!=='building' && h.kind!=='decor')) return;
+    const g=pxToGrid(e.clientX, e.clientY);
+    const item = h.kind==='building' ? BUILDINGS[h.idx] : DECOR[h.idx];
+    drag={ kind:h.kind, idx:h.idx, startGx:item.gx, startGy:item.gy, offGx:g.gx-item.gx, offGy:g.gy-item.gy };
+    if(h.kind==='building'){ selected=h.idx; }
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor='grabbing';
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!drag) return;
+    const g=pxToGrid(e.clientX, e.clientY);
+    const newGx=snap(g.gx-drag.offGx), newGy=snap(g.gy-drag.offGy);
+    if(drag.kind==='building'){
+      const b=BUILDINGS[drag.idx]; b.gx=newGx; b.gy=newGy;
+    } else {
+      const d=DECOR[drag.idx]; d.gx=newGx; d.gy=newGy; syncDecorBack(d);
+    }
+    draw();
+  });
+  function endDrag(e){
+    if(!drag) return;
+    if(drag.kind==='building'){
+      const b=BUILDINGS[drag.idx];
+      const moved = b.gx!==drag.startGx || b.gy!==drag.startGy;
+      if(moved) postToParent({type:'campus-move', idx:drag.idx, gx:b.gx, gy:b.gy, item:b});
+      else      postToParent({type:'campus-select', idx:drag.idx, item:b});
+    } else {
+      const d=DECOR[drag.idx];
+      const moved = d.gx!==drag.startGx || d.gy!==drag.startGy;
+      if(moved) postToParent({type:'campus-decor-move', idx:drag.idx, src:d._src, srcIdx:d._idx, k:d.k, gx:d.gx, gy:d.gy});
+    }
+    drag=null; canvas.style.cursor='default';
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  // Keyboard: R xoay 90°, Del/Backspace xoá, Esc bỏ chọn
+  document.addEventListener('keydown', e=>{
+    if(selected<0) return;
+    if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    const b=BUILDINGS[selected];
+    if(e.key==='r' || e.key==='R'){
+      b.rot=((b.rot||0)+90)%360;
+      window.__rerenderBuilding && window.__rerenderBuilding(selected);
+      draw();
+      postToParent({type:'campus-rotate', idx:selected, rot:b.rot, item:b});
+      e.preventDefault();
+    } else if(e.key==='Delete' || e.key==='Backspace'){
+      const removed=BUILDINGS.splice(selected,1)[0];
+      postToParent({type:'campus-delete', idx:selected, item:removed});
+      selected=-1; draw();
+      e.preventDefault();
+    } else if(e.key==='Escape'){
+      selected=-1; draw(); postToParent({type:'campus-deselect'});
+    }
+  });
+
+  // Nhận lệnh từ parent inspector: set field, delete, rotate
+  window.addEventListener('message', e=>{
+    const m=e.data; if(!m || !m.type) return;
+    if(m.type==='campus-cmd-set'){
+      const i=m.idx; if(i==null || !BUILDINGS[i]) return;
+      const b=BUILDINGS[i];
+      // chỉ cho sửa các field an toàn — không cho đổi url/model qua đây (Phase 2.2 dùng palette)
+      const allowed=new Set(['name','emoji','pin','s','rot','flag','gx','gy']);
+      if(allowed.has(m.key)){ b[m.key]=m.value;
+        // rot baked vào sprite lúc render — phải re-render khi đổi
+        if(m.key==='rot' && window.__rerenderBuilding) window.__rerenderBuilding(i);
+        draw();
+        postToParent({type:'campus-dirty'});
+      }
+    } else if(m.type==='campus-cmd-delete'){
+      const i=m.idx; if(i==null || !BUILDINGS[i]) return;
+      BUILDINGS.splice(i,1); selected=-1; draw();
+      postToParent({type:'campus-dirty'});
+    } else if(m.type==='campus-cmd-select'){
+      const i=m.idx; if(i==null || !BUILDINGS[i]) return;
+      selected=i; draw();
+      postToParent({type:'campus-select', idx:i, item:BUILDINGS[i]});
+    } else if(m.type==='campus-cmd-state'){
+      // parent hỏi snapshot — trả full layout (buildings + props + tints…)
+      postToParent({type:'campus-state', layout: CAMPUSES[_dom]});
+    }
+  });
+
+  // Báo parent đã sẵn sàng — gửi danh sách building để inspector dropdown
+  postToParent({type:'campus-ready', domain:_dom, buildings:BUILDINGS.map((b,i)=>({i, id:b.id, name:b.name, emoji:b.emoji}))});
+
+  console.log('[campus-editor] EDIT mode ON — click building để chọn, drag để di chuyển, R xoay, Del xoá');
+}
 </script>
 </body>
 </html>
