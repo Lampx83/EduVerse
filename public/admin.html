@@ -299,6 +299,29 @@
     </div>
   </div>
 
+  <!-- View / edit wallet (XP / coin / streak / achievements / modules) -->
+  <div class="modal" id="modal-wallet" style="display:none;max-width:640px">
+    <h3>🎮 Ví game của HS/SV</h3>
+    <p class="sub" id="ew-sub"></p>
+    <div id="ew-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="grp"><label>XP</label><input id="ew-xp" type="number" min="0"></div>
+      <div class="grp"><label>Coin</label><input id="ew-coins" type="number" min="0"></div>
+      <div class="grp"><label>Streak (chuỗi ngày)</label><input id="ew-streak" type="number" min="0"></div>
+      <div class="grp"><label>Streak shields (khiên)</label><input id="ew-shields" type="number" min="0"></div>
+    </div>
+    <div class="ctx" style="font-size:12px;background:rgba(59,130,246,0.08);border-left-color:#3b82f6">
+      ℹ️ Sửa XP/coin trực tiếp ghi đè ví của user. Achievements + modules đã hoàn thành chỉ xem, không sửa qua form này.
+    </div>
+    <details style="margin-top:10px;font-size:13px"><summary>Chi tiết achievements / modules theo ngày / quest</summary>
+      <pre id="ew-raw" style="background:#0f1729;padding:10px;border-radius:6px;max-height:240px;overflow:auto;font-size:11px"></pre>
+    </details>
+    <div class="actions">
+      <button class="btn" id="ew-cancel">Đóng</button>
+      <button class="btn primary" id="ew-submit">💾 Lưu ví</button>
+    </div>
+  </div>
+
   <!-- Confirm delete (chung cho mọi entity) -->
   <div class="modal" id="modal-confirm" style="display:none;border-color:rgba(239,68,68,0.4)">
     <h3 id="cf-title">⚠️ Xác nhận xoá</h3>

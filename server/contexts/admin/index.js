@@ -56,8 +56,31 @@ const Q = {
     (SELECT COUNT(*) FROM requests r WHERE r.school_id=s.id) AS requests
     FROM schools s ORDER BY s.id`),
   createSchool: db.prepare(`INSERT INTO schools (code,name,domain,created_at) VALUES (@code,@name,@domain,@t)`),
-  users: db.prepare(`SELECT id, username, display_name, role, school_id, email, plan, plan_expires_at, billing_cycle, created_at, last_login
-    FROM users WHERE (@school_id IS NULL OR school_id=@school_id) ORDER BY created_at DESC LIMIT @limit`),
+  // LEFT JOIN user_wallets để admin nhìn được level/XP/coin/streak — wallet là
+  // nguồn chân lý cho game-state. Row chưa có wallet → các field NULL → FE
+  // hiển thị "—" / Lv1 mặc định.
+  users: db.prepare(`
+    SELECT u.id, u.username, u.display_name, u.role, u.school_id, u.email,
+           u.plan, u.plan_expires_at, u.billing_cycle, u.created_at, u.last_login,
+           w.xp, w.coins, w.streak, w.longest_streak, w.last_visit_day,
+           w.quizzes_passed, w.updated_at AS wallet_updated_at
+    FROM users u
+    LEFT JOIN user_wallets w ON w.user_id = u.id
+    WHERE (@school_id IS NULL OR u.school_id=@school_id)
+    ORDER BY u.created_at DESC LIMIT @limit
+  `),
+  // Wallet chi tiết của 1 user (achievements + modules_by_day + daily). FE
+  // dùng cho modal "xem ví của HS/SV" trong admin.
+  userWalletDetail: db.prepare(`
+    SELECT u.id, u.username, u.display_name, u.role,
+           w.coins, w.xp, w.streak, w.longest_streak, w.streak_shields,
+           w.last_visit_day, w.achievements, w.vr_sessions, w.meta_sessions,
+           w.quizzes_passed, w.modules_by_day, w.daily, w.quests_claimed,
+           w.updated_at
+    FROM users u
+    LEFT JOIN user_wallets w ON w.user_id = u.id
+    WHERE u.id = ?
+  `),
   setUserRole: db.prepare(`UPDATE users SET role=@role WHERE id=@id`),
   requests: db.prepare(`SELECT id, school_id, domain, type, title, detail, status, votes, student, admin_note, created_at, updated_at
     FROM requests ORDER BY created_at DESC LIMIT @limit`),
@@ -105,6 +128,56 @@ export function attachAdmin(r) {
     if (!['pupil', 'student', 'teacher', 'admin'].includes(role)) return res.status(400).json({ error: 'invalid_role' });
     Q.setUserRole.run({ id: Number(req.params.id), role });
     res.json({ ok: true });
+  });
+
+  // GET /api/admin/users/:id/wallet — chi tiết ví game của 1 HS/SV. Parse JSON
+  // string achievements/modules_by_day/daily/quests_claimed về object để FE
+  // không phải parse 2 lần. Null nếu user chưa từng có wallet row.
+  r.get('/api/admin/users/:id/wallet', requireAdmin, (req, res) => {
+    const row = Q.userWalletDetail.get(Number(req.params.id));
+    if (!row) return res.status(404).json({ error: 'user_not_found' });
+    const parse = (s, fb) => { try { return JSON.parse(s || ''); } catch { return fb; } };
+    res.json({
+      user: { id: row.id, username: row.username, display_name: row.display_name, role: row.role },
+      wallet: row.xp == null ? null : {
+        coins: row.coins, xp: row.xp,
+        streak: row.streak, longest_streak: row.longest_streak, streak_shields: row.streak_shields,
+        last_visit_day: row.last_visit_day,
+        achievements: parse(row.achievements, []),
+        vr_sessions: row.vr_sessions, meta_sessions: row.meta_sessions,
+        quizzes_passed: row.quizzes_passed,
+        modules_by_day: parse(row.modules_by_day, {}),
+        daily: parse(row.daily, {}),
+        quests_claimed: parse(row.quests_claimed, {}),
+        updated_at: row.updated_at,
+      },
+    });
+  });
+
+  // PATCH /api/admin/users/:id/wallet — admin chỉnh ví thủ công (vd khôi phục
+  // XP user mất do bug, thưởng coin cho sự kiện, reset streak). Chỉ field nào
+  // truyền lên mới update; field còn lại giữ nguyên. Clamp ≥0 để chống nhập âm.
+  const ALLOWED_WALLET_FIELDS = ['xp', 'coins', 'streak', 'longest_streak', 'streak_shields',
+                                  'vr_sessions', 'meta_sessions', 'quizzes_passed'];
+  r.patch('/api/admin/users/:id/wallet', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const cur = Q.userWalletDetail.get(id);
+    if (!cur) return res.status(404).json({ error: 'user_not_found' });
+    const patch = req.body || {};
+    const sets = [], vals = { id, updated_at: Date.now() };
+    for (const f of ALLOWED_WALLET_FIELDS) {
+      if (patch[f] != null) {
+        sets.push(`${f} = @${f}`);
+        vals[f] = Math.max(0, Math.floor(Number(patch[f])) || 0);
+      }
+    }
+    if (!sets.length) return res.status(400).json({ error: 'no_fields' });
+    // Wallet row có thể chưa tồn tại → INSERT trước với defaults rồi UPDATE.
+    if (cur.xp == null) {
+      db.prepare(`INSERT INTO user_wallets (user_id, updated_at) VALUES (?, ?)`).run(id, Date.now());
+    }
+    db.prepare(`UPDATE user_wallets SET ${sets.join(', ')}, updated_at = @updated_at WHERE user_id = @id`).run(vals);
+    res.json({ ok: true, wallet: Q.userWalletDetail.get(id) });
   });
 
   // Admin set gói cước thủ công (cấp/gia hạn/huỷ). cycle 'month'|'year'|null;

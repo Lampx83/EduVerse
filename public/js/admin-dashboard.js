@@ -414,7 +414,9 @@ function renderUsers() {
     <table>
       <thead><tr>
         <th>#</th><th>Username</th><th>Tên hiển thị</th><th>Vai trò</th>
-        <th>Gói</th><th>Trường</th><th>Email</th><th>Tuổi</th><th>Đăng nhập gần nhất</th><th></th>
+        <th>Gói</th><th>Trường</th><th title="Level tính từ XP">Lv</th>
+        <th>XP</th><th>Coin</th><th title="Chuỗi ngày liên tục">🔥</th>
+        <th>Email</th><th>Đăng nhập gần nhất</th><th></th>
       </tr></thead>
       <tbody>
       ${userCache.map(u => `
@@ -425,10 +427,14 @@ function renderUsers() {
           <td><span class="pill ${u.role}">${u.role}</span></td>
           <td><span class="pill">${esc(u.plan || 'free')}</span></td>
           <td>${u.school_id}</td>
+          <td style="font-weight:600;color:#a78bfa">${lvFromXp(u.xp || 0)}</td>
+          <td style="font-size:12px">${u.xp != null ? u.xp : '—'}</td>
+          <td style="font-size:12px">${u.coins != null ? u.coins : '—'}</td>
+          <td style="font-size:12px">${u.streak || 0}</td>
           <td style="font-size:12px;opacity:.7">${u.email ? esc(u.email) : '—'}</td>
-          <td style="font-size:12px;opacity:.7">${u.age || '—'}</td>
           <td style="font-size:12px;opacity:.7">${fmt(u.last_login)}</td>
           <td class="actions" style="white-space:nowrap">
+            <button class="btn" data-act="wallet" data-uid="${u.id}" title="Xem/sửa ví XP/coin">🎮</button>
             <button class="btn" data-act="role" data-uid="${u.id}" data-role="${u.role}" title="Đổi vai trò">👥</button>
             <button class="btn" data-act="edit" data-uid="${u.id}" title="Sửa thông tin">✏️</button>
             <button class="btn" data-act="pwd" data-uid="${u.id}" title="Đặt lại mật khẩu">🔑</button>
@@ -448,6 +454,7 @@ function renderUsers() {
       if (!u) return;
       if (b.dataset.act === 'role') openRoleModal(id, b.dataset.role);
       else if (b.dataset.act === 'edit') openEditUserModal(u);
+      else if (b.dataset.act === 'wallet') openWalletModal(u);
       else if (b.dataset.act === 'pwd') openResetPwdModal(u);
       else if (b.dataset.act === 'del') confirmDeleteUser(u);
     });
@@ -662,10 +669,70 @@ function openConfirm({ title, msg, ctx, onConfirm }) {
 }
 
 function hideAllModals() {
-  ['modal-replyReq','modal-setRole','modal-createUser','modal-editUser','modal-resetPwd','modal-confirm','modal-school'].forEach(id => {
+  ['modal-replyReq','modal-setRole','modal-createUser','modal-editUser','modal-resetPwd','modal-confirm','modal-school','modal-wallet'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
+}
+
+// ─── Wallet (XP/coin/streak) viewer + editor ───
+// Cùng công thức với public/js/engine/gamification.js để admin thấy đúng level
+// mà user đang hiển thị. Đổi đây phải đổi cả gamification.js.
+function lvFromXp(xp) {
+  xp = Math.max(0, xp | 0);
+  const cum = L => { const n = Math.max(1, L) - 1; return 60 * n + 40 * (n * (n + 1)) / 2; };
+  let L = 1; while (xp >= cum(L + 1)) L++; return L;
+}
+async function openWalletModal(u) {
+  const r = await api(`/api/admin/users/${u.id}/wallet`);
+  if (!r.ok) return toast('Không tải được ví: ' + (r.data?.error || r.status), 'err');
+  const w = r.data.wallet;
+  $('#ew-sub').textContent = `@${u.username} · ${u.display_name} (id=${u.id}, role=${u.role})`;
+  if (!w) {
+    $('#ew-summary').innerHTML = '<div class="ctx" style="grid-column:1/-1">Chưa có ví — user chưa hoạt động lần nào</div>';
+    $('#ew-xp').value = 0; $('#ew-coins').value = 0; $('#ew-streak').value = 0; $('#ew-shields').value = 0;
+    $('#ew-raw').textContent = '(empty)';
+  } else {
+    const lv = lvFromXp(w.xp);
+    $('#ew-summary').innerHTML = `
+      <div class="ctx" style="text-align:center"><div style="font-size:11px;opacity:.7">Level</div><div style="font-size:22px;font-weight:700;color:#a78bfa">${lv}</div></div>
+      <div class="ctx" style="text-align:center"><div style="font-size:11px;opacity:.7">XP</div><div style="font-size:18px;font-weight:600">${w.xp}</div></div>
+      <div class="ctx" style="text-align:center"><div style="font-size:11px;opacity:.7">Coin</div><div style="font-size:18px;font-weight:600;color:#fbbf24">${w.coins}</div></div>
+      <div class="ctx" style="text-align:center"><div style="font-size:11px;opacity:.7">Streak</div><div style="font-size:18px;font-weight:600;color:#ef4444">${w.streak} 🔥</div></div>
+    `;
+    $('#ew-xp').value = w.xp;
+    $('#ew-coins').value = w.coins;
+    $('#ew-streak').value = w.streak;
+    $('#ew-shields').value = w.streak_shields;
+    $('#ew-raw').textContent = JSON.stringify({
+      achievements: w.achievements,
+      modules_by_day: w.modules_by_day,
+      daily: w.daily,
+      quests_claimed: w.quests_claimed,
+      longest_streak: w.longest_streak,
+      vr_sessions: w.vr_sessions, meta_sessions: w.meta_sessions,
+      quizzes_passed: w.quizzes_passed,
+      last_visit_day: w.last_visit_day,
+      updated_at: w.updated_at && new Date(w.updated_at).toISOString(),
+    }, null, 2);
+  }
+  $('#modal-bg').dataset.uid = u.id;
+  hideAllModals(); $('#modal-wallet').style.display = '';
+  $('#modal-bg').classList.add('show');
+}
+async function submitWallet() {
+  const uid = Number($('#modal-bg').dataset.uid);
+  const body = {
+    xp: Number($('#ew-xp').value) || 0,
+    coins: Number($('#ew-coins').value) || 0,
+    streak: Number($('#ew-streak').value) || 0,
+    streak_shields: Number($('#ew-shields').value) || 0,
+  };
+  const r = await api(`/api/admin/users/${uid}/wallet`, { method:'PATCH', body: JSON.stringify(body) });
+  if (!r.ok) return toast('Lỗi lưu ví: ' + (r.data?.error || r.status), 'err');
+  toast(`✓ Đã lưu ví · Lv${lvFromXp(body.xp)}`);
+  closeModal();
+  await loadUsers();
 }
 function openRoleModal(uid, currentRole) {
   const u = userCache.find(x => x.id === uid);
@@ -915,6 +982,8 @@ async function init() {
   $('#eu-submit').addEventListener('click', submitEditUser);
   $('#rp-cancel').addEventListener('click', closeModal);
   $('#rp-submit').addEventListener('click', submitResetPwd);
+  $('#ew-cancel').addEventListener('click', closeModal);
+  $('#ew-submit').addEventListener('click', submitWallet);
   $('#rp-gen').addEventListener('click', () => { $('#rp-password').value = genPassword(16); });
   $('#cf-cancel').addEventListener('click', closeModal);
   $('#sch-cancel').addEventListener('click', closeModal);
