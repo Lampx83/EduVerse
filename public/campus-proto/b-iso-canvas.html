@@ -471,7 +471,7 @@ function rebuildDecor(){
   DECOR = [
     ...((C.trees||[]).map(([gx,gy],i)=>({k:'tree', gx, gy, _src:'trees', _idx:i}))),
     ...((C.cars ||[]).map(([gx,gy],i)=>({k:'car',  gx, gy, _src:'cars',  _idx:i}))),
-    ...((C.props||[]).map((p,i)    =>({k:p.k, gx:p.gx, gy:p.gy, rot:p.rot||0, _src:'props', _idx:i}))),
+    ...((C.props||[]).map((p,i)    =>({k:p.k, gx:p.gx, gy:p.gy, rot:p.rot||0, pin:p.pin||null, _src:'props', _idx:i}))),
   ];
 }
 rebuildDecor();
@@ -564,6 +564,7 @@ function syncDecorBack(d){
   else if(d._src==='props'){
     C.props[d._idx].gx = d.gx; C.props[d._idx].gy = d.gy;
     if(d.rot != null) C.props[d._idx].rot = d.rot;
+    if(d.pin != null) C.props[d._idx].pin = d.pin; else if(!d.pin) delete C.props[d._idx].pin;
   }
 }
 
@@ -874,11 +875,17 @@ function draw(){
   for(const it of items){
     if(it.deco){
       const dk=espriteCacheKey(it.deco.k, it.deco.rot||0);
-      const sp=esprite[dk]||esprite[it.deco.k];   // fallback về sprite không xoay nếu cache chưa có
+      const sp=esprite[dk]||esprite[it.deco.k];
       const selD=EDIT && it.deco===DECOR[selectedDecor];
       if(selD){ ctx.fillStyle='rgba(251,191,36,.45)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5,TH*0.5,0,0,7); ctx.fill();
                 ctx.strokeStyle='#fbbf24'; ctx.lineWidth=2; ctx.stroke(); }
       if(sp) blit(ctx, sp, it.p, DS*(BLIT[it.deco.k]||0.8));
+      // Pin màu: chấm tròn nhỏ bên trên item (dùng toạ độ sprite gốc)
+      if(it.deco.pin){ const sc=DS*(BLIT[it.deco.k]||0.8);
+        const py=it.p.y-sp.height*sc+ANCHOR.y*sc - 4;
+        ctx.save(); ctx.fillStyle=it.deco.pin;
+        ctx.beginPath(); ctx.arc(it.p.x, py, 5, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore(); }
       continue;
     }
     if(it.play){ drawPlay(it.play); continue; }
@@ -918,43 +925,94 @@ function buildLegend(){ const host=document.getElementById('legend-rows');
     if(bi>=0) enter(BUILDINGS[bi], bi); else { const f=FACILITIES.find(x=>x.id===id); if(f) enter(f,null); } }));
 }
 
+let _zoom=1.0;   // zoom scale hiện tại (0.4 – 2.5)
+let _panOx=0, _panOy=0;   // pan offset thêm vào ox/oy
+
+function baseOx(w){ return w/2 - 3*TW/2; }
+function baseOy(h){ return h*0.46 - (N*0.92)*TH/2; }
+
+function applyZoom(){
+  // P() dùng ox,oy trực tiếp — scale bằng cách inflate TW/TH sẽ phức tạp.
+  // Dùng ctx.setTransform với zoom scale cho toàn bộ draw call thay vì.
+  const w=innerWidth, h=innerHeight;
+  const cx=w/2, cy=h/2;
+  ctx.setTransform(DPR*_zoom, 0, 0, DPR*_zoom, (cx*(1-_zoom))*DPR + _panOx*DPR, (cy*(1-_zoom))*DPR + _panOy*DPR);
+  hctx.setTransform(DPR*_zoom, 0, 0, DPR*_zoom, (cx*(1-_zoom))*DPR + _panOx*DPR, (cy*(1-_zoom))*DPR + _panOy*DPR);
+}
+
 function resize(){ const w=innerWidth,h=innerHeight;
   canvas.width=w*DPR; canvas.height=h*DPR; canvas.style.width=w+'px'; canvas.style.height=h+'px';
-  hit.width=w*DPR; hit.height=h*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); hctx.setTransform(DPR,0,0,DPR,0,0);
-  ox=w/2 - 3*TW/2; oy=h*0.46 - (N*0.92)*TH/2; draw(); }
+  hit.width=w*DPR; hit.height=h*DPR;
+  ox=baseOx(w)+_panOx; oy=baseOy(h)+_panOy;
+  applyZoom(); draw(); }
 addEventListener('resize', resize); resize();
+
+// Wheel zoom — cả desktop và editor iframe
+canvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.111;
+  _zoom = Math.max(0.35, Math.min(2.8, _zoom * delta));
+  applyZoom(); draw();
+  // Báo parent để hiện giá trị zoom nếu muốn
+  if(EDIT) postToParent({type:'campus-zoom', zoom:Math.round(_zoom*100)});
+}, {passive:false});
+
+// Expose zoom control cho parent (nút +/-  trong editor)
+window.__zoomIn  = ()=>{ _zoom=Math.min(2.8,_zoom*1.2); applyZoom(); draw(); };
+window.__zoomOut = ()=>{ _zoom=Math.max(0.35,_zoom*0.8); applyZoom(); draw(); };
+window.__zoomReset=()=>{ _zoom=1; _panOx=0; _panOy=0; resize(); };
+
+// Cần cập nhật hitAt để transform ngược toạ độ click → canvas CSS coords
+// hitAt nhận clientX/Y → cần compensate zoom+pan
+function clientToCanvas(cx, cy){
+  const w=innerWidth, h=innerHeight;
+  const cx0=w/2, cy0=h/2;
+  return { x:(cx-cx0)/_zoom + cx0 - _panOx/_zoom, y:(cy-cy0)/_zoom + cy0 - _panOy/_zoom };
+}
+window.__clientToCanvas = clientToCanvas;
 if(EMBED){ const bk=document.querySelector('.back'); if(bk) bk.style.display='none'; }
 
 // Hit-test tại toạ độ client → {kind:'building'|'facility'|'decor', idx, item} | null
 // Building: đọc pixel hit-canvas. Facility/Decor: nearest neighbour trong bán kính.
 // Edit mode (super-admin): bật cả decor (cây/prop/xe). View mode: chỉ building + facility.
+// Chuyển toạ độ logical P(gx,gy) → screen CSS, compensate cho zoom+pan
+function logicalToScreen(lx, ly){
+  const w=innerWidth, h=innerHeight, cx0=w/2, cy0=h/2;
+  return { x:(lx-cx0)*_zoom+cx0+_panOx, y:(ly-cy0)*_zoom+cy0+_panOy };
+}
+
 function hitAt(cx, cy){
-  const px = hctx.getImageData(cx*DPR, cy*DPR, 1, 1).data;
+  // Building: pixel hit-canvas — đọc physical pixel. Zoom transform đã được baked vào hctx.
+  // Cần tính physical pixel coords: clientXY → chia zoom+pan ngược.
+  const lp=clientToCanvas(cx,cy);
+  const phx=lp.x*DPR, phy=lp.y*DPR;
+  const px = hctx.getImageData(Math.round(phx), Math.round(phy), 1, 1).data;
   if(px[3] > 10){ const id = colId(px[0], px[1], px[2]); if(id >= 0) return {kind:'building', idx:id, item:BUILDINGS[id]}; }
 
-  // Edit mode: decor được ưu tiên riêng, dùng radius lớn hơn facility.
-  // Tách 2 vòng để decor không bị facility wins do bestD chung.
+  // Edit mode: decor ưu tiên, radius 48px (screen-space, zoom-compensated)
   if(EDIT){
     let bestDecor=null, bestDecorD=Infinity;
+    const R=(48*_zoom)*(48*_zoom);  // radius scale theo zoom
     for(let i=0; i<DECOR.length; i++){
-      const d0=DECOR[i]; if(!esprite[d0.k] && !esprite[espriteCacheKey(d0.k,d0.rot||0)]) continue; // chỉ hit visible decor
-      const p=P(d0.gx,d0.gy);
-      const dx=cx-p.x, dy=cy-(p.y-4);   // shift lên 4px để khớp với visual center sprite
+      const d0=DECOR[i]; if(!esprite[d0.k] && !esprite[espriteCacheKey(d0.k,d0.rot||0)]) continue;
+      const s=logicalToScreen(P(d0.gx,d0.gy).x, P(d0.gx,d0.gy).y);
+      const dx=cx-s.x, dy=cy-(s.y-4*_zoom);
       const d=dx*dx+dy*dy;
       if(d<bestDecorD){ bestDecorD=d; bestDecor={kind:'decor',idx:i,item:d0}; }
     }
-    if(bestDecor && bestDecorD<=48*48) return bestDecor;  // radius 48px cho decor
+    if(bestDecor && bestDecorD<=R) return bestDecor;
   }
 
-  // Facility pins (cả 2 mode) — radius 26px
+  // Facility pins (cả 2 mode) — radius 26px screen-space
   let best=null, bestD=Infinity;
+  const FR=(26*_zoom)*(26*_zoom);
   for(let i=0; i<FACILITIES.length; i++){
-    const f=FACILITIES[i], p=P(f.gx,f.gy);
-    const dx=cx-p.x, dy=cy-(p.y-12);
+    const f=FACILITIES[i]; const s=logicalToScreen(P(f.gx,f.gy).x, P(f.gx,f.gy).y);
+    const dx=cx-s.x, dy=cy-(s.y-12*_zoom);
     const d=dx*dx+dy*dy;
     if(d<bestD){ bestD=d; best={kind:'facility',idx:i,item:f}; }
   }
-  if(best && bestD<=26*26) return best;
+  if(best && bestD<=FR) return best;
   return null;
 }
 
@@ -1109,6 +1167,10 @@ if(EDIT){
     } else if(m.type==='campus-cmd-place'){
       // parent chọn model từ palette → bắt đầu place mode
       window.__startPlaceMode(m); draw();
+    } else if(m.type==='campus-cmd-set-decor'){
+      const d=DECOR[m.idx]; if(!d) return;
+      const allowed=new Set(['pin','rot','gx','gy']);
+      if(allowed.has(m.key)){ d[m.key]=m.value; syncDecorBack(d); draw(); postToParent({type:'campus-dirty'}); }
     } else if(m.type==='campus-cmd-rotate-decor'){
       rotateDecor(m.idx, m.delta||90);
     } else if(m.type==='campus-cmd-delete-decor'){

@@ -95,6 +95,10 @@
   </select>
 
   <button class="btn" id="reloadIframe" title="Reload map">↻ Reload</button>
+  <button class="btn" id="zoomOut" title="Thu nhỏ" style="padding:7px 10px;">−</button>
+  <span id="zoomVal" style="font-size:12px; color:var(--muted); min-width:36px; text-align:center;">100%</span>
+  <button class="btn" id="zoomIn" title="Phóng to" style="padding:7px 10px;">+</button>
+  <button class="btn" id="zoomReset" title="Reset zoom" style="padding:7px 10px; font-size:11px;">⊡</button>
   <button class="btn" id="downloadDefault" title="Export current effective layout">⤓ Export</button>
   <button class="btn primary" id="save">💾 Save override</button>
   <button class="btn warn" id="reset" title="Xoá override, về default">↶ Reset default</button>
@@ -170,8 +174,12 @@
             <button class="btn" id="dRotCW"  style="flex:1; font-size:16px;" title="Xoay chiều kim đồng hồ">⟳</button>
           </div>
         </div>
-        <div class="hint" style="margin-top:8px;">Drag để di chuyển. Rotate để thay đổi hướng hàng rào / đèn / ghế.</div>
-        <button class="btn bad" id="dDelete" style="width:100%; margin-top:12px;">🗑️ Xoá</button>
+        <div class="row" style="margin-top:8px;"><label>Pin màu</label>
+          <input id="dPin" type="color" value="#94a3b8" style="width:50px; height:30px; border:1px solid var(--border); border-radius:6px; background:transparent; cursor:pointer;">
+          <button class="btn" id="dPinClear" style="font-size:11px; padding:4px 8px; color:var(--muted);">Xoá pin</button>
+        </div>
+        <div class="hint" style="margin:4px 0 0; font-size:11px;">Drag di chuyển · ⟲⟳ xoay · chấm màu hiện trên map.</div>
+        <button class="btn bad" id="dDelete" style="width:100%; margin-top:10px;">🗑️ Xoá</button>
       </div>
     </div>
 
@@ -340,6 +348,7 @@ function openDecorInspector(idx, item){
   $('#dName').textContent=item.k||'(decor)';
   $('#dPos').textContent=`gx:${item.gx} gy:${item.gy}  ·  idx ${idx}`;
   $('#dRotVal').textContent=(item.rot||0)+'°';
+  $('#dPin').value=item.pin||'#94a3b8';
 }
 
 function openInspector(idx, item){
@@ -488,6 +497,20 @@ $('#dRotCCW').addEventListener('click',()=>{
   iframe.contentWindow?.postMessage({type:'campus-cmd-rotate-decor', idx:currentDecorIdx, delta:-90},'*');
   setDirty(true);
 });
+// Pin màu decor
+function sendDecorCmd(key, value){
+  if(currentDecorIdx<0) return;
+  iframe.contentWindow?.postMessage({type:'campus-cmd-set-decor', idx:currentDecorIdx, key, value},'*');
+  setDirty(true);
+}
+$('#dPin').addEventListener('input', e=>sendDecorCmd('pin', e.target.value));
+$('#dPinClear').addEventListener('click',()=>{ sendDecorCmd('pin', null); $('#dPin').value='#94a3b8'; });
+
+// Zoom buttons
+$('#zoomIn').addEventListener('click',()=>{ iframe.contentWindow?.__zoomIn?.(); });
+$('#zoomOut').addEventListener('click',()=>{ iframe.contentWindow?.__zoomOut?.(); });
+$('#zoomReset').addEventListener('click',()=>{ iframe.contentWindow?.__zoomReset?.(); $('#zoomVal').textContent='100%'; });
+
 $('#dDelete').addEventListener('click',()=>{
   if(currentDecorIdx<0) return;
   if(!confirm('Xoá item này khỏi map?')) return;
@@ -536,6 +559,8 @@ window.addEventListener('message', e=>{
     $('#placingBanner').style.display='none';
   } else if(m.type==='campus-thumb'){
     handleThumb(m);
+  } else if(m.type==='campus-zoom'){
+    $('#zoomVal').textContent=m.zoom+'%';
   } else if(m.type==='campus-dirty'){
     setDirty(true);
   }
