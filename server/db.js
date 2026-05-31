@@ -1,585 +1,330 @@
-import Database from 'better-sqlite3';
-import path from 'node:path';
+// Tizia DB layer — Postgres (port từ better-sqlite3 cũ).
+//
+// API: mọi hàm export đều ASYNC, tên giữ y như bản SQLite để Phase 2 caller chỉ
+// việc thêm `await`. SQL viết kiểu named-param (@foo); pg.js convert sang $1.$2.
+//
+// Schema: server/db/schema.sql (idempotent CREATE IF NOT EXISTS). File này
+// auto-apply schema khi import lần đầu — local dev không phải chạy migrate tay.
+//
+// Tenant: school_id đóng vai tenant id. school 1 = 'tizia-default' (legacy).
+
 import fs from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pool, query, one, many, exec, tx, bindNamed } from './db/pg.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = process.env.DATA_DIR
-  ? path.resolve(process.env.DATA_DIR)
-  : path.resolve(__dirname, '..', 'data');
 
-fs.mkdirSync(DATA_DIR, { recursive: true });
+// ── Schema bootstrap ──
+// Đọc schema.sql và apply ngay khi module load. Idempotent → re-run an toàn.
+// Block toàn bộ server start cho tới khi xong, đảm bảo bảng có trước request đầu.
+const SCHEMA_PATH = path.resolve(__dirname, 'db', 'schema.sql');
+let _schemaReady = null;
+export function ensureSchema() {
+  if (_schemaReady) return _schemaReady;
+  const sql = fs.readFileSync(SCHEMA_PATH, 'utf8');
+  _schemaReady = pool.query(sql).then(() => {
+    console.log('[db] Postgres schema ensured');
+  }).catch(err => {
+    _schemaReady = null;
+    console.error('[db] schema apply failed', err);
+    throw err;
+  });
+  return _schemaReady;
+}
+// Fire-and-forget khi import — server/index.js có thể `await ensureSchema()` nếu cần.
+ensureSchema().catch(() => {});
 
-// Đổi tên 2026-05-31: pharmacy.db → tizia.db (rebrand). Nếu file mới chưa có
-// nhưng pharmacy.db legacy còn → rename atomic để giữ data. Cả prod & local
-// đều rename trước khi deploy code này.
-const dbPath = path.join(DATA_DIR, 'tizia.db');
-try {
-  const legacy = path.join(DATA_DIR, 'pharmacy.db');
-  if (!fs.existsSync(dbPath) && fs.existsSync(legacy)) {
-    fs.renameSync(legacy, dbPath);
-    // Đổi tên cả WAL/SHM file để SQLite không lock vào file cũ.
-    for (const ext of ['-wal', '-shm']) {
-      const oldF = legacy + ext, newF = dbPath + ext;
-      if (fs.existsSync(oldF)) fs.renameSync(oldF, newF);
-    }
-    console.log(`[db] migrated ${legacy} → ${dbPath}`);
-  }
-} catch (e) { console.warn('[db] legacy rename failed', e.message); }
-export const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+// Re-export pool + helpers cho admin/index.js (raw query khi cần).
+export { pool, query, one, many, exec, tx };
+// Backward-compat shim: `db` cũ là instance better-sqlite3. Code mới nên dùng
+// query/one/many trực tiếp. Các caller cũ gọi `db.prepare(sql).get(args)` sẽ phải
+// migrate sang `await one(sql, params)` ở Phase 2.
+export const db = { query, one, many, exec, tx, pool };
 
-// Step 1: create tables (without indexes that reference v5 columns)
-db.exec(`
-  CREATE TABLE IF NOT EXISTS attempts (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    version      TEXT    NOT NULL,
-    player_name  TEXT    NOT NULL DEFAULT 'Ẩn danh',
-    score        INTEGER NOT NULL,
-    correct      INTEGER NOT NULL,
-    total        INTEGER NOT NULL,
-    duration_ms  INTEGER,
-    details      TEXT,
-    created_at   INTEGER NOT NULL,
-    class_code   TEXT,
-    level_n      INTEGER
-  );
-  CREATE INDEX IF NOT EXISTS idx_attempts_version_score
-    ON attempts(version, score DESC, created_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_attempts_recent
-    ON attempts(created_at DESC);
-
-  CREATE TABLE IF NOT EXISTS achievements (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_name  TEXT    NOT NULL,
-    badge_id     TEXT    NOT NULL,
-    unlocked_at  INTEGER NOT NULL,
-    UNIQUE(player_name, badge_id)
-  );
-  CREATE INDEX IF NOT EXISTS idx_ach_player ON achievements(player_name);
-
-  CREATE TABLE IF NOT EXISTS classes (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    code          TEXT    NOT NULL UNIQUE,
-    name          TEXT    NOT NULL,
-    teacher_name  TEXT    NOT NULL DEFAULT 'GV',
-    created_at    INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_classes_code ON classes(code);
-
-  -- Yêu cầu của SV gửi tới "Ban điều hành AI" của từng trường
-  CREATE TABLE IF NOT EXISTS requests (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    domain      TEXT    NOT NULL,                     -- pharmacy | it | ...
-    type        TEXT    NOT NULL DEFAULT 'other',     -- game | theory | lab | skill | other
-    title       TEXT    NOT NULL,
-    detail      TEXT,
-    student     TEXT    NOT NULL DEFAULT 'Ẩn danh',
-    status      TEXT    NOT NULL DEFAULT 'pending',   -- pending | reviewing | done | rejected
-    votes       INTEGER NOT NULL DEFAULT 1,
-    admin_note  TEXT,
-    created_at  INTEGER NOT NULL,
-    updated_at  INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_requests_domain ON requests(domain, votes DESC, created_at DESC);
-
-  -- Tài khoản người dùng (SV + GV). password_hash dạng scrypt$salt$hash.
-  CREATE TABLE IF NOT EXISTS users (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    username      TEXT    NOT NULL UNIQUE COLLATE NOCASE,
-    display_name  TEXT    NOT NULL,
-    password_hash TEXT    NOT NULL,
-    role          TEXT    NOT NULL DEFAULT 'student',
-    created_at    INTEGER NOT NULL,
-    last_login    INTEGER
-  );
-  CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-
-  -- Phiên đăng nhập. Token là chuỗi ngẫu nhiên 32 byte hex (server cấp).
-  CREATE TABLE IF NOT EXISTS sessions (
-    token       TEXT    PRIMARY KEY,
-    user_id     INTEGER NOT NULL,
-    created_at  INTEGER NOT NULL,
-    expires_at  INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
-  CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
-
-  -- OAuth/SSO identities. Một user có thể có nhiều liên kết (Google + MS chẳng hạn).
-  CREATE TABLE IF NOT EXISTS oauth_identities (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id     INTEGER NOT NULL,
-    provider    TEXT    NOT NULL,            -- google | microsoft | github | ...
-    subject     TEXT    NOT NULL,            -- 'sub' ổn định do provider cấp
-    email       TEXT,
-    created_at  INTEGER NOT NULL,
-    UNIQUE(provider, subject),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_oauth_user ON oauth_identities(user_id);
-
-  -- Multi-tenancy (Phase 0 foundation): mỗi trường là 1 tenant.
-  -- Mặc định school_id=1 ('tizia-default') chứa legacy data trước khi mở multi-tenant.
-  -- SSO email domain → school auto-map (vd '*@neu.edu.vn' → NEU). Phase 1 sẽ enforce
-  -- Postgres RLS theo school_id; hiện tại SQLite, isolation enforce ở app layer.
-  CREATE TABLE IF NOT EXISTS schools (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    code        TEXT    NOT NULL UNIQUE,
-    name        TEXT    NOT NULL,
-    domain      TEXT,                          -- email domain để map SSO auto, có thể NULL
-    created_at  INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_schools_code   ON schools(code);
-  CREATE INDEX IF NOT EXISTS idx_schools_domain ON schools(domain);
-`);
-
-// Step 4: upgrade `users` cho OAuth — email/avatar có thể đến sau khi đã có DB cũ.
-try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN avatar_url TEXT`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN age INTEGER`); } catch {}
-// Cho phép password_hash NULL cho user thuần SSO. SQLite không drop được NOT NULL,
-// nhưng ta vẫn cài giá trị '' (empty) khi tạo user SSO — verifyPassword luôn trả false.
-
-// Step 2: add v5 columns to attempts if upgrading from older DB
-try { db.exec(`ALTER TABLE attempts ADD COLUMN class_code TEXT`); } catch {}
-try { db.exec(`ALTER TABLE attempts ADD COLUMN level_n INTEGER`); } catch {}
-
-// Step 3: create indexes that depend on the v5 columns (now guaranteed to exist)
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_class ON attempts(class_code, created_at DESC)`); } catch {}
-
-// Step 5: multi-tenancy migration (Phase 0). Thêm school_id vào 4 entity table top-level.
-// Additive với DEFAULT 1 → legacy row tự backfill về school 'tizia-default'.
-// SQLite KHÔNG cho phép ALTER ADD COLUMN với non-constant DEFAULT, nên dùng hằng 1.
-try { db.prepare(`INSERT OR IGNORE INTO schools (id, code, name, created_at) VALUES (1, 'tizia-default', 'Tizia', ?)`).run(Date.now()); } catch {}
-try { db.exec(`ALTER TABLE users    ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
-try { db.exec(`ALTER TABLE classes  ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
-try { db.exec(`ALTER TABLE attempts ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
-try { db.exec(`ALTER TABLE requests ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_school    ON users(school_id)`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_classes_school  ON classes(school_id)`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_school ON attempts(school_id, created_at DESC)`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_requests_school ON requests(school_id, votes DESC, created_at DESC)`); } catch {}
-
-// Hồ sơ học sinh / sinh viên (Trục 1 phân biệt HS vs SV). Các cột này NULL cho
-// user cũ → trigger modal /complete-profile.html ở lần login kế. Không có FK ràng
-// buộc — major/grade là enum mềm để FE tự đối chiếu DOMAIN_META; cohort là free
-// text (K65/K2024…); school_name là tên trường HS/PH/THPT/ĐH user đang theo học.
-try { db.exec(`ALTER TABLE users ADD COLUMN grade INTEGER`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN major TEXT`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN cohort TEXT`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN school_name TEXT`); } catch {}
-
-// Trục 4: family plan + school code. family_links cho phép 1 PH link n con HS
-// (parent_user_id phải là role='teacher' hoặc 'student' tuổi >=18 — kiểm ở app
-// layer, không hard-enforce DB). Plan của parent được kế thừa xuống con khi
-// con role='pupil'. school_codes là code redeem do trường K-12/ĐH cấp:
-//   - kind='grant_plan': set plan cho user (vd 'plus' 365 ngày)
-//   - kind='discount':   ghi discount_percent áp cho lần thanh toán kế
-// max_uses=0 → vô hạn. expires_at NULL → vĩnh viễn.
-db.exec(`
-  CREATE TABLE IF NOT EXISTS family_links (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    parent_user_id  INTEGER NOT NULL,
-    child_user_id   INTEGER NOT NULL,
-    created_at      INTEGER NOT NULL,
-    UNIQUE(parent_user_id, child_user_id),
-    FOREIGN KEY (parent_user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (child_user_id)  REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_family_parent ON family_links(parent_user_id);
-  CREATE INDEX IF NOT EXISTS idx_family_child  ON family_links(child_user_id);
-
-  CREATE TABLE IF NOT EXISTS school_codes (
-    id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    code              TEXT    NOT NULL UNIQUE COLLATE NOCASE,
-    school_id         INTEGER NOT NULL DEFAULT 1,
-    kind              TEXT    NOT NULL DEFAULT 'grant_plan', -- grant_plan | discount
-    grant_plan        TEXT,                                  -- 'plus' | 'pro' khi kind='grant_plan'
-    grant_days        INTEGER NOT NULL DEFAULT 365,
-    discount_percent  INTEGER NOT NULL DEFAULT 0,            -- 0..90 khi kind='discount'
-    max_uses          INTEGER NOT NULL DEFAULT 0,            -- 0 = vô hạn
-    used_count        INTEGER NOT NULL DEFAULT 0,
-    expires_at        INTEGER,
-    note              TEXT,
-    created_by        INTEGER,
-    created_at        INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_school_codes_school ON school_codes(school_id, expires_at);
-
-  -- Log mỗi lần redeem để audit + chống abuse. UNIQUE(user_id, code_id) để 1 user
-  -- không redeem trùng 1 code; nhưng có thể redeem nhiều code khác nhau.
-  CREATE TABLE IF NOT EXISTS school_code_redemptions (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    code_id      INTEGER NOT NULL,
-    user_id      INTEGER NOT NULL,
-    redeemed_at  INTEGER NOT NULL,
-    outcome      TEXT,                       -- 'plan_granted' | 'discount_saved'
-    UNIQUE(code_id, user_id),
-    FOREIGN KEY (code_id) REFERENCES school_codes(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_redemption_user ON school_code_redemptions(user_id);
-`);
-
-// Step 6: gói cước (free/plus/pro). plan_expires_at NULL = vĩnh viễn (cho free) hoặc
-// đến khi mua. billing_cycle = month|year (lưu để render đúng "hết hạn dd/mm/yyyy"
-// và để gia hạn). Hết hạn → app degrade về free nhưng KHÔNG xoá cột → khôi phục
-// lịch sử nếu user gia hạn lại. Default 'free' cho user cũ.
-try { db.exec(`ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN plan_expires_at INTEGER`); } catch {}
-try { db.exec(`ALTER TABLE users ADD COLUMN billing_cycle TEXT`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_plan ON users(plan, plan_expires_at)`); } catch {}
-
-// Kho học liệu do AI sinh thêm (nút "Học thêm" + "Hỏi cô giáo AI" ở Tiểu học).
-// Mỗi lần Ollama sinh nội dung mới → lưu lại để bài học giàu dần, tái sử dụng
-// (không phải gọi AI lại) và để GV duyệt. kind='question' (quiz) | 'qa' (hỏi-đáp).
-db.exec(`
-  CREATE TABLE IF NOT EXISTS ai_lesson_content (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id   INTEGER NOT NULL DEFAULT 1,
-    week_id     TEXT    NOT NULL,            -- scenario id, vd 'P2-w07-quiz'
-    subject     TEXT,                        -- nhãn môn, vd 'Toán'
-    topic       TEXT,                        -- chủ đề tuần
-    kind        TEXT    NOT NULL,            -- 'question' | 'qa'
-    stem        TEXT,                        -- câu hỏi (question) / câu hỏi của HS (qa)
-    payload     TEXT    NOT NULL,            -- JSON: question={choices,answer,explanation}; qa={answer}
-    student     TEXT,                        -- ai kích hoạt (display name)
-    upvotes     INTEGER NOT NULL DEFAULT 0,
-    flagged     INTEGER NOT NULL DEFAULT 0,  -- GV gắn cờ nội dung sai → ẩn khỏi kho
-    created_at  INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_ai_content_week
-    ON ai_lesson_content(week_id, kind, flagged, created_at DESC);
-`);
-
-// Thông báo cá nhân cho HS — kênh phản hồi từ Ban điều hành AI khi xử lý xong
-// 1 yêu cầu (request). Key theo display_name vì requests.student lưu tên hiển
-// thị (không có user_id ở thời điểm tạo, có cả guest). Read receipt: read_at.
-db.exec(`
-  CREATE TABLE IF NOT EXISTS notifications (
-    id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id         INTEGER NOT NULL DEFAULT 1,
-    user_display_name TEXT    NOT NULL,         -- người nhận, khớp users.display_name
-    request_id        INTEGER,                   -- request gốc (NULL nếu không gắn)
-    kind              TEXT    NOT NULL,          -- 'reply' | 'system' | ...
-    title             TEXT    NOT NULL,
-    body              TEXT,
-    url               TEXT,                      -- link điều hướng khi click
-    read_at           INTEGER,                   -- NULL = chưa đọc
-    created_at        INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_notifications_user
-    ON notifications(user_display_name, read_at, created_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_notifications_request
-    ON notifications(request_id);
-`);
-
-// Multi-tenancy: mọi write ghi school_id, mọi read cross-user lọc theo school_id.
-// Tham số @school_id bắt buộc ở các statement có ảnh hưởng tenant. Caller lấy từ
-// req.schoolId (attachTenant middleware) — xem server/contexts/identity/tenant.js.
-const insertAttemptStmt = db.prepare(`
-  INSERT INTO attempts (school_id, version, player_name, score, correct, total, duration_ms, details, created_at, class_code, level_n)
-  VALUES (@school_id, @version, @player_name, @score, @correct, @total, @duration_ms, @details, @created_at, @class_code, @level_n)
-`);
-
-const leaderboardStmt = db.prepare(`
-  SELECT id, player_name, score, correct, total, duration_ms, created_at
-  FROM attempts
-  WHERE version = @version AND school_id = @school_id
-  ORDER BY score DESC, created_at DESC
-  LIMIT @limit
-`);
-
-const statsStmt = db.prepare(`
-  SELECT
-    COUNT(*)              AS total_attempts,
-    ROUND(AVG(score), 1)  AS avg_score,
-    MAX(score)            AS best_score,
-    SUM(CASE WHEN correct = total AND total > 0 THEN 1 ELSE 0 END) AS perfect_count
-  FROM attempts
-  WHERE version = @version AND school_id = @school_id
-`);
-
-const recentStmt = db.prepare(`
-  SELECT id, version, player_name, score, correct, total, created_at
-  FROM attempts
-  WHERE school_id = @school_id
-  ORDER BY created_at DESC
-  LIMIT @limit
-`);
-
-const allAttemptsStmt = db.prepare(`
-  SELECT id, version, player_name, score, correct, total, duration_ms, details, created_at
-  FROM attempts
-  ORDER BY created_at DESC
-`);
-
-const histogramStmt = db.prepare(`
-  SELECT
-    CAST((score / 10) AS INTEGER) * 10 AS bucket,
-    COUNT(*) AS n
-  FROM attempts
-  WHERE version = @version AND school_id = @school_id
-  GROUP BY bucket
-  ORDER BY bucket
-`);
-
-export function insertAttempt(row) {
-  // school_id đặt SAU spread để luôn có giá trị (fallback 1) kể cả khi row.school_id
-  // = undefined — an toàn cho legacy / single-tenant caller.
-  const info = insertAttemptStmt.run({ ...row, school_id: row.school_id ?? 1 });
-  return { id: info.lastInsertRowid, createdAt: row.created_at };
+// ── attempts ──
+export async function insertAttempt(row) {
+  const r = await one(`
+    INSERT INTO attempts (school_id, version, player_name, score, correct, total, duration_ms, details, created_at, class_code, level_n)
+    VALUES (@school_id, @version, @player_name, @score, @correct, @total, @duration_ms, @details, @created_at, @class_code, @level_n)
+    RETURNING id, created_at
+  `, {
+    school_id:   row.school_id ?? 1,
+    version:     row.version,
+    player_name: row.player_name,
+    score:       row.score,
+    correct:     row.correct,
+    total:       row.total,
+    duration_ms: row.duration_ms ?? null,
+    // details: stringify để pg gửi đúng JSONB (array JS sẽ bị nhầm thành PG array nếu để nguyên).
+    details:     row.details == null ? null : (typeof row.details === 'string' ? row.details : JSON.stringify(row.details)),
+    created_at:  row.created_at,
+    class_code:  row.class_code ?? null,
+    level_n:     row.level_n ?? null,
+  });
+  return { id: r.id, createdAt: r.created_at };
 }
 
 export function getLeaderboard(version, limit = 10, schoolId = 1) {
-  return leaderboardStmt.all({ version, limit, school_id: schoolId });
+  return many(`
+    SELECT id, player_name, score, correct, total, duration_ms, created_at
+    FROM attempts WHERE version = @version AND school_id = @school_id
+    ORDER BY score DESC, created_at DESC LIMIT @limit
+  `, { version, limit, school_id: schoolId });
 }
 
-export function getStats(version, schoolId = 1) {
-  return statsStmt.get({ version, school_id: schoolId }) || { total_attempts: 0, avg_score: 0, best_score: 0, perfect_count: 0 };
+export async function getStats(version, schoolId = 1) {
+  const row = await one(`
+    SELECT
+      COUNT(*)::int                                                 AS total_attempts,
+      ROUND(AVG(score)::numeric, 1)                                 AS avg_score,
+      COALESCE(MAX(score), 0)                                       AS best_score,
+      SUM(CASE WHEN correct = total AND total > 0 THEN 1 ELSE 0 END)::int AS perfect_count
+    FROM attempts WHERE version = @version AND school_id = @school_id
+  `, { version, school_id: schoolId });
+  return row || { total_attempts: 0, avg_score: 0, best_score: 0, perfect_count: 0 };
 }
 
 export function getRecent(limit = 20, schoolId = 1) {
-  return recentStmt.all({ limit, school_id: schoolId });
+  return many(`
+    SELECT id, version, player_name, score, correct, total, created_at
+    FROM attempts WHERE school_id = @school_id
+    ORDER BY created_at DESC LIMIT @limit
+  `, { limit, school_id: schoolId });
 }
-
-// --- Class management ---
-const createClassStmt = db.prepare(`
-  INSERT INTO classes (school_id, code, name, teacher_name, created_at)
-  VALUES (@school_id, @code, @name, @teacher_name, @created_at)
-`);
-const getClassByCodeStmt = db.prepare(`
-  SELECT id, code, name, teacher_name, created_at FROM classes WHERE code = ?
-`);
-const listClassesStmt = db.prepare(`
-  SELECT id, code, name, teacher_name, created_at,
-    (SELECT COUNT(*) FROM attempts WHERE class_code = classes.code) AS attempt_count,
-    (SELECT COUNT(DISTINCT player_name) FROM attempts WHERE class_code = classes.code) AS student_count
-  FROM classes WHERE school_id = @school_id ORDER BY created_at DESC
-`);
-const classMembersStmt = db.prepare(`
-  SELECT player_name,
-    COUNT(*) AS attempts,
-    MAX(score) AS best_score,
-    ROUND(AVG(score), 1) AS avg_score,
-    SUM(CASE WHEN correct = total AND total > 0 THEN 1 ELSE 0 END) AS perfect_count,
-    MAX(created_at) AS last_seen
-  FROM attempts WHERE class_code = ? GROUP BY player_name
-  ORDER BY best_score DESC, attempts DESC
-`);
-const classAttemptsStmt = db.prepare(`
-  SELECT id, version, player_name, score, correct, total, duration_ms, level_n, created_at
-  FROM attempts WHERE class_code = ? ORDER BY created_at DESC LIMIT @limit
-`);
-const playerAttemptsStmt = db.prepare(`
-  SELECT id, version, player_name, score, correct, total, duration_ms, level_n, details, created_at
-  FROM attempts WHERE player_name = @player ORDER BY created_at DESC LIMIT @limit
-`);
-
-export function createClass({ code, name, teacher_name, school_id = 1 }) {
-  const info = createClassStmt.run({ school_id, code, name, teacher_name, created_at: Date.now() });
-  return { id: info.lastInsertRowid, code };
-}
-export function getClassByCode(code) { return getClassByCodeStmt.get(code) || null; }
-export function listClasses(schoolId = 1) { return listClassesStmt.all({ school_id: schoolId }); }
-export function getClassMembers(code) { return classMembersStmt.all(code); }
-export function getClassAttempts(code, limit = 100) { return classAttemptsStmt.all(code, { limit }); }
-export function getPlayerAttempts(player, limit = 50) { return playerAttemptsStmt.all({ player, limit }); }
 
 export function getAllAttempts() {
-  return allAttemptsStmt.all();
+  return many(`
+    SELECT id, version, player_name, score, correct, total, duration_ms, details, created_at
+    FROM attempts ORDER BY created_at DESC
+  `);
 }
 
 export function getHistogram(version, schoolId = 1) {
-  return histogramStmt.all({ version, school_id: schoolId });
+  return many(`
+    SELECT (score / 10) * 10 AS bucket, COUNT(*)::int AS n
+    FROM attempts WHERE version = @version AND school_id = @school_id
+    GROUP BY bucket ORDER BY bucket
+  `, { version, school_id: schoolId });
 }
 
-const achievementsForStmt = db.prepare(`
-  SELECT badge_id, unlocked_at FROM achievements
-  WHERE player_name = @player ORDER BY unlocked_at DESC
-`);
-const allAchievementsStmt = db.prepare(`
-  SELECT player_name, badge_id, unlocked_at FROM achievements
-  ORDER BY unlocked_at DESC LIMIT 50
-`);
-const unlockAchievementStmt = db.prepare(`
-  INSERT OR IGNORE INTO achievements (player_name, badge_id, unlocked_at)
-  VALUES (@player, @badge, @t)
-`);
+// --- Classes ---
+export async function createClass({ code, name, teacher_name, school_id = 1 }) {
+  const r = await one(`
+    INSERT INTO classes (school_id, code, name, teacher_name, created_at)
+    VALUES (@school_id, @code, @name, @teacher_name, @created_at)
+    RETURNING id, code
+  `, { school_id, code, name, teacher_name, created_at: Date.now() });
+  return { id: r.id, code: r.code };
+}
+
+export function getClassByCode(code) {
+  return one(`SELECT id, code, name, teacher_name, created_at FROM classes WHERE code = @code`, { code });
+}
+
+export function listClasses(schoolId = 1) {
+  return many(`
+    SELECT c.id, c.code, c.name, c.teacher_name, c.created_at,
+      (SELECT COUNT(*)::int                FROM attempts a WHERE a.class_code = c.code) AS attempt_count,
+      (SELECT COUNT(DISTINCT player_name)::int FROM attempts a WHERE a.class_code = c.code) AS student_count
+    FROM classes c WHERE c.school_id = @school_id ORDER BY c.created_at DESC
+  `, { school_id: schoolId });
+}
+
+export function getClassMembers(code) {
+  return many(`
+    SELECT player_name,
+      COUNT(*)::int AS attempts,
+      MAX(score) AS best_score,
+      ROUND(AVG(score)::numeric, 1) AS avg_score,
+      SUM(CASE WHEN correct = total AND total > 0 THEN 1 ELSE 0 END)::int AS perfect_count,
+      MAX(created_at) AS last_seen
+    FROM attempts WHERE class_code = @code GROUP BY player_name
+    ORDER BY best_score DESC, attempts DESC
+  `, { code });
+}
+
+export function getClassAttempts(code, limit = 100) {
+  return many(`
+    SELECT id, version, player_name, score, correct, total, duration_ms, level_n, created_at
+    FROM attempts WHERE class_code = @code ORDER BY created_at DESC LIMIT @limit
+  `, { code, limit });
+}
+
+export function getPlayerAttempts(player, limit = 50) {
+  return many(`
+    SELECT id, version, player_name, score, correct, total, duration_ms, level_n, details, created_at
+    FROM attempts WHERE player_name = @player ORDER BY created_at DESC LIMIT @limit
+  `, { player, limit });
+}
+
+// --- Achievements ---
 export function getAchievements(player) {
-  return achievementsForStmt.all({ player });
+  return many(`
+    SELECT badge_id, unlocked_at FROM achievements
+    WHERE player_name = @player ORDER BY unlocked_at DESC
+  `, { player });
 }
 export function getAllRecentAchievements() {
-  return allAchievementsStmt.all();
+  return many(`
+    SELECT player_name, badge_id, unlocked_at FROM achievements
+    ORDER BY unlocked_at DESC LIMIT 50
+  `);
 }
-export function unlockAchievement(player, badge) {
-  const info = unlockAchievementStmt.run({ player, badge, t: Date.now() });
-  return info.changes > 0;
+export async function unlockAchievement(player, badge) {
+  const r = await exec(`
+    INSERT INTO achievements (player_name, badge_id, unlocked_at)
+    VALUES (@player, @badge, @t)
+    ON CONFLICT (player_name, badge_id) DO NOTHING
+  `, { player, badge, t: Date.now() });
+  return r.rowCount > 0;
 }
 
-// Confusion matrix: parses attempt.details.breakdown / details.medicines
-// → returns { categories: [...], matrix: { actualCat: { placedCat: count } } }
-// --- Requests ("Ban điều hành AI" inbox) ---
+// --- Requests (Ban điều hành AI inbox) ---
 const VALID_REQ_TYPES = new Set(['game', 'theory', 'lab', 'skill', 'other']);
 const VALID_REQ_STATUS = new Set(['pending', 'reviewing', 'done', 'rejected']);
 
-const insertRequestStmt = db.prepare(`
-  INSERT INTO requests (school_id, domain, type, title, detail, student, status, votes, created_at, updated_at)
-  VALUES (@school_id, @domain, @type, @title, @detail, @student, 'pending', 1, @t, @t)
-`);
-const listRequestsStmt = db.prepare(`
-  SELECT id, domain, type, title, detail, student, status, votes, admin_note, created_at, updated_at
-  FROM requests WHERE domain = @domain AND school_id = @school_id
-  ORDER BY (status='done') ASC, votes DESC, created_at DESC
-  LIMIT @limit
-`);
-const voteRequestStmt = db.prepare(`UPDATE requests SET votes = votes + 1, updated_at = @t WHERE id = @id`);
-const setRequestStatusStmt = db.prepare(`UPDATE requests SET status = @status, admin_note = @note, updated_at = @t WHERE id = @id`);
-const requestStatsStmt = db.prepare(`
-  SELECT status, COUNT(*) AS n FROM requests WHERE domain = @domain AND school_id = @school_id GROUP BY status
-`);
-
-export function createRequest({ domain, type, title, detail, student, school_id = 1 }) {
+export async function createRequest({ domain, type, title, detail, student, school_id = 1 }) {
   const t = Date.now();
   const safeType = VALID_REQ_TYPES.has(type) ? type : 'other';
-  const info = insertRequestStmt.run({
+  const r = await one(`
+    INSERT INTO requests (school_id, domain, type, title, detail, student, status, votes, created_at, updated_at)
+    VALUES (@school_id, @domain, @type, @title, @detail, @student, 'pending', 1, @t, @t)
+    RETURNING id, created_at
+  `, {
     school_id,
-    domain: String(domain || '').slice(0, 40),
-    type: safeType,
-    title: String(title || '').slice(0, 200),
-    // Nâng giới hạn detail từ 2000 → 10000 chars. Brief redesign chi tiết của
-    // SV/HS (vd req #3 của Enderboy) có thể >2000 chars và đang bị server âm
-    // thầm cắt cụt — gây mất thông tin. 10000 chars = ~2-3 trang A4, đủ cho
-    // mọi brief sản phẩm hợp lý; storage cost không đáng kể (SQLite TEXT).
-    detail: detail ? String(detail).slice(0, 10000) : null,
+    domain:  String(domain || '').slice(0, 40),
+    type:    safeType,
+    title:   String(title || '').slice(0, 200),
+    detail:  detail ? String(detail).slice(0, 10000) : null,
     student: String(student || 'Ẩn danh').slice(0, 60),
     t,
   });
-  return { id: info.lastInsertRowid, createdAt: t };
+  return { id: r.id, createdAt: r.created_at };
 }
+
 export function listRequests(domain, limit = 50, schoolId = 1) {
-  return listRequestsStmt.all({ domain: String(domain || ''), limit, school_id: schoolId });
+  return many(`
+    SELECT id, domain, type, title, detail, student, status, votes, admin_note, created_at, updated_at
+    FROM requests WHERE domain = @domain AND school_id = @school_id
+    ORDER BY (status = 'done') ASC, votes DESC, created_at DESC
+    LIMIT @limit
+  `, { domain: String(domain || ''), limit, school_id: schoolId });
 }
-export function voteRequest(id) {
-  const info = voteRequestStmt.run({ id: Number(id), t: Date.now() });
-  return info.changes > 0;
+
+export async function voteRequest(id) {
+  const r = await exec(`UPDATE requests SET votes = votes + 1, updated_at = @t WHERE id = @id`,
+    { id: Number(id), t: Date.now() });
+  return r.rowCount > 0;
 }
-export function setRequestStatus(id, status, note) {
+
+export async function setRequestStatus(id, status, note) {
   if (!VALID_REQ_STATUS.has(status)) return false;
-  const info = setRequestStatusStmt.run({ id: Number(id), status, note: note ? String(note).slice(0, 500) : null, t: Date.now() });
-  return info.changes > 0;
+  const r = await exec(`UPDATE requests SET status = @status, admin_note = @note, updated_at = @t WHERE id = @id`, {
+    id: Number(id), status,
+    note: note ? String(note).slice(0, 500) : null,
+    t: Date.now(),
+  });
+  return r.rowCount > 0;
 }
-export function getRequestStats(domain, schoolId = 1) {
-  const rows = requestStatsStmt.all({ domain: String(domain || ''), school_id: schoolId });
+
+export async function getRequestStats(domain, schoolId = 1) {
+  const rows = await many(`
+    SELECT status, COUNT(*)::int AS n FROM requests
+    WHERE domain = @domain AND school_id = @school_id GROUP BY status
+  `, { domain: String(domain || ''), school_id: schoolId });
   const out = { pending: 0, reviewing: 0, done: 0, rejected: 0 };
   for (const r of rows) out[r.status] = r.n;
   return out;
 }
 
-// --- Notifications (kênh phản hồi cá nhân cho HS) ---
+// --- Notifications ---
 const VALID_NOTIF_KINDS = new Set(['reply', 'system']);
 
-const insertNotificationStmt = db.prepare(`
-  INSERT INTO notifications (school_id, user_display_name, request_id, kind, title, body, url, created_at)
-  VALUES (@school_id, @user_display_name, @request_id, @kind, @title, @body, @url, @created_at)
-`);
-const listNotificationsStmt = db.prepare(`
-  SELECT id, request_id, kind, title, body, url, read_at, created_at
-  FROM notifications
-  WHERE user_display_name = @user AND school_id = @school_id
-  ORDER BY (read_at IS NOT NULL) ASC, created_at DESC
-  LIMIT @limit
-`);
-const countUnreadStmt = db.prepare(`
-  SELECT COUNT(*) AS n FROM notifications
-  WHERE user_display_name = @user AND school_id = @school_id AND read_at IS NULL
-`);
-const markReadStmt = db.prepare(`
-  UPDATE notifications SET read_at = @t
-  WHERE id = @id AND user_display_name = @user AND read_at IS NULL
-`);
-const markAllReadStmt = db.prepare(`
-  UPDATE notifications SET read_at = @t
-  WHERE user_display_name = @user AND school_id = @school_id AND read_at IS NULL
-`);
-
-/** Bỏ qua nếu thiếu display_name hợp lệ (vd 'Ẩn danh' / rỗng) — tránh broadcast. */
-export function createNotification({ user_display_name, request_id = null, kind = 'reply', title, body = null, url = null, school_id = 1 }) {
+export async function createNotification({ user_display_name, request_id = null, kind = 'reply', title, body = null, url = null, school_id = 1 }) {
   const u = String(user_display_name || '').trim();
   if (!u || u === 'Ẩn danh') return null;
   if (!VALID_NOTIF_KINDS.has(kind)) kind = 'reply';
-  const info = insertNotificationStmt.run({
+  const r = await one(`
+    INSERT INTO notifications (school_id, user_display_name, request_id, kind, title, body, url, created_at)
+    VALUES (@school_id, @user_display_name, @request_id, @kind, @title, @body, @url, @created_at)
+    RETURNING id
+  `, {
     school_id, user_display_name: u.slice(0, 60),
     request_id: request_id ? Number(request_id) : null,
     kind,
     title: String(title || '').slice(0, 200),
-    body: body ? String(body).slice(0, 1000) : null,
-    url: url ? String(url).slice(0, 500) : null,
+    body:  body ? String(body).slice(0, 1000) : null,
+    url:   url ? String(url).slice(0, 500) : null,
     created_at: Date.now(),
   });
-  return { id: info.lastInsertRowid };
+  return { id: r.id };
 }
+
 export function listNotifications(user_display_name, schoolId = 1, limit = 30) {
   const u = String(user_display_name || '').trim();
-  if (!u) return [];
-  return listNotificationsStmt.all({ user: u, school_id: schoolId, limit });
+  if (!u) return Promise.resolve([]);
+  return many(`
+    SELECT id, request_id, kind, title, body, url, read_at, created_at
+    FROM notifications
+    WHERE user_display_name = @user AND school_id = @school_id
+    ORDER BY (read_at IS NOT NULL) ASC, created_at DESC
+    LIMIT @limit
+  `, { user: u, school_id: schoolId, limit });
 }
-export function countUnreadNotifications(user_display_name, schoolId = 1) {
+
+export async function countUnreadNotifications(user_display_name, schoolId = 1) {
   const u = String(user_display_name || '').trim();
   if (!u) return 0;
-  return countUnreadStmt.get({ user: u, school_id: schoolId })?.n || 0;
+  const r = await one(`
+    SELECT COUNT(*)::int AS n FROM notifications
+    WHERE user_display_name = @user AND school_id = @school_id AND read_at IS NULL
+  `, { user: u, school_id: schoolId });
+  return r?.n || 0;
 }
-export function markNotificationRead(id, user_display_name) {
+
+export async function markNotificationRead(id, user_display_name) {
   const u = String(user_display_name || '').trim();
   if (!u) return false;
-  return markReadStmt.run({ id: Number(id), user: u, t: Date.now() }).changes > 0;
+  const r = await exec(`
+    UPDATE notifications SET read_at = @t
+    WHERE id = @id AND user_display_name = @user AND read_at IS NULL
+  `, { id: Number(id), user: u, t: Date.now() });
+  return r.rowCount > 0;
 }
-export function markAllNotificationsRead(user_display_name, schoolId = 1) {
+
+export async function markAllNotificationsRead(user_display_name, schoolId = 1) {
   const u = String(user_display_name || '').trim();
   if (!u) return 0;
-  return markAllReadStmt.run({ user: u, school_id: schoolId, t: Date.now() }).changes;
+  const r = await exec(`
+    UPDATE notifications SET read_at = @t
+    WHERE user_display_name = @user AND school_id = @school_id AND read_at IS NULL
+  `, { user: u, school_id: schoolId, t: Date.now() });
+  return r.rowCount;
 }
 
-// --- Kho học liệu AI sinh thêm ---
-const insertAiContentStmt = db.prepare(`
-  INSERT INTO ai_lesson_content (school_id, week_id, subject, topic, kind, stem, payload, student, created_at)
-  VALUES (@school_id, @week_id, @subject, @topic, @kind, @stem, @payload, @student, @created_at)
-`);
-const existsAiStemStmt = db.prepare(`
-  SELECT 1 FROM ai_lesson_content WHERE week_id = @week_id AND kind = @kind AND stem = @stem LIMIT 1
-`);
-const getAiQuestionsStmt = db.prepare(`
-  SELECT stem, payload, created_at FROM ai_lesson_content
-  WHERE week_id = @week_id AND kind = 'question' AND flagged = 0
-  ORDER BY created_at DESC LIMIT @limit
-`);
-const getAiQaStmt = db.prepare(`
-  SELECT stem, payload, created_at FROM ai_lesson_content
-  WHERE week_id = @week_id AND kind = 'qa' AND flagged = 0
-  ORDER BY created_at DESC LIMIT @limit
-`);
-const countAiContentStmt = db.prepare(`
-  SELECT kind, COUNT(*) AS n FROM ai_lesson_content
-  WHERE week_id = @week_id AND flagged = 0 GROUP BY kind
-`);
-
-/** Lưu 1 mảng câu hỏi AI vừa sinh. Bỏ qua câu trùng stem trong cùng tuần. */
-export function saveAiQuestions({ week_id, subject, topic, student, questions = [], school_id = 1 }) {
+// --- AI lesson content ---
+export async function saveAiQuestions({ week_id, subject, topic, student, questions = [], school_id = 1 }) {
   if (!week_id || !Array.isArray(questions) || !questions.length) return { saved: 0 };
   const t = Date.now();
   let saved = 0;
-  const tx = db.transaction(() => {
+  await tx(async (c) => {
     for (const q of questions) {
       const stem = String(q.stem || '').trim();
       if (!stem) continue;
-      if (existsAiStemStmt.get({ week_id, kind: 'question', stem })) continue;  // dedupe
-      insertAiContentStmt.run({
+      const exists = await c.one(
+        `SELECT 1 AS x FROM ai_lesson_content WHERE week_id = @week_id AND kind = 'question' AND stem = @stem LIMIT 1`,
+        { week_id, stem }
+      );
+      if (exists) continue;
+      await c.exec(`
+        INSERT INTO ai_lesson_content (school_id, week_id, subject, topic, kind, stem, payload, student, created_at)
+        VALUES (@school_id, @week_id, @subject, @topic, 'question', @stem, @payload, @student, @created_at)
+      `, {
         school_id, week_id,
         subject: subject ? String(subject).slice(0, 60) : null,
-        topic: topic ? String(topic).slice(0, 160) : null,
-        kind: 'question', stem: stem.slice(0, 500),
+        topic:   topic ? String(topic).slice(0, 160) : null,
+        stem:    stem.slice(0, 500),
         payload: JSON.stringify({ choices: q.choices, answer: q.answer, explanation: q.explanation || '' }),
         student: student ? String(student).slice(0, 60) : null,
         created_at: t,
@@ -587,20 +332,25 @@ export function saveAiQuestions({ week_id, subject, topic, student, questions = 
       saved++;
     }
   });
-  tx();
   return { saved };
 }
 
-/** Lưu 1 cặp hỏi-đáp với "cô giáo AI". */
-export function saveAiQa({ week_id, subject, topic, student, question, answer, school_id = 1 }) {
+export async function saveAiQa({ week_id, subject, topic, student, question, answer, school_id = 1 }) {
   if (!week_id || !question || !answer) return { saved: 0 };
   const stem = String(question).trim().slice(0, 500);
-  if (existsAiStemStmt.get({ week_id, kind: 'qa', stem })) return { saved: 0 };  // dedupe câu hỏi y hệt
-  insertAiContentStmt.run({
+  const exists = await one(
+    `SELECT 1 AS x FROM ai_lesson_content WHERE week_id = @week_id AND kind = 'qa' AND stem = @stem LIMIT 1`,
+    { week_id, stem }
+  );
+  if (exists) return { saved: 0 };
+  await exec(`
+    INSERT INTO ai_lesson_content (school_id, week_id, subject, topic, kind, stem, payload, student, created_at)
+    VALUES (@school_id, @week_id, @subject, @topic, 'qa', @stem, @payload, @student, @created_at)
+  `, {
     school_id, week_id,
     subject: subject ? String(subject).slice(0, 60) : null,
-    topic: topic ? String(topic).slice(0, 160) : null,
-    kind: 'qa', stem,
+    topic:   topic ? String(topic).slice(0, 160) : null,
+    stem,
     payload: JSON.stringify({ answer: String(answer).slice(0, 2000) }),
     student: student ? String(student).slice(0, 60) : null,
     created_at: Date.now(),
@@ -608,33 +358,48 @@ export function saveAiQa({ week_id, subject, topic, student, question, answer, s
   return { saved: 1 };
 }
 
-/** Lấy câu hỏi AI đã tích luỹ của 1 tuần (để luyện lại không cần gọi Ollama). */
-export function getAiQuestions(week_id, limit = 50) {
-  return getAiQuestionsStmt.all({ week_id: String(week_id), limit })
-    .map(r => { try { const p = JSON.parse(r.payload); return { stem: r.stem, ...p }; } catch { return null; } })
-    .filter(Boolean);
+export async function getAiQuestions(week_id, limit = 50) {
+  const rows = await many(`
+    SELECT stem, payload, created_at FROM ai_lesson_content
+    WHERE week_id = @week_id AND kind = 'question' AND flagged = 0
+    ORDER BY created_at DESC LIMIT @limit
+  `, { week_id: String(week_id), limit });
+  // payload đã là object (JSONB) → spread thẳng.
+  return rows.map(r => ({ stem: r.stem, ...(r.payload || {}) }));
 }
-/** Lấy hỏi-đáp đã tích luỹ của 1 tuần. */
-export function getAiQa(week_id, limit = 50) {
-  return getAiQaStmt.all({ week_id: String(week_id), limit })
-    .map(r => { try { const p = JSON.parse(r.payload); return { question: r.stem, answer: p.answer, created_at: r.created_at }; } catch { return null; } })
-    .filter(Boolean);
+
+export async function getAiQa(week_id, limit = 50) {
+  const rows = await many(`
+    SELECT stem, payload, created_at FROM ai_lesson_content
+    WHERE week_id = @week_id AND kind = 'qa' AND flagged = 0
+    ORDER BY created_at DESC LIMIT @limit
+  `, { week_id: String(week_id), limit });
+  return rows.map(r => ({ question: r.stem, answer: r.payload?.answer, created_at: r.created_at }));
 }
-/** Đếm số học liệu AI đã tích luỹ theo tuần → { question, qa }. */
-export function getAiContentCounts(week_id) {
-  const rows = countAiContentStmt.all({ week_id: String(week_id) });
+
+export async function getAiContentCounts(week_id) {
+  const rows = await many(`
+    SELECT kind, COUNT(*)::int AS n FROM ai_lesson_content
+    WHERE week_id = @week_id AND flagged = 0 GROUP BY kind
+  `, { week_id: String(week_id) });
   const out = { question: 0, qa: 0 };
   for (const r of rows) out[r.kind] = r.n;
   return out;
 }
 
-export function getConfusion(version) {
-  const rows = db.prepare(`SELECT details FROM attempts WHERE version = ? AND details IS NOT NULL`).all(version);
+// Confusion matrix — parse details JSONB của attempts.
+export async function getConfusion(version) {
+  const rows = await many(
+    `SELECT details FROM attempts WHERE version = @version AND details IS NOT NULL`,
+    { version }
+  );
   const matrix = {};
   const categories = new Set();
   for (const r of rows) {
-    let d;
-    try { d = JSON.parse(r.details); } catch { continue; }
+    // details là JSONB → đã là object. Một số legacy có thể là string → parse.
+    let d = r.details;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch { continue; } }
+    if (!d) continue;
     const items = d.medicines || d.breakdown || [];
     for (const it of items) {
       const actual = it.category;
@@ -651,387 +416,319 @@ export function getConfusion(version) {
 }
 
 // --- Users & sessions ---
-const insertUserStmt = db.prepare(`
-  INSERT INTO users (username, display_name, password_hash, role, age, school_id, created_at,
-                     grade, major, cohort, school_name)
-  VALUES (@username, @display_name, @password_hash, @role, @age, @school_id, @created_at,
-          @grade, @major, @cohort, @school_name)
-`);
-const getUserByUsernameStmt = db.prepare(`
-  SELECT id, username, display_name, password_hash, role, age, email, avatar_url, created_at, last_login,
-         grade, major, cohort, school_name
-  FROM users WHERE username = ? COLLATE NOCASE
-`);
-const getUserByIdStmt = db.prepare(`
-  SELECT id, username, display_name, role, age, email, avatar_url, school_id, created_at, last_login,
-         plan, plan_expires_at, billing_cycle,
-         grade, major, cohort, school_name
-  FROM users WHERE id = ?
-`);
-const setUserPlanStmt = db.prepare(`
-  UPDATE users SET plan = @plan, plan_expires_at = @expires, billing_cycle = @cycle WHERE id = @id
-`);
-const touchLoginStmt = db.prepare(`UPDATE users SET last_login = @t WHERE id = @id`);
-const updateDisplayNameStmt = db.prepare(`UPDATE users SET display_name = @name WHERE id = @id`);
-
-const insertSessionStmt = db.prepare(`
-  INSERT INTO sessions (token, user_id, created_at, expires_at)
-  VALUES (@token, @user_id, @created_at, @expires_at)
-`);
-const getSessionStmt = db.prepare(`
-  SELECT s.token, s.user_id, s.expires_at,
-         u.username, u.display_name, u.role, u.school_id,
-         u.plan, u.plan_expires_at
-  FROM sessions s JOIN users u ON u.id = s.user_id
-  WHERE s.token = ? AND s.expires_at > @now
-`);
-const deleteSessionStmt = db.prepare(`DELETE FROM sessions WHERE token = ?`);
-const purgeExpiredSessionsStmt = db.prepare(`DELETE FROM sessions WHERE expires_at <= ?`);
-
 const ALLOWED_ROLES = new Set(['pupil', 'student', 'teacher']);
-export function createUser({ username, display_name, password_hash, role, age, school_id = 1,
-                             grade = null, major = null, cohort = null, school_name = null }) {
-  const info = insertUserStmt.run({
+
+export async function createUser({ username, display_name, password_hash, role, age, school_id = 1,
+                                    grade = null, major = null, cohort = null, school_name = null }) {
+  const r = await one(`
+    INSERT INTO users (username, display_name, password_hash, role, age, school_id, created_at,
+                       grade, major, cohort, school_name)
+    VALUES (@username, @display_name, @password_hash, @role, @age, @school_id, @created_at,
+            @grade, @major, @cohort, @school_name)
+    RETURNING id
+  `, {
     username, display_name, password_hash,
     role: ALLOWED_ROLES.has(role) ? role : 'student',
-    age: Number.isFinite(age) ? Math.floor(age) : null,
-    school_id: Number(school_id) || 1,
-    created_at: Date.now(),
-    grade: Number.isFinite(grade) ? Math.floor(grade) : null,
-    major: major ? String(major).slice(0, 40) : null,
-    cohort: cohort ? String(cohort).slice(0, 20) : null,
+    age:  Number.isFinite(age) ? Math.floor(age) : null,
+    school_id:   Number(school_id) || 1,
+    created_at:  Date.now(),
+    grade:       Number.isFinite(grade) ? Math.floor(grade) : null,
+    major:       major ? String(major).slice(0, 40) : null,
+    cohort:      cohort ? String(cohort).slice(0, 20) : null,
     school_name: school_name ? String(school_name).slice(0, 120) : null,
   });
-  return { id: info.lastInsertRowid };
+  return { id: r.id };
 }
+
 export function getUserByUsername(username) {
-  return getUserByUsernameStmt.get(String(username || '').trim()) || null;
+  return one(`
+    SELECT id, username, display_name, password_hash, role, age, email, avatar_url, created_at, last_login,
+           grade, major, cohort, school_name
+    FROM users WHERE username = @username
+  `, { username: String(username || '').trim() });
 }
+
 export function getUserById(id) {
-  return getUserByIdStmt.get(Number(id)) || null;
+  return one(`
+    SELECT id, username, display_name, role, age, email, avatar_url, school_id, created_at, last_login,
+           plan, plan_expires_at, billing_cycle,
+           grade, major, cohort, school_name
+    FROM users WHERE id = @id
+  `, { id: Number(id) });
 }
+
 export function touchLogin(id) {
-  touchLoginStmt.run({ id: Number(id), t: Date.now() });
+  return exec(`UPDATE users SET last_login = @t WHERE id = @id`, { id: Number(id), t: Date.now() });
 }
+
 export function updateDisplayName(id, name) {
-  updateDisplayNameStmt.run({ id: Number(id), name: String(name).slice(0, 60) });
+  return exec(`UPDATE users SET display_name = @name WHERE id = @id`,
+    { id: Number(id), name: String(name).slice(0, 60) });
 }
-// Set gói cước. expires_at=null = vĩnh viễn (chỉ áp dụng cho 'free'); với plus/pro
-// caller phải truyền timestamp ms. cycle='month'|'year'|null.
+
 export function setUserPlan(id, { plan, expires_at = null, cycle = null }) {
-  setUserPlanStmt.run({
+  return exec(`
+    UPDATE users SET plan = @plan, plan_expires_at = @expires, billing_cycle = @cycle WHERE id = @id
+  `, {
     id: Number(id),
     plan: String(plan || 'free'),
     expires: expires_at ? Number(expires_at) : null,
-    cycle: cycle ? String(cycle) : null,
+    cycle:   cycle ? String(cycle) : null,
   });
 }
-export function createSession({ token, user_id, ttlMs }) {
+
+export async function createSession({ token, user_id, ttlMs }) {
   const now = Date.now();
-  insertSessionStmt.run({ token, user_id, created_at: now, expires_at: now + ttlMs });
-  return { token, expires_at: now + ttlMs };
+  const expires_at = now + ttlMs;
+  await exec(`
+    INSERT INTO sessions (token, user_id, created_at, expires_at)
+    VALUES (@token, @user_id, @created_at, @expires_at)
+  `, { token, user_id, created_at: now, expires_at });
+  return { token, expires_at };
 }
+
 export function getSession(token) {
   if (!token) return null;
-  return getSessionStmt.get(String(token), { now: Date.now() }) || null;
+  return one(`
+    SELECT s.token, s.user_id, s.expires_at,
+           u.username, u.display_name, u.role, u.school_id,
+           u.plan, u.plan_expires_at
+    FROM sessions s JOIN users u ON u.id = s.user_id
+    WHERE s.token = @token AND s.expires_at > @now
+  `, { token: String(token), now: Date.now() });
 }
+
 export function deleteSession(token) {
-  deleteSessionStmt.run(String(token || ''));
+  return exec(`DELETE FROM sessions WHERE token = @token`, { token: String(token || '') });
 }
+
 export function purgeExpiredSessions() {
-  purgeExpiredSessionsStmt.run(Date.now());
+  return exec(`DELETE FROM sessions WHERE expires_at <= @now`, { now: Date.now() });
 }
-// Quét rác phiên hết hạn mỗi giờ (nhẹ nhàng — bảng nhỏ).
-setInterval(purgeExpiredSessions, 60 * 60 * 1000).unref?.();
+
+// Quét rác phiên hết hạn mỗi giờ.
+setInterval(() => { purgeExpiredSessions().catch(() => {}); }, 60 * 60 * 1000).unref?.();
 
 // --- OAuth identities ---
-const findOAuthStmt = db.prepare(`
-  SELECT u.id, u.username, u.display_name, u.role, u.email, u.avatar_url,
-         oi.id AS oauth_id, oi.provider, oi.subject
-  FROM oauth_identities oi JOIN users u ON u.id = oi.user_id
-  WHERE oi.provider = ? AND oi.subject = ?
-`);
-const insertOAuthStmt = db.prepare(`
-  INSERT INTO oauth_identities (user_id, provider, subject, email, created_at)
-  VALUES (@user_id, @provider, @subject, @email, @created_at)
-`);
-const updateUserProfileStmt = db.prepare(`
-  UPDATE users SET
-    display_name = COALESCE(@display_name, display_name),
-    email        = COALESCE(@email, email),
-    avatar_url   = COALESCE(@avatar_url, avatar_url)
-  WHERE id = @id
-`);
-const countUsernameStmt = db.prepare(`SELECT COUNT(*) AS n FROM users WHERE username = ? COLLATE NOCASE`);
-
 export function findUserByOAuth(provider, subject) {
-  return findOAuthStmt.get(String(provider), String(subject)) || null;
+  return one(`
+    SELECT u.id, u.username, u.display_name, u.role, u.email, u.avatar_url,
+           oi.id AS oauth_id, oi.provider, oi.subject
+    FROM oauth_identities oi JOIN users u ON u.id = oi.user_id
+    WHERE oi.provider = @provider AND oi.subject = @subject
+  `, { provider: String(provider), subject: String(subject) });
 }
+
 export function linkOAuth({ user_id, provider, subject, email }) {
-  insertOAuthStmt.run({
+  return exec(`
+    INSERT INTO oauth_identities (user_id, provider, subject, email, created_at)
+    VALUES (@user_id, @provider, @subject, @email, @created_at)
+  `, {
     user_id, provider, subject,
     email: email ? String(email).slice(0, 120) : null,
     created_at: Date.now(),
   });
 }
+
 export function updateUserProfile(id, { display_name, email, avatar_url } = {}) {
-  updateUserProfileStmt.run({
-    id, display_name: display_name || null,
-    email: email || null, avatar_url: avatar_url || null,
-  });
+  return exec(`
+    UPDATE users SET
+      display_name = COALESCE(@display_name, display_name),
+      email        = COALESCE(@email, email),
+      avatar_url   = COALESCE(@avatar_url, avatar_url)
+    WHERE id = @id
+  `, { id, display_name: display_name || null, email: email || null, avatar_url: avatar_url || null });
 }
-// Người dùng tự sửa hồ sơ (display_name + age + email + 4 trường HS/SV). Set trực
-// tiếp (không COALESCE) vì form cung cấp đủ; email/major/cohort/school_name rỗng → null.
-// grade rỗng/0 → null. Caller chịu trách nhiệm validate theo role (xem auth.js).
-const updateEditableStmt = db.prepare(`
-  UPDATE users SET
-    display_name = @display_name, age = @age, email = @email,
-    grade = @grade, major = @major, cohort = @cohort, school_name = @school_name
-  WHERE id = @id
-`);
+
 export function updateUserEditable(id, { display_name, age, email,
                                           grade = null, major = null, cohort = null, school_name = null }) {
-  updateEditableStmt.run({
+  return exec(`
+    UPDATE users SET
+      display_name = @display_name, age = @age, email = @email,
+      grade = @grade, major = @major, cohort = @cohort, school_name = @school_name
+    WHERE id = @id
+  `, {
     id: Number(id),
     display_name: String(display_name).slice(0, 60),
-    age: Number.isFinite(age) ? Math.floor(age) : null,
-    email: email ? String(email).slice(0, 120) : null,
-    grade: Number.isFinite(grade) && grade > 0 ? Math.floor(grade) : null,
-    major: major ? String(major).slice(0, 40) : null,
+    age:    Number.isFinite(age) ? Math.floor(age) : null,
+    email:  email ? String(email).slice(0, 120) : null,
+    grade:  Number.isFinite(grade) && grade > 0 ? Math.floor(grade) : null,
+    major:  major ? String(major).slice(0, 40) : null,
     cohort: cohort ? String(cohort).slice(0, 20) : null,
     school_name: school_name ? String(school_name).slice(0, 120) : null,
   });
 }
-export function isUsernameTaken(username) {
-  return (countUsernameStmt.get(String(username))?.n || 0) > 0;
+
+export async function isUsernameTaken(username) {
+  const r = await one(`SELECT COUNT(*)::int AS n FROM users WHERE username = @u`, { u: String(username) });
+  return (r?.n || 0) > 0;
 }
 
-// --- Schools (multi-tenancy Phase 0) ---
-// Mỗi trường là 1 tenant. Default school id=1 'tizia-default' giữ legacy data.
-// Phase 1 sẽ wire createUser/SSO auto-map theo resolveSchoolByEmail và enforce
-// Postgres RLS theo school_id. Hiện tại helpers ready, callers chưa migrate.
-const getSchoolByIdStmt     = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE id = ?`);
-const getSchoolByCodeStmt   = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE code = ?`);
-const getSchoolByDomainStmt = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE domain = ?`);
-const listSchoolsStmt       = db.prepare(`SELECT id, code, name, domain, created_at FROM schools ORDER BY id ASC`);
-const createSchoolStmt      = db.prepare(`INSERT INTO schools (code, name, domain, created_at) VALUES (@code, @name, @domain, @created_at)`);
-
+// --- Schools (tenant) ---
 export function getSchoolById(id) {
-  return getSchoolByIdStmt.get(Number(id)) || null;
+  return one(`SELECT id, code, name, domain, created_at FROM schools WHERE id = @id`, { id: Number(id) });
 }
 export function getSchoolByCode(code) {
-  return getSchoolByCodeStmt.get(String(code || '').trim()) || null;
+  return one(`SELECT id, code, name, domain, created_at FROM schools WHERE code = @code`,
+    { code: String(code || '').trim() });
 }
 export function getSchoolByDomain(domain) {
   if (!domain) return null;
-  return getSchoolByDomainStmt.get(String(domain).trim().toLowerCase()) || null;
+  return one(`SELECT id, code, name, domain, created_at FROM schools WHERE domain = @domain`,
+    { domain: String(domain).trim().toLowerCase() });
 }
 export function listSchools() {
-  return listSchoolsStmt.all();
+  return many(`SELECT id, code, name, domain, created_at FROM schools ORDER BY id ASC`);
 }
-export function createSchool({ code, name, domain }) {
-  const info = createSchoolStmt.run({
+export async function createSchool({ code, name, domain }) {
+  const r = await one(`
+    INSERT INTO schools (code, name, domain, created_at)
+    VALUES (@code, @name, @domain, @created_at)
+    RETURNING id
+  `, {
     code:   String(code || '').trim().slice(0, 40),
     name:   String(name || '').trim().slice(0, 120),
     domain: domain ? String(domain).trim().toLowerCase().slice(0, 80) : null,
     created_at: Date.now(),
   });
-  return { id: info.lastInsertRowid };
+  return { id: r.id };
 }
-// Phân giải tenant từ email SSO: 'lan@neu.edu.vn' → school có domain='neu.edu.vn'.
-// Trả null nếu admin chưa cấu hình domain cho trường — caller fallback school_id=1.
-export function resolveSchoolByEmail(email) {
+export async function resolveSchoolByEmail(email) {
   const m = String(email || '').match(/@([^@]+)$/);
   if (!m) return null;
   return getSchoolByDomain(m[1].toLowerCase());
 }
 
-// ── Family links (Trục 4) ──
-const insertFamilyStmt = db.prepare(`
-  INSERT OR IGNORE INTO family_links (parent_user_id, child_user_id, created_at)
-  VALUES (@parent_user_id, @child_user_id, @created_at)
-`);
-const deleteFamilyStmt = db.prepare(`
-  DELETE FROM family_links WHERE parent_user_id = @parent AND child_user_id = @child
-`);
-const listChildrenStmt = db.prepare(`
-  SELECT u.id, u.username, u.display_name, u.role, u.grade, u.school_name, u.plan, u.plan_expires_at
-  FROM family_links f JOIN users u ON u.id = f.child_user_id
-  WHERE f.parent_user_id = ? ORDER BY f.created_at ASC
-`);
-const getParentPlanStmt = db.prepare(`
-  SELECT u.id AS parent_id, u.plan AS parent_plan, u.plan_expires_at AS parent_plan_expires_at
-  FROM family_links f JOIN users u ON u.id = f.parent_user_id
-  WHERE f.child_user_id = ?
-  ORDER BY (CASE u.plan WHEN 'pro' THEN 3 WHEN 'plus' THEN 2 WHEN 'free' THEN 1 ELSE 0 END) DESC
-  LIMIT 1
-`);
-
-export function linkChildToParent({ parent_user_id, child_user_id }) {
-  const info = insertFamilyStmt.run({
+// --- Family links (Trục 4) ---
+export async function linkChildToParent({ parent_user_id, child_user_id }) {
+  const r = await exec(`
+    INSERT INTO family_links (parent_user_id, child_user_id, created_at)
+    VALUES (@parent_user_id, @child_user_id, @created_at)
+    ON CONFLICT (parent_user_id, child_user_id) DO NOTHING
+  `, {
     parent_user_id: Number(parent_user_id),
-    child_user_id: Number(child_user_id),
-    created_at: Date.now(),
+    child_user_id:  Number(child_user_id),
+    created_at:     Date.now(),
   });
-  return { linked: info.changes > 0 };
+  return { linked: r.rowCount > 0 };
 }
-export function unlinkChildFromParent({ parent_user_id, child_user_id }) {
-  const info = deleteFamilyStmt.run({ parent: Number(parent_user_id), child: Number(child_user_id) });
-  return { unlinked: info.changes > 0 };
+
+export async function unlinkChildFromParent({ parent_user_id, child_user_id }) {
+  const r = await exec(
+    `DELETE FROM family_links WHERE parent_user_id = @parent AND child_user_id = @child`,
+    { parent: Number(parent_user_id), child: Number(child_user_id) }
+  );
+  return { unlinked: r.rowCount > 0 };
 }
+
 export function listChildrenOfParent(parent_user_id) {
-  return listChildrenStmt.all(Number(parent_user_id));
+  return many(`
+    SELECT u.id, u.username, u.display_name, u.role, u.grade, u.school_name, u.plan, u.plan_expires_at
+    FROM family_links f JOIN users u ON u.id = f.child_user_id
+    WHERE f.parent_user_id = @parent ORDER BY f.created_at ASC
+  `, { parent: Number(parent_user_id) });
 }
-/** Trả về parent có plan cao nhất (để con kế thừa). null nếu không có/không link. */
+
 export function getBestParentPlanForChild(child_user_id) {
-  return getParentPlanStmt.get(Number(child_user_id)) || null;
+  return one(`
+    SELECT u.id AS parent_id, u.plan AS parent_plan, u.plan_expires_at AS parent_plan_expires_at
+    FROM family_links f JOIN users u ON u.id = f.parent_user_id
+    WHERE f.child_user_id = @child
+    ORDER BY (CASE u.plan WHEN 'pro' THEN 3 WHEN 'plus' THEN 2 WHEN 'free' THEN 1 ELSE 0 END) DESC
+    LIMIT 1
+  `, { child: Number(child_user_id) });
 }
 
-// ── School codes (Trục 4) ──
-const insertCodeStmt = db.prepare(`
-  INSERT INTO school_codes (code, school_id, kind, grant_plan, grant_days, discount_percent,
-                            max_uses, expires_at, note, created_by, created_at)
-  VALUES (@code, @school_id, @kind, @grant_plan, @grant_days, @discount_percent,
-          @max_uses, @expires_at, @note, @created_by, @created_at)
-`);
-const getCodeStmt = db.prepare(`SELECT * FROM school_codes WHERE code = ? COLLATE NOCASE`);
-const incCodeUsageStmt = db.prepare(`UPDATE school_codes SET used_count = used_count + 1 WHERE id = ?`);
-const insertRedemptionStmt = db.prepare(`
-  INSERT OR IGNORE INTO school_code_redemptions (code_id, user_id, redeemed_at, outcome)
-  VALUES (@code_id, @user_id, @redeemed_at, @outcome)
-`);
-const listRedemptionsForUserStmt = db.prepare(`
-  SELECT r.code_id, r.outcome, r.redeemed_at, c.code, c.kind, c.discount_percent, c.grant_plan
-  FROM school_code_redemptions r JOIN school_codes c ON c.id = r.code_id
-  WHERE r.user_id = ? ORDER BY r.redeemed_at DESC
-`);
-
+// --- School codes (Trục 4) ---
 export function createSchoolCode({ code, school_id = 1, kind = 'grant_plan',
                                    grant_plan = null, grant_days = 365,
                                    discount_percent = 0, max_uses = 0,
                                    expires_at = null, note = null, created_by = null }) {
-  insertCodeStmt.run({
+  return exec(`
+    INSERT INTO school_codes (code, school_id, kind, grant_plan, grant_days, discount_percent,
+                              max_uses, expires_at, note, created_by, created_at)
+    VALUES (@code, @school_id, @kind, @grant_plan, @grant_days, @discount_percent,
+            @max_uses, @expires_at, @note, @created_by, @created_at)
+  `, {
     code: String(code).trim().slice(0, 40),
     school_id: Number(school_id) || 1,
     kind: kind === 'discount' ? 'discount' : 'grant_plan',
     grant_plan: grant_plan ? String(grant_plan) : null,
     grant_days: Math.max(1, Math.floor(Number(grant_days) || 365)),
     discount_percent: Math.max(0, Math.min(90, Math.floor(Number(discount_percent) || 0))),
-    max_uses: Math.max(0, Math.floor(Number(max_uses) || 0)),
+    max_uses:   Math.max(0, Math.floor(Number(max_uses) || 0)),
     expires_at: expires_at ? Number(expires_at) : null,
-    note: note ? String(note).slice(0, 200) : null,
+    note:       note ? String(note).slice(0, 200) : null,
     created_by: created_by ? Number(created_by) : null,
     created_at: Date.now(),
   });
 }
+
 export function getSchoolCode(code) {
-  return getCodeStmt.get(String(code || '').trim()) || null;
+  return one(`SELECT * FROM school_codes WHERE code = @code`, { code: String(code || '').trim() });
 }
-/** Tăng used_count + insert redemption. Trả false nếu đã redeem rồi (UNIQUE). */
-export function redeemSchoolCode({ code_id, user_id, outcome }) {
-  const info = insertRedemptionStmt.run({
-    code_id: Number(code_id), user_id: Number(user_id),
-    redeemed_at: Date.now(), outcome: String(outcome || ''),
+
+export async function redeemSchoolCode({ code_id, user_id, outcome }) {
+  return tx(async (c) => {
+    const ins = await c.exec(`
+      INSERT INTO school_code_redemptions (code_id, user_id, redeemed_at, outcome)
+      VALUES (@code_id, @user_id, @redeemed_at, @outcome)
+      ON CONFLICT (code_id, user_id) DO NOTHING
+    `, {
+      code_id: Number(code_id), user_id: Number(user_id),
+      redeemed_at: Date.now(), outcome: String(outcome || ''),
+    });
+    if (ins.rowCount === 0) return false;
+    await c.exec(`UPDATE school_codes SET used_count = used_count + 1 WHERE id = @id`,
+      { id: Number(code_id) });
+    return true;
   });
-  if (info.changes === 0) return false;
-  incCodeUsageStmt.run(Number(code_id));
-  return true;
 }
+
 export function listRedemptionsForUser(user_id) {
-  return listRedemptionsForUserStmt.all(Number(user_id));
+  return many(`
+    SELECT r.code_id, r.outcome, r.redeemed_at, c.code, c.kind, c.discount_percent, c.grant_plan
+    FROM school_code_redemptions r JOIN school_codes c ON c.id = r.code_id
+    WHERE r.user_id = @uid ORDER BY r.redeemed_at DESC
+  `, { uid: Number(user_id) });
 }
 
-// ── User wallets ──
-// Ví XP/coin/streak/daily-quest per-user. Trước đây toàn bộ state nằm ở localStorage
-// (key tizia:wallet:v1) → mất ngay khi đổi máy / clear cache / dùng cửa sổ ẩn danh,
-// và nhiều user trên cùng máy dùng chung 1 ví. Bảng này khoá theo user_id để
-// XP/level theo người, không theo trình duyệt. Các trường JSON (achievements,
-// modules_by_day, daily, quests_claimed) lưu nguyên payload từ client để giữ
-// engine pure-client; server chỉ là kho đồng bộ + clamp số.
-db.exec(`
-  CREATE TABLE IF NOT EXISTS user_wallets (
-    user_id          INTEGER PRIMARY KEY,
-    coins            INTEGER NOT NULL DEFAULT 0,
-    xp               INTEGER NOT NULL DEFAULT 0,
-    streak           INTEGER NOT NULL DEFAULT 0,
-    longest_streak   INTEGER NOT NULL DEFAULT 0,
-    streak_shields   INTEGER NOT NULL DEFAULT 0,
-    last_visit_day   TEXT    NOT NULL DEFAULT '',
-    achievements     TEXT    NOT NULL DEFAULT '[]',
-    vr_sessions      INTEGER NOT NULL DEFAULT 0,
-    meta_sessions    INTEGER NOT NULL DEFAULT 0,
-    quizzes_passed   INTEGER NOT NULL DEFAULT 0,
-    modules_by_day   TEXT    NOT NULL DEFAULT '{}',
-    daily            TEXT    NOT NULL DEFAULT '{}',
-    quests_claimed   TEXT    NOT NULL DEFAULT '{}',
-    updated_at       INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-`);
-
-const getUserWalletStmt = db.prepare(`SELECT * FROM user_wallets WHERE user_id = ?`);
-const upsertUserWalletStmt = db.prepare(`
-  INSERT INTO user_wallets (user_id, coins, xp, streak, longest_streak, streak_shields,
-                            last_visit_day, achievements, vr_sessions, meta_sessions,
-                            quizzes_passed, modules_by_day, daily, quests_claimed, updated_at)
-  VALUES (@user_id, @coins, @xp, @streak, @longest_streak, @streak_shields,
-          @last_visit_day, @achievements, @vr_sessions, @meta_sessions,
-          @quizzes_passed, @modules_by_day, @daily, @quests_claimed, @updated_at)
-  ON CONFLICT(user_id) DO UPDATE SET
-    coins          = excluded.coins,
-    xp             = excluded.xp,
-    streak         = excluded.streak,
-    longest_streak = excluded.longest_streak,
-    streak_shields = excluded.streak_shields,
-    last_visit_day = excluded.last_visit_day,
-    achievements   = excluded.achievements,
-    vr_sessions    = excluded.vr_sessions,
-    meta_sessions  = excluded.meta_sessions,
-    quizzes_passed = excluded.quizzes_passed,
-    modules_by_day = excluded.modules_by_day,
-    daily          = excluded.daily,
-    quests_claimed = excluded.quests_claimed,
-    updated_at     = excluded.updated_at
-`);
-
-/** Đọc ví của 1 user. Trả null nếu chưa có row (caller fallback ví rỗng). */
-export function getUserWallet(user_id) {
-  const row = getUserWalletStmt.get(Number(user_id));
+// --- User wallets ---
+export async function getUserWallet(user_id) {
+  const row = await one(`SELECT * FROM user_wallets WHERE user_id = @uid`, { uid: Number(user_id) });
   if (!row) return null;
-  // Parse các trường JSON; lỗi parse → giá trị mặc định an toàn.
-  const parse = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
+  // JSONB fields đã được pg parse → giữ nguyên. Fallback an toàn nếu NULL.
   return {
-    coins:          row.coins | 0,
-    xp:             row.xp | 0,
+    coins:          Number(row.coins) | 0,
+    xp:             Number(row.xp) | 0,
     streak:         row.streak | 0,
     longestStreak:  row.longest_streak | 0,
     streakShields:  row.streak_shields | 0,
     lastVisitDay:   row.last_visit_day || '',
-    achievements:   parse(row.achievements, []),
+    achievements:   row.achievements || [],
     vrSessions:     row.vr_sessions | 0,
     metaSessions:   row.meta_sessions | 0,
     quizzesPassed:  row.quizzes_passed | 0,
-    modulesByDay:   parse(row.modules_by_day, {}),
-    daily:          parse(row.daily, {}),
-    questsClaimed:  parse(row.quests_claimed, {}),
-    // KHÔNG dùng `| 0` cho timestamp ms — vượt 2^31 sẽ bị truncate về 32-bit signed.
+    modulesByDay:   row.modules_by_day || {},
+    daily:          row.daily || {},
+    questsClaimed:  row.quests_claimed || {},
     updatedAt:      Number(row.updated_at) || 0,
   };
 }
 
 const _toInt = (v, max = 1e9) => Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
 const _toStr = (v, max = 32) => String(v || '').slice(0, max);
-const _toJson = (v, fallback) => {
-  // Accept either object/array hoặc JSON string. Re-serialize để chuẩn hoá + giới hạn size.
+// JSONB: trả về JSON string (pg driver coi array JS là Postgres array nếu
+// không stringify — gửi cho cột JSONB sẽ thành '{"first_login"}' syntax sai).
+// Cap 64KB sau khi serialize để khoá tăng size không kiểm soát.
+const _toJsonB = (v, fallback) => {
   try {
     const obj = (typeof v === 'string') ? JSON.parse(v) : (v ?? fallback);
     const s = JSON.stringify(obj);
-    return s.length > 64_000 ? JSON.stringify(fallback) : s;     // 64KB cap — đủ rộng cho modulesByDay
+    return s.length > 64_000 ? JSON.stringify(fallback) : s;
   } catch { return JSON.stringify(fallback); }
 };
 
-// Gộp modulesByDay: union các module id theo từng ngày. Bảo vệ chống 1 client
-// cũ (chưa biết module mới) ghi đè làm mất danh sách bài đã hoàn thành trong ngày.
 function _mergeModulesByDay(cur = {}, inc = {}) {
   const out = {};
   for (const day of new Set([...Object.keys(cur), ...Object.keys(inc)])) {
@@ -1040,35 +737,43 @@ function _mergeModulesByDay(cur = {}, inc = {}) {
   return out;
 }
 
-/**
- * Đồng bộ ví của user từ client. CỐT LÕI an toàn: các field game-state CHỈ TĂNG
- * (xp, coins, longest_streak, vr/meta sessions, quizzes_passed, achievements,
- * modules_by_day) được áp dụng MONOTONIC — không bao giờ cho giá trị mới NHỎ HƠN
- * giá trị server hiện có. Nhờ vậy mọi race ở client (tab cũ, thiết bị khác, fetch
- * lỗi rồi đẩy local thấp) đều vô hại: không thể hạ level của user.
- *
- * Field CÓ THỂ giảm hợp lệ (streak reset khi bỏ lỡ ngày, shield bị tiêu, daily
- * reset mỗi ngày) → last-write theo payload client.
- *
- * @param {object} opts
- * @param {boolean} [opts.monotonic=true] - false để ghi đè cứng (admin chỉnh tay).
- */
-export function upsertUserWallet(user_id, w = {}, { monotonic = true } = {}) {
-  const cur = getUserWallet(user_id) || {};
+export async function upsertUserWallet(user_id, w = {}, { monotonic = true } = {}) {
+  const cur = (await getUserWallet(user_id)) || {};
   const pick = (k, def = 0) => (w[k] !== undefined ? w[k] : (cur[k] ?? def));
-  // Monotonic ↑ : lấy max(server, client). Không monotonic → lấy client (last-write).
   const up = (k, max = 1e9) => {
     const incoming = _toInt(pick(k), max);
     return monotonic ? Math.max(incoming, _toInt(cur[k] ?? 0, max)) : incoming;
   };
   const incAch = Array.isArray(pick('achievements', [])) ? pick('achievements', []) : [];
   const achievements = monotonic
-    ? [...new Set([...(cur.achievements || []), ...incAch])]   // union — badge không mất
+    ? [...new Set([...(cur.achievements || []), ...incAch])]
     : incAch;
   const incMods = (typeof pick('modulesByDay', {}) === 'object') ? pick('modulesByDay', {}) : {};
   const modulesByDay = monotonic ? _mergeModulesByDay(cur.modulesByDay, incMods) : incMods;
 
-  upsertUserWalletStmt.run({
+  await exec(`
+    INSERT INTO user_wallets (user_id, coins, xp, streak, longest_streak, streak_shields,
+                              last_visit_day, achievements, vr_sessions, meta_sessions,
+                              quizzes_passed, modules_by_day, daily, quests_claimed, updated_at)
+    VALUES (@user_id, @coins, @xp, @streak, @longest_streak, @streak_shields,
+            @last_visit_day, @achievements, @vr_sessions, @meta_sessions,
+            @quizzes_passed, @modules_by_day, @daily, @quests_claimed, @updated_at)
+    ON CONFLICT (user_id) DO UPDATE SET
+      coins          = EXCLUDED.coins,
+      xp             = EXCLUDED.xp,
+      streak         = EXCLUDED.streak,
+      longest_streak = EXCLUDED.longest_streak,
+      streak_shields = EXCLUDED.streak_shields,
+      last_visit_day = EXCLUDED.last_visit_day,
+      achievements   = EXCLUDED.achievements,
+      vr_sessions    = EXCLUDED.vr_sessions,
+      meta_sessions  = EXCLUDED.meta_sessions,
+      quizzes_passed = EXCLUDED.quizzes_passed,
+      modules_by_day = EXCLUDED.modules_by_day,
+      daily          = EXCLUDED.daily,
+      quests_claimed = EXCLUDED.quests_claimed,
+      updated_at     = EXCLUDED.updated_at
+  `, {
     user_id:        Number(user_id),
     coins:          up('coins', 1e12),
     xp:             up('xp', 1e12),
@@ -1076,17 +781,66 @@ export function upsertUserWallet(user_id, w = {}, { monotonic = true } = {}) {
     vr_sessions:    up('vrSessions', 1e9),
     meta_sessions:  up('metaSessions', 1e9),
     quizzes_passed: up('quizzesPassed', 1e9),
-    // Có thể giảm hợp lệ → last-write từ client.
     streak:         _toInt(pick('streak'), 10000),
     streak_shields: _toInt(pick('streakShields'), 1000),
     last_visit_day: _toStr(pick('lastVisitDay', ''), 16),
-    achievements:   _toJson(achievements, []),
-    modules_by_day: _toJson(modulesByDay, {}),
-    daily:          _toJson(pick('daily', {}), {}),
-    quests_claimed: _toJson(pick('questsClaimed', {}), {}),
+    achievements:   _toJsonB(achievements, []),
+    modules_by_day: _toJsonB(modulesByDay, {}),
+    daily:          _toJsonB(pick('daily', {}), {}),
+    quests_claimed: _toJsonB(pick('questsClaimed', {}), {}),
     updated_at:     Date.now(),
   });
   return getUserWallet(user_id);
 }
 
-console.log(`[db] SQLite open at ${dbPath}`);
+// --- Scenario runs (đếm số lần hoàn thành theo familyId per-user) ---
+// Cross-device qua DB. UPSERT monotonic: runs++, best_stars/best_score = MAX.
+
+export async function getScenarioRunsForUser(user_id) {
+  const rows = await many(
+    `SELECT family_id, runs, best_stars, best_score, last_ts
+     FROM scenario_runs WHERE user_id = @uid`,
+    { uid: Number(user_id) }
+  );
+  const out = {};
+  for (const r of rows) {
+    out[r.family_id] = {
+      runs: r.runs | 0,
+      bestStars: r.best_stars | 0,
+      bestScore: r.best_score | 0,
+      lastTs: Number(r.last_ts) || 0,
+    };
+  }
+  return out;
+}
+
+export async function recordScenarioRunDb(user_id, family_id, stars = 0, score = 0) {
+  const fid = String(family_id || '').slice(0, 64);
+  if (!fid) return null;
+  const s = Math.max(0, Math.min(3, Math.floor(Number(stars) || 0)));
+  const sc = Math.max(0, Math.min(1000, Math.floor(Number(score) || 0)));
+  await exec(`
+    INSERT INTO scenario_runs (user_id, family_id, runs, best_stars, best_score, last_ts)
+    VALUES (@uid, @fid, 1, @stars, @score, @ts)
+    ON CONFLICT (user_id, family_id) DO UPDATE SET
+      runs       = scenario_runs.runs + 1,
+      best_stars = GREATEST(scenario_runs.best_stars, EXCLUDED.best_stars),
+      best_score = GREATEST(scenario_runs.best_score, EXCLUDED.best_score),
+      last_ts    = EXCLUDED.last_ts
+  `, { uid: Number(user_id), fid, stars: s, score: sc, ts: Date.now() });
+  const row = await one(
+    `SELECT runs, best_stars, best_score, last_ts FROM scenario_runs
+     WHERE user_id = @uid AND family_id = @fid`,
+    { uid: Number(user_id), fid }
+  );
+  return row ? {
+    runs: row.runs | 0,
+    bestStars: row.best_stars | 0,
+    bestScore: row.best_score | 0,
+    lastTs: Number(row.last_ts) || 0,
+  } : null;
+}
+
+// Legacy exports để code cũ chưa migrate không nổ ở runtime:
+export const DB_PATH = null;          // không còn ý nghĩa với Postgres
+export const DB_DATA_DIR = null;

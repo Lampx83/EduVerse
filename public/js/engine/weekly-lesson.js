@@ -37,6 +37,15 @@ function renderBlock(b) {
  * @param {Function}    o.onStartBonus   - (bonusScenario) => chạy quiz AI sinh thêm
  */
 export function renderWeeklyLesson({ host, scenario, grade = 2, subjectLabel = '', onStartQuiz, onStartBonus }) {
+  // GA4: học sinh mở tuần học — analytics dashboard đo "lesson_start" theo môn/lớp/tuần.
+  try {
+    window.tiziaTrack?.('lesson_start', {
+      week_id: scenario.id || '',
+      week_title: (scenario.title || '').slice(0, 80),
+      subject: subjectLabel || scenario.subject || '',
+      grade: Number(grade) || 0,
+    });
+  } catch {}
   const lesson = scenario.lesson || {};
   const theory = Array.isArray(lesson.theory) ? lesson.theory : [];
   const examples = Array.isArray(lesson.examples) ? lesson.examples : [];
@@ -123,6 +132,14 @@ export function renderWeeklyLesson({ host, scenario, grade = 2, subjectLabel = '
   });
 
   host.querySelector('#wl-start-quiz').addEventListener('click', () => {
+    try {
+      window.tiziaTrack?.('lesson_quiz_open', {
+        week_id: scenario.id || '',
+        subject: subjectLabel || scenario.subject || '',
+        grade: Number(grade) || 0,
+        question_count: (scenario.questions || []).length,
+      });
+    } catch {}
     if (typeof onStartQuiz === 'function') onStartQuiz();
   });
 

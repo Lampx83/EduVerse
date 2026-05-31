@@ -68,6 +68,11 @@
   .scn-card.exp-card { border-color: rgba(20,184,166,0.45); }
   .scn-card.soon { opacity: 0.5; pointer-events: none; }
   .stub-tag { background: rgba(251,191,36,0.25); padding: 1px 7px; border-radius: 6px; font-size: 10px; }
+  .run-badge {
+    margin-left: auto; background: rgba(16,185,129,0.18);
+    border: 1px solid rgba(16,185,129,0.45);
+    color: #d1fae5; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 700;
+  }
   #app { min-height: 200px; }
   .scenario-header { padding: 16px 20px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 16px; }
   .scenario-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
@@ -202,8 +207,11 @@
   import { MODULES as PHARMACY_MODULES } from './js/engine/learning-path.js';
   import { getPlayerName, getClassCode } from './js/api.js';
   import { loadActiveDomain, getActiveDomainId, isGamifiedDomain } from './js/engine/domain.js';
-  import { awardForResult, recordModuleStars, getProgress } from './js/engine/wallet.js';
+  import { awardForResult, recordModuleStars, getProgress,
+           getScenarioRunsMap, recordScenarioRun,
+           loadScenarioRunsFromServer } from './js/engine/wallet.js';
   import { showRewardOverlay } from './js/engine/reward-fx.js';
+  import { generatePracticeFor, hasPracticeGenerator } from './js/scenarios/primary-math-practice.js';
 
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'L1.1';
@@ -304,11 +312,24 @@
   const kindToTrack = {};
   for (const t of TRACKS) for (const k of t.kinds) kindToTrack[k] = t.key;
 
+  // Cache scenario theo id để startScenario tìm được item sinh ngẫu nhiên
+  // (id thay đổi mỗi lần renderPicker, getScenariosForModule không thấy).
+  const _dynamicScenarios = new Map();
+  let _runsMap = {};
+
   function renderPicker() {
+    _dynamicScenarios.clear();
+    _runsMap = getScenarioRunsMap();
     const scenarios = getScenariosForModule(moduleId);
     const experiences = moduleMeta?.experiences || [];
 
-    if (!scenarios.length && !experiences.length) {
+    // Practice generator — sinh fresh bài thực hành mỗi lần vào, đa dạng kind
+    const dynamicPractice = hasPracticeGenerator(moduleId)
+      ? (generatePracticeFor(moduleId) || [])
+      : [];
+    for (const s of dynamicPractice) _dynamicScenarios.set(s.id, s);
+
+    if (!scenarios.length && !experiences.length && !dynamicPractice.length) {
       app.innerHTML = `<div class="not-found">
         <h3>⏳ Module ${moduleId} chưa có nội dung</h3>
         <p>Ban điều hành AI đang phát triển. Bạn có thể gửi yêu cầu ở trang trường để được ưu tiên!</p>
@@ -323,9 +344,20 @@
     for (const e of experiences) {
       buckets.practice.push({ kind: 'experience', exp: e });
     }
-    // Scenarios → theo kind
+    // Dynamic practice → luôn nằm trong nhóm Thực hành
+    for (const s of dynamicPractice) {
+      buckets.practice.push({ kind: 'scenario', scenario: s });
+    }
+    // Scenarios tĩnh → theo kind. Ẩn các bài tĩnh đã được generator thay
+    // thế cùng familyId (tránh hiển thị trùng nhóm với bản random).
+    const dynFamilies = new Set(dynamicPractice.map(s => s.familyId).filter(Boolean));
     for (const s of scenarios) {
       const track = kindToTrack[s.kind] || 'theory';
+      if (track === 'practice' && dynFamilies.size) {
+        // skip bài tĩnh trùng grade nếu đã có dynamic — kiểm tra qua id prefix
+        const isStaticOld = /^P\d-toan-(fill|match)$/.test(s.id);
+        if (isStaticOld) continue;
+      }
       buckets[track].push({ kind: 'scenario', scenario: s });
     }
 
@@ -356,6 +388,11 @@
   }
 
   function scnCard(s) {
+    const key = s.familyId || s.id;
+    const runs = (key && _runsMap[key]) || null;
+    const runBadge = runs && runs.runs > 0
+      ? `<span class="run-badge" title="Lần làm gần nhất: ${new Date(runs.lastTs).toLocaleDateString('vi-VN')}">✅ ${runs.runs} lần${runs.bestStars ? ` · ${'⭐'.repeat(runs.bestStars)}` : ''}${runs.bestScore ? ` · ${runs.bestScore}đ` : ''}</span>`
+      : '';
     return `
       <div class="scn-card" data-id="${s.id}">
         <h4>${s.title}</h4>
@@ -366,6 +403,7 @@
           ${s.correctPairs ? `<span>${s.correctPairs.length} cặp</span>` : ''}
           ${s.targets ? `<span>${s.targets.length} ảnh</span>` : ''}
           ${s.isStub ? '<span class="stub-tag">nháp</span>' : ''}
+          ${runBadge}
         </div>
       </div>`;
   }
@@ -400,8 +438,9 @@
   function startScenario(id) {
     picker.innerHTML = '';
     app.innerHTML = '';
-    const scenarios = getScenariosForModule(moduleId);
-    const scenario = scenarios.find(s => s.id === id);
+    // Ưu tiên dynamic cache (id sinh random) trước khi rơi về scenarios tĩnh
+    const scenario = _dynamicScenarios.get(id)
+      || getScenariosForModule(moduleId).find(s => s.id === id);
     if (!scenario) return renderPicker();
 
     // Tuần học có lý thuyết (Tiểu học) → hiện màn bài giảng + nút AI trước,
@@ -428,6 +467,12 @@
     if (_completed) return;
     _completed = true;
 
+    // Đếm số lần hoàn thành theo familyId (ổn định kể cả khi id random).
+    try {
+      const fam = scenario?.familyId || scenario?.id;
+      if (fam) recordScenarioRun(fam, result?.stars, result?.score);
+    } catch {}
+
     // Trường KHÔNG game hoá (Dược, CNTT…): giữ hành vi cũ — chỉ hiện kết quả,
     // không thưởng XP/coin, không màn reward.
     if (!GAMIFIED) { showResult(result); return; }
@@ -444,11 +489,10 @@
       if (award) await showRewardOverlay({ result, award, wallet: award.wallet });
     } catch (e) { console.warn('[reward] overlay failed', e); }
 
-    // Làm xong là THOÁT ngay về lộ trình (chống bấm hoàn thành nhiều lần).
-    const dest = backParam
-      ? decodeURIComponent(backParam)
-      : `school.html?domain=${encodeURIComponent(getActiveDomainId())}`;
-    location.href = dest;
+    // Làm xong → quay lại danh sách bài của chính module này (picker).
+    // Tránh đẩy SV ra campus/school. _completed sẽ được reset khi runEngine()
+    // start scenario kế tiếp, badge "đã làm N lần" cập nhật ngay tại picker.
+    renderPicker();
   }
 
   function showResult(result) {
@@ -473,7 +517,12 @@
     card.querySelector('.back-btn').addEventListener('click', renderPicker);
   }
 
-  renderPicker();
+  // Sync run-count từ server trước khi render lần đầu (cross-device).
+  // Best-effort: lỗi mạng/guest → vẫn render dựa trên cache localStorage.
+  (async () => {
+    try { await loadScenarioRunsFromServer(); } catch {}
+    renderPicker();
+  })();
 </script>
 </body>
 </html>

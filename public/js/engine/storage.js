@@ -28,6 +28,7 @@ export const KEYS = {
   SFX:           NEW_PREFIX + 'sfx',
   DIFFICULTY:    NEW_PREFIX + 'difficulty',
   ROLE:          NEW_PREFIX + 'role',          // 'student' (default) | 'teacher'
+  SCN_RUNS:      NEW_PREFIX + 'scn-runs',      // số lần hoàn thành theo familyId
   // Welcome cards (dynamic suffix)
   welcomeCard:   (id) => NEW_PREFIX + 'welcome:' + id,
   // OSCE

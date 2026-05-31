@@ -29,15 +29,22 @@ function htmlEscape(s) {
 }
 
 // Danh mục trang công khai (crawlable). Mở rộng khi có thêm landing.
+// lastmod để Google biết trang còn fresh; build-time const + per-request "today".
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
 function publicUrls(origin) {
+  const lm = todayISO();
+  // Chỉ liệt kê URL THẬT SỰ public (không bị auth gate redirect). /apps và /school
+  // hiện cần login → KHÔNG đưa vào sitemap (Google skip do 302). Khi muốn các trang
+  // đó được index, thêm vào PUBLIC_PATH_* trong auth.js và phải có SSR meta riêng.
   const urls = [
-    { loc: `${origin}/welcome`, priority: '1.0', changefreq: 'weekly' },
-    { loc: `${origin}/login.html`, priority: '0.3', changefreq: 'monthly' },
+    { loc: `${origin}/welcome`,          priority: '1.0', changefreq: 'weekly',  lastmod: lm },
+    { loc: `${origin}/login.html`,       priority: '0.3', changefreq: 'monthly', lastmod: lm },
   ];
-  // Mỗi trường → 1 landing công khai /welcome?school=<code> (giới thiệu, SEO theo trường).
+  // Mỗi trường → 1 landing công khai /welcome?school=<code> (SEO theo trường).
   try {
     for (const s of listSchools()) {
-      urls.push({ loc: `${origin}/welcome?school=${encodeURIComponent(s.code)}`, priority: '0.8', changefreq: 'weekly' });
+      urls.push({ loc: `${origin}/welcome?school=${encodeURIComponent(s.code)}`, priority: '0.8', changefreq: 'weekly', lastmod: lm });
     }
   } catch {}
   return urls;
@@ -49,20 +56,59 @@ function jsonLd(origin, school) {
     '@context': 'https://schema.org',
     '@type': 'EducationalOrganization',
     name: school ? `Tizia · ${school.name}` : 'Tizia',
+    alternateName: 'The Intelligent Zone for Interactive Academy',
     url: origin + (school ? `/welcome?school=${school.code}` : '/welcome'),
+    logo: `${origin}/favicon.svg`,
+    image: `${origin}/og-default.svg`,
     description: 'Vũ trụ giáo dục ảo: nhiều trường ảo (Dược, CNTT, Kinh tế, phổ thông) với 2D · 3D · VR · XR · Metaverse · gamification, do AI điều hành.',
     inLanguage: 'vi-VN',
+    areaServed: 'VN',
+    sameAs: ['https://tizia.vn'],
   };
-  return JSON.stringify(org);
+  const site = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Tizia',
+    url: origin + '/',
+    inLanguage: 'vi-VN',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${origin}/apps?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  };
+  return JSON.stringify([org, site]);
 }
 
 export function attachSeo(r, { basePath = '' } = {}) {
-  // robots.txt — cho phép crawl, trỏ sitemap.
+  // robots.txt — Allow trang công khai, Disallow API/admin/login flow nội bộ.
   r.get('/robots.txt', (req, res) => {
     const origin = originOf(req, basePath);
     res.type('text/plain').send(
-      `User-agent: *\nAllow: /$\nAllow: /welcome\nAllow: /login.html\n` +
-      `# Khu vực ứng dụng cần đăng nhập — không index\nDisallow: /api/\nDisallow: /sim/\n` +
+      `# Tizia — The Intelligent Zone for Interactive Academy\n` +
+      `User-agent: *\n` +
+      `Allow: /\n` +
+      `Allow: /welcome\n` +
+      `Allow: /login.html\n` +
+      `Allow: /favicon.svg\n` +
+      `Allow: /og-default.svg\n` +
+      `Allow: /manifest.webmanifest\n` +
+      `Allow: /js/\n` +
+      `Allow: /img/\n` +
+      `Allow: /models/\n` +
+      `# Disallow khu vực động / cần đăng nhập / nội bộ\n` +
+      `Disallow: /api/\n` +
+      `Disallow: /sim/\n` +
+      `Disallow: /admin\n` +
+      `Disallow: /admin/\n` +
+      `Disallow: /admin.html\n` +
+      `Disallow: /dashboard.html\n` +
+      `Disallow: /family.html\n` +
+      `Disallow: /complete-profile.html\n` +
+      `Disallow: /lesson-builder.html\n` +
+      `# Chặn bot AI scrape nội dung (tuỳ chọn — bỏ comment để bật)\n` +
+      `# User-agent: GPTBot\n# Disallow: /\n` +
+      `\n` +
       `Sitemap: ${origin}/sitemap.xml\n`
     );
   });
@@ -71,8 +117,9 @@ export function attachSeo(r, { basePath = '' } = {}) {
   r.get('/sitemap.xml', (req, res) => {
     const origin = originOf(req, basePath);
     const items = publicUrls(origin).map((u) =>
-      `  <url>\n    <loc>${xmlEscape(u.loc)}</loc>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`
+      `  <url>\n    <loc>${xmlEscape(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`
     ).join('\n');
+    res.set('Cache-Control', 'public, max-age=3600');
     res.type('application/xml').send(
       `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</urlset>\n`
     );
@@ -89,6 +136,8 @@ export function attachSeo(r, { basePath = '' } = {}) {
                          : 'Tizia — Vũ trụ giáo dục ảo 3D · VR · AI';
     const desc = 'Nền tảng giáo dục ảo: trường Dược, CNTT, Kinh tế và phổ thông với mô phỏng 2D/3D/VR/XR, gamification, gia sư AI và Ban điều hành AI tự cải tiến theo góp ý người học.';
     const canonical = school ? `${origin}/welcome?school=${school.code}` : `${origin}/welcome`;
+    const ogImage = `${origin}/og-default.svg`;
+    res.set('Cache-Control', 'public, max-age=600');
     res.type('html').send(`<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -96,13 +145,24 @@ export function attachSeo(r, { basePath = '' } = {}) {
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>${htmlEscape(title)}</title>
 <meta name="description" content="${htmlEscape(desc)}" />
+<meta name="robots" content="index,follow,max-image-preview:large" />
+<meta name="theme-color" content="#fbbf24" />
 <link rel="canonical" href="${htmlEscape(canonical)}" />
+<link rel="icon" type="image/svg+xml" href="${basePath}/favicon.svg" />
+<link rel="apple-touch-icon" href="${basePath}/apple-touch-icon.png" />
 <meta property="og:type" content="website" />
+<meta property="og:site_name" content="Tizia" />
 <meta property="og:title" content="${htmlEscape(title)}" />
 <meta property="og:description" content="${htmlEscape(desc)}" />
 <meta property="og:url" content="${htmlEscape(canonical)}" />
 <meta property="og:locale" content="vi_VN" />
+<meta property="og:image" content="${htmlEscape(ogImage)}" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="${htmlEscape(title)}" />
+<meta name="twitter:description" content="${htmlEscape(desc)}" />
+<meta name="twitter:image" content="${htmlEscape(ogImage)}" />
 <script type="application/ld+json">${jsonLd(origin, school)}</script>
 </head>
 <body>
@@ -110,7 +170,7 @@ export function attachSeo(r, { basePath = '' } = {}) {
 <h1>${htmlEscape(school ? `Tizia · ${school.name}` : 'Tizia — Vũ trụ giáo dục ảo')}</h1>
 <p>${htmlEscape(desc)}</p>
 <p><a href="${basePath}/login.html?return=${encodeURIComponent(basePath + '/')}">Vào học ngay →</a></p>
-<nav><a href="${basePath}/welcome">Trang chủ</a></nav>
+<nav><a href="${basePath}/welcome">Trang chủ</a> · <a href="${basePath}/apps">Ứng dụng</a> · <a href="${basePath}/school">Trường ảo</a></nav>
 </main>
 </body>
 </html>`);
