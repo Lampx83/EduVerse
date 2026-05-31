@@ -59,7 +59,7 @@ const Q = {
   users: db.prepare(`SELECT id, username, display_name, role, school_id, email, plan, plan_expires_at, billing_cycle, created_at, last_login
     FROM users WHERE (@school_id IS NULL OR school_id=@school_id) ORDER BY created_at DESC LIMIT @limit`),
   setUserRole: db.prepare(`UPDATE users SET role=@role WHERE id=@id`),
-  requests: db.prepare(`SELECT id, school_id, domain, type, title, status, votes, student, created_at
+  requests: db.prepare(`SELECT id, school_id, domain, type, title, detail, status, votes, student, admin_note, created_at, updated_at
     FROM requests ORDER BY created_at DESC LIMIT @limit`),
   setRequestStatus: db.prepare(`UPDATE requests SET status=@status, admin_note=@note, updated_at=@t WHERE id=@id`),
 };
