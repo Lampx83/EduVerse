@@ -52,6 +52,28 @@
   .row input[type=text], .row input[type=number], .row select{flex:1; background:#020617; color:var(--txt); border:1px solid var(--border); border-radius:6px; padding:6px 8px; font-size:13px; font-family:inherit;}
   .row input[type=color]{width:50px; height:30px; border:1px solid var(--border); border-radius:6px; background:transparent; cursor:pointer;}
   .row input[type=checkbox]{width:18px; height:18px; cursor:pointer;}
+
+  /* Tabs */
+  .tab-bar{display:flex; border-bottom:1px solid var(--border);}
+  .tab-btn{flex:1; background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:9px 0; font-size:12px; font-weight:600; letter-spacing:.5px; cursor:pointer; transition:.15s;}
+  .tab-btn.active{color:var(--txt); border-bottom-color:var(--accent2);}
+  .tab-pane{display:none; flex:1; overflow:auto; padding:12px 14px;}
+  .tab-pane.active{display:block;}
+
+  /* Palette */
+  .palette-search{width:100%; background:#020617; color:var(--txt); border:1px solid var(--border); border-radius:8px; padding:7px 10px; font-size:13px; margin-bottom:10px;}
+  .pack-label{font-size:10px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin:10px 0 6px; font-weight:700;}
+  .model-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:4px;}
+  .model-card{background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:8px 4px 6px; text-align:center; cursor:pointer; transition:.15s; position:relative;}
+  .model-card:hover{border-color:var(--accent2); background:#1a2740;}
+  .model-card.placing{border-color:var(--ok); background:#0d2a1a;}
+  .model-card canvas{width:100%; height:60px; display:block; object-fit:contain;}
+  .model-card .mc-name{font-size:9.5px; color:var(--muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px;}
+  .kind-toggle{display:flex; gap:6px; margin-bottom:10px;}
+  .kind-btn{flex:1; font-size:11px; padding:5px; border-radius:6px; border:1px solid var(--border); background:var(--bg3); color:var(--muted); cursor:pointer; transition:.15s;}
+  .kind-btn.active{background:var(--accent2); color:#0f172a; border-color:var(--accent2); font-weight:700;}
+  #placingBanner{display:none; background:#0d2a1a; border:1px solid var(--ok); border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:12px; color:var(--ok); text-align:center;}
+  #placingBanner .cancel-place{float:right; cursor:pointer; font-size:14px; color:var(--muted);}
 </style>
 </head>
 <body>
@@ -83,12 +105,21 @@
     <iframe id="canvas" src="about:blank"></iframe>
   </div>
 
-  <aside>
-    <div class="pane-head">
-      <span id="dirtyDot" style="display:none; color:var(--warn);">●</span>
-      Inspector
+  <aside style="width:380px; background:var(--bg2); border-left:1px solid var(--border); display:flex; flex-direction:column; min-height:0;">
+    <div style="padding:8px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; font-size:12px;">
+      <span id="dirtyDot" style="display:none; color:var(--warn); font-size:14px;">●</span>
+      <span style="color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Bảng điều khiển</span>
+      <button class="btn primary" id="save" style="margin-left:auto; padding:4px 10px; font-size:12px;">💾 Lưu</button>
     </div>
-    <div class="pane-body">
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="inspector">🔍 Inspector</button>
+      <button class="tab-btn" data-tab="palette">🧱 Thư viện</button>
+      <button class="tab-btn" data-tab="json">📝 JSON</button>
+    </div>
+
+    <!-- Inspector tab -->
+    <div id="tab-inspector" class="tab-pane active">
       <div id="inspectorEmpty" class="hint" style="text-align:center; padding:20px 0;">
         <div style="font-size:32px; margin-bottom:8px;">🖱️</div>
         Click toà nhà trên bản đồ để chọn.<br>
@@ -114,16 +145,32 @@
         <div class="row"><label>Cờ trường</label><input id="fFlag" type="checkbox"></div>
         <button class="btn bad" id="iDelete" style="width:100%; margin-top:12px;">🗑️ Xoá toà nhà</button>
       </div>
+    </div>
 
-      <details style="margin-top:18px;">
-        <summary style="cursor:pointer; color:var(--muted); font-size:12px; user-select:none;">📝 JSON thô (advanced)</summary>
-        <textarea id="json" spellcheck="false" placeholder='{"buildings":[...]}' style="margin-top:8px;"></textarea>
-        <div style="display:flex; gap:6px; margin-top:6px;">
-          <button class="btn" id="loadFromServer" style="flex:1;">⤓ Load server</button>
-          <button class="btn" id="pickFile" style="flex:1;">📁 Import</button>
-          <input type="file" id="file" accept=".json" hidden>
-        </div>
-      </details>
+    <!-- Palette tab -->
+    <div id="tab-palette" class="tab-pane">
+      <div id="placingBanner">
+        🎯 Đang đặt: <span id="placingName"></span>
+        <span class="cancel-place" title="Huỷ (Esc)" onclick="cancelPlace()">✕</span>
+      </div>
+      <div class="kind-toggle">
+        <button class="kind-btn active" data-kind="building" onclick="setKind('building',this)">🏠 Toà nhà</button>
+        <button class="kind-btn" data-kind="decor" onclick="setKind('decor',this)">🌳 Trang trí</button>
+      </div>
+      <input class="palette-search" type="search" id="palSearch" placeholder="🔍 Tìm model...">
+      <div id="palGrid" style="font-size:12px; color:var(--muted); padding:20px 0; text-align:center;">Đang tải...</div>
+    </div>
+
+    <!-- JSON tab -->
+    <div id="tab-json" class="tab-pane">
+      <div class="hint">Snapshot JSON của map hiện tại. Sửa rồi bấm Lưu.</div>
+      <textarea id="json" spellcheck="false" placeholder='{"buildings":[...]}'
+                style="width:100%; height:55vh; background:#020617; color:#cbd5e1; border:1px solid var(--border); border-radius:8px; padding:10px; font-family:ui-monospace,Menlo,monospace; font-size:11.5px;"></textarea>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="btn" id="loadFromServer" style="flex:1;">⤓ Load server</button>
+        <button class="btn" id="pickFile" style="flex:1;">📁 Import</button>
+        <input type="file" id="file" accept=".json" hidden>
+      </div>
     </div>
   </aside>
 </main>
@@ -134,6 +181,107 @@
 const $=s=>document.querySelector(s);
 const dom=$('#domain'), iframe=$('#canvas'), ta=$('#json'), toastEl=$('#toast');
 let csrfToken=null;
+
+// ── Tabs ──
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    $('#tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Palette ──
+let paletteModels=[], placeKind='building', placingCard=null;
+
+function setKind(k, el){
+  placeKind=k;
+  document.querySelectorAll('.kind-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderPalette($('#palSearch').value);
+}
+
+async function loadPalette(){
+  try{
+    const r=await fetch('/api/campus-models',{credentials:'same-origin'});
+    if(!r.ok) throw new Error(r.status);
+    const j=await r.json();
+    paletteModels=[...(j.suburban||[]),...(j.kay||[])];
+    renderPalette('');
+  }catch(e){ $('#palGrid').textContent='Lỗi tải palette: '+e.message; }
+}
+
+function renderPalette(q){
+  const search=(q||'').toLowerCase();
+  const models=paletteModels.filter(m=>{
+    if(search && !m.name.toLowerCase().includes(search) && !m.key.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  if(!models.length){ $('#palGrid').innerHTML='<div style="color:var(--muted);padding:20px;text-align:center;">Không tìm thấy</div>'; return; }
+  // Nhóm theo pack
+  const byPack={};
+  for(const m of models){ (byPack[m.pack]||(byPack[m.pack]=[])).push(m); }
+  const packLabels={sub:'Kenney Suburban', kay:'KayKit'};
+  let html='';
+  for(const [pack,items] of Object.entries(byPack)){
+    html+=`<div class="pack-label">${packLabels[pack]||pack} (${items.length})</div><div class="model-grid">`;
+    for(const m of items){
+      html+=`<div class="model-card" data-key="${m.key}" data-url="${m.url}" data-name="${m.name}" data-pack="${m.pack}" title="${m.name}">
+        <canvas id="thumb_${m.key.replace(/[^a-z0-9]/gi,'_')}" width="90" height="60"></canvas>
+        <div class="mc-name">${m.name}</div>
+      </div>`;
+    }
+    html+='</div>';
+  }
+  $('#palGrid').innerHTML=html;
+  // Click handler
+  $('#palGrid').querySelectorAll('.model-card').forEach(card=>{
+    card.addEventListener('click',()=>startPlace(card));
+  });
+  // Render thumbnails via iframe's Three.js (nếu iframe đã load)
+  requestAnimationFrame(()=>renderThumbs(models));
+}
+
+function renderThumbs(models){
+  const w=iframe.contentWindow;
+  if(!w||!w.__rerenderBuilding) return;   // iframe chưa sẵn
+  for(const m of models){
+    const canvasId='thumb_'+m.key.replace(/[^a-z0-9]/gi,'_');
+    const thumbCanvas=document.getElementById(canvasId);
+    if(!thumbCanvas||thumbCanvas._rendered) continue;
+    // Yêu cầu iframe render sprite từ URL → trả lại DataURL
+    w.postMessage({type:'campus-cmd-thumb', url: m.url, canvasId},'*');
+  }
+}
+
+// Thêm handler thumb response vào listen messages
+function handleThumb(m){
+  const c=document.getElementById(m.canvasId);
+  if(!c) return;
+  const img=new Image(); img.onload=()=>{ c.getContext('2d').drawImage(img,0,0,c.width,c.height); c._rendered=true; };
+  img.src=m.dataUrl;
+}
+
+function startPlace(card){
+  if(placingCard) placingCard.classList.remove('placing');
+  placingCard=card; card.classList.add('placing');
+  const opts={type:'campus-cmd-place', url:card.dataset.url, pack:card.dataset.pack, name:card.dataset.name, kind:placeKind};
+  iframe.contentWindow?.postMessage(opts,'*');
+  $('#placingBanner').style.display='';
+  $('#placingName').textContent=card.dataset.name;
+  // Switch to inspector tab so user can see the map
+  document.querySelector('.tab-btn[data-tab="inspector"]').click();
+  toast(`🎯 Click vào map để đặt "${card.dataset.name}" — Esc để huỷ`,'ok');
+}
+
+function cancelPlace(){
+  if(placingCard){ placingCard.classList.remove('placing'); placingCard=null; }
+  iframe.contentWindow?.postMessage({type:'campus-cmd-cancel-place'},'*');
+  $('#placingBanner').style.display='none';
+}
+
+$('#palSearch').addEventListener('input',e=>renderPalette(e.target.value));
 
 function toast(msg, kind='ok'){ toastEl.textContent=msg; toastEl.className='toast show '+kind; clearTimeout(toast._t); toast._t=setTimeout(()=>toastEl.classList.remove('show'),2200); }
 function reloadIframe(){ iframe.src=`/campus-proto/b-iso-canvas.html?domain=${dom.value}&edit=1&_t=${Date.now()}`; setDirty(false); closeInspector(); }
@@ -282,13 +430,28 @@ window.addEventListener('message', e=>{
   } else if(m.type==='campus-decor-move'){
     setDirty(true);
     toast(`📍 ${m.k} ở ${m.src}[${m.srcIdx}] → (${m.gx}, ${m.gy})`,'ok');
+  } else if(m.type==='campus-placed'){
+    setDirty(true);
+    if(placingCard){ placingCard.classList.remove('placing'); placingCard=null; }
+    $('#placingBanner').style.display='none';
+    toast(`✅ Đã đặt "${m.item?.name||m.k||''}" — drag để tinh chỉnh vị trí`,'ok');
+  } else if(m.type==='campus-place-cancelled'){
+    if(placingCard){ placingCard.classList.remove('placing'); placingCard=null; }
+    $('#placingBanner').style.display='none';
+  } else if(m.type==='campus-thumb'){
+    handleThumb(m);
   } else if(m.type==='campus-dirty'){
     setDirty(true);
   }
 });
 
 // init
-(async()=>{ await loadCsrf(); reloadIframe(); await loadFromServer(); })();
+(async()=>{
+  await loadCsrf();
+  reloadIframe();
+  await loadFromServer();
+  await loadPalette();
+})();
 </script>
 </body>
 </html>

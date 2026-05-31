@@ -10,6 +10,52 @@
 // ============================================================
 
 import { db } from '../../db.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PUBLIC_DIR = path.resolve(__dirname, '..', '..', '..', 'public');
+
+// Danh sách model tĩnh cho palette — quét lúc server start, cache mãi (không đổi khi chạy).
+// Chia 2 pack: suburban (Kenney City Kit Suburban) và kay (KayKit Mini-Game pack).
+let MODEL_CATALOGUE = null;
+function buildCatalogue() {
+  if (MODEL_CATALOGUE) return MODEL_CATALOGUE;
+  const subDir = path.join(PUBLIC_DIR, 'campus-proto', 'assets', 'suburban', 'Models', 'GLB format');
+  const kayDir = path.join(PUBLIC_DIR, 'campus-proto', 'assets', 'kaykit');
+
+  function glbsIn(dir, pack, urlBase) {
+    try {
+      return fs.readdirSync(dir)
+        .filter(f => f.endsWith('.glb'))
+        .map(f => ({
+          pack,
+          key: `${pack}:${f.replace('.glb', '')}`,
+          name: f.replace('.glb', '').replace(/-/g, ' '),
+          url: `${urlBase}/${encodeURIComponent(f)}`,
+        }));
+    } catch { return []; }
+  }
+
+  const suburban = glbsIn(subDir, 'sub', 'assets/suburban/Models/GLB format');
+  // KayKit — folder lưu theo thư mục con; quét 2 level
+  const kay = [];
+  if (fs.existsSync(kayDir)) {
+    for (const entry of fs.readdirSync(kayDir)) {
+      const sub = path.join(kayDir, entry);
+      if (fs.statSync(sub).isDirectory()) {
+        const items = glbsIn(sub, 'kay', `assets/kaykit/${entry}`);
+        kay.push(...items);
+      } else if (entry.endsWith('.glb')) {
+        kay.push({ pack: 'kay', key: `kay:${entry.replace('.glb','')}`, name: entry.replace('.glb','').replace(/-/g,' '), url: `assets/kaykit/${entry}` });
+      }
+    }
+  }
+
+  MODEL_CATALOGUE = { suburban, kay, total: suburban.length + kay.length };
+  return MODEL_CATALOGUE;
+}
 
 // Tạo bảng nếu chưa có — idempotent, chạy mỗi khi server start.
 db.exec(`
@@ -55,6 +101,10 @@ function readLayout(domain) {
 }
 
 export function attachCampusLayout(r, requireAdmin) {
+  // GET public — danh sách model cho palette (không cần login)
+  r.get('/api/campus-models', (_req, res) => {
+    res.json(buildCatalogue());
+  });
   // GET public — view page fetch để override default
   r.get('/api/campus-layout/:domain', (req, res) => {
     const domain = String(req.params.domain || '').toLowerCase();

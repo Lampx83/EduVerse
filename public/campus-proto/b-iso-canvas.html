@@ -557,6 +557,85 @@ window.CAMPUSES = CAMPUSES;
 window.__campusDomain = _dom;
 window.__getBuildings = () => BUILDINGS;
 window.__campusP = (gx,gy) => P(gx,gy);   // grid → pixel cho test/verify từ ngoài
+window.__DECOR_REF  = ()  => DECOR;        // đọc decor live (module-scoped)
+window.__rebuildDecor = rebuildDecor;       // gọi lại sau khi thêm cây/props
+
+// ── Place mode (palette) ─────────────────────────────────────────────────────
+// Khi parent gửi {type:'campus-cmd-place-start', url, pack, name, kind}:
+//   kind='building' → thêm vào BUILDINGS, render sprite + blit
+//   kind='decor'    → thêm vào C.props + rebuildDecor
+// Click chuột trên canvas → đặt xuống tại grid snap-0.5. Esc hủy.
+let _placeMode = null;   // {url, pack, name, kind} | null
+let _ghostPos  = null;   // {gx,gy} | null — vị trí preview ghost
+
+window.__startPlaceMode = function(opts) {
+  _placeMode = opts; _ghostPos = null;
+  canvas.style.cursor = 'crosshair';
+  postToParent({type:'campus-place-started', name: opts.name});
+};
+window.__cancelPlaceMode = function() {
+  _placeMode = null; _ghostPos = null;
+  canvas.style.cursor = 'default';
+  postToParent({type:'campus-place-cancelled'});
+};
+
+// Draw ghost circle at current pointer position khi đang ở place mode
+function drawGhost() {
+  if (!_ghostPos) return;
+  const p = P(_ghostPos.gx, _ghostPos.gy);
+  ctx.save();
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle   = '#60a5fa';
+  ctx.beginPath(); ctx.ellipse(p.x, p.y, TW*0.45, TH*0.45, 0, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(p.x, p.y, TW*0.45, TH*0.45, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+async function placeItem(gx, gy) {
+  const opts = _placeMode;
+  _placeMode = null; _ghostPos = null; canvas.style.cursor = 'default';
+
+  if (opts.kind === 'building') {
+    // Tạo id tạm từ tên model
+    const id = opts.url.split('/').pop().replace('.glb','') + '_' + Date.now().toString(36);
+    const newB = { id, name: opts.name, emoji: '🏠', gx, gy, url: opts.url, s: 1.0, rot: 0, pin: '#94a3b8' };
+    BUILDINGS.push(newB);
+    // Render sprite mới
+    try {
+      const idx = BUILDINGS.length - 1;
+      if (!modelCache[opts.url]) modelCache[opts.url] = await load(opts.url);
+      const sc = modelCache[opts.url].clone(true);
+      prep(sc, __GS); sc.rotation.y = 0;
+      const spr = renderSprite(sc);
+      bsprite[id] = { spr, tint: tint(spr, idCol(idx)), idx };
+    } catch(e) { console.warn('[place] sprite fail', e); }
+    selected = BUILDINGS.length - 1;
+    buildLegend();
+    draw();
+    postToParent({type:'campus-placed', kind:'building', idx: BUILDINGS.length-1, item: newB});
+    postToParent({type:'campus-select', idx: BUILDINGS.length-1, item: newB});
+    postToParent({type:'campus-dirty'});
+  } else {
+    // kind='decor' → thêm vào props
+    const propKey = opts.url.split('/').pop().replace('.glb','');
+    if (!C.props) C.props = [];
+    const idx = C.props.length;
+    C.props.push({ k: propKey, gx, gy });
+    rebuildDecor();
+    // Render sprite nếu chưa có
+    if (!esprite[propKey]) {
+      try {
+        const m = await load(opts.url); prep(m, __GS*(PREP[propKey]||1.0));
+        esprite[propKey] = renderSprite(m);
+      } catch(e) { console.warn('[place] decor sprite fail', e); }
+    }
+    draw();
+    postToParent({type:'campus-placed', kind:'decor', src:'props', srcIdx:idx, k:propKey, gx, gy});
+    postToParent({type:'campus-dirty'});
+  }
+}
 function poly(pts,color,stroke,lw=1){ ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y); ctx.closePath();
   if(color){ctx.fillStyle=color;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();} }
 const tileRect=(gx,gy,w,d)=>[P(gx,gy),P(gx+w,gy),P(gx+w,gy+d),P(gx,gy+d)];
@@ -813,6 +892,12 @@ const tip = document.getElementById('tip');
 // iPad/touch: không có hover → bỏ qua pointermove cho touch, tap trực tiếp chọn được.
 canvas.addEventListener('pointermove', e=>{
   if(e.pointerType === 'touch') return;
+  // Place mode — update ghost + draw
+  if(_placeMode) {
+    const g = pxToGrid ? pxToGrid(e.clientX, e.clientY) : {gx:(e.clientX-ox)/TW+(e.clientY-oy)/TH, gy:(e.clientY-oy)/TH-(e.clientX-ox)/TW};
+    _ghostPos = {gx: Math.round(g.gx*2)/2, gy: Math.round(g.gy*2)/2};
+    draw(); drawGhost(); return;
+  }
   const h = hitAt(e.clientX, e.clientY);
   const id = (h && h.kind === 'building') ? h.idx : -1;
   if(id !== hovered){ hovered = id; draw(); }
@@ -820,16 +905,19 @@ canvas.addEventListener('pointermove', e=>{
     const label = (h.kind==='decor') ? `${h.item.k} (${h.item.gx}, ${h.item.gy})` : `${h.item.emoji} ${h.item.name}`;
     tip.textContent = label; tip.style.left = e.clientX+'px'; tip.style.top = e.clientY+'px'; tip.style.opacity = 1;
     canvas.style.cursor = (EDIT && h.kind==='decor') ? 'grab' : 'pointer';
-  } else { tip.style.opacity = 0; canvas.style.cursor = 'default'; }
+  } else { tip.style.opacity = 0; canvas.style.cursor = EDIT ? 'default' : 'default'; }
 });
 canvas.addEventListener('pointerleave', ()=>{ tip.style.opacity = 0; if(hovered !== -1){ hovered = -1; draw(); } });
 
 // Tap/click: tự hit-test tại điểm chạm thay vì dựa vào `hovered` (vì touch không có hover)
 function handleTap(cx, cy){
+  // Place mode — đặt item xuống tại vị trí ghost
+  if(_placeMode) {
+    if(_ghostPos) placeItem(_ghostPos.gx, _ghostPos.gy);
+    return;
+  }
   const h = hitAt(cx, cy);
   if(EDIT){
-    // Click building → select + báo parent (mở inspector). Click decor → KHÔNG select
-    // (decor sửa qua drag, không có inspector). Click nền → bỏ chọn building.
     if(h && h.kind==='building'){
       selected = h.idx; draw();
       postToParent({type:'campus-select', idx:selected, item: BUILDINGS[selected]});
@@ -853,9 +941,11 @@ canvas.addEventListener('touchend', e=>{
 }, {passive:false});
 
 // ====== EDIT MODE: drag-to-move + keyboard + lệnh từ parent ======
+// pxToGrid dùng cả ngoài EDIT (place mode) — khai báo ở scope ngoài.
+const pxToGrid=(cx,cy)=>({ gx:(cx-ox)/TW + (cy-oy)/TH, gy:(cy-oy)/TH - (cx-ox)/TW });
+const snap=(v,step=0.5)=>Math.round(v/step)*step;
+
 if(EDIT){
-  const pxToGrid=(cx,cy)=>({ gx:(cx-ox)/TW + (cy-oy)/TH, gy:(cy-oy)/TH - (cx-ox)/TW });
-  const snap=(v,step=0.5)=>Math.round(v/step)*step;
 
   // Propagate vị trí decor về C.{trees|cars|props} — chỗ duy nhất được serialize khi save.
   function syncDecorBack(d){
@@ -867,6 +957,7 @@ if(EDIT){
   let drag=null;   // {kind, idx, startGx, startGy, offGx, offGy}
   canvas.addEventListener('pointerdown', e=>{
     if(e.button!==0) return;
+    if(_placeMode) return;   // place mode: pointerdown không kéo
     const h=hitAt(e.clientX, e.clientY);
     if(!h || (h.kind!=='building' && h.kind!=='decor')) return;
     const g=pxToGrid(e.clientX, e.clientY);
@@ -921,7 +1012,8 @@ if(EDIT){
       selected=-1; draw();
       e.preventDefault();
     } else if(e.key==='Escape'){
-      selected=-1; draw(); postToParent({type:'campus-deselect'});
+      if(_placeMode){ window.__cancelPlaceMode(); draw(); }
+      else { selected=-1; draw(); postToParent({type:'campus-deselect'}); }
     }
   });
 
@@ -948,8 +1040,23 @@ if(EDIT){
       selected=i; draw();
       postToParent({type:'campus-select', idx:i, item:BUILDINGS[i]});
     } else if(m.type==='campus-cmd-state'){
-      // parent hỏi snapshot — trả full layout (buildings + props + tints…)
       postToParent({type:'campus-state', layout: CAMPUSES[_dom]});
+    } else if(m.type==='campus-cmd-place'){
+      // parent chọn model từ palette → bắt đầu place mode
+      window.__startPlaceMode(m); draw();
+    } else if(m.type==='campus-cmd-cancel-place'){
+      window.__cancelPlaceMode(); draw();
+    } else if(m.type==='campus-cmd-thumb'){
+      // Render sprite cho 1 model URL và trả DataURL về parent (dùng cho palette thumbnail)
+      (async()=>{
+        try{
+          const url = m.url.startsWith('http') ? m.url : `/campus-proto/${m.url}`;
+          if(!modelCache[m.url]) modelCache[m.url] = await load(url);
+          const sc = modelCache[m.url].clone(true); prep(sc, __GS);
+          const spr = renderSprite(sc);
+          postToParent({type:'campus-thumb', canvasId:m.canvasId, dataUrl:spr.toDataURL()});
+        }catch(e){ /* bỏ qua nếu model lỗi */ }
+      })();
     }
   });
 

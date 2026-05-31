@@ -131,6 +131,8 @@ const PUBLIC_PATH_PREFIXES = [
   // Layout override của bản đồ — guest cũng cần fetch để render đúng map đã chỉnh.
   // POST (super-admin sửa) ở /api/admin/campus-layout — đã có requireAdmin riêng.
   '/api/campus-layout/',
+  // Danh sách model cho palette editor — không có dữ liệu nhạy cảm.
+  '/api/campus-models',
   '/manifest.webmanifest', '/sw.js', '/favicon',
   '/vendor/', '/models/',
 ];
