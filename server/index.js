@@ -1,9 +1,10 @@
 import express from 'express';
+import compression from 'compression';
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
@@ -16,6 +17,7 @@ import { attachUser, makeAuthGate, makeProfileGate, requireAuth, attachAuth } fr
 import { attachOAuth, listEnabledProviders } from './contexts/identity/oauth.js';
 import { attachTenant } from './contexts/identity/tenant.js';
 import { attachSeo } from './contexts/seo/index.js';
+import { injectSeoHead, originOf as seoOriginOf } from './contexts/seo/inject.js';
 import { attachAnalytics } from './contexts/analytics/index.js';
 import { sendGA4Event } from './contexts/analytics/ga4-mp.js';
 import { attachBilling } from './contexts/billing/index.js';
@@ -192,6 +194,13 @@ function checkAndUnlockBadges(playerName, attempt, role = 'student') {
 
 const app = express();
 app.disable('x-powered-by');
+// Tin tưởng reverse proxy (NPM) phía trước — để req.protocol/x-forwarded-* trả đúng
+// https://, dùng cho canonical SEO + cookie secure flag chuẩn.
+app.set('trust proxy', 1);
+
+// gzip/deflate cho mọi response text-based. SEO bonus: trang nhẹ → Lighthouse cao
+// → Core Web Vitals tốt. Skip nếu client gửi x-no-compression hoặc đã có CE.
+app.use(compression({ threshold: 1024 }));
 
 // Security headers (R6) — an toàn áp mọi response. Rate-limit auth (pre-auth, theo IP).
 app.use(securityHeaders);
@@ -355,6 +364,32 @@ r.get('/api/wallet', requireAuth, (req, res) => {
 r.put('/api/wallet', requireAuth, (req, res) => {
   const w = upsertUserWallet(req.user.id, req.body || {});
   res.json(w);
+});
+
+// Scenario runs — đếm số lần hoàn thành theo familyId per-user, cross-device.
+// GET trả map { familyId: { runs, bestStars, bestScore, lastTs } } của user.
+// POST upsert monotonic (runs++, MAX stars/score). Body: { familyId, stars, score }.
+r.get('/api/scenario-runs', requireAuth, async (req, res) => {
+  try {
+    const map = await getScenarioRunsForUser(req.user.id);
+    res.json(map);
+  } catch (e) {
+    console.warn('[scenario-runs] GET failed', e?.message);
+    res.status(500).json({ error: 'db_error' });
+  }
+});
+r.post('/api/scenario-runs', requireAuth, async (req, res) => {
+  const familyId = String(req.body?.familyId || '').trim().slice(0, 64);
+  if (!familyId) return res.status(400).json({ error: 'familyId required' });
+  const stars = Number(req.body?.stars) || 0;
+  const score = Number(req.body?.score) || 0;
+  try {
+    const row = await recordScenarioRunDb(req.user.id, familyId, stars, score);
+    res.json({ familyId, ...(row || {}) });
+  } catch (e) {
+    console.warn('[scenario-runs] POST failed', e?.message);
+    res.status(500).json({ error: 'db_error' });
+  }
 });
 
 // Trục 3: ?role=pupil|student|teacher → trả về badge phù hợp audience + 'all'.
@@ -600,8 +635,15 @@ r.get(/.*/, async (req, res, next) => {
       + (hasHeader ? '' : HEADER_TAG + '\n')
       + SGF_TAG;
     const idx = html.lastIndexOf('</body>');
-    const out = idx >= 0 ? html.slice(0, idx) + tags + '\n' + html.slice(idx) : html + tags;
+    let out = idx >= 0 ? html.slice(0, idx) + tags + '\n' + html.slice(idx) : html + tags;
+    // SEO: bổ sung default meta (favicon, og:image, canonical, twitter card, robots)
+    // vào trang nào còn thiếu. Idempotent — không đè meta thủ công đã có.
+    try {
+      const origin = seoOriginOf(req, BASE_PATH);
+      out = injectSeoHead(out, { origin, urlPath: req.path, basePath: BASE_PATH });
+    } catch {}
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
     res.send(out);
   } catch {
     next();
@@ -617,8 +659,21 @@ r.use('/vendor/mediapipe', express.static(MEDIAPIPE_DIR, {
   },
 }));
 
-// Static frontend (served last so /api/* wins on conflicts)
-r.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
+// Static frontend (served last so /api/* wins on conflicts). Cache aggressively
+// cho asset có hash/version, vừa phải cho HTML (HTML đã có middleware riêng phía trên).
+// SEO bonus: header Cache-Control giúp Lighthouse score + giảm tải server.
+r.use(express.static(PUBLIC_DIR, {
+  extensions: ['html'],
+  setHeaders: (res, filePath) => {
+    if (/\.(?:js|css|woff2?|ttf|otf|eot)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+    } else if (/\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|glb|gltf|hdr|exr|mp3|ogg|wav|mp4|webm)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=2592000');
+    } else if (/\.(?:webmanifest|json)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+  },
+}));
 
 // 404 fallback → serve landing (so deep links to non-existent paths still render)
 r.use((_req, res) => {

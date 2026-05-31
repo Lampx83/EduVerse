@@ -3,7 +3,24 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🔌 Ứng dụng tích hợp · Tizia</title>
+<title>Ứng dụng tích hợp — ScoreUp · Codelab · Smartdoc · FeedBackMe | Tizia</title>
+<meta name="description" content="4 ứng dụng tích hợp Tizia một cổng đăng nhập: ScoreUp (chấm điểm), Codelab NEU OJ (luyện code), Smartdoc (tài liệu thông minh), FeedBackMe (góp ý đa chiều)." />
+<meta name="keywords" content="Tizia apps, ScoreUp, Codelab, NEU OJ, Smartdoc, FeedBackMe, tích hợp, single sign-on, edtech" />
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Ứng dụng tích hợp Tizia",
+  "itemListElement": [
+    { "@type": "SoftwareApplication", "position": 1, "name": "ScoreUp",          "applicationCategory": "EducationalApplication", "operatingSystem": "Web", "url": "https://tizia.vn/scoreup" },
+    { "@type": "SoftwareApplication", "position": 2, "name": "Codelab (NEU OJ)", "applicationCategory": "EducationalApplication", "operatingSystem": "Web", "url": "https://tizia.vn/codelab" },
+    { "@type": "SoftwareApplication", "position": 3, "name": "Smartdoc",         "applicationCategory": "EducationalApplication", "operatingSystem": "Web", "url": "https://tizia.vn/smartdoc" },
+    { "@type": "SoftwareApplication", "position": 4, "name": "FeedBackMe",       "applicationCategory": "EducationalApplication", "operatingSystem": "Web", "url": "https://tizia.vn/feedback" }
+  ]
+}
+</script>
 <style>
   :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#38bdf8; --card:rgba(255,255,255,.05);
     --border:rgba(255,255,255,.12); --muted:#94a3b8; }
@@ -64,8 +81,15 @@
   const active = APPS.find(a => a.id === params.get('app'));
   const root = document.getElementById('root');
 
-  if (active) renderEmbed(active);
-  else renderGrid();
+  if (active) {
+    // GA4: mở 1 app anh em (ScoreUp/Codelab/Smartdoc/FeedBackMe…). Đo tần suất
+    // bridging từ Tizia sang vũ trụ app — chỉ báo SSO + integration hoạt động.
+    try { window.tiziaTrack?.('app_launch', { app_id: active.id, app_name: active.name }); } catch {}
+    renderEmbed(active);
+  } else {
+    try { window.tiziaTrack?.('app_grid_view', { count: APPS.length }); } catch {}
+    renderGrid();
+  }
 
   function renderGrid() {
     document.body.style.display = 'block';

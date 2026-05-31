@@ -3,8 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Trường · Tizia</title>
-<meta name="description" content="Tizia — The Intelligent Zone for Interactive Academy. Bản đồ tương tác từng cấp học." />
+<title>Trường ảo — Mầm non · Tiểu học · THCS · THPT · Dược · CNTT · Kinh tế | Tizia</title>
+<meta name="description" content="Chọn trường ảo Tizia theo cấp học: Mầm non, Tiểu học, THCS, THPT (theo GDPT 2018) và đại học (Dược, CNTT, Kinh tế). Bản đồ campus 2.5D tương tác, học bằng mô phỏng 3D/VR." />
+<meta name="keywords" content="trường ảo, campus map, mầm non, tiểu học, THCS, THPT, GDPT 2018, đại học Dược, đại học CNTT, đại học Kinh tế, Tizia" />
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<meta property="og:title" content="Trường ảo Tizia — chọn cấp học, vào campus tương tác" />
+<meta property="og:description" content="Mầm non, Tiểu học, THCS, THPT (GDPT 2018) và đại học Dược/CNTT/Kinh tế. Mỗi trường 1 bản đồ campus 2.5D riêng, học bằng mô phỏng." />
+<meta property="og:image" content="./og-default.svg" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
 <style>
   :root {
     --bg-1: #0f172a; --bg-2: #1e293b; --bg-3: #312e81;
@@ -65,8 +73,13 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 (function(){
   const dom = new URLSearchParams(location.search).get('domain') || 'pharmacy';
   document.getElementById('campus-frame').src = 'campus-proto/b-iso-canvas.html?embed=1&domain=' + encodeURIComponent(dom);
+  // GA4: vào trang trường (chọn domain từ trang chủ). school_enter là 1 bước trong
+  // funnel mặc định (welcome_view → register → school_enter → module_start → …).
+  try { window.tiziaTrack?.('school_enter', { domain: dom }); } catch {}
   window.addEventListener('message', function(e){
     const d = e.data; if(!d || d.type !== 'campus-enter') return;
+    // Bấm vào toà nhà trong khuôn viên.
+    try { window.tiziaTrack?.('campus_building_click', { domain: dom, building: String(d.building || d.id || '').slice(0,40) }); } catch {}
     const path = document.getElementById('campus');   // cuộn tới khu lộ trình học
     if(path) path.scrollIntoView({ block:'start' });
   });

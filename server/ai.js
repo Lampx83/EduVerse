@@ -24,6 +24,7 @@
 
 import { aiQuotaGate, recordAiCall } from './ai-quota.js';
 import { saveAiQuestions, saveAiQa, getAiQuestions, getAiQa, getAiContentCounts } from './db.js';
+import { sendGA4Event } from './contexts/analytics/ga4-mp.js';
 
 const OLLAMA_URL = (process.env.OLLAMA_URL || 'http://101.96.66.232:8037/ollama/api').replace(/\/+$/, '');
 const OLLAMA_SECKEY = process.env.OLLAMA_SECKEY || 'pharmasim';
@@ -76,6 +77,7 @@ function wrapAi(endpoint, handler) {
   return [
     aiQuotaGate(endpoint),
     async (req, res) => {
+      const t0 = Date.now();
       try {
         const result = await handler(req.body || {}, req);
         const u = result?._usage || {};
@@ -85,10 +87,22 @@ function wrapAi(endpoint, handler) {
           completion_tokens: u.completion_tokens || 0,
           status: 'ok',
         });
+        // GA4: ai_chat — endpoint + model + thời gian xử lý. Tokens nếu handler báo.
+        sendGA4Event(req, 'ai_chat', {
+          endpoint, model: OLLAMA_MODEL,
+          prompt_tokens: u.prompt_tokens || 0,
+          completion_tokens: u.completion_tokens || 0,
+          duration_ms: Date.now() - t0,
+          status: 'ok',
+        });
         if (result && '_usage' in result) delete result._usage;
         res.json(result);
       } catch (e) {
         recordAiCall(req, { provider: 'ollama', model: OLLAMA_MODEL, status: 'error' });
+        sendGA4Event(req, 'ai_chat', {
+          endpoint, model: OLLAMA_MODEL,
+          duration_ms: Date.now() - t0, status: 'error',
+        });
         console.error('[ai] handler error:', e?.message || e);
         res.status(500).json({ error: 'AI request failed', detail: String(e?.message || e) });
       }
