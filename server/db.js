@@ -1026,27 +1026,58 @@ const _toJson = (v, fallback) => {
   } catch { return JSON.stringify(fallback); }
 };
 
+// Gộp modulesByDay: union các module id theo từng ngày. Bảo vệ chống 1 client
+// cũ (chưa biết module mới) ghi đè làm mất danh sách bài đã hoàn thành trong ngày.
+function _mergeModulesByDay(cur = {}, inc = {}) {
+  const out = {};
+  for (const day of new Set([...Object.keys(cur), ...Object.keys(inc)])) {
+    out[day] = [...new Set([...(cur[day] || []), ...(inc[day] || [])])];
+  }
+  return out;
+}
+
 /**
- * Ghi đè ví của user. Server không tự tính XP — chỉ persist payload từ client.
- * Clamp số nguyên để chống abuse cơ bản (XP/coin không âm, ≤1 tỷ).
- * Field undefined → giữ giá trị hiện có (merge với row cũ nếu có).
+ * Đồng bộ ví của user từ client. CỐT LÕI an toàn: các field game-state CHỈ TĂNG
+ * (xp, coins, longest_streak, vr/meta sessions, quizzes_passed, achievements,
+ * modules_by_day) được áp dụng MONOTONIC — không bao giờ cho giá trị mới NHỎ HƠN
+ * giá trị server hiện có. Nhờ vậy mọi race ở client (tab cũ, thiết bị khác, fetch
+ * lỗi rồi đẩy local thấp) đều vô hại: không thể hạ level của user.
+ *
+ * Field CÓ THỂ giảm hợp lệ (streak reset khi bỏ lỡ ngày, shield bị tiêu, daily
+ * reset mỗi ngày) → last-write theo payload client.
+ *
+ * @param {object} opts
+ * @param {boolean} [opts.monotonic=true] - false để ghi đè cứng (admin chỉnh tay).
  */
-export function upsertUserWallet(user_id, w = {}) {
+export function upsertUserWallet(user_id, w = {}, { monotonic = true } = {}) {
   const cur = getUserWallet(user_id) || {};
   const pick = (k, def = 0) => (w[k] !== undefined ? w[k] : (cur[k] ?? def));
+  // Monotonic ↑ : lấy max(server, client). Không monotonic → lấy client (last-write).
+  const up = (k, max = 1e9) => {
+    const incoming = _toInt(pick(k), max);
+    return monotonic ? Math.max(incoming, _toInt(cur[k] ?? 0, max)) : incoming;
+  };
+  const incAch = Array.isArray(pick('achievements', [])) ? pick('achievements', []) : [];
+  const achievements = monotonic
+    ? [...new Set([...(cur.achievements || []), ...incAch])]   // union — badge không mất
+    : incAch;
+  const incMods = (typeof pick('modulesByDay', {}) === 'object') ? pick('modulesByDay', {}) : {};
+  const modulesByDay = monotonic ? _mergeModulesByDay(cur.modulesByDay, incMods) : incMods;
+
   upsertUserWalletStmt.run({
     user_id:        Number(user_id),
-    coins:          _toInt(pick('coins'), 1e12),
-    xp:             _toInt(pick('xp'), 1e12),
+    coins:          up('coins', 1e12),
+    xp:             up('xp', 1e12),
+    longest_streak: up('longestStreak', 10000),
+    vr_sessions:    up('vrSessions', 1e9),
+    meta_sessions:  up('metaSessions', 1e9),
+    quizzes_passed: up('quizzesPassed', 1e9),
+    // Có thể giảm hợp lệ → last-write từ client.
     streak:         _toInt(pick('streak'), 10000),
-    longest_streak: _toInt(pick('longestStreak'), 10000),
     streak_shields: _toInt(pick('streakShields'), 1000),
     last_visit_day: _toStr(pick('lastVisitDay', ''), 16),
-    achievements:   _toJson(pick('achievements', []), []),
-    vr_sessions:    _toInt(pick('vrSessions'), 1e9),
-    meta_sessions:  _toInt(pick('metaSessions'), 1e9),
-    quizzes_passed: _toInt(pick('quizzesPassed'), 1e9),
-    modules_by_day: _toJson(pick('modulesByDay', {}), {}),
+    achievements:   _toJson(achievements, []),
+    modules_by_day: _toJson(modulesByDay, {}),
     daily:          _toJson(pick('daily', {}), {}),
     quests_claimed: _toJson(pick('questsClaimed', {}), {}),
     updated_at:     Date.now(),

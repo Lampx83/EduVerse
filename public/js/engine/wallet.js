@@ -110,13 +110,20 @@ async function _pushToServer(w) {
 export async function loadWalletFromServer() {
   _serverSyncEnabled = true;
   let remote = null;
+  let fetchOk = false;
   try {
     const r = await fetch('/api/wallet', { credentials: 'same-origin' });
-    if (r.ok) remote = await r.json();
+    if (r.ok) { fetchOk = true; remote = await r.json(); }   // remote=null khi server CHƯA có ví
   } catch {}
+  if (!fetchOk) {
+    // GET lỗi (mạng / 5xx / 401 race) → TUYỆT ĐỐI không đẩy local lên server,
+    // tránh clobber giá trị cao đang có trên DB bằng snapshot local thấp. Chỉ
+    // dùng local để render; lần _save kế (server-side monotonic guard) sẽ sync.
+    return getWallet();
+  }
   if (!remote) {
-    // Lần đầu sau khi triển khai: server chưa có ví, đẩy local lên để không
-    // mất XP đang có (tab hiện tại đang chạy).
+    // Server xác nhận chưa có ví (200 + null) → đẩy local lên lần đầu. An toàn vì
+    // server chưa có gì để mất. Monotonic guard phía server vẫn bảo vệ về sau.
     const local = getWallet();
     if (local.xp > 0 || local.coins > 0) _pushToServer(local);
     return local;
