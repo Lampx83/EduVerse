@@ -6,21 +6,59 @@
 <title>Campus 2.5D · Tizia</title>
 <style>
   * { box-sizing: border-box; }
+  /* Day/Night theme (req #1 Enderboy mục 10 + mục 9 ánh sáng) ------------------
+     :root vars cho phép swap nền + legend + tip giữa day/night chỉ bằng class
+     body.night. Canvas (cỏ, đường) đọc qua biến JS riêng (xem __NIGHT).         */
+  :root {
+    --bg-grad: linear-gradient(180deg, #cfeecb 0%, #d9f3d2 60%, #eafff0 100%);
+    --legend-bg: rgba(255,255,255,.92);
+    --legend-text: #1f2937;
+    --legend-head: #0f172a;
+    --legend-hover: rgba(192,57,43,.12);
+    --legend-cat: rgba(15,23,42,.55);
+    --tip-bg: #fff;
+    --tip-text: #1f2937;
+    --credit-text: #33506a;
+  }
+  body.night {
+    --bg-grad: linear-gradient(180deg, #0b1228 0%, #14223c 55%, #1e2e52 100%);
+    --legend-bg: rgba(15,23,42,.85);
+    --legend-text: #e2e8f0;
+    --legend-head: #f8fafc;
+    --legend-hover: rgba(99,102,241,.22);
+    --legend-cat: rgba(226,232,240,.55);
+    --tip-bg: rgba(15,23,42,.92);
+    --tip-text: #f1f5f9;
+    --credit-text: #94a3b8;
+  }
   html, body { margin: 0; height: 100%; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;
-    background: linear-gradient(180deg, #cfeecb 0%, #d9f3d2 60%, #eafff0 100%); }
+    background: var(--bg-grad); transition: background .4s ease; }
   #c { display: block; }
-  #legend { position:fixed; left:16px; bottom:16px; z-index:12; background:rgba(255,255,255,.92); border-radius:14px; padding:10px 14px 11px; box-shadow:0 8px 24px rgba(0,0,0,.2); color:#1f2937; backdrop-filter:blur(4px); max-height:62vh; overflow:auto; }
-  #legend h4 { margin:0 0 7px; font-size:12px; letter-spacing:1px; color:#0f172a; font-weight:800; }
-  #legend #legend-rows { display:grid; grid-template-columns:repeat(2,auto); gap:2px 14px; }
-  #legend .lr { display:flex; align-items:center; gap:8px; font-size:12px; padding:2px 5px; border-radius:7px; cursor:pointer; transition:background .12s; }
-  #legend .lr:hover { background:rgba(192,57,43,.12); }
+  /* Legend dạng CARD phân nhóm (req #1 Enderboy mục 7) ------------------------
+     Mỗi nhóm có heading nhỏ + danh sách dòng. Glassmorphism nhẹ qua backdrop. */
+  #legend { position:fixed; left:16px; bottom:16px; z-index:12; background:var(--legend-bg); border-radius:14px; padding:10px 14px 11px; box-shadow:0 8px 24px rgba(0,0,0,.2); color:var(--legend-text); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); max-height:62vh; overflow:auto; min-width: 220px; transition: background .4s, color .4s; }
+  #legend h4 { margin:0 0 8px; font-size:12px; letter-spacing:1px; color:var(--legend-head); font-weight:800; display:flex; align-items:center; gap:6px; }
+  #legend .cat { font-size:10px; letter-spacing:1.2px; color:var(--legend-cat); font-weight:700; text-transform:uppercase; margin:8px 0 3px; padding:0 5px; display:flex; align-items:center; gap:5px; }
+  #legend .cat:first-child { margin-top:0; }
+  #legend .cat::after { content:''; flex:1; height:1px; background:currentColor; opacity:.18; }
+  #legend .lr { display:flex; align-items:center; gap:8px; font-size:12px; padding:3px 6px; border-radius:7px; cursor:pointer; transition:background .12s, transform .12s; }
+  #legend .lr:hover { background:var(--legend-hover); transform:translateX(2px); }
+  #legend .lr.active { background:var(--legend-hover); box-shadow: inset 2px 0 0 currentColor; }
   #legend .lr .e { width:18px; text-align:center; font-size:14px; }
   .back { position:fixed; left:18px; top:16px; z-index:11; background:rgba(15,23,42,.7); color:#fff; text-decoration:none; padding:7px 13px; border-radius:20px; font-size:12.5px; backdrop-filter:blur(8px); }
-  .credit { position:fixed; right:16px; bottom:16px; z-index:11; color:#33506a; font-size:11px; opacity:.7; }
-  #tip { position:fixed; z-index:20; background:#fff; color:#1f2937; font-weight:800; font-size:13px; padding:6px 11px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.25); pointer-events:none; opacity:0; transition:opacity .12s; transform:translate(-50%,-130%); white-space:nowrap; }
+  /* Nút Day/Night (req #1 Enderboy mục 10) ---------------------------------- */
+  #theme-toggle { position:fixed; right:16px; top:16px; z-index:11; background:rgba(15,23,42,.7); color:#fff; border:0; cursor:pointer; padding:7px 11px; border-radius:20px; font-size:13px; backdrop-filter:blur(8px); display:flex; align-items:center; gap:5px; transition: transform .15s; }
+  #theme-toggle:hover { transform: scale(1.06); }
+  #theme-toggle:active { transform: scale(0.95); }
+  .credit { position:fixed; right:16px; bottom:16px; z-index:11; color:var(--credit-text); font-size:11px; opacity:.7; transition: color .4s; }
+  #tip { position:fixed; z-index:20; background:var(--tip-bg); color:var(--tip-text); font-weight:800; font-size:13px; padding:6px 11px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.25); pointer-events:none; opacity:0; transition:opacity .12s, background .4s, color .4s; transform:translate(-50%,-130%); white-space:nowrap; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
   #toast { position:fixed; left:50%; top:24px; transform:translateX(-50%) translateY(-10px); z-index:21; background:#16a34a; color:#fff; font-weight:800; padding:10px 18px; border-radius:12px; opacity:0; transition:opacity .25s, transform .25s; box-shadow:0 8px 24px rgba(0,0,0,.25); pointer-events:none; }
   #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
   #loading { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:30; background:rgba(220,245,255,.92); color:#23506a; font-weight:800; font-size:15px; }
+  @media (prefers-reduced-motion: reduce) {
+    html, body, #legend, #tip, #theme-toggle, .credit { transition: none !important; }
+    #legend .lr { transition: none !important; }
+  }
 </style>
 <script type="importmap">
 { "imports": {
@@ -31,8 +69,9 @@
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="legend"><h4>CHÚ GIẢI</h4><div id="legend-rows"></div></div>
+<div id="legend"><h4>📍 CHÚ GIẢI</h4><div id="legend-rows"></div></div>
 <a class="back" href="/">← Tizia</a>
+<button id="theme-toggle" type="button" title="Chuyển ngày/đêm — phím D" aria-label="Chuyển chế độ ngày/đêm"><span id="theme-icon">🌙</span><span id="theme-label">Đêm</span></button>
 <div class="credit">3D: KayKit (CC0)</div>
 <div id="tip"></div>
 <div id="toast"></div>
@@ -227,6 +266,10 @@ const CAMPUSES = {
       {type:'garden',   gx:13.6,gy:11,  w:5,  d:3.2},  // vườn hoa (giữa)
       {type:'football', gx:1.2, gy:4,   w:5,  d:3.2},  // sân bóng mini (trái)
       {type:'parking',  gx:1.4, gy:11.2,w:4.6,d:2.8},  // nhà xe đạp (trái)
+      // Cổng TIỂU HỌC (req #2 từ capybara): trước đây primary chỉ có gate
+      // trong facilities (marker icon) mà THIẾU field type='gate' → schoolGate()
+      // không render. Bổ sung để bằng vai với THCS/Mầm non/THPT.
+      {type:'gate',     gx:16.1,gy:15.4, label:'TIỂU HỌC'},
     ],
     sportTargets:{},
     trees:[[10.5,1],[13,1],[16.3,1],[19.5,1],[24.5,1],
@@ -282,6 +325,8 @@ const CAMPUSES = {
       {type:'football', gx:19.4,gy:2, w:7.4,d:4.2},
       {type:'court', gx:19.8,gy:8.2, w:4,d:5},
       {type:'parking', gx:19.4,gy:14.4, w:6,d:3.4},
+      // Bổ sung cổng THPT (đồng đều với THCS/Tiểu học/Mầm non) — req #2 mở rộng
+      {type:'gate', gx:10.2,gy:17.8, label:'THPT'},
     ],
     sportTargets:{ football:'/time-attack.html', court:'/time-attack.html' },
     props:(()=>{ const p=[];
@@ -336,6 +381,8 @@ const CAMPUSES = {
       {type:'football', gx:1,gy:8, w:4.5,d:3},
       {type:'court', gx:1.2,gy:12.6, w:3.2,d:3.4},
       {type:'parking', gx:10.2,gy:20, w:5,d:3.2},
+      // Cổng IT (đồng đều với các trường khác) — req #2 mở rộng
+      {type:'gate', gx:15,gy:0.8, label:'CNTT'},
     ],
     sportTargets:{ football:'/time-attack.html', court:'/time-attack.html' },
     trees:[[14.6,3.6],[16.6,3.6],[14.2,7.6],[16.8,7.6],[15,10.2],[15.4,16.4],
@@ -925,13 +972,92 @@ function enter(item, idx){
   if(idx!=null){ hovered=idx; draw(); }
   toast.textContent=`Vào: ${item.emoji} ${item.name}`; toast.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>toast.classList.remove('show'),1600);
   if(EMBED) parent.postMessage({type:'campus-enter', id:item.id, name:item.name, emoji:item.emoji}, '*'); }
+// Phân nhóm chú giải (req #1 Enderboy mục 7) ------------------------------
+// Suy luận category từ tên/id để không phải thêm field `cat` cho từng building
+// trong CAMPUSES (giữ cấu hình gọn). Thứ tự nhóm cố định để UX nhất quán.
+const CAT_ORDER = ['lop', 'bomon', 'dieuhanh', 'sinhhoat', 'theduc', 'tienich'];
+const CAT_LABEL = {
+  lop:      { e:'📚', t:'Lớp học · Khối học' },
+  bomon:    { e:'🔬', t:'Phòng bộ môn · Lab' },
+  dieuhanh: { e:'🏫', t:'Điều hành · Hỗ trợ' },
+  sinhhoat: { e:'🎨', t:'Sinh hoạt · Đoàn thể' },
+  theduc:   { e:'⚽', t:'Thể chất · Sân bãi' },
+  tienich:  { e:'🚪', t:'Tiện ích · Khuôn viên' },
+};
+function categorize(o) {
+  const id = String(o.id||'').toLowerCase();
+  const n  = String(o.name||'').toLowerCase();
+  // Lớp học / khối lớp / cụm "Lớp N" ở tiểu học
+  if (/^(grade\d|g\d|class|khoi|khối|lớp)/.test(id) || /^lớp |^khối /.test(n)) return 'lop';
+  // Điều hành
+  if (/^(admin|head|hieu|bgh)/.test(id) || /hiệu bộ|hiệu trưởng|bgh|hành chính|điều hành/.test(n)) return 'dieuhanh';
+  // Thể chất - sân bãi
+  if (/(gym|football|court|track|baseball|sport|bike|park|playground|playarea|playmat)/.test(id)
+      || /sân|nhà thể|đa năng|bóng|chơi|xe đạp/.test(n)) return 'theduc';
+  // Sinh hoạt - Đoàn thể - Y tế - Nghệ thuật - Ẩm thực
+  if (/(youth|doi|tradition|medical|health|canteen|dorm|music|art|hall)/.test(id)
+      || /đoàn|đội|y tế|truyền thống|căng tin|nhà ăn|ký túc|âm nhạc|nghệ thuật|mĩ thuật|hội trường/.test(n)) return 'sinhhoat';
+  // Tiện ích khuôn viên (facilities + cổng + hồ + vườn)
+  if (o.bi == null || /(gate|garden|lake|pond|flag|plaza)/.test(id)
+      || /cổng|vườn|hồ|sân chào cờ/.test(n)) return 'tienich';
+  // Default: phòng bộ môn / lab / chức năng
+  return 'bomon';
+}
+
 function buildLegend(){ const host=document.getElementById('legend-rows');
   const all=[...BUILDINGS.map((b,i)=>({...b,bi:i})), ...FACILITIES.map(f=>({...f,bi:null}))];
-  host.innerHTML=all.map(o=>`<div class="lr" data-id="${o.id}"><span class="e">${o.emoji}</span><span>${o.name}</span></div>`).join('');
+  // Gom theo nhóm
+  const groups = {};
+  for (const o of all) { const c = categorize(o); (groups[c] = groups[c] || []).push(o); }
+  // Render theo thứ tự CAT_ORDER, bỏ nhóm rỗng
+  const html = CAT_ORDER
+    .filter(c => groups[c] && groups[c].length)
+    .map(c => {
+      const meta = CAT_LABEL[c];
+      const rows = groups[c].map(o =>
+        `<div class="lr" data-id="${o.id}"><span class="e">${o.emoji}</span><span>${o.name}</span></div>`
+      ).join('');
+      return `<div class="cat"><span>${meta.e}</span><span>${meta.t}</span></div>${rows}`;
+    }).join('');
+  host.innerHTML = html;
   host.querySelectorAll('.lr').forEach(el=>el.addEventListener('click',()=>{
     const id=el.dataset.id; const bi=BUILDINGS.findIndex(b=>b.id===id);
     if(bi>=0) enter(BUILDINGS[bi], bi); else { const f=FACILITIES.find(x=>x.id===id); if(f) enter(f,null); } }));
+  // Hover row trên legend → set hovered building để canvas highlight (req #1 mục 4)
+  host.querySelectorAll('.lr').forEach(el=>{
+    el.addEventListener('pointerenter', ()=>{
+      const bi = BUILDINGS.findIndex(b=>b.id===el.dataset.id);
+      if (bi >= 0 && hovered !== bi) { hovered = bi; draw(); }
+    });
+    el.addEventListener('pointerleave', ()=>{ if (hovered !== -1) { hovered = -1; draw(); } });
+  });
 }
+
+// ── Day/Night toggle (req #1 Enderboy mục 10) -------------------------------
+// Lưu trong localStorage để giữ preference giữa các session. Phím tắt: D.
+// Canvas vẫn render màu cỏ ngày (KayKit không có texture đêm); chỉ làm tối
+// nền + UI overlay — đủ giảm mỏi mắt khi học buổi tối, không phá visual map.
+(function initThemeToggle(){
+  const btn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+  const label = document.getElementById('theme-label');
+  function apply(night){
+    document.body.classList.toggle('night', night);
+    icon.textContent = night ? '☀️' : '🌙';
+    label.textContent = night ? 'Ngày' : 'Đêm';
+    try { localStorage.setItem('tizia.campus.night', night ? '1' : '0'); } catch {}
+  }
+  // restore
+  let initNight = false;
+  try { initNight = localStorage.getItem('tizia.campus.night') === '1'; } catch {}
+  apply(initNight);
+  btn.addEventListener('click', ()=> apply(!document.body.classList.contains('night')));
+  // Phím tắt D
+  window.addEventListener('keydown', e=>{
+    if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+    if (e.key === 'd' || e.key === 'D') apply(!document.body.classList.contains('night'));
+  });
+})();
 
 let _zoom=1.0;   // zoom scale hiện tại (0.4 – 2.5)
 let _panOx=0, _panOy=0;   // pan offset thêm vào ox/oy

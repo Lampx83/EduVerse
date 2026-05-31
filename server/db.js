@@ -449,7 +449,11 @@ export function createRequest({ domain, type, title, detail, student, school_id 
     domain: String(domain || '').slice(0, 40),
     type: safeType,
     title: String(title || '').slice(0, 200),
-    detail: detail ? String(detail).slice(0, 2000) : null,
+    // Nâng giới hạn detail từ 2000 → 10000 chars. Brief redesign chi tiết của
+    // SV/HS (vd req #3 của Enderboy) có thể >2000 chars và đang bị server âm
+    // thầm cắt cụt — gây mất thông tin. 10000 chars = ~2-3 trang A4, đủ cho
+    // mọi brief sản phẩm hợp lý; storage cost không đáng kể (SQLite TEXT).
+    detail: detail ? String(detail).slice(0, 10000) : null,
     student: String(student || 'Ẩn danh').slice(0, 60),
     t,
   });

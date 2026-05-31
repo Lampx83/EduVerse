@@ -81,8 +81,8 @@ function autoMount() {
             <input id="sgf-title-in" class="sgf-in" maxlength="200"
                    placeholder="VD: Thêm dạng bài Toán có nhiều cách giải" />
           </label>
-          <label class="sgf-lab">Mô tả chi tiết (tuỳ chọn)
-            <textarea id="sgf-detail" class="sgf-in" rows="3" maxlength="2000"
+          <label class="sgf-lab">Mô tả chi tiết (tuỳ chọn) <span id="sgf-detail-count" style="opacity:.55;font-size:11px;float:right">0 / 10000</span>
+            <textarea id="sgf-detail" class="sgf-in" rows="3" maxlength="10000"
                       placeholder="Càng cụ thể, AI càng dễ hiểu &amp; phản hồi đúng nhu cầu của bạn."></textarea>
           </label>
           <div class="sgf-ctx" id="sgf-ctx"></div>
@@ -114,6 +114,20 @@ function bind(root) {
   const sendBtn = root.querySelector('#sgf-send');
   const ctxBox = root.querySelector('#sgf-ctx');
   const inbox = root.querySelector('#sgf-inbox');
+
+  // Live counter cho detail textarea (req #3 bị cụt ở 2000 chars trước đây →
+  // giờ giới hạn 10000, hiển thị bộ đếm để SV biết khi nào sắp đầy).
+  const detailInput = root.querySelector('#sgf-detail');
+  const detailCount = root.querySelector('#sgf-detail-count');
+  if (detailInput && detailCount) {
+    const updateCount = () => {
+      const n = detailInput.value.length;
+      detailCount.textContent = `${n.toLocaleString('vi-VN')} / 10.000`;
+      detailCount.style.color = n > 9000 ? '#dc2626' : n > 7000 ? '#f59e0b' : '';
+    };
+    detailInput.addEventListener('input', updateCount);
+    updateCount();
+  }
 
   const ctx = pageContext();
   ctxBox.innerHTML = `📍 <b>Trang đang xem:</b> ${escapeHtml(ctx.title || ctx.url)}
