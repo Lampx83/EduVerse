@@ -955,20 +955,45 @@ function resize(){ const w=innerWidth,h=innerHeight;
   applyZoom(); draw(); }
 addEventListener('resize', resize); resize();
 
+// ── Tính zoom tối thiểu: vừa đủ để thấy toàn bộ BUILDINGS ──
+// Tính ở pixel-space (zoom=1): mỗi building chiếm TW*s/2 × TH*s*4 (ước tính chiều cao 3D).
+// So sánh bounding box với viewport center → min scale theo cả 2 chiều.
+function calcMinZoom(){
+  if(!BUILDINGS.length) return 0.3;
+  const cx=innerWidth/2, cy=innerHeight/2;
+  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  for(const b of BUILDINGS){
+    const p=P(b.gx, b.gy);
+    const hw=TW*(b.s||1)*0.55, hvBot=TH*(b.s||1)*0.5, hvTop=100*(b.s||1);
+    minX=Math.min(minX,p.x-hw); maxX=Math.max(maxX,p.x+hw);
+    minY=Math.min(minY,p.y-hvTop); maxY=Math.max(maxY,p.y+hvBot);
+  }
+  const PAD=48;
+  minX-=PAD; maxX+=PAD; minY-=PAD; maxY+=PAD;
+  // Min zoom theo chiều ngang: bounding box phải không vượt viewport khi scale quanh cx
+  let zx=1, zy=1;
+  if(maxX>cx) zx=Math.min(zx,(innerWidth-cx)/(maxX-cx));
+  if(minX<cx) zx=Math.min(zx,cx/(cx-minX));
+  if(maxY>cy) zy=Math.min(zy,(innerHeight-cy)/(maxY-cy));
+  if(minY<cy) zy=Math.min(zy,cy/(cy-minY));
+  return Math.max(0.2, Math.min(zx, zy));
+}
+
+function clampZoom(z){ return Math.max(calcMinZoom(), Math.min(2.8, z)); }
+
 // Wheel zoom — cả desktop và editor iframe
 canvas.addEventListener('wheel', e=>{
   e.preventDefault();
   const delta = e.deltaY > 0 ? 0.9 : 1.111;
-  _zoom = Math.max(0.35, Math.min(2.8, _zoom * delta));
+  _zoom = clampZoom(_zoom * delta);
   applyZoom(); draw();
-  // Báo parent để hiện giá trị zoom nếu muốn
   if(EDIT) postToParent({type:'campus-zoom', zoom:Math.round(_zoom*100)});
 }, {passive:false});
 
 // Expose zoom control cho parent (nút +/-  trong editor)
-window.__zoomIn  = ()=>{ _zoom=Math.min(2.8,_zoom*1.2); applyZoom(); draw(); };
-window.__zoomOut = ()=>{ _zoom=Math.max(0.35,_zoom*0.8); applyZoom(); draw(); };
-window.__zoomReset=()=>{ _zoom=1; _panOx=0; _panOy=0; resize(); };
+window.__zoomIn  = ()=>{ _zoom=clampZoom(_zoom*1.2); applyZoom(); draw(); };
+window.__zoomOut = ()=>{ _zoom=clampZoom(_zoom*0.8); applyZoom(); draw(); };
+window.__zoomReset=()=>{ _zoom=clampZoom(1); _panOx=0; _panOy=0; resize(); };
 
 // Cần cập nhật hitAt để transform ngược toạ độ click → canvas CSS coords
 // hitAt nhận clientX/Y → cần compensate zoom+pan
