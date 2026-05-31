@@ -460,14 +460,18 @@ export function attachAdmin(r) {
       const adminCount = db.prepare(`SELECT COUNT(*) c FROM users WHERE role='admin'`).get().c;
       if (adminCount <= 1) return res.status(400).json({ error: 'last_admin', message: 'không thể xoá admin cuối cùng' });
     }
-    const tx = db.transaction((uid) => {
+    const tx = db.transaction((uid, displayName) => {
       db.prepare(`DELETE FROM sessions WHERE user_id = ?`).run(uid);
       if (tableExists('oauth_identities')) db.prepare(`DELETE FROM oauth_identities WHERE user_id = ?`).run(uid);
-      if (tableExists('subscriptions')) db.prepare(`DELETE FROM subscriptions WHERE user_id = ?`).run(uid);
-      if (tableExists('notifications')) db.prepare(`DELETE FROM notifications WHERE user_id = ?`).run(uid);
+      // notifications dùng user_display_name (chuỗi), không user_id — xoá theo display_name
+      if (tableExists('notifications') && displayName) {
+        db.prepare(`DELETE FROM notifications WHERE user_display_name = ?`).run(displayName);
+      }
+      // subscriptions là school-level (UNIQUE school_id), KHÔNG xoá theo user.
+      // attempts/achievements link bằng player_name=display_name, để lại làm thống kê lịch sử.
       db.prepare(`DELETE FROM users WHERE id = ?`).run(uid);
     });
-    try { tx(id); res.json({ ok: true, deleted: u.username }); }
+    try { tx(id, u.display_name); res.json({ ok: true, deleted: u.username }); }
     catch (e) { res.status(500).json({ error: 'delete_failed', detail: String(e.message) }); }
   });
 
