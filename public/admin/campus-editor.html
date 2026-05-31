@@ -273,14 +273,14 @@ function renderPalette(q){
 
 function renderThumbs(models){
   const w=iframe.contentWindow;
-  if(!w||!w.__rerenderBuilding) return;   // iframe chưa sẵn
-  for(const m of models){
+  if(!w||!w.__rerenderBuilding) return;
+  // Stagger requests để không flood iframe với 40 load đồng thời
+  models.forEach((m, i)=>{
     const canvasId='thumb_'+m.key.replace(/[^a-z0-9]/gi,'_');
     const thumbCanvas=document.getElementById(canvasId);
-    if(!thumbCanvas||thumbCanvas._rendered) continue;
-    // Yêu cầu iframe render sprite từ URL → trả lại DataURL
-    w.postMessage({type:'campus-cmd-thumb', url: m.url, canvasId},'*');
-  }
+    if(!thumbCanvas||thumbCanvas._rendered) return;
+    setTimeout(()=>w.postMessage({type:'campus-cmd-thumb', url:m.url, canvasId},'*'), i*40);
+  });
 }
 
 // Thêm handler thumb response vào listen messages
@@ -489,7 +489,8 @@ $('#dDelete').addEventListener('click',()=>{
 window.addEventListener('message', e=>{
   const m=e.data; if(!m || !m.type) return;
   if(m.type==='campus-ready'){
-    console.log('[campus-editor] iframe ready', m.domain, m.buildings?.length, 'buildings');
+    // Iframe đã load xong → trigger render thumbnail cho toàn bộ palette
+    if(paletteModels.length) renderThumbs(paletteModels);
   } else if(m.type==='campus-select'){
     openInspector(m.idx, m.item);
   } else if(m.type==='campus-select-decor'){

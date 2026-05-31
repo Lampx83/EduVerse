@@ -38,7 +38,8 @@ function buildCatalogue() {
     } catch { return []; }
   }
 
-  const suburban = glbsIn(subDir, 'sub', 'assets/suburban/Models/GLB format');
+  // encodeURI mã hoá space → %20 nhưng giữ / — cần cho GLTFLoader fetch đúng
+  const suburban = glbsIn(subDir, 'sub', 'assets/suburban/Models/GLB%20format');
   // KayKit — folder lưu theo thư mục con; quét 2 level
   const kay = [];
   if (fs.existsSync(kayDir)) {
