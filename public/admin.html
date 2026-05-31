@@ -5,98 +5,212 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>🏛️ Ban điều hành · Tizia</title>
 <style>
-  :root { --bg:#0f172a; --bg2:#1e293b; --accent:#fbbf24; --ok:#22c55e; --bad:#ef4444;
-    --border:rgba(255,255,255,0.12); --txt:#e2e8f0; --muted:#94a3b8; }
+  :root {
+    --bg:#0b1220; --bg2:#111a2e; --bg3:#16213d; --accent:#fbbf24; --accent2:#60a5fa;
+    --ok:#22c55e; --warn:#fb923c; --bad:#ef4444; --purple:#a78bfa; --cyan:#22d3ee; --pink:#f472b6;
+    --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.20);
+    --txt:#e2e8f0; --muted:#94a3b8; --dim:#64748b;
+    --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--txt); }
-  header { padding:14px 24px; background:var(--bg2); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
-  header h1 { font-size:18px; margin:0; }
-  header .badge { background:var(--accent); color:#0f172a; font-weight:700; font-size:11px; padding:2px 8px; border-radius:999px; }
-  header .right { margin-left:auto; display:flex; gap:10px; align-items:center; font-size:13px; }
-  header .right a { color:var(--txt); text-decoration:none; opacity:.75; }
-  header .right a:hover { opacity:1; }
-  main { max-width:1200px; margin:0 auto; padding:20px; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
-  .card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
-  .card .n { font-size:26px; font-weight:800; color:var(--accent); }
-  .card .l { font-size:12px; opacity:0.7; margin-top:2px; }
-  .card.pending .n { color:#fb923c; }
-  .tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
-  .tab { padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--txt); cursor:pointer; font-size:13px; }
-  .tab.active { background:var(--accent); color:#0f172a; font-weight:700; border-color:var(--accent); }
-  .tab .count { display:inline-block; background:rgba(255,255,255,0.15); padding:1px 7px; border-radius:8px; margin-left:5px; font-size:11px; }
+  html,body { margin:0; padding:0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--txt); min-height:100vh; }
+  a { color:var(--accent2); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+
+  header { padding:14px 24px; background:linear-gradient(180deg,var(--bg2) 0%, rgba(17,26,46,0.85) 100%);
+           border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px;
+           position:sticky; top:0; z-index:30; backdrop-filter:blur(8px); }
+  header h1 { font-size:18px; margin:0; font-weight:700; }
+  header .badge { background:var(--accent); color:#0f172a; font-weight:800; font-size:11px; padding:3px 9px; border-radius:999px; letter-spacing:.5px; }
+  header .live-dot { width:7px; height:7px; border-radius:50%; background:var(--ok); display:inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+  header .right { margin-left:auto; display:flex; gap:12px; align-items:center; font-size:13px; }
+  header .right .who { opacity:.7; }
+  header .right .iconbtn { background:transparent; border:1px solid var(--border); color:var(--txt); padding:5px 9px; border-radius:7px; cursor:pointer; font-family:inherit; font-size:13px; }
+  header .right .iconbtn:hover { background:rgba(255,255,255,0.05); }
+  header .right .iconbtn.spin svg { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  main { max-width:1400px; margin:0 auto; padding:20px 24px 80px; }
+
+  /* ============ SECTION HEADERS ============ */
+  .section { margin-bottom:28px; }
+  .section-title { display:flex; align-items:center; gap:10px; margin:0 0 12px; font-size:13px;
+                   text-transform:uppercase; letter-spacing:.7px; color:var(--muted); font-weight:700; }
+  .section-title .line { flex:1; height:1px; background:var(--border); }
+
+  /* ============ KPI CARDS ============ */
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .kpi { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:14px 16px;
+         position:relative; overflow:hidden; transition:.2s; }
+  .kpi:hover { border-color:var(--border-strong); transform:translateY(-1px); }
+  .kpi.hero { padding:18px 20px; }
+  .kpi .label { font-size:11.5px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); font-weight:600; }
+  .kpi .value { font-size:30px; font-weight:800; margin-top:4px; color:var(--accent); line-height:1.1; font-variant-numeric:tabular-nums; }
+  .kpi.hero .value { font-size:36px; }
+  .kpi .delta { font-size:12px; margin-top:3px; display:flex; align-items:center; gap:4px; }
+  .kpi .delta.up { color:var(--ok); }
+  .kpi .delta.dn { color:var(--bad); }
+  .kpi .delta.flat { color:var(--dim); }
+  .kpi .icon { position:absolute; top:14px; right:14px; opacity:.18; font-size:24px; }
+  .kpi.pending .value { color:var(--warn); }
+  .kpi.danger .value  { color:var(--bad); }
+  .kpi.ok .value      { color:var(--ok); }
+  .kpi.info .value    { color:var(--accent2); }
+
+  /* ============ TWO-COL GRID ============ */
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+  .panel { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
+  .panel-title { font-size:13.5px; font-weight:700; margin:0 0 12px; display:flex; align-items:center; gap:8px; }
+  .panel-title .legend { margin-left:auto; font-size:11px; opacity:.6; display:flex; gap:10px; }
+  .panel-title .legend i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; vertical-align:middle; }
+
+  /* ============ CHARTS (SVG) ============ */
+  .chart { width:100%; height:200px; position:relative; }
+  .chart svg { width:100%; height:100%; display:block; }
+  .chart .axis-y, .chart .axis-x { font-size:10px; fill:var(--dim); }
+  .chart .grid-line { stroke:var(--border); stroke-width:1; }
+  .chart .area { fill-opacity:0.18; }
+  .chart .line { fill:none; stroke-width:2; }
+  .chart .dot { stroke:var(--bg2); stroke-width:1.5; }
+  .chart .bar { transition:.15s; }
+  .chart .bar:hover { filter:brightness(1.2); }
+  .chart-tooltip { position:absolute; background:#000; color:#fff; padding:6px 9px; font-size:11.5px;
+                   border-radius:6px; pointer-events:none; opacity:0; transition:.1s; z-index:10;
+                   border:1px solid var(--border-strong); white-space:nowrap; }
+
+  /* ============ LIST / TOP ============ */
+  .list-rank { display:flex; flex-direction:column; gap:7px; }
+  .list-rank .row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:9px;
+                    background:rgba(255,255,255,0.025); transition:.15s; }
+  .list-rank .row:hover { background:rgba(255,255,255,0.05); }
+  .list-rank .rank { font-size:11px; font-weight:800; width:22px; text-align:center; color:var(--muted); }
+  .list-rank .row.top1 .rank { color:var(--accent); }
+  .list-rank .row.top2 .rank { color:#c0c0c0; }
+  .list-rank .row.top3 .rank { color:#cd7f32; }
+  .list-rank .name { flex:1; font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .list-rank .sub { font-size:11px; color:var(--muted); font-weight:400; margin-left:6px; }
+  .list-rank .value { font-size:13px; font-weight:800; color:var(--accent); font-variant-numeric:tabular-nums; }
+
+  /* ============ ACTIVITY FEED ============ */
+  .feed { display:flex; flex-direction:column; gap:7px; max-height:340px; overflow-y:auto; padding-right:4px; }
+  .feed::-webkit-scrollbar { width:6px; }
+  .feed::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:3px; }
+  .feed .item { display:flex; gap:9px; padding:7px 8px; border-radius:7px; align-items:flex-start; font-size:12.5px; }
+  .feed .item:hover { background:rgba(255,255,255,0.03); }
+  .feed .kind { font-size:14px; line-height:1.2; margin-top:1px; }
+  .feed .body { flex:1; min-width:0; }
+  .feed .body .label { line-height:1.35; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .feed .body .time { font-size:10.5px; color:var(--dim); margin-top:1px; }
+
+  /* ============ SYSTEM BAR ============ */
+  .syshealth { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .syshealth .item { background:var(--bg2); border:1px solid var(--border); border-radius:11px; padding:11px 14px; }
+  .syshealth .item .l { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); font-weight:600; margin-bottom:3px; }
+  .syshealth .item .v { font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .syshealth .item .v small { font-size:11px; color:var(--muted); font-weight:400; margin-left:4px; }
+  .syshealth .item.ok .v { color:var(--ok); }
+  .syshealth .item.warn .v { color:var(--warn); }
+
+  /* ============ TABS (giữ legacy) ============ */
+  .tabs { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:14px; border-bottom:1px solid var(--border); padding-bottom:5px; }
+  .tab { padding:7px 14px; border-radius:8px 8px 0 0; border:1px solid transparent; border-bottom:none;
+         background:transparent; color:var(--muted); cursor:pointer; font-size:13px; font-family:inherit; font-weight:600; transition:.15s; }
+  .tab:hover { color:var(--txt); }
+  .tab.active { background:var(--bg2); color:var(--accent); border-color:var(--border); }
+  .tab .count { display:inline-block; background:rgba(255,255,255,0.08); padding:1px 7px; border-radius:8px; margin-left:5px; font-size:11px; color:var(--muted); }
+  .tab.active .count { background:rgba(251,191,36,0.18); color:var(--accent); }
+
   .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; font-size:13px; }
   .toolbar select, .toolbar input { background:var(--bg2); color:var(--txt); border:1px solid var(--border); border-radius:7px; padding:6px 10px; font-size:13px; font-family:inherit; }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
-  th { opacity:0.6; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
-  tr:hover { background:rgba(255,255,255,0.02); }
-  tr.expanded { background:rgba(251,191,36,0.04); }
+  .toolbar .spacer { flex:1; }
+
+  /* ============ TABLES ============ */
+  table { width:100%; border-collapse:collapse; font-size:13px; background:var(--bg2); border-radius:12px; overflow:hidden; }
+  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { opacity:0.6; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.4px; background:rgba(0,0,0,0.15); }
+  tbody tr:hover { background:rgba(255,255,255,0.025); }
+  tr.expanded { background:rgba(251,191,36,0.05); }
   td.actions { white-space:nowrap; }
-  .pill { font-size:11px; padding:2px 8px; border-radius:999px; background:rgba(255,255,255,0.08); }
-  .pill.pending   { background:rgba(148,163,184,0.25); color:#cbd5e1; }
-  .pill.reviewing { background:rgba(251,191,36,0.22); color:#fcd34d; }
-  .pill.done      { background:rgba(34,197,94,0.22); color:#86efac; }
-  .pill.rejected  { background:rgba(239,68,68,0.22); color:#fca5a5; }
-  .pill.admin     { background:rgba(251,191,36,0.22); color:#fcd34d; }
-  .pill.teacher   { background:rgba(168,85,247,0.22); color:#d8b4fe; }
+
+  /* ============ PILLS ============ */
+  .pill { display:inline-block; font-size:11px; padding:2px 9px; border-radius:999px; background:rgba(255,255,255,0.07); font-weight:600; }
+  .pill.pending   { background:rgba(148,163,184,0.20); color:#cbd5e1; }
+  .pill.reviewing { background:rgba(251,191,36,0.20); color:#fcd34d; }
+  .pill.done      { background:rgba(34,197,94,0.20); color:#86efac; }
+  .pill.rejected  { background:rgba(239,68,68,0.20); color:#fca5a5; }
+  .pill.admin     { background:rgba(251,191,36,0.20); color:#fcd34d; }
+  .pill.teacher   { background:rgba(168,85,247,0.20); color:#d8b4fe; }
   .pill.student   { background:rgba(56,189,248,0.18); color:#7dd3fc; }
   .pill.pupil     { background:rgba(34,197,94,0.18); color:#86efac; }
-  .err { padding:30px; text-align:center; opacity:0.8; }
-  .btn { font-size:12px; padding:5px 10px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--txt); cursor:pointer; font-family:inherit; }
-  .btn:hover { background:rgba(255,255,255,0.06); }
+  .pill.ok        { background:rgba(34,197,94,0.20); color:#86efac; }
+  .pill.error, .pill.blocked { background:rgba(239,68,68,0.20); color:#fca5a5; }
+
+  /* ============ BUTTONS ============ */
+  .btn { font-size:12px; padding:6px 11px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--txt); cursor:pointer; font-family:inherit; font-weight:600; transition:.15s; }
+  .btn:hover { background:rgba(255,255,255,0.06); border-color:var(--border-strong); }
   .btn.primary { background:var(--accent); color:#0f172a; border-color:var(--accent); font-weight:700; }
   .btn.primary:hover { filter:brightness(1.08); background:var(--accent); }
   .btn.danger { color:#fca5a5; border-color:rgba(239,68,68,0.4); }
   .btn.danger:hover { background:rgba(239,68,68,0.12); }
+
+  /* ============ MISC ============ */
+  .err { padding:30px; text-align:center; opacity:0.7; font-size:13px; }
+  .loading { padding:24px; text-align:center; opacity:0.5; font-size:13px; }
+  .empty { padding:20px; text-align:center; opacity:0.5; font-size:12.5px; }
   .detail-row { background:rgba(0,0,0,0.18); }
   .detail-row td { padding:14px 16px; }
   .detail-box { font-size:12.5px; line-height:1.55; }
   .detail-box h4 { margin:0 0 6px; font-size:11.5px; text-transform:uppercase; letter-spacing:.5px; opacity:.6; }
   .detail-box .blk { background:rgba(0,0,0,0.25); border:1px solid var(--border); border-radius:8px; padding:9px 11px; margin:6px 0; }
   .detail-box .blk.note { background:rgba(251,191,36,0.06); border-color:rgba(251,191,36,0.25); }
-  .detail-box .blk.decision { font-size:12px; }
-  .detail-box .blk .meta { font-size:11px; opacity:.6; margin-bottom:4px; }
-  /* Modal */
-  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:50; display:none; align-items:flex-start; justify-content:center; padding-top:60px; }
+
+  /* Modal (giữ legacy) */
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:50; display:none; align-items:flex-start; justify-content:center; padding-top:60px; backdrop-filter:blur(4px); }
   .modal-bg.show { display:flex; }
-  .modal { background:var(--bg2); border:1px solid var(--border); border-radius:14px; width:560px; max-width:calc(100vw - 32px); padding:18px 20px; }
+  .modal { background:var(--bg2); border:1px solid var(--border-strong); border-radius:14px; width:560px; max-width:calc(100vw - 32px); padding:20px; box-shadow:var(--shadow); }
   .modal h3 { margin:0 0 4px; font-size:16px; }
   .modal .sub { font-size:12.5px; opacity:.65; margin:0 0 14px; }
   .modal .grp { display:flex; flex-direction:column; gap:6px; margin-bottom:11px; }
   .modal label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; opacity:.6; font-weight:700; }
-  .modal select, .modal textarea, .modal input { background:#0f172a; color:var(--txt); border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:13.5px; font-family:inherit; }
+  .modal select, .modal textarea, .modal input { background:var(--bg); color:var(--txt); border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:13.5px; font-family:inherit; }
   .modal textarea { resize:vertical; min-height:88px; line-height:1.5; }
   .modal .ctx { background:rgba(0,0,0,0.25); border-left:3px solid var(--accent); padding:8px 11px; border-radius:0 8px 8px 0; font-size:12.5px; margin-bottom:13px; }
   .modal .ctx b { color:var(--accent); }
   .modal .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:6px; }
-  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background:var(--ok); color:#04210f; font-weight:700; padding:11px 22px; border-radius:11px; opacity:0; transition:.25s; z-index:60; }
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background:var(--ok); color:#04210f; font-weight:700; padding:11px 22px; border-radius:11px; opacity:0; transition:.25s; z-index:60; box-shadow:var(--shadow); }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
   .toast.err { background:var(--bad); color:#fff; }
 </style>
 </head>
 <body data-no-suggestion-fab>
 <header>
-  <h1>🏛️ Ban điều hành Tizia</h1><span class="badge">ADMIN</span>
+  <h1>🏛️ Ban điều hành Tizia</h1>
+  <span class="badge">ADMIN</span>
+  <span class="live-dot" title="Live — auto refresh 60s"></span>
   <div class="right">
-    <span id="who" style="opacity:.7"></span>
-    <a href="/space.html" title="Về trang chính">← Về Tizia</a>
-    <a href="#" id="logoutBtn">Đăng xuất</a>
+    <span class="who" id="who"></span>
+    <button class="iconbtn" id="refreshBtn" title="Tải lại tất cả (R)">↻ Refresh</button>
+    <a href="/space.html" title="Về trang chính" class="iconbtn" style="text-decoration:none;display:inline-block;">← Tizia</a>
+    <a href="#" id="logoutBtn" class="iconbtn" style="text-decoration:none;">Đăng xuất</a>
   </div>
 </header>
-<main id="app"><div class="err">Đang tải…</div></main>
+<main id="app"><div class="loading">⏳ Đang tải dashboard…</div></main>
 
+<!-- Modals -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal" id="modal-replyReq">
     <h3>💬 Trả lời yêu cầu HS</h3>
-    <p class="sub">Lời nhắn sẽ được gửi qua 🔔 thông báo của HS + lưu audit trail.</p>
+    <p class="sub">Lời nhắn sẽ được gửi qua 🔔 thông báo + lưu audit trail.</p>
     <div class="ctx" id="modal-ctx"></div>
     <div class="grp">
       <label>Trạng thái</label>
       <select id="modal-status">
-        <option value="done">✓ Hoàn thành (done)</option>
-        <option value="reviewing">🔧 Đang xử lý (reviewing)</option>
-        <option value="rejected">✗ Từ chối (rejected)</option>
+        <option value="done">✓ Hoàn thành</option>
+        <option value="reviewing">🔧 Đang xử lý</option>
+        <option value="rejected">✗ Từ chối</option>
       </select>
     </div>
     <div class="grp">
@@ -129,285 +243,8 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="chart-tooltip" id="ctt"></div>
 
-<script type="module">
-const $ = (s) => document.querySelector(s);
-const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour12: false }) : '—';
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-async function api(path, opts) {
-  const r = await fetch(path, { credentials:'same-origin', headers:{'Content-Type':'application/json'}, ...opts });
-  if (r.status === 401) { location.href = '/login.html?return=' + encodeURIComponent('/admin.html'); throw new Error('login'); }
-  const data = await r.json().catch(()=>({}));
-  return { status: r.status, ok: r.ok, data };
-}
-
-function toast(msg, kind='ok') {
-  const t = $('#toast'); t.textContent = msg;
-  t.classList.toggle('err', kind === 'err');
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-// ─── REQUEST: expandable row + reply modal ───
-let reqCache = [];
-let reqFilter = 'all';
-
-async function loadRequests() {
-  const r = await api('/api/admin/requests?limit=300');
-  reqCache = r.data.requests || [];
-  renderRequests();
-}
-
-function renderRequests() {
-  const filtered = reqFilter === 'all' ? reqCache : reqCache.filter(r => r.status === reqFilter);
-  const counts = reqCache.reduce((m,r) => (m[r.status] = (m[r.status]||0)+1, m), {});
-  const host = $('#tabbody');
-  host.innerHTML = `
-    <div class="toolbar">
-      <span>Lọc:</span>
-      <select id="reqFilter">
-        <option value="all">Tất cả (${reqCache.length})</option>
-        <option value="pending">Chờ xử lý (${counts.pending||0})</option>
-        <option value="reviewing">Đang xử lý (${counts.reviewing||0})</option>
-        <option value="done">Hoàn thành (${counts.done||0})</option>
-        <option value="rejected">Từ chối (${counts.rejected||0})</option>
-      </select>
-      <button class="btn" id="reqRefresh">↻ Tải lại</button>
-    </div>
-    <table>
-      <thead><tr>
-        <th>#</th><th>Trường</th><th>Tiêu đề</th><th>Loại</th>
-        <th>HS</th><th>Trạng thái</th><th>Vote</th><th>Tạo lúc</th><th></th>
-      </tr></thead>
-      <tbody>
-      ${filtered.map(r => `
-        <tr data-rid="${r.id}">
-          <td>${r.id}</td>
-          <td><span class="pill">${esc(r.domain)}</span></td>
-          <td style="max-width:340px">${esc(r.title)}</td>
-          <td><span class="pill">${esc(r.type)}</span></td>
-          <td>${esc(r.student)}</td>
-          <td><span class="pill ${r.status}">${r.status}</span></td>
-          <td>${r.votes}</td>
-          <td style="font-size:12px;opacity:.7">${fmt(r.created_at)}</td>
-          <td class="actions">
-            <button class="btn" data-act="detail" data-rid="${r.id}">👁 Xem</button>
-            <button class="btn primary" data-act="reply" data-rid="${r.id}">💬 Trả lời</button>
-          </td>
-        </tr>
-      `).join('')}
-      </tbody>
-    </table>
-    ${filtered.length === 0 ? '<div class="err">Không có yêu cầu nào trong bộ lọc.</div>' : ''}
-  `;
-  $('#reqFilter').value = reqFilter;
-  $('#reqFilter').addEventListener('change', e => { reqFilter = e.target.value; renderRequests(); });
-  $('#reqRefresh').addEventListener('click', loadRequests);
-  host.querySelectorAll('[data-act]').forEach(b => {
-    b.addEventListener('click', () => {
-      const id = Number(b.dataset.rid);
-      if (b.dataset.act === 'reply') openReplyModal(id);
-      else toggleDetail(id);
-    });
-  });
-}
-
-async function toggleDetail(id) {
-  const tr = $(`#tabbody tr[data-rid="${id}"]`);
-  if (!tr) return;
-  const next = tr.nextElementSibling;
-  if (next && next.classList.contains('detail-row')) {
-    next.remove();
-    tr.classList.remove('expanded');
-    return;
-  }
-  tr.classList.add('expanded');
-  const colspan = tr.children.length;
-  const detail = document.createElement('tr');
-  detail.className = 'detail-row';
-  detail.innerHTML = `<td colspan="${colspan}"><div class="detail-box">Đang tải…</div></td>`;
-  tr.after(detail);
-
-  const r = reqCache.find(x => x.id === id);
-  const dr = await api(`/api/requests/${id}/decisions`);
-  const decisions = dr.data?.decisions || [];
-  detail.querySelector('.detail-box').innerHTML = `
-    <h4>Nội dung yêu cầu</h4>
-    <div class="blk">${esc(r.title)}${r.detail ? `<div style="opacity:.7;margin-top:5px">${esc(r.detail)}</div>` : ''}</div>
-    ${r.admin_note ? `<h4>Phản hồi đã gửi cho HS</h4><div class="blk note">${esc(r.admin_note)}</div>` : ''}
-    <h4>Lịch sử quyết định AI (${decisions.length})</h4>
-    ${decisions.length === 0 ? '<div class="blk" style="opacity:.6">Chưa có quyết định nào.</div>' :
-      decisions.map(d => `
-        <div class="blk decision">
-          <div class="meta">${fmt(d.created_at)} · <b>${d.decided_by}</b>${d.model ? ' · ' + d.model : ''} · confidence: ${(d.confidence||0).toFixed(2)}</div>
-          <div><b>${d.action}</b> → ${d.status_applied}${d.priority_score != null ? ` · priority ${d.priority_score}` : ''}</div>
-          ${d.reason ? `<div style="opacity:.75;margin-top:4px;font-size:11.5px">↳ ${esc(d.reason)}</div>` : ''}
-          ${d.public_note ? `<div style="opacity:.85;margin-top:4px">💬 ${esc(d.public_note)}</div>` : ''}
-        </div>
-      `).join('')
-    }
-  `;
-}
-
-function openReplyModal(id) {
-  const r = reqCache.find(x => x.id === id);
-  if (!r) return;
-  $('#modal-replyReq').style.display = '';
-  $('#modal-setRole').style.display = 'none';
-  $('#modal-ctx').innerHTML = `<b>#${r.id}</b> · ${esc(r.domain)}/${esc(r.type)} · gửi bởi <b>${esc(r.student)}</b><br>${esc(r.title)}`;
-  $('#modal-status').value = r.status === 'rejected' ? 'rejected' : 'done';
-  $('#modal-msg').value = '';
-  $('#modal-bg').classList.add('show');
-  $('#modal-bg').dataset.rid = id;
-  $('#modal-msg').focus();
-}
-
-async function submitReply() {
-  const id = Number($('#modal-bg').dataset.rid);
-  const status = $('#modal-status').value;
-  const message = $('#modal-msg').value.trim();
-  if (message.length < 4) return toast('Lời nhắn quá ngắn (≥4 ký tự)', 'err');
-  const r = await api(`/api/admin/requests/${id}/reply`, { method: 'POST', body: JSON.stringify({ status, message }) });
-  if (!r.ok) return toast('Lỗi: ' + (r.data?.error || r.status), 'err');
-  toast(r.data.notified ? '✓ Đã gửi phản hồi + 🔔 cho HS' : '✓ Đã đóng yêu cầu (HS ẩn danh, không gửi 🔔)');
-  closeModal();
-  await loadRequests();
-}
-
-function closeModal() {
-  $('#modal-bg').classList.remove('show');
-}
-
-// ─── USERS: change role ───
-let userCache = [];
-async function loadUsers() {
-  const r = await api('/api/admin/users?limit=300');
-  userCache = r.data.users || [];
-  renderUsers();
-}
-function renderUsers() {
-  const host = $('#tabbody');
-  host.innerHTML = `
-    <table>
-      <thead><tr>
-        <th>#</th><th>Username</th><th>Tên hiển thị</th><th>Vai trò</th>
-        <th>Gói</th><th>Trường</th><th>Đăng nhập gần nhất</th><th></th>
-      </tr></thead>
-      <tbody>
-      ${userCache.map(u => `
-        <tr>
-          <td>${u.id}</td>
-          <td>@${esc(u.username)}</td>
-          <td>${esc(u.display_name)}</td>
-          <td><span class="pill ${u.role}">${u.role}</span></td>
-          <td><span class="pill">${esc(u.plan || 'free')}</span></td>
-          <td>${u.school_id}</td>
-          <td style="font-size:12px;opacity:.7">${fmt(u.last_login)}</td>
-          <td class="actions"><button class="btn" data-uid="${u.id}" data-role="${u.role}">👥 Đổi vai trò</button></td>
-        </tr>
-      `).join('')}
-      </tbody>
-    </table>
-  `;
-  host.querySelectorAll('[data-uid]').forEach(b => {
-    b.addEventListener('click', () => openRoleModal(Number(b.dataset.uid), b.dataset.role));
-  });
-}
-function openRoleModal(uid, currentRole) {
-  const u = userCache.find(x => x.id === uid);
-  if (!u) return;
-  $('#modal-replyReq').style.display = 'none';
-  $('#modal-setRole').style.display = '';
-  $('#modal-role-sub').textContent = `@${u.username} · ${u.display_name} · hiện tại: ${currentRole}`;
-  $('#modal-role').value = currentRole;
-  $('#modal-bg').dataset.uid = uid;
-  $('#modal-bg').classList.add('show');
-}
-async function submitRole() {
-  const uid = Number($('#modal-bg').dataset.uid);
-  const role = $('#modal-role').value;
-  const r = await api(`/api/admin/users/${uid}/role`, { method: 'POST', body: JSON.stringify({ role }) });
-  if (!r.ok) return toast('Lỗi đổi vai trò', 'err');
-  toast('✓ Đã đổi vai trò → ' + role);
-  closeModal();
-  await loadUsers();
-}
-
-// ─── Other tabs (read-only) ───
-const TABS = {
-  requests: { label:'💡 Góp ý', load: loadRequests, badge: () => reqCache.filter(r => r.status === 'pending').length },
-  users:    { label:'👥 Người dùng', load: loadUsers },
-  schools:  { label:'🏫 Trường', load: () => loadSimple('/api/admin/schools', 'schools',
-    ['id','code','name','users','attempts','requests']) },
-  decisions:{ label:'🤖 Quyết định AI', load: () => loadSimple('/api/admin/ai-decisions?limit=200', 'decisions',
-    ['id','request_id','action','status_applied','decided_by','confidence','created_at'], { created_at: fmt }) },
-  content:  { label:'📚 Học liệu AI', load: () => loadSimple('/api/admin/content?limit=200', 'content',
-    ['id','school_id','subject','kind','flagged','created_at'], { created_at: fmt }) },
-  billing:  { label:'💳 Gói cước', load: () => loadSimple('/api/admin/billing', 'subscriptions',
-    ['school_id','school','plan','status','current_period_end'], { current_period_end: fmt }) },
-};
-
-async function loadSimple(path, key, cols, fmtMap = {}) {
-  const r = await api(path);
-  const rows = r.data[key] || [];
-  if (!rows.length) { $('#tabbody').innerHTML = '<div class="err">Chưa có dữ liệu.</div>'; return; }
-  const head = cols.map(c=>`<th>${c}</th>`).join('');
-  const body = rows.map(row => '<tr>' + cols.map(c => {
-    let v = row[c]; if (fmtMap[c]) v = fmtMap[c](v);
-    if (['status','plan','role','action','decided_by'].includes(c)) v = `<span class="pill ${row[c]||''}">${v??''}</span>`;
-    return `<td>${v ?? '—'}</td>`;
-  }).join('') + '</tr>').join('');
-  $('#tabbody').innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
-}
-
-let currentTab = 'requests';
-async function showTab(key) {
-  currentTab = key;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.k === key));
-  $('#tabbody').innerHTML = '<div class="err">Đang tải…</div>';
-  try { await TABS[key].load(); } catch(e) { $('#tabbody').innerHTML = `<div class="err">Lỗi: ${e.message}</div>`; }
-}
-
-// ─── Init ───
-(async function init() {
-  const ov = await api('/api/admin/overview');
-  if (ov.status === 403) {
-    $('#app').innerHTML = `<div class="err">⛔ Cần quyền <b>admin</b>. Tài khoản hiện tại không đủ quyền.<br>
-      Liên hệ quản trị để được cấp quyền (ADMIN_PROMOTE_USERNAME hoặc SQL <code>UPDATE users SET role='admin' WHERE username=?</code>).</div>`;
-    return;
-  }
-  const d = ov.data;
-  const cards = [
-    ['schools','Trường'],['users','Người dùng'],['attempts','Lượt học'],
-    ['requests','Tổng góp ý'],['requests_pending','Chờ xử lý','pending'],['ai_decisions','Quyết định AI'],
-    ['ai_content','Học liệu AI'],['events','Sự kiện'],['paid_schools','Trường trả phí'],
-  ].filter(([k]) => d[k] != null).map(([k,l,cls]) => `<div class="card ${cls||''}"><div class="n">${d[k]}</div><div class="l">${l}</div></div>`).join('');
-  $('#app').innerHTML = `
-    <div class="cards">${cards}</div>
-    <div class="tabs">${Object.entries(TABS).map(([k,v]) => `<button class="tab" data-k="${k}">${v.label}</button>`).join('')}</div>
-    <div id="tabbody"></div>
-  `;
-  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.k)));
-
-  const meR = await api('/api/auth/me'); $('#who').textContent = meR.data?.user ? '@' + meR.data.user.username : '';
-  showTab('requests');
-})();
-
-// Modal wiring
-$('#modal-bg').addEventListener('click', e => { if (e.target === $('#modal-bg')) closeModal(); });
-$('#modal-cancel').addEventListener('click', closeModal);
-$('#modal-submit').addEventListener('click', submitReply);
-$('#modal-role-cancel').addEventListener('click', closeModal);
-$('#modal-role-submit').addEventListener('click', submitRole);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-// Logout
-$('#logoutBtn').addEventListener('click', async (e) => {
-  e.preventDefault();
-  await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-  location.href = '/login.html';
-});
-</script>
+<script type="module" src="/js/admin-dashboard.js"></script>
 </body>
 </html>

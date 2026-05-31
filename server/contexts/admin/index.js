@@ -199,5 +199,161 @@ export function attachAdmin(r) {
     res.json({ subscriptions: db.prepare(`SELECT s.school_id, sc.name AS school, s.plan, s.status, s.current_period_end FROM subscriptions s LEFT JOIN schools sc ON sc.id=s.school_id ORDER BY s.school_id`).all() });
   });
 
-  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin)');
+  // ─────────────────────────────────────────────────────────────
+  // Dashboard endpoints (single-page admin)
+  // ─────────────────────────────────────────────────────────────
+
+  // GET /api/admin/timeseries?days=30
+  // Trả về [{date:'2026-05-31', attempts, users, requests, ai_tokens}] cho dashboard line/bar charts.
+  // Lấp ngày trống = 0 để chart không gãy.
+  r.get('/api/admin/timeseries', requireAdmin, (req, res) => {
+    const days = Math.min(Math.max(Number(req.query.days) || 30, 1), 90);
+    const now = Date.now();
+    const startMs = now - days * 86400_000;
+    const bucket = (tbl, col = 'created_at') => {
+      if (!tableExists(tbl)) return new Map();
+      const rows = db.prepare(`SELECT date(${col}/1000,'unixepoch','+7 hours') AS d, COUNT(*) AS n
+                               FROM ${tbl} WHERE ${col} >= ? GROUP BY d`).all(startMs);
+      return new Map(rows.map(r => [r.d, r.n]));
+    };
+    const attempts = bucket('attempts');
+    const users = bucket('users');
+    const requests = bucket('requests');
+    let aiTokens = new Map();
+    if (tableExists('ai_token_usage')) {
+      const rows = db.prepare(`SELECT date(created_at/1000,'unixepoch','+7 hours') AS d,
+                                      SUM(prompt_tokens + completion_tokens) AS n
+                               FROM ai_token_usage WHERE created_at >= ? GROUP BY d`).all(startMs);
+      aiTokens = new Map(rows.map(r => [r.d, r.n || 0]));
+    }
+    const series = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now - i * 86400_000);
+      d.setUTCHours(d.getUTCHours() + 7); // +07 VN
+      const key = d.toISOString().slice(0, 10);
+      series.push({
+        date: key,
+        attempts: attempts.get(key) || 0,
+        users: users.get(key) || 0,
+        requests: requests.get(key) || 0,
+        ai_tokens: aiTokens.get(key) || 0,
+      });
+    }
+    res.json({ days, series });
+  });
+
+  // GET /api/admin/ai-tokens-by-model?days=30 — breakdown tokens by model (bar/donut chart)
+  r.get('/api/admin/ai-tokens-by-model', requireAdmin, (req, res) => {
+    if (!tableExists('ai_token_usage')) return res.json({ models: [] });
+    const days = Math.min(Math.max(Number(req.query.days) || 30, 1), 90);
+    const startMs = Date.now() - days * 86400_000;
+    const rows = db.prepare(`SELECT model, provider,
+        SUM(prompt_tokens) AS pin, SUM(completion_tokens) AS pout,
+        COUNT(*) AS calls, SUM(cost_usd_micros) AS cost_micros
+      FROM ai_token_usage WHERE created_at >= ? GROUP BY model, provider ORDER BY (pin+pout) DESC`).all(startMs);
+    res.json({ days, models: rows });
+  });
+
+  // GET /api/admin/top?metric=schools|students&limit=10
+  r.get('/api/admin/top', requireAdmin, (req, res) => {
+    const metric = String(req.query.metric || 'schools');
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
+    if (metric === 'schools') {
+      const rows = db.prepare(`SELECT s.id, s.code, s.name,
+          (SELECT COUNT(*) FROM users u WHERE u.school_id=s.id) AS users,
+          (SELECT COUNT(*) FROM attempts a WHERE a.school_id=s.id) AS attempts,
+          (SELECT COUNT(*) FROM requests r WHERE r.school_id=s.id) AS requests
+        FROM schools s ORDER BY attempts DESC, users DESC LIMIT ?`).all(limit);
+      return res.json({ metric, rows });
+    }
+    if (metric === 'students') {
+      // Top theo lượt học (link attempts ↔ users qua player_name = display_name; fallback school_id)
+      const rows = db.prepare(`SELECT u.id, u.username, u.display_name, u.role, u.school_id,
+          COUNT(a.id) AS attempts, COALESCE(SUM(a.score), 0) AS total_score, MAX(a.created_at) AS last_played
+        FROM users u LEFT JOIN attempts a ON a.player_name = u.display_name AND a.school_id = u.school_id
+        WHERE u.role IN ('pupil','student')
+        GROUP BY u.id ORDER BY attempts DESC, total_score DESC LIMIT ?`).all(limit);
+      return res.json({ metric, rows });
+    }
+    res.status(400).json({ error: 'unknown_metric' });
+  });
+
+  // GET /api/admin/system — runtime info (uptime, memory, db size, node version)
+  r.get('/api/admin/system', requireAdmin, async (_req, res) => {
+    const mem = process.memoryUsage();
+    let dbSize = null;
+    try {
+      const { statSync } = await import('node:fs');
+      const dbPath = process.env.DATA_DIR ? `${process.env.DATA_DIR}/pharmacy.db` : null;
+      if (dbPath) dbSize = statSync(dbPath).size;
+    } catch {}
+    res.json({
+      uptime_seconds: Math.floor(process.uptime()),
+      memory: { rss: mem.rss, heap_used: mem.heapUsed, heap_total: mem.heapTotal },
+      node_version: process.version,
+      platform: process.platform,
+      db_size_bytes: dbSize,
+      now_ms: Date.now(),
+    });
+  });
+
+  // GET /api/admin/activity?limit=50 — feed gom new users, attempts, requests, analytics events
+  r.get('/api/admin/activity', requireAdmin, (req, res) => {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+    const items = [];
+    db.prepare(`SELECT id, username, display_name, role, school_id, created_at AS t
+                FROM users ORDER BY created_at DESC LIMIT ?`).all(limit).forEach(u => {
+      items.push({ kind: 'user_register', t: u.t, user_id: u.id, school_id: u.school_id,
+                   label: `@${u.username} (${u.display_name}) · ${u.role}` });
+    });
+    db.prepare(`SELECT id, player_name, version, score, total, correct, school_id, created_at AS t
+                FROM attempts ORDER BY created_at DESC LIMIT ?`).all(limit).forEach(a => {
+      items.push({ kind: 'attempt', t: a.t, school_id: a.school_id,
+                   label: `${a.player_name} · ${a.version} · ${a.score}đ (${a.correct}/${a.total})` });
+    });
+    db.prepare(`SELECT id, student, title, status, domain, school_id, created_at AS t
+                FROM requests ORDER BY created_at DESC LIMIT ?`).all(limit).forEach(r => {
+      items.push({ kind: 'request', t: r.t, school_id: r.school_id,
+                   label: `${r.student} · ${r.domain} · ${r.title}`.slice(0, 120), meta: { status: r.status } });
+    });
+    if (tableExists('analytics_events')) {
+      db.prepare(`SELECT id, name, user_id, school_id, path, ts AS t
+                  FROM analytics_events ORDER BY ts DESC LIMIT ?`).all(limit).forEach(e => {
+        items.push({ kind: 'event', t: e.t, user_id: e.user_id, school_id: e.school_id,
+                     label: `${e.name}${e.path ? ' · ' + e.path : ''}` });
+      });
+    }
+    items.sort((a, b) => (b.t || 0) - (a.t || 0));
+    res.json({ items: items.slice(0, limit) });
+  });
+
+  // GET /api/admin/overview2 — extend overview với delta 24h (không break /overview cũ)
+  r.get('/api/admin/overview2', requireAdmin, (_req, res) => {
+    const base = Q.overview.get();
+    const now = Date.now();
+    const t24 = now - 86400_000;
+    const t48 = now - 2 * 86400_000;
+    const count = (sql, ...args) => { try { return db.prepare(sql).get(...args)?.c || 0; } catch { return 0; } };
+    const delta = {
+      users_24h: count(`SELECT COUNT(*) c FROM users WHERE created_at >= ?`, t24),
+      users_prev_24h: count(`SELECT COUNT(*) c FROM users WHERE created_at >= ? AND created_at < ?`, t48, t24),
+      attempts_24h: count(`SELECT COUNT(*) c FROM attempts WHERE created_at >= ?`, t24),
+      attempts_prev_24h: count(`SELECT COUNT(*) c FROM attempts WHERE created_at >= ? AND created_at < ?`, t48, t24),
+      requests_24h: count(`SELECT COUNT(*) c FROM requests WHERE created_at >= ?`, t24),
+      requests_prev_24h: count(`SELECT COUNT(*) c FROM requests WHERE created_at >= ? AND created_at < ?`, t48, t24),
+    };
+    const extra = {};
+    if (tableExists('ai_decisions')) extra.ai_decisions = count(`SELECT COUNT(*) c FROM ai_decisions`);
+    if (tableExists('analytics_events')) extra.events = count(`SELECT COUNT(*) c FROM analytics_events`);
+    if (tableExists('subscriptions')) extra.paid_schools = count(`SELECT COUNT(*) c FROM subscriptions WHERE plan<>'free' AND status='active'`);
+    if (tableExists('ai_lesson_content')) extra.ai_content = count(`SELECT COUNT(*) c FROM ai_lesson_content`);
+    if (tableExists('ai_token_usage')) {
+      extra.ai_tokens_total = count(`SELECT SUM(prompt_tokens + completion_tokens) c FROM ai_token_usage`);
+      extra.ai_tokens_24h = count(`SELECT SUM(prompt_tokens + completion_tokens) c FROM ai_token_usage WHERE created_at >= ?`, t24);
+    }
+    extra.active_sessions = count(`SELECT COUNT(*) c FROM sessions WHERE expires_at > ?`, now);
+    res.json({ ...base, ...extra, delta });
+  });
+
+  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin) + dashboard endpoints');
 }
