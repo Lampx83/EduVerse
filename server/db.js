@@ -147,6 +147,67 @@ try { db.exec(`CREATE INDEX IF NOT EXISTS idx_classes_school  ON classes(school_
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_school ON attempts(school_id, created_at DESC)`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_requests_school ON requests(school_id, votes DESC, created_at DESC)`); } catch {}
 
+// Hồ sơ học sinh / sinh viên (Trục 1 phân biệt HS vs SV). Các cột này NULL cho
+// user cũ → trigger modal /complete-profile.html ở lần login kế. Không có FK ràng
+// buộc — major/grade là enum mềm để FE tự đối chiếu DOMAIN_META; cohort là free
+// text (K65/K2024…); school_name là tên trường HS/PH/THPT/ĐH user đang theo học.
+try { db.exec(`ALTER TABLE users ADD COLUMN grade INTEGER`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN major TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN cohort TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN school_name TEXT`); } catch {}
+
+// Trục 4: family plan + school code. family_links cho phép 1 PH link n con HS
+// (parent_user_id phải là role='teacher' hoặc 'student' tuổi >=18 — kiểm ở app
+// layer, không hard-enforce DB). Plan của parent được kế thừa xuống con khi
+// con role='pupil'. school_codes là code redeem do trường K-12/ĐH cấp:
+//   - kind='grant_plan': set plan cho user (vd 'plus' 365 ngày)
+//   - kind='discount':   ghi discount_percent áp cho lần thanh toán kế
+// max_uses=0 → vô hạn. expires_at NULL → vĩnh viễn.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS family_links (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    parent_user_id  INTEGER NOT NULL,
+    child_user_id   INTEGER NOT NULL,
+    created_at      INTEGER NOT NULL,
+    UNIQUE(parent_user_id, child_user_id),
+    FOREIGN KEY (parent_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (child_user_id)  REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_family_parent ON family_links(parent_user_id);
+  CREATE INDEX IF NOT EXISTS idx_family_child  ON family_links(child_user_id);
+
+  CREATE TABLE IF NOT EXISTS school_codes (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    code              TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    school_id         INTEGER NOT NULL DEFAULT 1,
+    kind              TEXT    NOT NULL DEFAULT 'grant_plan', -- grant_plan | discount
+    grant_plan        TEXT,                                  -- 'plus' | 'pro' khi kind='grant_plan'
+    grant_days        INTEGER NOT NULL DEFAULT 365,
+    discount_percent  INTEGER NOT NULL DEFAULT 0,            -- 0..90 khi kind='discount'
+    max_uses          INTEGER NOT NULL DEFAULT 0,            -- 0 = vô hạn
+    used_count        INTEGER NOT NULL DEFAULT 0,
+    expires_at        INTEGER,
+    note              TEXT,
+    created_by        INTEGER,
+    created_at        INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_school_codes_school ON school_codes(school_id, expires_at);
+
+  -- Log mỗi lần redeem để audit + chống abuse. UNIQUE(user_id, code_id) để 1 user
+  -- không redeem trùng 1 code; nhưng có thể redeem nhiều code khác nhau.
+  CREATE TABLE IF NOT EXISTS school_code_redemptions (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    code_id      INTEGER NOT NULL,
+    user_id      INTEGER NOT NULL,
+    redeemed_at  INTEGER NOT NULL,
+    outcome      TEXT,                       -- 'plan_granted' | 'discount_saved'
+    UNIQUE(code_id, user_id),
+    FOREIGN KEY (code_id) REFERENCES school_codes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_redemption_user ON school_code_redemptions(user_id);
+`);
+
 // Step 6: gói cước (free/plus/pro). plan_expires_at NULL = vĩnh viễn (cho free) hoặc
 // đến khi mua. billing_cycle = month|year (lưu để render đúng "hết hạn dd/mm/yyyy"
 // và để gia hạn). Hết hạn → app degrade về free nhưng KHÔNG xoá cột → khôi phục
@@ -572,16 +633,20 @@ export function getConfusion(version) {
 
 // --- Users & sessions ---
 const insertUserStmt = db.prepare(`
-  INSERT INTO users (username, display_name, password_hash, role, age, school_id, created_at)
-  VALUES (@username, @display_name, @password_hash, @role, @age, @school_id, @created_at)
+  INSERT INTO users (username, display_name, password_hash, role, age, school_id, created_at,
+                     grade, major, cohort, school_name)
+  VALUES (@username, @display_name, @password_hash, @role, @age, @school_id, @created_at,
+          @grade, @major, @cohort, @school_name)
 `);
 const getUserByUsernameStmt = db.prepare(`
-  SELECT id, username, display_name, password_hash, role, age, email, avatar_url, created_at, last_login
+  SELECT id, username, display_name, password_hash, role, age, email, avatar_url, created_at, last_login,
+         grade, major, cohort, school_name
   FROM users WHERE username = ? COLLATE NOCASE
 `);
 const getUserByIdStmt = db.prepare(`
   SELECT id, username, display_name, role, age, email, avatar_url, school_id, created_at, last_login,
-         plan, plan_expires_at, billing_cycle
+         plan, plan_expires_at, billing_cycle,
+         grade, major, cohort, school_name
   FROM users WHERE id = ?
 `);
 const setUserPlanStmt = db.prepare(`
@@ -605,13 +670,18 @@ const deleteSessionStmt = db.prepare(`DELETE FROM sessions WHERE token = ?`);
 const purgeExpiredSessionsStmt = db.prepare(`DELETE FROM sessions WHERE expires_at <= ?`);
 
 const ALLOWED_ROLES = new Set(['pupil', 'student', 'teacher']);
-export function createUser({ username, display_name, password_hash, role, age, school_id = 1 }) {
+export function createUser({ username, display_name, password_hash, role, age, school_id = 1,
+                             grade = null, major = null, cohort = null, school_name = null }) {
   const info = insertUserStmt.run({
     username, display_name, password_hash,
     role: ALLOWED_ROLES.has(role) ? role : 'student',
     age: Number.isFinite(age) ? Math.floor(age) : null,
     school_id: Number(school_id) || 1,
     created_at: Date.now(),
+    grade: Number.isFinite(grade) ? Math.floor(grade) : null,
+    major: major ? String(major).slice(0, 40) : null,
+    cohort: cohort ? String(cohort).slice(0, 20) : null,
+    school_name: school_name ? String(school_name).slice(0, 120) : null,
   });
   return { id: info.lastInsertRowid };
 }
@@ -691,17 +761,26 @@ export function updateUserProfile(id, { display_name, email, avatar_url } = {}) 
     email: email || null, avatar_url: avatar_url || null,
   });
 }
-// Người dùng tự sửa hồ sơ (display_name + age + email). Set trực tiếp (không COALESCE)
-// vì form cung cấp đủ; email rỗng → null.
+// Người dùng tự sửa hồ sơ (display_name + age + email + 4 trường HS/SV). Set trực
+// tiếp (không COALESCE) vì form cung cấp đủ; email/major/cohort/school_name rỗng → null.
+// grade rỗng/0 → null. Caller chịu trách nhiệm validate theo role (xem auth.js).
 const updateEditableStmt = db.prepare(`
-  UPDATE users SET display_name = @display_name, age = @age, email = @email WHERE id = @id
+  UPDATE users SET
+    display_name = @display_name, age = @age, email = @email,
+    grade = @grade, major = @major, cohort = @cohort, school_name = @school_name
+  WHERE id = @id
 `);
-export function updateUserEditable(id, { display_name, age, email }) {
+export function updateUserEditable(id, { display_name, age, email,
+                                          grade = null, major = null, cohort = null, school_name = null }) {
   updateEditableStmt.run({
     id: Number(id),
     display_name: String(display_name).slice(0, 60),
     age: Number.isFinite(age) ? Math.floor(age) : null,
     email: email ? String(email).slice(0, 120) : null,
+    grade: Number.isFinite(grade) && grade > 0 ? Math.floor(grade) : null,
+    major: major ? String(major).slice(0, 40) : null,
+    cohort: cohort ? String(cohort).slice(0, 20) : null,
+    school_name: school_name ? String(school_name).slice(0, 120) : null,
   });
 }
 export function isUsernameTaken(username) {
@@ -746,6 +825,101 @@ export function resolveSchoolByEmail(email) {
   const m = String(email || '').match(/@([^@]+)$/);
   if (!m) return null;
   return getSchoolByDomain(m[1].toLowerCase());
+}
+
+// ── Family links (Trục 4) ──
+const insertFamilyStmt = db.prepare(`
+  INSERT OR IGNORE INTO family_links (parent_user_id, child_user_id, created_at)
+  VALUES (@parent_user_id, @child_user_id, @created_at)
+`);
+const deleteFamilyStmt = db.prepare(`
+  DELETE FROM family_links WHERE parent_user_id = @parent AND child_user_id = @child
+`);
+const listChildrenStmt = db.prepare(`
+  SELECT u.id, u.username, u.display_name, u.role, u.grade, u.school_name, u.plan, u.plan_expires_at
+  FROM family_links f JOIN users u ON u.id = f.child_user_id
+  WHERE f.parent_user_id = ? ORDER BY f.created_at ASC
+`);
+const getParentPlanStmt = db.prepare(`
+  SELECT u.id AS parent_id, u.plan AS parent_plan, u.plan_expires_at AS parent_plan_expires_at
+  FROM family_links f JOIN users u ON u.id = f.parent_user_id
+  WHERE f.child_user_id = ?
+  ORDER BY (CASE u.plan WHEN 'pro' THEN 3 WHEN 'plus' THEN 2 WHEN 'free' THEN 1 ELSE 0 END) DESC
+  LIMIT 1
+`);
+
+export function linkChildToParent({ parent_user_id, child_user_id }) {
+  const info = insertFamilyStmt.run({
+    parent_user_id: Number(parent_user_id),
+    child_user_id: Number(child_user_id),
+    created_at: Date.now(),
+  });
+  return { linked: info.changes > 0 };
+}
+export function unlinkChildFromParent({ parent_user_id, child_user_id }) {
+  const info = deleteFamilyStmt.run({ parent: Number(parent_user_id), child: Number(child_user_id) });
+  return { unlinked: info.changes > 0 };
+}
+export function listChildrenOfParent(parent_user_id) {
+  return listChildrenStmt.all(Number(parent_user_id));
+}
+/** Trả về parent có plan cao nhất (để con kế thừa). null nếu không có/không link. */
+export function getBestParentPlanForChild(child_user_id) {
+  return getParentPlanStmt.get(Number(child_user_id)) || null;
+}
+
+// ── School codes (Trục 4) ──
+const insertCodeStmt = db.prepare(`
+  INSERT INTO school_codes (code, school_id, kind, grant_plan, grant_days, discount_percent,
+                            max_uses, expires_at, note, created_by, created_at)
+  VALUES (@code, @school_id, @kind, @grant_plan, @grant_days, @discount_percent,
+          @max_uses, @expires_at, @note, @created_by, @created_at)
+`);
+const getCodeStmt = db.prepare(`SELECT * FROM school_codes WHERE code = ? COLLATE NOCASE`);
+const incCodeUsageStmt = db.prepare(`UPDATE school_codes SET used_count = used_count + 1 WHERE id = ?`);
+const insertRedemptionStmt = db.prepare(`
+  INSERT OR IGNORE INTO school_code_redemptions (code_id, user_id, redeemed_at, outcome)
+  VALUES (@code_id, @user_id, @redeemed_at, @outcome)
+`);
+const listRedemptionsForUserStmt = db.prepare(`
+  SELECT r.code_id, r.outcome, r.redeemed_at, c.code, c.kind, c.discount_percent, c.grant_plan
+  FROM school_code_redemptions r JOIN school_codes c ON c.id = r.code_id
+  WHERE r.user_id = ? ORDER BY r.redeemed_at DESC
+`);
+
+export function createSchoolCode({ code, school_id = 1, kind = 'grant_plan',
+                                   grant_plan = null, grant_days = 365,
+                                   discount_percent = 0, max_uses = 0,
+                                   expires_at = null, note = null, created_by = null }) {
+  insertCodeStmt.run({
+    code: String(code).trim().slice(0, 40),
+    school_id: Number(school_id) || 1,
+    kind: kind === 'discount' ? 'discount' : 'grant_plan',
+    grant_plan: grant_plan ? String(grant_plan) : null,
+    grant_days: Math.max(1, Math.floor(Number(grant_days) || 365)),
+    discount_percent: Math.max(0, Math.min(90, Math.floor(Number(discount_percent) || 0))),
+    max_uses: Math.max(0, Math.floor(Number(max_uses) || 0)),
+    expires_at: expires_at ? Number(expires_at) : null,
+    note: note ? String(note).slice(0, 200) : null,
+    created_by: created_by ? Number(created_by) : null,
+    created_at: Date.now(),
+  });
+}
+export function getSchoolCode(code) {
+  return getCodeStmt.get(String(code || '').trim()) || null;
+}
+/** Tăng used_count + insert redemption. Trả false nếu đã redeem rồi (UNIQUE). */
+export function redeemSchoolCode({ code_id, user_id, outcome }) {
+  const info = insertRedemptionStmt.run({
+    code_id: Number(code_id), user_id: Number(user_id),
+    redeemed_at: Date.now(), outcome: String(outcome || ''),
+  });
+  if (info.changes === 0) return false;
+  incCodeUsageStmt.run(Number(code_id));
+  return true;
+}
+export function listRedemptionsForUser(user_id) {
+  return listRedemptionsForUserStmt.all(Number(user_id));
 }
 
 console.log(`[db] SQLite open at ${dbPath}`);

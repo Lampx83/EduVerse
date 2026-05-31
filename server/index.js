@@ -12,11 +12,12 @@ import { attachAppProxies } from './app-proxy.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
-import { attachUser, makeAuthGate, requireAuth, attachAuth } from './contexts/identity/auth.js';
+import { attachUser, makeAuthGate, makeProfileGate, requireAuth, attachAuth } from './contexts/identity/auth.js';
 import { attachOAuth, listEnabledProviders } from './contexts/identity/oauth.js';
 import { attachTenant } from './contexts/identity/tenant.js';
 import { attachSeo } from './contexts/seo/index.js';
 import { attachAnalytics } from './contexts/analytics/index.js';
+import { sendGA4Event } from './contexts/analytics/ga4-mp.js';
 import { attachBilling } from './contexts/billing/index.js';
 import { attachIntegration } from './contexts/integration/index.js';
 import { attachAdmin } from './contexts/admin/index.js';
@@ -48,29 +49,68 @@ function isValidVersion(v) {
   return VALID_VERSIONS.has(v) || SCENARIO_ID_PATTERN.test(v);
 }
 
-// Badge definitions used by both backend (auto-unlock) and frontend (display)
+// Badge definitions used by both backend (auto-unlock) and frontend (display).
+// Trục 3: audience phân biệt HS / SV.
+//   - 'all'     : hiện cho mọi role (chung)
+//   - 'pupil'   : chỉ HS thấy (cute, dễ đạt, nhịp ngắn)
+//   - 'student' : chỉ SV thấy (chuyên ngành, cạnh tranh, khó hơn)
+// Backend dùng audience để skip không tự unlock badge "ngoài role" (vd HS không
+// bao giờ trigger tlc-* dù tình cờ chạy version sắc ký demo).
 const BADGES = [
-  { id: 'first-play',     icon: '🎮', label: 'Lần đầu chơi',         desc: 'Hoàn thành lượt đầu tiên' },
-  { id: 'perfect-1',      icon: '🎯', label: 'Perfect đầu tay',      desc: 'Đạt 100% lần đầu' },
-  { id: 'perfect-5',      icon: '⭐', label: '5 lần Perfect',         desc: 'Đạt 100% năm lần' },
-  { id: 'speed-demon',    icon: '⚡', label: 'Tốc độ ánh sáng',       desc: 'Hoàn thành < 20 giây' },
-  { id: 'all-modes',      icon: '🏆', label: 'Bậc thầy đa mode',     desc: 'Chơi đủ cả 4 mode chính' },
-  { id: 'hard-perfect',   icon: '👑', label: 'Vua khó nhằn',         desc: 'Perfect ở chế độ Khó (8 loại)' },
-  { id: 'metaverse-host', icon: '🌐', label: 'Cư dân Metaverse',     desc: 'Tham gia phòng metaverse' },
-  // Sắc ký TLC badges
-  { id: 'tlc-first',      icon: '🧪', label: 'Nhà phân tích TLC',    desc: 'Hoàn thành lượt sắc ký đầu tiên' },
-  { id: 'tlc-perfect-rf', icon: '🎯', label: 'Rf hoàn hảo',          desc: 'Đo cả 3 Rf chính xác trong ±0.05' },
-  { id: 'tlc-speed',      icon: '⚡', label: 'Tốc độ sắc ký',         desc: 'Hoàn thành TLC dưới 60 giây' },
-  { id: 'tlc-all-modes',  icon: '🏅', label: 'Đa nền tảng TLC',      desc: 'Chơi đủ 5 phiên bản web Sắc ký' },
-  { id: 'tlc-meta-host',  icon: '🌐', label: 'Học viên Meta-Sắc-ký', desc: 'Tham gia phòng Metaverse Sắc ký' },
+  // Common (mọi role)
+  { id: 'first-play',     icon: '🎮', label: 'Lần đầu chơi',         desc: 'Hoàn thành lượt đầu tiên',           audience: 'all' },
+  { id: 'perfect-1',      icon: '🎯', label: 'Perfect đầu tay',      desc: 'Đạt 100% lần đầu',                   audience: 'all' },
+  { id: 'perfect-5',      icon: '⭐', label: '5 lần Perfect',         desc: 'Đạt 100% năm lần',                   audience: 'all' },
+  { id: 'speed-demon',    icon: '⚡', label: 'Tốc độ ánh sáng',       desc: 'Hoàn thành < 20 giây',               audience: 'all' },
+  { id: 'all-modes',      icon: '🏆', label: 'Bậc thầy đa mode',     desc: 'Chơi đủ cả 4 mode chính',            audience: 'all' },
+  // Student (chuyên ngành, khó)
+  { id: 'hard-perfect',   icon: '👑', label: 'Vua khó nhằn',         desc: 'Perfect ở chế độ Khó (8 loại)',      audience: 'student' },
+  { id: 'metaverse-host', icon: '🌐', label: 'Cư dân Metaverse',     desc: 'Tham gia phòng metaverse',           audience: 'student' },
+  // Sắc ký TLC badges — chuyên Dược (SV)
+  { id: 'tlc-first',      icon: '🧪', label: 'Nhà phân tích TLC',    desc: 'Hoàn thành lượt sắc ký đầu tiên',    audience: 'student' },
+  { id: 'tlc-perfect-rf', icon: '🎯', label: 'Rf hoàn hảo',          desc: 'Đo cả 3 Rf chính xác trong ±0.05',   audience: 'student' },
+  { id: 'tlc-speed',      icon: '⚡', label: 'Tốc độ sắc ký',         desc: 'Hoàn thành TLC dưới 60 giây',        audience: 'student' },
+  { id: 'tlc-all-modes',  icon: '🏅', label: 'Đa nền tảng TLC',      desc: 'Chơi đủ 5 phiên bản web Sắc ký',     audience: 'student' },
+  { id: 'tlc-meta-host',  icon: '🌐', label: 'Học viên Meta-Sắc-ký', desc: 'Tham gia phòng Metaverse Sắc ký',    audience: 'student' },
+  // Pupil (HS — vui, dễ đạt, nhịp ngắn, thưởng sticker/pet feel)
+  { id: 'sticker-collector', icon: '🌟', label: 'Sao học sinh',       desc: 'Hoàn thành 3 bài bất kỳ',            audience: 'pupil' },
+  { id: 'streak-3',          icon: '🔥', label: 'Chuỗi 3 ngày',       desc: 'Học 3 ngày liên tiếp',               audience: 'pupil' },
+  { id: 'streak-7',          icon: '🌈', label: 'Tuần lễ chăm chỉ',   desc: 'Học 7 ngày liên tiếp',               audience: 'pupil' },
+  { id: 'math-hero',         icon: '➕', label: 'Anh hùng Toán',      desc: 'Perfect 3 bài Toán liên tiếp',       audience: 'pupil' },
+  { id: 'reading-hero',      icon: '📖', label: 'Mọt sách Tiếng Việt', desc: 'Đọc xong 5 bài Tiếng Việt',         audience: 'pupil' },
+  { id: 'parent-show',       icon: '👨‍👩‍👧', label: 'Khoe bố mẹ',         desc: 'Bấm "khoe điểm" với phụ huynh',     audience: 'pupil' },
 ];
 
-function checkAndUnlockBadges(playerName, attempt) {
+// True nếu badge này phù hợp với role hiện tại. role='all' luôn pass.
+function badgeApplies(badge, role) {
+  if (!badge.audience || badge.audience === 'all') return true;
+  return badge.audience === role;
+}
+
+// Đếm số ngày liên tiếp tính ngược từ ngày mới nhất. Input là array string ngày
+// 'YYYY-MM-DD' đã sort DESC. Vd ['2026-05-31','2026-05-30','2026-05-29','2026-05-27']
+// → 3 (đứt ở 28). Empty → 0.
+function consecutiveDays(days) {
+  if (!days || !days.length) return 0;
+  let count = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1] + 'T00:00:00Z').getTime();
+    const cur  = new Date(days[i]     + 'T00:00:00Z').getTime();
+    if (prev - cur === 86400000) count++;
+    else break;
+  }
+  return count;
+}
+
+// Trục 3: nhận thêm `role` để gate badge audience. Nếu role không khớp audience,
+// silent skip (vd HS không trigger 'hard-perfect' dù chạy mode khó). Caller (route
+// /api/attempts) phải truyền role; default 'student' để backward-compat.
+function checkAndUnlockBadges(playerName, attempt, role = 'student') {
   const newly = [];
   const tryUnlock = (badgeId) => {
-    if (unlockAchievement(playerName, badgeId)) {
-      newly.push(BADGES.find(b => b.id === badgeId));
-    }
+    const b = BADGES.find(x => x.id === badgeId);
+    if (!b || !badgeApplies(b, role)) return;       // skip nếu badge không cho role này
+    if (unlockAchievement(playerName, badgeId)) newly.push(b);
   };
   tryUnlock('first-play');
   if (attempt.correct === attempt.total && attempt.total > 0) {
@@ -88,6 +128,37 @@ function checkAndUnlockBadges(playerName, attempt) {
   `).get(playerName);
   if ((distinct?.c ?? 0) >= 4) tryUnlock('all-modes');
   if (attempt.version === 'metaverse') tryUnlock('metaverse-host');
+
+  // ── HS-specific (Trục 3) ──
+  if (role === 'pupil') {
+    const totalAttempts = db.prepare(`SELECT COUNT(*) AS c FROM attempts WHERE player_name = ?`).get(playerName)?.c || 0;
+    if (totalAttempts >= 3) tryUnlock('sticker-collector');
+    // Streak ngày: dùng DATE(created_at/1000, 'unixepoch') để gom theo ngày.
+    const days = db.prepare(`
+      SELECT DISTINCT date(created_at/1000, 'unixepoch') AS d FROM attempts
+      WHERE player_name = ? ORDER BY d DESC LIMIT 10
+    `).all(playerName).map(r => r.d);
+    const streak = consecutiveDays(days);
+    if (streak >= 3) tryUnlock('streak-3');
+    if (streak >= 7) tryUnlock('streak-7');
+    // Math hero: 3 bài Toán liên tiếp perfect — phát hiện qua version chứa 'toan' hoặc subject='Toán'
+    if (attempt.correct === attempt.total && attempt.total > 0
+        && (String(attempt.version || '').toLowerCase().includes('toan')
+            || String(attempt.subject || '').toLowerCase().includes('toán'))) {
+      const last3 = db.prepare(`
+        SELECT correct, total, version FROM attempts
+        WHERE player_name = ? AND (lower(version) LIKE '%toan%' OR lower(version) LIKE '%math%')
+        ORDER BY created_at DESC LIMIT 3
+      `).all(playerName);
+      if (last3.length >= 3 && last3.every(a => a.correct === a.total && a.total > 0)) tryUnlock('math-hero');
+    }
+    // Reading hero: 5 lượt môn Tiếng Việt
+    const tvCount = db.prepare(`
+      SELECT COUNT(*) AS c FROM attempts
+      WHERE player_name = ? AND (lower(version) LIKE '%tieng-viet%' OR lower(version) LIKE '%tv-%')
+    `).get(playerName)?.c || 0;
+    if (tvCount >= 5) tryUnlock('reading-hero');
+  }
 
   // === Sắc ký TLC badges ===
   const SACKY_VERSIONS = ['sac-ky-2d', 'sac-ky-3d', 'sac-ky-vr-web', 'sac-ky-quiz', 'sac-ky-meta'];
@@ -131,6 +202,10 @@ app.use(['/api/auth/login', '/api/auth/register'], sensitiveAuthLimiter);
 // các app anh em (/scoreup, /codelab, …) cũng được gate trên cùng origin.
 app.use((req, _res, next) => { attachUser(req, _res, next); });
 app.use(makeAuthGate({ basePath: BASE_PATH }));
+// Trục 1: ép user (đã login) khai bổ sung profile HS/SV nếu thiếu. SAU makeAuthGate
+// (để chỉ áp dụng cho user đã login) và TRƯỚC attachAppProxies (để app anh em cũng
+// bị chặn nếu user chưa hoàn tất profile).
+app.use(makeProfileGate({ basePath: BASE_PATH }));
 // Gắn req.schoolId (multi-tenant) — SAU attachUser để đọc được user.school_id.
 app.use(attachTenant);
 // Rate-limit CHỈ /api/* (không tính static asset) + key theo user (R5) — SAU attachUser.
@@ -223,7 +298,18 @@ r.post('/api/attempts', requireAuth, (req, res) => {
     duration_ms: durationMs, details, created_at: Date.now(),
     class_code: classCode, level_n: levelN,
   });
-  const newBadges = checkAndUnlockBadges(playerName, { version, score, correct, total, durationMs });
+  const newBadges = checkAndUnlockBadges(playerName, { version, score, correct, total, durationMs }, req.user.role);
+  // GA4: bắn quiz_submit từ server (nguồn chân lý — client không can thiệp được
+  // vào score). + 1 event badge_unlock cho mỗi huy hiệu mới mở.
+  sendGA4Event(req, 'quiz_submit', {
+    version, score, correct, total,
+    accuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
+    duration_ms: durationMs || 0,
+    is_perfect: total > 0 && correct === total ? 1 : 0,
+  });
+  for (const b of (newBadges || [])) {
+    if (b?.id) sendGA4Event(req, 'badge_unlock', { badge_id: b.id, badge_label: b.label || '' });
+  }
   res.json({ ...result, newBadges });
 });
 
@@ -257,7 +343,13 @@ r.get('/api/confusion', (req, res) => {
   res.json(getConfusion(version));
 });
 
-r.get('/api/badges', (_req, res) => res.json(BADGES));
+// Trục 3: ?role=pupil|student|teacher → trả về badge phù hợp audience + 'all'.
+// Không truyền role → trả tất cả (legacy + admin dashboard).
+r.get('/api/badges', (req, res) => {
+  const role = req.query.role || req.user?.role;
+  if (!role) return res.json(BADGES);
+  res.json(BADGES.filter(b => badgeApplies(b, role)));
+});
 
 // ============================================================
 // AI TUTOR — Claude API endpoints (grade-soap, patient-turn, evaluate-roleplay, tutor-chat)
@@ -462,10 +554,18 @@ r.get('/api/export.csv', (_req, res) => {
 });
 
 // HTML injection middleware — gắn các widget global vào mọi trang HTML:
+//   • auth-header.js: header chung (logo Tizia + breadcrumb + chuông + chip user)
 //   • suggestion-fab.js: nút "🏛️ Đề nghị" góc dưới phải
-//   • notifications-bell.js: chuông phản hồi từ Ban điều hành AI góc trên phải
+//   • notifications-bell.js: chuông notification (tự mount vào slot trong header)
+// Page muốn opt-out: thêm thuộc tính tương ứng vào <body>:
+//   data-no-auth-header, data-no-notifications-bell, data-no-suggestion-fab.
 // Tránh phải sửa thủ công 59+ file.
+const HEADER_TAG = `<script type="module" src="js/auth-header.js"></script>`;
 const SGF_TAG = `<script type="module" src="js/suggestion-fab.js"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
+// Analytics: gtag loader + consent banner. Để TRƯỚC các script khác để buffer
+// event sớm. `analytics.js` phải là script thường (không module) để global
+// window.tiziaTrack/gtag khả dụng cho mọi inline script + module sau này.
+const ANALYTICS_TAG = `<script src="js/analytics.js"></script>\n<script src="js/consent-banner.js" defer></script>`;
 r.get(/.*/, async (req, res, next) => {
   const u = req.path;
   if (u.startsWith('/api/') || u.startsWith('/vendor/')) return next();
@@ -478,8 +578,15 @@ r.get(/.*/, async (req, res, next) => {
   if (!file.startsWith(PUBLIC_DIR + path.sep)) return next(); // chống path traversal
   try {
     const html = await fs.readFile(file, 'utf8');
+    // Tránh nhúng trùng nếu trang đã include sẵn auth-header.js / analytics.js.
+    const hasHeader = /auth-header\.js/i.test(html);
+    const hasAnalytics = /\banalytics\.js/i.test(html);
+    const tags =
+      (hasAnalytics ? '' : ANALYTICS_TAG + '\n')
+      + (hasHeader ? '' : HEADER_TAG + '\n')
+      + SGF_TAG;
     const idx = html.lastIndexOf('</body>');
-    const out = idx >= 0 ? html.slice(0, idx) + SGF_TAG + '\n' + html.slice(idx) : html + SGF_TAG;
+    const out = idx >= 0 ? html.slice(0, idx) + tags + '\n' + html.slice(idx) : html + tags;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(out);
   } catch {

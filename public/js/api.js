@@ -95,9 +95,14 @@ export async function submitAttempt(payload) {
   }
 }
 
-export async function getBadges() {
-  try { const r = await fetch('api/badges'); return r.ok ? await r.json() : []; }
-  catch { return []; }
+// Trục 3: ?role=pupil|student|teacher → server filter badge audience phù hợp.
+// Không truyền role → trả full list (legacy).
+export async function getBadges(role) {
+  try {
+    const qs = role ? ('?role=' + encodeURIComponent(role)) : '';
+    const r = await fetch('api/badges' + qs);
+    return r.ok ? await r.json() : [];
+  } catch { return []; }
 }
 
 export async function getMyAchievements() {

@@ -63,6 +63,15 @@ export function effectivePlan(user) {
   return p;
 }
 
+/** Trục 4 family plan: con HS kế thừa gói của PH nếu PH có gói cao hơn.
+ *  parent: { plan, plan_expires_at } | null. Trả về plan tốt hơn (rank cao hơn). */
+export function effectivePlanWithFamily(user, parent) {
+  const own = effectivePlan(user);
+  if (!parent || !parent.plan) return own;
+  const parentEff = effectivePlan({ plan: parent.plan, plan_expires_at: parent.plan_expires_at });
+  return parentEff.rank > own.rank ? parentEff : own;
+}
+
 /** True nếu userPlan >= required (theo rank). meetsPlan('pro', 'plus') = true. */
 export function meetsPlan(userPlanId, requiredPlanId) {
   const u = USER_PLANS[userPlanId] || USER_PLANS.guest;

@@ -911,7 +911,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
 <script type="module">
 import { getPlayerName, setPlayerName, getBadges, getMyAchievements, getClassCode, setClassCode, joinClassByCode } from './js/api.js';
-import { bootstrapMe } from './js/auth.js';
+import { bootstrapMe, fetchMe } from './js/auth.js';
 
 // Header (logo trái, tài khoản phải) gắn ở './js/auth-header.js' (auto-mount).
 // Ở đây dùng me để chào cá nhân hoá + lộ công cụ giáo viên đúng người.
@@ -1013,9 +1013,10 @@ classJoinBtn.addEventListener('click', async () => {
 classInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') classJoinBtn.click(); });
 refreshClassUI();
 
-// --- Badges ---
+// --- Badges (Trục 3: lọc theo role để HS chỉ thấy badge HS) ---
 async function loadBadges() {
-  const [all, mine] = await Promise.all([getBadges(), getMyAchievements()]);
+  const me = await fetchMe().catch(() => null);
+  const [all, mine] = await Promise.all([getBadges(me?.role), getMyAchievements()]);
   const unlocked = new Set(mine.map(a => a.badge_id));
   const list = document.getElementById('badges-list');
   document.getElementById('badges-count').textContent = `(${unlocked.size}/${all.length})`;

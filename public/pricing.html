@@ -122,6 +122,28 @@
   <div class="plans" id="plans"></div>
   <div class="msg" id="msg"></div>
 
+  <!-- Trục 4: redeem mã trường / khuyến mãi -->
+  <div style="max-width: 480px; margin: 24px auto; padding: 18px 20px; border-radius: 12px;
+              background: rgba(251,191,36,0.10); border: 1px dashed rgba(251,191,36,0.4);">
+    <h3 style="margin: 0 0 8px; font-size: 16px;">🎟️ Có mã trường hoặc mã khuyến mãi?</h3>
+    <p style="margin: 0 0 12px; font-size: 13px; opacity: 0.8;">
+      Trường K-12 / ĐH cấp mã sinh viên → nhập để nhận gói Plus 1 năm hoặc giảm giá khi thanh toán.
+    </p>
+    <form id="form-redeem" style="display: flex; gap: 8px;">
+      <input id="redeem-code" placeholder="Nhập mã, vd NEU2026" required
+             style="flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15);
+                    background: white; color: #1f2937; font-size: 14px; font-family: inherit;
+                    text-transform: uppercase; letter-spacing: 1px;" />
+      <button type="submit" id="redeem-btn"
+              style="padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer;
+                     background: linear-gradient(135deg, #fbbf24, #f97316); color: #3e2723;
+                     font-weight: 700; font-size: 14px; font-family: inherit;">
+        Áp dụng
+      </button>
+    </form>
+    <div id="redeem-result" style="margin-top: 10px; font-size: 13px;"></div>
+  </div>
+
   <div class="faq">
     <h3>Câu hỏi thường gặp</h3>
     <details>
@@ -289,6 +311,38 @@
       btn.disabled = false; btn.textContent = 'Nâng cấp ' + USER_PLANS[plan].name;
     }
   }
+
+  // Trục 4: redeem mã trường / khuyến mãi
+  const formRedeem = document.getElementById('form-redeem');
+  const redeemBtn = document.getElementById('redeem-btn');
+  const redeemResult = document.getElementById('redeem-result');
+  formRedeem?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    redeemResult.textContent = '';
+    redeemBtn.disabled = true;
+    const code = document.getElementById('redeem-code').value.trim().toUpperCase();
+    try {
+      const r = await fetch('/api/billing/redeem-code', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ code }),
+      });
+      const data = await r.json();
+      if (r.ok) {
+        redeemResult.innerHTML = `✓ ${data.message}`;
+        redeemResult.style.color = '#16a34a';
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        redeemResult.textContent = '⚠️ ' + (data.message || data.error || 'Mã không dùng được');
+        redeemResult.style.color = '#dc2626';
+      }
+    } catch (err) {
+      redeemResult.textContent = '⚠️ Lỗi mạng. Thử lại.';
+      redeemResult.style.color = '#dc2626';
+    } finally {
+      redeemBtn.disabled = false;
+    }
+  });
 </script>
 </body>
 </html>

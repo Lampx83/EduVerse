@@ -5,9 +5,9 @@ import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   createUser, getUserByUsername, getUserById, touchLogin, updateDisplayName, updateUserEditable,
   createSession, getSession, deleteSession,
-  resolveSchoolByEmail, getSchoolByCode,
+  resolveSchoolByEmail, getSchoolByCode, getBestParentPlanForChild,
 } from '../../db.js';
-import { effectivePlan, meetsPlan, USER_PLANS } from '../billing/user-plans.js';
+import { effectivePlan, effectivePlanWithFamily, meetsPlan, USER_PLANS } from '../billing/user-plans.js';
 
 const COOKIE_NAME = 'tizia_sid';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 ngày
@@ -117,6 +117,9 @@ export function requirePlan(minPlan) {
 // Whitelist các path không cần login (login/register, asset chung, health, /api/auth, PWA).
 const PUBLIC_PATH_PREFIXES = [
   '/api/auth/', '/api/health',
+  // Bootstrap GA4 measurement ID — public để banner consent + gtag chạy được ở
+  // mọi trang (kể cả login/register/guest mode). Không trả bí mật, chỉ ID + role.
+  '/api/analytics/bootstrap',
   // Cổng thanh toán callback (VNPay return + IPN). Xác thực bằng chữ ký HMAC,
   // KHÔNG bằng cookie — VNPay gọi server-to-server không kèm session. create-order
   // KHÔNG nằm ở đây nên vẫn yêu cầu đăng nhập.
@@ -170,6 +173,43 @@ export function makeAuthGate({ basePath = '' } = {}) {
   };
 }
 
+// ── Helpers cho phân biệt HS/SV ──
+// Valid major IDs cho SV — phải khớp DOMAIN_META trong public/js/engine/domain.js
+// (chỉ cho phép trường ĐH/CĐ, không cho 'preschool'/'primary'/… vốn dành HS).
+const VALID_STUDENT_MAJORS = new Set([
+  'pharmacy', 'it', 'economics', 'business', 'finance', 'medicine', 'nursing',
+  'law', 'education', 'engineering', 'architecture', 'languages', 'agriculture',
+  'tourism', 'arts', 'media', 'social-sciences', 'natural-sciences',
+  'logistics', 'public-admin',
+]);
+
+/** Profile đã đủ thông tin để vào app chưa? Teacher luôn đủ; pupil cần grade;
+ *  student cần major. school_name + cohort là tuỳ chọn (không chặn). */
+export function isProfileComplete(user) {
+  if (!user) return false;
+  if (user.role === 'teacher') return true;
+  if (user.role === 'pupil') return Number.isFinite(user.grade) && user.grade >= 1 && user.grade <= 12;
+  if (user.role === 'student') return !!user.major && VALID_STUDENT_MAJORS.has(user.major);
+  return true; // role lạ → để qua, không chặn
+}
+
+/** Quyết định URL HS/SV/GV được điều hướng tới sau login. Trả relative path. */
+export function defaultRouteForUser(user) {
+  if (!user) return '/';
+  if (user.role === 'teacher') return '/dashboard.html';
+  if (user.role === 'pupil') {
+    const g = Number(user.grade);
+    if (g >= 1 && g <= 5) return '/school.html?domain=primary';
+    if (g >= 6 && g <= 9) return '/school.html?domain=secondary';
+    if (g >= 10 && g <= 12) return '/school.html?domain=highschool';
+    return '/school.html?domain=preschool'; // chưa khai grade → coi như Mầm non
+  }
+  if (user.role === 'student' && user.major && VALID_STUDENT_MAJORS.has(user.major)) {
+    return `/school.html?domain=${encodeURIComponent(user.major)}`;
+  }
+  return '/'; // fallback: trang chủ có school selector
+}
+
 // ── Routes ──
 const USERNAME_RE = /^[a-z0-9_.-]{3,32}$/i;
 
@@ -184,6 +224,14 @@ export function attachAuth(r) {
     const role = ['pupil', 'student', 'teacher'].includes(roleRaw) ? roleRaw : 'student';
     const ageRaw = Number(b.age);
     const age = Number.isFinite(ageRaw) ? Math.floor(ageRaw) : null;
+
+    // Trục 1: profile theo role. Validate ở dưới sau check chung — cho user thấy lỗi
+    // cơ bản (username/password) trước rồi mới đến lỗi field role-specific.
+    const gradeRaw = Number(b.grade);
+    const grade = Number.isFinite(gradeRaw) ? Math.floor(gradeRaw) : null;
+    const major = String(b.major || '').trim() || null;
+    const cohort = String(b.cohort || '').trim().slice(0, 20) || null;
+    const school_name = String(b.schoolName || b.school_name || '').trim().slice(0, 120) || null;
 
     if (!USERNAME_RE.test(username)) {
       return res.status(400).json({ error: 'username không hợp lệ (3-32 ký tự a-z, 0-9, _ . -)' });
@@ -201,6 +249,15 @@ export function attachAuth(r) {
       return res.status(409).json({ error: 'username đã tồn tại' });
     }
 
+    // Validate field role-specific. Cho phép thiếu (sẽ rơi vào /complete-profile)
+    // nhưng nếu user CÓ điền thì phải hợp lệ — tránh major lạ chui vào DB.
+    if (role === 'pupil' && grade != null && (grade < 1 || grade > 12)) {
+      return res.status(400).json({ error: 'lớp phải từ 1 đến 12 (Tiểu học → THPT)' });
+    }
+    if (role === 'student' && major && !VALID_STUDENT_MAJORS.has(major)) {
+      return res.status(400).json({ error: 'ngành học không hợp lệ' });
+    }
+
     // Phân giải trường (tenant): ưu tiên schoolCode SV nhập → email domain → mặc định 1.
     const email = String(b.email || '').trim().toLowerCase();
     const schoolCode = String(b.schoolCode || '').trim();
@@ -212,12 +269,16 @@ export function attachAuth(r) {
       username, display_name,
       password_hash: hashPassword(password),
       role, age, school_id,
+      grade, major, cohort, school_name,
     });
     const token = randomBytes(32).toString('hex');
     const { expires_at } = createSession({ token, user_id: id, ttlMs: SESSION_TTL_MS });
     touchLogin(id);
     setSessionCookie(res, token, expires_at);
-    res.json({ ok: true, user: { id, username, display_name, role, age, school_id } });
+    // Gợi ý FE redirect: nếu profile đủ → vào trường phù hợp; thiếu → /complete-profile.
+    const userObj = { id, username, display_name, role, age, school_id, grade, major, cohort, school_name };
+    const redirectTo = isProfileComplete(userObj) ? defaultRouteForUser(userObj) : '/complete-profile.html';
+    res.json({ ok: true, user: userObj, redirectTo });
   });
 
   // POST /api/auth/login
@@ -233,13 +294,13 @@ export function attachAuth(r) {
     const { expires_at } = createSession({ token, user_id: user.id, ttlMs: SESSION_TTL_MS });
     touchLogin(user.id);
     setSessionCookie(res, token, expires_at);
-    res.json({
-      ok: true,
-      user: {
-        id: user.id, username: user.username, display_name: user.display_name,
-        role: user.role, age: user.age,
-      },
-    });
+    const userObj = {
+      id: user.id, username: user.username, display_name: user.display_name,
+      role: user.role, age: user.age,
+      grade: user.grade, major: user.major, cohort: user.cohort, school_name: user.school_name,
+    };
+    const redirectTo = isProfileComplete(userObj) ? defaultRouteForUser(userObj) : '/complete-profile.html';
+    res.json({ ok: true, user: userObj, redirectTo });
   });
 
   // POST /api/auth/logout
@@ -257,6 +318,18 @@ export function attachAuth(r) {
     if (!u) return res.status(401).json({ error: 'unauthorized' });
     const full = getUserById(u.id);
     const eff = full ? effectivePlan(full) : null;
+    // Trục 4: nếu HS có PH linked với gói cao hơn → kế thừa. Báo cờ inherited_plan
+    // để UI hiển thị "Bạn được PH chia sẻ gói Plus" thay vì cho mua nâng cấp.
+    let effFamily = eff;
+    let inheritedFromParent = false;
+    if (full && full.role === 'pupil') {
+      const parent = getBestParentPlanForChild(full.id);
+      if (parent) {
+        // Map field name: SQL trả parent_plan/parent_plan_expires_at, helper cần plan/plan_expires_at.
+        effFamily = effectivePlanWithFamily(full, { plan: parent.parent_plan, plan_expires_at: parent.parent_plan_expires_at });
+        if (effFamily.id !== eff.id) inheritedFromParent = true;
+      }
+    }
     res.json({
       user: full ? {
         id: full.id, username: full.username, display_name: full.display_name,
@@ -267,7 +340,12 @@ export function attachAuth(r) {
         plan: full.plan || 'free',
         plan_expires_at: full.plan_expires_at || null,
         billing_cycle: full.billing_cycle || null,
-        effective_plan: eff?.id || 'free',
+        effective_plan: effFamily?.id || 'free',
+        inherited_from_parent: inheritedFromParent,
+        // Trục 1: phân biệt HS/SV
+        grade: full.grade, major: full.major, cohort: full.cohort, school_name: full.school_name,
+        profile_complete: isProfileComplete(full),
+        default_route: defaultRouteForUser(full),
       } : null,
     });
   });
@@ -293,14 +371,105 @@ export function attachAuth(r) {
       return res.status(400).json({ error: 'email không hợp lệ' });
     }
 
-    updateUserEditable(req.user.id, { display_name: name, age, email });
+    // Trục 1: cho phép sửa thêm grade/major/cohort/school_name. Giữ giá trị cũ nếu
+    // body không gửi (undefined) — chỉ ghi đè khi key có trong b.
+    const cur = getUserById(req.user.id) || {};
+    const grade = b.grade === undefined ? cur.grade
+      : (Number.isFinite(Number(b.grade)) ? Math.floor(Number(b.grade)) : null);
+    const major = b.major === undefined ? cur.major
+      : (String(b.major || '').trim() || null);
+    const cohort = b.cohort === undefined ? cur.cohort
+      : (String(b.cohort || '').trim().slice(0, 20) || null);
+    const school_name = (b.schoolName === undefined && b.school_name === undefined) ? cur.school_name
+      : (String(b.schoolName || b.school_name || '').trim().slice(0, 120) || null);
+
+    if (cur.role === 'pupil' && grade != null && (grade < 1 || grade > 12)) {
+      return res.status(400).json({ error: 'lớp phải từ 1 đến 12' });
+    }
+    if (cur.role === 'student' && major && !VALID_STUDENT_MAJORS.has(major)) {
+      return res.status(400).json({ error: 'ngành học không hợp lệ' });
+    }
+
+    updateUserEditable(req.user.id, { display_name: name, age, email, grade, major, cohort, school_name });
     const full = getUserById(req.user.id);
     res.json({
       ok: true,
       user: full ? {
         id: full.id, username: full.username, display_name: full.display_name,
         role: full.role, age: full.age, email: full.email, avatar_url: full.avatar_url,
+        grade: full.grade, major: full.major, cohort: full.cohort, school_name: full.school_name,
+        profile_complete: isProfileComplete(full),
+        default_route: defaultRouteForUser(full),
       } : null,
     });
   });
+
+  // POST /api/auth/complete-profile — endpoint riêng cho modal khai bổ sung (user
+  // cũ trước migration). Chỉ cập nhật 4 trường HS/SV, không đụng display_name/age/email.
+  // Trả redirectTo để FE bay thẳng tới trường phù hợp.
+  r.post('/api/auth/complete-profile', (req, res) => {
+    if (!req.user) req.user = getCurrentUser(req);
+    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+    const cur = getUserById(req.user.id);
+    if (!cur) return res.status(404).json({ error: 'user not found' });
+
+    const b = req.body ?? {};
+    const gradeRaw = Number(b.grade);
+    const grade = Number.isFinite(gradeRaw) ? Math.floor(gradeRaw) : null;
+    const major = String(b.major || '').trim() || null;
+    const cohort = String(b.cohort || '').trim().slice(0, 20) || null;
+    const school_name = String(b.schoolName || b.school_name || '').trim().slice(0, 120) || null;
+
+    if (cur.role === 'pupil') {
+      if (!Number.isFinite(grade) || grade < 1 || grade > 12) {
+        return res.status(400).json({ error: 'Vui lòng chọn lớp (1–12)' });
+      }
+    } else if (cur.role === 'student') {
+      if (!major || !VALID_STUDENT_MAJORS.has(major)) {
+        return res.status(400).json({ error: 'Vui lòng chọn ngành học' });
+      }
+    }
+    // teacher: cho qua, không bắt buộc.
+
+    updateUserEditable(cur.id, {
+      display_name: cur.display_name, age: cur.age, email: cur.email,
+      grade, major, cohort, school_name,
+    });
+    const full = getUserById(cur.id);
+    res.json({
+      ok: true,
+      user: full,
+      redirectTo: defaultRouteForUser(full),
+    });
+  });
+}
+
+// ── Middleware: ép user (đã login) khai bổ sung profile nếu thiếu ──
+// Đặt SAU makeAuthGate trong server/index.js. Bỏ qua: API auth, page /complete-profile
+// chính nó, asset tĩnh, /logout. Không động tới guest (req.user == null) — guest đã
+// được makeAuthGate xử lý.
+const PROFILE_GATE_EXEMPT = new Set([
+  '/complete-profile.html', '/complete-profile',
+  '/logout', '/api/auth/logout', '/api/auth/me', '/api/auth/complete-profile',
+  '/api/analytics/bootstrap',
+]);
+function isProfileGateExempt(p) {
+  if (PROFILE_GATE_EXEMPT.has(p)) return true;
+  if (p.startsWith('/api/auth/')) return true;
+  if (p.startsWith('/js/') || p.startsWith('/vendor/')) return true;
+  if (/\.(css|png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|map|js|webmanifest)$/i.test(p)) return true;
+  return false;
+}
+export function makeProfileGate({ basePath = '' } = {}) {
+  return function profileGate(req, res, next) {
+    if (!req.user) return next();                       // guest → để authGate lo
+    if (isProfileGateExempt(req.path)) return next();
+    // Đọc full user 1 lần để check profile (req.user chỉ có vài field từ session).
+    const full = getUserById(req.user.id);
+    if (!full || isProfileComplete(full)) return next();
+    if (req.path.startsWith('/api/')) {
+      return res.status(409).json({ error: 'profile_incomplete', complete_profile_url: '/complete-profile.html' });
+    }
+    return res.redirect(`${basePath || ''}/complete-profile.html`);
+  };
 }

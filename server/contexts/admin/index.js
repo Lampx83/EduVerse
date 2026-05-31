@@ -13,6 +13,7 @@
 import { scryptSync, randomBytes } from 'node:crypto';
 import { db, createNotification, setUserPlan, createUser, getUserById, getUserByUsername, updateUserEditable } from '../../db.js';
 import { VALID_USER_PLANS, expiresAtFor } from '../billing/user-plans.js';
+import { listAiPromptsForSchool, listAiPromptsForUser } from '../../ai-quota.js';
 
 // Scrypt hash — đồng bộ format với contexts/identity/auth.js (scrypt$salt$hash)
 function hashPassword(password) {
@@ -534,5 +535,48 @@ export function attachAdmin(r) {
     res.json({ ok: true, deleted: id });
   });
 
-  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin) + dashboard + CRUD');
+  // Trục 2: log prompt AI của HS — GV xem trong trường mình, admin xem cross-tenant.
+  // GET /api/teacher/ai-prompts → role=teacher/admin trong cùng school_id thấy được;
+  // ?blocked=1 lọc các prompt đã bị filter chặn (để GV chú ý ngay).
+  // GET /api/admin/ai-prompts → admin xem tất cả school; nhận thêm ?school_id=.
+  r.get('/api/teacher/ai-prompts', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+    if (!['teacher', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'forbidden', message: 'Chỉ giảng viên hoặc admin xem được' });
+    }
+    const schoolId = req.user.role === 'admin' && req.query.school_id
+      ? Number(req.query.school_id) : (req.user.school_id || 1);
+    const blockedOnly = req.query.blocked === '1' || req.query.blocked === 'true';
+    const limit = Number(req.query.limit) || 50;
+    res.json({ logs: listAiPromptsForSchool(schoolId, { blockedOnly, limit }) });
+  });
+
+  r.get('/api/admin/ai-prompts', requireAdmin, (req, res) => {
+    const schoolId = req.query.school_id ? Number(req.query.school_id) : null;
+    const blockedOnly = req.query.blocked === '1';
+    const limit = Number(req.query.limit) || 100;
+    if (schoolId) {
+      return res.json({ logs: listAiPromptsForSchool(schoolId, { blockedOnly, limit }) });
+    }
+    // Cross-school: query trực tiếp, không filter school_id
+    const rows = db.prepare(`
+      SELECT l.id, l.school_id, l.user_id, l.role, l.endpoint, l.prompt_text,
+             l.blocked, l.block_reason, l.block_category, l.created_at,
+             u.username, u.display_name, u.grade
+      FROM ai_prompt_log l LEFT JOIN users u ON u.id = l.user_id
+      WHERE (? = 0 OR l.blocked = 1)
+      ORDER BY l.created_at DESC LIMIT ?
+    `).all(blockedOnly ? 1 : 0, Math.min(Math.max(limit, 1), 500));
+    res.json({ logs: rows });
+  });
+
+  // GET /api/me/ai-prompts — chính user xem log của mình (HS xem lại câu mình hỏi
+  // hôm qua, hoặc cùng PH coi). Không có phân quyền chéo.
+  r.get('/api/me/ai-prompts', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+    const limit = Number(req.query.limit) || 50;
+    res.json({ logs: listAiPromptsForUser(req.user.id, limit) });
+  });
+
+  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin) + dashboard + CRUD + ai-prompt logs');
 }

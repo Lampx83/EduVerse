@@ -14,8 +14,9 @@
 //   - Alert khi >80% quota
 // ============================================================
 
-import { db } from './db.js';
-import { effectivePlan, dailyAiQuota } from './contexts/billing/user-plans.js';
+import { db, getBestParentPlanForChild } from './db.js';
+import { effectivePlan, effectivePlanWithFamily, dailyAiQuota } from './contexts/billing/user-plans.js';
+import { checkContentSafety, extractPromptText } from './contexts/safety/profanity-vi.js';
 
 // ─────────────── Schema ───────────────
 db.exec(`
@@ -36,6 +37,25 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_ai_usage_school_time ON ai_token_usage(school_id, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_ai_usage_user_time   ON ai_token_usage(user_id, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_ai_usage_status      ON ai_token_usage(status, created_at DESC);
+
+  -- Trục 2: log chi tiết prompt text của HS để GV/PH xem được. SV/GV cũng log
+  -- nhưng chỉ khi blocked (tiết kiệm storage). prompt_text giới hạn 500 ký tự
+  -- để tránh dump bài luận dài. block_reason/block_category lấy từ checkContentSafety.
+  CREATE TABLE IF NOT EXISTS ai_prompt_log (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    school_id       INTEGER NOT NULL DEFAULT 1,
+    user_id         INTEGER,
+    role            TEXT,                       -- 'pupil' | 'student' | 'teacher' | 'guest'
+    endpoint        TEXT    NOT NULL,
+    prompt_text     TEXT,                       -- max 500 char, đã trim
+    blocked         INTEGER NOT NULL DEFAULT 0, -- 0 | 1
+    block_reason    TEXT,
+    block_category  TEXT,                       -- profanity | self_harm | violence_threat | pii
+    created_at      INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_ai_log_school_time ON ai_prompt_log(school_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_ai_log_user_time   ON ai_prompt_log(user_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_ai_log_blocked     ON ai_prompt_log(blocked, created_at DESC);
 `);
 
 // ─────────────── Default quotas (env override) ───────────────
@@ -110,15 +130,30 @@ const schoolUsageStmt = db.prepare(`
   WHERE school_id = ? AND created_at > ? AND status != 'blocked'
 `);
 
+// Trục 2: cap quota theo role để bảo vệ HS (không thể spam Ollama vô tận, dù plan cao).
+// pupil: cap cứng 15 req/ngày bất kể plan (kỷ luật học → không lạm dụng AI làm hộ).
+// student: theo plan nguyên.
+// teacher: ×2 plan (GV cần đọc/chấm/duyệt nhiều).
+const PUPIL_DAY_CAP = 15;
+const TEACHER_MULTIPLIER = 2;
+export function dailyAiQuotaForUser(user) {
+  const base = dailyAiQuota(user?.plan || 'free');
+  const role = user?.role || 'guest';
+  if (role === 'pupil') return Math.min(base, PUPIL_DAY_CAP);
+  if (role === 'teacher') return base * TEACHER_MULTIPLIER;
+  return base;
+}
+
 // Per-user quota theo PLAN (window 24h, đếm ai_calls_day). School-level vẫn dùng
 // hour window để chống burst nghẽn Ollama cho 1 tenant. Guest (rank 0) → chặn cứng.
-export function checkAiQuota({ school_id, user_id, user_plan }) {
+// Trục 2: cap theo role thêm bên trên plan — xem dailyAiQuotaForUser.
+export function checkAiQuota({ school_id, user_id, user_plan, user_role }) {
   const now = Date.now();
   const userU   = user_id ? userUsageStmt.get(Number(user_id), now - DAY_MS)        : { req: 0, tokens: 0 };
   const schoolU =           schoolUsageStmt.get(Number(school_id) || 1, now - HOUR_MS);
 
   if (user_id) {
-    const dayCap = dailyAiQuota(user_plan || 'free');
+    const dayCap = dailyAiQuotaForUser({ plan: user_plan, role: user_role });
     if (dayCap <= 0) {
       return { allowed: false, reason: 'plan_no_ai', retry_after: 60, upgrade_url: '/pricing.html' };
     }
@@ -145,8 +180,44 @@ export function aiQuotaGate(endpoint) {
   return (req, res, next) => {
     const user_id   = req.user?.id || null;
     const school_id = req.user?.school_id || 1;
-    const user_plan = req.user ? effectivePlan(req.user).id : 'guest';
-    const verdict = checkAiQuota({ school_id, user_id, user_plan });
+    const user_role = req.user?.role || 'guest';
+    // Trục 4: nếu HS → check PH có gói cao hơn không, dùng plan tốt hơn.
+    let userPlanEff = req.user ? effectivePlan(req.user) : null;
+    if (req.user && user_role === 'pupil') {
+      const parent = getBestParentPlanForChild(req.user.id);
+      if (parent) {
+        userPlanEff = effectivePlanWithFamily(req.user,
+          { plan: parent.parent_plan, plan_expires_at: parent.parent_plan_expires_at });
+      }
+    }
+    const user_plan = userPlanEff?.id || 'guest';
+
+    // Trục 2: pupil safety — check content TRƯỚC quota để (a) chặn nội dung độc dù
+    // chưa hết quota, (b) ghi log riêng vào ai_prompt_log để GV/PH xem được.
+    // SV/GV: chỉ log khi blocked → đỡ bloat DB.
+    const promptText = extractPromptText(req.body);
+    if (user_role === 'pupil' && promptText) {
+      const verdict = checkContentSafety(promptText);
+      logPromptForUser({
+        school_id, user_id, role: user_role, endpoint,
+        prompt_text: promptText,
+        blocked: !verdict.safe, block_reason: verdict.reason, block_category: verdict.category,
+      });
+      if (!verdict.safe) {
+        // Cũng ghi vào ai_token_usage để rate-limit dashboard thấy
+        logAiUsage({ school_id, user_id, provider: 'safety-gate', model: '-', endpoint, status: 'blocked' });
+        return res.status(400).json({
+          error: 'content_unsafe',
+          reason: verdict.reason,
+          category: verdict.category,
+          message: verdict.category === 'self_harm'
+            ? 'Mình thấy bạn không ổn. Hãy gọi 1800 599920 (miễn phí, 24/7) hoặc nói với người lớn ngay nhé. ❤️'
+            : 'Câu hỏi này có nội dung không phù hợp với lớp học. Thầy/cô đã nhận được thông báo.',
+        });
+      }
+    }
+
+    const verdict = checkAiQuota({ school_id, user_id, user_plan, user_role });
     if (!verdict.allowed) {
       logAiUsage({
         school_id, user_id,
@@ -163,7 +234,7 @@ export function aiQuotaGate(endpoint) {
       });
     }
     // Stash context cho recordAiCall sau khi handler xong.
-    req._aiContext = { school_id, user_id, endpoint, started_at: Date.now() };
+    req._aiContext = { school_id, user_id, endpoint, started_at: Date.now(), role: user_role };
     next();
   };
 }
@@ -198,5 +269,55 @@ export function getSchoolUsage(school_id, sinceMs = 24 * HOUR_MS) {
   return schoolUsageRangeStmt.get(Number(school_id) || 1, Date.now() - sinceMs);
 }
 export function getQuotaConfig() {
-  return { ...QUOTA };
+  return { ...QUOTA, pupilDayCap: PUPIL_DAY_CAP, teacherMultiplier: TEACHER_MULTIPLIER };
+}
+
+// ─────────────── Prompt log (Trục 2) ───────────────
+const insertPromptLogStmt = db.prepare(`
+  INSERT INTO ai_prompt_log (school_id, user_id, role, endpoint, prompt_text,
+                             blocked, block_reason, block_category, created_at)
+  VALUES (@school_id, @user_id, @role, @endpoint, @prompt_text,
+          @blocked, @block_reason, @block_category, @created_at)
+`);
+
+export function logPromptForUser({ school_id, user_id, role, endpoint, prompt_text,
+                                   blocked = false, block_reason = null, block_category = null }) {
+  insertPromptLogStmt.run({
+    school_id: Number(school_id) || 1,
+    user_id: user_id ? Number(user_id) : null,
+    role: role ? String(role).slice(0, 20) : null,
+    endpoint: String(endpoint || ''),
+    prompt_text: String(prompt_text || '').slice(0, 500),
+    blocked: blocked ? 1 : 0,
+    block_reason: block_reason ? String(block_reason).slice(0, 200) : null,
+    block_category: block_category ? String(block_category).slice(0, 30) : null,
+    created_at: Date.now(),
+  });
+}
+
+// Liệt kê prompt log trong 1 trường — dùng cho dashboard GV xem HS hỏi gì.
+// Mặc định 50 dòng mới nhất; có thể filter blocked=1 để xem riêng case bị chặn.
+const listPromptsBySchoolStmt = db.prepare(`
+  SELECT l.id, l.user_id, l.role, l.endpoint, l.prompt_text,
+         l.blocked, l.block_reason, l.block_category, l.created_at,
+         u.username, u.display_name, u.grade
+  FROM ai_prompt_log l LEFT JOIN users u ON u.id = l.user_id
+  WHERE l.school_id = @school_id
+    AND (@blocked_only = 0 OR l.blocked = 1)
+  ORDER BY l.created_at DESC LIMIT @limit
+`);
+export function listAiPromptsForSchool(school_id, { blockedOnly = false, limit = 50 } = {}) {
+  return listPromptsBySchoolStmt.all({
+    school_id: Number(school_id) || 1,
+    blocked_only: blockedOnly ? 1 : 0,
+    limit: Math.min(Math.max(Number(limit) || 50, 1), 500),
+  });
+}
+
+const listPromptsByUserStmt = db.prepare(`
+  SELECT id, endpoint, prompt_text, blocked, block_reason, block_category, created_at
+  FROM ai_prompt_log WHERE user_id = ? ORDER BY created_at DESC LIMIT ?
+`);
+export function listAiPromptsForUser(user_id, limit = 50) {
+  return listPromptsByUserStmt.all(Number(user_id), Math.min(Math.max(Number(limit) || 50, 1), 500));
 }

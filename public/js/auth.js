@@ -21,28 +21,65 @@ export async function login(username, password) {
   if (r.ok && data?.user) {
     _me = data.user;
     syncToLocal(_me);
-    return { ok: true, user: data.user };
+    try { window.tiziaTrack?.('login', { method: 'password', role: data.user.role || '' }); } catch {}
+    return { ok: true, user: data.user, redirectTo: data.redirectTo || null };
   }
   return { ok: false, error: data?.error || `Lỗi ${r.status}` };
 }
 
-export async function register({ username, displayName, password, role, age }) {
+// Trục 1: nhận thêm grade/major/cohort/schoolName. Chỉ những field có giá trị mới
+// được forward lên server (tránh ghi đè bằng null lúc đăng ký nhanh).
+export async function register({ username, displayName, password, role, age,
+                                 grade, major, cohort, schoolName }) {
+  const body = { username, displayName, password, role, age };
+  if (grade != null) body.grade = grade;
+  if (major) body.major = major;
+  if (cohort) body.cohort = cohort;
+  if (schoolName) body.schoolName = schoolName;
   const r = await fetch(`${A}/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'same-origin',
-    body: JSON.stringify({ username, displayName, password, role, age }),
+    body: JSON.stringify(body),
   });
   const data = await r.json().catch(() => ({}));
   if (r.ok && data?.user) {
     _me = data.user;
     syncToLocal(_me);
-    return { ok: true, user: data.user };
+    try {
+      window.tiziaTrack?.('sign_up', { method: 'password', role: data.user.role || '' });
+      // GA4 recommended event "login" — bắn cả 2 để cohort login bao gồm register.
+      window.tiziaTrack?.('login', { method: 'register', role: data.user.role || '' });
+    } catch {}
+    return { ok: true, user: data.user, redirectTo: data.redirectTo || null };
+  }
+  return { ok: false, error: data?.error || `Lỗi ${r.status}` };
+}
+
+// Khai bổ sung profile cho user cũ (Trục 1 backfill). POST /api/auth/complete-profile.
+export async function completeProfile({ grade, major, cohort, schoolName }) {
+  const body = {};
+  if (grade != null) body.grade = grade;
+  if (major) body.major = major;
+  if (cohort) body.cohort = cohort;
+  if (schoolName) body.schoolName = schoolName;
+  const r = await fetch(`${A}/complete-profile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(body),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (r.ok && data?.ok) {
+    _me = data.user;
+    syncToLocal(_me);
+    return { ok: true, user: data.user, redirectTo: data.redirectTo || null };
   }
   return { ok: false, error: data?.error || `Lỗi ${r.status}` };
 }
 
 export async function logout() {
+  try { window.tiziaTrack?.('logout', {}); } catch {}
   try {
     await fetch(`${A}/logout`, { method: 'POST', credentials: 'same-origin' });
   } catch {}

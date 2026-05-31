@@ -33,6 +33,30 @@ const CSS = `
   }
   .ev-header .ev-spacer { flex: 1; }
 
+  /* Nút Quay lại + breadcrumb — chỉ hiện ở trang trong */
+  .ev-header .ev-back {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    cursor: pointer; color: #fff; font-size: 15px; font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, transform 0.12s;
+  }
+  .ev-header .ev-back:hover { background: rgba(255,255,255,0.16); border-color: rgba(251,191,36,0.55); transform: translateX(-1px); }
+  .ev-header .ev-crumbs {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; opacity: 0.92; min-width: 0;
+  }
+  .ev-header .ev-crumbs a { color: inherit; text-decoration: none; opacity: 0.75; }
+  .ev-header .ev-crumbs a:hover { color: #fbbf24; opacity: 1; text-decoration: underline; }
+  .ev-header .ev-crumbs .sep { opacity: 0.45; }
+  .ev-header .ev-crumbs .leaf {
+    color: #fde68a; font-weight: 600;
+    max-width: 38vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* Slot chứa chuông notification (do notifications-bell.js mount vào) */
+  #ev-bell-slot { display: inline-flex; align-items: center; }
+
   .ev-user-wrap { position: relative; }
   .ev-header .ev-user {
     display: inline-flex; align-items: center; gap: 10px;
@@ -138,6 +162,10 @@ const CSS = `
     .ev-header .ev-brand .name { display: none; }
     .ev-header .ev-user-text { max-width: 120px; overflow: hidden; }
     .ev-header .ev-user-name { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+    .ev-header .ev-crumbs .crumb-home { display: none; }
+    .ev-header .ev-crumbs .sep { display: none; }
+    .ev-header .ev-crumbs .leaf { max-width: 42vw; }
+    .ev-header .ev-back { width: 30px; height: 30px; }
   }
 `;
 
@@ -162,6 +190,53 @@ function planPill(planId) {
   return `<span class="ev-plan-pill" style="background:${b.bg};color:${b.color}" title="Gói cước hiện tại">${b.label}</span>`;
 }
 
+// Trang chủ = "/" hoặc "/index(.html)". Trang trong → có breadcrumb + nút back.
+function isHomePage() {
+  const p = location.pathname.replace(/\/+$/, '');
+  if (p === '') return true;
+  const last = p.split('/').pop() || '';
+  return last === 'index' || last === 'index.html';
+}
+
+// Tên trang cho breadcrumb. Ưu tiên <body data-page-title>, fallback document.title
+// (đã strip "· Tizia" / "Tizia ·" cho gọn).
+function getPageTitle() {
+  const explicit = document.body?.dataset?.pageTitle;
+  if (explicit) return explicit;
+  let t = (document.title || '').trim();
+  t = t.replace(/\s*[·•|–—-]\s*Tizia\s*$/i, '').replace(/^Tizia\s*[·•|–—-]\s*/i, '');
+  return t || 'Trang';
+}
+
+function breadcrumbHtml() {
+  if (isHomePage()) return '';
+  const title = esc(getPageTitle());
+  return `
+    <button class="ev-back" id="ev-back-btn" type="button" title="Quay lại trang trước" aria-label="Quay lại trang trước">←</button>
+    <nav class="ev-crumbs" aria-label="Breadcrumb">
+      <a href="./" class="crumb-home" title="Về trang chủ">🏠 Trang chủ</a>
+      <span class="sep">›</span>
+      <span class="leaf" aria-current="page">${title}</span>
+    </nav>
+  `;
+}
+
+function wireBackBtn(host) {
+  const back = host.querySelector('#ev-back-btn');
+  if (!back) return;
+  back.addEventListener('click', () => {
+    try {
+      const ref = document.referrer && new URL(document.referrer);
+      const sameOrigin = ref && ref.origin === location.origin && ref.pathname !== location.pathname;
+      if (history.length > 1 && sameOrigin) {
+        history.back();
+        return;
+      }
+    } catch { /* ignore */ }
+    location.href = './';
+  });
+}
+
 function fmtExpire(ms) {
   if (!ms) return '';
   try {
@@ -174,10 +249,14 @@ function render(host, user) {
   if (!user) {
     host.innerHTML = `
       <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
+      ${breadcrumbHtml()}
       <span class="ev-spacer"></span>
+      <span id="ev-bell-slot"></span>
       <a href="pricing.html" class="ev-plan-pill" style="background:rgba(168,85,247,.22);color:#a855f7;text-decoration:none">✨ Xem gói</a>
       <span class="ev-anon" style="margin-left:10px">Chưa đăng nhập · <a href="login.html">Đăng nhập</a></span>
     `;
+    wireBackBtn(host);
+    document.dispatchEvent(new CustomEvent('ev-header-mounted'));
     return;
   }
   const r = ROLE_LABEL[user.role] || ROLE_LABEL.student;
@@ -189,6 +268,15 @@ function render(host, user) {
     ? `<div class="pf-row"><span class="k">Email</span><span class="v">${esc(user.email)}</span></div>` : '';
   const ageRow = user.age != null
     ? `<div class="pf-row"><span class="k">Tuổi</span><span class="v">${user.age}</span></div>` : '';
+  // Trục 1+3: hiển thị Lớp/Ngành/Khoá/Trường tuỳ role
+  const gradeRow = (user.role === 'pupil' && user.grade != null)
+    ? `<div class="pf-row"><span class="k">Lớp</span><span class="v">${user.grade === 0 ? 'Mầm non' : 'Lớp ' + user.grade}</span></div>` : '';
+  const majorRow = (user.role === 'student' && user.major)
+    ? `<div class="pf-row"><span class="k">Ngành</span><span class="v">${esc(user.major)}</span></div>` : '';
+  const cohortRow = (user.role === 'student' && user.cohort)
+    ? `<div class="pf-row"><span class="k">Khoá</span><span class="v">${esc(user.cohort)}</span></div>` : '';
+  const schoolRow = user.school_name
+    ? `<div class="pf-row"><span class="k">Trường</span><span class="v">${esc(user.school_name)}</span></div>` : '';
   const planId = effectivePlanId(user);
   const planDef = USER_PLANS[planId];
   const planRow = `<div class="pf-row"><span class="k">Gói cước</span><span class="v">${planPill(planId)}</span></div>`;
@@ -201,7 +289,9 @@ function render(host, user) {
 
   host.innerHTML = `
     <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
+    ${breadcrumbHtml()}
     <span class="ev-spacer"></span>
+    <span id="ev-bell-slot"></span>
     <div class="ev-user-wrap" id="ev-user-wrap">
       <button class="ev-user" id="ev-user-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Xem hồ sơ">
         <span class="ev-avatar">${avatarInner}</span>
@@ -225,12 +315,19 @@ function render(host, user) {
           <div class="pf-rows">
             <div class="pf-row"><span class="k">Tài khoản</span><span class="v">@${esc(user.username)}</span></div>
             <div class="pf-row"><span class="k">Vai trò</span><span class="v">${r.label}</span></div>
+            ${gradeRow}
+            ${majorRow}
+            ${cohortRow}
+            ${schoolRow}
             ${ageRow}
             ${emailRow}
             ${planRow}
             ${expireRow}
           </div>
           ${planCta}
+          ${user.role === 'student'
+            ? `<a class="ev-plan-cta" href="cv.html" style="background:linear-gradient(135deg,#0ea5e9,#22c55e);margin-top:10px">🪪 Xuất CV / Portfolio</a>`
+            : ''}
           <div class="pf-divider" style="margin-top:14px"></div>
           <div class="pf-actions">
             <button class="pf-btn pf-edit-btn" id="ev-edit-btn" type="button">✏️ Chỉnh sửa</button>
@@ -261,6 +358,9 @@ function render(host, user) {
       </div>
     </div>
   `;
+
+  wireBackBtn(host);
+  document.dispatchEvent(new CustomEvent('ev-header-mounted'));
 
   const wrap = host.querySelector('#ev-user-wrap');
   const btn = host.querySelector('#ev-user-btn');
@@ -307,6 +407,8 @@ function render(host, user) {
 }
 
 export async function mountAuthHeader() {
+  if (document.body?.dataset?.noAuthHeader !== undefined) return null;
+  try { if (window.top !== window.self) return null; } catch { /* cross-origin iframe */ return null; }
   injectStyle();
   // Cho phép trang định sẵn vị trí: <header id="auth-header"></header>; nếu không có
   // thì tự chèn vào đầu body.

@@ -112,7 +112,7 @@
   .sso-btn.microsoft { background: #fff; color: #2f6fb8; }
 </style>
 </head>
-<body>
+<body data-no-auth-header data-no-notifications-bell data-no-suggestion-fab>
 <form class="card" id="form-login" autocomplete="on">
   <div class="logo">🌌</div>
   <h1>Tizia</h1>
@@ -192,7 +192,11 @@
     try {
       const res = await login(form.username.value.trim(), form.password.value);
       if (res?.ok) {
-        location.replace(returnTo);
+        // Ưu tiên ?return= (user click vào lesson rồi mới login → trả về lesson).
+        // Không có ?return= → dùng redirectTo do server tính theo role+grade+major
+        // (Trục 1: HS → trường phổ thông phù hợp, SV → trường ngành phù hợp).
+        const target = params.get('return') || res.redirectTo || returnTo;
+        location.replace(target);
       } else {
         errEl.textContent = res?.error || 'Đăng nhập thất bại';
         errEl.classList.add('show');
