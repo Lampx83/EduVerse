@@ -716,14 +716,51 @@ function resize(){ const w=innerWidth,h=innerHeight;
 addEventListener('resize', resize); resize();
 if(EMBED){ const bk=document.querySelector('.back'); if(bk) bk.style.display='none'; }
 
-const tip=document.getElementById('tip');
+// Hit-test tại toạ độ client → {kind:'building'|'facility', idx, item} | null
+// Toà nhà: đọc pixel từ hit-canvas (id-color). Facility: tìm pin gần nhất trong bán kính chạm.
+function hitAt(cx, cy){
+  const px = hctx.getImageData(cx*DPR, cy*DPR, 1, 1).data;
+  if(px[3] > 10){ const id = colId(px[0], px[1], px[2]); if(id >= 0) return {kind:'building', idx:id, item:BUILDINGS[id]}; }
+  // Facility pins: tâm pin nằm cao hơn điểm chân ~ (h/2+6) = ~18.5px; ta dùng bán kính chạm ≈ 24px
+  let best = null, bestD = Infinity;
+  for(let i=0; i<FACILITIES.length; i++){
+    const f = FACILITIES[i], p = P(f.gx, f.gy);
+    const dx = cx - p.x, dy = cy - (p.y - 12);
+    const d = dx*dx + dy*dy;
+    if(d < bestD){ bestD = d; best = {kind:'facility', idx:i, item:f}; }
+  }
+  if(best && bestD <= 28*28) return best;
+  return null;
+}
+
+const tip = document.getElementById('tip');
+// iPad/touch: không có hover → bỏ qua pointermove cho touch, tap trực tiếp chọn được.
 canvas.addEventListener('pointermove', e=>{
-  const px=hctx.getImageData(e.clientX*DPR,e.clientY*DPR,1,1).data;
-  const id=(px[3]>10)? colId(px[0],px[1],px[2]) : -1;
-  if(id!==hovered){ hovered=id; draw(); }
-  if(id>=0){ const b=BUILDINGS[id]; tip.textContent=`${b.emoji} ${b.name}`; tip.style.left=e.clientX+'px'; tip.style.top=e.clientY+'px'; tip.style.opacity=1; canvas.style.cursor='pointer'; }
-  else { tip.style.opacity=0; canvas.style.cursor='default'; } });
-canvas.addEventListener('click', ()=>{ if(hovered<0) return; enter(BUILDINGS[hovered], hovered); });
+  if(e.pointerType === 'touch') return;
+  const h = hitAt(e.clientX, e.clientY);
+  const id = (h && h.kind === 'building') ? h.idx : -1;
+  if(id !== hovered){ hovered = id; draw(); }
+  if(h){ tip.textContent = `${h.item.emoji} ${h.item.name}`; tip.style.left = e.clientX+'px'; tip.style.top = e.clientY+'px'; tip.style.opacity = 1; canvas.style.cursor = 'pointer'; }
+  else { tip.style.opacity = 0; canvas.style.cursor = 'default'; }
+});
+canvas.addEventListener('pointerleave', ()=>{ tip.style.opacity = 0; if(hovered !== -1){ hovered = -1; draw(); } });
+
+// Tap/click: tự hit-test tại điểm chạm thay vì dựa vào `hovered` (vì touch không có hover)
+function handleTap(cx, cy){
+  const h = hitAt(cx, cy);
+  if(!h) return;
+  if(h.kind === 'building') enter(h.item, h.idx);
+  else enter(h.item, null);
+}
+canvas.addEventListener('click', e=> handleTap(e.clientX, e.clientY));
+// Trên touch, tránh delay 300ms và đảm bảo phản hồi ngay cả khi click bị nuốt
+canvas.addEventListener('touchend', e=>{
+  if(e.changedTouches && e.changedTouches.length){
+    const t = e.changedTouches[0];
+    e.preventDefault();
+    handleTap(t.clientX, t.clientY);
+  }
+}, {passive:false});
 </script>
 </body>
 </html>
