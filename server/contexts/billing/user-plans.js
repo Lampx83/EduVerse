@@ -6,8 +6,8 @@
 // [public/js/plans.js] cho FE — đổi giá/quota thì sửa CẢ HAI file.
 //
 // Nguyên tắc:
-//   - guest: chưa đăng nhập, chỉ thử Mầm non
-//   - free:  đã đăng ký, mở Mầm non + Tiểu học (Lớp 1–2)
+//   - guest: chưa đăng nhập, thử Mầm non + Phổ thông (Tiểu/THCS/THPT) + Dược + CNTT
+//   - free:  đã đăng ký, mở các trường khách + (sau này) giữ tiến độ
 //   - plus:  mở toàn bộ trường nội dung, KHÔNG có AI cá nhân hoá
 //   - pro:   + AI gợi ý / chấm tự luận / lộ trình cá nhân hoá
 //
@@ -20,14 +20,14 @@ export const USER_PLANS = {
     id: 'guest', name: 'Khách', rank: 0,
     price_month_vnd: 0, price_year_vnd: 0,
     ai_calls_day: 0,
-    domains_allow: ['preschool'],
+    domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it'],
     features: ['browse_demo'],
   },
   free: {
     id: 'free', name: 'Miễn phí', rank: 1,
     price_month_vnd: 0, price_year_vnd: 0,
     ai_calls_day: 20,
-    domains_allow: ['preschool', 'primary'],   // Mầm non + Tiểu học
+    domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it'],
     features: ['save_progress', 'ai_tutor_basic', 'leaderboard'],
   },
   plus: {

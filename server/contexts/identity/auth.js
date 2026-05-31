@@ -133,8 +133,8 @@ const PUBLIC_PATH_EXACT = new Set([
   // SEO: trang công khai crawlable cho Googlebot (xem contexts/seo).
   '/welcome', '/robots.txt', '/sitemap.xml',
   // CHẾ ĐỘ KHÁCH (không đăng nhập): được xem trang chủ + chợ app + trang trường
-  // và các trang nội dung lớp học. Frontend tự khoá trường ≠ Mầm non cho khách
-  // (xem isGuestDomain trong public/js/engine/domain.js). Mọi /api/* ghi dữ liệu
+  // và các trang nội dung lớp học. Frontend tự khoá các trường ngoài danh sách
+  // GUEST_DOMAINS cho khách (xem public/js/engine/domain.js). Mọi /api/* ghi dữ liệu
   // (attempts, classes, lessons…) vẫn yêu cầu đăng nhập, nên không có lỗ hổng.
   '/', '/index.html',
   '/apps.html',

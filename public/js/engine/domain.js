@@ -142,14 +142,16 @@ export const GAMIFIED_DOMAINS = new Set(['primary', 'secondary']);
 export function isGamifiedDomain(id) { return GAMIFIED_DOMAINS.has(id); }
 
 /**
- * Trường mà KHÁCH (chưa đăng nhập) được phép vào để dùng thử. Hiện chỉ Mầm non
- * — nội dung nhẹ, không cần lưu tiến độ. Các trường khác bị khoá cho khách,
- * yêu cầu đăng nhập để mở khoá.
+ * Trường mà KHÁCH (chưa đăng nhập) được phép vào để dùng thử: Mầm non, toàn bộ
+ * phổ thông (Tiểu học/THCS/THPT), Dược và CNTT. Khách không lưu tiến độ —
+ * trường nào ngoài danh sách này vẫn yêu cầu đăng nhập để mở khoá.
  *
  * Phase B2C: ngoài 'guest', mỗi trường còn gắn min plan (free/plus/pro) — xem
  * [public/js/plans.js]. Lookup: getRequiredPlan(id) → 'guest'|'free'|'plus'.
  */
-export const GUEST_DOMAINS = new Set(['preschool']);
+export const GUEST_DOMAINS = new Set([
+  'preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it',
+]);
 export function isGuestDomain(id) { return GUEST_DOMAINS.has(id); }
 
 /** Plan tối thiểu để vào 1 trường (mirror của BE getRequiredPlanForDomain). */
