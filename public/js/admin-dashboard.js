@@ -176,7 +176,7 @@ function renderKpi(overview) {
     { k:'ai_tokens_24h', label:'AI tokens 24h', icon:'⚡', cls:'info', fallback:'—' },
     { k:'ai_content', label:'Học liệu AI', icon:'📚' },
     { k:'paid_schools', label:'Trường trả phí', icon:'💳', cls:'ok' },
-    { k:'active_sessions', label:'Đang online', icon:'🟢', cls:'ok' },
+    { k:'active_sessions', label:'Tài khoản còn phiên', icon:'🟢', cls:'ok' },
     { k:'events', label:'Sự kiện', icon:'📊' },
     { k:'requests', label:'Tổng góp ý', icon:'✉️' },
   ];
@@ -777,7 +777,134 @@ const TABS = {
     ['id','school_id','subject','kind','flagged','created_at'], { created_at: fmt }, '/api/admin/content', 'content') },
   billing:   { label:'💳 Gói cước', load: () => loadSimple('/api/admin/billing', 'subscriptions',
     ['school_id','school','plan','status','current_period_end'], { current_period_end: fmt }) },
+  backup:    { label:'🛟 Sao lưu', load: loadBackups },
 };
+
+// ─────────── Sao lưu / Phục hồi DB (Postgres pg_dump) ───────────
+// Auto-snapshot mỗi 03:00 (BACKUP_HOUR), giữ N file (BACKUP_KEEP). Restore
+// gọi pg_restore --clean --if-exists -1 trên connection pool đang chạy
+// (single-transaction → rollback nếu lỗi). Trước restore server tự snapshot
+// file pre-restore làm safety net.
+async function loadBackups() {
+  const r = await api('/api/admin/backups');
+  if (!r.ok) { $('#tabbody').innerHTML = `<div class="err">Lỗi tải danh sách: ${r.data?.error || r.status}</div>`; return; }
+  const items = r.data.backups || [];
+
+  const meta = `
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-title">⚙️ Cấu hình auto-backup</div>
+      <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;font-size:13px">
+        <div><div style="color:var(--muted)">Khung giờ</div><div style="font-weight:700">${String(r.data.auto_hour).padStart(2,'0')}:00 (server time)</div></div>
+        <div><div style="color:var(--muted)">Giữ tối đa</div><div style="font-weight:700">${r.data.keep} file</div></div>
+        <div><div style="color:var(--muted)">Tổng dung lượng</div><div style="font-weight:700">${fmtBytes(r.data.total_size)}</div></div>
+        <div><div style="color:var(--muted)">Định dạng</div><div style="font-weight:700">${esc(r.data.format || 'pg_dump -Fc')}</div></div>
+        <div style="grid-column:span 2"><div style="color:var(--muted)">Thư mục</div><div style="font-family:monospace;font-size:12px;word-break:break-all">${esc(r.data.dir)}</div></div>
+      </div>
+    </div>`;
+
+  const actions = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn primary" id="do-snapshot">📸 Tạo backup ngay</button>
+      <label class="btn" style="cursor:pointer">
+        ⤴️ Phục hồi từ file…
+        <input type="file" id="restore-file" accept=".dump,application/octet-stream" style="display:none">
+      </label>
+      <button class="btn" id="refresh-bk">↻ Tải lại</button>
+    </div>`;
+
+  let body;
+  if (!items.length) {
+    body = '<div class="empty">Chưa có backup nào. Bấm "Tạo backup ngay" để snapshot lần đầu.</div>';
+  } else {
+    const rows = items.map((b, i) => `
+      <tr>
+        <td style="font-family:monospace">${esc(b.name)}</td>
+        <td>${fmtBytes(b.size)}</td>
+        <td>${fmt(b.created_at)}</td>
+        <td class="actions">
+          <a class="btn" href="/api/admin/backups/${encodeURIComponent(b.name)}" download title="Tải về">⬇</a>
+          <button class="btn" data-restore="${esc(b.name)}" title="Phục hồi từ snapshot này">⤴︎</button>
+          <button class="btn danger" data-del="${esc(b.name)}" title="Xoá" ${i === 0 ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>🗑</button>
+        </td>
+      </tr>`).join('');
+    body = `<table><thead><tr><th>Tên file</th><th>Dung lượng</th><th>Tạo lúc</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  $('#tabbody').innerHTML = meta + actions + body;
+
+  $('#do-snapshot').onclick = async () => {
+    $('#do-snapshot').disabled = true; $('#do-snapshot').textContent = '⏳ Đang sao lưu…';
+    const rr = await api('/api/admin/backups', { method:'POST', body: JSON.stringify({ label:'manual' }) });
+    if (!rr.ok) return toast('Lỗi: ' + (rr.data?.detail || rr.data?.error || rr.status), 'err');
+    toast('✓ Đã tạo ' + rr.data.backup.name); await loadBackups();
+  };
+
+  $('#refresh-bk').onclick = () => loadBackups();
+
+  $$('button[data-del]').forEach(btn => {
+    btn.onclick = () => {
+      const name = btn.dataset.del;
+      openConfirm({
+        title:'🗑 Xoá backup?',
+        msg:'Không thể khôi phục lại. File sẽ bị xoá vĩnh viễn khỏi đĩa.',
+        ctx: name,
+        onConfirm: async () => {
+          const rr = await api(`/api/admin/backups/${encodeURIComponent(name)}`, { method:'DELETE' });
+          if (!rr.ok) return toast('Lỗi xoá', 'err');
+          toast('✓ Đã xoá ' + name); closeModal(); await loadBackups();
+        },
+      });
+    };
+  });
+
+  $$('button[data-restore]').forEach(btn => {
+    btn.onclick = () => {
+      const name = btn.dataset.restore;
+      openConfirm({
+        title:'⚠️ Phục hồi từ snapshot?',
+        msg:'pg_restore --clean sẽ chạy ngay trên DB đang sống — mọi bảng bị DROP rồi tạo lại từ snapshot. Server tự lưu safety snapshot pre-restore trước khi restore. Có chắc chắn?',
+        ctx: name,
+        onConfirm: async () => {
+          const fr = await fetch(`/api/admin/backups/${encodeURIComponent(name)}`, { credentials:'same-origin' });
+          if (!fr.ok) return toast('Không tải được snapshot', 'err');
+          const buf = await fr.arrayBuffer();
+          const rr = await fetch('/api/admin/restore', {
+            method:'POST', credentials:'same-origin',
+            headers:{'Content-Type':'application/octet-stream','X-Confirm-Restore':'YES'},
+            body: buf,
+          });
+          const j = await rr.json().catch(()=>({}));
+          if (!rr.ok) return toast('Lỗi: ' + (j.detail || j.error || rr.status), 'err');
+          toast('✓ Đã phục hồi · safety=' + (j.safety_backup || '—')); closeModal(); await loadBackups();
+        },
+      });
+    };
+  });
+
+  const fileInput = $('#restore-file');
+  if (fileInput) {
+    fileInput.onchange = async (e) => {
+      const file = e.target.files?.[0]; if (!file) return;
+      if (!/\.dump$/i.test(file.name)) { toast('Chỉ nhận file .dump (pg_dump -Fc)', 'err'); fileInput.value=''; return; }
+      openConfirm({
+        title:'⚠️ Phục hồi từ file upload?',
+        msg:'pg_restore --clean sẽ chạy ngay — bảng hiện tại bị DROP rồi tạo lại từ file upload. Server tự lưu safety snapshot pre-restore. Có chắc chắn?',
+        ctx: `${file.name} · ${fmtBytes(file.size)}`,
+        onConfirm: async () => {
+          const buf = await file.arrayBuffer();
+          const rr = await fetch('/api/admin/restore', {
+            method:'POST', credentials:'same-origin',
+            headers:{'Content-Type':'application/octet-stream','X-Confirm-Restore':'YES'},
+            body: buf,
+          });
+          const j = await rr.json().catch(()=>({}));
+          if (!rr.ok) return toast('Lỗi: ' + (j.message || j.detail || j.error || rr.status), 'err');
+          toast('✓ Đã phục hồi · safety=' + (j.safety_backup || '—')); closeModal(); fileInput.value=''; await loadBackups();
+        },
+      });
+    };
+  }
+}
 
 // loadSimple variant có cột "Xoá" cuối row (dùng cho content)
 async function loadSimpleWithDelete(path, key, cols, fmtMap = {}, deleteBase, entityLabel) {

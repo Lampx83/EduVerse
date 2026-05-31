@@ -14,6 +14,7 @@ import { scryptSync, randomBytes } from 'node:crypto';
 import { db, createNotification, setUserPlan, createUser, getUserById, getUserByUsername, updateUserEditable } from '../../db.js';
 import { VALID_USER_PLANS, expiresAtFor } from '../billing/user-plans.js';
 import { listAiPromptsForSchool, listAiPromptsForUser } from '../../ai-quota.js';
+import { attachBackup, scheduleAutoBackup } from './backup.js';
 
 // Scrypt hash — đồng bộ format với contexts/identity/auth.js (scrypt$salt$hash)
 function hashPassword(password) {
@@ -435,7 +436,13 @@ export function attachAdmin(r) {
       extra.ai_tokens_total = count(`SELECT SUM(prompt_tokens + completion_tokens) c FROM ai_token_usage`);
       extra.ai_tokens_24h = count(`SELECT SUM(prompt_tokens + completion_tokens) c FROM ai_token_usage WHERE created_at >= ?`, t24);
     }
-    extra.active_sessions = count(`SELECT COUNT(*) c FROM sessions WHERE expires_at > ?`, now);
+    // "Đang online" = số user phân biệt còn session hợp lệ. Trước đây dùng
+    // COUNT(*) → đếm row session (1 user x N tab/device = N session) khiến
+    // số online vượt cả tổng user. DISTINCT user_id phản ánh đúng "ai đang
+    // có session". Lưu ý: cookie session 30 ngày nên đây vẫn là "có thể vào
+    // không cần đăng nhập lại", không phải realtime — để realtime cần track
+    // last_seen riêng (chưa có cột này trong schema).
+    extra.active_sessions = count(`SELECT COUNT(DISTINCT user_id) c FROM sessions WHERE expires_at > ?`, now);
     res.json({ ...base, ...extra, delta });
   });
 
@@ -651,5 +658,9 @@ export function attachAdmin(r) {
     res.json({ logs: listAiPromptsForUser(req.user.id, limit) });
   });
 
-  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin) + dashboard + CRUD + ai-prompt logs');
+  // Backup/restore (xuất nhập file SQLite + auto snapshot hàng ngày)
+  attachBackup(r);
+  scheduleAutoBackup();
+
+  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin) + dashboard + CRUD + ai-prompt logs + backup');
 }
