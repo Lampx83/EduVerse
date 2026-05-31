@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lumiverse · Mascot v2 (PNG export)</title>
+<style>
+  :root {
+    --bg: #0b0b2a;
+    --bg2: #141438;
+    --card: #1b1b48;
+    --ink: #f4f4ff;
+    --muted: #9a9ad0;
+    --accent: #ffd93d;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: radial-gradient(ellipse at top, #1a1a4e 0%, var(--bg) 60%); color: var(--ink); font-family: -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif; min-height: 100vh; }
+  body { padding: 36px 24px 80px; }
+  h1 { font-size: 28px; margin: 0 0 6px; text-align: center; letter-spacing: -0.01em; }
+  h1 span { background: linear-gradient(90deg, #ffd93d, #ff8c42 60%, #ff5cdb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  p.sub { text-align: center; color: var(--muted); margin: 0 0 28px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; max-width: 1280px; margin: 0 auto; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: linear-gradient(180deg, var(--card), var(--bg2)); border: 1px solid rgba(255,255,255,0.06); border-radius: 24px; padding: 24px; box-shadow: 0 30px 80px rgba(0,0,0,0.35); }
+  .card h2 { margin: 0 0 4px; font-size: 22px; }
+  .card .tag { color: var(--accent); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .card p { color: var(--muted); line-height: 1.55; font-size: 14px; margin: 6px 0 16px; }
+  .stage { background: radial-gradient(circle at 30% 30%, rgba(255,217,61,0.18), transparent 55%), radial-gradient(circle at 70% 70%, rgba(255,92,219,0.15), transparent 55%), #0a0a24; border-radius: 16px; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 360px; position: relative; overflow: hidden; }
+  .stage::before { content:""; position:absolute; inset:0; background-image: radial-gradient(1px 1px at 10% 20%, #fff, transparent), radial-gradient(1.5px 1.5px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 30% 70%, #ffd93d, transparent), radial-gradient(1px 1px at 85% 80%, #fff, transparent), radial-gradient(1.5px 1.5px at 55% 15%, #fff, transparent); pointer-events:none; }
+  .float { animation: floaty 3.5s ease-in-out infinite; }
+  .float-slow { animation: floaty 5s ease-in-out infinite; }
+  @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .actions { display:flex; gap:10px; margin-top: 14px; }
+  button { background:#3a3380; color:#fff; border:1px solid rgba(255,255,255,0.1); padding:10px 16px; border-radius:10px; font-size:14px; cursor:pointer; font-weight:600; }
+  button:hover { background:#4a44a3; }
+  .png-out { display:flex; gap:14px; margin-top:12px; padding:10px; background:#0a0a24; border-radius:12px; align-items:center; min-height:120px; }
+  .png-out img { max-width:96px; max-height:96px; background: rgba(255,255,255,0.04); border-radius:8px; padding:4px; }
+  .png-out .meta { font-size:12px; color:var(--muted); line-height:1.5; }
+</style>
+</head>
+<body>
+  <h1>Mascot v3 · <span>Lumiverse</span></h1>
+  <p class="sub">Sao mập mạp hơn · Cú vũ trụ + tri thức hơn</p>
+
+  <div class="grid">
+
+    <section class="card">
+      <div class="tag">Hướng 1 — v3 chubby</div>
+      <h2>Bé Sao Lumi ⭐</h2>
+      <p>Dáng sao mập mạp như plush: tip ngắn lại, valley nông, viền dày bo tròn. Body phồng 3D, mắt to chiếm 1/3 mặt, má hồng to, mũ tốt nghiệp + sách phép thuật.</p>
+
+      <div class="stage">
+        <svg id="svgStar" class="float" width="420" height="420" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="sBodyGrad" cx="42%" cy="35%" r="68%">
+              <stop offset="0%" stop-color="#FFFCC7"/>
+              <stop offset="30%" stop-color="#FFE57A"/>
+              <stop offset="65%" stop-color="#FFC02F"/>
+              <stop offset="100%" stop-color="#C9580F"/>
+            </radialGradient>
+            <radialGradient id="sBodyShade" cx="50%" cy="80%" r="55%">
+              <stop offset="0%" stop-color="#8A3A0A" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#8A3A0A" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="sGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FFD93D" stop-opacity="0.55"/>
+              <stop offset="60%" stop-color="#FFD93D" stop-opacity="0.12"/>
+              <stop offset="100%" stop-color="#FFD93D" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="sCheek" cx="50%" cy="50%" r="55%">
+              <stop offset="0%" stop-color="#FF9DB8" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#FF6FA0" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="sEye" cx="50%" cy="50%" r="55%">
+              <stop offset="0%" stop-color="#5B4ACF"/>
+              <stop offset="60%" stop-color="#2E1F8C"/>
+              <stop offset="100%" stop-color="#120A40"/>
+            </radialGradient>
+            <linearGradient id="sCapGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3A3380"/>
+              <stop offset="100%" stop-color="#15113F"/>
+            </linearGradient>
+            <linearGradient id="sBookGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FF5CDB"/>
+              <stop offset="100%" stop-color="#7E2DD8"/>
+            </linearGradient>
+            <radialGradient id="sBookGlow" cx="50%" cy="40%" r="50%">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="sShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+              <feOffset dx="0" dy="10" result="off"/>
+              <feComponentTransfer><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+              <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <circle cx="300" cy="310" r="280" fill="url(#sGlow)"/>
+          <ellipse cx="300" cy="555" rx="150" ry="16" fill="#000" opacity="0.4"/>
+
+          <!-- chubby plush star: shallow valleys (R≈190), rounded tips via Q curves + thick rounded stroke -->
+          <g filter="url(#sShadow)">
+            <path d="
+              M 300 90
+              Q 360 175 510 245
+              Q 470 360 445 510
+              Q 365 525 300 500
+              Q 235 525 155 510
+              Q 130 360 90 245
+              Q 240 175 300 90 Z"
+              fill="url(#sBodyGrad)" stroke="#7A3308" stroke-width="14" stroke-linejoin="round"/>
+            <!-- bottom shading -->
+            <ellipse cx="300" cy="450" rx="220" ry="80" fill="url(#sBodyShade)"/>
+            <!-- inner highlight: smaller chubby star, semi-transparent -->
+            <path d="
+              M 300 180
+              Q 335 230 415 270
+              Q 395 340 380 425
+              Q 340 432 300 415
+              Q 260 432 220 425
+              Q 205 340 185 270
+              Q 265 230 300 180 Z"
+              fill="#FFF6B8" opacity="0.4"/>
+            <!-- top specular -->
+            <path d="M250 195 Q300 170 350 195 Q335 220 300 220 Q265 220 250 195 Z" fill="#FFFFFF" opacity="0.6"/>
+            <!-- small specular dots -->
+            <ellipse cx="380" cy="240" rx="14" ry="8" fill="#FFFFFF" opacity="0.45" transform="rotate(-25 380 240)"/>
+          </g>
+
+          <!-- cheeks (big, plush) -->
+          <ellipse cx="200" cy="345" rx="42" ry="26" fill="url(#sCheek)"/>
+          <ellipse cx="400" cy="345" rx="42" ry="26" fill="url(#sCheek)"/>
+
+          <!-- eyebrows -->
+          <path d="M210 260 Q240 245 275 258" stroke="#3A1A0A" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <path d="M325 258 Q360 245 390 260" stroke="#3A1A0A" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+          <!-- eyes (bigger, taking ~1/3 of face) -->
+          <ellipse cx="240" cy="310" rx="38" ry="44" fill="#FFFFFF"/>
+          <ellipse cx="244" cy="312" rx="30" ry="36" fill="url(#sEye)"/>
+          <ellipse cx="244" cy="312" rx="13" ry="16" fill="#0A0625"/>
+          <circle cx="252" cy="302" r="8" fill="#FFFFFF"/>
+          <circle cx="236" cy="322" r="4" fill="#FFFFFF" opacity="0.85"/>
+          <path d="M210 285 L202 274 M220 278 L216 266 M232 274 L231 260" stroke="#3A1A0A" stroke-width="4" stroke-linecap="round"/>
+
+          <ellipse cx="360" cy="310" rx="38" ry="44" fill="#FFFFFF"/>
+          <ellipse cx="356" cy="312" rx="30" ry="36" fill="url(#sEye)"/>
+          <ellipse cx="356" cy="312" rx="13" ry="16" fill="#0A0625"/>
+          <circle cx="364" cy="302" r="8" fill="#FFFFFF"/>
+          <circle cx="348" cy="322" r="4" fill="#FFFFFF" opacity="0.85"/>
+          <path d="M390 285 L398 274 M380 278 L384 266 M368 274 L369 260" stroke="#3A1A0A" stroke-width="4" stroke-linecap="round"/>
+
+          <!-- big smile open mouth -->
+          <path d="M240 365 Q300 430 360 365 Q335 395 300 398 Q265 395 240 365 Z" fill="#5C1230" stroke="#3A1A0A" stroke-width="3" stroke-linejoin="round"/>
+          <ellipse cx="300" cy="395" rx="24" ry="10" fill="#FF6FA0"/>
+          <path d="M255 368 Q300 378 345 368" stroke="#FFFFFF" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.95"/>
+
+          <!-- mortarboard cap -->
+          <g transform="translate(170 75) rotate(-15)">
+            <ellipse cx="65" cy="55" rx="62" ry="13" fill="url(#sCapGrad)"/>
+            <rect x="18" y="38" width="92" height="20" fill="url(#sCapGrad)"/>
+            <path d="M0 50 L65 18 L130 50 L65 82 Z" fill="url(#sCapGrad)" stroke="#0A0625" stroke-width="3"/>
+            <circle cx="110" cy="34" r="7" fill="#FFD93D"/>
+            <path d="M110 34 Q128 72 145 96" stroke="#FFD93D" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M138 90 L152 108 M145 84 L152 108 M152 84 L152 108" stroke="#FFD93D" stroke-width="4" stroke-linecap="round"/>
+          </g>
+
+          <!-- magic book -->
+          <g transform="translate(245 422)">
+            <rect x="0" y="0" width="110" height="68" rx="7" fill="url(#sBookGrad)" stroke="#3A0E60" stroke-width="3"/>
+            <rect x="6" y="6" width="98" height="56" rx="4" fill="#FFFFFF" opacity="0.94"/>
+            <circle cx="55" cy="34" r="17" fill="url(#sBookGlow)"/>
+            <path d="M55 19 L59 31 L72 33 L62 41 L65 53 L55 47 L45 53 L48 41 L38 33 L51 31 Z" fill="#FFD93D" stroke="#E07A1F" stroke-width="1.5"/>
+          </g>
+
+          <!-- floating sparkles -->
+          <g fill="#FFFFFF">
+            <path d="M85 150 l4 -12 l4 12 l12 4 l-12 4 l-4 12 l-4 -12 l-12 -4 z" opacity="0.9"/>
+            <path d="M510 160 l3 -10 l3 10 l10 3 l-10 3 l-3 10 l-3 -10 l-10 -3 z" opacity="0.9"/>
+            <path d="M55 370 l2.5 -8 l2.5 8 l8 2.5 l-8 2.5 l-2.5 8 l-2.5 -8 l-8 -2.5 z" opacity="0.85"/>
+            <path d="M540 390 l2.5 -8 l2.5 8 l8 2.5 l-8 2.5 l-2.5 8 l-2.5 -8 l-8 -2.5 z" opacity="0.85"/>
+            <circle cx="130" cy="480" r="3.5"/>
+            <circle cx="470" cy="490" r="3.5"/>
+            <circle cx="80" cy="230" r="2.5"/>
+            <circle cx="520" cy="250" r="2.5"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="actions">
+        <button onclick="exportPng('svgStar','lumi-star.png')">⬇️ Export PNG (1024×1024)</button>
+        <button onclick="exportPng('svgStar','lumi-star@2x.png',2048)">⬇️ @2x</button>
+      </div>
+      <div class="png-out" id="out-svgStar"><span class="meta">Chưa export.</span></div>
+    </section>
+
+
+    <section class="card">
+      <div class="tag">Hướng 5 — v3 cosmic & scholar</div>
+      <h2>Cú Sao Lumi 🦉</h2>
+      <p>Bụng là cả một dải ngân hà xoắn (nebula + galaxy spiral), kính tròn vàng học giả, mũ tốt nghiệp tua dài, chồng sách dưới chân, vành đai Sao Thổ + hành tinh nhỏ quay quanh, sao chổi và nhiều chòm sao xung quanh.</p>
+
+      <div class="stage">
+        <svg id="svgOwl" class="float-slow" width="420" height="420" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="oBody" cx="50%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#7B62D6"/>
+              <stop offset="55%" stop-color="#3A2A95"/>
+              <stop offset="100%" stop-color="#0E0930"/>
+            </radialGradient>
+            <radialGradient id="oNebula1" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FF5CDB" stop-opacity="0.85"/>
+              <stop offset="60%" stop-color="#9B3CFF" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#9B3CFF" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="oNebula2" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#5CE9FF" stop-opacity="0.75"/>
+              <stop offset="60%" stop-color="#4A7BFF" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#4A7BFF" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="oBelly" cx="50%" cy="50%" r="55%">
+              <stop offset="0%" stop-color="#2A1F70"/>
+              <stop offset="100%" stop-color="#0A0530"/>
+            </radialGradient>
+            <radialGradient id="oFaceDisc" cx="50%" cy="40%" r="65%">
+              <stop offset="0%" stop-color="#5B4AC0"/>
+              <stop offset="100%" stop-color="#221A60"/>
+            </radialGradient>
+            <radialGradient id="oEyeGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FFFCC7"/>
+              <stop offset="50%" stop-color="#FFD93D"/>
+              <stop offset="100%" stop-color="#C77A1A"/>
+            </radialGradient>
+            <radialGradient id="oHalo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#9B7CFF" stop-opacity="0.55"/>
+              <stop offset="60%" stop-color="#9B7CFF" stop-opacity="0.12"/>
+              <stop offset="100%" stop-color="#9B7CFF" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="oBeak" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FFC85A"/>
+              <stop offset="100%" stop-color="#D45F1A"/>
+            </linearGradient>
+            <linearGradient id="oCap" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#23204A"/>
+              <stop offset="100%" stop-color="#0A0625"/>
+            </linearGradient>
+            <linearGradient id="oBookA" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#FF5CDB"/><stop offset="100%" stop-color="#7E2DD8"/></linearGradient>
+            <linearGradient id="oBookB" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#5CE9FF"/><stop offset="100%" stop-color="#3A6FD8"/></linearGradient>
+            <linearGradient id="oBookC" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#FFD93D"/><stop offset="100%" stop-color="#D49A1A"/></linearGradient>
+            <radialGradient id="oPlanet" cx="35%" cy="35%" r="70%">
+              <stop offset="0%" stop-color="#FFD93D"/>
+              <stop offset="60%" stop-color="#D45F1A"/>
+              <stop offset="100%" stop-color="#6A1A05"/>
+            </radialGradient>
+            <radialGradient id="oPlanetSmall" cx="35%" cy="35%" r="70%">
+              <stop offset="0%" stop-color="#9DDFFF"/>
+              <stop offset="100%" stop-color="#2A4A8A"/>
+            </radialGradient>
+            <radialGradient id="oGlassesGlint" cx="40%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
+              <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="oShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+              <feOffset dx="0" dy="12" result="off"/>
+              <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+              <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- background halo -->
+          <circle cx="300" cy="300" r="290" fill="url(#oHalo)"/>
+
+          <!-- background constellations -->
+          <g fill="#FFFFFF" opacity="0.8">
+            <circle cx="60" cy="100" r="2"/>
+            <circle cx="120" cy="70" r="1.5"/>
+            <circle cx="180" cy="90" r="2"/>
+            <circle cx="540" cy="100" r="2"/>
+            <circle cx="480" cy="65" r="1.5"/>
+            <circle cx="420" cy="90" r="2"/>
+            <path d="M60 100 L120 70 L180 90" stroke="#FFFFFF" stroke-width="0.6" fill="none" opacity="0.4"/>
+            <path d="M540 100 L480 65 L420 90" stroke="#FFFFFF" stroke-width="0.6" fill="none" opacity="0.4"/>
+          </g>
+
+          <!-- Saturn-like orbit ring around owl -->
+          <ellipse cx="300" cy="300" rx="280" ry="55" fill="none" stroke="#FFD93D" stroke-width="2.5" opacity="0.55" transform="rotate(-12 300 300)"/>
+          <ellipse cx="300" cy="300" rx="280" ry="55" fill="none" stroke="#FF8C42" stroke-width="1" opacity="0.4" transform="rotate(-12 300 300)" stroke-dasharray="6 8"/>
+
+          <!-- tiny planet on the orbit, top-right -->
+          <g transform="translate(490 180) rotate(-12)">
+            <circle r="14" fill="url(#oPlanetSmall)"/>
+            <ellipse rx="22" ry="5" fill="none" stroke="#9DDFFF" stroke-width="1.8" opacity="0.7"/>
+          </g>
+
+          <!-- ground shadow -->
+          <ellipse cx="300" cy="572" rx="170" ry="14" fill="#000" opacity="0.45"/>
+
+          <!-- ear tufts -->
+          <g filter="url(#oShadow)">
+            <path d="M180 170 Q175 95 218 142 Q207 164 196 174 Z" fill="#2A1F70" stroke="#0A0625" stroke-width="2.5"/>
+            <path d="M420 170 Q425 95 382 142 Q393 164 404 174 Z" fill="#2A1F70" stroke="#0A0625" stroke-width="2.5"/>
+          </g>
+
+          <!-- body -->
+          <g filter="url(#oShadow)">
+            <ellipse cx="300" cy="340" rx="200" ry="210" fill="url(#oBody)" stroke="#0A0625" stroke-width="3"/>
+            <!-- belly disc (deep space, contains galaxy) -->
+            <ellipse cx="300" cy="380" rx="130" ry="148" fill="url(#oBelly)"/>
+
+            <!-- nebula clouds inside body -->
+            <ellipse cx="240" cy="330" rx="90" ry="55" fill="url(#oNebula1)" transform="rotate(-25 240 330)"/>
+            <ellipse cx="360" cy="420" rx="100" ry="60" fill="url(#oNebula2)" transform="rotate(30 360 420)"/>
+            <ellipse cx="320" cy="280" rx="50" ry="30" fill="url(#oNebula1)" opacity="0.6"/>
+
+            <!-- galaxy spiral on belly -->
+            <g transform="translate(300 390)" opacity="0.95">
+              <circle r="6" fill="#FFFCC7"/>
+              <path d="M0 0 Q40 -10 60 -45 Q40 -75 -10 -70" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.8"/>
+              <path d="M0 0 Q-40 10 -60 45 Q-40 75 10 70" stroke="#FFFFFF" stroke-width="2.5" fill="none" opacity="0.8"/>
+              <path d="M0 0 Q25 -35 -5 -65" stroke="#FFD93D" stroke-width="1.5" fill="none" opacity="0.7"/>
+              <path d="M0 0 Q-25 35 5 65" stroke="#FFD93D" stroke-width="1.5" fill="none" opacity="0.7"/>
+            </g>
+
+            <!-- scattered stars inside body -->
+            <g fill="#FFFFFF">
+              <circle cx="240" cy="290" r="1.8"/>
+              <circle cx="270" cy="430" r="2.2"/>
+              <circle cx="350" cy="320" r="1.6"/>
+              <circle cx="380" cy="470" r="2"/>
+              <circle cx="220" cy="420" r="1.6"/>
+              <circle cx="400" cy="360" r="1.8" fill="#FFD93D"/>
+              <circle cx="200" cy="380" r="1.5" fill="#FFD93D"/>
+            </g>
+          </g>
+
+          <!-- stars outside body -->
+          <g fill="#FFFFFF">
+            <circle cx="100" cy="220" r="2.5" opacity="0.95"/>
+            <circle cx="495" cy="220" r="2" opacity="0.9"/>
+            <circle cx="80" cy="320" r="2" opacity="0.85"/>
+            <circle cx="525" cy="320" r="2.5" opacity="0.95"/>
+            <path d="M120 280 l2.5 -8 l2.5 8 l8 2.5 l-8 2.5 l-2.5 8 l-2.5 -8 l-8 -2.5 z" opacity="0.9"/>
+            <path d="M480 270 l2.5 -8 l2.5 8 l8 2.5 l-8 2.5 l-2.5 8 l-2.5 -8 l-8 -2.5 z" opacity="0.9"/>
+            <!-- shooting star top-left -->
+            <path d="M40 50 L88 96" stroke="#FFFFFF" stroke-width="2" opacity="0.65" stroke-linecap="round"/>
+            <circle cx="88" cy="96" r="3"/>
+          </g>
+
+          <!-- face disc -->
+          <ellipse cx="300" cy="290" rx="160" ry="128" fill="url(#oFaceDisc)"/>
+          <g stroke="rgba(255,255,255,0.14)" stroke-width="1.5" fill="none">
+            <path d="M195 215 Q225 222 245 232"/>
+            <path d="M175 265 Q205 265 225 268"/>
+            <path d="M192 320 Q222 315 244 305"/>
+            <path d="M405 215 Q375 222 355 232"/>
+            <path d="M425 265 Q395 265 375 268"/>
+            <path d="M408 320 Q378 315 356 305"/>
+          </g>
+
+          <!-- eye sockets -->
+          <ellipse cx="238" cy="288" rx="62" ry="66" fill="#0A0625"/>
+          <ellipse cx="362" cy="288" rx="62" ry="66" fill="#0A0625"/>
+          <!-- glowing iris -->
+          <circle cx="238" cy="288" r="50" fill="url(#oEyeGlow)"/>
+          <circle cx="362" cy="288" r="50" fill="url(#oEyeGlow)"/>
+          <circle cx="238" cy="288" r="42" fill="none" stroke="#FFB144" stroke-width="2" opacity="0.55"/>
+          <circle cx="362" cy="288" r="42" fill="none" stroke="#FFB144" stroke-width="2" opacity="0.55"/>
+          <!-- pupil -->
+          <circle cx="242" cy="291" r="19" fill="#0A0625"/>
+          <circle cx="358" cy="291" r="19" fill="#0A0625"/>
+          <!-- specular -->
+          <circle cx="251" cy="281" r="9" fill="#FFFFFF"/>
+          <circle cx="367" cy="281" r="9" fill="#FFFFFF"/>
+          <circle cx="230" cy="298" r="3" fill="#FFFFFF" opacity="0.85"/>
+          <circle cx="346" cy="298" r="3" fill="#FFFFFF" opacity="0.85"/>
+          <!-- eyelashes -->
+          <path d="M192 240 L182 222 M207 228 L202 208 M222 220 L220 200" stroke="#0A0625" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M408 240 L418 222 M393 228 L398 208 M378 220 L380 200" stroke="#0A0625" stroke-width="3.5" stroke-linecap="round"/>
+
+          <!-- SCHOLAR GLASSES (gold round) -->
+          <g>
+            <circle cx="238" cy="288" r="68" fill="none" stroke="#FFD93D" stroke-width="6"/>
+            <circle cx="362" cy="288" r="68" fill="none" stroke="#FFD93D" stroke-width="6"/>
+            <circle cx="238" cy="288" r="68" fill="url(#oGlassesGlint)" opacity="0.4"/>
+            <circle cx="362" cy="288" r="68" fill="url(#oGlassesGlint)" opacity="0.4"/>
+            <!-- nose bridge -->
+            <path d="M298 295 Q300 280 302 295" stroke="#FFD93D" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <!-- temple arms -->
+            <path d="M170 290 Q156 296 145 304" stroke="#FFD93D" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M430 290 Q444 296 455 304" stroke="#FFD93D" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <!-- glint -->
+            <path d="M215 250 Q225 245 240 247" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.85"/>
+            <path d="M340 250 Q350 245 365 247" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.85"/>
+          </g>
+
+          <!-- beak -->
+          <path d="M300 348 L272 398 L328 398 Z" fill="url(#oBeak)" stroke="#3A1A0A" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M300 348 L290 372 L310 372 Z" fill="#FFFFFF" opacity="0.35"/>
+          <path d="M285 394 Q300 402 315 394" stroke="#3A1A0A" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+          <!-- wings -->
+          <g filter="url(#oShadow)">
+            <path d="M105 340 Q70 410 110 482 Q140 462 155 422 Q150 380 145 350 Z" fill="#2A1F70" stroke="#0A0625" stroke-width="2.5"/>
+            <path d="M495 340 Q530 410 490 482 Q460 462 445 422 Q450 380 455 350 Z" fill="#2A1F70" stroke="#0A0625" stroke-width="2.5"/>
+            <path d="M110 380 Q130 392 150 380 M108 410 Q128 422 152 410 M112 440 Q130 452 148 440" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none"/>
+            <path d="M490 380 Q470 392 450 380 M492 410 Q472 422 448 410 M488 440 Q470 452 452 440" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none"/>
+            <!-- stars on wings -->
+            <circle cx="130" cy="430" r="1.5" fill="#FFFFFF"/>
+            <circle cx="470" cy="430" r="1.5" fill="#FFFFFF"/>
+          </g>
+
+          <!-- mortarboard cap -->
+          <g transform="translate(190 100)">
+            <ellipse cx="115" cy="80" rx="105" ry="14" fill="url(#oCap)" stroke="#000" stroke-width="1.5"/>
+            <path d="M10 75 L115 30 L220 75 L115 120 Z" fill="url(#oCap)" stroke="#000" stroke-width="2"/>
+            <rect x="100" y="18" width="30" height="20" rx="3" fill="url(#oCap)"/>
+            <circle cx="200" cy="75" r="9" fill="#FFD93D"/>
+            <path d="M200 75 Q224 120 244 162" stroke="#FFD93D" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M238 156 L260 184 M246 150 L260 184 M256 148 L260 184" stroke="#FFD93D" stroke-width="4" stroke-linecap="round"/>
+            <!-- tiny stars on cap -->
+            <circle cx="65" cy="60" r="1.5" fill="#FFD93D"/>
+            <circle cx="165" cy="60" r="1.5" fill="#FFD93D"/>
+          </g>
+
+          <!-- stack of books at feet (3 books) -->
+          <g transform="translate(195 480)">
+            <!-- bottom book (wider) -->
+            <rect x="0" y="40" width="210" height="32" rx="3" fill="url(#oBookC)" stroke="#5a3a08" stroke-width="2"/>
+            <rect x="4" y="44" width="202" height="24" fill="#FFF6E0" opacity="0.95"/>
+            <line x1="105" y1="40" x2="105" y2="72" stroke="#5a3a08" stroke-width="1.5"/>
+            <!-- middle book -->
+            <rect x="20" y="14" width="170" height="28" rx="3" fill="url(#oBookB)" stroke="#0A2A50" stroke-width="2"/>
+            <rect x="24" y="18" width="162" height="20" fill="#E0F8FF" opacity="0.95"/>
+            <line x1="105" y1="14" x2="105" y2="42" stroke="#0A2A50" stroke-width="1.5"/>
+            <!-- top book (open with mark) -->
+            <rect x="50" y="-10" width="110" height="26" rx="3" fill="url(#oBookA)" stroke="#3A0E60" stroke-width="2.5"/>
+            <rect x="54" y="-6" width="102" height="18" fill="#FFFFFF" opacity="0.95"/>
+            <path d="M105 -2 L107 4 L113 5 L108 9 L109 15 L105 12 L101 15 L102 9 L97 5 L103 4 Z" fill="#FFD93D" stroke="#C77A1A" stroke-width="1"/>
+          </g>
+
+          <!-- talons gripping top book -->
+          <g stroke="#D45F1A" stroke-width="5" stroke-linecap="round" fill="none">
+            <path d="M258 475 L258 488 M250 488 L266 488 M246 488 L258 502 L270 488"/>
+            <path d="M342 475 L342 488 M334 488 L350 488 M330 488 L342 502 L354 488"/>
+          </g>
+
+          <!-- quill pen tucked behind ear-right -->
+          <g transform="translate(440 145) rotate(35)">
+            <path d="M0 0 L8 -50 L14 -52 L6 0 Z" fill="#FFFCC7" stroke="#8A6A1A" stroke-width="1.5"/>
+            <path d="M2 -10 L4 -45 L8 -10" stroke="#8A6A1A" stroke-width="1" fill="none" opacity="0.6"/>
+          </g>
+
+          <!-- floating sparkles -->
+          <g fill="#FFFFFF">
+            <path d="M70 130 l3.5 -10 l3.5 10 l10 3.5 l-10 3.5 l-3.5 10 l-3.5 -10 l-10 -3.5 z" opacity="0.9"/>
+            <path d="M520 140 l3 -10 l3 10 l10 3 l-10 3 l-3 10 l-3 -10 l-10 -3 z" opacity="0.9"/>
+            <path d="M40 410 l2.5 -8 l2.5 8 l8 2.5 l-8 2.5 l-2.5 8 l-2.5 -8 l-8 -2.5 z" opacity="0.85"/>
+            <path d="M555 410 l2.5 -8 l2.5 8 l8 2.5 l-8 2.5 l-2.5 8 l-2.5 -8 l-8 -2.5 z" opacity="0.85"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="actions">
+        <button onclick="exportPng('svgOwl','lumi-owl.png')">⬇️ Export PNG (1024×1024)</button>
+        <button onclick="exportPng('svgOwl','lumi-owl@2x.png',2048)">⬇️ @2x</button>
+      </div>
+      <div class="png-out" id="out-svgOwl"><span class="meta">Chưa export.</span></div>
+    </section>
+
+  </div>
+
+<script>
+async function exportPng(svgId, filename, size = 1024) {
+  const svg = document.getElementById(svgId);
+  const clone = svg.cloneNode(true);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  clone.setAttribute('width', size);
+  clone.setAttribute('height', size);
+  const ser = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([ser], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+  const cv = document.createElement('canvas');
+  cv.width = size; cv.height = size;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,size,size);
+  ctx.drawImage(img, 0, 0, size, size);
+  URL.revokeObjectURL(url);
+
+  const dataUrl = cv.toDataURL('image/png');
+  window.__pngExports = window.__pngExports || {};
+  window.__pngExports[filename] = dataUrl;
+
+  const out = document.getElementById('out-' + svgId);
+  out.innerHTML = `<img src="${dataUrl}" alt=""><div class="meta"><b>${filename}</b><br>${size}×${size}px · ~${Math.round(dataUrl.length/1024)} KB<br>✓ ở window.__pngExports['${filename}']</div>`;
+  return dataUrl;
+}
+</script>
+</body>
+</html>

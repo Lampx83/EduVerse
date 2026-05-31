@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CABINETS, ALL_DRUGS } from './catalog.js';
 
 const MODELS_BASE = './models/pharmacy/';
@@ -85,34 +86,145 @@ function buildDrugBoxMesh(drug) {
     const box = new THREE.Mesh(new THREE.BoxGeometry(style.w, style.h, style.d), mat);
     box.castShadow = true; box.receiveShadow = true;
     sub.add(box);
-    const stripeMat = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.6 });
+    // Variant stripes: thay vì SCALE box (gây Z-fight ở mặt sau/cạnh), em dùng decal MỎNG
+    // (depth 0.002m) đặt sát mặt TRƯỚC body với khoảng cách physical 4mm — không bao
+    // giờ Z-fight bất kể camera/depth-buffer precision.
+    const stripeMat = new THREE.MeshStandardMaterial({
+      color: accent, roughness: 0.6,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    });
+    const FRONT = style.d / 2 + 0.002; // mặt trước body + 2mm
+    const BACK  = -style.d / 2 - 0.002; // mặt sau body − 2mm
     if (style.variant === 'banner') {
-      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 1.01, style.h * 0.22, style.d * 1.01), stripeMat);
-      s.position.y = style.h * 0.28; sub.add(s);
+      // Dải ngang phía trên — chỉ mặt trước
+      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.98, style.h * 0.22, 0.003), stripeMat);
+      s.position.set(0, style.h * 0.28, FRONT); sub.add(s);
     } else if (style.variant === 'panel') {
-      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 1.01, style.h * 1.01, style.d * 0.18), stripeMat);
-      s.position.z = style.d * 0.42; sub.add(s);
+      // Panel kín mặt trước
+      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.98, style.h * 0.98, 0.003), stripeMat);
+      s.position.set(0, 0, FRONT); sub.add(s);
     } else if (style.variant === 'stripe') {
-      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 1.01, style.h * 0.10, style.d * 1.01), stripeMat);
-      s.position.y = -style.h * 0.15; sub.add(s);
-      const s2 = new THREE.Mesh(new THREE.BoxGeometry(style.w * 1.01, style.h * 0.10, style.d * 1.01), stripeMat);
-      s2.position.y = style.h * 0.15; sub.add(s2);
+      // 2 sọc ngang
+      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.98, style.h * 0.10, 0.003), stripeMat);
+      s.position.set(0, -style.h * 0.15, FRONT); sub.add(s);
+      const s2 = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.98, style.h * 0.10, 0.003), stripeMat);
+      s2.position.set(0, style.h * 0.15, FRONT); sub.add(s2);
     } else if (style.variant === 'twotone') {
-      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 1.01, style.h * 0.5, style.d * 1.01), stripeMat);
-      s.position.y = style.h * 0.25; sub.add(s);
+      // Nửa trên = accent
+      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.98, style.h * 0.5, 0.003), stripeMat);
+      s.position.set(0, style.h * 0.25, FRONT); sub.add(s);
     } else if (style.variant === 'classic') {
-      const lightMat = new THREE.MeshStandardMaterial({ color: accentLight, roughness: 0.7 });
-      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.7, style.h * 0.4, style.d * 1.01), lightMat);
-      sub.add(s);
-      const s2 = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.7, style.h * 0.05, style.d * 1.01), stripeMat);
-      s2.position.y = style.h * 0.22; sub.add(s2);
-    } else { // flag
-      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.4, style.h * 1.01, style.d * 1.01), stripeMat);
-      s.position.x = -style.w * 0.28; sub.add(s);
+      const lightMat = new THREE.MeshStandardMaterial({
+        color: accentLight, roughness: 0.7,
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+      });
+      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.7, style.h * 0.4, 0.003), lightMat);
+      s.position.set(0, 0, FRONT); sub.add(s);
+      const s2 = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.7, style.h * 0.05, 0.004), stripeMat);
+      s2.position.set(0, style.h * 0.22, FRONT); sub.add(s2);
+    } else { // flag — dải dọc bên trái mặt trước
+      const s = new THREE.Mesh(new THREE.BoxGeometry(style.w * 0.4, style.h * 0.98, 0.003), stripeMat);
+      s.position.set(-style.w * 0.28, 0, FRONT); sub.add(s);
     }
     group.add(sub);
   }
   return group;
+}
+
+// ── Procedural textures (port từ compounding-lab.html) — sàn gạch + tường tile + bàn marble
+function makePharmacyFloorTex() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 1024;
+  const x = c.getContext('2d');
+  // Sàn nhà thuốc: tile trắng kem sạch (khác lab dùng brick nâu)
+  x.fillStyle = '#d6d8d0'; x.fillRect(0, 0, 1024, 1024); // grout
+  const tileSize = 256, gap = 5;
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      const hue = 35 + Math.random() * 6;
+      const sat = 8 + Math.random() * 6;
+      const lig = 86 + Math.random() * 4;
+      const px = i * tileSize + gap, py = j * tileSize + gap;
+      const w = tileSize - gap * 2, h = tileSize - gap * 2;
+      const g = x.createLinearGradient(px, py, px + w, py + h);
+      g.addColorStop(0, `hsl(${hue}, ${sat}%, ${lig + 3}%)`);
+      g.addColorStop(0.5, `hsl(${hue}, ${sat}%, ${lig}%)`);
+      g.addColorStop(1, `hsl(${hue}, ${sat}%, ${lig - 3}%)`);
+      x.fillStyle = g;
+      const r = 3;
+      x.beginPath();
+      x.moveTo(px + r, py);
+      x.lineTo(px + w - r, py); x.quadraticCurveTo(px + w, py, px + w, py + r);
+      x.lineTo(px + w, py + h - r); x.quadraticCurveTo(px + w, py + h, px + w - r, py + h);
+      x.lineTo(px + r, py + h); x.quadraticCurveTo(px, py + h, px, py + h - r);
+      x.lineTo(px, py + r); x.quadraticCurveTo(px, py, px + r, py);
+      x.closePath(); x.fill();
+      for (let k = 0; k < 50; k++) {
+        x.fillStyle = `rgba(120,120,120,${0.02 + Math.random() * 0.04})`;
+        x.fillRect(px + Math.random() * w, py + Math.random() * h, 1 + Math.random(), 1 + Math.random());
+      }
+      x.strokeStyle = 'rgba(255,255,255,0.12)';
+      x.lineWidth = 1;
+      x.beginPath();
+      x.moveTo(px + 3, py + 3); x.lineTo(px + w - 3, py + 3);
+      x.stroke();
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  return t;
+}
+function makePharmacyWallTex() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  const x = c.getContext('2d');
+  x.fillStyle = '#eaf0ea'; x.fillRect(0, 0, 512, 512);
+  x.strokeStyle = '#b8c5bd'; x.lineWidth = 2.5;
+  for (let i = 0; i <= 4; i++) {
+    x.beginPath(); x.moveTo(i * 128, 0); x.lineTo(i * 128, 512); x.stroke();
+    x.beginPath(); x.moveTo(0, i * 128); x.lineTo(512, i * 128); x.stroke();
+  }
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+    const g = x.createLinearGradient(i * 128, j * 128, (i + 1) * 128, (j + 1) * 128);
+    g.addColorStop(0, 'rgba(255,255,255,0.10)');
+    g.addColorStop(1, 'rgba(0,0,0,0.04)');
+    x.fillStyle = g; x.fillRect(i * 128, j * 128, 128, 128);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(3, 1.5);
+  return t;
+}
+function makeCounterMarbleTex(w = 1024, h = 512) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, '#f7ecd8'); g.addColorStop(0.5, '#ecdcc0'); g.addColorStop(1, '#dcc8a4');
+  x.fillStyle = g; x.fillRect(0, 0, w, h);
+  x.strokeStyle = 'rgba(120,90,60,0.15)';
+  for (let i = 0; i < 10; i++) {
+    x.beginPath(); x.lineWidth = 0.4 + Math.random() * 1.2;
+    let px = Math.random() * w, py = 0;
+    x.moveTo(px, py);
+    while (py < h) {
+      px += (Math.random() - 0.5) * 60; py += 10 + Math.random() * 20;
+      x.lineTo(px, py);
+    }
+    x.stroke();
+  }
+  for (let i = 0; i < 800; i++) {
+    x.fillStyle = `rgba(100,75,45,${Math.random() * 0.04})`;
+    x.fillRect(Math.random() * w, Math.random() * h, 1, 1);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  return t;
 }
 
 // ── GLB loader helper (auto-scale + ground at y=0) ──────────────────────────
@@ -137,20 +249,20 @@ function autoScaleGLB(obj, targetSize) {
   return obj;
 }
 
-// ── Camera presets — match cấu trúc tủ mới theo docx chỉnh sửa 1 ────────────
+// ── Camera presets — label match upstream Pharmacy-AI ───────────────────────
 const CAMERA_PRESETS = {
-  default:        { label: 'Toàn cảnh',                  pos: [3.4, 4.0, 5.5],     target: [0, 0.9, -0.4],         minDist: 2.5, maxDist: 14 },
-  fridge:         { label: 'Tủ lạnh 2-8°C',              pos: [-1.6, 1.6, 1.5],    target: [-3.6, 1.0, 1.45],      minDist: 0.8, maxDist: 5  },
-  counter:        { label: 'Quầy giao dịch',             pos: [0.0, 1.9, 3.4],     target: [0.0, 1.05, 1.0],       minDist: 1.5, maxDist: 8  },
-  consult:        { label: 'Khu tư vấn',                 pos: [-1.6, 2.0, 1.2],    target: [-3.4, 0.8, -0.4],      minDist: 1.0, maxDist: 7  },
-  cab_rx_1:       { label: 'Tủ kê đơn 1 (Rx)',           pos: [-2.82, 1.7, -0.20], target: [-2.82, 1.40, -2.125],  minDist: 0.8, maxDist: 4 },
-  cab_rx_2:       { label: 'Tủ kê đơn 2 (Rx)',           pos: [-0.94, 1.7, -0.20], target: [-0.94, 1.40, -2.125],  minDist: 0.8, maxDist: 4 },
-  cab_otc_1:      { label: 'Tủ không kê đơn 1 (OTC)',    pos: [ 0.94, 1.7, -0.20], target: [ 0.94, 1.40, -2.125],  minDist: 0.8, maxDist: 4 },
-  cab_otc_2:      { label: 'Tủ không kê đơn 2 (OTC)',    pos: [ 2.82, 1.7, -0.20], target: [ 2.82, 1.40, -2.125],  minDist: 0.8, maxDist: 4 },
-  cab_special:    { label: 'Kiểm soát đặc biệt',         pos: [ 2.45, 1.0, -1.18], target: [ 4.225, 0.80, -1.18],  minDist: 0.8, maxDist: 4 },
-  cab_supp_1:     { label: 'Sản phẩm KP thuốc 1 (TPCN)', pos: [ 2.45, 1.6,  0.60], target: [ 4.225, 1.30,  0.60],  minDist: 0.8, maxDist: 4 },
-  cab_supp_2:     { label: 'Sản phẩm KP thuốc 2 (MP)',   pos: [ 2.45, 1.6,  2.38], target: [ 4.225, 1.30,  2.38],  minDist: 0.8, maxDist: 4 },
-  front_drawers:  { label: 'Tủ quầy trước (4 ngăn)',     pos: [ 0.0, 1.5,  4.3],   target: [ 0.0, 0.5,  2.0],      minDist: 1.0, maxDist: 6  }
+  default:        { label: 'Toàn cảnh',                pos: [3.4, 4.0, 5.5],     target: [0, 0.9, -0.4],         minDist: 2.5, maxDist: 14 },
+  fridge:         { label: 'Tủ lạnh 2-8°C',            pos: [-1.6, 1.6, 1.5],    target: [-3.6, 1.0, 1.45],      minDist: 0.8, maxDist: 5  },
+  counter:        { label: 'Quầy giao dịch',           pos: [0.0, 1.9, 3.4],     target: [0.0, 1.05, 1.0],       minDist: 1.5, maxDist: 8  },
+  consult:        { label: 'Khu tư vấn',               pos: [-1.6, 2.0, 1.2],    target: [-3.4, 0.8, -0.4],      minDist: 1.0, maxDist: 7  },
+  cab_rx_1:       { label: 'Kháng sinh',               pos: [-2.82, 1.7, -0.20], target: [-2.82, 1.40, -2.125],  minDist: 0.8, maxDist: 4 },
+  cab_rx_2:       { label: 'Tim mạch–Tiểu đường',      pos: [-0.94, 1.7, -0.20], target: [-0.94, 1.40, -2.125],  minDist: 0.8, maxDist: 4 },
+  cab_otc_1:      { label: 'Giảm đau–Ho cảm',          pos: [ 0.94, 1.7, -0.20], target: [ 0.94, 1.40, -2.125],  minDist: 0.8, maxDist: 4 },
+  cab_otc_2:      { label: 'Hô hấp–Tiêu hoá',          pos: [ 2.82, 1.7, -0.20], target: [ 2.82, 1.40, -2.125],  minDist: 0.8, maxDist: 4 },
+  cab_special:    { label: 'Dược liệu',                pos: [ 2.45, 1.6, -1.18], target: [ 4.225, 1.30, -1.18],  minDist: 0.8, maxDist: 4 },
+  cab_supp_1:     { label: 'TPCN–Vitamin',             pos: [ 2.45, 1.6,  0.60], target: [ 4.225, 1.30,  0.60],  minDist: 0.8, maxDist: 4 },
+  cab_supp_2:     { label: 'Mỹ phẩm',                  pos: [ 2.45, 1.6,  2.38], target: [ 4.225, 1.30,  2.38],  minDist: 0.8, maxDist: 4 },
+  front_drawers:  { label: 'Tủ quầy trước',            pos: [ 0.0, 1.5,  4.3],   target: [ 0.0, 0.5,  2.0],      minDist: 1.0, maxDist: 6  }
 };
 
 // ── Fridge stock (13 items, port 1-1) ───────────────────────────────────────
@@ -174,18 +286,26 @@ const FRIDGE_SHELF_Y = {
 
 // ── Build the entire scene graph ────────────────────────────────────────────
 export function buildScene(canvas, opts = {}) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  // Renderer config — copy từ compounding-lab.html (PBR + soft shadow + ACES tone mapping).
+  const renderer = new THREE.WebGLRenderer({
+    canvas, antialias: true, alpha: false,
+    logarithmicDepthBuffer: true
+  });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xe6efe9);
-  scene.fog = new THREE.Fog(0xe6efe9, 14, 26);
+  scene.background = new THREE.Color(0xeef2ee);
+  scene.fog = new THREE.Fog(0xeef2ee, 14, 38);
 
-  const camera = new THREE.PerspectiveCamera(48, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+  // Camera near/far thu hẹp + logarithmicDepthBuffer → Z-buffer precision đủ cho mọi
+  // khoảng cách trong phòng 9m, giảm Z-fighting toàn bộ scene.
+  const camera = new THREE.PerspectiveCamera(48, canvas.clientWidth / canvas.clientHeight, 0.3, 30);
   camera.position.set(...CAMERA_PRESETS.default.pos);
 
   const controls = new OrbitControls(camera, canvas);
@@ -197,38 +317,72 @@ export function buildScene(canvas, opts = {}) {
   controls.maxDistance = CAMERA_PRESETS.default.maxDist;
   controls.maxPolarAngle = Math.PI / 2.1;
 
-  // Lighting (port 1-1)
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xcbd5e1, 0.4));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.0);
-  sun.position.set(4, 6, 5);
+  // Lighting — port nguyên recipe từ compounding-lab.html (phòng bào chế).
+  // PBR environment + ambient nhẹ + sun directional có soft shadow + fill xanh + 3 đèn trần ấm vàng.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+  pmrem.dispose();
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+
+  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+  sun.position.set(2.2, 4.2, 2.4);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.left = -8; sun.shadow.camera.right = 8;
-  sun.shadow.camera.top = 8; sun.shadow.camera.bottom = -8;
+  sun.shadow.camera.left = -3.5; sun.shadow.camera.right = 3.5;
+  sun.shadow.camera.top = 3.5;  sun.shadow.camera.bottom = -2;
+  sun.shadow.camera.near = 0.1; sun.shadow.camera.far = 12;
+  sun.shadow.bias = -0.0005;
   scene.add(sun);
-  const spot = new THREE.SpotLight(0xfef9c3, 0.9, 8, 0.55, 0.7);
-  spot.position.set(0, 3.4, 1.9);
-  spot.castShadow = true;
-  scene.add(spot);
-  scene.add(spot.target);
 
-  // Room dims (port 1-1)
+  // Fill ánh sáng xanh nhạt từ phía sau
+  const fill = new THREE.DirectionalLight(0xc8e1ff, 0.28);
+  fill.position.set(-2, 3, -1);
+  scene.add(fill);
+
+  // 6 đèn trần spotlight ấm vàng (0xfff5e0) phủ khu vực quầy + tủ
+  const ROOM_H_SPOT = 2.85; // độ cao mép đèn trần (= ROOM_H - 0.75)
+  function ceilingSpot(x, z) {
+    const sp = new THREE.SpotLight(0xfff5e0, 0.7, 8, Math.PI / 5.5, 0.4, 1.3);
+    sp.position.set(x, ROOM_H_SPOT, z);
+    sp.target.position.set(x, 0.95, z);
+    sp.castShadow = false;
+    scene.add(sp); scene.add(sp.target);
+    const housing = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.08, 0.05, 24),
+      new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.55, roughness: 0.35 })
+    );
+    housing.position.set(x, ROOM_H_SPOT + 0.12, z);
+    scene.add(housing);
+    const bulb = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.07, 0.07, 0.01, 24),
+      new THREE.MeshBasicMaterial({ color: 0xfff8e0 })
+    );
+    bulb.position.set(x, ROOM_H_SPOT + 0.09, z);
+    scene.add(bulb);
+  }
+  // 3 đèn trên quầy + 3 đèn trên dãy tủ sau lưng (đối xứng x = -1.5, 0, 1.5)
+  ceilingSpot(-1.5, 1.3);  ceilingSpot(0, 1.3);  ceilingSpot(1.5, 1.3);
+  ceilingSpot(-1.5, -1.5); ceilingSpot(0, -1.5); ceilingSpot(1.5, -1.5);
+
+  // Room dims — BACK_Z = -2.4 (KHÔNG phải -ROOM_D/2) để tủ sát quầy hơn, view không trống.
   const ROOM_W = 9, ROOM_D = 9, ROOM_H = 3.6;
-  const BACK_Z = -ROOM_D / 2;
+  const BACK_Z = -2.4;
   const RIGHT_X = ROOM_W / 2;
 
-  // Floor
+  // Floor — sàn gạch tile trắng kem, repeat 3×2 cho mịn
+  const floorTex = makePharmacyFloorTex();
+  floorTex.repeat.set(3, 2);
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(ROOM_W, ROOM_D),
-    new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.85 })
+    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.85, metalness: 0.04 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
 
-  // Walls
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0xecfeff, roughness: 0.85 });
+  // Walls — tile xanh nhạt giống lab, chỉ 3 mặt (KHÔNG tường trước).
+  const wallMat = new THREE.MeshStandardMaterial({ map: makePharmacyWallTex(), roughness: 0.82 });
   const backWall = new THREE.Mesh(new THREE.BoxGeometry(ROOM_W, ROOM_H, 0.1), wallMat);
   backWall.position.set(0, ROOM_H / 2, BACK_Z - 0.05);
   scene.add(backWall);
@@ -240,8 +394,11 @@ export function buildScene(canvas, opts = {}) {
   const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, ROOM_H, sideDepth), wallMat);
   rightWall.position.set(ROOM_W / 2 + 0.05, ROOM_H / 2, sideCenterZ);
   scene.add(rightWall);
-  // Ceiling
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_D), new THREE.MeshStandardMaterial({ color: 0xfafbfd, roughness: 0.9 }));
+  // Trần — chỉ trải dài tới ROOM_D/2 (= +4.5), không tới hết phía trước phòng để có cảm giác mở.
+  const ceil = new THREE.Mesh(
+    new THREE.PlaneGeometry(ROOM_W, ROOM_D),
+    new THREE.MeshStandardMaterial({ color: 0xfafbfd, roughness: 0.9 })
+  );
   ceil.position.y = ROOM_H; ceil.rotation.x = Math.PI / 2;
   scene.add(ceil);
 
@@ -297,114 +454,50 @@ export function buildScene(canvas, opts = {}) {
     return tex;
   }
 
-  // ── Per-shelf labels per docx requirement ───────────────────────────────
-  // 2 tủ Rx × 7 ngăn + 2 tủ OTC × 7 ngăn + tủ kiểm soát đặc biệt 4 ngăn
-  const SHELF_LABELS = {
-    rx_1: [
-      'Kháng sinh Rx',
-      'Thuốc tim mạch Rx',
-      'Thuốc hô hấp Rx',
-      'Thuốc giảm đau chống viêm Rx',
-      'Thuốc điều trị loét dạ dày Rx',
-      'Thuốc tiêu hóa Rx',
-      'Thuốc giãn cơ Rx'
-    ],
-    rx_2: [
-      'Thuốc điều trị tiểu đường Rx',
-      'Hormon và nội tiết Rx',
-      'Thuốc phụ khoa Rx',
-      'Thuốc điều trị đau nửa đầu Rx',
-      'Thuốc kháng virus Rx',
-      'Thuốc nhỏ mắt, mũi, tai Rx',
-      'Thuốc tiêm, dịch truyền Rx'
-    ],
-    otc_1: [
-      'Thuốc hạ sốt giảm đau OTC',
-      'Thuốc kháng histamin OTC',
-      'Thuốc hô hấp OTC',
-      'Thuốc nhỏ mắt, mũi, tai OTC',
-      'Thuốc tiêu hóa OTC',
-      'Vitamin và khoáng chất OTC',
-      'Thuốc có nguồn gốc dược liệu OTC'
-    ],
-    otc_2: [
-      'Thuốc điều trị loét dạ dày OTC',
-      'Thuốc tiêu hóa OTC',
-      'Thuốc phụ khoa OTC',
-      'Tránh thai OTC',
-      'Thuốc dùng ngoài OTC',
-      'Thuốc nhỏ giọt OTC',
-      'Sirô OTC'
-    ],
-    special_control: [
-      'Thuốc gây nghiện, hướng thần, tiền chất',
-      'Thuốc danh mục cấm/hạn chế',
-      'Thuốc kiểm soát đặc biệt khác',
-      'Thuốc lưu trữ an toàn'
-    ],
-    supp_1: ['Thực phẩm chức năng', 'Vitamin TPCN', 'Khoáng chất TPCN', 'Bổ sung dinh dưỡng', 'Hỗ trợ tiêu hóa'],
-    supp_2: ['Mỹ phẩm', 'Dụng cụ y tế', 'Băng – gạc – sát khuẩn', 'Khẩu trang – găng tay', 'Vật tư khác']
-  };
-
   function buildCabinet(cab, W, H, D, shelfCount, opts = {}) {
     const cabGroup = new THREE.Group();
-    const frameMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.6 });
-    const accentMat = new THREE.MeshStandardMaterial({ color: cab.accent, roughness: 0.55 });
+    // Body teal-green giống screenshot upstream
+    const frameMat = new THREE.MeshStandardMaterial({ color: cab.accent, roughness: 0.55, metalness: 0.05 });
     const back = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.05), frameMat);
     back.position.set(0, H / 2, -D / 2 + 0.025);
     cabGroup.add(back);
 
-    // Banner header (textured) — "THUỐC KÊ ĐƠN Rx" v.v.
-    const bannerH = 0.18;
+    // Banner — TRẮNG bo tròn, chữ teal đậm, đặt PHÍA TRÊN tủ như screenshot
+    const bannerH = 0.35;
+    const bannerW = W * 0.95;
     const bannerTex = makeTextTexture(cab.label, {
-      w: 1024, h: 128,
-      bg: cab.accent,
-      color: '#ffffff',
-      fontSize: 56
+      w: 1024, h: 256,
+      bg: '#ffffff',
+      color: '#0f766e',  // teal đậm
+      fontSize: 80
     });
-    const bannerMat = new THREE.MeshStandardMaterial({ map: bannerTex, roughness: 0.6 });
-    const banner = new THREE.Mesh(new THREE.BoxGeometry(W, bannerH, 0.02), bannerMat);
-    banner.position.set(0, H - bannerH / 2 - 0.02, D / 2 - 0.005);
+    const bannerMat = new THREE.MeshStandardMaterial({
+      map: bannerTex, roughness: 0.55,
+      polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3
+    });
+    const banner = new THREE.Mesh(new THREE.BoxGeometry(bannerW, bannerH, 0.04), bannerMat);
+    banner.position.set(0, H + bannerH / 2 - 0.02, D / 2 - 0.1);
     cabGroup.add(banner);
-    // Vẫn giữ top accent strip cho khối kệ phía sau banner
-    const header = new THREE.Mesh(new THREE.BoxGeometry(W, 0.12, D), accentMat);
-    header.position.set(0, H - 0.06, 0);
-    cabGroup.add(header);
 
-    // Side rails
-    const railL = new THREE.Mesh(new THREE.BoxGeometry(0.03, H, D), frameMat);
-    railL.position.set(-W / 2 + 0.015, H / 2, 0); cabGroup.add(railL);
-    const railR = new THREE.Mesh(new THREE.BoxGeometry(0.03, H, D), frameMat);
-    railR.position.set(W / 2 - 0.015, H / 2, 0); cabGroup.add(railR);
+    // Side rails — cùng màu teal cho liền mạch
+    const railL = new THREE.Mesh(new THREE.BoxGeometry(0.04, H, D), frameMat);
+    railL.position.set(-W / 2 + 0.02, H / 2, 0); cabGroup.add(railL);
+    const railR = new THREE.Mesh(new THREE.BoxGeometry(0.04, H, D), frameMat);
+    railR.position.set(W / 2 - 0.02, H / 2, 0); cabGroup.add(railR);
+    // Đáy tủ (kick board)
+    const baseRail = new THREE.Mesh(new THREE.BoxGeometry(W, 0.12, D), frameMat);
+    baseRail.position.set(0, 0.06, 0); cabGroup.add(baseRail);
 
-    // Shelves
-    const shelfMat = new THREE.MeshStandardMaterial({ color: 0xeceff3, roughness: 0.7 });
+    // Shelves — màu cream giống screenshot
+    const shelfMat = new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.65 });
     const shelfYs = [];
-    const usableH = H - 0.35;
+    const usableH = H - 0.25;
     for (let s = 0; s < shelfCount; s++) {
-      const y = 0.20 + s * usableH / shelfCount;
+      const y = 0.18 + s * usableH / shelfCount;
       shelfYs.push(y);
-      const shelf = new THREE.Mesh(new THREE.BoxGeometry(W - 0.04, 0.03, D - 0.03), shelfMat);
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(W - 0.06, 0.04, D - 0.04), shelfMat);
       shelf.position.set(0, y, 0); shelf.receiveShadow = true;
       cabGroup.add(shelf);
-    }
-
-    // Shelf labels (per docx) — gắn ở mép trước của mỗi ngăn
-    const labels = SHELF_LABELS[cab.id] || [];
-    for (let s = 0; s < shelfCount; s++) {
-      const label = labels[s] || '';
-      if (!label) continue;
-      const tex = makeTextTexture(label, {
-        w: 512, h: 64,
-        bg: '#ffffff',
-        border: cab.accent,
-        color: cab.accent,
-        fontSize: 26
-      });
-      const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.7 });
-      const labelMesh = new THREE.Mesh(new THREE.BoxGeometry(W * 0.7, 0.06, 0.012), mat);
-      labelMesh.position.set(0, shelfYs[s] + 0.04, D / 2 - 0.012);
-      cabGroup.add(labelMesh);
     }
 
     // Cửa kính (cho tủ kiểm soát đặc biệt)
@@ -413,12 +506,9 @@ export function buildScene(canvas, opts = {}) {
         color: 0xbfdbfe, transparent: true, opacity: 0.22, roughness: 0.05,
         metalness: 0, transmission: 0.6, ior: 1.5
       });
-      const glass = new THREE.Mesh(new THREE.BoxGeometry(W - 0.08, H - 0.3, 0.02), glassMat);
-      glass.position.set(0, H / 2, D / 2 - 0.01);
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(W - 0.08, H - 0.3, 0.025), glassMat);
+      glass.position.set(0, H / 2, D / 2 + 0.02);
       cabGroup.add(glass);
-      const lockTag = new THREE.Mesh(new THREE.CircleGeometry(0.02, 16), new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.5 }));
-      lockTag.position.set(0, H * 0.35, D / 2 - 0.005);
-      cabGroup.add(lockTag);
     }
 
     // Distribute drugs onto shelves
@@ -460,20 +550,21 @@ export function buildScene(canvas, opts = {}) {
     scene.add(g);
   });
 
-  // Front counter
+  // Front counter — mặt bàn kem, body TEAL giống screenshot upstream
   const counter = new THREE.Group();
   const counterTop = new THREE.Mesh(
-    new THREE.BoxGeometry(COUNTER_W, 0.08, COUNTER_D),
-    new THREE.MeshStandardMaterial({ color: 0xe9d5b0, roughness: 0.6 })
+    new THREE.BoxGeometry(COUNTER_W + 0.1, 0.08, COUNTER_D + 0.1),
+    new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.45, metalness: 0.05 })
   );
   counterTop.position.set(0, COUNTER_H, COUNTER_Z);
   counterTop.castShadow = counterTop.receiveShadow = true;
   counter.add(counterTop);
   const counterBody = new THREE.Mesh(
-    new THREE.BoxGeometry(COUNTER_W, COUNTER_H, COUNTER_D),
-    new THREE.MeshStandardMaterial({ color: 0xd1b990, roughness: 0.75 })
+    new THREE.BoxGeometry(COUNTER_W, COUNTER_H - 0.08, COUNTER_D),
+    new THREE.MeshStandardMaterial({ color: 0x0d9488, roughness: 0.5, metalness: 0.1 })
   );
-  counterBody.position.set(0, 0.5, COUNTER_Z);
+  counterBody.position.set(0, (COUNTER_H - 0.08) / 2, COUNTER_Z);
+  counterBody.castShadow = counterBody.receiveShadow = true;
   counter.add(counterBody);
   scene.add(counter);
 
@@ -490,10 +581,10 @@ export function buildScene(canvas, opts = {}) {
   // 2 ngăn tủ kính (Thuốc dùng ngoài Rx / OTC) + 2 ngăn tránh sáng (Thuốc chờ xử lý / Hồ sơ tài liệu)
   // Đặt phía TRƯỚC dược sĩ, dưới mép counter — sinh viên cúi xuống lấy.
   const FRONT_DRAWER_LABELS = [
-    { id: 'drawer_rx',    label: 'Thuốc dùng ngoài Rx',   accent: '#dc2626', glass: true },
-    { id: 'drawer_otc',   label: 'Thuốc dùng ngoài OTC',  accent: '#2563eb', glass: true },
-    { id: 'drawer_wait',  label: 'Thuốc chờ xử lý',       accent: '#94a3b8', glass: false },
-    { id: 'drawer_files', label: 'Hồ sơ tài liệu',         accent: '#64748b', glass: false }
+    { id: 'drawer_rx',    label: 'Thuốc dùng ngoài Rx',   accent: '#0d9488', glass: true },
+    { id: 'drawer_otc',   label: 'Thuốc dùng ngoài OTC',  accent: '#0d9488', glass: true },
+    { id: 'drawer_wait',  label: 'Thuốc chờ xử lý',       accent: '#0d9488', glass: false },
+    { id: 'drawer_files', label: 'Hồ sơ tài liệu',         accent: '#0d9488', glass: false }
   ];
   const drawerGroup = new THREE.Group();
   drawerGroup.position.set(0, 0, COUNTER_Z + COUNTER_D / 2 + 0.04);
@@ -502,108 +593,408 @@ export function buildScene(canvas, opts = {}) {
     const dx = -COUNTER_W / 2 + drawerW / 2 + i * drawerW;
     const wrap = new THREE.Group();
     wrap.position.set(dx, 0, 0);
-    // Body
+    // Body — teal giống counter
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(drawerW - 0.04, COUNTER_H - 0.04, 0.36),
-      new THREE.MeshStandardMaterial({ color: 0xd6b88a, roughness: 0.7 })
+      new THREE.MeshStandardMaterial({ color: 0x0d9488, roughness: 0.55, metalness: 0.1 })
     );
     body.position.set(0, COUNTER_H / 2, 0);
     body.castShadow = body.receiveShadow = true;
     wrap.add(body);
-    // 2 tầng (front face has 2 horizontal dividers)
+    // 2 tầng (front face has 2 horizontal dividers).
+    // Body BoxGeometry depth 0.36 → front face nằm ở z = +0.18.
+    // Đẩy face/handle/label ra ngoài để KHÔNG Z-fight với body và lẫn nhau.
     for (let t = 0; t < 2; t++) {
       const y = 0.18 + t * 0.42;
       const faceMat = dr.glass
         ? new THREE.MeshPhysicalMaterial({ color: 0xbfdbfe, transparent: true, opacity: 0.28, roughness: 0.05, transmission: 0.65, ior: 1.5 })
         : new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.7 });
-      const face = new THREE.Mesh(new THREE.BoxGeometry(drawerW - 0.08, 0.36, 0.02), faceMat);
-      face.position.set(0, y + 0.18, 0.18);
+      const face = new THREE.Mesh(new THREE.BoxGeometry(drawerW - 0.08, 0.36, 0.022), faceMat);
+      face.position.set(0, y + 0.18, 0.205); // 0.18 (body front) + 0.025 ngoài
       wrap.add(face);
-      // Handle
+      // Handle — đẩy ra trước face thêm 0.02
       const handle = new THREE.Mesh(
         new THREE.BoxGeometry(drawerW * 0.4, 0.02, 0.018),
         new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.6, roughness: 0.3 })
       );
-      handle.position.set(0, y + 0.06, 0.19);
+      handle.position.set(0, y + 0.06, 0.225);
       wrap.add(handle);
     }
-    // Label
+    // Label — đặt ở dưới drawer, đẩy ra ngoài hẳn 0.025
     const labelTex = makeTextTexture(dr.label, {
       w: 512, h: 96, bg: '#ffffff', border: dr.accent, color: dr.accent, fontSize: 36
     });
-    const labelMat = new THREE.MeshStandardMaterial({ map: labelTex, roughness: 0.7 });
-    const label = new THREE.Mesh(new THREE.BoxGeometry(drawerW - 0.08, 0.08, 0.012), labelMat);
-    label.position.set(0, 0.07, 0.19);
+    const labelMat = new THREE.MeshStandardMaterial({
+      map: labelTex, roughness: 0.7,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    });
+    const label = new THREE.Mesh(new THREE.BoxGeometry(drawerW - 0.08, 0.08, 0.018), labelMat);
+    label.position.set(0, 0.07, 0.21);
     wrap.add(label);
     drawerGroup.add(wrap);
   });
   scene.add(drawerGroup);
 
-  // POS computer (dual-screen feel: pharmacist side + CFD facing customer)
+  // POS computer — port theo upstream: T-base + trụ + khớp xoay + 2 màn back-to-back
+  // (15.6" cho dược sĩ, CFD 10" cho khách) + bàn phím nghiêng + chuột.
   const POS_X = 1.45;
   const pos = new THREE.Group();
+  pos.scale.setScalar(0.72);
+
+  // Đế chữ T
   const posBase = new THREE.Mesh(
-    new THREE.BoxGeometry(0.55, 0.04, 0.34),
-    new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.4 })
+    new THREE.BoxGeometry(0.5, 0.04, 0.42),
+    new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.35, roughness: 0.45 })
   );
-  posBase.position.set(0, 0.02, 0); pos.add(posBase);
-  const posScreenA = new THREE.Mesh(
-    new THREE.BoxGeometry(0.5, 0.32, 0.03),
-    new THREE.MeshStandardMaterial({ color: 0x0a3070, emissive: 0x0a3070, emissiveIntensity: 0.6 })
+  posBase.position.set(0, 0.025, 0); pos.add(posBase);
+  const posBaseRim = new THREE.Mesh(
+    new THREE.BoxGeometry(0.52, 0.012, 0.44),
+    new THREE.MeshStandardMaterial({ color: 0x1f2937 })
   );
-  posScreenA.position.set(0, 0.22, -0.06);
-  posScreenA.rotation.x = 0.18;
-  posScreenA.userData = { posClick: true };
-  pos.add(posScreenA);
-  // Customer-facing display (mini, smaller, facing the other way)
-  const posCFD = new THREE.Mesh(
-    new THREE.BoxGeometry(0.32, 0.18, 0.025),
-    new THREE.MeshStandardMaterial({ color: 0x064e3b, emissive: 0x065f46, emissiveIntensity: 0.5 })
+  posBaseRim.position.set(0, 0.005, 0); pos.add(posBaseRim);
+  // Trụ
+  const posStem = new THREE.Mesh(
+    new THREE.BoxGeometry(0.08, 0.32, 0.08),
+    new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.35, roughness: 0.45 })
   );
-  posCFD.position.set(0, 0.16, 0.16);
-  posCFD.rotation.x = -0.18;
-  pos.add(posCFD);
-  pos.position.set(POS_X, COUNTER_H, COUNTER_Z);
+  posStem.position.set(0, 0.22, 0); pos.add(posStem);
+  // Khớp xoay (cylinder)
+  const posJoint = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.055, 0.055, 0.07, 24),
+    new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.6, roughness: 0.3 })
+  );
+  posJoint.position.set(0, 0.38, 0); pos.add(posJoint);
+
+  // ──── Màn chính 15.6" cho DƯỢC SĨ (hướng -z, vào phía sau quầy) ────
+  const monitorMain = new THREE.Group();
+  monitorMain.position.set(0, 0.6, -0.08);
+  monitorMain.rotation.set(0.05, Math.PI, 0);
+  const mainBezel = new THREE.Mesh(
+    new THREE.BoxGeometry(0.92, 0.62, 0.06),
+    new THREE.MeshStandardMaterial({ color: 0x0a0f1c, metalness: 0.55, roughness: 0.4 })
+  );
+  monitorMain.add(mainBezel);
+  // Thanh đáy bezel
+  const mainBottomBar = new THREE.Mesh(
+    new THREE.BoxGeometry(0.92, 0.06, 0.061),
+    new THREE.MeshStandardMaterial({ color: 0x0f172a })
+  );
+  mainBottomBar.position.set(0, -0.27, 0.001);
+  monitorMain.add(mainBottomBar);
+  // Screen texture (canvas) — UI giống upstream
+  const mainScreenTex = (() => {
+    const c = document.createElement('canvas');
+    c.width = 860; c.height = 500;
+    const ctx = c.getContext('2d');
+    // Background
+    const grad = ctx.createLinearGradient(0, 0, 0, 500);
+    grad.addColorStop(0, '#0b1220'); grad.addColorStop(1, '#0f1f3a');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 860, 500);
+    // Top status bar
+    ctx.fillStyle = '#0d9488';
+    ctx.fillRect(0, 0, 860, 50);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 26px Inter, sans-serif';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.fillText('★ Pharma-POS v1.0', 16, 25);
+    ctx.fillStyle = '#a7f3d0'; ctx.font = 'bold 22px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('● online · DS001', 844, 25);
+    // Body
+    ctx.fillStyle = '#bae6fd'; ctx.font = 'bold 40px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('F2: DANH MỤC  ·  F9: THANH TOÁN', 430, 180);
+    ctx.fillStyle = '#e2e8f0'; ctx.font = '28px Inter, sans-serif';
+    ctx.fillText('Danh mục: 180 SKU', 430, 240);
+    // Green CTA
+    ctx.fillStyle = '#22c55e'; ctx.font = 'bold 50px Inter, sans-serif';
+    ctx.fillText('🛒 NHẤN ĐỂ MỞ POS', 430, 340);
+    // Footer ticks
+    ctx.fillStyle = '#0ea5e9'; ctx.fillRect(0, 480, 860, 6);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  })();
+  const mainScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.86, 0.5),
+    new THREE.MeshStandardMaterial({
+      map: mainScreenTex, emissive: 0x082f49, emissiveIntensity: 0.45,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    })
+  );
+  mainScreen.position.set(0, 0.025, 0.035);
+  mainScreen.userData = { posClick: true };
+  monitorMain.add(mainScreen);
+  pos.add(monitorMain);
+
+  // ──── Màn phụ CFD 10" cho KHÁCH (hướng +z) ────
+  const monitorCFD = new THREE.Group();
+  monitorCFD.position.set(0, 0.6, 0.08);
+  monitorCFD.rotation.set(0.05, 0, 0);
+  const cfdBezel = new THREE.Mesh(
+    new THREE.BoxGeometry(0.56, 0.4, 0.05),
+    new THREE.MeshStandardMaterial({ color: 0x0a0f1c, metalness: 0.55, roughness: 0.4 })
+  );
+  monitorCFD.add(cfdBezel);
+  const cfdScreenTex = (() => {
+    const c = document.createElement('canvas');
+    c.width = 520; c.height = 320;
+    const ctx = c.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 320);
+    grad.addColorStop(0, '#0c4a6e'); grad.addColorStop(1, '#0e7490');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 520, 320);
+    ctx.fillStyle = '#ecfeff'; ctx.font = 'bold 22px Inter, sans-serif';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    ctx.fillText('NHÀ THUỐC GPP · KHÁCH HÀNG', 260, 50);
+    ctx.fillStyle = '#bae6fd'; ctx.font = 'bold 26px Inter, sans-serif';
+    ctx.fillText('TỔNG TIỀN PHẢI THANH TOÁN', 260, 110);
+    ctx.fillStyle = '#fef3c7'; ctx.font = 'bold 75px Inter, sans-serif';
+    ctx.fillText('— ₫', 260, 200);
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '18px Inter, sans-serif';
+    ctx.fillText('(đã gồm 8% VAT) — Cảm ơn quý khách!', 260, 280);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  })();
+  const cfdScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.52, 0.32),
+    new THREE.MeshStandardMaterial({
+      map: cfdScreenTex, emissive: 0x0ea5e9, emissiveIntensity: 0.4,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    })
+  );
+  cfdScreen.position.set(0, 0.02, 0.03);
+  monitorCFD.add(cfdScreen);
+  pos.add(monitorCFD);
+
+  // ──── Bàn phím nghiêng ────
+  const kbBase = new THREE.Mesh(
+    new THREE.BoxGeometry(0.55, 0.025, 0.2),
+    new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.55 })
+  );
+  kbBase.rotation.x = 0.08;
+  kbBase.position.set(0, 0.015, -0.32);
+  pos.add(kbBase);
+  const kbKeys = new THREE.Mesh(
+    new THREE.BoxGeometry(0.51, 0.005, 0.17),
+    new THREE.MeshStandardMaterial({ color: 0x475569 })
+  );
+  kbKeys.rotation.x = 0.08;
+  kbKeys.position.set(0, 0.029, -0.32);
+  pos.add(kbKeys);
+  // Chuột (bên trái bàn phím khi nhìn từ phía dược sĩ)
+  const mouse = new THREE.Mesh(
+    new THREE.BoxGeometry(0.08, 0.028, 0.13),
+    new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.55 })
+  );
+  mouse.position.set(-0.35, 0.018, -0.32); pos.add(mouse);
+
+  pos.position.set(POS_X, COUNTER_H + 0.05, COUNTER_Z - 0.05);
   scene.add(pos);
 
-  // Label-editor trigger ("RA LẺ" yellow tray on counter)
-  const TOOLTRAY_X = 0.55;
-  const labelTrigger = new THREE.Mesh(
-    new THREE.BoxGeometry(0.4, 0.04, 0.25),
-    new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.25 })
+  // ── Khay BÁN HÀNG (pick tray) — port 1-1 từ upstream: mặt khay + 4 viền gờ + nhãn ──
+  const PICK_TRAY_W = 0.62, PICK_TRAY_D = 0.34, PICK_TRAY_T = 0.022, PICK_TRAY_RIM = 0.01;
+  const PICK_TRAY_CX = -0.30;
+  const PICK_TRAY_CZ = COUNTER_Z + 0.20;
+  const PICK_TRAY_CY = COUNTER_H + PICK_TRAY_T / 2;
+  const pickTray = new THREE.Group();
+  pickTray.position.set(PICK_TRAY_CX, PICK_TRAY_CY, PICK_TRAY_CZ);
+  scene.add(pickTray);
+  const pickBase = new THREE.Mesh(
+    new THREE.BoxGeometry(PICK_TRAY_W, PICK_TRAY_T, PICK_TRAY_D),
+    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.55, metalness: 0.05 })
   );
-  labelTrigger.position.set(TOOLTRAY_X, COUNTER_H + 0.025, COUNTER_Z + 0.18);
-  labelTrigger.userData = { labelClick: true };
-  scene.add(labelTrigger);
-
-  // Tool tray (scissors/tape/pen/notepad GLB)
-  const toolTrayGroup = new THREE.Group();
-  toolTrayGroup.position.set(TOOLTRAY_X, COUNTER_H + 0.005, COUNTER_Z - 0.05);
-  scene.add(toolTrayGroup);
-  const TOOL_TARGETS = [
-    { url: 'scissors.glb', position: [0.05, 0, 0.12],  rotY:  Math.PI / 4,  size: 0.16 },
-    { url: 'tape.glb',     position: [0.22, 0, 0.12],  rotY: -Math.PI / 6,  size: 0.11 },
-    { url: 'pen.glb',      position: [-0.1, 0, 0.13],  rotY:  Math.PI / 2.5,size: 0.14 },
-    { url: 'notepad.glb',  position: [0.38, 0, 0.05],  rotY:  Math.PI / 12, size: 0.16 }
-  ];
-
-  // Pick tray (port 1-1: 4×2 slots)
-  const PICK_TRAY_CX = -0.55;
-  const tray = new THREE.Mesh(
-    new THREE.BoxGeometry(0.62, 0.02, 0.34),
-    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 })
+  pickTray.add(pickBase);
+  // 4 viền gờ
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.5 });
+  [
+    [0,                                  PICK_TRAY_T / 2 + 0.005, -PICK_TRAY_D / 2 + 0.005, PICK_TRAY_W,    0.012, PICK_TRAY_RIM],
+    [0,                                  PICK_TRAY_T / 2 + 0.005,  PICK_TRAY_D / 2 - 0.005, PICK_TRAY_W,    0.012, PICK_TRAY_RIM],
+    [-PICK_TRAY_W / 2 + 0.005,           PICK_TRAY_T / 2 + 0.005, 0,                        PICK_TRAY_RIM, 0.012, PICK_TRAY_D],
+    [ PICK_TRAY_W / 2 - 0.005,           PICK_TRAY_T / 2 + 0.005, 0,                        PICK_TRAY_RIM, 0.012, PICK_TRAY_D]
+  ].forEach(p => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(p[3], p[4], p[5]), rimMat);
+    m.position.set(p[0], p[1], p[2]);
+    pickTray.add(m);
+  });
+  // Nhãn "KHAY BÁN HÀNG"
+  const pickTrayLabelTex = (() => {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#e2e8f0'; ctx.fillRect(0, 0, 512, 64);
+    ctx.fillStyle = '#475569'; ctx.font = 'bold 30px Inter, sans-serif';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    ctx.fillText('KHAY BÁN HÀNG · 4×2 slot', 256, 32);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  })();
+  const pickTrayLabel = new THREE.Mesh(
+    new THREE.PlaneGeometry(PICK_TRAY_W * 0.7, 0.05),
+    new THREE.MeshStandardMaterial({
+      map: pickTrayLabelTex, transparent: true,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    })
   );
-  tray.position.set(PICK_TRAY_CX, COUNTER_H + 0.045, COUNTER_Z);
-  scene.add(tray);
+  pickTrayLabel.rotation.x = -Math.PI / 2;
+  pickTrayLabel.position.set(0, PICK_TRAY_T / 2 + 0.001, -PICK_TRAY_D / 2 + 0.05);
+  pickTray.add(pickTrayLabel);
+
   const TRAY_SLOTS = [];
   for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) {
     TRAY_SLOTS.push(new THREE.Vector3(
       PICK_TRAY_CX + (c - 1.5) * 0.135,
       COUNTER_H + 0.06,
-      COUNTER_Z + (r - 0.5) * 0.14
+      PICK_TRAY_CZ + (r - 0.5) * 0.14
     ));
   }
   function pickSlotPos(idx) { return TRAY_SLOTS[Math.min(idx, TRAY_SLOTS.length - 1)]; }
+
+  // ── KHAY DỤNG CỤ + RA LẺ + NHÃN HDSD (tool tray) — port 1-1 upstream ──
+  // Group co lại 0.75× để vừa quầy, mặt khay 0.95×0.42m thật, nằm bên phải pick tray.
+  const TOOLTRAY_X = 0.55;
+  const TT_SCALE = 0.75;
+  const TW = 0.95, TD = 0.42;
+  const toolTrayGroup = new THREE.Group();
+  toolTrayGroup.position.set(TOOLTRAY_X, COUNTER_H + 0.01 * TT_SCALE, COUNTER_Z - 0.05);
+  toolTrayGroup.scale.setScalar(TT_SCALE);
+  scene.add(toolTrayGroup);
+
+  // Khay nền (click để soạn nhãn HDSD)
+  const toolTrayBase = new THREE.Mesh(
+    new THREE.BoxGeometry(TW, 0.02, TD),
+    new THREE.MeshStandardMaterial({ color: 0xe7e5e4, roughness: 0.6 })
+  );
+  toolTrayBase.userData = { labelClick: true };
+  toolTrayGroup.add(toolTrayBase);
+  // Nhãn "KHAY DỤNG CỤ + RA LẺ + NHÃN HDSD"
+  const toolTrayLabelTex = (() => {
+    const c = document.createElement('canvas');
+    c.width = 1024; c.height = 96;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fde68a'; ctx.fillRect(0, 0, 1024, 96);
+    ctx.strokeStyle = '#d97706'; ctx.lineWidth = 4;
+    ctx.strokeRect(2, 2, 1020, 92);
+    ctx.fillStyle = '#1f2937'; ctx.font = 'bold 38px Inter, sans-serif';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    ctx.fillText('KHAY DỤNG CỤ + RA LẺ + NHÃN HDSD · click để soạn nhãn', 512, 48);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  })();
+  const toolTrayLabel = new THREE.Mesh(
+    new THREE.PlaneGeometry(TW * 0.92, 0.06),
+    new THREE.MeshStandardMaterial({
+      map: toolTrayLabelTex, transparent: true,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    })
+  );
+  toolTrayLabel.rotation.x = -Math.PI / 2;
+  toolTrayLabel.position.set(0, 0.012, -TD / 2 + 0.05);
+  toolTrayGroup.add(toolTrayLabel);
+
+  // Hộp RA LẺ (pill counter) — vàng kem, viền cam, gạt chia + 4 viên thuốc giả
+  const pillCounter = new THREE.Group();
+  pillCounter.position.set(-0.36, 0.012, 0.05);
+  toolTrayGroup.add(pillCounter);
+  const pillPad = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 0.025, 0.16),
+    new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.5 })
+  );
+  pillCounter.add(pillPad);
+  // Viền 4 cạnh
+  [
+    [0, 0.02, -0.08, 0.2, 0.04, 0.01],
+    [0, 0.02,  0.08, 0.2, 0.04, 0.01],
+    [-0.1, 0.02, 0, 0.01, 0.04, 0.16],
+    [ 0.1, 0.02, 0, 0.01, 0.04, 0.16]
+  ].forEach(p => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(p[3], p[4], p[5]),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b }));
+    m.position.set(p[0], p[1], p[2]);
+    pillCounter.add(m);
+  });
+  // Gạt chia
+  const divider = new THREE.Mesh(
+    new THREE.BoxGeometry(0.005, 0.04, 0.14),
+    new THREE.MeshStandardMaterial({ color: 0x0f172a })
+  );
+  divider.position.set(0, 0.025, 0);
+  pillCounter.add(divider);
+  // 4 viên thuốc giả
+  [[-0.05,-0.04],[-0.03,0.02],[0.04,-0.03],[0.06,0.05]].forEach(([dx, dz], i) => {
+    const pill = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.012, 0.012, 0.006, 14),
+      new THREE.MeshStandardMaterial({ color: i % 2 === 0 ? 0xffffff : 0xfbbf24, roughness: 0.5 })
+    );
+    pill.position.set(dx, 0.022, dz);
+    pillCounter.add(pill);
+  });
+
+  // 3 bao bì ra lẻ (Sáng/Trưa/Tối) — trắng/vàng/hồng
+  [
+    { color: 0xffffff, outline: 0xcbd5e1, dx: -0.13 },
+    { color: 0xfde68a, outline: 0xd97706, dx: -0.02 },
+    { color: 0xfbcfe8, outline: 0xbe185d, dx:  0.09 }
+  ].forEach((bag, i) => {
+    const g = new THREE.Group();
+    g.position.set(bag.dx, 0.012, -0.05);
+    g.rotation.y = i * 0.08 - 0.1;
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.022, 0.11),
+      new THREE.MeshStandardMaterial({ color: bag.color, roughness: 0.7 })
+    );
+    g.add(body);
+    const seal = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.004, 0.012),
+      new THREE.MeshStandardMaterial({ color: bag.outline })
+    );
+    seal.position.set(0, 0.013, -0.05);
+    g.add(seal);
+    toolTrayGroup.add(g);
+  });
+
+  // Túi zip-lock kín khí (xanh trong)
+  const zipBag = new THREE.Group();
+  zipBag.position.set(0.18, 0.012, -0.05);
+  zipBag.rotation.y = 0.15;
+  const zipBody = new THREE.Mesh(
+    new THREE.BoxGeometry(0.09, 0.014, 0.11),
+    new THREE.MeshStandardMaterial({
+      color: 0xcffafe, roughness: 0.25, metalness: 0.1,
+      transparent: true, opacity: 0.78
+    })
+  );
+  zipBag.add(zipBody);
+  const zipStrip = new THREE.Mesh(
+    new THREE.BoxGeometry(0.085, 0.004, 0.008),
+    new THREE.MeshStandardMaterial({ color: 0x0891b2 })
+  );
+  zipStrip.position.set(0, 0.009, -0.05);
+  zipBag.add(zipStrip);
+  toolTrayGroup.add(zipBag);
+
+  // Xấp giấy dính HDSD (4 lớp) — màu trắng + 1 lớp vàng kem trên cùng
+  const stickerPile = new THREE.Group();
+  stickerPile.position.set(0.38, 0.012, -0.08);
+  stickerPile.rotation.y = 0.1;
+  for (let i = 0; i < 4; i++) {
+    const sheet = new THREE.Mesh(
+      new THREE.BoxGeometry(0.09, 0.003, 0.06),
+      new THREE.MeshStandardMaterial({ color: i === 3 ? 0xfef9c3 : 0xffffff, roughness: 0.65 })
+    );
+    sheet.position.y = 0.003 + i * 0.0035;
+    stickerPile.add(sheet);
+  }
+  toolTrayGroup.add(stickerPile);
+
+  // Tool GLB targets: scissors/tape/pen/notepad — vị trí trong khay 0.95×0.42
+  const TOOL_TARGETS = [
+    { url: 'scissors.glb', position: [0.05, 0.012, 0.12], rotY:  Math.PI / 4,   size: 0.16 },
+    { url: 'tape.glb',     position: [0.22, 0.012, 0.12], rotY: -Math.PI / 6,   size: 0.11 },
+    { url: 'pen.glb',      position: [-0.1, 0.012, 0.13], rotY:  Math.PI / 2.5, size: 0.14 },
+    { url: 'notepad.glb',  position: [0.38, 0.012, 0.05], rotY:  Math.PI / 12,  size: 0.16 }
+  ];
 
   // ── FRIDGE — custom mesh, 5 shelves, 2 doors, 13 stocks (port 1-1) ───────
   const fridgeGroup = new THREE.Group();
@@ -825,60 +1216,8 @@ export function buildScene(canvas, opts = {}) {
         plantGroups.push({ group: wrap, phase: p.phase });
       } catch (e) { console.warn('Plant load failed:', e); }
     }
-    // Sofa (consult area)
-    try {
-      const gltf = await loadGLB(MODELS_BASE + 'sofa.glb');
-      autoScaleGLB(gltf.scene, 1.4);
-      gltf.scene.position.set(-3.4, 0, 0.9);
-      gltf.scene.rotation.y = Math.PI;
-      scene.add(gltf.scene);
-    } catch (e) { console.warn('Sofa load failed:', e); }
-    // Pharmacist (behind counter)
-    try {
-      const gltf = await loadGLB(MODELS_BASE + 'pharmacist.glb');
-      const obj = gltf.scene;
-      autoScaleGLB(obj, 1.7);
-      const wrap = new THREE.Group();
-      wrap.add(obj);
-      wrap.position.set(-0.6, 0, COUNTER_Z - 1.0);
-      wrap.rotation.y = 0; // facing +z (toward counter+customer)
-      scene.add(wrap);
-      if (gltf.animations?.length) {
-        const mixer = new THREE.AnimationMixer(obj);
-        const idle = gltf.animations.find(a => /idle|stand/i.test(a.name)) ||
-                     gltf.animations.find(a => !/walk|run|dance|jump/i.test(a.name)) ||
-                     gltf.animations[0];
-        if (idle) {
-          const action = mixer.clipAction(idle);
-          action.timeScale = 0.7;
-          action.play();
-          charMixers.push(mixer);
-        }
-      }
-    } catch (e) { console.warn('Pharmacist load failed:', e); }
-    // Patient (in front of counter)
-    try {
-      const gltf = await loadGLB(MODELS_BASE + 'patient.glb');
-      const obj = gltf.scene;
-      autoScaleGLB(obj, 1.65);
-      const wrap = new THREE.Group();
-      wrap.add(obj);
-      wrap.position.set(0.5, 0, COUNTER_Z + 1.2);
-      wrap.rotation.y = Math.PI; // facing -z (toward counter/pharmacist)
-      scene.add(wrap);
-      if (gltf.animations?.length) {
-        const mixer = new THREE.AnimationMixer(obj);
-        const idle = gltf.animations.find(a => /idle|stand/i.test(a.name)) ||
-                     gltf.animations.find(a => !/walk|run|dance|jump/i.test(a.name)) ||
-                     gltf.animations[0];
-        if (idle) {
-          const action = mixer.clipAction(idle);
-          action.timeScale = 0.7;
-          action.play();
-          charMixers.push(mixer);
-        }
-      }
-    } catch (e) { console.warn('Patient load failed:', e); }
+    // Sofa: bỏ theo yêu cầu.
+    // Pharmacist + Patient: bỏ theo yêu cầu — không phù hợp với view nhà thuốc.
   }
   loadAllModels();
 

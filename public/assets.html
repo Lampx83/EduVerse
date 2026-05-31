@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>EduVerse · Thư viện Asset 3D</title>
+<title>Tizia · Thư viện Asset 3D</title>
 <style>
   :root {
     --bg-1: #0f172a; --bg-2: #1e293b; --bg-3: #312e81;
@@ -115,7 +115,7 @@
     <div class="stats" id="stats">Đang quét…</div>
   </div>
   <p class="tagline">
-    Catalogue toàn bộ model 3D (.glb/.gltf) dùng được trong EduVerse — phân loại theo gói, tag, kích thước.
+    Catalogue toàn bộ model 3D (.glb/.gltf) dùng được trong Tizia — phân loại theo gói, tag, kích thước.
     Bấm vào card để xem trước. Có thể kéo URL vào Lesson Builder (sắp ra mắt).
   </p>
 
@@ -234,7 +234,7 @@ function render() {
     el.addEventListener('dragstart', (e) => {
       // Cho phép kéo URL vào input field hoặc Lesson Builder (sau này)
       e.dataTransfer.setData('text/plain', new URL(el.dataset.url, location.href).toString());
-      e.dataTransfer.setData('application/x-eduverse-asset', el.dataset.url);
+      e.dataTransfer.setData('application/x-tizia-asset', el.dataset.url);
     });
   });
 }

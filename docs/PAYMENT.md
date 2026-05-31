@@ -1,4 +1,4 @@
-# EduVerse — Payment (VNPay) Setup & Flow
+# Tizia — Payment (VNPay) Setup & Flow
 
 > **Phase 1, OFF mặc định.** Bật bằng `PAYMENT_ENABLED=1`. Khi tắt: KHÔNG có
 > bảng payment, KHÔNG có route — runtime hiện tại không đổi.
@@ -8,7 +8,7 @@
 
 ## 1. Nguyên tắc bất di bất dịch
 
-1. **KHÔNG bao giờ chạm thẻ** (PAN/CVV) — VNPay hosted page xử lý. EduVerse chỉ tạo đơn + nhận kết quả.
+1. **KHÔNG bao giờ chạm thẻ** (PAN/CVV) — VNPay hosted page xử lý. Tizia chỉ tạo đơn + nhận kết quả.
 2. **IPN là nguồn chân lý**, KHÔNG phải Return URL. User đóng tab không được làm hỏng đơn.
 3. **Idempotency** trên IPN: bảng `webhook_inbox` UNIQUE(gateway, event_key) → retry của VNPay không ghi sổ trùng.
 4. **Internal ledger double-entry**: mọi tiền vào/ra ghi `ledger_entries` cân bằng. Đối soát hàng ngày với VNPay, KHÔNG tin mỗi số trên cổng.
@@ -21,7 +21,7 @@ PAYMENT_ENABLED=1
 VNPAY_TMN_CODE=<mã merchant>           # VNPay cấp
 VNPAY_HASH_SECRET=<secret ký>          # secrets manager, KHÔNG git
 VNPAY_PAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html   # sandbox; prod đổi domain
-VNPAY_RETURN_URL=https://eduverse.vn/api/payment/vnpay/return
+VNPAY_RETURN_URL=https://tizia.vn/api/payment/vnpay/return
 ```
 
 Đăng ký sandbox: https://sandbox.vnpayment.vn/devreg → lấy TMN_CODE + HASH_SECRET + thẻ test.

@@ -1,11 +1,11 @@
-# Cloudflare Tunnel ingress config for EduVerse
+# Cloudflare Tunnel ingress config for Tizia
 # Copy to ~/.cloudflared/config.yml and adjust UUID + hostname.
 #
 # Steps to set up a named tunnel (one-time):
 #
 #   cloudflared tunnel login                          # opens browser, picks limio.vn zone
-#   cloudflared tunnel create eduverse             # outputs UUID
-#   cloudflared tunnel route dns eduverse ps.limio.vn   # creates DNS CNAME
+#   cloudflared tunnel create tizia             # outputs UUID
+#   cloudflared tunnel route dns tizia ps.limio.vn   # creates DNS CNAME
 #
 # Then copy this file → ~/.cloudflared/config.yml
 # (replace UUID-HERE with the UUID from `create`)
@@ -16,9 +16,9 @@
 #
 # Or run in foreground:
 #
-#   cloudflared tunnel run eduverse
+#   cloudflared tunnel run tizia
 
-tunnel: eduverse
+tunnel: tizia
 credentials-file: /home/codelab/.cloudflared/UUID-HERE.json
 
 # ============================================================

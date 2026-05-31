@@ -36,4 +36,51 @@ export const MODULES = [
   { category: 'curriculum', id: 'SV9', title: 'Ngữ văn lớp 9', yearLevel: 4, subject: 'ngu-van',
     scenarioIds: ['SV9-van-quiz'], knowledgeQuiz: 'SV9-van-quiz', minStarsToUnlock: 9, prerequisites: ['SV8'],
     description: 'Truyện Kiều · truyện - thơ hiện đại · phương châm hội thoại · cách dẫn trực tiếp/gián tiếp · nghĩa hàm ý.' },
+
+  // ───────── Lớp 6 — 11 môn × 36 tuần (HK1: T1–18 · HK2: T19–36) ─────────
+  // Scenario tuần do lop6/<môn>.js sinh ra (S6XXX-wNN-quiz). Module loader
+  // auto-list theo prefix ID. Tổng ~2 427 câu trắc nghiệm bám GDPT 2018.
+  { category: 'curriculum', id: 'S6TOAN', title: 'Toán lớp 6 (36 tuần)', yearLevel: 1, subject: 'toan',
+    scenarioIds: ['S6TOAN-w01-quiz'], knowledgeQuiz: 'S6TOAN-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần (HK1: số tự nhiên, chia hết, ƯCLN-BCNN, số nguyên. HK2: phân số, số thập phân, tỉ số phần trăm, hình học cơ bản).' },
+
+  { category: 'curriculum', id: 'S6NV', title: 'Ngữ văn lớp 6 (36 tuần)', yearLevel: 1, subject: 'ngu-van',
+    scenarioIds: ['S6NV-w01-quiz'], knowledgeQuiz: 'S6NV-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần (HK1: truyện đồng thoại-cổ tích-truyền thuyết, thơ lục bát, miêu tả, tu từ, từ vựng-câu. HK2: ký, thơ tự sự, nghị luận, thông tin, biểu cảm, dấu câu, từ Hán Việt).' },
+
+  { category: 'curriculum', id: 'S6TA', title: 'Tiếng Anh lớp 6 (36 tuần)', yearLevel: 1, subject: 'tieng-anh',
+    scenarioIds: ['S6TA-w01-quiz'], knowledgeQuiz: 'S6TA-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần CEFR A1–A2 (HK1: school, home, friends, neighbourhood, natural wonders, modal verbs. HK2: environment, future, TV, past simple, sports, cities, robots).' },
+
+  { category: 'curriculum', id: 'S6KHTN', title: 'Khoa học tự nhiên lớp 6 (36 tuần)', yearLevel: 1, subject: 'khtn',
+    scenarioIds: ['S6KHTN-w01-quiz'], knowledgeQuiz: 'S6KHTN-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần tích hợp Vật lý-Hoá-Sinh (HK1: dụng cụ đo, chất, vật liệu, tế bào. HK2: phân loại sinh vật, lực, năng lượng, Trái Đất-Mặt Trời).' },
+
+  { category: 'curriculum', id: 'S6LSDL', title: 'Lịch sử & Địa lí lớp 6 (36 tuần)', yearLevel: 1, subject: 'lich-su-dia',
+    scenarioIds: ['S6LSDL-w01-quiz'], knowledgeQuiz: 'S6LSDL-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần tích hợp (HK1 Lịch sử: nguyên thuỷ → Ai Cập-Lưỡng Hà → Văn Lang-Âu Lạc → Bắc thuộc & khởi nghĩa. HK2 Địa lí: bản đồ, Trái Đất, địa hình, khí hậu, nước, đất, sinh vật).' },
+
+  { category: 'curriculum', id: 'S6GDCD', title: 'GD công dân lớp 6 (36 tuần)', yearLevel: 1, subject: 'gdcd',
+    scenarioIds: ['S6GDCD-w01-quiz'], knowledgeQuiz: 'S6GDCD-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần · 12 chủ đề (HK1: truyền thống dòng họ, yêu thương, siêng năng, trung thực, tự lập, tự nhận thức. HK2: ứng phó nguy hiểm, tiết kiệm, công dân, quyền-nghĩa vụ, quyền trẻ em).' },
+
+  { category: 'curriculum', id: 'S6CN', title: 'Công nghệ lớp 6 (36 tuần)', yearLevel: 1, subject: 'cong-nghe',
+    scenarioIds: ['S6CN-w01-quiz'], knowledgeQuiz: 'S6CN-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần · 4 chương (Nhà ở · Bảo quản-chế biến thực phẩm · Trang phục-thời trang · Đồ dùng điện trong gia đình).' },
+
+  { category: 'curriculum', id: 'S6TH', title: 'Tin học lớp 6 (36 tuần)', yearLevel: 1, subject: 'tin-hoc',
+    scenarioIds: ['S6TH-w01-quiz'], knowledgeQuiz: 'S6TH-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần · 6 chủ đề A-F (máy tính, Internet, tệp-thư mục, đạo đức số, soạn thảo-trình chiếu, thuật toán cơ bản).' },
+
+  { category: 'curriculum', id: 'S6GDTC', title: 'GD thể chất lớp 6 (36 tuần)', yearLevel: 1, subject: 'gdtc',
+    scenarioIds: ['S6GDTC-w01-quiz'], knowledgeQuiz: 'S6GDTC-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần (HK1: đội hình, TD liên hoàn, chạy ngắn-bền, nhảy xa-bật cao, ném bóng. HK2: bóng đá-rổ-cầu lông-chuyền, an toàn-sơ cứu, dinh dưỡng vận động).' },
+
+  { category: 'curriculum', id: 'S6NT', title: 'Nghệ thuật lớp 6 (36 tuần)', yearLevel: 1, subject: 'nghe-thuat',
+    scenarioIds: ['S6NT-w01-quiz'], knowledgeQuiz: 'S6NT-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần (HK1 Âm nhạc: nốt-nhịp-trường độ, nhạc cụ, dân ca. HK2 Mỹ thuật: yếu tố tạo hình, màu sắc, tĩnh vật-chân dung, tranh dân gian Đông Hồ-Hàng Trống).' },
+
+  { category: 'curriculum', id: 'S6HDTN', title: 'HĐ trải nghiệm – hướng nghiệp lớp 6 (36 tuần)', yearLevel: 1, subject: 'hdtn',
+    scenarioIds: ['S6HDTN-w01-quiz'], knowledgeQuiz: 'S6HDTN-w01-quiz', minStarsToUnlock: 0,
+    description: '36 tuần · 4 mạch GDPT 2018 (Hướng vào bản thân · Hướng đến xã hội · Hướng đến tự nhiên · Hướng nghiệp).' },
 ];

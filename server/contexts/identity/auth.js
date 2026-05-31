@@ -1,4 +1,4 @@
-// Đăng nhập cho EduVerse: scrypt password + opaque session token (cookie httpOnly).
+// Đăng nhập cho Tizia: scrypt password + opaque session token (cookie httpOnly).
 // Không thêm thư viện ngoài — dùng node:crypto + better-sqlite3 sẵn có.
 
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
@@ -7,8 +7,9 @@ import {
   createSession, getSession, deleteSession,
   resolveSchoolByEmail, getSchoolByCode,
 } from '../../db.js';
+import { effectivePlan, meetsPlan, USER_PLANS } from '../billing/user-plans.js';
 
-const COOKIE_NAME = 'eduverse_sid';
+const COOKIE_NAME = 'tizia_sid';
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 ngày
 const SCRYPT_KEYLEN = 64;
 
@@ -74,6 +75,8 @@ export function getCurrentUser(req) {
     display_name: sess.display_name,
     role: sess.role,
     school_id: sess.school_id,   // cần cho attachTenant (multi-tenant enforcement)
+    plan: sess.plan || 'free',
+    plan_expires_at: sess.plan_expires_at || null,
     token: sess.token,
   };
 }
@@ -91,6 +94,25 @@ export function requireAuth(req, res, next) {
   next();
 }
 
+// ── Middleware: bắt buộc gói cước ≥ level (B2C user plan) ──
+// Dùng cho route premium (vd /api/ai/grade-essay yêu cầu 'pro'). Trả 402 Payment
+// Required + meta để FE bật paywall modal. requireAuth phải chạy trước để có req.user.
+export function requirePlan(minPlan) {
+  return (req, res, next) => {
+    if (!req.user) req.user = getCurrentUser(req);
+    if (!req.user) return res.status(401).json({ error: 'unauthorized', needLogin: true });
+    const eff = effectivePlan(req.user);
+    if (!meetsPlan(eff.id, minPlan)) {
+      return res.status(402).json({
+        error: 'plan_required', current_plan: eff.id, required_plan: minPlan,
+        message: `Tính năng này cần gói "${USER_PLANS[minPlan]?.name || minPlan}". Gói hiện tại: ${eff.name}.`,
+        upgrade_url: '/pricing.html',
+      });
+    }
+    next();
+  };
+}
+
 // ── Gate trang HTML: chưa đăng nhập → redirect /login.html ──
 // Whitelist các path không cần login (login/register, asset chung, health, /api/auth, PWA).
 const PUBLIC_PATH_PREFIXES = [
@@ -99,7 +121,10 @@ const PUBLIC_PATH_PREFIXES = [
   // KHÔNG bằng cookie — VNPay gọi server-to-server không kèm session. create-order
   // KHÔNG nằm ở đây nên vẫn yêu cầu đăng nhập.
   '/api/payment/vnpay/',
-  '/js/auth.js', '/js/sso.js', '/js/auth-header.js', '/js/engine/storage.js',
+  // Bundle JS/scenarios không phải bí mật — guest cần để render trang chủ + trường Mầm non.
+  '/js/',
+  // Bản đồ khuôn viên (iframe nhúng vào school.html) — không có bí mật, là HTML/JS thuần.
+  '/campus-proto/',
   '/manifest.webmanifest', '/sw.js', '/favicon',
   '/vendor/', '/models/',
 ];
@@ -107,6 +132,17 @@ const PUBLIC_PATH_EXACT = new Set([
   '/login.html', '/register.html', '/login', '/register',
   // SEO: trang công khai crawlable cho Googlebot (xem contexts/seo).
   '/welcome', '/robots.txt', '/sitemap.xml',
+  // CHẾ ĐỘ KHÁCH (không đăng nhập): được xem trang chủ + chợ app + trang trường
+  // và các trang nội dung lớp học. Frontend tự khoá trường ≠ Mầm non cho khách
+  // (xem isGuestDomain trong public/js/engine/domain.js). Mọi /api/* ghi dữ liệu
+  // (attempts, classes, lessons…) vẫn yêu cầu đăng nhập, nên không có lỗ hổng.
+  '/', '/index.html',
+  '/apps.html',
+  '/school.html',
+  '/subject.html', '/module.html', '/lesson.html', '/weekly-lesson.html',
+  '/quiz.html',
+  // Trang bảng giá — khách phải xem được trước khi đăng ký/mua.
+  '/pricing.html', '/pricing',
 ]);
 
 function isPublicPath(p) {
@@ -220,12 +256,18 @@ export function attachAuth(r) {
     const u = req.user || getCurrentUser(req);
     if (!u) return res.status(401).json({ error: 'unauthorized' });
     const full = getUserById(u.id);
+    const eff = full ? effectivePlan(full) : null;
     res.json({
       user: full ? {
         id: full.id, username: full.username, display_name: full.display_name,
         role: full.role, age: full.age,
         email: full.email, avatar_url: full.avatar_url,
         created_at: full.created_at, last_login: full.last_login,
+        // Plan: stored = cột raw trong DB; effective = đã xét hết hạn (degrade về free)
+        plan: full.plan || 'free',
+        plan_expires_at: full.plan_expires_at || null,
+        billing_cycle: full.billing_cycle || null,
+        effective_plan: eff?.id || 'free',
       } : null,
     });
   });

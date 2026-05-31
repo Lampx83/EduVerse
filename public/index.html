@@ -3,13 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>EduVerse · Vũ trụ giáo dục</title>
+<title>Tizia · Vũ trụ giáo dục</title>
+<meta name="description" content="Tizia — The Intelligent Zone for Interactive Academy. Vũ trụ giáo dục do AI điều hành, học bằng 2D · 3D · VR · XR · Metaverse." />
+<meta property="og:title" content="Tizia · Vũ trụ giáo dục" />
+<meta property="og:description" content="Tizia — The Intelligent Zone for Interactive Academy." />
+<meta property="og:type" content="website" />
 <!-- PWA: offline-first cho mạng yếu (GAP 14) -->
 <link rel="manifest" href="./manifest.webmanifest" />
 <meta name="theme-color" content="#fbbf24" />
-<meta name="application-name" content="EduVerse" />
+<meta name="application-name" content="Tizia" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="EduVerse" />
+<meta name="apple-mobile-web-app-title" content="Tizia" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <style>
   :root {
@@ -109,7 +113,7 @@
   @keyframes shoot { 0%{left:-160px;opacity:0} 5%{opacity:.9} 13%{left:120%;opacity:0} 100%{left:120%;opacity:0} }
 
   /* ===== Hệ mặt trời thống nhất: quỹ đạo elip nghiêng + hành tinh đôi là 1 node ===== */
-  .stage { position: relative; width: 440px; height: 440px; max-width: 100%; margin: 0 auto; overflow: hidden; }
+  .stage { position: relative; width: 490px; height: 420px; max-width: 100%; margin: 0 auto; overflow: hidden; }
   .solar { position: absolute; inset: 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -126,9 +130,13 @@
     50%     { transform: scale(1.035); filter: brightness(1.12); box-shadow: 0 0 44px 13px rgba(251,191,36,0.78), 0 0 104px 30px rgba(249,115,22,0.44); }
   }
 
-  /* Quỹ đạo elip nghiêng (w≠h tạo elip, --tilt nghiêng, --dur tốc độ, --dir chiều) */
-  .osys { position: absolute; inset: 0; margin: auto; width: var(--w); height: var(--h); transform: rotate(var(--tilt)); }
+  /* Quỹ đạo elip NGHIÊNG đúng cách: hộp gốc là HÌNH TRÒN (w×w), rồi rotate(tilt)+scaleY(k)
+     ép cả VÒNG lẫn ĐƯỜNG-icon cùng một tỉ lệ → icon LUÔN bám đúng vạch. --k<1 = dẹt. */
+  .osys { position: absolute; inset: 0; margin: auto; width: var(--w); height: var(--w);
+          transform: rotate(var(--tilt, 0deg)) scaleY(var(--k, 1)); }
   .osys .ring { position: absolute; inset: 0; border: 1px dashed rgba(255,255,255,var(--ring-a, 0.15)); border-radius: 50%; }
+  /* Bù méo cho emoji: ngược scaleY + ngược tilt → icon hiện bình thường, không dẹt/nghiêng */
+  .osys .pf { display: inline-block; transform: scaleY(calc(1 / var(--k, 1))) rotate(calc(-1 * var(--tilt, 0deg))); }
   .osys .rot { position: absolute; inset: 0; animation: spin var(--dur) linear infinite; animation-delay: var(--delay, 0s); }
   .osys[data-dir="rev"] .rot { animation-direction: reverse; }
   /* Icon kiến thức: KHÔNG vòng tròn nền — chỉ emoji nổi, có bóng đổ cho rõ */
@@ -141,13 +149,14 @@
     animation-delay: var(--delay, 0s);
     transition: opacity 0.4s;
   }
-  /* Sao Hỏa: quả cầu đỏ gỉ (CSS gradient) — hành tinh thật, icon cố định không đổi */
-  .osys .planet.mars {
-    width: 20px; height: 20px; margin-left: -10px;
-    background: radial-gradient(circle at 35% 30%, #ffcaa6 0%, #e2683c 46%, #b23a1e 80%, #7c2410 100%);
-    box-shadow: 0 0 10px 2px rgba(226,104,60,0.4); filter: none;
-  }
+  /* Sao Hỏa: quả cầu đỏ gỉ (CSS gradient). Đặt trên .pf để được bù méo → luôn tròn. */
+  .osys .planet.mars { width: 20px; height: 20px; margin-left: -10px; background: transparent; box-shadow: none; filter: none; }
   .osys .planet.mars.top { top: -10px; }
+  .osys .planet.mars .pf {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffcaa6 0%, #e2683c 46%, #b23a1e 80%, #7c2410 100%);
+    box-shadow: 0 0 10px 2px rgba(226,104,60,0.4);
+  }
   .osys[data-dir="rev"] .planet { animation-direction: normal; }
   .osys .planet.top { top: -16px; }
   .osys .planet.bot { bottom: -16px; }
@@ -159,8 +168,10 @@
   .osys .binode { width: 72px; height: 72px; margin-left: -36px; background: transparent; border: none; box-shadow: none; }
   .osys .binode.bot { bottom: -36px; }
   .osys .binode.top { top: -36px; }
+  /* .bfix bù méo cho CẢ hệ Trái đất–Mặt trăng → quỹ đạo Mặt trăng là HÌNH TRÒN (không elip). */
+  .binode .bfix { position: absolute; inset: 0; transform: scaleY(calc(1 / var(--k, 1))) rotate(calc(-1 * var(--tilt, 0deg))); }
   .binode .bring { position: absolute; inset: 8px; border: 1px dashed rgba(255,255,255,0.28); border-radius: 50%; }
-  /* Trái đất: tâm node, không quay quanh mặt trời-con, chỉ đứng yên ở giữa */
+  /* Trái đất: tâm node, đứng yên ở giữa (đã được .bfix bù méo) */
   .binode .earth { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
     font-size: 27px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.55)); z-index: 2; }
   /* Vành xoay của Mặt trăng + bản thân Mặt trăng (counter-rotate để glyph thẳng) */
@@ -404,7 +415,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 }
 </script>
 
-<!-- One-time migration của localStorage keys cũ pharmacysim:* → eduverse:* -->
+<!-- One-time migration của localStorage keys cũ pharmacysim:* → tizia:* -->
 <script type="module">
   import { migrateAllKnown, KEYS, lsGet, lsSet } from './js/engine/storage.js';
   migrateAllKnown();
@@ -428,7 +439,8 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   <div class="hero-inner">
     <!-- Cột trái: lời chào -->
     <div class="hero-left">
-      <h2 class="greet" id="hero-greet">Chào mừng đến EduVerse <span class="wave">👋</span></h2>
+      <h2 class="greet" id="hero-greet">Chào mừng đến Tizia <span class="wave">👋</span></h2>
+      <p class="tagline" style="opacity:.85;font-style:italic;font-size:13px;margin-top:-4px;letter-spacing:.3px;">The Intelligent Zone for Interactive Academy</p>
       <p class="tagline">Vũ trụ giáo dục <b>do AI điều hành</b> — học liệu, môi trường thực hành và <b>tự cải tiến mỗi ngày</b>. Học bằng 2D · 3D · VR · XR · Metaverse.</p>
       <div class="cta-row">
         <a class="cta primary" id="hero-enter" href="#schools">🏫 Vào trường của bạn</a>
@@ -442,33 +454,35 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
       <div class="stage" id="stage" aria-hidden="true">
         <div class="solar">
           <div class="core"></div>
-          <!-- Quỹ đạo TRÒN đồng tâm: icon LUÔN nằm đúng trên vạch (1 đường = 1 icon).
-               Bán kính tăng dần (trong→ngoài); --ring-a (đậm nhạt) + tốc độ/chiều/lệch pha khác nhau. -->
-          <div class="osys" style="--w:130px;--h:130px;--tilt:0deg;--dur:14s;--delay:0s;--ring-a:0.34">
-            <div class="ring"></div><div class="rot"><span class="planet top" data-rot="1">💊</span></div>
+          <!-- Quỹ đạo ELIP NGHIÊNG (hộp tròn + scaleY(--k) + rotate(--tilt)); icon bám đúng vạch
+               nhờ .pf bù méo. Mỗi vòng 1 icon; --k (độ dẹt) + --tilt + --ring-a khác nhau. -->
+          <div class="osys" style="--w:210px;--k:0.80;--tilt:0deg;--dur:14s;--delay:0s;--ring-a:0.32">
+            <div class="ring"></div><div class="rot"><span class="planet top"><span class="pf" data-rot="1">💊</span></span></div>
           </div>
-          <div class="osys" data-dir="rev" style="--w:185px;--h:185px;--tilt:0deg;--dur:18s;--delay:-5s;--ring-a:0.20">
-            <div class="ring"></div><div class="rot"><span class="planet top" data-rot="1">💻</span></div>
+          <div class="osys" data-dir="rev" style="--w:300px;--k:0.55;--tilt:20deg;--dur:18s;--delay:-5s;--ring-a:0.20">
+            <div class="ring"></div><div class="rot"><span class="planet top"><span class="pf" data-rot="1">💻</span></span></div>
           </div>
-          <div class="osys" style="--w:240px;--h:240px;--tilt:0deg;--dur:23s;--delay:-11s;--ring-a:0.13">
-            <div class="ring"></div><div class="rot"><span class="planet top" data-rot="1">⚖️</span></div>
+          <div class="osys" style="--w:362px;--k:0.64;--tilt:-24deg;--dur:23s;--delay:-11s;--ring-a:0.14">
+            <div class="ring"></div><div class="rot"><span class="planet top"><span class="pf" data-rot="1">⚖️</span></span></div>
           </div>
-          <div class="osys" data-dir="rev" style="--w:295px;--h:295px;--tilt:0deg;--dur:30s;--delay:-17s;--ring-a:0.26">
-            <div class="ring"></div><div class="rot"><span class="planet top" data-rot="1">📐</span></div>
+          <div class="osys" data-dir="rev" style="--w:300px;--k:0.86;--tilt:10deg;--dur:30s;--delay:-17s;--ring-a:0.26">
+            <div class="ring"></div><div class="rot"><span class="planet top"><span class="pf" data-rot="1">📐</span></span></div>
           </div>
           <!-- Trái đất + Mặt trăng (icon cố định) -->
-          <div class="osys" style="--w:345px;--h:345px;--tilt:0deg;--dur:37s;--delay:-9s;--ring-a:0.18">
+          <div class="osys" style="--w:412px;--k:0.58;--tilt:-14deg;--dur:37s;--delay:-9s;--ring-a:0.18">
             <div class="ring"></div><div class="rot">
               <span class="planet binode top">
-                <span class="bring"></span>
-                <span class="earth">🌍</span>
-                <span class="bspin"><span class="moon">🌙</span></span>
+                <span class="bfix">
+                  <span class="bring"></span>
+                  <span class="earth">🌍</span>
+                  <span class="bspin"><span class="moon">🌕</span></span>
+                </span>
               </span>
             </div>
           </div>
           <!-- Sao Hỏa: nhỏ + quỹ đạo NGOÀI Trái đất (xa mặt trời hơn), icon cố định -->
-          <div class="osys" data-dir="rev" style="--w:392px;--h:392px;--tilt:0deg;--dur:46s;--delay:-15s;--ring-a:0.11">
-            <div class="ring"></div><div class="rot"><span class="planet mars top"></span></div>
+          <div class="osys" data-dir="rev" style="--w:462px;--k:0.62;--tilt:16deg;--dur:46s;--delay:-15s;--ring-a:0.12">
+            <div class="ring"></div><div class="rot"><span class="planet mars top"><span class="pf"></span></span></div>
           </div>
         </div>
       </div>
@@ -681,6 +695,32 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     .school-card.locked .sc-cta {
       background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.6);
     }
+    /* Guest-locked: vẫn bấm được (→ login), không xám nặng như coming-soon */
+    .school-card.guest-locked {
+      cursor: pointer; opacity: 0.8; filter: none;
+    }
+    .school-card.guest-locked::after { content: '🔐'; opacity: 0.85; }
+    .school-card.guest-locked:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,0.1);
+      border-color: var(--sc-color, var(--accent));
+      box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+    }
+    .school-card.guest-locked .sc-cta {
+      background: rgba(251,191,36,0.85); color: #3e2723;
+    }
+    /* Plan-locked: đã đăng nhập nhưng gói chưa đủ → CTA "Nâng cấp" tím */
+    .school-card.plan-locked { cursor: pointer; opacity: 0.85; filter: none; }
+    .school-card.plan-locked::after { content: '✨'; opacity: 0.95; }
+    .school-card.plan-locked:hover {
+      transform: translateY(-3px); background: rgba(168,85,247,.08);
+      border-color: #a855f7; box-shadow: 0 8px 22px rgba(168,85,247,.25);
+    }
+    .school-card.plan-locked .sc-cta {
+      background: linear-gradient(135deg,#a855f7,#ec4899); color: #fff;
+    }
+    .school-card .sc-pill.plus { background: rgba(59,130,246,.28); color: #93c5fd; font-weight: 700; }
+    .school-card .sc-pill.pro  { background: rgba(168,85,247,.32); color: #d8b4fe; font-weight: 700; }
 
     /* Cụm cấp học (Phổ thông / Higher Ed) */
     .school-cluster { margin-bottom: 22px; }
@@ -697,34 +737,76 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   <div id="school-clusters"></div>
 
   <script type="module">
-    import { DOMAIN_META, DOMAIN_LEVELS } from './js/engine/domain.js';
+    import { DOMAIN_META, DOMAIN_LEVELS, isGuestDomain, getRequiredPlan, canEnterDomain } from './js/engine/domain.js';
+    import { fetchMe } from './js/auth.js';
+    import { effectivePlanId, USER_PLANS } from './js/plans.js';
 
     const host = document.getElementById('school-clusters');
     const statusLabel = { ready: '✓ Sẵn sàng', preview: 'Preview', locked: '🔒 Sắp mở' };
     const order = { ready: 0, preview: 1, locked: 2 };
 
+    // Chế độ KHÁCH: nếu chưa đăng nhập, các trường ≠ Mầm non bị khoá tạm với CTA
+    // "Đăng nhập để mở". Không redirect, không nháy — giữ nguyên trang chủ.
+    const me = await fetchMe();
+    const isGuest = !me;
+    const myPlan = effectivePlanId(me);
+
     const openCount = DOMAIN_META.filter(d => d.status !== 'locked').length;
-    document.getElementById('schools-hint').textContent =
-      `${openCount}/${DOMAIN_META.length} trường đã mở · chia theo cấp học · các trường khác đang được xây dựng`;
+    const planLine = isGuest
+      ? `bạn đang ở chế độ khách — chỉ vào được trường Mầm non, đăng nhập (miễn phí) để thêm Tiểu học`
+      : (myPlan === 'pro'
+          ? `gói Pro — tất cả trường + AI cá nhân hoá`
+          : (myPlan === 'plus'
+              ? `gói Plus — tất cả trường, AI gợi ý cơ bản`
+              : `gói ${USER_PLANS[myPlan]?.name || 'Miễn phí'} — nâng cấp để mở thêm trường & AI`));
+    document.getElementById('schools-hint').textContent = `${openCount}/${DOMAIN_META.length} trường đã mở · ${planLine}`;
 
     function card(d) {
-      const locked = d.status === 'locked';
-      const meta = locked ? '<span class="sc-meta-sub">Đang phát triển</span>'
-                          : `${d.shortName} · ${d.moduleCount} module`;
-      const tag = `<span class="sc-pill ${d.status}">${statusLabel[d.status] || d.status}</span>`;
-      const cta = locked ? '🔒 Sắp mở' : '→ Vào trường';
-      const attrs = locked
-        ? 'aria-disabled="true" title="Trường này đang được xây dựng — sắp mở"'
-        : `href="school.html?domain=${encodeURIComponent(d.id)}"`;
-      const t = locked ? 'div' : 'a';
+      const isComingSoon = d.status === 'locked';
+      const enterable = !isComingSoon && canEnterDomain(d.id, me);
+      const required = getRequiredPlan(d.id);  // 'guest'|'free'|'plus'
+      const needLogin = isGuest && !enterable && required === 'free';   // chỉ cần login (miễn phí)
+      const needUpgrade = !isGuest && !enterable && !isComingSoon;       // đã login, cần nâng gói
+      const guestLocked = isGuest && !enterable && !needLogin;            // khách + cần plus
+
+      const meta = isComingSoon
+        ? '<span class="sc-meta-sub">Đang phát triển</span>'
+        : `${d.shortName} · ${d.moduleCount} module`;
+      const statusTag = `<span class="sc-pill ${d.status}">${statusLabel[d.status] || d.status}</span>`;
+      // Tag yêu cầu gói (chỉ hiện khi không phải coming-soon và yêu cầu > free)
+      const planTag = (!isComingSoon && required === 'plus')
+        ? ` <span class="sc-pill plus">✨ Cần Plus</span>` : '';
+      const guestTag = needLogin
+        ? ' <span class="sc-pill locked">🔐 Cần đăng nhập</span>' : '';
+
+      let cta, attrs, t = 'a';
+      if (isComingSoon) {
+        cta = '🔒 Sắp mở';
+        attrs = 'aria-disabled="true" title="Trường này đang được xây dựng — sắp mở"';
+        t = 'div';
+      } else if (needLogin) {
+        cta = '🔐 Đăng nhập để vào';
+        attrs = `href="login.html?return=${encodeURIComponent('/school.html?domain=' + d.id)}" title="Đăng nhập miễn phí để mở khoá"`;
+      } else if (needUpgrade || guestLocked) {
+        cta = `✨ Nâng cấp ${USER_PLANS[required]?.name || 'Plus'}`;
+        attrs = `href="pricing.html?want=${encodeURIComponent(required)}&domain=${encodeURIComponent(d.id)}" title="Nâng cấp gói ${USER_PLANS[required]?.name} để vào trường ${d.name}"`;
+      } else {
+        cta = '→ Vào trường';
+        attrs = `href="school.html?domain=${encodeURIComponent(d.id)}"`;
+      }
+
+      const classes = ['school-card'];
+      if (isComingSoon) classes.push('locked');
+      else if (needLogin) classes.push('locked', 'guest-locked');
+      else if (needUpgrade || guestLocked) classes.push('locked', 'plan-locked');
       return `
-        <${t} class="school-card ${locked ? 'locked' : ''}" ${attrs} style="--sc-color: ${d.accent}">
+        <${t} class="${classes.join(' ')}" ${attrs} style="--sc-color: ${d.accent}">
           <div class="sc-head">
             <div class="sc-icon">${d.icon}</div>
             <div><div class="sc-name">${d.name}</div><div class="sc-short">${meta}</div></div>
           </div>
           <div class="sc-tagline">${d.tagline}</div>
-          <div class="sc-meta">${tag}</div>
+          <div class="sc-meta">${statusTag}${planTag}${guestTag}</div>
           <div class="sc-cta">${cta}</div>
         </${t}>`;
     }
@@ -813,13 +895,14 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
 <!-- ============ LỐI TẮT TÍNH NĂNG (băng chuyền, cuối trang) ============ -->
 <div class="section" style="margin-bottom:20px">
-  <div class="section-title"><h2>✨ Khám phá thêm</h2><span class="hint">Công cụ &amp; trải nghiệm xuyên suốt EduVerse</span></div>
+  <div class="section-title"><h2>✨ Khám phá thêm</h2><span class="hint">Công cụ &amp; trải nghiệm xuyên suốt Tizia</span></div>
   <div class="feature-strip" aria-label="Lối tắt tính năng">
     <div class="feature-track" id="feature-track"></div>
   </div>
 </div>
 
 <footer>
+  <b>Tizia</b> — The Intelligent Zone for Interactive Academy<br>
   Backend: Node.js + Express + SQLite + WebSocket trên cổng <code>8041</code> ·
   Chạy: <code>npm install &amp;&amp; npm start</code> ·
   Deploy: Docker / Portainer (xem README)<br>
@@ -832,12 +915,56 @@ import { bootstrapMe } from './js/auth.js';
 
 // Header (logo trái, tài khoản phải) gắn ở './js/auth-header.js' (auto-mount).
 // Ở đây dùng me để chào cá nhân hoá + lộ công cụ giáo viên đúng người.
-const me = await bootstrapMe();
+// CHẾ ĐỘ KHÁCH: không redirect khi chưa login — guest vẫn xem được trang chủ,
+// chỉ vào được trường Mầm non (logic khoá ở danh sách trường).
+const me = await bootstrapMe({ redirectOnFail: false });
+const greetEl = document.getElementById('hero-greet');
 if (me) {
   // Lời chào theo vai trò + tên (rút gọn còn tên gọi đầu/cuối cho thân thiện).
-  const greetEl = document.getElementById('hero-greet');
   const hi = me.role === 'teacher' ? 'Chào Thầy/Cô' : 'Chào';
   greetEl.innerHTML = `${hi} <b>${me.display_name}</b> <span class="wave">👋</span>`;
+} else {
+  greetEl.innerHTML = `Chào <b>khách</b> ghé Tizia <span class="wave">👋</span>`;
+  // Banner guest + CTA login (chèn ngay dưới hero, trước section #schools).
+  const banner = document.createElement('div');
+  banner.id = 'guest-banner';
+  banner.innerHTML = `
+    <div class="gb-inner">
+      <span class="gb-icon">🧸</span>
+      <div class="gb-text">
+        <b>Bạn đang dùng thử ở chế độ khách.</b>
+        Vào được trường <b>Mầm non</b> — các trường khác cần đăng nhập để mở khoá.
+      </div>
+      <a class="gb-cta" href="login.html?return=%2F">Đăng nhập</a>
+      <a class="gb-alt" href="register.html">Tạo tài khoản</a>
+    </div>`;
+  const style = document.createElement('style');
+  style.textContent = `
+    #guest-banner { max-width: 1340px; margin: 0 auto 20px; padding: 0 20px; }
+    #guest-banner .gb-inner {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(244,114,182,0.18));
+      border: 1px solid rgba(251,191,36,0.4);
+      border-radius: 14px; padding: 12px 16px;
+      backdrop-filter: blur(10px);
+    }
+    #guest-banner .gb-icon { font-size: 28px; line-height: 1; }
+    #guest-banner .gb-text { flex: 1; min-width: 220px; font-size: 13.5px; line-height: 1.5; }
+    #guest-banner .gb-cta {
+      padding: 8px 16px; border-radius: 999px; font-weight: 700; font-size: 13px;
+      background: linear-gradient(135deg, #fbbf24, #f97316); color: #3e2723;
+      text-decoration: none; transition: transform 0.12s, box-shadow 0.15s;
+    }
+    #guest-banner .gb-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(251,191,36,0.4); }
+    #guest-banner .gb-alt {
+      font-size: 12.5px; opacity: 0.85; color: #fde68a; text-decoration: none;
+      border-bottom: 1px dashed rgba(253,230,138,0.5);
+    }
+    #guest-banner .gb-alt:hover { opacity: 1; }
+  `;
+  document.head.appendChild(style);
+  const schools = document.getElementById('schools');
+  schools.parentNode.insertBefore(banner, schools);
 }
 if (me?.role === 'teacher') {
   const t = document.getElementById('teacher-tools');

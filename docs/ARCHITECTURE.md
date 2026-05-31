@@ -1,10 +1,26 @@
-# EduVerse — Kiến trúc đích
+# Tizia — Kiến trúc đích
 
 > **Phục vụ:** ~30,000 MAU / 1,000 concurrent (peak 2,000) / 100GB DB-năm
 > cho các trường phổ thông + 3 đại học.
 > **Hạ tầng:** cluster 4-server on-premise (~1 tỷ VND). Xem [INFRA.md](INFRA.md).
 
 ---
+
+## 0. Stack chính xác (framework vs thư viện vs vanilla)
+
+Để không hiểu nhầm "không framework": Tizia **CÓ** dùng framework ở backend —
+là loại **micro**, không phải frameworkless.
+
+| Tầng | Thành phần | Phân loại |
+|---|---|---|
+| Backend | **Express** | **Framework** (micro — điều phối request→route→middleware) |
+| Backend | better-sqlite3, ws | Thư viện (ta gọi nó) |
+| Frontend | HTML/CSS/JS thuần | **Vanilla** (KHÔNG UI framework: không React/Vue/Angular) |
+| Frontend | Three.js, MediaPipe, importmap | Thư viện / native trình duyệt |
+
+→ **Micro-framework (Express) ở backend + vanilla ở frontend.** Chủ đích KHÔNG dùng
+framework **nặng/opinionated** (NestJS/Next.js/Django) — xem [NO-FRAMEWORK-REVIEW.md](NO-FRAMEWORK-REVIEW.md)
+để biết vì sao giữ Express + đã vá những thứ framework nặng "tặng kèm" (CSRF, rate-limit, headers).
 
 ## 1. Nguyên tắc thiết kế
 
@@ -67,7 +83,7 @@
 ## 5. Multi-tenancy
 
 - **Model:** Shared DB + `school_id INTEGER NOT NULL` trên mọi bảng entity + **Postgres RLS** (Phase 1).
-- **Default school:** `id=1 'eduverse-default'` để legacy data có chỗ.
+- **Default school:** `id=1 'tizia-default'` để legacy data có chỗ.
 - **Tenant assignment:**
   - SSO: email domain → school (auto map, vd `*@neu.edu.vn` → NEU)
   - Local register: dropdown chọn trường + verify class-code

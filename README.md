@@ -1,9 +1,9 @@
-# 🌌 EduVerse — Vũ trụ giáo dục
+# 🌌 Tizia — Vũ trụ giáo dục
 
 **Nền tảng mô phỏng đào tạo đa ngành** — sinh viên các trường có thể vào học, làm thực hành, chơi
 gamification, trải nghiệm 2D/3D/VR/XR/Metaverse trong cùng một hệ thống.
 
-> EduVerse không gắn với một ngành cụ thể. Mỗi "trường" là một **domain** plug-in. Hiện đã có
+> Tizia không gắn với một ngành cụ thể. Mỗi "trường" là một **domain** plug-in. Hiện đã có
 > 3 trường: Dược, Kinh tế, CNTT. Thêm trường mới chỉ cần tạo 1 folder `domains/<id>/`.
 
 | Trường | Trạng thái | Quy mô | Đặc thù |
@@ -19,8 +19,8 @@ Chuyển trường: click vào card trên trang chủ, hoặc thêm URL param `?
 ## 🚀 Quick start
 
 ```bash
-git clone https://github.com/Lampx83/EduVerse.git
-cd EduVerse
+git clone https://github.com/Lampx83/Tizia.git
+cd Tizia
 npm install
 npm run dev               # http://localhost:8041
 ```
@@ -31,7 +31,7 @@ docker compose up --build -d
 # → http://localhost:8041
 ```
 
-Dữ liệu SQLite lưu trong named volume `eduverse-data` (mount `/data`).
+Dữ liệu SQLite lưu trong named volume `tizia-data` (mount `/data`).
 
 ---
 
@@ -82,8 +82,8 @@ Mỗi trường được hiển thị dưới dạng **subway-map** theo năm:
 - Locked → dim + 🔒 + tooltip "Cần pass: X" hoặc "Cần X⭐ tổng"
 
 ### Gamification (tất cả trường dùng chung)
-- ⭐ **Stars** — 0–3 sao mỗi module (lưu `eduverse:progress`)
-- 🪙 **Pharma-coin** — `stars × 10 + streak × 2` mỗi lượt complete (lưu `eduverse:wallet:v1`)
+- ⭐ **Stars** — 0–3 sao mỗi module (lưu `tizia:progress`)
+- 🪙 **Pharma-coin** — `stars × 10 + streak × 2` mỗi lượt complete (lưu `tizia:wallet:v1`)
 - 🔥 **Streak** — số ngày liên tiếp truy cập
 - 🏆 **Achievements** — catalog đặc thù từng trường (12-20 huy hiệu/trường) → toast khi unlock
 
@@ -114,10 +114,10 @@ Bộ data: 81 thuốc, 30 dược liệu, 10 ca lâm sàng, 85+ scenarios theo D
 
 ## 📦 Deploy qua Portainer (Stack from Git)
 
-1. Portainer → **Stacks** → **+ Add stack** → name: `eduverse`
+1. Portainer → **Stacks** → **+ Add stack** → name: `tizia`
 2. Build method: **Repository**
 3. Điền:
-   - **Repository URL**: `https://github.com/Lampx83/EduVerse.git`
+   - **Repository URL**: `https://github.com/Lampx83/Tizia.git`
    - **Repository reference**: `refs/heads/main`
    - **Compose path**: `docker-compose.yml`
 4. Bật **Automatic updates** (tuỳ chọn) → poll 5–15 phút để auto-redeploy
@@ -133,8 +133,8 @@ Mở `http://<host>:8041`.
   - **Caddy + mkcert** (LAN nội bộ): trust root CA trên từng máy
 - **Backup volume**:
   ```bash
-  docker run --rm -v eduverse_eduverse-data:/data -v $PWD:/backup alpine \
-    tar czf /backup/eduverse-backup.tar.gz /data
+  docker run --rm -v tizia_tizia-data:/data -v $PWD:/backup alpine \
+    tar czf /backup/tizia-backup.tar.gz /data
   ```
 - **Đổi port host**: sửa `8041:8041` → `<host_port>:8041` trong compose, KHÔNG đổi `PORT` env.
 
@@ -144,14 +144,14 @@ Mở `http://<host>:8041`.
 
 | Method | Path | Mô tả |
 |---|---|---|
-| `GET`  | `/api/health` | Health check (`{service: 'eduverse', …}`) |
+| `GET`  | `/api/health` | Health check (`{service: 'tizia', …}`) |
 | `POST` | `/api/attempts` | `{version, playerName?, score, correct, total, durationMs?, details?}` |
 | `GET`  | `/api/leaderboard?version=&limit=10` | Top điểm theo version |
 | `GET`  | `/api/stats?version=` | Tổng lượt, TB, perfect, best |
 | `GET`  | `/api/histogram?version=` | Phổ điểm bucket 10đ |
 | `GET`  | `/api/confusion?version=` | Ma trận nhóm thực → nhóm SV đặt |
 | `GET`  | `/api/recent?limit=20` | Lượt chơi gần nhất |
-| `GET`  | `/api/export.csv` | Tải toàn bộ attempts (UTF-8 BOM, tên file `eduverse-attempts-YYYY-MM-DD.csv`) |
+| `GET`  | `/api/export.csv` | Tải toàn bộ attempts (UTF-8 BOM, tên file `tizia-attempts-YYYY-MM-DD.csv`) |
 | `GET`  | `/api/badges` | Danh sách tất cả huy hiệu |
 | `GET`  | `/api/achievements?player=` | Huy hiệu đã mở khoá của 1 SV |
 | `POST` | `/api/ai/grade-soap`, `/patient-turn`, `/evaluate-roleplay` | AI tutor (Ollama) |
@@ -196,7 +196,7 @@ Hoặc dùng [Caddyfile](Caddyfile) Pattern 2 (auto Let's Encrypt) — có thể
 ## 📊 Truy vấn dữ liệu trực tiếp
 
 ```bash
-docker exec -it eduverse sh
+docker exec -it tizia sh
 sqlite3 /data/pharmacy.db \
   "SELECT version, player_name, score, correct||'/'||total AS r FROM attempts ORDER BY score DESC LIMIT 10;"
 
@@ -208,14 +208,14 @@ curl -O http://localhost:8041/api/export.csv
 
 ## 🧬 Migration từ PharmacySIM cũ
 
-Project trước có tên **PharmacySIM**. Sau khi tách engine đa-domain, đổi tên thành **EduVerse**:
-- `localStorage` tự migrate `pharmacysim:*` → `eduverse:*` ngay lần đầu user mở app sau khi upgrade
-- Docker container: rename `pharmacysim` → `eduverse`; volume cũ `pharmacysim-data` cần restore vào `eduverse-data` thủ công nếu deploy đè:
+Project trước có tên **PharmacySIM**. Sau khi tách engine đa-domain, đổi tên thành **Tizia**:
+- `localStorage` tự migrate `pharmacysim:*` → `tizia:*` ngay lần đầu user mở app sau khi upgrade
+- Docker container: rename `pharmacysim` → `tizia`; volume cũ `pharmacysim-data` cần restore vào `tizia-data` thủ công nếu deploy đè:
   ```bash
-  docker volume create eduverse_eduverse-data
+  docker volume create tizia_tizia-data
   docker run --rm \
     -v pharmacysim_pharmacysim-data:/from \
-    -v eduverse_eduverse-data:/to \
+    -v tizia_tizia-data:/to \
     alpine sh -c 'cp -a /from/. /to/'
   ```
 - `OLLAMA_SECKEY` giữ nguyên `'pharmasim'` (shared secret với Ollama server nội bộ — không liên quan brand)

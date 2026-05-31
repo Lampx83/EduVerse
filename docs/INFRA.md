@@ -1,4 +1,4 @@
-# EduVerse — Hạ tầng on-premise (4 server, ~1 tỷ VND)
+# Tizia — Hạ tầng on-premise (4 server, ~1 tỷ VND)
 
 > **Phục vụ:** 30k MAU / 1k concurrent (peak 2k) / 100GB DB-năm
 > Phục vụ các trường phổ thông + 3 đại học, deploy trong VN.
@@ -105,7 +105,7 @@ ufw enable
 # ────────── Server #1: App ──────────
 curl -fsSL https://get.docker.com | sh
 ufw allow 80,443/tcp
-mkdir -p /opt/eduverse && cd /opt/eduverse
+mkdir -p /opt/tizia && cd /opt/tizia
 # git clone <repo> .
 # docker compose up -d  (Caddy + Node + Redis + MinIO)
 
@@ -117,7 +117,7 @@ apt install -y postgresql-16 postgresql-16-pgvector pgbackrest
 #   wal_level = replica
 #   max_wal_senders = 5
 #   archive_mode = on
-#   archive_command = 'pgbackrest --stanza=eduverse archive-push %p'
+#   archive_command = 'pgbackrest --stanza=tizia archive-push %p'
 # Edit pg_hba.conf: allow replica từ 10.0.0.14 (Server #4)
 systemctl restart postgresql
 

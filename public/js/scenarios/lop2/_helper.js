@@ -19,7 +19,7 @@ export const W = (modulePrefix, subjectKey, n, title, questions, opts = {}) => {
   const week = String(n).padStart(2, '0');
   return {
     id:           `${modulePrefix}-w${week}-quiz`,
-    title:        `Lớp 2 · Tuần ${n} — ${title}`,
+    title:        `Tuần ${n} — ${title}`,
     kind:         opts.kind ?? 'quiz',
     yearLevel:    2,
     subject:      subjectKey,

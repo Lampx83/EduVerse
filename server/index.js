@@ -3,7 +3,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
@@ -125,7 +125,7 @@ app.disable('x-powered-by');
 app.use(securityHeaders);
 app.use(['/api/auth/login', '/api/auth/register'], sensitiveAuthLimiter);
 
-// Đăng nhập là điều kiện tiên quyết để dùng EduVerse.
+// Đăng nhập là điều kiện tiên quyết để dùng Tizia.
 // attachUser luôn gắn req.user (nullable). makeAuthGate redirect HTML chưa login về /login.html
 // và trả 401 cho /api/* (trừ /api/auth/*, /api/health). Phải nằm TRƯỚC attachAppProxies để
 // các app anh em (/scoreup, /codelab, …) cũng được gate trên cùng origin.
@@ -137,7 +137,7 @@ app.use(attachTenant);
 app.use('/api', apiLimiter);
 
 // Integrated sibling apps — each reverse-proxied under its own sub-path so the
-// whole suite is reachable on EduVerse's single origin (iframe + cookie/auth
+// whole suite is reachable on Tizia's single origin (iframe + cookie/auth
 // friendly). Targets are configurable per deployment via *_TARGET env vars;
 // *_PUBLIC_PATH only when the upstream was built with a basePath != its mount.
 // Apps that aren't running degrade to a graceful "chưa chạy" page. Surfaced to
@@ -180,7 +180,7 @@ app.use(csrf);
 const r = express.Router();
 
 r.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'eduverse', port: PORT, basePath: BASE_PATH, time: Date.now() });
+  res.json({ ok: true, service: 'tizia', port: PORT, basePath: BASE_PATH, time: Date.now() });
 });
 
 // SEO public (robots.txt, sitemap.xml, /welcome) — crawlable, ngoài auth gate.
@@ -419,6 +419,29 @@ r.get('/api/ai-decisions', (req, res) => {
   res.json({ decisions: getRecentDecisions(req.schoolId, limit) });
 });
 
+// ── Notifications — hộp thư cá nhân của HS (phản hồi từ Ban điều hành AI) ──
+// Key theo display_name (vì requests lưu tên HS, có cả guest gửi → user_id chưa
+// có lúc tạo). Guest chưa đăng nhập → trả 401 mượt để FE ẩn bell.
+r.get('/api/notifications', (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'unauthorized', items: [], unread: 0 });
+  const u = req.user.display_name;
+  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+  res.json({
+    items: listNotifications(u, req.schoolId, limit),
+    unread: countUnreadNotifications(u, req.schoolId),
+  });
+});
+r.post('/api/notifications/:id/read', (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+  const ok = markNotificationRead(req.params.id, req.user.display_name);
+  res.json({ ok });
+});
+r.post('/api/notifications/read-all', (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+  const n = markAllNotificationsRead(req.user.display_name, req.schoolId);
+  res.json({ ok: true, marked: n });
+});
+
 r.get('/api/export.csv', (_req, res) => {
   const rows = getAllAttempts();
   const esc = v => {
@@ -434,13 +457,15 @@ r.get('/api/export.csv', (_req, res) => {
     ].join(','));
   }
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="eduverse-attempts-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.setHeader('Content-Disposition', `attachment; filename="tizia-attempts-${new Date().toISOString().slice(0,10)}.csv"`);
   res.send('﻿' + lines.join('\n'));
 });
 
-// HTML injection middleware — gắn <script suggestion-fab.js> vào mọi trang HTML
-// để nút "🏛️ Đề nghị" tự xuất hiện ở mọi page (không phải sửa thủ công 59 file).
-const SGF_TAG = `<script type="module" src="js/suggestion-fab.js"></script>`;
+// HTML injection middleware — gắn các widget global vào mọi trang HTML:
+//   • suggestion-fab.js: nút "🏛️ Đề nghị" góc dưới phải
+//   • notifications-bell.js: chuông phản hồi từ Ban điều hành AI góc trên phải
+// Tránh phải sửa thủ công 59+ file.
+const SGF_TAG = `<script type="module" src="js/suggestion-fab.js"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
 r.get(/.*/, async (req, res, next) => {
   const u = req.path;
   if (u.startsWith('/api/') || u.startsWith('/vendor/')) return next();
@@ -492,7 +517,7 @@ if (BASE_PATH) {
 const httpServer = http.createServer(app);
 attachRoom(httpServer, BASE_PATH);
 httpServer.listen(PORT, HOST, () => {
-  console.log(`[eduverse] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
+  console.log(`[tizia] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
   const oauthList = listEnabledProviders();
   if (oauthList.length) {
     console.log(`[oauth] enabled providers: ${oauthList.map(p => p.label).join(', ')}`);

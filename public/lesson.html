@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>EduVerse · Bài giảng</title>
+<title>Tizia · Bài giảng</title>
 <link rel="manifest" href="./manifest.webmanifest" />
 <meta name="theme-color" content="#fbbf24" />
 <style>
@@ -232,7 +232,7 @@ async function init() {
     const res = await fetch('./api/lessons/' + slug);
     if (!res.ok) throw new Error('Bài không tồn tại hoặc đã xoá');
     const lesson = await res.json();
-    document.title = 'EduVerse · ' + lesson.title;
+    document.title = 'Tizia · ' + lesson.title;
     $('title').textContent = lesson.title;
     $('meta').textContent =
       (lesson.subject ? lesson.subject + ' · ' : '') +

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>OSCE Championship · EduVerse</title>
+<title>OSCE Championship · Tizia</title>
 <style>
   :root {
     --bg-1: #0f172a; --bg-2: #1e293b; --bg-3: #312e81;
@@ -256,7 +256,7 @@
   import { getPlayerName, getClassCode, setPlayerName, setClassCode } from './js/api.js';
 
   const VERSION = 'GC07-osce-championship';
-  const STATE_KEY = 'eduverse:osce-championship:state';
+  const STATE_KEY = 'tizia:osce-championship:state';
 
   // --------------------------------------------------------------
   // Global state
@@ -956,7 +956,7 @@
             <div class="cert-meta">
               <div>Mã chứng chỉ: <span class="cert-id">${certId}</span></div>
               <div>Lớp: ${escapeHtml(state.classCode || '—')} · Ngày cấp: ${dateStr}</div>
-              <div style="margin-top:6px;opacity:0.7">EduVerse · Trường ĐH Dược · Mô phỏng OSCE năm cuối</div>
+              <div style="margin-top:6px;opacity:0.7">Tizia · Trường ĐH Dược · Mô phỏng OSCE năm cuối</div>
             </div>
             <button class="download-btn" id="print-btn">🖨️ In / lưu PDF chứng chỉ</button>
           </div>

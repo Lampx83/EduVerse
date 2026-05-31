@@ -1,4 +1,4 @@
-// Client-side helper cho hệ thống đăng nhập EduVerse.
+// Client-side helper cho hệ thống đăng nhập Tizia.
 // Mọi page đã được server-side gate (chưa login → redirect /login.html), nên ở đây
 // chỉ cần helpers gọi API + cache user (đồng bộ) cho UI.
 

@@ -45,7 +45,7 @@
 
   function createBadge() {
     const el = document.createElement('div');
-    el.id = 'eduverse-offline-badge';
+    el.id = 'tizia-offline-badge';
     Object.assign(el.style, {
       position: 'fixed', left: '10px', bottom: '10px', zIndex: 99999,
       background: 'rgba(15,23,42,0.92)', color: '#fbbf24',

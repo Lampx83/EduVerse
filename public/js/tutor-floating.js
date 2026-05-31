@@ -20,7 +20,7 @@
   if (typeof window === 'undefined') return;
   if (window.EduTutor) return; // tránh mount 2 lần
 
-  const STORAGE_KEY = 'eduverse.tutor.history.v1';
+  const STORAGE_KEY = 'tizia.tutor.history.v1';
   const MAX_HISTORY = 12;
 
   // Parse data-* attributes của script tag tự khởi tạo
@@ -44,7 +44,7 @@
   };
 
   const TUTOR_STYLE_DOC = {
-    it: 'Khi giải thích code, dùng pseudo-code tiếng Việt trước rồi mới đến cú pháp. Khuyến khích test trên SQL playground / code lab có sẵn của EduVerse.',
+    it: 'Khi giải thích code, dùng pseudo-code tiếng Việt trước rồi mới đến cú pháp. Khuyến khích test trên SQL playground / code lab có sẵn của Tizia.',
     pharmacy: 'Khi tư vấn dùng thuốc, luôn nhắc về liều, đường dùng, tương tác, chống chỉ định. Tham chiếu được tới các lab sắc ký / chuẩn độ / antibiogram có sẵn.',
     medical: 'Khi giải thích triệu chứng, theo cấu trúc SOAP. Nhấn mạnh khi nào cần khám bác sĩ.',
     school: 'Bám sát Chương trình GDPT 2018 của Bộ GD&ĐT VN, dùng ví dụ học sinh Việt quen thuộc.',
@@ -171,7 +171,7 @@
       <div class="edututor-head">
         <div class="ico">🦉</div>
         <div>
-          <div class="title">AI Tutor · EduVerse</div>
+          <div class="title">AI Tutor · Tizia</div>
           <div class="sub">Lĩnh vực: <span id="edututor-domain">${DOMAIN_LABEL[autoDomain] || autoDomain}</span></div>
         </div>
         <button class="close" id="edututor-close" title="Đóng">✕</button>
@@ -234,7 +234,7 @@
   function restoreHistory() {
     loadHistory();
     if (!history.length) {
-      addMsg('bot', `Xin chào! Mình là AI tutor của EduVerse — chuyên lĩnh vực <b>${DOMAIN_LABEL[autoDomain] || autoDomain}</b>. Bạn cần mình giúp gì ở trang này?`);
+      addMsg('bot', `Xin chào! Mình là AI tutor của Tizia — chuyên lĩnh vực <b>${DOMAIN_LABEL[autoDomain] || autoDomain}</b>. Bạn cần mình giúp gì ở trang này?`);
     } else {
       for (const h of history) addMsg(h.role === 'user' ? 'user' : 'bot', h.content, /*skipSpeak*/ true);
     }

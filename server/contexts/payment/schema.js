@@ -35,6 +35,11 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_invoices_order  ON invoices(order_ref);
   CREATE INDEX IF NOT EXISTS idx_invoices_school ON invoices(school_id, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status, created_at DESC);
+`);
+// metadata JSON: gắn payload tuỳ ý vào invoice (vd {plan,cycle} cho upgrade gói B2C).
+// IPN parse để biết phải kích hoạt gì sau khi settled. Lazy add column.
+try { db.exec(`ALTER TABLE invoices ADD COLUMN metadata TEXT`); } catch {}
+db.exec(`
 
   CREATE TABLE IF NOT EXISTS payments (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,

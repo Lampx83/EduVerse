@@ -11,6 +11,9 @@ export const SUBJECTS = {
   'gdcd':        { label: 'GD công dân',          icon: '⚖️', color: '#c084fc' },
   'tin-hoc':     { label: 'Tin học',              icon: '💻', color: '#8b5cf6' },
   'cong-nghe':   { label: 'Công nghệ',            icon: '⚙️', color: '#64748b' },
+  'gdtc':        { label: 'Giáo dục thể chất',    icon: '⚽', color: '#22c55e' },
+  'nghe-thuat':  { label: 'Nghệ thuật',           icon: '🎨', color: '#ec4899' },
+  'hdtn':        { label: 'Trải nghiệm – hướng nghiệp', icon: '🧭', color: '#f97316' },
 };
 export function getSubject(id) {
   return SUBJECTS[id] || { label: id, icon: '📘', color: '#94a3b8' };

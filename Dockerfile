@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
-# ---- Stage 1: EduVerse prod deps (compiles better-sqlite3 native binding) ----
-FROM node:20-alpine AS eduverse-deps
+# ---- Stage 1: Tizia prod deps (compiles better-sqlite3 native binding) ----
+FROM node:20-alpine AS tizia-deps
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
@@ -15,8 +15,8 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     DATA_DIR=/data
 
-# EduVerse (Express + SQLite + WebSocket)
-COPY --from=eduverse-deps /app/node_modules ./node_modules
+# Tizia (Express + SQLite + WebSocket)
+COPY --from=tizia-deps /app/node_modules ./node_modules
 COPY package*.json ./
 COPY server/ ./server/
 COPY public/ ./public/

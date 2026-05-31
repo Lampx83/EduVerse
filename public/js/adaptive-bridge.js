@@ -1,6 +1,6 @@
 /* GAP 11 — Adaptive Quiz bridge (FE)
  *
- * Cho phép bất kỳ quiz/lab nào trong EduVerse:
+ * Cho phép bất kỳ quiz/lab nào trong Tizia:
  *   (a) gửi sự kiện học (đúng/sai) về server để cập nhật BKT
  *   (b) hỏi câu tiếp theo nên làm
  *
@@ -11,7 +11,7 @@
  *
  * Identity:
  *   - Học sinh được nhận diện qua localStorage('player.name') — pattern hiện có
- *     của EduVerse. Nếu chưa có, fallback 'Ẩn danh'.
+ *     của Tizia. Nếu chưa có, fallback 'Ẩn danh'.
  */
 
 const BASE = location.pathname.includes('/ps/') ? '/ps' : '';

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Module · EduVerse</title>
+<title>Module · Tizia</title>
 <style>
   :root {
     --bg-1: #0f172a; --bg-2: #1e293b; --bg-3: #312e81;
@@ -208,31 +208,43 @@
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'L1.1';
 
-  // Nếu mở từ lộ trình môn (subject.html) → thêm link quay lại lộ trình.
+  // backParam = lộ trình môn (subject.html) nếu mở từ đó. Breadcrumb dựng sau khi
+  // biết domain (xem buildBreadcrumb bên dưới) để luôn có link cấp cha "Trường".
   const backParam = params.get('back');
-  if (backParam) {
-    try {
-      const nav = document.querySelector('.top-nav');
-      const a = document.createElement('a');
-      a.href = decodeURIComponent(backParam);
-      a.textContent = '← Lộ trình môn';
-      const sep = document.createElement('span');
-      sep.style.opacity = '0.4'; sep.textContent = '·';
-      nav.insertBefore(sep, nav.firstChild);
-      nav.insertBefore(a, nav.firstChild);
-    } catch {}
-  }
 
   // Load the ACTIVE domain so module metadata + achievement catalog match
   // the school the student came from (falls back to pharmacy modules).
-  let DOMAIN_MODULES = PHARMACY_MODULES, ACHIEVEMENTS = [], GET_SUBJECT = null;
+  let DOMAIN_MODULES = PHARMACY_MODULES, ACHIEVEMENTS = [], GET_SUBJECT = null, SCHOOL_NAME = 'Trường';
   try {
     const dom = await loadActiveDomain();
     DOMAIN_MODULES = dom.MODULES || PHARMACY_MODULES;
     ACHIEVEMENTS = dom.ACHIEVEMENTS || [];
     GET_SUBJECT = dom.getSubject || null;
+    SCHOOL_NAME = dom.DOMAIN?.shortName || dom.DOMAIN?.name || dom.name || 'Trường';
   } catch {}
   const MODULES = DOMAIN_MODULES;
+
+  // Breadcrumb phân cấp: Trang chủ › Trường › [Lộ trình môn] › Module.
+  // Trước đây chỉ có "Trang chủ" nên không quay lại được trang trường → bổ sung
+  // link cấp cha "Trường" (school.html?domain=X) LUÔN hiển thị.
+  (function buildBreadcrumb() {
+    try {
+      const nav = document.querySelector('.top-nav');
+      const crumb = document.getElementById('breadcrumb');
+      const domainId = params.get('domain') || getActiveDomainId();
+      const mkLink = (href, text) => { const a = document.createElement('a'); a.href = href; a.textContent = text; return a; };
+      const mkSep = () => { const s = document.createElement('span'); s.style.opacity = '0.4'; s.textContent = '·'; return s; };
+      // Chèn TRƯỚC breadcrumb (sau "Trang chủ"): Trường, rồi Lộ trình môn (nếu có).
+      if (domainId) {
+        nav.insertBefore(mkLink(`school.html?domain=${encodeURIComponent(domainId)}`, `🏫 ${SCHOOL_NAME}`), crumb);
+        nav.insertBefore(mkSep(), crumb);
+      }
+      if (backParam) {
+        nav.insertBefore(mkLink(decodeURIComponent(backParam), '📚 Lộ trình môn'), crumb);
+        nav.insertBefore(mkSep(), crumb);
+      }
+    } catch (e) { console.warn('[breadcrumb]', e); }
+  })();
   const moduleMeta = MODULES.find(m => m.id === moduleId)
     || PHARMACY_MODULES.find(m => m.id === moduleId);
   // Nhãn môn (cho AI "Học thêm" / "Hỏi cô giáo") — fallback về key nếu thiếu.
@@ -256,7 +268,7 @@
     title.textContent = `${moduleId} · ${moduleMeta.title}`;
     subtitle.textContent = `Năm ${moduleMeta.yearLevel} · Môn: ${moduleMeta.subject}`;
     breadcrumb.textContent = `Năm ${moduleMeta.yearLevel} · ${moduleMeta.title}`;
-    document.title = `${moduleId} · ${moduleMeta.title} — EduVerse`;
+    document.title = `${moduleId} · ${moduleMeta.title} — Tizia`;
     info.style.display = 'block';
     infoText.innerHTML = `<b>Yêu cầu mở khoá:</b> ${moduleMeta.minStarsToUnlock} sao tích luỹ${moduleMeta.prerequisites?.length ? ` · <b>Tiền đề:</b> ${moduleMeta.prerequisites.join(', ')}` : ''}`;
     infoChips.innerHTML = `
@@ -273,7 +285,7 @@
       const bits = [s0.chapter && `📂 ${s0.chapter}`, s0.boss && '👑 Boss', s0.difficulty && `⭐ Độ khó ${s0.difficulty}/5`].filter(Boolean);
       subtitle.textContent = bits.join(' · ');
       breadcrumb.textContent = s0.chapter || s0.title;
-      document.title = `${s0.title} — EduVerse`;
+      document.title = `${s0.title} — Tizia`;
     } else {
       title.textContent = moduleId;
       subtitle.textContent = 'Bài học';

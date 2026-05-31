@@ -4,7 +4,7 @@
 // Gắn các ứng dụng tích hợp (proxy cùng origin, xem server/app-proxy.js +
 // public/apps.html) làm "phiên bản trải nghiệm" trên subway-map. URL trỏ vào
 // launcher apps.html?app=<id> (relative → an toàn với BASE_PATH); launcher
-// nhúng app qua iframe và có thanh quay lại EduVerse.
+// nhúng app qua iframe và có thanh quay lại Tizia.
 // ============================================================
 
 /** @typedef {import('../../engine/types.js').ExperienceMode} ExperienceMode */

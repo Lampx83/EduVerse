@@ -10,7 +10,8 @@
 // Đây là foundation; UI ở public/admin.html.
 // ============================================================
 
-import { db } from '../../db.js';
+import { db, createNotification, setUserPlan } from '../../db.js';
+import { VALID_USER_PLANS, expiresAtFor } from '../billing/user-plans.js';
 
 // ── Bootstrap admin từ env (an toàn: chỉ promote user đã tồn tại) ──
 export function ensureAdminBootstrap() {
@@ -44,7 +45,7 @@ const Q = {
     (SELECT COUNT(*) FROM requests r WHERE r.school_id=s.id) AS requests
     FROM schools s ORDER BY s.id`),
   createSchool: db.prepare(`INSERT INTO schools (code,name,domain,created_at) VALUES (@code,@name,@domain,@t)`),
-  users: db.prepare(`SELECT id, username, display_name, role, school_id, email, created_at, last_login
+  users: db.prepare(`SELECT id, username, display_name, role, school_id, email, plan, plan_expires_at, billing_cycle, created_at, last_login
     FROM users WHERE (@school_id IS NULL OR school_id=@school_id) ORDER BY created_at DESC LIMIT @limit`),
   setUserRole: db.prepare(`UPDATE users SET role=@role WHERE id=@id`),
   requests: db.prepare(`SELECT id, school_id, domain, type, title, status, votes, student, created_at
@@ -95,6 +96,23 @@ export function attachAdmin(r) {
     res.json({ ok: true });
   });
 
+  // Admin set gói cước thủ công (cấp/gia hạn/huỷ). cycle 'month'|'year'|null;
+  // null + plan 'free' → vĩnh viễn. days override để cấp thử (vd trial 7 ngày).
+  r.post('/api/admin/users/:id/plan', requireAdmin, (req, res) => {
+    const plan = String(req.body?.plan || '').toLowerCase();
+    if (!VALID_USER_PLANS.has(plan)) return res.status(400).json({ error: 'invalid_plan' });
+    const cycle = ['month', 'year'].includes(req.body?.cycle) ? req.body.cycle : null;
+    const days = Number(req.body?.days) || 0;
+    let expires_at = null;
+    if (plan !== 'free' && plan !== 'guest') {
+      if (days > 0) expires_at = Date.now() + days * 24 * 3600 * 1000;
+      else if (cycle) expires_at = expiresAtFor(cycle);
+      else expires_at = expiresAtFor('month');
+    }
+    setUserPlan(Number(req.params.id), { plan, expires_at, cycle });
+    res.json({ ok: true, plan, expires_at, cycle });
+  });
+
   // Góp ý — xuyên tenant (giám sát Ban điều hành AI) + can thiệp status
   r.get('/api/admin/requests', requireAdmin, (req, res) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
@@ -105,6 +123,54 @@ export function attachAdmin(r) {
     if (!['pending', 'reviewing', 'done', 'rejected'].includes(status)) return res.status(400).json({ error: 'invalid_status' });
     Q.setRequestStatus.run({ id: Number(req.params.id), status, note: req.body?.note ? String(req.body.note).slice(0, 500) : null, t: Date.now() });
     res.json({ ok: true });
+  });
+
+  // Đóng góp ý + GỬI PHẢN HỒI cá nhân cho HS. Khác /status: bắt buộc message,
+  // gửi notification vào hộp thư của HS (key theo display_name). Dùng khi đã xử
+  // lý xong yêu cầu — UI bell ở HS sẽ kêu báo.
+  const getRequestForReply = db.prepare(`SELECT id, school_id, student, title, domain FROM requests WHERE id = ?`);
+  // Ghi audit trail vào ai_decisions với decided_by='human' để admin override trùng
+  // schema với AI auto-decision — bảng audit chỉ có 1 nguồn sự thật.
+  const insertHumanDecision = db.prepare(`
+    INSERT INTO ai_decisions (school_id, request_id, decided_by, action, status_applied, reason, public_note, priority_score, confidence, created_at)
+    VALUES (@school_id, @request_id, 'human', @action, @status, @reason, @public_note, 100, 1.0, @t)
+  `);
+  const ACTION_BY_STATUS = { done: 'approve', rejected: 'reject', reviewing: 'approve' };
+
+  r.post('/api/admin/requests/:id/reply', requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const status = String(req.body?.status || 'done');
+    if (!['done', 'rejected', 'reviewing'].includes(status)) return res.status(400).json({ error: 'invalid_status' });
+    const message = String(req.body?.message || '').trim();
+    if (message.length < 4) return res.status(400).json({ error: 'message_too_short' });
+
+    const reqRow = getRequestForReply.get(id);
+    if (!reqRow) return res.status(404).json({ error: 'request_not_found' });
+
+    Q.setRequestStatus.run({ id, status, note: message.slice(0, 500), t: Date.now() });
+
+    insertHumanDecision.run({
+      school_id: reqRow.school_id || 1, request_id: id,
+      action: ACTION_BY_STATUS[status],
+      status, reason: `[admin] ${req.user.username} → ${status}`,
+      public_note: message.slice(0, 500), t: Date.now(),
+    });
+
+    const titleByStatus = {
+      done:      'Yêu cầu của bạn đã hoàn thành ✓',
+      rejected:  'Phản hồi về yêu cầu của bạn',
+      reviewing: 'Yêu cầu của bạn đang được xử lý',
+    };
+    const notif = createNotification({
+      user_display_name: reqRow.student,
+      request_id: id,
+      kind: 'reply',
+      title: titleByStatus[status],
+      body: `「${reqRow.title}」 — ${message}`,
+      url: `/space.html?domain=${encodeURIComponent(reqRow.domain || '')}#requests`,
+      school_id: reqRow.school_id || 1,
+    });
+    res.json({ ok: true, status, notified: !!notif, notification_id: notif?.id || null });
   });
 
   // Audit quyết định AI — xuyên tenant (minh bạch "AI điều hành")

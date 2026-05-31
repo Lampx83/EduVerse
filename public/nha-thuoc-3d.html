@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
 <meta name="theme-color" content="#0d9488" />
-<title>EduVerse · Nhà thuốc 3D GPP</title>
+<title>Tizia · Nhà thuốc 3D GPP</title>
 <link rel="manifest" href="./manifest.webmanifest" />
 <style>
   :root {
@@ -18,7 +18,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
   .app {
-    display: grid; grid-template-columns: 1.45fr 1fr; gap: 12px;
+    display: grid; grid-template-columns: 1fr 340px; gap: 12px;
     height: 100vh; padding: 12px;
   }
   @media (max-width: 980px) { .app { grid-template-columns: 1fr; grid-template-rows: 60vh 1fr; overflow-y: auto; height: auto; } }
@@ -229,18 +229,32 @@
       <button class="btn primary" id="send">Gửi</button>
     </div>
 
-    <h3>🛠️ Công cụ</h3>
+    <h3>🏷️ Khay dụng cụ & nhãn HDSD</h3>
     <div class="quick-tools">
-      <button class="btn" id="btn-pos" type="button">💳 Mở POS</button>
-      <button class="btn" id="btn-label" type="button">🏷️ Soạn nhãn HDSD</button>
-      <label class="rx-line"><input type="checkbox" id="rx-toggle"/> Có đơn hợp lệ (Rx)</label>
+      <button class="btn" id="btn-label" type="button">🧾 Soạn nhãn mới</button>
+    </div>
+    <div id="labels-status" class="rx-line" style="font-size:11px;color:var(--muted);margin-top:4px">
+      Chưa có nhãn nào được dán. Mở khay dụng cụ trên quầy hoặc nút "Soạn nhãn mới".
     </div>
 
-    <h3>🎯 Gợi ý SEGUE</h3>
+    <h3>💳 Phần mềm POS</h3>
+    <div class="quick-tools">
+      <button class="btn" id="btn-pos" type="button">💻 Mở phần mềm bán hàng</button>
+      <button class="btn" id="btn-rx" type="button">📋 Xem đơn thuốc</button>
+      <button class="btn" id="btn-doctor" type="button">📞 Gọi bác sĩ</button>
+      <button class="btn" id="btn-senior" type="button">👨‍⚕️ DS đại học</button>
+    </div>
+    <label class="rx-line"><input type="checkbox" id="rx-toggle"/> Khách có đơn thuốc hợp lệ</label>
+
+    <h3>🎯 Gợi ý theo SEGUE</h3>
     <ul class="hints" id="hints"></ul>
 
     <button class="btn success" id="finish" type="button">🏁 Kết phiên & chấm điểm</button>
     <div id="score-panel" hidden></div>
+    <div id="stats-bar" style="display:flex;gap:10px;font-size:11px;color:var(--muted);padding-top:6px;border-top:1px solid var(--border)">
+      <span>Đã chọn: <b id="stat-picked">0</b></span>
+      <span>Đã dán nhãn: <b id="stat-labeled">0/—</b></span>
+    </div>
   </aside>
 </div>
 

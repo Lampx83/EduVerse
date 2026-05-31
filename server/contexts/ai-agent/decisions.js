@@ -127,7 +127,7 @@ function ruleDecision({ votes }) {
 }
 
 async function aiDecision({ domain, type, title, detail, votes }) {
-  const system = `Bạn là HIỆU TRƯỞNG AI điều hành một trường trong vũ trụ giáo dục EduVerse. `
+  const system = `Bạn là HIỆU TRƯỞNG AI điều hành một trường trong vũ trụ giáo dục Tizia. `
     + `Nhiệm vụ: ra QUYẾT ĐỊNH cho góp ý của sinh viên một cách có trách nhiệm. `
     + `Cân nhắc: tính khả thi, lợi ích giáo dục, mức độ phù hợp, số lượt ủng hộ. `
     + `Tiếng Việt. CHỈ trả JSON.`;

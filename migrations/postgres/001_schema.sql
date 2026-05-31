@@ -1,5 +1,5 @@
 -- ============================================================
--- EduVerse — Postgres schema (Phase 1 target)
+-- Tizia — Postgres schema (Phase 1 target)
 -- ============================================================
 -- Tương đương schema SQLite hiện tại (server/db.js) nhưng cho Postgres 16,
 -- KÈM Row-Level Security (RLS) theo school_id để enforce multi-tenant ở DB layer.
@@ -14,7 +14,7 @@
 --   * Bảng con (sessions, oauth_identities, achievements) được DENORMALIZE thêm
 --     school_id để RLS đơn giản (không phải join users mỗi policy check).
 --
--- Cách chạy:  psql -d eduverse -f migrations/postgres/001_schema.sql
+-- Cách chạy:  psql -d tizia -f migrations/postgres/001_schema.sql
 -- ============================================================
 
 CREATE EXTENSION IF NOT EXISTS citext;
@@ -162,7 +162,7 @@ CREATE INDEX IF NOT EXISTS idx_ai_usage_status      ON ai_token_usage(status, cr
 -- ============================================================
 INSERT INTO schools (id, code, name, created_at)
 OVERRIDING SYSTEM VALUE
-VALUES (1, 'eduverse-default', 'EduVerse', (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT)
+VALUES (1, 'tizia-default', 'Tizia', (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT)
 ON CONFLICT (id) DO NOTHING;
 
 -- Advance identity sequence qua id đã seed thủ công, nếu không INSERT school tiếp
@@ -195,7 +195,7 @@ END $$;
 -- ============================================================
 -- App role (least privilege — KHÔNG superuser, RLS áp dụng đầy đủ)
 -- ============================================================
--- CREATE ROLE eduverse_app LOGIN PASSWORD '<từ secrets manager>';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO eduverse_app;
--- GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO eduverse_app;
--- (eduverse_app KHÔNG có BYPASSRLS → RLS enforce. Migration chạy bằng owner role riêng.)
+-- CREATE ROLE tizia_app LOGIN PASSWORD '<từ secrets manager>';
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tizia_app;
+-- GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO tizia_app;
+-- (tizia_app KHÔNG có BYPASSRLS → RLS enforce. Migration chạy bằng owner role riêng.)

@@ -156,7 +156,7 @@ export function streakAtRisk() {
 /**
  * Sau khi scenario complete: cập nhật coin, quizzesPassed,
  * modulesByDay, kiểm achievement.
- * @param {Object} progress - module-stars progress map (key eduverse:progress)
+ * @param {Object} progress - module-stars progress map (key tizia:progress)
  * @param {import('./types.js').CourseModule} mod
  * @param {{ stars:number, score:number }} result
  * @param {import('./types.js').Achievement[]} [catalog]

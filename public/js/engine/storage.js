@@ -1,9 +1,9 @@
 // ============================================================
 // Storage helper — namespace + auto-migrate cũ → mới
 // ============================================================
-// Mọi key dùng `eduverse:*` prefix. Để không mất dữ liệu của
+// Mọi key dùng `tizia:*` prefix. Để không mất dữ liệu của
 // user đã dùng phiên bản PharmacySIM cũ, lần đầu tiên đọc 1 key
-// `eduverse:*` mà chưa có giá trị, ta tự copy từ `pharmacysim:*`
+// `tizia:*` mà chưa có giá trị, ta tự copy từ `pharmacysim:*`
 // (nếu tồn tại) sang.
 //
 // Sau migration, key cũ bị xoá để không còn 2 nguồn dữ liệu.
@@ -14,7 +14,7 @@
 //   lsSet(KEYS.PLAYER_NAME, 'Phạm Lâm');
 // ============================================================
 
-const NEW_PREFIX = 'eduverse:';
+const NEW_PREFIX = 'tizia:';
 const OLD_PREFIX = 'pharmacysim:';
 
 /** Catalog các key chuẩn — không hard-code chuỗi rải rác. */

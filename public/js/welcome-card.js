@@ -11,7 +11,7 @@
 //       'Đặt vào ô kệ đúng nhóm điều trị',
 //     ],
 //     controls: { keys: ['W','A','S','D'], mouse: 'left', extras: [{ key: 'E', desc: 'tương tác' }] },
-//     persistKey: 'eduverse:welcome:3d-shelf',
+//     persistKey: 'tizia:welcome:3d-shelf',
 //     dismissLabel: 'Bắt đầu',
 //   });
 
@@ -229,7 +229,7 @@ export function showWelcomeCard(opts = {}) {
   injectStyle();
   const {
     icon = '💊',
-    title = 'EduVerse',
+    title = 'Tizia',
     intro = '',
     bullets = [],
     controls = {},

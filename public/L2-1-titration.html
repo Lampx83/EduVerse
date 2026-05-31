@@ -775,8 +775,8 @@ async function submitResult() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         version: 'L2.1-titration-01',
-        playerName: (localStorage.getItem('eduverse:playerName') || 'Ẩn danh'),
-        classCode: localStorage.getItem('eduverse:classCode') || undefined,
+        playerName: (localStorage.getItem('tizia:playerName') || 'Ẩn danh'),
+        classCode: localStorage.getItem('tizia:classCode') || undefined,
         score,
         correct: errorPct < 2 ? 1 : 0,
         total: 1,

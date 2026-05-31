@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🎨 Web Playground · Trường CNTT · EduVerse</title>
+<title>🎨 Web Playground · Trường CNTT · Tizia</title>
 <style>
   :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#ec4899; --border:rgba(255,255,255,.12); --card:rgba(255,255,255,.05); }
   * { box-sizing:border-box; }
@@ -76,11 +76,11 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const LS = 'eduverse:it:webplay';
+const LS = 'tizia:it:webplay';
 
 const TEMPLATES = {
   hello: {
-    html: '<h1>Xin chào EduVerse 👋</h1>\n<p>Đây là trang web đầu tiên của bạn.</p>\n<button id="btn">Bấm tôi</button>',
+    html: '<h1>Xin chào Tizia 👋</h1>\n<p>Đây là trang web đầu tiên của bạn.</p>\n<button id="btn">Bấm tôi</button>',
     css: 'body { font-family: system-ui; text-align: center; padding: 40px; color: #1f2937; }\nh1 { color: #ec4899; }\nbutton { padding: 10px 20px; border: 0; border-radius: 8px; background: #38bdf8; color: #fff; font-weight: 700; cursor: pointer; }',
     js: "document.getElementById('btn').addEventListener('click', () => {\n  document.querySelector('p').textContent = 'Bạn vừa chạy JavaScript! 🎉';\n});"
   },

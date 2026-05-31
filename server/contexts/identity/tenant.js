@@ -8,8 +8,8 @@
 //
 // Thứ tự phân giải (dừng ở cái đầu tiên có giá trị):
 //   1. req.user.school_id   — user đã đăng nhập (nguồn chuẩn nhất)
-//   2. host → schools.domain — subdomain/đa-domain (vd neu.eduverse.vn) [Phase 1+]
-//   3. default 1            — 'eduverse-default'
+//   2. host → schools.domain — subdomain/đa-domain (vd neu.tizia.vn) [Phase 1+]
+//   3. default 1            — 'tizia-default'
 //
 // PHẢI chạy SAU attachUser (cần req.user). Xem server/index.js.
 // ============================================================
@@ -24,11 +24,11 @@ function schoolIdFromHost(host) {
   if (!host) return null;
   const h = String(host).split(':')[0].toLowerCase();
   if (hostCache.has(h)) return hostCache.get(h);
-  // Thử khớp domain đầy đủ, rồi tới phần "neu" của neu.eduverse.vn.
+  // Thử khớp domain đầy đủ, rồi tới phần "neu" của neu.tizia.vn.
   let school = getSchoolByDomain(h);
   if (!school) {
     const sub = h.split('.')[0];
-    if (sub && sub !== 'www' && sub !== 'eduverse') school = getSchoolByDomain(sub);
+    if (sub && sub !== 'www' && sub !== 'tizia') school = getSchoolByDomain(sub);
   }
   const id = school?.id ?? null;
   hostCache.set(h, id);

@@ -1,7 +1,7 @@
-# EduVerse — Identity Provider (Keycloak + SSO) Setup
+# Tizia — Identity Provider (Keycloak + SSO) Setup
 
 > **Phase 1.** Gom mọi cách đăng nhập (local, Google, Microsoft Entra/Azure AD,
-> SAML của ĐH) về **một** IdP trung tâm là **Keycloak**. EduVerse chỉ tin Keycloak
+> SAML của ĐH) về **một** IdP trung tâm là **Keycloak**. Tizia chỉ tin Keycloak
 > qua OIDC — không tự quản lý từng provider nữa.
 > Artifact: [deploy/keycloak/](../deploy/keycloak/). Kiến trúc: [ARCHITECTURE.md](ARCHITECTURE.md) §6.
 
@@ -19,22 +19,22 @@ Hiện tại [server/contexts/identity/oauth.js](../server/contexts/identity/oau
 | Session tự quản trong SQLite | SSO session chuẩn OIDC, logout toàn cục |
 | Map email domain → trường: thủ công | Identity Provider Mapper |
 
-EduVerse vẫn giữ `oauth.js` cho giai đoạn chuyển tiếp; Phase 1 thêm **1 provider OIDC duy nhất = Keycloak**, các provider khác chuyển vào Keycloak.
+Tizia vẫn giữ `oauth.js` cho giai đoạn chuyển tiếp; Phase 1 thêm **1 provider OIDC duy nhất = Keycloak**, các provider khác chuyển vào Keycloak.
 
 ## 2. Kiến trúc luồng
 
 ```
-SV/GV ── trình duyệt ──► EduVerse (eduverse-web OIDC client)
+SV/GV ── trình duyệt ──► Tizia (tizia-web OIDC client)
                               │  redirect /api/auth/oidc → Keycloak
                               ▼
-                         Keycloak (realm eduverse)
+                         Keycloak (realm tizia)
                           ├── local users (migrate từ bảng users)
                           ├── Google (Google for Education)
                           ├── Microsoft Entra ID (3 ĐH dùng M365)
                           └── SAML 2.0 (ĐH có hệ thống cũ)
                               │  trả OIDC id_token + roles + group(school)
                               ▼
-                         EduVerse map: group → school_id, role claim → role
+                         Tizia map: group → school_id, role claim → role
 ```
 
 ## 3. Triển khai (Server #3)
@@ -46,20 +46,20 @@ psql -h 10.0.0.11 -U postgres -c "CREATE ROLE keycloak LOGIN PASSWORD '<secret>'
 psql -h 10.0.0.11 -U postgres -c "GRANT ALL ON DATABASE keycloak TO keycloak;"
 
 # 2. Secrets (Doppler/Infisical inject, KHÔNG hardcode)
-export KC_DB_PASSWORD=...  KC_ADMIN_PASSWORD=...  KC_HOSTNAME=https://id.eduverse.vn
+export KC_DB_PASSWORD=...  KC_ADMIN_PASSWORD=...  KC_HOSTNAME=https://id.tizia.vn
 
 # 3. Khởi động Keycloak (tự import realm template)
 cd deploy/keycloak
 docker compose -f docker-compose.keycloak.yml up -d
 
-# 4. Caddy (Server #1) reverse-proxy: id.eduverse.vn → 10.0.0.x:8080 (TLS)
+# 4. Caddy (Server #1) reverse-proxy: id.tizia.vn → 10.0.0.x:8080 (TLS)
 ```
 
 ## 4. Cấu hình realm
 
-Dùng template [realm-eduverse.example.json](../deploy/keycloak/realm-eduverse.example.json) (tự import qua `--import-realm`) rồi chỉnh trong Admin Console:
+Dùng template [realm-tizia.example.json](../deploy/keycloak/realm-tizia.example.json) (tự import qua `--import-realm`) rồi chỉnh trong Admin Console:
 
-1. **Client `eduverse-web`**: confidential, lấy `client_secret` → đặt vào secrets EduVerse (`OIDC_CLIENT_SECRET`).
+1. **Client `tizia-web`**: confidential, lấy `client_secret` → đặt vào secrets Tizia (`OIDC_CLIENT_SECRET`).
 2. **redirectUris**: thêm đúng domain production + `limio.vn/ps` (deploy sau prefix).
 3. **Identity Providers**:
    - **Google**: tạo OAuth client ở Google Cloud Console, paste id/secret.
@@ -67,9 +67,9 @@ Dùng template [realm-eduverse.example.json](../deploy/keycloak/realm-eduverse.e
    - **SAML**: import metadata XML của ĐH.
 4. **Mappers — email domain → school_id**:
    - Identity Provider Mapper: `*@neu.edu.vn` → group `/neu` → attribute `school_code=neu`.
-   - EduVerse khi nhận id_token đọc claim `groups`/`school_code` → `resolveSchoolByEmail` hoặc map trực tiếp.
+   - Tizia khi nhận id_token đọc claim `groups`/`school_code` → `resolveSchoolByEmail` hoặc map trực tiếp.
 
-## 5. Tích hợp phía EduVerse (code Phase 1)
+## 5. Tích hợp phía Tizia (code Phase 1)
 
 Thêm 1 OIDC provider "keycloak" vào [oauth.js](../server/contexts/identity/oauth.js) (đã có khung Authorization Code + PKCE):
 
@@ -97,7 +97,7 @@ Khi tạo user từ SSO: gọi `resolveSchoolByEmail(email)` (đã có ở [db.j
 Bảng `users` hiện có scrypt hash — Keycloak KHÔNG đọc được scrypt trực tiếp.
 
 **2 cách:**
-- **(Khuyến nghị) Lazy migration**: giữ local login ở EduVerse song song. User SSO mới → Keycloak. User cũ tiếp tục login local, lần đầu được mời "liên kết tài khoản trường". Không ép migrate hàng loạt.
+- **(Khuyến nghị) Lazy migration**: giữ local login ở Tizia song song. User SSO mới → Keycloak. User cũ tiếp tục login local, lần đầu được mời "liên kết tài khoản trường". Không ép migrate hàng loạt.
 - **Bulk import**: export `users` → Keycloak `partialImport` với `credentials` type `password-hash`. Cần custom hash provider cho scrypt (viết SPI Java) — chỉ làm nếu bắt buộc.
 
 ## 7. Checklist go-live IdP
@@ -105,7 +105,7 @@ Bảng `users` hiện có scrypt hash — Keycloak KHÔNG đọc được scrypt
 - [ ] Keycloak chạy với DB Postgres (KHÔNG H2), backup cùng pgBackRest
 - [ ] TLS qua Caddy, `KC_HOSTNAME` đúng domain
 - [ ] Admin password đổi khỏi bootstrap, bật MFA cho admin
-- [ ] Client secret EduVerse trong secrets manager (không git)
+- [ ] Client secret Tizia trong secrets manager (không git)
 - [ ] Test login từng provider: local, Google, Entra, SAML (nếu có)
 - [ ] Test email domain → school_id mapping đúng
 - [ ] Test global logout (SLO)
@@ -115,6 +115,6 @@ Bảng `users` hiện có scrypt hash — Keycloak KHÔNG đọc được scrypt
 ## 8. Anchors
 
 - Compose: [deploy/keycloak/docker-compose.keycloak.yml](../deploy/keycloak/docker-compose.keycloak.yml)
-- Realm template: [deploy/keycloak/realm-eduverse.example.json](../deploy/keycloak/realm-eduverse.example.json)
+- Realm template: [deploy/keycloak/realm-tizia.example.json](../deploy/keycloak/realm-tizia.example.json)
 - OAuth hiện tại: [server/contexts/identity/oauth.js](../server/contexts/identity/oauth.js)
 - Tenant resolve: `resolveSchoolByEmail` trong [server/db.js](../server/db.js)

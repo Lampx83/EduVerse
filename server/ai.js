@@ -379,10 +379,10 @@ const DOMAIN_SYSTEM = {
   it: `Bạn là gia sư CNTT giàu kinh nghiệm cho sinh viên Việt Nam.
 Bạn thông thạo: SQL, lập trình, thuật toán, cấu trúc dữ liệu, web, mật mã CTF.
 Khi giải thích: ví dụ trực quan, pseudo-code tiếng Việt trước rồi mới đến cú pháp.
-Đề xuất học sinh thử ngay trên SQL Playground / Code Lab / Web Playground / Cipher CTF có sẵn trong EduVerse.`,
+Đề xuất học sinh thử ngay trên SQL Playground / Code Lab / Web Playground / Cipher CTF có sẵn trong Tizia.`,
   pharmacy: `Bạn là gia sư Dược lâm sàng Việt Nam.
 Khi tư vấn dùng thuốc, luôn nêu: liều thường dùng, đường dùng, chống chỉ định, tương tác, tác dụng phụ chính.
-Tham chiếu được tới các lab có sẵn trong EduVerse: chuẩn độ, sắc ký TLC, antibiogram, IV infusion, dilution, dispense, calibration curve, PK curve, pediatric dose, GMP factory.
+Tham chiếu được tới các lab có sẵn trong Tizia: chuẩn độ, sắc ký TLC, antibiogram, IV infusion, dilution, dispense, calibration curve, PK curve, pediatric dose, GMP factory.
 Tránh lời khuyên y khoa cá nhân — nhắc người dùng tham vấn bác sĩ/dược sĩ.`,
   medical: `Bạn là gia sư Y khoa cho sinh viên Việt Nam.
 Khi giải thích ca bệnh, dùng cấu trúc SOAP (Subjective/Objective/Assessment/Plan).
@@ -392,7 +392,7 @@ Tham chiếu được tới các module có sẵn: OSCE championship, ER triage,
 Bám sát kiến thức trong sách Cánh Diều, Kết Nối Tri Thức, Chân Trời Sáng Tạo.
 Dùng ví dụ học sinh Việt quen thuộc (ăn phở, đi học bằng xe đạp, đá cầu sân trường).
 Khi học sinh sai, hỏi gợi mở để các em tự nhận ra, đừng cho đáp án ngay.`,
-  general: `Bạn là gia sư AI thân thiện trong EduVerse — vũ trụ giáo dục Việt Nam.
+  general: `Bạn là gia sư AI thân thiện trong Tizia — vũ trụ giáo dục Việt Nam.
 Giải thích đơn giản, có ví dụ, không dùng thuật ngữ tiếng Anh khi tiếng Việt có sẵn.
 Khích lệ tích cực, giọng văn ấm áp như anh/chị lớn.`,
 };
@@ -407,7 +407,12 @@ async function handleTutorChat({ domain = 'general', grade, context, history = [
   const styleLine = styleNote ? `Lưu ý phong cách: ${styleNote}` : '';
 
   const fullSystem = [sys, contextLine, gradeLine, styleLine].filter(Boolean).join('\n\n')
-    + '\n\nLUẬT QUAN TRỌNG: trả lời TIẾNG VIỆT, ngắn gọn (3–6 câu cho câu hỏi thông thường, dài hơn nếu cần giải thuật/code). KHÔNG mở đầu bằng "Tất nhiên rồi!" hay "Tôi sẽ giúp bạn". Vào thẳng nội dung.';
+    + '\n\nLUẬT NGÔN NGỮ (TUYỆT ĐỐI):'
+    + '\n- Người dùng hỏi bằng ngôn ngữ nào, trả lời bằng đúng ngôn ngữ đó (mặc định TIẾNG VIỆT).'
+    + '\n- TUYỆT ĐỐI KHÔNG trả lời bằng tiếng Trung (中文), tiếng Nhật, tiếng Hàn, hay bất kỳ ngôn ngữ nào khác trừ khi người dùng yêu cầu rõ ràng.'
+    + '\n- KHÔNG tự ý dịch câu hỏi của người dùng sang ngôn ngữ khác. Nếu họ viết "22*6 bằng mấy" thì trả lời thẳng bằng tiếng Việt (ví dụ: "22 × 6 = 132"), không lặp lại câu hỏi bằng ngôn ngữ khác.'
+    + '\n- Với câu hỏi tính toán/số học, trả lời trực tiếp kết quả + giải thích ngắn, KHÔNG diễn giải dài dòng.'
+    + '\n\nLUẬT TRÌNH BÀY: ngắn gọn (3–6 câu cho câu hỏi thông thường, dài hơn nếu cần giải thuật/code). KHÔNG mở đầu bằng "Tất nhiên rồi!" hay "Tôi sẽ giúp bạn". Vào thẳng nội dung.';
 
   // Multi-turn — đưa history vào, sau đó message hiện tại
   const messages = [
@@ -431,7 +436,7 @@ async function handleTutorChat({ domain = 'general', grade, context, history = [
 
 function templateTutorReply(domain, message) {
   const label = ({ it: 'CNTT', pharmacy: 'Dược', medical: 'Y khoa', school: 'phổ thông' }[domain]) || 'giáo dục';
-  return `Mình tạm thời chưa kết nối được tới mô hình AI. Câu hỏi "${String(message).slice(0, 120)}" thuộc lĩnh vực ${label} — bạn thử lại sau ít phút, hoặc xem trực tiếp các lab tương ứng trong EduVerse để thực hành nhé.`;
+  return `Mình tạm thời chưa kết nối được tới mô hình AI. Câu hỏi "${String(message).slice(0, 120)}" thuộc lĩnh vực ${label} — bạn thử lại sau ít phút, hoặc xem trực tiếp các lab tương ứng trong Tizia để thực hành nhé.`;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -756,7 +761,7 @@ const PDF_SUBJECT_HINTS = {
   ngu_van: 'Ngữ văn — phân tích biện pháp tu từ, bối cảnh tác giả, liên hệ giá trị nhân văn.',
   lich_su: 'Lịch sử — ngữ cảnh sự kiện, nguyên nhân-diễn biến-ý nghĩa, không học vẹt.',
   dia: 'Địa lí — số liệu cụ thể vùng VN, không bịa.',
-  tin_hoc: 'Tin học — kèm ví dụ code chạy được, gắn với SQL Playground / Code Lab của EduVerse.',
+  tin_hoc: 'Tin học — kèm ví dụ code chạy được, gắn với SQL Playground / Code Lab của Tizia.',
   tieng_anh: 'Tiếng Anh — giải thích NGỮ PHÁP bằng tiếng Việt, ví dụ bằng tiếng Anh.',
   gdcd: 'GDCD — bám điều luật cụ thể, ví dụ tình huống học sinh.',
   cong_nghe: 'Công nghệ — gắn với sản phẩm/ứng dụng thực tế.',
@@ -887,7 +892,7 @@ function templateNote({ type, title }) {
  */
 export async function aiReviewRequest({ domain, type, title, detail }) {
   const fallback = { note: templateNote({ type, title }), status: 'reviewing', source: 'template' };
-  const system = `Bạn là HIỆU TRƯỞNG AI của một trường trong vũ trụ giáo dục EduVerse — `
+  const system = `Bạn là HIỆU TRƯỞNG AI của một trường trong vũ trụ giáo dục Tizia — `
     + `nơi cơ sở giáo dục do AI điều hành, cung cấp học liệu và môi trường học tập, liên tục tự cải tiến theo góp ý của sinh viên. `
     + `Giọng văn: thân thiện, chuyên nghiệp, khích lệ. Tiếng Việt.`;
   const prompt = `Sinh viên gửi yêu cầu cải tiến tới trường "${domain}":

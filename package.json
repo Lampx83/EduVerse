@@ -1,8 +1,8 @@
 {
-  "name": "eduverse",
+  "name": "tizia",
   "version": "0.2.0",
   "private": true,
-  "description": "EduVerse — Vũ trụ giáo dục ảo: nhiều trường ảo (Dược, Kinh tế, CNTT…) với 2D · 3D · VR · XR · Metaverse · gamification",
+  "description": "Tizia — Vũ trụ giáo dục ảo: nhiều trường ảo (Dược, Kinh tế, CNTT…) với 2D · 3D · VR · XR · Metaverse · gamification",
   "type": "module",
   "scripts": {
     "start": "node server/index.js",

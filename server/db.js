@@ -106,7 +106,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_oauth_user ON oauth_identities(user_id);
 
   -- Multi-tenancy (Phase 0 foundation): mỗi trường là 1 tenant.
-  -- Mặc định school_id=1 ('eduverse-default') chứa legacy data trước khi mở multi-tenant.
+  -- Mặc định school_id=1 ('tizia-default') chứa legacy data trước khi mở multi-tenant.
   -- SSO email domain → school auto-map (vd '*@neu.edu.vn' → NEU). Phase 1 sẽ enforce
   -- Postgres RLS theo school_id; hiện tại SQLite, isolation enforce ở app layer.
   CREATE TABLE IF NOT EXISTS schools (
@@ -135,9 +135,9 @@ try { db.exec(`ALTER TABLE attempts ADD COLUMN level_n INTEGER`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_class ON attempts(class_code, created_at DESC)`); } catch {}
 
 // Step 5: multi-tenancy migration (Phase 0). Thêm school_id vào 4 entity table top-level.
-// Additive với DEFAULT 1 → legacy row tự backfill về school 'eduverse-default'.
+// Additive với DEFAULT 1 → legacy row tự backfill về school 'tizia-default'.
 // SQLite KHÔNG cho phép ALTER ADD COLUMN với non-constant DEFAULT, nên dùng hằng 1.
-try { db.prepare(`INSERT OR IGNORE INTO schools (id, code, name, created_at) VALUES (1, 'eduverse-default', 'EduVerse', ?)`).run(Date.now()); } catch {}
+try { db.prepare(`INSERT OR IGNORE INTO schools (id, code, name, created_at) VALUES (1, 'tizia-default', 'Tizia', ?)`).run(Date.now()); } catch {}
 try { db.exec(`ALTER TABLE users    ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
 try { db.exec(`ALTER TABLE classes  ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
 try { db.exec(`ALTER TABLE attempts ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
@@ -146,6 +146,15 @@ try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_school    ON users(school_id
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_classes_school  ON classes(school_id)`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_school ON attempts(school_id, created_at DESC)`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_requests_school ON requests(school_id, votes DESC, created_at DESC)`); } catch {}
+
+// Step 6: gói cước (free/plus/pro). plan_expires_at NULL = vĩnh viễn (cho free) hoặc
+// đến khi mua. billing_cycle = month|year (lưu để render đúng "hết hạn dd/mm/yyyy"
+// và để gia hạn). Hết hạn → app degrade về free nhưng KHÔNG xoá cột → khôi phục
+// lịch sử nếu user gia hạn lại. Default 'free' cho user cũ.
+try { db.exec(`ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free'`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN plan_expires_at INTEGER`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN billing_cycle TEXT`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_plan ON users(plan, plan_expires_at)`); } catch {}
 
 // Kho học liệu do AI sinh thêm (nút "Học thêm" + "Hỏi cô giáo AI" ở Tiểu học).
 // Mỗi lần Ollama sinh nội dung mới → lưu lại để bài học giàu dần, tái sử dụng
@@ -167,6 +176,28 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_ai_content_week
     ON ai_lesson_content(week_id, kind, flagged, created_at DESC);
+`);
+
+// Thông báo cá nhân cho HS — kênh phản hồi từ Ban điều hành AI khi xử lý xong
+// 1 yêu cầu (request). Key theo display_name vì requests.student lưu tên hiển
+// thị (không có user_id ở thời điểm tạo, có cả guest). Read receipt: read_at.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    school_id         INTEGER NOT NULL DEFAULT 1,
+    user_display_name TEXT    NOT NULL,         -- người nhận, khớp users.display_name
+    request_id        INTEGER,                   -- request gốc (NULL nếu không gắn)
+    kind              TEXT    NOT NULL,          -- 'reply' | 'system' | ...
+    title             TEXT    NOT NULL,
+    body              TEXT,
+    url               TEXT,                      -- link điều hướng khi click
+    read_at           INTEGER,                   -- NULL = chưa đọc
+    created_at        INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_notifications_user
+    ON notifications(user_display_name, read_at, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_notifications_request
+    ON notifications(request_id);
 `);
 
 // Multi-tenancy: mọi write ghi school_id, mọi read cross-user lọc theo school_id.
@@ -367,6 +398,70 @@ export function getRequestStats(domain, schoolId = 1) {
   return out;
 }
 
+// --- Notifications (kênh phản hồi cá nhân cho HS) ---
+const VALID_NOTIF_KINDS = new Set(['reply', 'system']);
+
+const insertNotificationStmt = db.prepare(`
+  INSERT INTO notifications (school_id, user_display_name, request_id, kind, title, body, url, created_at)
+  VALUES (@school_id, @user_display_name, @request_id, @kind, @title, @body, @url, @created_at)
+`);
+const listNotificationsStmt = db.prepare(`
+  SELECT id, request_id, kind, title, body, url, read_at, created_at
+  FROM notifications
+  WHERE user_display_name = @user AND school_id = @school_id
+  ORDER BY (read_at IS NOT NULL) ASC, created_at DESC
+  LIMIT @limit
+`);
+const countUnreadStmt = db.prepare(`
+  SELECT COUNT(*) AS n FROM notifications
+  WHERE user_display_name = @user AND school_id = @school_id AND read_at IS NULL
+`);
+const markReadStmt = db.prepare(`
+  UPDATE notifications SET read_at = @t
+  WHERE id = @id AND user_display_name = @user AND read_at IS NULL
+`);
+const markAllReadStmt = db.prepare(`
+  UPDATE notifications SET read_at = @t
+  WHERE user_display_name = @user AND school_id = @school_id AND read_at IS NULL
+`);
+
+/** Bỏ qua nếu thiếu display_name hợp lệ (vd 'Ẩn danh' / rỗng) — tránh broadcast. */
+export function createNotification({ user_display_name, request_id = null, kind = 'reply', title, body = null, url = null, school_id = 1 }) {
+  const u = String(user_display_name || '').trim();
+  if (!u || u === 'Ẩn danh') return null;
+  if (!VALID_NOTIF_KINDS.has(kind)) kind = 'reply';
+  const info = insertNotificationStmt.run({
+    school_id, user_display_name: u.slice(0, 60),
+    request_id: request_id ? Number(request_id) : null,
+    kind,
+    title: String(title || '').slice(0, 200),
+    body: body ? String(body).slice(0, 1000) : null,
+    url: url ? String(url).slice(0, 500) : null,
+    created_at: Date.now(),
+  });
+  return { id: info.lastInsertRowid };
+}
+export function listNotifications(user_display_name, schoolId = 1, limit = 30) {
+  const u = String(user_display_name || '').trim();
+  if (!u) return [];
+  return listNotificationsStmt.all({ user: u, school_id: schoolId, limit });
+}
+export function countUnreadNotifications(user_display_name, schoolId = 1) {
+  const u = String(user_display_name || '').trim();
+  if (!u) return 0;
+  return countUnreadStmt.get({ user: u, school_id: schoolId })?.n || 0;
+}
+export function markNotificationRead(id, user_display_name) {
+  const u = String(user_display_name || '').trim();
+  if (!u) return false;
+  return markReadStmt.run({ id: Number(id), user: u, t: Date.now() }).changes > 0;
+}
+export function markAllNotificationsRead(user_display_name, schoolId = 1) {
+  const u = String(user_display_name || '').trim();
+  if (!u) return 0;
+  return markAllReadStmt.run({ user: u, school_id: schoolId, t: Date.now() }).changes;
+}
+
 // --- Kho học liệu AI sinh thêm ---
 const insertAiContentStmt = db.prepare(`
   INSERT INTO ai_lesson_content (school_id, week_id, subject, topic, kind, stem, payload, student, created_at)
@@ -485,8 +580,12 @@ const getUserByUsernameStmt = db.prepare(`
   FROM users WHERE username = ? COLLATE NOCASE
 `);
 const getUserByIdStmt = db.prepare(`
-  SELECT id, username, display_name, role, age, email, avatar_url, school_id, created_at, last_login
+  SELECT id, username, display_name, role, age, email, avatar_url, school_id, created_at, last_login,
+         plan, plan_expires_at, billing_cycle
   FROM users WHERE id = ?
+`);
+const setUserPlanStmt = db.prepare(`
+  UPDATE users SET plan = @plan, plan_expires_at = @expires, billing_cycle = @cycle WHERE id = @id
 `);
 const touchLoginStmt = db.prepare(`UPDATE users SET last_login = @t WHERE id = @id`);
 const updateDisplayNameStmt = db.prepare(`UPDATE users SET display_name = @name WHERE id = @id`);
@@ -497,7 +596,8 @@ const insertSessionStmt = db.prepare(`
 `);
 const getSessionStmt = db.prepare(`
   SELECT s.token, s.user_id, s.expires_at,
-         u.username, u.display_name, u.role, u.school_id
+         u.username, u.display_name, u.role, u.school_id,
+         u.plan, u.plan_expires_at
   FROM sessions s JOIN users u ON u.id = s.user_id
   WHERE s.token = ? AND s.expires_at > @now
 `);
@@ -526,6 +626,16 @@ export function touchLogin(id) {
 }
 export function updateDisplayName(id, name) {
   updateDisplayNameStmt.run({ id: Number(id), name: String(name).slice(0, 60) });
+}
+// Set gói cước. expires_at=null = vĩnh viễn (chỉ áp dụng cho 'free'); với plus/pro
+// caller phải truyền timestamp ms. cycle='month'|'year'|null.
+export function setUserPlan(id, { plan, expires_at = null, cycle = null }) {
+  setUserPlanStmt.run({
+    id: Number(id),
+    plan: String(plan || 'free'),
+    expires: expires_at ? Number(expires_at) : null,
+    cycle: cycle ? String(cycle) : null,
+  });
 }
 export function createSession({ token, user_id, ttlMs }) {
   const now = Date.now();
@@ -599,7 +709,7 @@ export function isUsernameTaken(username) {
 }
 
 // --- Schools (multi-tenancy Phase 0) ---
-// Mỗi trường là 1 tenant. Default school id=1 'eduverse-default' giữ legacy data.
+// Mỗi trường là 1 tenant. Default school id=1 'tizia-default' giữ legacy data.
 // Phase 1 sẽ wire createUser/SSO auto-map theo resolveSchoolByEmail và enforce
 // Postgres RLS theo school_id. Hiện tại helpers ready, callers chưa migrate.
 const getSchoolByIdStmt     = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE id = ?`);
