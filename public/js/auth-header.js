@@ -57,6 +57,26 @@ const CSS = `
   /* Slot chứa chuông notification (do notifications-bell.js mount vào) */
   #ev-bell-slot { display: inline-flex; align-items: center; }
 
+  /* Quick-link 5 mini-game / trải nghiệm trực quan — luôn hiện ở mọi trang.
+     Trước đây chỉ ẩn trong "Khám phá thêm" cuối trang chủ, user không tìm thấy. */
+  .ev-quicklinks { display: inline-flex; gap: 4px; padding: 0 4px; }
+  .ev-quicklinks a {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none; font-size: 17px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.15s, border-color 0.15s, transform 0.12s;
+  }
+  .ev-quicklinks a:hover {
+    background: rgba(251,191,36,0.18); border-color: rgba(251,191,36,0.55); transform: translateY(-1px);
+  }
+  @media (max-width: 720px) {
+    .ev-quicklinks { gap: 2px; padding: 0 2px; }
+    .ev-quicklinks a { width: 26px; height: 26px; font-size: 14px; }
+    /* Trên mobile chỉ giữ 3 quick-link đầu để khỏi chen header */
+    .ev-quicklinks a:nth-child(n+4) { display: none; }
+  }
+
   .ev-user-wrap { position: relative; }
   .ev-header .ev-user {
     display: inline-flex; align-items: center; gap: 10px;
@@ -245,12 +265,31 @@ function fmtExpire(ms) {
   } catch { return ''; }
 }
 
+// 7 quick-link "trải nghiệm trực quan" — luôn hiện trên header để user không
+// phải đào xuống cuối trang chủ tìm. Thứ tự ưu tiên Cây Tri Thức (sticky), Pet,
+// Leaderboard, Bão Số Học, Lab Hoá, Đố Chữ, Bản đồ VN. Mobile chỉ hiện 3 đầu (CSS @media).
+const QUICK_LINKS = [
+  { href: '/cay-tri-thuc.html',  ic: '🌳', title: 'Cây Tri Thức của em' },
+  { href: '/pet-tri-thuc.html',  ic: '🐉', title: 'Pet Tri Thức (Tiziamon)' },
+  { href: '/bang-phong-than.html', ic: '🏆', title: 'Bảng Phong Thần' },
+  { href: '/bao-so-hoc.html',    ic: '⛈️', title: 'Bão Số Học (luyện tính)' },
+  { href: '/lab-hoa-ao.html',    ic: '🧪', title: 'Lab Hoá Học Ảo' },
+  { href: '/do-chu-ghep-van.html', ic: '🔤', title: 'Đố Chữ Ghép Vần' },
+  { href: '/ban-do-vn.html',     ic: '🗺️', title: 'Bản đồ Việt Nam Tri Thức' },
+];
+function quickLinksHtml() {
+  return `<span class="ev-quicklinks">${QUICK_LINKS.map(q =>
+    `<a href="${q.href}" title="${q.title}" aria-label="${q.title}">${q.ic}</a>`
+  ).join('')}</span>`;
+}
+
 function render(host, user) {
   if (!user) {
     host.innerHTML = `
       <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
       ${breadcrumbHtml()}
       <span class="ev-spacer"></span>
+      ${quickLinksHtml()}
       <span id="ev-bell-slot"></span>
       <a href="pricing.html" class="ev-plan-pill" style="background:rgba(168,85,247,.22);color:#a855f7;text-decoration:none">✨ Xem gói</a>
       <span class="ev-anon" style="margin-left:10px">Chưa đăng nhập · <a href="login.html">Đăng nhập</a></span>
@@ -291,6 +330,7 @@ function render(host, user) {
     <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
     ${breadcrumbHtml()}
     <span class="ev-spacer"></span>
+    ${quickLinksHtml()}
     <span id="ev-bell-slot"></span>
     <div class="ev-user-wrap" id="ev-user-wrap">
       <button class="ev-user" id="ev-user-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Xem hồ sơ">

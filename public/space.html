@@ -610,6 +610,8 @@ const SPACES_SECONDARY = {
       {ic:'📖',name:'Ngữ văn 6',rd:'36 tuần: truyện đồng thoại, cổ tích, truyền thuyết, thơ lục bát, biện pháp tu từ, từ Hán Việt.',href:'/module.html?domain=secondary&module=S6NV'},
       {ic:'🇬🇧',name:'Tiếng Anh 6',rd:'36 tuần CEFR A1-A2: school, family, neighbourhood, modal verbs, past simple, future, sports, cities.',href:'/module.html?domain=secondary&module=S6TA'},
       {ic:'🔬',name:'Khoa học tự nhiên 6',rd:'36 tuần tích hợp Vật lý-Hoá-Sinh: dụng cụ đo, chất, tế bào, lực, năng lượng, Trái Đất-Mặt Trời.',href:'/module.html?domain=secondary&module=S6KHTN'},
+      // Lab Hoá ảo — mô phỏng 15 phản ứng hoá học bằng kéo thả, bổ trợ KHTN
+      {ic:'🧪',name:'Lab Hoá học ảo',rd:'Kéo thả 10 hoá chất (HCl, NaOH, AgNO₃, CuSO₄…) để khám phá 15 phản ứng — có kết tủa, sủi khí, đổi màu.',href:'/lab-hoa-ao.html'},
       {ic:'🗺️',name:'Lịch sử & Địa lí 6',rd:'36 tuần (HK1 Lịch sử nguyên thuỷ→Bắc thuộc; HK2 Địa lí bản đồ, Trái Đất, địa hình, khí hậu).',href:'/module.html?domain=secondary&module=S6LSDL'},
       {ic:'⚖️',name:'GDCD 6',rd:'36 tuần · 12 chủ đề: truyền thống, yêu thương, tự lập, quyền-nghĩa vụ công dân, quyền trẻ em.',href:'/module.html?domain=secondary&module=S6GDCD'},
       {ic:'⚙️',name:'Công nghệ 6',rd:'36 tuần · 4 chương: Nhà ở · Bảo quản-chế biến thực phẩm · Trang phục · Đồ dùng điện gia đình.',href:'/module.html?domain=secondary&module=S6CN'},
@@ -617,7 +619,10 @@ const SPACES_SECONDARY = {
       {ic:'⚽',name:'Giáo dục thể chất 6',rd:'36 tuần: đội hình, TD liên hoàn, chạy ngắn-bền, nhảy xa, ném bóng, bóng đá-rổ-cầu lông, sơ cứu.',href:'/module.html?domain=secondary&module=S6GDTC'},
       {ic:'🎨',name:'Nghệ thuật 6',rd:'36 tuần (HK1 Âm nhạc nốt-nhịp-dân ca; HK2 Mỹ thuật yếu tố tạo hình, màu, tranh Đông Hồ).',href:'/module.html?domain=secondary&module=S6NT'},
       {ic:'🧭',name:'Trải nghiệm — hướng nghiệp',rd:'36 tuần · 4 mạch: Bản thân · Xã hội · Tự nhiên · Hướng nghiệp.',href:'/module.html?domain=secondary&module=S6HDTN'},
-      {ic:'🏯',name:'GD địa phương Hà Nội',rd:'36 tuần: Thăng Long-Hà Nội từ Lý Thái Tổ đến đô thị thông minh; phố cổ, làng nghề, danh nhân.',href:'/module.html?domain=secondary&module=S6GDDP'}],
+      {ic:'🏯',name:'GD địa phương Hà Nội',rd:'36 tuần: Thăng Long-Hà Nội từ Lý Thái Tổ đến đô thị thông minh; phố cổ, làng nghề, danh nhân.',href:'/module.html?domain=secondary&module=S6GDDP'},
+      // Mini-game tích hợp — bổ trợ Toán + LS-ĐL bằng trải nghiệm trực quan
+      {ic:'⛈️',name:'Bão Số Học (Medium/Hard)',rd:'Arcade luyện tính nhẩm — phù hợp ôn nhân/chia/luỹ thừa lớp 6.',href:'/bao-so-hoc.html'},
+      {ic:'🗺️',name:'Bản đồ Tri thức 63 tỉnh',rd:'Khám phá 63 tỉnh thành VN — đặc sản, danh lam, sự kiện lịch sử + quiz.',href:'/ban-do-vn.html'}],
     skills:['Làm quen cấp THCS','Tự học có kế hoạch'],
     quiz:[{q:'Số đối của 7 là?',o:['-7','7','0','1/7'],a:0},
       {q:'Thơ lục bát có cặp câu gồm?',o:['Một câu 6 chữ & một câu 8 chữ','Hai câu 7 chữ','Câu 5 chữ','Câu tự do'],a:0},
@@ -1287,17 +1292,23 @@ const SPACES_IT = {
 const SPACES_PRIMARY = {
   g1:{emoji:'1️⃣',name:'Lớp 1',accent:'#ef4444',intro:'Lớp 1 — những bước đầu tiên: tập đếm, tập đọc và làm quen trường lớp. Học mà chơi, chơi mà học!',
     rooms:[{ic:'➗',name:'Toán lớp 1',rd:'Đếm & so sánh số trong 100, cộng trừ không nhớ, hình cơ bản.',href:'/module.html?domain=primary&module=P1'},
+      // Bão Số Học — arcade luyện tính nhẩm phù hợp lớp 1-2 (level Easy)
+      {ic:'⛈️',name:'Bão Số Học (luyện tính)',rd:'Phép tính rơi như mưa — bấm đáp án nhanh trước khi chạm đất. Combo cao = sét đánh!',href:'/bao-so-hoc.html'},
       {ic:'📖',name:'Tiếng Việt 1 — Học vần',rd:'Học âm, vần và tập đọc trơn.',panel:[
         {h:'Bắt đầu biết đọc'},
         {ul:['Học các âm và vần, ghép lại thành tiếng','Đánh vần rồi đọc trơn cả tiếng','Đọc to, rõ ràng từng câu ngắn','Tập viết chữ thường và chữ hoa']},
         {note:'Mỗi tối đọc vài câu cùng bố mẹ, em sẽ mau biết đọc!'}]},
+      // Đố Chữ Ghép Vần — luyện ghép chữ tiếng Việt, phù hợp lớp 1-3
+      {ic:'🔤',name:'Đố Chữ Ghép Vần',rd:'Kéo thả các chữ để ghép thành từ — 60 từ chia 3 cấp từ dễ đến khó.',href:'/do-chu-ghep-van.html'},
       {ic:'🔤',name:'Tiếng Anh 1 — Lật thẻ',rd:'Chào hỏi, màu sắc và con vật.',panel:[
         {p:'Bấm vào thẻ để học những từ tiếng Anh đầu tiên.'},
         {flash:[{e:'👋',f:'Hello',b:'Xin chào'},{e:'🔴',f:'Red',b:'Màu đỏ'},{e:'🔵',f:'Blue',b:'Màu xanh'},{e:'1️⃣',f:'One',b:'Số một'},{e:'🐱',f:'Cat',b:'Con mèo'},{e:'🐶',f:'Dog',b:'Con chó'}]}]},
       {ic:'🏫',name:'TN&XH — Trường lớp & gia đình',rd:'Em và những người xung quanh.',panel:[
         {h:'Em khám phá xung quanh'},
         {ul:['Các thành viên trong gia đình em','Trường lớp: thầy cô, bạn bè, đồ dùng học tập','Giữ vệ sinh: rửa tay, đánh răng, mặc ấm khi trời lạnh']},
-        {mcq:[{q:'Trước khi ăn và sau khi đi vệ sinh, em cần làm gì?',o:['Rửa tay bằng xà phòng','Lau tay vào áo','Không cần làm gì','Chỉ thổi cho sạch'],a:0,fb:'Rửa tay với xà phòng giúp phòng bệnh — nhớ rửa đủ các bước nhé!'}]}]}],
+        {mcq:[{q:'Trước khi ăn và sau khi đi vệ sinh, em cần làm gì?',o:['Rửa tay bằng xà phòng','Lau tay vào áo','Không cần làm gì','Chỉ thổi cho sạch'],a:0,fb:'Rửa tay với xà phòng giúp phòng bệnh — nhớ rửa đủ các bước nhé!'}]}]},
+      // Bản đồ VN — game khám phá 63 tỉnh, phù hợp HS lớp 1 khám phá quê hương
+      {ic:'🗺️',name:'Bản đồ Việt Nam Tri thức',rd:'63 tỉnh thành — 63 câu chuyện. Click vào tỉnh để xem đặc sản + làm quiz.',href:'/ban-do-vn.html'}],
     skills:['Đếm & cộng trừ trong 100','Bắt đầu biết đọc'],
     quiz:[{q:'Số liền sau của 9 là số nào?',o:['10','8','11','0'],a:0},
       {q:'5 + 3 = ?',o:['8','7','9','6'],a:0},
@@ -1306,6 +1317,8 @@ const SPACES_PRIMARY = {
   g2:{emoji:'2️⃣',name:'Lớp 2',accent:'#f59e0b',intro:'Lớp 2 — Đầy đủ 9 môn theo GDPT 2018 · Mỗi môn 36 tuần (HK1: tuần 1-18 · HK2: tuần 19-36, tuần 22 nghỉ Tết) · Bám sát SGK Cánh Diều / Kết nối tri thức / Chân trời sáng tạo.',
     rooms:[
       {ic:'➗',name:'Toán lớp 2',rd:'HK1: Cộng trừ có nhớ, bảng nhân 2-5. HK2: Bảng chia, đơn vị đo, số đến 1000, tiền VN, chu vi.',href:'/module.html?domain=primary&module=P2'},
+      // Mini-game arcade luyện tính nhẩm — bổ trợ cho phòng Toán
+      {ic:'⛈️',name:'Bão Số Học (arcade)',rd:'Phép tính rơi như mưa — bấm đáp án nhanh để né "bão". Combo cao sét đánh, điểm gấp đôi!',href:'/bao-so-hoc.html'},
       {ic:'📖',name:'Tiếng Việt lớp 2',rd:'HK1: Đọc-hiểu, từ chỉ sự vật/hoạt động/đặc điểm, mẫu câu Ai là gì?. HK2: Dấu câu, mở rộng vốn từ, viết đoạn 3-5 câu.',href:'/module.html?domain=primary&module=P2TV'},
       {ic:'🇬🇧',name:'Tiếng Anh lớp 2',rd:'HK1: Greetings, numbers 1-10, colors, body, family. HK2: Animals, food, classroom, weekdays, weather.',href:'/module.html?domain=primary&module=P2TA'},
       {ic:'⚽',name:'Giáo dục thể chất lớp 2',rd:'HK1: Đội hình đội ngũ, bài thể dục phát triển chung, đi-chạy-nhảy. HK2: Ném-bắt bóng, tâng cầu, trò chơi dân gian.',href:'/module.html?domain=primary&module=P2GDTC'},
@@ -1321,10 +1334,14 @@ const SPACES_PRIMARY = {
 
   g3:{emoji:'3️⃣',name:'Lớp 3',accent:'#22c55e',intro:'Lớp 3 — thành thạo bảng nhân chia, tính chu vi và viết đoạn văn ngắn.',
     rooms:[{ic:'➗',name:'Toán lớp 3',rd:'Bảng nhân/chia 6–9, chu vi, số đến 100 000.',href:'/module.html?domain=primary&module=P3'},
+      // Bão Số Học level Medium — phù hợp nhân chia lớp 3
+      {ic:'⛈️',name:'Bão Số Học (Medium)',rd:'Phép tính rơi mức trung — luyện nhân chia trong 100, trừ có nhớ tốc độ.',href:'/bao-so-hoc.html'},
       {ic:'📖',name:'Tiếng Việt 3 — Từ & câu',rd:'Từ chỉ sự vật, hoạt động, đặc điểm.',panel:[
         {h:'Luyện từ và câu'},
         {cards:[{ic:'🍎',t:'Từ chỉ sự vật',d:'bàn, cây, mẹ, con mèo…'},{ic:'🏃',t:'Từ chỉ hoạt động',d:'chạy, đọc, hát…'},{ic:'🌈',t:'Từ chỉ đặc điểm',d:'cao, xanh, ngoan…'}]},
         {note:'Mẫu câu: "Ai là gì?", "Ai làm gì?", "Ai thế nào?".'}]},
+      // Đố Chữ Ghép Vần — cấp medium phù hợp lớp 3 (từ 5-7 chữ cái)
+      {ic:'🔤',name:'Đố Chữ Ghép Vần (Medium)',rd:'Ghép từ 5-7 chữ cái: trường học, biển xanh, mặt trời… có gợi ý.',href:'/do-chu-ghep-van.html'},
       {ic:'🔤',name:'Tiếng Anh 3 — Lật thẻ',rd:'Gia đình và cơ thể.',panel:[
         {flash:[{e:'👩',f:'Mother',b:'Mẹ'},{e:'👨',f:'Father',b:'Bố'},{e:'✋',f:'Hand',b:'Bàn tay'},{e:'👀',f:'Eyes',b:'Đôi mắt'},{e:'😀',f:'Happy',b:'Vui'},{e:'🟢',f:'Green',b:'Màu xanh lá'}]}]},
       {ic:'🌏',name:'TN&XH — Cơ thể & họ hàng',rd:'Giữ gìn sức khoẻ.',panel:[
@@ -1347,7 +1364,9 @@ const SPACES_PRIMARY = {
         {mcq:[{q:'Nước đóng băng (thể rắn) khi nào?',o:['Khi gặp lạnh (0°C trở xuống)','Khi đun sôi','Khi để ngoài nắng','Khi pha đường'],a:0,fb:'Gặp lạnh, nước chuyển từ thể lỏng sang thể rắn (đóng băng) ở 0°C.'}]}]},
       {ic:'🗺️',name:'Lịch sử & Địa lí 4',rd:'Buổi đầu dựng nước & bản đồ Việt Nam.',panel:[
         {ul:['Nhà nước Văn Lang – Âu Lạc: buổi đầu dựng nước','Truyền thuyết Con Rồng cháu Tiên, Sơn Tinh – Thuỷ Tinh','Việt Nam hình chữ S, có đồng bằng, núi và biển']},
-        {note:'Bản đồ giúp em biết phương hướng và vị trí các vùng miền.'}]}],
+        {note:'Bản đồ giúp em biết phương hướng và vị trí các vùng miền.'}]},
+      // Bản đồ VN game — bổ trợ LSDL lớp 4 (vùng miền + đặc sản)
+      {ic:'🗺️',name:'Bản đồ Tri thức 63 tỉnh',rd:'Khám phá đặc sản, danh lam và làm quiz về 63 tỉnh thành Việt Nam.',href:'/ban-do-vn.html'}],
     skills:['Phân số & hình học','Bắt đầu Khoa học – Sử – Địa'],
     quiz:[{q:'Phân số nào bằng một nửa?',o:['1/2','1/3','2/3','3/4'],a:0},
       {q:'Số nào chia hết cho 5?',o:['25','22','13','9'],a:0},
@@ -1365,7 +1384,11 @@ const SPACES_PRIMARY = {
         {mcq:[{q:'Việc nào giúp bảo vệ môi trường?',o:['Bỏ rác đúng nơi & phân loại rác','Vứt rác xuống sông','Để vòi nước chảy lãng phí','Bẻ cành, hái lá cây'],a:0,fb:'Giảm – Tái sử dụng – Tái chế (3R) và bỏ rác đúng nơi giúp môi trường sạch đẹp.'}]}]},
       {ic:'🗺️',name:'Lịch sử & Địa lí 5',rd:'Các mốc lịch sử & địa lí Việt Nam.',panel:[
         {timeline:[{t:'Dựng nước',d:'Văn Lang – Âu Lạc.'},{t:'Đấu tranh giữ nước',d:'Các cuộc kháng chiến chống ngoại xâm.'},{t:'1945',d:'Bác Hồ đọc Tuyên ngôn Độc lập.'},{t:'1975',d:'Đất nước thống nhất.'}]},
-        {note:'Việt Nam nằm ở Đông Nam Á, có nhiều dân tộc cùng chung sống.'}]}],
+        {note:'Việt Nam nằm ở Đông Nam Á, có nhiều dân tộc cùng chung sống.'}]},
+      // Bão Số Học level Hard — phù hợp toán lớp 5 (4 phép trong 1000)
+      {ic:'⛈️',name:'Bão Số Học (Hard)',rd:'Mức khó: +, −, ×, ÷ trong 1000. Combo cao mở sét đánh!',href:'/bao-so-hoc.html'},
+      // Bản đồ VN — ôn LS-ĐL lớp 5
+      {ic:'🗺️',name:'Bản đồ Tri thức 63 tỉnh',rd:'63 tỉnh thành — đặc sản, danh lam, quiz địa lý. Ôn lại trước khi lên cấp 2.',href:'/ban-do-vn.html'}],
     skills:['Số thập phân & phần trăm','Sẵn sàng lên lớp 6'],
     quiz:[{q:'Số thập phân 0,5 bằng phân số nào?',o:['1/2','1/5','5','1/50'],a:0},
       {q:'25% của 100 là?',o:['25','50','75','10'],a:0},

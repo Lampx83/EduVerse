@@ -106,6 +106,15 @@
 <div class="grid">
   <div class="row" id="versions-row"></div>
 
+  <!-- 🌟 Trải nghiệm trực quan — surface 5 mini-game lên dashboard để HS/GV thấy ngay -->
+  <div class="card" id="exp-card" style="background:linear-gradient(135deg,rgba(34,197,94,.08),rgba(56,189,248,.08))">
+    <h2 style="display:flex;align-items:center;gap:10px">
+      🎮 Trải nghiệm trực quan
+      <span style="font-size:11px;font-weight:600;color:#64748b;background:rgba(100,116,139,.12);padding:3px 10px;border-radius:10px">Bấm vào để chơi ngay</span>
+    </h2>
+    <div id="exp-grid" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-top:14px"></div>
+  </div>
+
   <div class="card">
     <h2>🕒 Lượt chơi gần nhất</h2>
     <div class="recent-wrap">
@@ -252,6 +261,32 @@ async function loadAll() {
 
 document.getElementById('refresh').addEventListener('click', loadAll);
 loadAll();
+
+// ── Trải nghiệm trực quan: 5 mini-game standalone ──
+// Đặt ở dashboard để HS đăng nhập thấy ngay shortcut, đỡ phải đào xuống cuối trang chủ.
+const EXPERIENCES = [
+  { href: '/cay-tri-thuc.html',    ic: '🌳', t: 'Cây Tri Thức',    d: 'Mỗi tuần hoàn thành = 1 chiếc lá lên cây.' },
+  { href: '/pet-tri-thuc.html',    ic: '🐉', t: 'Pet Tri Thức',    d: 'Nuôi Tiziamon — sinh vật ảo tiến hoá theo điểm.' },
+  { href: '/bang-phong-than.html', ic: '🏆', t: 'Bảng Phong Thần', d: 'Xem em đứng thứ mấy theo tuần/tháng/all-time.' },
+  { href: '/bao-so-hoc.html',      ic: '⛈️', t: 'Bão Số Học',      d: 'Arcade phép tính rơi, combo sét đánh.' },
+  { href: '/ban-do-vn.html',       ic: '🗺️', t: 'Bản đồ VN',       d: '63 tỉnh — 63 câu chuyện + quiz địa lý.' },
+];
+(function renderExperiences() {
+  const grid = document.getElementById('exp-grid');
+  if (!grid) return;
+  grid.innerHTML = EXPERIENCES.map(e => `
+    <a href="${e.href}" style="display:flex;flex-direction:column;gap:6px;padding:14px 14px 16px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;text-decoration:none;color:#1f2937;transition:transform .12s, box-shadow .15s">
+      <span style="font-size:32px;line-height:1">${e.ic}</span>
+      <b style="font-size:14px;color:#1e293b">${e.t}</b>
+      <span style="font-size:12px;color:#64748b;line-height:1.45">${e.d}</span>
+    </a>
+  `).join('');
+  // Hover scale via inline JS (CSS would need :hover rule)
+  for (const a of grid.querySelectorAll('a')) {
+    a.addEventListener('mouseenter', () => { a.style.transform = 'translateY(-3px)'; a.style.boxShadow = '0 10px 24px rgba(0,0,0,.08)'; });
+    a.addEventListener('mouseleave', () => { a.style.transform = ''; a.style.boxShadow = ''; });
+  }
+})();
 </script>
 <script src="./js/pwa-register.js" defer></script>
 <script src="./js/tutor-floating.js" data-domain="general" defer></script>

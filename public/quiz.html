@@ -224,7 +224,12 @@ async function finish() {
     <div class="score">${state.score}</div>
     <div style="color:#666;margin:4px 0 12px">Đúng ${state.correctCount}/${state.questions.length} · streak cao nhất ${state.bestStreak} · ${(durationMs/1000).toFixed(1)}s</div>
     ${newBadges.length ? `<div style="font-size:13px;color:#374151">🎁 Mở khóa huy hiệu mới:</div><div class="badges">${newBadges.map(b => `<span class="badge">${b.icon} ${b.label}</span>`).join('')}</div>` : ''}
-    <div style="margin-top:18px">
+    <!-- Đóng vòng feedback: link đến 2 trang trải nghiệm liên quan ngay sau khi xong quiz -->
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e5e7eb;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <a href="/bang-phong-than.html" style="padding:8px 14px;background:linear-gradient(135deg,#fbbf24,#f97316);color:#3e2723;border-radius:18px;text-decoration:none;font-weight:700;font-size:13px">🏆 Bảng Phong Thần</a>
+      <a href="/cay-tri-thuc.html" style="padding:8px 14px;background:rgba(34,197,94,.15);color:#15803d;border:1px solid rgba(34,197,94,.4);border-radius:18px;text-decoration:none;font-weight:700;font-size:13px">🌳 Cây Tri Thức</a>
+    </div>
+    <div style="margin-top:14px">
       <button id="again">🔄 Chơi lại</button>
       <button class="secondary" onclick="location.href='./'">← Về trang chính</button>
     </div>

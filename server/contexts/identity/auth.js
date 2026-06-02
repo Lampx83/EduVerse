@@ -156,6 +156,10 @@ const PUBLIC_PATH_EXACT = new Set([
   '/bao-so-hoc.html',
   // Bản đồ Việt Nam Tri thức — game khám phá 63 tỉnh. Standalone, guest chơi được.
   '/ban-do-vn.html',
+  // Lab Hoá Học Ảo — kéo thả 2 hoá chất xem phản ứng. Standalone, guest chơi được.
+  '/lab-hoa-ao.html',
+  // Đố Chữ Ghép Vần — ghép âm tiết Tiếng Việt cho lớp 1-3. Standalone, guest chơi được.
+  '/do-chu-ghep-van.html',
   // Pet Tri Thức — virtual pet "Tiziamon" tiến hoá theo XP. State trong localStorage,
   // sync XP với /api/wallet khi đã login (best-effort). Guest chơi được offline.
   '/pet-tri-thuc.html',

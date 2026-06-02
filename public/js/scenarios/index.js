@@ -26,6 +26,7 @@ import { PRESCHOOL_SCENARIOS } from './preschool-basics.js';
 import { PRIMARY_LOP1_SCENARIOS } from './lop1/_index.js';
 let PRIMARY_LOP3_SCENARIOS = {}, PRIMARY_LOP4_SCENARIOS = {}, PRIMARY_LOP5_SCENARIOS = {};
 let SECONDARY_LOP7_SCENARIOS = {}, SECONDARY_LOP8_SCENARIOS = {}, SECONDARY_LOP9_SCENARIOS = {};
+let HIGHSCHOOL_LOP10_SCENARIOS = {};
 let PRESCHOOL_WEEKS_SCENARIOS = {};
 try { ({ PRIMARY_LOP3_SCENARIOS  } = await import('./lop3/_index.js')); } catch {}
 try { ({ PRIMARY_LOP4_SCENARIOS  } = await import('./lop4/_index.js')); } catch {}
@@ -33,6 +34,7 @@ try { ({ PRIMARY_LOP5_SCENARIOS  } = await import('./lop5/_index.js')); } catch 
 try { ({ SECONDARY_LOP7_SCENARIOS } = await import('./lop7/_index.js')); } catch {}
 try { ({ SECONDARY_LOP8_SCENARIOS } = await import('./lop8/_index.js')); } catch {}
 try { ({ SECONDARY_LOP9_SCENARIOS } = await import('./lop9/_index.js')); } catch {}
+try { ({ HIGHSCHOOL_LOP10_SCENARIOS } = await import('./lop10/_index.js')); } catch {}
 try { ({ PRESCHOOL_WEEKS_SCENARIOS } = await import('./preschool-weeks.js')); } catch {}
 
 // Phẳng hoá tất cả scenarios thành 1 object {id → scenario}
@@ -56,6 +58,7 @@ export const ALL_SCENARIOS = {
   ...SECONDARY_LOP7_SCENARIOS,
   ...SECONDARY_LOP8_SCENARIOS,
   ...SECONDARY_LOP9_SCENARIOS,
+  ...HIGHSCHOOL_LOP10_SCENARIOS,
   ...SECONDARY_MATH_SCENARIOS,
   ...SECONDARY_LIT_SCENARIOS,
   ...MATH6_LESSON_SCENARIOS,

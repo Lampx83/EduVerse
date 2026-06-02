@@ -92,6 +92,11 @@ export function renderWeeklyLesson({ host, scenario, grade = 2, subjectLabel = '
         <button class="wl-btn wl-btn-bank" id="wl-bank" style="display:none">
           📚 Kho câu hỏi
         </button>
+        <!-- "Trồng lá" CTA — bấm vào Cây Tri Thức xem các tuần đã hoàn thành dưới dạng visual -->
+        <a class="wl-btn" id="wl-tree" href="/cay-tri-thuc.html" target="_blank" rel="noopener"
+           style="background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(132,204,22,.2));color:#15803d;border:1px solid rgba(34,197,94,.5);text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+          🌳 Cây Tri Thức của em
+        </a>
       </div>
 
       <div id="wl-ai-zone"></div>
