@@ -67,9 +67,11 @@ export const DOMAIN_META = [
     tagline: 'Lớp 10–12 · phân ban KHTN/KHXH · luyện thi tốt nghiệp THPT & ĐH',
     accent: '#6366f1', status: 'preview', moduleCount: 30 },
   // Cao đẳng / Đại học chuyên ngành
+  // economics: đã có skeleton domain folder (preview) nhưng chưa wire vào
+  // space.html / campus-proto → enabled:false để FE biết tạm chưa cho vào.
   { id: 'economics', name: 'Trường Kinh tế',               shortName: 'Kinh tế', icon: '📉',
     tagline: 'Kinh tế Vi mô/Vĩ mô · Kinh tế lượng · chính sách công',
-    accent: '#0ea5e9', status: 'locked' },
+    accent: '#0ea5e9', status: 'locked', enabled: false },
   { id: 'business', name: 'Trường Kinh doanh',             shortName: 'Kinh doanh', icon: '📈',
     tagline: 'Quản trị · Marketing · Khởi nghiệp · Chiến lược · vận hành doanh nghiệp',
     accent: '#f97316', status: 'locked' },

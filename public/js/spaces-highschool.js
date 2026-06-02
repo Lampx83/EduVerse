@@ -128,7 +128,20 @@ window.SPACES_HIGHSCHOOL = {
       {ic:'🔢',name:'Công thức cốt lõi',rd:'Lật thẻ ôn công thức.',panel:[
         {flash:[{e:'🏃',f:'Định luật II Newton',b:'F = m·a'},{e:'⚡',f:'Định luật Ohm',b:'I = U / R'},
           {e:'🌊',f:'Tần số dao động',b:'f = 1 / T'},{e:'🔋',f:'Công suất điện',b:'P = U·I'},
-          {e:'💡',f:'Điện năng tiêu thụ',b:'A = P·t'}]}]}],
+          {e:'💡',f:'Điện năng tiêu thụ',b:'A = P·t'}]}]},
+      {ic:'🕰️',name:'Dao động & con lắc đơn',rd:'Chu kì T phụ thuộc gì?',panel:[
+        {h:'Con lắc đơn — dao động điều hoà nhỏ'},
+        {ul:['Chu kì T = 2π·√(ℓ/g) — chỉ phụ thuộc chiều dài ℓ và gia tốc trọng trường g','Không phụ thuộc khối lượng vật nặng','Không phụ thuộc biên độ (khi góc nhỏ < 10°)','Dùng để đo g bằng cách đếm chu kì']},
+        {mcq:[{q:'Tăng chiều dài dây con lắc đơn lên 4 lần (giữ nguyên g) thì chu kì T sẽ?',o:['Tăng 2 lần','Tăng 4 lần','Giảm 2 lần','Không đổi'],a:0,fb:'T tỉ lệ √ℓ → ℓ tăng 4 lần ⇒ T tăng √4 = 2 lần.'}]},
+        {note:'Thí nghiệm kinh điển: đo g bằng con lắc đơn — đếm 20 chu kì rồi chia trung bình để giảm sai số.'}]},
+      {ic:'🔄',name:'Định luật bảo toàn năng lượng',rd:'Năng lượng chuyển hoá nhưng không mất.',panel:[
+        {h:'Bảo toàn cơ năng (hệ kín, bỏ qua ma sát)'},
+        {ul:['Cơ năng W = Wđ + Wt = ½mv² + mgh','Vật rơi tự do: Wt giảm — Wđ tăng (W không đổi)','Có ma sát → cơ năng chuyển một phần thành nhiệt','Năng lượng KHÔNG mất đi, chỉ chuyển hoá giữa các dạng']},
+        {mcq:[{q:'Thả vật rơi tự do từ độ cao h. Tại điểm chạm đất, vận tốc v = ?',o:['√(2gh)','gh','2gh','g·h²'],a:0,fb:'Bảo toàn cơ năng: mgh = ½mv² ⇒ v = √(2gh).'}]}]},
+      {ic:'💡',name:'Hiện tượng quang điện',rd:'Ánh sáng "đánh bật" electron khỏi kim loại.',panel:[
+        {h:'Thuyết lượng tử của Einstein'},
+        {ul:['Ánh sáng gồm các hạt photon, năng lượng ε = h·f','Quang điện xảy ra khi f ≥ f₀ (tần số ngưỡng của kim loại)','Cường độ ánh sáng KHÔNG quyết định có quang điện hay không — chỉ tần số mới quyết định','Ứng dụng: pin mặt trời, cảm biến ánh sáng, đèn LED']},
+        {mcq:[{q:'Chiếu ánh sáng đỏ (f thấp) rất mạnh vào tấm kẽm — không có quang điện. Vì sao?',o:['f < f₀ của kẽm','Đèn không đủ sáng','Kẽm bị oxi hoá','Thiếu nguồn điện'],a:0,fb:'Quang điện chỉ phụ thuộc TẦN SỐ, không phụ thuộc cường độ — đỏ có f thấp hơn ngưỡng f₀ của kẽm.'}]}]}],
     skills:['Kĩ năng thí nghiệm','An toàn điện','Xử lí số liệu & sai số'],
     quiz:[{q:'Theo định luật II Newton, gia tốc a của vật?',o:['Tỉ lệ thuận với lực F, tỉ lệ nghịch với khối lượng m','Tỉ lệ nghịch với F','Không phụ thuộc F','Bằng F·m'],a:0},
       {q:'Đơn vị đo cường độ dòng điện là?',o:['Ampe (A)','Vôn (V)','Oát (W)','Ôm (Ω)'],a:0},
@@ -243,7 +256,19 @@ window.SPACES_HIGHSCHOOL = {
         {timeline:[{t:'Thành lập',d:'Những ngày đầu xây dựng trường.'},{t:'Phát triển',d:'Mở rộng cơ sở vật chất & đội ngũ.'},
           {t:'Thành tích',d:'Học sinh giỏi, đỗ đại học, giải phong trào.'},{t:'Hôm nay',d:'Tiếp nối truyền thống, hội nhập số.'}]}]},
       {ic:'🤝',name:'Công dân & kĩ năng sống',rd:'Quyền & nghĩa vụ công dân.',panel:[
-        {mcq:[{q:'Công dân Việt Nam đủ bao nhiêu tuổi có quyền bầu cử đại biểu Quốc hội?',o:['Đủ 18 tuổi','Đủ 15 tuổi','Đủ 16 tuổi','Đủ 21 tuổi'],a:0,fb:'Đủ 18 tuổi có quyền bầu cử; đủ 21 tuổi có quyền ứng cử đại biểu Quốc hội & HĐND.'}]}]}],
+        {mcq:[{q:'Công dân Việt Nam đủ bao nhiêu tuổi có quyền bầu cử đại biểu Quốc hội?',o:['Đủ 18 tuổi','Đủ 15 tuổi','Đủ 16 tuổi','Đủ 21 tuổi'],a:0,fb:'Đủ 18 tuổi có quyền bầu cử; đủ 21 tuổi có quyền ứng cử đại biểu Quốc hội & HĐND.'}]}]},
+      {ic:'🗳️',name:'Đại hội Đoàn',rd:'Cơ chế dân chủ trong tổ chức Đoàn.',panel:[
+        {h:'Đại hội Đoàn các cấp'},
+        {ul:['Đại hội chi đoàn lớp: bầu Ban Chấp hành chi đoàn (Bí thư, Phó Bí thư)','Đại hội Đoàn trường: bầu BCH Đoàn trường, nhiệm kì 1 năm','Đại hội Đoàn quận/huyện, tỉnh, toàn quốc — tổ chức theo nhiệm kì','Đại hội cao nhất: Đại hội Đại biểu toàn quốc Đoàn TNCS Hồ Chí Minh']},
+        {note:'Đại hội Đoàn là dịp tổng kết, đề ra phương hướng & bầu ra người đại diện — rèn ý thức dân chủ ngay từ trường học.'}]},
+      {ic:'💚',name:'Tình nguyện & "Tuổi trẻ sáng tạo"',rd:'Các phong trào tiêu biểu.',panel:[
+        {cards:[{ic:'🌞',t:'Mùa hè xanh',d:'Sinh viên tình nguyện về vùng sâu vùng xa.'},{ic:'📝',t:'Tiếp sức mùa thi',d:'Hỗ trợ sĩ tử thi tốt nghiệp / ĐH.'},
+          {ic:'💡',t:'Tuổi trẻ sáng tạo',d:'Khuyến khích ý tưởng KHKT, khởi nghiệp.'},{ic:'🏆',t:'Học sinh 3 tốt',d:'Đạo đức tốt – Học tập tốt – Thể lực tốt.'}]},
+        {p:'Tham gia phong trào tình nguyện giúp HS rèn kĩ năng tổ chức, giao tiếp, làm việc nhóm — rất có lợi cho hồ sơ xét tuyển ĐH & du học.'}]},
+      {ic:'⚖️',name:'Quyền & nghĩa vụ thanh niên',rd:'Luật Thanh niên 2020.',panel:[
+        {h:'Theo Luật Thanh niên 2020 (công dân 16–30 tuổi)'},
+        {ul:['Quyền: học tập, lao động, được tham gia xây dựng & bảo vệ Tổ quốc','Nghĩa vụ: gương mẫu chấp hành Hiến pháp & pháp luật','Trách nhiệm với gia đình – xã hội – Tổ quốc','Nam đủ 18 tuổi có nghĩa vụ đăng kí nghĩa vụ quân sự']},
+        {mcq:[{q:'Theo Luật Thanh niên 2020, thanh niên là công dân Việt Nam trong độ tuổi?',o:['Từ đủ 16 đến 30 tuổi','Từ 18 đến 35 tuổi','Từ 15 đến 25 tuổi','Từ 12 đến 18 tuổi'],a:0,fb:'Luật Thanh niên 2020 quy định thanh niên là công dân Việt Nam từ đủ 16 tuổi đến 30 tuổi.'}]}]}],
     skills:['Hiểu tổ chức Đoàn','Ý thức công dân'],
     quiz:[{q:'Đoàn TNCS Hồ Chí Minh được thành lập ngày nào?',o:['26/3/1931','2/9/1945','20/11/1982','19/5/1890'],a:0},
       {q:'Công dân đủ 18 tuổi có quyền?',o:['Bầu cử','Không có quyền nào','Miễn mọi nghĩa vụ','Tự đặt ra luật'],a:0},
@@ -276,8 +301,17 @@ window.SPACES_HIGHSCHOOL = {
         {ul:['Đủ 4 nhóm chất: bột đường, đạm, béo, vitamin – khoáng','Ăn sáng đầy đủ để học tập tốt','Uống đủ nước mỗi ngày','Hạn chế đồ ngọt, nước có ga, đồ chiên rán']},
         {note:'Bữa ăn đa dạng giúp cơ thể tuổi dậy thì phát triển toàn diện.'}]},
       {ic:'🧼',name:'An toàn thực phẩm',rd:'Vệ sinh ăn uống.',panel:[
-        {check:['Rửa tay sạch trước khi ăn','Ăn chín, uống sôi','Kiểm tra hạn sử dụng thực phẩm','Không dùng đồ ăn ôi thiu, nghi ngờ hỏng']}]}],
-    skills:['Dinh dưỡng hợp lí','Vệ sinh an toàn thực phẩm'],
+        {check:['Rửa tay sạch trước khi ăn','Ăn chín, uống sôi','Kiểm tra hạn sử dụng thực phẩm','Không dùng đồ ăn ôi thiu, nghi ngờ hỏng']}]},
+      {ic:'🌱',name:'Dinh dưỡng tuổi vị thành niên',rd:'Ăn gì để phát triển toàn diện?',panel:[
+        {h:'Đặc thù dinh dưỡng tuổi 15–18'},
+        {ul:['Nhu cầu năng lượng cao: nam ~2.500–2.800 kcal/ngày, nữ ~2.100–2.400 kcal/ngày','Cần đủ canxi (sữa, cá nhỏ, đậu) cho chiều cao & xương','Sắt + vitamin C giúp tránh thiếu máu (đặc biệt nữ tuổi dậy thì)','Protein chất lượng: trứng, cá, thịt nạc, đậu — giúp phát triển cơ bắp','Hạn chế đồ ăn nhanh, nước ngọt, đồ uống tăng lực']},
+        {mcq:[{q:'Bạn nữ 16 tuổi hay chóng mặt, mệt mỏi, da xanh. Có thể thiếu chất gì?',o:['Sắt (thiếu máu thiếu sắt)','Đường','Chất béo','Muối'],a:0,fb:'Nữ tuổi dậy thì dễ thiếu sắt do mất máu kinh nguyệt — cần ăn thịt đỏ, gan, rau lá xanh đậm + vitamin C.'}]}]},
+      {ic:'🤝',name:'Văn minh nơi công cộng',rd:'Ứng xử ở căng tin & nơi đông người.',panel:[
+        {cards:[{ic:'🪑',t:'Xếp hàng',d:'Đứng đúng thứ tự, không chen lấn.'},{ic:'🤫',t:'Nói vừa đủ nghe',d:'Không gây ồn ào ảnh hưởng người khác.'},
+          {ic:'🗑️',t:'Phân loại rác',d:'Bỏ rác đúng thùng tái chế / hữu cơ / vô cơ.'},{ic:'🙏',t:'Cảm ơn cô bác',d:'Nói "cảm ơn" với cô chú phục vụ.'}]},
+        {check:['Xếp hàng mua đồ ăn, không chen ngang','Dùng xong dọn khay về vị trí quy định','Không vừa ăn vừa xem điện thoại lớn tiếng','Không lãng phí thức ăn — lấy vừa đủ ăn','Tôn trọng người phục vụ — xưng hô lịch sự']},
+        {note:'Văn minh nơi công cộng là biểu hiện cụ thể của giáo dục công dân — bắt đầu từ những việc nhỏ ngay trong căng tin.'}]}],
+    skills:['Dinh dưỡng hợp lí','Vệ sinh an toàn thực phẩm','Văn minh ứng xử'],
     quiz:[{q:'Bữa ăn cân bằng cần đủ mấy nhóm chất chính?',o:['4 nhóm','2 nhóm','1 nhóm','7 nhóm'],a:0},
       {q:'Thói quen tốt trước khi ăn là?',o:['Rửa tay sạch','Bỏ bữa','Ăn thật nhanh','Vừa ăn vừa chơi điện thoại'],a:0},
       {q:'Để phòng ngộ độc thực phẩm, nên?',o:['Ăn chín uống sôi, kiểm tra hạn dùng','Ăn đồ để lâu ngoài trời','Uống nước lã','Dùng đồ hết hạn'],a:0}]},
@@ -289,8 +323,18 @@ window.SPACES_HIGHSCHOOL = {
         {mcq:[{q:'Bị bỏng nước sôi ở tay, việc ĐẦU TIÊN nên làm là?',o:['Làm mát vùng bỏng dưới vòi nước sạch','Bôi kem đánh răng','Chọc vỡ nốt phồng','Bôi nước mắm'],a:0,fb:'Làm mát bằng nước sạch 10–20 phút giúp giảm tổn thương; không bôi kem đánh răng/nước mắm.'}]}]},
       {ic:'🧠',name:'Sức khoẻ tâm lí tuổi học trò',rd:'Quản lí cảm xúc & stress.',panel:[
         {ul:['Ngủ đủ giấc, vận động đều đặn','Chia sẻ với người tin cậy khi căng thẳng','Hít thở sâu, nghỉ ngơi hợp lí khi áp lực thi cử','Tìm đến thầy cô / phòng tham vấn khi cần']},
-        {note:'Căng thẳng kéo dài cần được lắng nghe & hỗ trợ — đừng ngại tìm giúp đỡ.'}]}],
-    skills:['Sơ cấp cứu cơ bản','Chăm sóc sức khoẻ tinh thần'],
+        {note:'Căng thẳng kéo dài cần được lắng nghe & hỗ trợ — đừng ngại tìm giúp đỡ.'}]},
+      {ic:'💭',name:'Sức khoẻ tâm thần học sinh',rd:'Nhận biết dấu hiệu sớm & tìm hỗ trợ.',panel:[
+        {h:'Dấu hiệu cảnh báo căng thẳng / trầm cảm tuổi học trò'},
+        {ul:['Mất ngủ kéo dài hoặc ngủ quá nhiều','Mất hứng thú với các hoạt động từng yêu thích','Thay đổi khẩu vị, sụt cân hoặc tăng cân nhanh','Hay cáu gắt, khóc lóc không rõ lí do','Có ý nghĩ tự làm đau / tự tử — DẤU HIỆU KHẨN CẤP']},
+        {mcq:[{q:'Bạn thân tâm sự "tớ không muốn sống nữa". Em nên?',o:['Lắng nghe nghiêm túc, không phán xét, báo ngay người lớn tin cậy','Cười cho qua, nghĩ bạn nói đùa','Hứa giữ bí mật tuyệt đối','Tránh xa bạn'],a:0,fb:'Mọi lời nói về tự tử PHẢI được coi là nghiêm túc. Nhiệm vụ của em: lắng nghe + báo người lớn (cô giáo, phụ huynh, đường dây nóng 1800-1567).'}]},
+        {note:'Đường dây tư vấn miễn phí: Tổng đài 111 (Bảo vệ trẻ em) hoặc 1800-1567 (Tâm lý). Đừng cô đơn — luôn có người sẵn sàng nghe.'}]},
+      {ic:'🚫',name:'Phòng tránh tệ nạn xã hội',rd:'Ma tuý, thuốc lá điện tử, bạo lực học đường.',panel:[
+        {cards:[{ic:'💨',t:'Thuốc lá điện tử (vape)',d:'Chứa nicotine + hoá chất độc — gây nghiện rất nhanh.'},{ic:'💊',t:'Ma tuý "núp bóng"',d:'Bánh, kẹo, nước trái cây tẩm ma tuý — cẩn thận đồ lạ.'},
+          {ic:'👊',t:'Bạo lực học đường',d:'Im lặng là tiếp tay — báo ngay thầy cô / phụ huynh.'},{ic:'📱',t:'Bắt nạt mạng',d:'Lưu bằng chứng, không trả đũa, báo người lớn.'}]},
+        {check:['Không nhận đồ ăn / nước uống từ người lạ','Không thử dù chỉ một lần — nghiện chỉ cần lần đầu','Nói KHÔNG với bạn rủ rê — tình bạn thật không ép em làm điều xấu','Báo cáo bạo lực học đường qua hộp thư trường, đường dây 111','Tuyệt đối tránh các nhóm chat/group lạ trên MXH']},
+        {mcq:[{q:'Bạn rủ "thử một hơi vape cho biết, không nghiện đâu". Câu trả lời tốt nhất?',o:['"Không, tớ không thử. Bạn cũng nên dừng đi"','"Ừ, một hơi chắc không sao"','"Tớ thử nhưng đừng nói với ai"','"Để mai tớ thử khi rảnh"'],a:0,fb:'Vape chứa nicotine gây nghiện rất nhanh chỉ sau vài lần. Bạn thật sự sẽ tôn trọng khi em từ chối thẳng thắn.'}]}]}],
+    skills:['Sơ cấp cứu cơ bản','Chăm sóc sức khoẻ tinh thần','Phòng tránh tệ nạn'],
     quiz:[{q:'Sơ cứu bỏng nhẹ đúng cách là?',o:['Làm mát bằng nước sạch','Bôi kem đánh răng','Chườm nước đá trực tiếp lâu','Băng kín thật chặt'],a:0},
       {q:'RICE trong sơ cứu bong gân KHÔNG gồm bước nào?',o:['Bôi dầu nóng ngay','Nghỉ ngơi','Chườm đá','Kê cao'],a:0},
       {q:'Khi căng thẳng kéo dài, nên?',o:['Chia sẻ & tìm hỗ trợ','Giữ kín một mình','Bỏ ăn bỏ ngủ','Tự cô lập'],a:0}]},
@@ -314,8 +358,19 @@ window.SPACES_HIGHSCHOOL = {
         {ul:['Đội mũ bảo hiểm khi đi xe đạp điện / xe máy điện','Đi đúng phần đường, làn đường','Không dàn hàng ngang, không lạng lách','Không dùng điện thoại khi đang điều khiển xe','Tuân thủ đèn tín hiệu & biển báo']},
         {mcq:[{q:'Học sinh đi xe đạp điện đến trường BẮT BUỘC phải?',o:['Đội mũ bảo hiểm cài quai đúng cách','Đi thật nhanh cho kịp giờ','Chở ba bạn','Vượt đèn đỏ khi đường vắng'],a:0,fb:'Người đi xe đạp điện/xe máy điện bắt buộc đội mũ bảo hiểm; vi phạm sẽ bị xử lí theo luật.'}]}]},
       {ic:'🅿️',name:'Văn hoá để xe',rd:'Sắp xếp gọn gàng.',panel:[
-        {check:['Để xe đúng nơi quy định','Khoá xe cẩn thận','Xếp xe ngay ngắn theo hàng','Tắt máy/khoá điện trước khi rời xe']}]}],
-    skills:['An toàn giao thông','Ý thức kỉ luật'],
+        {check:['Để xe đúng nơi quy định','Khoá xe cẩn thận','Xếp xe ngay ngắn theo hàng','Tắt máy/khoá điện trước khi rời xe']}]},
+      {ic:'⚡',name:'An toàn xe đạp điện – xe máy điện',rd:'Đặc thù kĩ thuật cần biết.',panel:[
+        {h:'Khác biệt giữa xe đạp điện & xe máy điện'},
+        {ul:['Xe đạp điện: tốc độ ≤ 25 km/h, công suất ≤ 250W — không cần GPLX, không cần đăng kí biển số (đa số mẫu)','Xe máy điện: tốc độ > 25 km/h hoặc công suất > 250W — PHẢI đăng kí biển số, đủ 16 tuổi mới được điều khiển','Cả hai đều BẮT BUỘC đội mũ bảo hiểm cài quai đúng cách','Pin Li-ion: tránh sạc qua đêm, không sạc ngay sau đi mưa, không dùng sạc không chính hãng','Kiểm tra phanh + lốp + đèn trước khi đi mỗi ngày']},
+        {mcq:[{q:'Học sinh 15 tuổi điều khiển xe máy điện đến trường — có vi phạm không?',o:['Có — phải đủ 16 tuổi mới được lái xe máy điện','Không, vì là xe điện','Chỉ vi phạm nếu không đội mũ','Tuỳ địa phương quy định'],a:0,fb:'Theo Luật Giao thông đường bộ, người đủ 16 tuổi trở lên mới được lái xe gắn máy & xe máy điện (xe có vận tốc > 25 km/h hoặc công suất > 250W).'}]},
+        {note:'Pin xe điện cháy nổ rất nguy hiểm — KHÔNG sạc trong nhà ở qua đêm, không che đậy khi đang sạc.'}]},
+      {ic:'🛣️',name:'Văn hoá giao thông & kĩ năng đi đường',rd:'Quan sát, nhường nhịn, dự đoán.',panel:[
+        {h:'Kĩ năng đi đường an toàn'},
+        {ol:['Quan sát kĩ trước khi sang đường — nhìn trái, nhìn phải, lại nhìn trái','Báo hiệu rõ ràng khi rẽ — bật xi-nhan / giơ tay sớm','Giữ khoảng cách an toàn với xe phía trước','Không phóng nhanh, vượt ẩu, lạng lách','Tuân thủ đèn tín hiệu — dừng hẳn khi đèn đỏ, không vượt lên vạch']},
+        {cards:[{ic:'👀',t:'Quan sát',d:'Luôn dự đoán tình huống bất ngờ.'},{ic:'🤲',t:'Nhường nhịn',d:'Người đi bộ, người già, trẻ em được ưu tiên.'},
+          {ic:'🚫',t:'Không dùng điện thoại',d:'Nghe gọi/nhắn tin khi lái = nguy hiểm chết người.'},{ic:'🍺',t:'Không cồn',d:'Đã uống rượu bia — tuyệt đối không lái xe.'}]},
+        {mcq:[{q:'Gặp đèn vàng đang chớp tại ngã tư, em nên?',o:['Giảm tốc độ, quan sát kĩ rồi mới qua','Tăng tốc vượt qua thật nhanh','Dừng giữa ngã tư','Bóp còi liên tục'],a:0,fb:'Đèn vàng chớp = cảnh báo nguy hiểm, các phương tiện được phép đi nhưng PHẢI giảm tốc & nhường đường cho người đi bộ + xe ưu tiên.'}]}]}],
+    skills:['An toàn giao thông','Ý thức kỉ luật','Văn hoá giao thông'],
     quiz:[{q:'Khi đi xe đạp điện, học sinh bắt buộc phải?',o:['Đội mũ bảo hiểm','Chở 3','Đi vào làn ô tô','Bấm còi liên tục'],a:0},
       {q:'Đèn tín hiệu màu đỏ nghĩa là?',o:['Dừng lại','Đi nhanh','Rẽ trái tự do','Tăng tốc'],a:0},
       {q:'Hành vi nào an toàn khi tham gia giao thông?',o:['Đi đúng phần đường, chú ý quan sát','Dùng điện thoại khi lái','Dàn hàng ngang','Lạng lách'],a:0}]},

@@ -17,6 +17,16 @@ export { SUBJECTS, getSubject } from './subjects.js';
 export { ACHIEVEMENTS } from './achievements.js';
 export { getExperiencesFor, listModulesWithExperiences } from './experiences.js';
 
+/**
+ * Trạng thái triển khai của Trường Kinh tế.
+ *   'preview' = đã có skeleton (modules/subjects/experiences/achievements)
+ *               nhưng CHƯA được wire vào space.html / campus-proto. Giữ lại
+ *               để chuẩn bị khi có Trường Kinh tế trong tương lai.
+ * Engine + FE nên đọc cờ này (cùng với DOMAIN_META.enabled) để quyết định
+ * có hiển thị/cho vào hay không.
+ */
+export const DOMAIN_STATUS = 'preview';
+
 /** @type {import('../../engine/types.js').DomainConfig} */
 export const DOMAIN = {
   id: 'economics',
@@ -31,4 +41,6 @@ export const DOMAIN = {
     'Năm 4 — Tích hợp + Khoá luận',
   ],
   tagline: 'Cử nhân Kinh tế · từ Kinh tế Vi mô đến Khoá luận · mô phỏng doanh nghiệp · stock sim · pitch battle',
+  status: DOMAIN_STATUS,
+  enabled: false,
 };
