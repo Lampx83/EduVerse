@@ -201,7 +201,10 @@ const SPACES_PHARMACY = {
         {h:'Cảnh giác dược (Pharmacovigilance)'},
         {p:'Phát hiện, đánh giá & phòng tránh phản ứng có hại của thuốc (ADR).'},
         {mcq:[{q:'Gặp một ADR nghiêm trọng, dược sĩ cần làm gì?',o:['Báo cáo về Trung tâm DI & ADR Quốc gia','Giấu đi để tránh phiền','Chỉ ghi sổ cá nhân','Bỏ qua nếu BN đã ổn'],a:0,fb:'Báo cáo ADR (kể cả nghi ngờ) giúp phát hiện tín hiệu an toàn — gửi Trung tâm DI & ADR Quốc gia.'}]},
-        {note:'Thang WHO-UMC đánh giá mối liên quan thuốc–ADR (chắc chắn → có thể → không chắc).'}]}],
+        {note:'Thang WHO-UMC đánh giá mối liên quan thuốc–ADR (chắc chắn → có thể → không chắc).'}]},
+      // Trải nghiệm cá nhân — Cây Tri Thức + Bảng Phong Thần cho SV Dược
+      {ic:'🌳',name:'Cây Tri Thức của em',rd:'Trực quan hoá tiến độ học 5 năm Dược — mỗi module hoàn thành = 1 chiếc lá.',href:'/cay-tri-thuc.html'},
+      {ic:'🏆',name:'Bảng Phong Thần Tizia',rd:'Xếp hạng SV Dược theo điểm tổng — cao thủ Dược điển!',href:'/bang-phong-than.html'}],
     skills:['Hiểu cơ cấu trường','Pháp chế & đăng ký thuốc','Cảnh giác dược'],
     quiz:[{q:'Dược sĩ đại học ở Việt Nam đào tạo mấy năm?',o:['3 năm','4 năm','5 năm','6 năm'],a:2},
       {q:'Cơ quan ban hành Dược điển Việt Nam?',o:['Bộ Y tế','Bộ Giáo dục','WHO','FDA'],a:0},
@@ -306,7 +309,9 @@ const SPACES_PHARMACY = {
       {ic:'🧫',name:'Phản ứng hữu cơ',rd:'Nhóm chức & SAR.',panel:[
         {h:'Hoá hữu cơ cho dược'},
         {ul:['Nhóm chức quyết định tính chất & tác dụng của phân tử thuốc','Hay gặp: -OH (hydroxyl), -COOH (carboxyl), -NH₂ (amin)','Đồng phân quang học có thể khác hẳn tác dụng dược lý']},
-        {mcq:[{q:'Vì sao cấu trúc hoá học quan trọng với thuốc?',o:['Quyết định gắn đích tác dụng & dược tính (SAR)','Chỉ để đặt tên','Không liên quan tác dụng','Chỉ ảnh hưởng màu sắc'],a:0,fb:'Quan hệ cấu trúc–tác dụng (SAR): thay đổi nhỏ cấu trúc → thay đổi tác dụng/độc tính.'}]}]}],
+        {mcq:[{q:'Vì sao cấu trúc hoá học quan trọng với thuốc?',o:['Quyết định gắn đích tác dụng & dược tính (SAR)','Chỉ để đặt tên','Không liên quan tác dụng','Chỉ ảnh hưởng màu sắc'],a:0,fb:'Quan hệ cấu trúc–tác dụng (SAR): thay đổi nhỏ cấu trúc → thay đổi tác dụng/độc tính.'}]}]},
+      // Lab Hoá ảo — sandbox phản ứng đơn giản, bổ trợ ôn cơ sở
+      {ic:'🧪',name:'Lab Hoá ảo (sandbox)',rd:'15 cặp phản ứng kéo thả (kết tủa, sủi khí, đổi màu, toả nhiệt) — ôn cơ sở hoá vô cơ.',href:'/lab-hoa-ao.html'}],
     skills:['Kỹ năng chuẩn độ','An toàn phòng thí nghiệm','Nhận biết dụng cụ'],
     quiz:[{q:'pH tại điểm tương đương khi chuẩn độ acid mạnh – base mạnh ≈?',o:['7','2','12','4'],a:0},
       {q:'Chỉ thị phenolphtalein chuyển màu hồng ở khoảng pH?',o:['8–10','0–1','2–4','13–14'],a:0},
@@ -726,7 +731,9 @@ const SPACES_SECONDARY = {
         {mcq:[{q:'"Nếu trời mưa thì mang ô" là cấu trúc?',o:['Rẽ nhánh (điều kiện)','Lặp','Tuần tự thuần tuý','Không phải thuật toán'],a:0,fb:'Cấu trúc rẽ nhánh: thực hiện hành động dựa trên một điều kiện đúng/sai.'}]}]},
       {ic:'🌐',name:'Tư duy số',rd:'Thông tin đáng tin & bản quyền.',panel:[
         {ul:['Kiểm chứng thông tin từ nhiều nguồn trước khi tin & chia sẻ','Tôn trọng bản quyền: ghi nguồn, không sao chép trái phép','Cân bằng thời gian dùng thiết bị, bảo vệ mắt & sức khoẻ']},
-        {note:'Là công dân số có trách nhiệm: lịch sự, trung thực và an toàn khi lên mạng.'}]}],
+        {note:'Là công dân số có trách nhiệm: lịch sự, trung thực và an toàn khi lên mạng.'}]},
+      // Code Quest — sandbox block-based programming kiểu Scratch
+      {ic:'🤖',name:'Code Quest — Lập trình kéo thả',rd:'10 level từ "Đi 3 ô tới đích" → mê cung có if-else. Luyện tư duy thuật toán.',href:'/code-quest.html'}],
     skills:['An toàn số','Tư duy thuật toán'],
     quiz:[{q:'Tổ hợp phím lưu văn bản nhanh?',o:['Ctrl + S','Ctrl + P','Ctrl + C','Alt + F4'],a:0},
       {q:'Khi gặp nội dung xấu/độc trên mạng, em nên?',o:['Không tương tác & báo người lớn/giáo viên','Chia sẻ cho nhiều bạn','Bình luận tranh cãi','Lưu lại để xem tiếp'],a:0},
@@ -768,7 +775,9 @@ const SPACES_SECONDARY = {
       {ic:'👀',name:'Cảm thụ nghệ thuật',rd:'Quan sát & cảm nhận tác phẩm.',panel:[
         {h:'Cách quan sát một tác phẩm'},
         {order:{title:'Sắp xếp 4 bước quan sát một tác phẩm nghệ thuật',items:['Quan sát tổng thể: chủ đề, bố cục, không khí chung','Phân tích chi tiết: màu sắc, đường nét, sắc độ','Cảm nhận cảm xúc tác phẩm gợi lên trong em','Diễn đạt cảm nhận bằng lời của chính em']}},
-        {note:'Không có cảm nhận "sai" — quan trọng là biết quan sát kĩ và diễn đạt được suy nghĩ riêng.'}]}],
+        {note:'Không có cảm nhận "sai" — quan trọng là biết quan sát kĩ và diễn đạt được suy nghĩ riêng.'}]},
+      // Pixel Art Studio — sáng tạo digital art cho HS THCS
+      {ic:'🎨',name:'Pixel Art Studio',rd:'Studio vẽ pixel art 16×16/32×32 với 16 màu, undo/redo, flood-fill, share PNG.',href:'/pixel-art-studio.html'}],
     skills:['Chơi đàn cơ bản','Cảm thụ thẩm mỹ','Pha màu & vẽ tự do'],
     quiz:[{q:'Ba màu cơ bản là?',o:['Đỏ, vàng, lam','Đỏ, lục, lam','Cam, tím, lục','Đen, trắng, xám'],a:0},
       {q:'Nhịp 4/4 có mấy phách trong một ô nhịp?',o:['4 phách','2 phách','3 phách','1 phách'],a:0},
@@ -784,7 +793,9 @@ const SPACES_SECONDARY = {
       {ic:'🗺️',name:'Sơ đồ trường',rd:'Các khu trong khuôn viên.',panel:[
         {h:'Khuôn viên Trường THCS'},
         {ul:['Dãy phòng học theo khối lớp 6 – 7 – 8 – 9','Phòng học bộ môn: KHTN, Tin học, Ngoại ngữ, Nghệ thuật, Công nghệ','Khu hỗ trợ: Thư viện, Phòng Y tế, Phòng Đoàn – Đội, Phòng truyền thống','Khu thể chất: Nhà đa năng, sân bóng đá, sân bóng rổ','Sân chào cờ, vườn trường, căng tin & bãi xe đạp']},
-        {note:'Bấm từng toà nhà trên bản đồ khuôn viên để vào không gian học tương ứng.'}]}],
+        {note:'Bấm từng toà nhà trên bản đồ khuôn viên để vào không gian học tương ứng.'}]},
+      // Cây Tri Thức — dashboard cá nhân của HS THCS
+      {ic:'🌳',name:'Cây Tri Thức của em',rd:'Trực quan hoá tiến độ học: mỗi tuần hoàn thành = 1 lá xanh. Lá đầy đủ → cây xum xuê!',href:'/cay-tri-thuc.html'}],
     skills:['Hiểu nội quy nhà trường','Tham gia xây dựng trường lớp'],
     quiz:[{q:'Khi đến lớp, học sinh nên?',o:['Đi học đúng giờ, chuẩn bị bài đầy đủ','Đến muộn cũng được','Bỏ đồng phục','Không cần soạn bài'],a:0},
       {q:'Của công trong trường (bàn ghế, thiết bị) cần được?',o:['Giữ gìn & bảo vệ','Vẽ bậy lên','Dùng tuỳ tiện rồi bỏ','Mang về nhà'],a:0},
@@ -826,7 +837,9 @@ const SPACES_SECONDARY = {
         {note:'Mỗi tấm huy chương là công sức của thầy trò qua nhiều thế hệ.'}]},
       {ic:'🌟',name:'Gương sáng',rd:'Học sinh & thầy cô tiêu biểu.',panel:[
         {ul:['Học sinh vượt khó học giỏi, gương người tốt việc tốt','Thầy cô tận tâm với nghề, hết lòng vì học sinh','Cựu học sinh thành đạt quay về đóng góp cho trường']},
-        {note:'Noi gương người tốt là cách rèn luyện bản thân mỗi ngày.'}]}],
+        {note:'Noi gương người tốt là cách rèn luyện bản thân mỗi ngày.'}]},
+      // Bảng Phong Thần — đặt ở Phòng truyền thống vì là nơi ghi danh học sinh giỏi
+      {ic:'🏆',name:'Bảng Phong Thần Tizia',rd:'Xếp hạng học tập theo tuần / tháng / mọi thời kỳ. Trở thành cao thủ luyện thi!',href:'/bang-phong-than.html'}],
     skills:['Tự hào truyền thống','Noi gương người tốt'],
     quiz:[{q:'Phòng truyền thống dùng để?',o:['Lưu giữ lịch sử & thành tích nhà trường','Học thể dục','Ăn trưa','Để xe đạp'],a:0},
       {q:'"Kế hoạch nhỏ" là phong trào?',o:['Thu gom giấy vụn/phế liệu gây quỹ Đội','Thi chạy','Thi hát','Thi vẽ'],a:0},
@@ -845,7 +858,9 @@ const SPACES_SECONDARY = {
         {note:'Hoạt động Đội rèn tinh thần đoàn kết, trách nhiệm và kĩ năng làm việc nhóm.'}]},
       {ic:'💪',name:'Kĩ năng sống',rd:'Ứng xử & tự bảo vệ.',panel:[
         {mcq:[{q:'Thấy bạn bị bắt nạt ở trường, em nên?',o:['Can ngăn nếu an toàn & báo thầy cô','Quay video đăng mạng','Hùa theo trêu chọc','Mặc kệ, không liên quan'],a:0,fb:'Không thờ ơ với bạo lực học đường: hỗ trợ bạn & báo người lớn để được giúp đỡ.'},
-          {q:'Để làm việc nhóm hiệu quả, cần?',o:['Lắng nghe, phân công & tôn trọng ý kiến','Tự làm hết một mình','Ai nói to thì nghe','Tranh cãi cho thắng'],a:0,fb:'Làm việc nhóm tốt: phân công rõ, lắng nghe và tôn trọng lẫn nhau.'}]}]}],
+          {q:'Để làm việc nhóm hiệu quả, cần?',o:['Lắng nghe, phân công & tôn trọng ý kiến','Tự làm hết một mình','Ai nói to thì nghe','Tranh cãi cho thắng'],a:0,fb:'Làm việc nhóm tốt: phân công rõ, lắng nghe và tôn trọng lẫn nhau.'}]}]},
+      // Pet Tri Thức — linh vật Đội. THCS thì pet đã ở stage "teen"
+      {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Pet Tri Thức tiến hoá theo XP. Sinh hoạt Đội đều đặn → Pet thành dragon!',href:'/pet-tri-thuc.html'}],
     skills:['Tinh thần đồng đội','Kĩ năng sống tích cực'],
     quiz:[{q:'Điều thứ hai trong 5 điều Bác Hồ dạy?',o:['Học tập tốt, lao động tốt','Yêu Tổ quốc, yêu đồng bào','Khiêm tốn, thật thà, dũng cảm','Giữ gìn vệ sinh thật tốt'],a:0},
       {q:'Tên đầy đủ của Đội?',o:['Đội Thiếu niên Tiền phong Hồ Chí Minh','Đoàn Thanh niên','Hội Sinh viên','Hội Chữ thập đỏ'],a:0},
@@ -947,7 +962,10 @@ const SPACES_IT = {
           {ic:'🔒',t:'Security Engineer',d:'Bảo mật, pentest, ứng cứu sự cố.'},
           {ic:'📱',t:'Mobile Developer',d:'Ứng dụng Android/iOS.'},
           {ic:'🤖',t:'AI/ML Engineer',d:'Huấn luyện & triển khai mô hình AI.'}]},
-        {note:'Chọn hướng theo thế mạnh — đặt mục tiêu học phù hợp ở Ký túc xá.'}]}],
+        {note:'Chọn hướng theo thế mạnh — đặt mục tiêu học phù hợp ở Ký túc xá.'}]},
+      // Cây Tri Thức + Bảng Phong Thần — SV CNTT cũng cần dashboard cá nhân
+      {ic:'🌳',name:'Cây Tri Thức của em',rd:'Trực quan hoá tiến độ 4 năm CNTT — mỗi môn hoàn thành = 1 lá.',href:'/cay-tri-thuc.html'},
+      {ic:'🏆',name:'Bảng Phong Thần',rd:'Xếp hạng SV CNTT theo điểm tổng + thành tích hackathon.',href:'/bang-phong-than.html'}],
     skills:['Hiểu chương trình đào tạo','Định hướng nghề nghiệp CNTT'],
     quiz:[{q:'Cử nhân CNTT ở Việt Nam thường đào tạo mấy năm?',o:['3 năm','4 năm','5 năm','6 năm'],a:1},
       {q:'Môn lập trình nhập môn phổ biến hiện nay hay dùng ngôn ngữ?',o:['Python','COBOL','Assembly','Fortran'],a:0},
@@ -1043,6 +1061,8 @@ const SPACES_IT = {
   algolab:{emoji:'🌳',name:'Lab Giải thuật & CTDL',accent:'#4ade80',intro:'Cấu trúc dữ liệu và giải thuật: chọn đúng cấu trúc, phân tích độ phức tạp, luyện tư duy giải bài.',
     rooms:[{ic:'📊',name:'Trực quan giải thuật — xem từng bước',rd:'Bubble/Selection/Insertion/Merge/Quick chạy động: so sánh, hoán đổi, Big-O + củng cố.',href:'/it-algo-viz.html?domain=it'},
       {ic:'🧮',name:'Code Lab — luyện giải thuật',rd:'Cài & chạy thuật toán, vượt bộ test.',href:'/it-code-lab.html?domain=it'},
+      // Code Quest — game block-based dành cho SV CNTT khởi động tư duy thuật toán
+      {ic:'🤖',name:'Code Quest — sandbox tư duy',rd:'Block-based puzzle 10 level — luyện tư duy phân tích bài + cấu trúc lặp/rẽ nhánh.',href:'/code-quest.html'},
       {ic:'🧗',name:'Luyện giải bài',rd:'Chọn thuật toán & cấu trúc đúng.',panel:[{h:'Chọn đúng công cụ cho bài toán'},{mcq:[{q:'Tìm một phần tử trong MẢNG ĐÃ SẮP XẾP nhanh nhất bằng?',o:['Tìm kiếm nhị phân O(log n)','Duyệt tuyến tính O(n)','Sắp xếp lại rồi duyệt','Chọn ngẫu nhiên'],a:0,fb:'Mảng đã sắp xếp ⇒ binary search O(log n).'},{q:'Hàng đợi công việc xử lý theo thứ tự đến nên dùng?',o:['Queue (FIFO)','Stack (LIFO)','Mảng ngẫu nhiên','Cây nhị phân'],a:0,fb:'Đến trước xử lý trước ⇒ Queue.'},{q:'Liên tục lấy phần tử NHỎ NHẤT nên dùng?',o:['Min-heap (priority queue)','Mảng thường','Stack','Hash map'],a:0,fb:'Heap cho lấy min/max ở O(log n).'}]}]},
       {ic:'🧱',name:'Cấu trúc dữ liệu',rd:'Lật thẻ đặc điểm & ứng dụng.',panel:[
         {p:'Lật thẻ ôn các cấu trúc dữ liệu nền tảng.'},
@@ -1177,7 +1197,9 @@ const SPACES_IT = {
         {h:'Phát triển ứng dụng di động'},
         {cards:[{ic:'🤖',t:'Android',d:'Kotlin/Java, Android Studio.'},{ic:'🍎',t:'iOS',d:'Swift, Xcode.'},
           {ic:'🦋',t:'Flutter',d:'Một codebase, đa nền tảng (Dart).'},{ic:'⚛️',t:'React Native',d:'JS/TS, đa nền tảng.'}]},
-        {note:'Cross-platform tiết kiệm công sức; native tối ưu hiệu năng & tính năng đặc thù.'}]}],
+        {note:'Cross-platform tiết kiệm công sức; native tối ưu hiệu năng & tính năng đặc thù.'}]},
+      // Pixel Art Studio — UI/UX cho dev: thiết kế icon, sprite game, ảnh placeholder
+      {ic:'🎨',name:'Pixel Art Studio',rd:'Tool vẽ pixel cho dev — design icon app, sprite game, asset PNG retro.',href:'/pixel-art-studio.html'}],
     skills:['Làm chủ HTML/CSS/JS','Responsive & a11y','Hiểu mobile dev'],
     quiz:[{q:'CSS chịu trách nhiệm gì trên trang web?',o:['Trình bày & bố cục','Lưu cơ sở dữ liệu','Định tuyến mạng','Biên dịch mã'],a:0},
       {q:'Kỹ thuật bố cục linh hoạt hiện đại của CSS?',o:['Flexbox / Grid','Bảng (table) lồng nhau','Thẻ font','iframe'],a:0},
@@ -1431,7 +1453,9 @@ const SPACES_PRIMARY = {
         {mcq:[{q:'Một người lạ trên mạng hỏi địa chỉ nhà em. Em nên?',o:['Không nói và kể cho bố mẹ biết','Nói luôn cho họ','Cho số điện thoại','Hẹn gặp riêng'],a:0,fb:'Tuyệt đối không chia sẻ thông tin cá nhân với người lạ và hãy báo người lớn.'}]}]},
       {ic:'🖥️',name:'Các bộ phận máy tính',rd:'Nhận biết phần cứng quen thuộc.',panel:[
         {cards:[{ic:'🖥️',t:'Màn hình',d:'Hiển thị hình ảnh.'},{ic:'⌨️',t:'Bàn phím',d:'Gõ chữ và số.'},{ic:'🖱️',t:'Chuột',d:'Di chuyển & chọn.'},{ic:'🔊',t:'Loa',d:'Phát âm thanh.'}]},
-        {note:'Ngồi thẳng lưng, mắt cách màn hình một sải tay và nghỉ mắt sau 20 phút.'}]}],
+        {note:'Ngồi thẳng lưng, mắt cách màn hình một sải tay và nghỉ mắt sau 20 phút.'}]},
+      // Code Quest — lập trình kéo thả như Scratch, làm quen tư duy thuật toán
+      {ic:'🤖',name:'Code Quest — Lập trình vui',rd:'Kéo thả khối lệnh để điều khiển robot 🤖 giải puzzle. 10 level từ dễ đến khó.',href:'/code-quest.html'}],
     skills:['Dùng internet an toàn','Biết các bộ phận máy tính'],
     quiz:[{q:'Bộ phận nào dùng để gõ chữ?',o:['Bàn phím','Màn hình','Loa','Chuột'],a:0},
       {q:'Người lạ trên mạng xin ảnh và địa chỉ, em nên?',o:['Từ chối và báo người lớn','Gửi ngay','Gửi cho vui','Đăng công khai'],a:0},
@@ -1446,7 +1470,10 @@ const SPACES_PRIMARY = {
         {ol:['Yêu Tổ quốc, yêu đồng bào','Học tập tốt, lao động tốt','Đoàn kết tốt, kỷ luật tốt','Giữ gìn vệ sinh thật tốt','Khiêm tốn, thật thà, dũng cảm']},
         {order:{title:'Sắp xếp đúng thứ tự 5 điều Bác Hồ dạy',items:['Yêu Tổ quốc, yêu đồng bào','Học tập tốt, lao động tốt','Đoàn kết tốt, kỷ luật tốt','Giữ gìn vệ sinh thật tốt','Khiêm tốn, thật thà, dũng cảm']}},
         {note:'Em hãy chọn một điều để cố gắng thực hiện trong tuần này nhé!'}]},
-      {ic:'🏛️',name:'Ban điều hành AI',rd:'Nói điều em mong muốn ở trường & bình chọn.',board:true}],
+      {ic:'🏛️',name:'Ban điều hành AI',rd:'Nói điều em mong muốn ở trường & bình chọn.',board:true},
+      // Cây Tri Thức + Bảng Phong Thần — dashboard cá nhân + xếp hạng, đặt ở Ban giám hiệu
+      {ic:'🌳',name:'Cây Tri Thức của em',rd:'Mỗi tuần em hoàn thành = 1 chiếc lá lên cây. Lá đầy đủ → cây xum xuê!',href:'/cay-tri-thuc.html'},
+      {ic:'🏆',name:'Bảng Phong Thần',rd:'Xem em đứng thứ mấy theo tuần / tháng / mọi thời điểm. Cố lên!',href:'/bang-phong-than.html'}],
     skills:['Hiểu nội quy trường','Ghi nhớ 5 điều Bác Hồ dạy'],
     quiz:[{q:'5 điều Bác Hồ dạy, điều đầu tiên là?',o:['Yêu Tổ quốc, yêu đồng bào','Giữ gìn vệ sinh','Khiêm tốn, thật thà','Học tập tốt'],a:0},
       {q:'Đến trường, em nên?',o:['Đi học đúng giờ, lễ phép','Đi muộn cũng được','Nói chuyện riêng trong giờ','Vứt rác ra sân'],a:0},
@@ -1462,7 +1489,9 @@ const SPACES_PRIMARY = {
         {ul:['Khăn quàng đỏ là một phần của lá cờ Tổ quốc','Đội viên đeo khăn quàng khi đến trường và sinh hoạt','Chào kiểu Đội: bàn tay phải giơ cao trên đầu']},
         {note:'Đeo khăn quàng ngay ngắn thể hiện em là Đội viên gương mẫu.'}]},
       {ic:'🤝',name:'Kĩ năng & hoạt động',rd:'Làm việc tốt mỗi ngày.',panel:[
-        {mcq:[{q:'"Làm nghìn việc tốt" — việc nào là việc tốt?',o:['Giúp bạn, nhặt được của rơi trả lại','Nói dối thầy cô','Bắt nạt bạn nhỏ','Bỏ học đi chơi'],a:0,fb:'Việc tốt là giúp đỡ mọi người, thật thà và trung thực.'}]}]}],
+        {mcq:[{q:'"Làm nghìn việc tốt" — việc nào là việc tốt?',o:['Giúp bạn, nhặt được của rơi trả lại','Nói dối thầy cô','Bắt nạt bạn nhỏ','Bỏ học đi chơi'],a:0,fb:'Việc tốt là giúp đỡ mọi người, thật thà và trung thực.'}]},
+      // Pet Tri Thức — Tiziamon là "linh vật Đội" của em
+      {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Nuôi Tiziamon — sinh vật ảo tiến hoá theo XP. Trả lời quiz để cho Pet ăn!',href:'/pet-tri-thuc.html'}],
     skills:['Sinh hoạt tập thể','Tinh thần Đội viên'],
     quiz:[{q:'Khăn quàng đỏ tượng trưng cho?',o:['Một phần lá cờ Tổ quốc','Một chiếc khăn bình thường','Đồng phục thể thao','Khăn lau bảng'],a:0},
       {q:'Tên đầy đủ của Đội là?',o:['Đội Thiếu niên Tiền phong Hồ Chí Minh','Đội bóng đá','Đội văn nghệ','Đội trực nhật'],a:0},
@@ -1494,7 +1523,9 @@ const SPACES_PRIMARY = {
       {ic:'🖍️',name:'Tập vẽ & nặn',rd:'Vẽ tranh trên máy.',panel:[
         {ul:['Vẽ những gì em yêu thích: gia đình, trường lớp, thiên nhiên','Tô màu gọn trong nét, không lem ra ngoài','Nặn đất tạo hình con vật, đồ vật ngộ nghĩnh']},
         {draw:true},
-        {note:'Không có bức tranh nào là sai — quan trọng là em sáng tạo và vui!'}]}],
+        {note:'Không có bức tranh nào là sai — quan trọng là em sáng tạo và vui!'}]},
+      // Pixel Art Studio — vẽ pixel sáng tạo
+      {ic:'🎨',name:'Pixel Art Studio',rd:'Vẽ pixel art 16×16 với 16 màu, lưu PNG và share cho bạn.',href:'/pixel-art-studio.html'}],
     skills:['Nhận biết & pha màu','Sáng tạo nghệ thuật'],
     quiz:[{q:'Đỏ pha với Vàng ra màu gì?',o:['Cam','Tím','Xanh lá','Đen'],a:0},
       {q:'Đâu là ba màu cơ bản?',o:['Đỏ, Vàng, Lam','Cam, Lục, Tím','Đen, Trắng, Xám','Hồng, Nâu, Be'],a:0},
@@ -1525,7 +1556,9 @@ const SPACES_PRIMARY = {
         {mcq:[{q:'Cây xanh KHÔNG cần điều gì để sống?',o:['Bóng tối hoàn toàn','Nước','Ánh sáng','Không khí'],a:0,fb:'Cây cần ánh sáng để quang hợp — để trong bóng tối lâu cây sẽ héo.'}]}]},
       {ic:'♻️',name:'Bảo vệ môi trường',rd:'Việc nhỏ ý nghĩa lớn.',panel:[
         {ul:['Phân loại rác: rác tái chế và rác bỏ đi','Tiết kiệm nước và điện','Trồng và chăm sóc cây xanh']},
-        {note:'3R: Reduce – Reuse – Recycle (Giảm – Tái sử dụng – Tái chế).'}]}],
+        {note:'3R: Reduce – Reuse – Recycle (Giảm – Tái sử dụng – Tái chế).'}]},
+      // Lab Hoá ảo — bổ trợ Khoa học lớp 5 (làm quen phản ứng nhẹ)
+      {ic:'🧪',name:'Lab Hoá ảo (Lớp 5)',rd:'Kéo thả 10 hoá chất để khám phá 15 phản ứng kì lạ — có kết tủa, sủi khí, đổi màu!',href:'/lab-hoa-ao.html'}],
     skills:['Hiểu hiện tượng tự nhiên','Ý thức bảo vệ môi trường'],
     quiz:[{q:'Nước đá là nước ở thể nào?',o:['Thể rắn','Thể lỏng','Thể khí','Không phải nước'],a:0},
       {q:'Cây xanh cần gì để sống?',o:['Nước, ánh sáng, không khí','Chỉ cần bóng tối','Chỉ cần kẹo','Không cần gì'],a:0},
@@ -1586,7 +1619,9 @@ const SPACES_PRESCHOOL = {
         {note:'Hát to, vỗ tay theo nhịp và làm động tác cô làm mẫu.'}]},
       {ic:'✅',name:'Bé ngoan mỗi ngày',rd:'Việc nhỏ bé tự làm được.',panel:[
         {check:['Chào cô khi đến lớp','Rửa tay trước khi ăn','Cất giày dép gọn gàng','Đi vệ sinh đúng nơi','Ngủ trưa không nói chuyện']},
-        {note:'Mỗi việc tốt cô sẽ tặng bé một bông hoa bé ngoan!'}]}],
+        {note:'Mỗi việc tốt cô sẽ tặng bé một bông hoa bé ngoan!'}]},
+      // Pet Tri Thức — Tiziamon là "thú cưng" của bé, dễ tương tác đầu đời
+      {ic:'🐉',name:'Bé nuôi Tiziamon',rd:'Sinh vật ảo của bé — bé trả lời câu hỏi để cho Tiziamon ăn và lớn lên.',href:'/pet-tri-thuc.html'}],
     skills:['Đếm 1–5','Nhận biết màu sắc'],
     quiz:[
       {q:'🍎🍎🍎 — Có mấy quả táo?',o:['2','3','4','5'],a:1},
@@ -1640,7 +1675,11 @@ const SPACES_PRESCHOOL = {
       {ic:'💭',name:'Ước mơ của bé',rd:'Lớn lên bé muốn làm gì?',panel:[
         {p:'Lớn lên bé muốn làm nghề gì? Bé hãy kể cho cô và bố mẹ nghe nhé!'},
         {goal:true},
-        {note:'Cô sẽ nhớ ước mơ của bé và động viên bé học giỏi mỗi ngày.'}]}],
+        {note:'Cô sẽ nhớ ước mơ của bé và động viên bé học giỏi mỗi ngày.'}]},
+      // 3 mini-game chuẩn bị vào lớp 1
+      {ic:'⛈️',name:'Bão Số Học (Easy)',rd:'Phép tính trong 10 rơi nhẹ — bé chọn đáp án đúng để né bão.',href:'/bao-so-hoc.html'},
+      {ic:'🔤',name:'Đố Chữ Ghép Vần',rd:'Bé kéo các chữ để ghép thành từ — chuẩn bị đọc trôi chảy ở lớp 1.',href:'/do-chu-ghep-van.html'},
+      {ic:'🌳',name:'Cây Tri Thức của bé',rd:'Mỗi tuần học = 1 chiếc lá lên cây. Cây xanh tốt → bé sẵn sàng vào lớp 1!',href:'/cay-tri-thuc.html'}],
     skills:['Đếm tới 20 · So sánh nhiều/ít','Sẵn sàng vào lớp 1'],
     quiz:[
       {q:'Sau số 9 là số mấy?',o:['8','10','11','19'],a:1},

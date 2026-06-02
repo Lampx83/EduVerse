@@ -314,12 +314,15 @@ function isAudienceMatch(audience, user) {
   return false;
 }
 
+// User feedback (jun 2026): không nên surface 9 icon mini-game lên header —
+// gây nhiễu, không phù hợp ngữ cảnh nghiêm túc. Thay vào đó nhúng vào từng
+// building tương ứng trong school.html (xem space.html SPACES_<DOMAIN>).
+// Hàm này giữ lại để future enable hoặc selective render (vd: link "Cây Tri
+// Thức" cho mọi user vẫn hữu ích vì nó là dashboard cá nhân). Hiện return ''.
 function quickLinksHtml(user) {
-  const visible = QUICK_LINKS.filter(q => isAudienceMatch(q.audience, user));
-  if (!visible.length) return '';
-  return `<span class="ev-quicklinks">${visible.map(q =>
-    `<a href="${q.href}" title="${q.title}" aria-label="${q.title}">${q.ic}</a>`
-  ).join('')}</span>`;
+  // eslint-disable-next-line no-unused-vars
+  void user;
+  return '';
 }
 
 function render(host, user) {

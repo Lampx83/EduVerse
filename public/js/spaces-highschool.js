@@ -21,7 +21,10 @@ window.SPACES_HIGHSCHOOL = {
         {h:'Các phương thức xét tuyển đại học'},
         {ul:['Xét điểm thi tốt nghiệp THPT','Xét học bạ THPT','Thi đánh giá năng lực / tư duy','Xét tuyển kết hợp (chứng chỉ ngoại ngữ…)','Tuyển thẳng theo quy chế']},
         {note:'Theo dõi đề án tuyển sinh của từng trường để biết tổ hợp & điểm chuẩn các năm.'}]},
-      {ic:'🏛️',name:'Ban điều hành AI',rd:'Đề xuất cải tiến cho nhà trường & bình chọn.',board:true}],
+      {ic:'🏛️',name:'Ban điều hành AI',rd:'Đề xuất cải tiến cho nhà trường & bình chọn.',board:true},
+      // Cây Tri Thức + Bảng Phong Thần — dashboard cá nhân + xếp hạng cho HS THPT
+      {ic:'🌳',name:'Cây Tri Thức của em',rd:'Trực quan hoá tiến độ 3 năm THPT — mỗi tuần học = 1 lá. Lớp 12 cây vào mùa hoa quả.',href:'/cay-tri-thuc.html'},
+      {ic:'🏆',name:'Bảng Phong Thần Tizia',rd:'Xếp hạng HS THPT theo điểm tổng + thành tích thi cấp tỉnh/quốc gia.',href:'/bang-phong-than.html'}],
     skills:['Hiểu cơ cấu trường','Chọn phân ban phù hợp','Định hướng nghề nghiệp'],
     quiz:[{q:'Cấp THPT ở Việt Nam gồm những lớp nào?',o:['Lớp 10, 11, 12','Lớp 6–9','Lớp 1–5','Lớp 10–13'],a:0},
       {q:'Theo GDPT 2018, từ lớp 10 học sinh bắt đầu?',o:['Chọn môn theo định hướng nghề (phân ban)','Học tất cả mọi môn như nhau','Chỉ học 3 môn','Nghỉ học các môn xã hội'],a:0},
@@ -112,7 +115,9 @@ window.SPACES_HIGHSCHOOL = {
       {ic:'⚖️',name:'Cân bằng phương trình',rd:'Định luật bảo toàn khối lượng.',panel:[
         {ol:['Viết đúng công thức các chất','Cân bằng số nguyên tử mỗi nguyên tố hai vế','Kiểm tra lại điện tích (nếu là ion)','Tối giản hệ số']},
         {order:{title:'Sắp xếp 4 bước cân bằng phương trình hoá học',items:['Viết đúng công thức các chất','Cân bằng số nguyên tử mỗi nguyên tố hai vế','Kiểm tra lại điện tích (nếu là ion)','Tối giản hệ số']}},
-        {mcq:[{q:'Cân bằng: H₂ + O₂ → H₂O. Hệ số đúng lần lượt là?',o:['2 ; 1 ; 2','1 ; 1 ; 1','2 ; 2 ; 2','1 ; 2 ; 1'],a:0,fb:'2H₂ + O₂ → 2H₂O — số nguyên tử H và O cân bằng hai vế.'}]}]}],
+        {mcq:[{q:'Cân bằng: H₂ + O₂ → H₂O. Hệ số đúng lần lượt là?',o:['2 ; 1 ; 2','1 ; 1 ; 1','2 ; 2 ; 2','1 ; 2 ; 1'],a:0,fb:'2H₂ + O₂ → 2H₂O — số nguyên tử H và O cân bằng hai vế.'}]}]},
+      // Lab Hoá ảo — 15 phản ứng kéo thả, ôn nhanh cho HS THPT
+      {ic:'🧪',name:'Lab Hoá ảo (15 phản ứng)',rd:'Kéo thả 10 hoá chất khám phá 15 phản ứng — kết tủa, sủi khí, đổi màu, toả nhiệt.',href:'/lab-hoa-ao.html'}],
     skills:['Thí nghiệm hoá học','An toàn hoá chất','Đọc bảng tuần hoàn'],
     quiz:[{q:'Trong phản ứng oxi hoá – khử, chất khử là chất?',o:['Nhường electron','Nhận electron','Không thay đổi','Luôn là kim loại quý'],a:0},
       {q:'Số hiệu nguyên tử Z cho biết?',o:['Số proton trong hạt nhân','Số neutron','Khối lượng mol','Số phân tử'],a:0},
@@ -150,7 +155,9 @@ window.SPACES_HIGHSCHOOL = {
       {ic:'🧮',name:'Tư duy thuật toán',rd:'Nối thuật toán với cách làm.',panel:[
         {cards:[{ic:'🔎',t:'Tìm kiếm tuần tự',d:'Duyệt lần lượt đến khi gặp.'},{ic:'⚡',t:'Tìm kiếm nhị phân',d:'Chia đôi dãy đã sắp xếp.'},
           {ic:'🫧',t:'Sắp xếp nổi bọt',d:'Đổi chỗ cặp kề nhau nhiều lượt.'},{ic:'📌',t:'Sắp xếp chọn',d:'Chọn phần tử nhỏ nhất mỗi lượt.'}]},
-        {match:{title:'Nối tên thuật toán với cách làm',pairs:[['Tìm kiếm tuần tự','Duyệt lần lượt đến khi gặp phần tử cần tìm'],['Tìm kiếm nhị phân','Chia đôi dãy đã sắp xếp để thu hẹp vùng tìm'],['Sắp xếp nổi bọt','Đổi chỗ cặp kề nhau nhiều lượt cho tới khi xong'],['Sắp xếp chọn','Mỗi lượt chọn phần tử nhỏ nhất đưa về đầu']]}}]}],
+        {match:{title:'Nối tên thuật toán với cách làm',pairs:[['Tìm kiếm tuần tự','Duyệt lần lượt đến khi gặp phần tử cần tìm'],['Tìm kiếm nhị phân','Chia đôi dãy đã sắp xếp để thu hẹp vùng tìm'],['Sắp xếp nổi bọt','Đổi chỗ cặp kề nhau nhiều lượt cho tới khi xong'],['Sắp xếp chọn','Mỗi lượt chọn phần tử nhỏ nhất đưa về đầu']]}}]},
+      // Code Quest — luyện tư duy lập trình bằng block-based
+      {ic:'🤖',name:'Code Quest — Lập trình kéo thả',rd:'10 level Scratch-style: lặp, rẽ nhánh, biến — luyện tư duy thuật toán trước khi viết Python.',href:'/code-quest.html'}],
     skills:['Lập trình Python cơ bản','An toàn mạng','Tư duy thuật toán'],
     quiz:[{q:'Số nhị phân 1010 bằng số thập phân nào?',o:['10','8','12','5'],a:0},
       {q:'Trong Python, lệnh in ra màn hình là?',o:['print()','echo()','printf()','write()'],a:0},
@@ -203,7 +210,9 @@ window.SPACES_HIGHSCHOOL = {
         {timeline:[{t:'Thành lập',d:'Những ngày đầu xây dựng trường.'},{t:'Phát triển',d:'Mở rộng cơ sở vật chất & đội ngũ.'},
           {t:'Thành tích',d:'Học sinh giỏi, đỗ đại học, giải phong trào.'},{t:'Hôm nay',d:'Tiếp nối truyền thống, hội nhập số.'}]}]},
       {ic:'🤝',name:'Công dân & kĩ năng sống',rd:'Quyền & nghĩa vụ công dân.',panel:[
-        {mcq:[{q:'Công dân Việt Nam đủ bao nhiêu tuổi có quyền bầu cử đại biểu Quốc hội?',o:['Đủ 18 tuổi','Đủ 15 tuổi','Đủ 16 tuổi','Đủ 21 tuổi'],a:0,fb:'Đủ 18 tuổi có quyền bầu cử; đủ 21 tuổi có quyền ứng cử đại biểu Quốc hội & HĐND.'}]}]}],
+        {mcq:[{q:'Công dân Việt Nam đủ bao nhiêu tuổi có quyền bầu cử đại biểu Quốc hội?',o:['Đủ 18 tuổi','Đủ 15 tuổi','Đủ 16 tuổi','Đủ 21 tuổi'],a:0,fb:'Đủ 18 tuổi có quyền bầu cử; đủ 21 tuổi có quyền ứng cử đại biểu Quốc hội & HĐND.'}]}]},
+      // Pet Tri Thức — Tiziamon stage "legendary" cho HS THPT đã có hành trình dài
+      {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Pet đã đi cùng em từ Mầm non — giờ vào THPT là dragon. Tiếp tục nuôi để biến thân legendary!',href:'/pet-tri-thuc.html'}],
     skills:['Hiểu tổ chức Đoàn','Ý thức công dân'],
     quiz:[{q:'Đoàn TNCS Hồ Chí Minh được thành lập ngày nào?',o:['26/3/1931','2/9/1945','20/11/1982','19/5/1890'],a:0},
       {q:'Công dân đủ 18 tuổi có quyền?',o:['Bầu cử','Không có quyền nào','Miễn mọi nghĩa vụ','Tự đặt ra luật'],a:0},
@@ -222,7 +231,9 @@ window.SPACES_HIGHSCHOOL = {
         {draw:true}]},
       {ic:'💡',name:'Sáng tạo & thẩm mĩ',rd:'Quy trình thiết kế sáng tạo.',panel:[
         {p:'Nghệ thuật giúp em thể hiện ý tưởng, cảm xúc và nhìn cái đẹp quanh mình — nền tảng cho thiết kế, truyền thông, kiến trúc.'},
-        {order:{title:'Sắp xếp 5 bước quy trình thiết kế sáng tạo',items:['Thấu hiểu vấn đề & người dùng','Lên ý tưởng đa dạng (brainstorm)','Phác thảo & chọn phương án','Làm mẫu thử (prototype) & thử nghiệm','Hoàn thiện & chia sẻ tác phẩm']}}]}],
+        {order:{title:'Sắp xếp 5 bước quy trình thiết kế sáng tạo',items:['Thấu hiểu vấn đề & người dùng','Lên ý tưởng đa dạng (brainstorm)','Phác thảo & chọn phương án','Làm mẫu thử (prototype) & thử nghiệm','Hoàn thiện & chia sẻ tác phẩm']}}]},
+      // Pixel Art Studio — sáng tạo digital art kiểu retro
+      {ic:'🎨',name:'Pixel Art Studio',rd:'Studio vẽ pixel — luyện bố cục, phối màu, sáng tạo ý tưởng kiểu retro game.',href:'/pixel-art-studio.html'}],
     skills:['Cảm thụ nghệ thuật','Tư duy thẩm mĩ'],
     quiz:[{q:'Nhịp 2/4 có mấy phách trong một ô nhịp?',o:['2 phách','4 phách','3 phách','1 phách'],a:0},
       {q:'Đàn bầu là nhạc cụ?',o:['Dân tộc Việt Nam','Phương Tây','Điện tử hiện đại','Của Ấn Độ'],a:0},
