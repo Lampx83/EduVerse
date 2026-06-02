@@ -276,6 +276,8 @@ const QUICK_LINKS = [
   { href: '/lab-hoa-ao.html',    ic: '🧪', title: 'Lab Hoá Học Ảo' },
   { href: '/do-chu-ghep-van.html', ic: '🔤', title: 'Đố Chữ Ghép Vần' },
   { href: '/ban-do-vn.html',     ic: '🗺️', title: 'Bản đồ Việt Nam Tri Thức' },
+  { href: '/pixel-art-studio.html', ic: '🎨', title: 'Pixel Art Studio' },
+  { href: '/code-quest.html',    ic: '🤖', title: 'Code Quest (lập trình kéo thả)' },
 ];
 function quickLinksHtml() {
   return `<span class="ev-quicklinks">${QUICK_LINKS.map(q =>

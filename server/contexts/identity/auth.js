@@ -165,6 +165,10 @@ const PUBLIC_PATH_EXACT = new Set([
   '/pet-tri-thuc.html',
   // Bảng Phong Thần — leaderboard tổng hợp. Đọc /api/leaderboard, guest cũng xem được.
   '/bang-phong-than.html',
+  // Pixel Art Studio — canvas vẽ pixel 16/32. Lưu vào localStorage, guest dùng được.
+  '/pixel-art-studio.html',
+  // Code Quest — block-based programming puzzle. State trong localStorage, guest chơi được.
+  '/code-quest.html',
   // Trang bảng giá — khách phải xem được trước khi đăng ký/mua.
   '/pricing.html', '/pricing',
 ]);
