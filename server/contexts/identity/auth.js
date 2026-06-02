@@ -156,6 +156,11 @@ const PUBLIC_PATH_EXACT = new Set([
   '/bao-so-hoc.html',
   // Bản đồ Việt Nam Tri thức — game khám phá 63 tỉnh. Standalone, guest chơi được.
   '/ban-do-vn.html',
+  // Pet Tri Thức — virtual pet "Tiziamon" tiến hoá theo XP. State trong localStorage,
+  // sync XP với /api/wallet khi đã login (best-effort). Guest chơi được offline.
+  '/pet-tri-thuc.html',
+  // Bảng Phong Thần — leaderboard tổng hợp. Đọc /api/leaderboard, guest cũng xem được.
+  '/bang-phong-than.html',
   // Trang bảng giá — khách phải xem được trước khi đăng ký/mua.
   '/pricing.html', '/pricing',
 ]);

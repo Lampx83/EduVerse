@@ -300,7 +300,7 @@ export const S7TOAN_WEEKS = [
 
   M(33, 'Tổng hợp đại số — bài toán tỉ lệ', [
     Q('Chia 60 thành ba phần tỉ lệ 1 : 2 : 3. Phần lớn nhất?', ['10', '20', '30', '40'], 2, 'Tổng 6 phần ⇒ mỗi phần 10; 3·10 = 30.'),
-    Q('Hai số tỉ lệ với 3 và 5, hiệu bằng 10. Số lớn?', ['10', '15', '20', '25'], 4 - 1, 'k(5 − 3) = 10 ⇒ k = 5; số lớn = 25.'),
+    Q('Hai số tỉ lệ với 3 và 5, hiệu bằng 10. Số lớn?', ['10', '15', '20', '25'], 3, 'k(5 − 3) = 10 ⇒ k = 5; số lớn = 25.'),
     Q('Diện tích tam giác đáy 6 cm, chiều cao 4 cm là?', ['10 cm²', '12 cm²', '24 cm²', '6 cm²'], 1, 'S = (1/2)·6·4 = 12.'),
     Q('Cho y tỉ lệ thuận x, x = 4 ⇒ y = 12. Khi x = 7, y = ?', ['12', '21', '7', '28'], 1, 'k = 3; y = 3·7 = 21.'),
     Q('Phân số 36/48 rút gọn?', ['2/3', '3/4', '4/5', '6/8'], 1, 'ƯCLN(36,48) = 12.'),
