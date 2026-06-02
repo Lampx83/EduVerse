@@ -149,6 +149,13 @@ const PUBLIC_PATH_EXACT = new Set([
   '/school.html',
   '/subject.html', '/module.html', '/lesson.html', '/weekly-lesson.html',
   '/quiz.html',
+  // Cây Tri Thức — visualize tuần học đã hoàn thành. Trang đọc-only, guest cũng xem
+  // được (render empty state nếu chưa có dữ liệu trong wallet/scenario-runs).
+  '/cay-tri-thuc.html',
+  // Bão Số Học — arcade luyện tính nhẩm. Standalone game, guest chơi được không cần login.
+  '/bao-so-hoc.html',
+  // Bản đồ Việt Nam Tri thức — game khám phá 63 tỉnh. Standalone, guest chơi được.
+  '/ban-do-vn.html',
   // Trang bảng giá — khách phải xem được trước khi đăng ký/mua.
   '/pricing.html', '/pricing',
 ]);

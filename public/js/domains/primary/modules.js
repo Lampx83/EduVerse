@@ -1,83 +1,132 @@
 // ============================================================
-// Trường Tiểu học — Module list
+// Trường Tiểu học — Module list (Lớp 1-5 GDPT 2018)
 // ============================================================
-// yearLevel = lớp (1–5). Lớp 2 đầy đủ 9 môn × 36 tuần (HK1: T1-18,
-// HK2: T19-36, T22 nghỉ Tết) theo GDPT 2018.
-// Module loader tự liệt scenarios theo prefix ID, không cần liệt
-// tất cả 36 IDs vào scenarioIds. knowledgeQuiz trỏ tuần 1 để mở
-// khoá module.
+// yearLevel = lớp (1–5). Mỗi môn 35-36 tuần.
+// Module loader tự liệt scenarios theo prefix ID (s.id.startsWith(moduleId + '-')),
+// không cần liệt tất cả 36 IDs vào scenarioIds. knowledgeQuiz trỏ tuần 1 để mở khoá.
 // ============================================================
+
+// Helper tạo module curriculum cho 1 môn × 1 lớp.
+const M = (id, title, year, subject, descr, opts = {}) => ({
+  category: 'curriculum', id, title, yearLevel: year, subject,
+  scenarioIds: [opts.firstId || `${id}-w01-quiz`],
+  knowledgeQuiz: opts.firstId || `${id}-w01-quiz`,
+  minStarsToUnlock: opts.minStars ?? 0,
+  ...(opts.prerequisites ? { prerequisites: opts.prerequisites } : {}),
+  description: descr,
+});
 
 /** @type {import('../../engine/types.js').CourseModule[]} */
 export const MODULES = [
-  // ─────────── Lớp 1 ───────────
-  { category: 'curriculum', id: 'P1', title: 'Toán lớp 1', yearLevel: 1, subject: 'toan',
-    scenarioIds: ['P1-toan-quiz'], knowledgeQuiz: 'P1-toan-quiz', minStarsToUnlock: 0,
-    description: 'Đếm, so sánh số trong 100; cộng trừ không nhớ; hình cơ bản.' },
+  // ──────────────── LỚP 1 — 8 môn × 35 tuần ────────────────
+  M('P1',     'Toán lớp 1',          1, 'toan',
+    '35 tuần (HK1: vị trí, số 1–10, hình cơ bản, cộng-trừ trong 10. HK2: số đến 100, cộng-trừ 2 chữ số, cm, đồng hồ, tiền VN).'),
+  M('P1TV',   'Tiếng Việt lớp 1',    1, 'tieng-viet',
+    '35 tuần (HK1: tư thế viết, âm đơn-ghép, vần đơn. HK2: vần phức, đọc đoạn, chính tả, từ loại, câu kể-hỏi-cảm).'),
+  M('P1TA',   'Tiếng Anh lớp 1',     1, 'tieng-anh',
+    '35 tuần (HK1: greetings, numbers, colors, family, body, classroom. HK2: animals, food, weather, clothes, action verbs).'),
+  M('P1TNXH', 'TN-XH lớp 1',         1, 'tnxh',
+    '35 tuần (HK1: gia đình, lớp học, an toàn nhà-trường, ATGT, cơ thể, vệ sinh. HK2: cây-con vật, mùa, Mặt Trời-Trăng, môi trường).'),
+  M('P1DD',   'Đạo đức lớp 1',       1, 'dao-duc',
+    '35 tuần — lễ phép, yêu gia đình, đoàn kết, gọn gàng, trung thực, an toàn, yêu Tổ quốc.'),
+  M('P1AN',   'Âm nhạc lớp 1',       1, 'am-nhac',
+    '35 tuần — bài hát thiếu nhi quen, nhạc cụ gõ, to-nhỏ, nhanh-chậm, Quốc ca.'),
+  M('P1MT',   'Mĩ thuật lớp 1',      1, 'my-thuat',
+    '35 tuần — màu cơ bản, nét, hình vuông-tròn-tam giác, vẽ đồ vật, in lá, xé dán, nặn đất.'),
+  M('P1GDTC', 'GDTC lớp 1',          1, 'gdtc',
+    '35 tuần — đội hình đội ngũ, đi-chạy-nhảy, ném-bắt bóng, trò chơi dân gian, an toàn.'),
+  M('P1HDTN', 'HĐ trải nghiệm lớp 1',1, 'htn',
+    '35 tuần — chào năm học, tự phục vụ, giữ lớp sạch, an toàn, ngày lễ, ước mơ.'),
 
-  // ─────────── Lớp 2 — Đầy đủ 9 môn × 36 tuần ───────────
-  // 1. Toán (5 tiết/tuần)
-  { category: 'curriculum', id: 'P2', title: 'Toán lớp 2', yearLevel: 2, subject: 'toan',
-    scenarioIds: ['P2-w01-quiz'], knowledgeQuiz: 'P2-w01-quiz',
-    minStarsToUnlock: 3, prerequisites: ['P1'],
-    description: '36 tuần (HK1: số đến 100, cộng-trừ có nhớ, dm-m-kg, hình tứ giác. HK2: bảng nhân/chia 2-5, số đến 1000, lít, tiền VN, chu vi).' },
+  // ──────────────── LỚP 2 — 9 môn × 36 tuần ────────────────
+  M('P2',     'Toán lớp 2',          2, 'toan',
+    '36 tuần (HK1: số đến 100, cộng-trừ có nhớ, dm-m-kg, hình tứ giác. HK2: bảng nhân/chia 2-5, số đến 1000, lít, tiền VN, chu vi).',
+    { minStars: 3, prerequisites: ['P1'] }),
+  M('P2TV',   'Tiếng Việt lớp 2',    2, 'tieng-viet',
+    '36 tuần (HK1: ôn âm vần, tập đọc, từ loại, mẫu câu. HK2: dấu câu, vốn từ, viết đoạn 3-5 câu).'),
+  M('P2TA',   'Tiếng Anh lớp 2',     2, 'tieng-anh',
+    '36 tuần (HK1: greetings, numbers, colors, body, family. HK2: animals, food, weather, days, toys, likes).'),
+  M('P2GDTC', 'GDTC lớp 2',          2, 'gdtc',
+    '36 tuần — đội hình, bài thể dục PTC, đi-chạy-nhảy, nhảy dây, tâng cầu, ném-bắt, trò chơi dân gian.'),
+  M('P2AN',   'Âm nhạc lớp 2',       2, 'am-nhac',
+    '36 tuần — bài hát thiếu nhi, cao độ-trường độ, tiết tấu, đọc nhạc Đô-Rê-Mi-Pha-Son.'),
+  M('P2MT',   'Mĩ thuật lớp 2',      2, 'my-thuat',
+    '36 tuần — yếu tố tạo hình, màu, pha màu, vẽ đề tài, xé dán, tranh Đông Hồ, nặn đất.'),
+  M('P2HDTN', 'HĐ trải nghiệm lớp 2',2, 'htn',
+    '36 tuần — bản thân, gia đình, ATGT, môi trường, tiết kiệm, định hướng nghề.'),
+  M('P2TNXH', 'TN-XH lớp 2',         2, 'tnxh',
+    '36 tuần — gia đình, trường học, cộng đồng, ATGT, thực-động vật, cơ thể, Trái Đất-Mặt Trời.'),
+  M('P2DD',   'Đạo đức lớp 2',       2, 'dao-duc',
+    '36 tuần — quý thời gian, lễ phép, yêu gia đình, trung thực, bảo vệ của công, yêu quê hương.'),
 
-  // 2. Tiếng Việt (10 tiết/tuần — nhiều tiết nhất)
-  { category: 'curriculum', id: 'P2TV', title: 'Tiếng Việt lớp 2', yearLevel: 2, subject: 'tieng-viet',
-    scenarioIds: ['P2TV-w01-quiz'], knowledgeQuiz: 'P2TV-w01-quiz',
-    minStarsToUnlock: 0,
-    description: '36 tuần (HK1: ôn âm vần, tập đọc, từ loại, mẫu câu Ai-là-gì/làm-gì/thế-nào. HK2: dấu câu, vốn từ thời tiết-Bác Hồ-cây cối-quê hương, viết đoạn 3-5 câu).' },
+  // ──────────────── LỚP 3 — 9 môn × 35 tuần ────────────────
+  M('P3',     'Toán lớp 3',          3, 'toan',
+    '35 tuần — bảng nhân/chia 6–9, nhân chia ngoài bảng, chu vi, số đến 10 000, gam-kg, ml-lít, tiền VN, hình hộp.',
+    { minStars: 6, prerequisites: ['P2'] }),
+  M('P3TV',   'Tiếng Việt lớp 3',    3, 'tieng-viet',
+    '35 tuần — đọc hiểu, từ loại, kiểu câu Ai-làm gì/thế nào/là gì, MRVT, viết thư, biên bản, đoạn miêu tả.'),
+  M('P3TA',   'Tiếng Anh lớp 3',     3, 'tieng-anh',
+    '35 tuần — greetings, family, friends, body, toys, school subjects, house, food, animals, weather, hobbies.'),
+  M('P3TNXH', 'TN-XH lớp 3',         3, 'tnxh',
+    '35 tuần — họ hàng, cộng đồng, ATGT, phòng tránh xâm hại, thực-động vật, cơ thể người, hệ tuần hoàn-tiêu hoá.'),
+  M('P3DD',   'Đạo đức lớp 3',       3, 'dao-duc',
+    '35 tuần — yêu Tổ quốc, kính thầy cô, tự lập, trung thực, an toàn mạng, bảo vệ môi trường.'),
+  M('P3AN',   'Âm nhạc lớp 3',       3, 'am-nhac',
+    '35 tuần — nhịp 3/4, móc đơn, recorder, gõ đệm, dân ca vùng miền, Quốc ca.'),
+  M('P3MT',   'Mĩ thuật lớp 3',      3, 'my-thuat',
+    '35 tuần — màu nóng-lạnh, in mộc bản, vẽ phong cảnh, mặt nạ, Origami, tranh đề tài Tết.'),
+  M('P3GDTC', 'GDTC lớp 3',          3, 'gdtc',
+    '35 tuần — bài thể dục liên hoàn, chạy 30m, bật xa, nhảy dây, đá cầu, bóng rổ mini, trò chơi dân gian.'),
+  M('P3HDTN', 'HĐ trải nghiệm lớp 3',3, 'htn',
+    '35 tuần — kế hoạch tuần, sinh nhật, an toàn xe đạp, làm thiệp, Đội Thiếu niên, dã ngoại.'),
 
-  // 3. Tiếng Anh (tự chọn, 2-4 tiết/tuần)
-  { category: 'curriculum', id: 'P2TA', title: 'Tiếng Anh lớp 2', yearLevel: 2, subject: 'tieng-anh',
-    scenarioIds: ['P2TA-w01-quiz'], knowledgeQuiz: 'P2TA-w01-quiz',
-    minStarsToUnlock: 0,
-    description: '36 tuần (HK1: greetings, numbers, colors, body, family, classroom. HK2: animals, food, weather, days, toys, routines, likes).' },
+  // ──────────────── LỚP 4 — 11 môn × 35 tuần ────────────────
+  M('P4',     'Toán lớp 4',          4, 'toan',
+    '35 tuần — số đến lớp triệu, dấu hiệu chia hết, phân số (4 phép), góc, hình bình hành, biểu đồ, trung bình cộng, toán tổng-tỉ.',
+    { minStars: 9, prerequisites: ['P3'] }),
+  M('P4TV',   'Tiếng Việt lớp 4',    4, 'tieng-viet',
+    '35 tuần — danh-động-tính từ, kiểu câu, dấu hai chấm-ngoặc kép, MRVT, văn miêu tả đồ vật-cây cối-con vật.'),
+  M('P4TA',   'Tiếng Anh lớp 4',     4, 'tieng-anh',
+    '35 tuần — present simple, present continuous, can/can\'t, past simple ngắn, future will/going to.'),
+  M('P4KH',   'Khoa học lớp 4',      4, 'khoa-hoc',
+    '35 tuần — nước, không khí, ánh sáng, nhiệt, âm thanh, thực-động vật, dinh dưỡng, môi trường.'),
+  M('P4LSDL', 'Lịch sử & Địa lý 4',  4, 'lich-su-dia-ly',
+    '35 tuần — bản đồ, các vùng VN, Văn Lang-Âu Lạc, Hùng Vương, Lý-Trần, Lê Lợi, Quang Trung.'),
+  M('P4DD',   'Đạo đức lớp 4',       4, 'dao-duc',
+    '35 tuần — yêu thương, kính thầy cô, biết ơn người lao động, trung thực, tiết kiệm, bảo vệ môi trường.'),
+  M('P4AN',   'Âm nhạc lớp 4',       4, 'am-nhac',
+    '35 tuần — nhịp 2/4 và 3/4, recorder, dân ca vùng, Em yêu hòa bình, Bàn tay mẹ, Cò lả.'),
+  M('P4MT',   'Mĩ thuật lớp 4',      4, 'my-thuat',
+    '35 tuần — bố cục cân đối, tĩnh vật, chân dung, in mộc bản, thiết kế logo, đèn lồng.'),
+  M('P4GDTC', 'GDTC lớp 4',          4, 'gdtc',
+    '35 tuần — bài thể dục 8 động tác, chạy 60m, bật xa, nhảy dây tập thể, đá cầu, bóng đá mini.'),
+  M('P4HDTN', 'HĐ trải nghiệm lớp 4',4, 'htn',
+    '35 tuần — kỹ năng học tập, làm việc nhóm, dã ngoại an toàn, các nghề trong cộng đồng, ngày lễ lớn.'),
+  M('P4CN',   'Công nghệ lớp 4',     4, 'cong-nghe',
+    '35 tuần — hoa cây cảnh, chậu cây tự chế, an toàn lao động, dụng cụ kỹ thuật, lắp ghép, máy tính cá nhân.'),
 
-  // 4. Giáo dục thể chất (2 tiết/tuần)
-  { category: 'curriculum', id: 'P2GDTC', title: 'GDTC lớp 2', yearLevel: 2, subject: 'gdtc',
-    scenarioIds: ['P2GDTC-w01-quiz'], knowledgeQuiz: 'P2GDTC-w01-quiz',
-    minStarsToUnlock: 0,
-    description: '36 tuần (HK1: đội hình đội ngũ, bài thể dục PTC, đi-chạy-nhảy, trò chơi. HK2: nhảy dây, tâng cầu, ném-bắt bóng, trò chơi dân gian, an toàn).' },
-
-  // 5. Âm nhạc (1 tiết/tuần)
-  { category: 'curriculum', id: 'P2AN', title: 'Âm nhạc lớp 2', yearLevel: 2, subject: 'am-nhac',
-    scenarioIds: ['P2AN-w01-quiz'], knowledgeQuiz: 'P2AN-w01-quiz',
-    minStarsToUnlock: 0,
-    description: '36 tuần (HK1: bài hát thiếu nhi, cao độ-trường độ, tiết tấu, nhạc cụ gõ. HK2: đọc nhạc Đô-Rê-Mi-Pha-Son, nhịp 2/4, nhạc cụ dân tộc).' },
-
-  // 6. Mỹ thuật (1 tiết/tuần)
-  { category: 'curriculum', id: 'P2MT', title: 'Mĩ thuật lớp 2', yearLevel: 2, subject: 'my-thuat',
-    scenarioIds: ['P2MT-w01-quiz'], knowledgeQuiz: 'P2MT-w01-quiz',
-    minStarsToUnlock: 0,
-    description: '36 tuần (HK1: yếu tố tạo hình, màu cơ bản, pha màu, vẽ đề tài quen thuộc, trang trí. HK2: xé dán, tranh Đông Hồ, vẽ phong cảnh, nặn đất, đề tài lễ).' },
-
-  // 7. Hoạt động trải nghiệm (3 tiết/tuần)
-  { category: 'curriculum', id: 'P2HDTN', title: 'Hoạt động trải nghiệm lớp 2', yearLevel: 2, subject: 'htn',
-    scenarioIds: ['P2HDTN-w01-quiz'], knowledgeQuiz: 'P2HDTN-w01-quiz',
-    minStarsToUnlock: 0,
-    description: '36 tuần (HK1: bản thân, gia đình, nhà trường, lễ phép. HK2: an toàn giao thông, môi trường, tiết kiệm, định hướng nghề nghiệp).' },
-
-  // 8. Tự nhiên & Xã hội (2 tiết/tuần)
-  { category: 'curriculum', id: 'P2TNXH', title: 'Tự nhiên & Xã hội lớp 2', yearLevel: 2, subject: 'tnxh',
-    scenarioIds: ['P2TNXH-w01-quiz'], knowledgeQuiz: 'P2TNXH-w01-quiz',
-    minStarsToUnlock: 0,
-    description: '36 tuần (HK1: gia đình, trường học, cộng đồng địa phương, ATGT. HK2: thực-động vật, cơ thể người, Trái Đất-Mặt Trời-Mặt Trăng, phương hướng).' },
-
-  // 9. Đạo đức (1 tiết/tuần)
-  { category: 'curriculum', id: 'P2DD', title: 'Đạo đức lớp 2', yearLevel: 2, subject: 'dao-duc',
-    scenarioIds: ['P2DD-w01-quiz'], knowledgeQuiz: 'P2DD-w01-quiz',
-    minStarsToUnlock: 0,
-    description: '36 tuần (HK1: quý thời gian, lễ phép, yêu gia đình, giúp bạn, yêu lao động. HK2: trung thực, bảo vệ của công, yêu quê hương, lịch sự công cộng, tự lập).' },
-
-  // ─────────── Lớp 3-5 ───────────
-  { category: 'curriculum', id: 'P3', title: 'Toán lớp 3', yearLevel: 3, subject: 'toan',
-    scenarioIds: ['P3-toan-quiz'], knowledgeQuiz: 'P3-toan-quiz', minStarsToUnlock: 6, prerequisites: ['P2'],
-    description: 'Bảng nhân/chia 6–9; nhân chia ngoài bảng; chu vi; số đến 100 000.' },
-  { category: 'curriculum', id: 'P4', title: 'Toán lớp 4', yearLevel: 4, subject: 'toan',
-    scenarioIds: ['P4-toan-quiz'], knowledgeQuiz: 'P4-toan-quiz', minStarsToUnlock: 9, prerequisites: ['P3'],
-    description: 'Phân số; dấu hiệu chia hết; diện tích; góc.' },
-  { category: 'curriculum', id: 'P5', title: 'Toán lớp 5', yearLevel: 5, subject: 'toan',
-    scenarioIds: ['P5-toan-quiz'], knowledgeQuiz: 'P5-toan-quiz', minStarsToUnlock: 12, prerequisites: ['P4'],
-    description: 'Số thập phân; tỉ số phần trăm; diện tích & thể tích; vận tốc.' },
+  // ──────────────── LỚP 5 — 11 môn × 35 tuần ────────────────
+  M('P5',     'Toán lớp 5',          5, 'toan',
+    '35 tuần — phân số, số thập phân (4 phép), thể tích, diện tích tam giác/thang/tròn, %, vận tốc-quãng đường-thời gian.',
+    { minStars: 12, prerequisites: ['P4'] }),
+  M('P5TV',   'Tiếng Việt lớp 5',    5, 'tieng-viet',
+    '35 tuần — đại từ, quan hệ từ, câu ghép, liên kết câu, tả người-cảnh-con vật, viết đơn-biên bản-báo cáo.'),
+  M('P5TA',   'Tiếng Anh lớp 5',     5, 'tieng-anh',
+    '35 tuần — past simple full, will/going to, so sánh, can/should, daily routine, directions, jobs.'),
+  M('P5KH',   'Khoa học lớp 5',      5, 'khoa-hoc',
+    '35 tuần — sự sinh sản, thiếu niên, an toàn dùng thuốc, năng lượng, hỗn hợp dung dịch, bảo vệ môi trường.'),
+  M('P5LSDL', 'Lịch sử & Địa lý 5',  5, 'lich-su-dia-ly',
+    '35 tuần — Pháp xâm lược, Đảng CSVN 1930, CMT8, 2/9/1945, Điện Biên Phủ, kháng chiến chống Mỹ, 30/4/1975, đổi mới.'),
+  M('P5DD',   'Đạo đức lớp 5',       5, 'dao-duc',
+    '35 tuần — biết ơn tổ tiên, tự lập, có trách nhiệm, tôn trọng phụ nữ, yêu hoà bình, Liên Hợp Quốc.'),
+  M('P5AN',   'Âm nhạc lớp 5',       5, 'am-nhac',
+    '35 tuần — recorder nâng cao, hợp xướng, nhạc cụ dân tộc, nhịp 4/4, Reo vang bình minh, Em vẫn nhớ trường xưa.'),
+  M('P5MT',   'Mĩ thuật lớp 5',      5, 'my-thuat',
+    '35 tuần — phối cảnh, tĩnh vật nâng cao, chân dung tự hoạ, in tranh khắc gỗ, thiệp 3D.'),
+  M('P5GDTC', 'GDTC lớp 5',          5, 'gdtc',
+    '35 tuần — bài thể dục 10 động tác, chạy 80m, đá cầu 3 người, cầu lông, bơi sải, kéo co tập thể.'),
+  M('P5HDTN', 'HĐ trải nghiệm lớp 5',5, 'htn',
+    '35 tuần — chuẩn bị lên cấp 2, kỹ năng tự lập, kế hoạch tuần, dã ngoại, ngày lễ lớn, tổng kết cấp 1.'),
+  M('P5CN',   'Công nghệ lớp 5',     5, 'cong-nghe',
+    '35 tuần — trồng rau, chăm gà-cá cảnh, an toàn điện, máy vi tính, lắp ghép, làm bếp đơn giản.'),
 ];

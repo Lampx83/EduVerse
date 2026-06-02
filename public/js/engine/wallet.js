@@ -35,6 +35,41 @@ let _sessionMaxXp     = 0;
 let _sessionMaxCoins  = 0;
 let _sessionUid       = null;
 
+// ── Stale-tab guard (fix bug "capybara bị đẩy lên level 22 = enderman") ──────
+// Cookie phiên + `tizia:me` dùng CHUNG cho mọi tab/cửa sổ của cùng browser,
+// nhưng mỗi tab giữ ví riêng trong bộ nhớ. Khi tab B đăng nhập user khác,
+// `tizia:me` đổi cho CẢ tab A — mà tab A không hề hay (không có storage
+// listener). Mọi _save() ở tab A sau đó đọc `tizia:me` = user mới → đóng dấu
+// nhầm ví XP-cao của user A thành user B rồi PUT bằng cookie user B. Server
+// monotonic chỉ tăng → user B bị đẩy lên vĩnh viễn.
+//
+// Fix: chốt "chủ ví của tab" lúc đồng bộ ví cho 1 user đã xác thực
+// (loadWalletFromServer). Mọi save/push sau đó nếu `tizia:me` hiện tại khác
+// chủ tab → tab này đã "ôi", TỪ CHỐI ghi/đẩy (không mis-stamp). `_tabOwnerUid`
+// CHỈ đổi qua loadWalletFromServer (đăng nhập lại cùng tab) hoặc reset khi
+// clearLocalWallet — KHÔNG bị tab khác sửa underneath.
+let _tabOwnerUid = null;
+
+/** Tab này có đang chạy cho 1 user nhưng `tizia:me` đã bị tab khác đổi không? */
+function _isStaleTab() {
+  return _tabOwnerUid != null && _currentUid() !== _tabOwnerUid;
+}
+
+// Tab khác đổi `tizia:me` (đăng nhập user khác) → storage event chỉ bắn ở các
+// tab KHÔNG gây ra thay đổi, đúng là tab "ôi" cần khoá. Báo cho UI biết để
+// hiển thị banner / tự reload; bản thân save/push đã được _isStaleTab chặn.
+try {
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'tizia:me') return;
+    if (_isStaleTab()) {
+      console.warn('[wallet] tài khoản đã đổi ở tab khác — tab này bị khoá đồng bộ ví');
+      try { window.dispatchEvent(new CustomEvent('tizia:account-changed-elsewhere', {
+        detail: { owner: _tabOwnerUid, now: _currentUid() },
+      })); } catch {}
+    }
+  });
+} catch {}
+
 // Đọc uid hiện tại từ cache `tizia:me` (set khi login / bootstrapMe). Trả về
 // null nếu chưa có — caller phải xử lý: chưa biết user thì KHÔNG trả ví local
 // (vì có thể là ví của user trước còn sót trong localStorage).
@@ -102,6 +137,7 @@ export function clearLocalWallet() {
   _sessionMaxXp = 0;
   _sessionMaxCoins = 0;
   _sessionUid = null;
+  _tabOwnerUid = null;
 }
 
 function _normalizeWallet(w) {
@@ -147,6 +183,12 @@ function _save(w) {
   // sau này bị merge nhầm khi user thật vừa login xong.
   const curUid = _currentUid();
   if (curUid == null) return;
+  // Stale-tab guard: tab này mở cho chủ A nhưng `tizia:me` đã thành B (tab khác
+  // đăng nhập) → KHÔNG ghi ví A dưới nhãn B, KHÔNG push (sẽ đẩy bằng cookie B).
+  if (_isStaleTab()) {
+    console.warn(`[wallet] stale tab (owner=${_tabOwnerUid}, tizia:me=${curUid}) → bỏ qua save/push`);
+    return;
+  }
   w._uid = curUid;
   try { localStorage.setItem(WALLET_KEY, JSON.stringify(w)); } catch {}
   _schedulePushToServer();
@@ -167,7 +209,15 @@ let _serverSyncEnabled = false;
 function _schedulePushToServer() {
   if (!_serverSyncEnabled) return;
   clearTimeout(_pushTimer);
-  _pushTimer = setTimeout(() => _pushToServer(getWallet()), 500);
+  _pushTimer = setTimeout(() => {
+    // Belt-and-suspenders: chặn lần nữa tại thời điểm bắn (tab có thể "ôi"
+    // trong 500ms debounce — đăng nhập tab khác xen vào).
+    if (_isStaleTab()) {
+      console.warn('[wallet] stale tab → huỷ push đã debounce');
+      return;
+    }
+    _pushToServer(getWallet());
+  }, 500);
 }
 
 async function _pushToServer(w) {
@@ -188,6 +238,10 @@ async function _pushToServer(w) {
  */
 export async function loadWalletFromServer() {
   _serverSyncEnabled = true;
+  // Chốt chủ ví của tab này = user hiện tại (đã được syncToLocal set `tizia:me`
+  // TRƯỚC khi gọi hàm này). Đây là nơi DUY NHẤT _tabOwnerUid được gán: đăng
+  // nhập lại cùng tab sẽ cập nhật chủ mới; tab khác đổi `tizia:me` thì KHÔNG.
+  { const owner = _currentUid(); if (owner != null) _tabOwnerUid = owner; }
   let remote = null;
   let fetchOk = false;
   try {
@@ -603,6 +657,9 @@ export function recordScenarioRun(familyId, stars, score) {
     m[familyId] = cur;
     localStorage.setItem(SCN_RUNS_KEY, JSON.stringify(m));
   } catch {}
+  // Stale tab (tài khoản đã đổi ở tab khác) → không POST: tránh đẩy run của
+  // user này sang user kia bằng cookie hiện hành. Cache local vẫn giữ.
+  if (_isStaleTab()) return;
   // Fire-and-forget gửi server để cross-device. Khi response về, replace local
   // bằng số liệu DB (nguồn chân lý) — chống lệch nếu user dùng nhiều tab/máy.
   try {

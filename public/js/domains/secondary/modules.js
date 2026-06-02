@@ -87,4 +87,41 @@ export const MODULES = [
   { category: 'curriculum', id: 'S6GDDP', title: 'Giáo dục địa phương Hà Nội lớp 6 (36 tuần)', yearLevel: 1, subject: 'gd-dia-phuong',
     scenarioIds: ['S6GDDP-w01-quiz'], knowledgeQuiz: 'S6GDDP-w01-quiz', minStarsToUnlock: 0,
     description: '36 tuần GDĐP Hà Nội (HK1: vị trí–dân cư–lịch sử Thăng Long, danh nhân, khởi nghĩa. HK2: ẩm thực–làng nghề–lễ hội–đô thị thông minh).' },
+
+  // ──────────────── LỚP 7 — 12 môn × 35 tuần ────────────────
+  ...((() => {
+    // Helper compact tạo module S7/S8/S9 — 12 môn mỗi lớp, mirror cấu trúc S6 nhưng dùng prefix mới.
+    const yLvl = { S7: 2, S8: 3, S9: 4 };
+    const yMin = { S7: 8,  S8: 12, S9: 16 };
+    const yPrev = { S7: 'S6TOAN', S8: 'S7TOAN', S9: 'S8TOAN' };
+    const subjects = [
+      ['TOAN',  'Toán',                'toan',           '35 tuần (số hữu tỉ, đa thức, phương trình, hình học)' ],
+      ['NV',    'Ngữ văn',             'ngu-van',        '35 tuần (thơ-truyện-nghị luận theo CT mới)' ],
+      ['TA',    'Tiếng Anh',           'tieng-anh',      '35 tuần (Global Success)' ],
+      ['KHTN',  'Khoa học tự nhiên',   'khtn',           '35 tuần (lý-hoá-sinh tích hợp)' ],
+      ['LSDL',  'Lịch sử & Địa lý',    'lich-su-dia',    '35 tuần (LS thế giới-VN + ĐL khu vực)' ],
+      ['GDCD',  'Giáo dục công dân',   'gdcd',           '35 tuần (đạo đức, pháp luật, kỹ năng sống)' ],
+      ['CN',    'Công nghệ',           'cong-nghe',      '35 tuần (theo định hướng nghề)' ],
+      ['TIN',   'Tin học',             'tin-hoc',        '35 tuần (mạng, văn bản, bảng tính, thuật toán)' ],
+      ['GDTC',  'GD thể chất',         'gdtc',           '35 tuần (chạy-nhảy-bóng-cầu-võ)' ],
+      ['NT',    'Nghệ thuật',          'nghe-thuat',     '35 tuần (Âm nhạc + Mỹ thuật)' ],
+      ['HDTN',  'HĐ trải nghiệm',      'hdtn',           '35 tuần (4 mạch GDPT 2018)' ],
+      ['GDDP',  'GD địa phương',       'gd-dia-phuong',  '35 tuần (lịch sử-văn hoá địa phương)' ],
+    ];
+    const out = [];
+    for (const grade of ['S7', 'S8', 'S9']) {
+      for (const [code, label, subj, desc] of subjects) {
+        const id = grade + code;
+        out.push({
+          category: 'curriculum', id, title: `${label} lớp ${grade[1]} (35 tuần)`,
+          yearLevel: yLvl[grade], subject: subj,
+          scenarioIds: [`${id}-w01-quiz`], knowledgeQuiz: `${id}-w01-quiz`,
+          minStarsToUnlock: code === 'TOAN' ? yMin[grade] : 0,
+          ...(code === 'TOAN' ? { prerequisites: [yPrev[grade]] } : {}),
+          description: desc,
+        });
+      }
+    }
+    return out;
+  })()),
 ];
