@@ -611,10 +611,12 @@ r.get('/api/export.csv', (_req, res) => {
 // Tránh phải sửa thủ công 59+ file.
 const HEADER_TAG = `<script type="module" src="js/auth-header.js"></script>`;
 const SGF_TAG = `<script type="module" src="js/suggestion-fab.js"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
-// Analytics: gtag loader + consent banner. Để TRƯỚC các script khác để buffer
-// event sớm. `analytics.js` phải là script thường (không module) để global
+// Analytics: chỉ gtag loader (analytics.js). Consent banner đã được bỏ theo
+// yêu cầu user (jun 2026) — gây phiền và che nội dung. Analytics vẫn hoạt
+// động theo mặc định "denied" (xem analytics.js) cho đến khi có cơ chế consent
+// khác. `analytics.js` phải là script thường (không module) để global
 // window.tiziaTrack/gtag khả dụng cho mọi inline script + module sau này.
-const ANALYTICS_TAG = `<script src="js/analytics.js"></script>\n<script src="js/consent-banner.js" defer></script>`;
+const ANALYTICS_TAG = `<script src="js/analytics.js"></script>`;
 r.get(/.*/, async (req, res, next) => {
   const u = req.path;
   if (u.startsWith('/api/') || u.startsWith('/vendor/')) return next();

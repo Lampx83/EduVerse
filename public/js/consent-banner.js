@@ -1,20 +1,24 @@
 // ============================================================
-// Cookie consent banner cho Tizia
+// Cookie consent banner cho Tizia — ĐÃ TẮT theo yêu cầu user (jun 2026)
 // ============================================================
-// • Hiện banner ở góc dưới khi chưa có cookie tizia_consent.
-// • 3 lựa chọn:
-//     - "Đồng ý tất cả" → bật analytics (gtag consent granted)
-//     - "Chỉ cần thiết"  → chỉ giữ cookie session login (consent denied)
-//     - "Tuỳ chỉnh"      → mở panel chi tiết (Tizia hiện chỉ có analytics
-//                          → bằng nút Đồng ý/Từ chối, nhưng cấu trúc sẵn
-//                          để mở rộng marketing/ads sau)
-// • Sau khi quyết định, banner ẩn 180 ngày. Có nút "🛡️ Cookie" cố định
-//   góc dưới-phải để mở lại bất cứ lúc nào (cần cho GDPR).
+// Banner che nội dung trên các trang chính (cây tri thức, bản đồ VN, mini-games).
+// File giữ lại để tương thích import cũ nhưng KHÔNG render gì + dọn dẹp banner
+// cũ nếu lỡ có (page cached cũ). Khôi phục bằng cách xoá `return` ở dưới + bỏ
+// CSS hide trong dọn-dẹp.
 // ============================================================
 
 (function () {
   if (window.__tiziaConsentBannerLoaded) return;
   window.__tiziaConsentBannerLoaded = true;
+
+  // Dọn dẹp banner cũ nếu page cached có sẵn DOM.
+  try {
+    const old = document.getElementById('tz-consent-banner');
+    if (old) old.remove();
+    const fab = document.getElementById('tz-consent-fab');
+    if (fab) fab.remove();
+  } catch {}
+  return; // ← short-circuit, không render banner mới
 
   // Một số trang opt-out qua <body data-no-consent-banner> (vd: campus iframe
   // không phải top-level — banner của trang chính đã handle).
