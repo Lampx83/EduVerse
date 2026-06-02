@@ -1093,16 +1093,47 @@ function draw(){
 // ====== Legend (bấm được) ======
 const EMBED = params.get('embed')==='1' || window.parent!==window;
 const toast=document.getElementById('toast'); let toastT;
+
+// ── Whitelist các ID toà nhà có nội dung thực trong space.html (jun 2026) ──
+// Trước đây mọi BUILDING auto-có TARGETS = '/space.html?b=...&domain=...' và
+// space.html fallback về key đầu tiên nếu không khớp → user click vào toà nhà
+// "trang trí" và bị đẩy sang trang khác (xác fake). Facility (sân chơi, vườn
+// hoa, cổng trường…) chỉ toast — không vào được đâu cả. UX bừa bộn.
+//
+// Fix: chỉ những ID nằm trong SPACE_KEYS_BY_DOMAIN mới có TARGETS thực. Toà
+// nhà / facility KHÔNG nằm trong list sẽ:
+//   • Bị ẩn khỏi chú giải (buildLegend filter).
+//   • Click trên bản đồ noop (không nav, không toast).
+//   • Vẫn được vẽ trên canvas (để khuôn viên đầy đặn) nhưng không nhận click.
+// Khi mở thêm trang space cho 1 toà mới, chỉ cần thêm id vào danh sách dưới.
+const SPACE_KEYS_BY_DOMAIN = {
+  pharmacy:   ['admin','lecture','library','hall','lab_org','lab_qc','lab_micro','gmp','clinpharm','garden','clinic','gpp','sim','canteen','dorm','museum'],
+  secondary:  ['lab','computer','english','artmusic','admin','library','tradition','youthunion','gym','tech','medical','canteen'],
+  it:         ['admin','lecture','library','hall','codelab','algolab','dblab','netlab','seclab','ailab','webstudio','startuphub'],
+  primary:    ['g1','g2','g3','g4','g5','library','english','computer','admin','doi','health','art','music','science','canteen','gym'],
+  preschool:  ['mam','choi','la','canteen'],
+  highschool: ['admin','grade10','grade11','grade12','lab_phys','lab_chem','lab_bio','computer','library','hall','youth','arts','canteen','medical','gym','bike'],
+};
+const VALID_BUILDING_IDS = new Set(SPACE_KEYS_BY_DOMAIN[_dom] || []);
+
 // Mỗi toà nhà → KHÔNG GIAN trải nghiệm bên trong (space.html?b=id). Sân → game.
+// CHỈ build TARGETS cho buildings có content trong SPACES_<DOMAIN> + facility có sport target.
 const TARGETS={};
-BUILDINGS.forEach(b=>TARGETS[b.id]='/space.html?b='+b.id+'&domain='+_dom);
+BUILDINGS.forEach(b=>{ if (VALID_BUILDING_IDS.has(b.id)) TARGETS[b.id]='/space.html?b='+b.id+'&domain='+_dom; });
 Object.entries(SPORT_TARGETS).forEach(([id,url])=>{ TARGETS[id]=url; });
+
+/** Item có thể bấm vào để có trải nghiệm thực? Building → trong whitelist domain.
+ *  Facility → có entry trong SPORT_TARGETS. Khác → false (ẩn khỏi legend, vô hiệu hoá click). */
+function hasInteractive(item) {
+  return !!(item && TARGETS[item.id]);
+}
+
 function enter(item, idx){
   const t=TARGETS[item.id];
   if(t){ (window.top||window).location.href=t; return; }   // có trải nghiệm → mở luôn
-  if(idx!=null){ hovered=idx; draw(); }
-  toast.textContent=`Vào: ${item.emoji} ${item.name}`; toast.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>toast.classList.remove('show'),1600);
-  if(EMBED) parent.postMessage({type:'campus-enter', id:item.id, name:item.name, emoji:item.emoji}, '*'); }
+  // Không có trải nghiệm: noop. Trước đây toast "Vào: …" nhưng dẫn đến dead-end UX.
+  // EMBED vẫn post message để editor (parent) biết user đã thử chọn.
+  if(EMBED) parent.postMessage({type:'campus-enter', id:item.id, name:item.name, emoji:item.emoji, noTarget:true}, '*'); }
 // Phân nhóm chú giải (req #1 Enderboy mục 7) ------------------------------
 // Suy luận category từ tên/id để không phải thêm field `cat` cho từng building
 // trong CAMPUSES (giữ cấu hình gọn). Thứ tự nhóm cố định để UX nhất quán.
@@ -1136,7 +1167,11 @@ function categorize(o) {
 }
 
 function buildLegend(){ const host=document.getElementById('legend-rows');
-  const all=[...BUILDINGS.map((b,i)=>({...b,bi:i})), ...FACILITIES.map(f=>({...f,bi:null}))];
+  // CHỈ liệt items có trải nghiệm thực (hasInteractive). Item "trang trí" (nhà
+  // không có space, sân không có sport target) bị ẩn để chú giải gọn + không
+  // gây nhầm là bấm được.
+  const all=[...BUILDINGS.map((b,i)=>({...b,bi:i})), ...FACILITIES.map(f=>({...f,bi:null}))]
+    .filter(hasInteractive);
   // Gom theo nhóm
   const groups = {};
   for (const o of all) { const c = categorize(o); (groups[c] = groups[c] || []).push(o); }
@@ -1317,7 +1352,10 @@ canvas.addEventListener('pointermove', e=>{
   if(h){
     const label = (h.kind==='decor') ? `${h.item.k} (${h.item.gx}, ${h.item.gy})` : `${h.item.emoji} ${h.item.name}`;
     tip.textContent = label; tip.style.left = e.clientX+'px'; tip.style.top = e.clientY+'px'; tip.style.opacity = 1;
-    canvas.style.cursor = (EDIT && h.kind==='decor') ? 'grab' : 'pointer';
+    // Pointer chỉ khi item interactive (đồng bộ với click handler ở handleTap).
+    // Decor edit-mode → grab. Non-interactive item (chưa có space) → default cursor.
+    const interactive = EDIT || h.kind === 'decor' || hasInteractive(h.item);
+    canvas.style.cursor = (EDIT && h.kind==='decor') ? 'grab' : (interactive ? 'pointer' : 'default');
   } else { tip.style.opacity = 0; canvas.style.cursor = EDIT ? 'default' : 'default'; }
 });
 canvas.addEventListener('pointerleave', ()=>{ tip.style.opacity = 0; if(hovered !== -1){ hovered = -1; draw(); } });
@@ -1361,6 +1399,8 @@ function handleTap(cx, cy){
     return;
   }
   if(!h) return;
+  // Item không có trải nghiệm thực → click trên bản đồ noop (tránh dead-end UX).
+  if(!hasInteractive(h.item)) return;
   if(h.kind === 'building') enter(h.item, h.idx);
   else enter(h.item, null);
 }
