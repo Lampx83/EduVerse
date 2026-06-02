@@ -265,22 +265,59 @@ function fmtExpire(ms) {
   } catch { return ''; }
 }
 
-// 7 quick-link "trải nghiệm trực quan" — luôn hiện trên header để user không
-// phải đào xuống cuối trang chủ tìm. Thứ tự ưu tiên Cây Tri Thức (sticky), Pet,
-// Leaderboard, Bão Số Học, Lab Hoá, Đố Chữ, Bản đồ VN. Mobile chỉ hiện 3 đầu (CSS @media).
+// Quick-link "trải nghiệm trực quan" trên header. Mỗi entry có `audience`
+// để lọc theo role + grade:
+//   - 'all'      : hiện cho mọi user (kể cả guest)
+//   - 'kid'      : chỉ HS Mầm non + Tiểu học (lớp 1-5) — game cấp Tiểu
+//   - 'teen'     : HS THCS + THPT (lớp 6-12) — phù hợp tuổi teen
+//   - 'k12'      : mọi HS phổ thông (lớp 1-12) — không hợp Sinh viên ĐH
+//   - 'cs'       : liên quan CS/Tin học — Code Quest hợp HS THCS+THPT + SV CNTT
+//   - 'sci'      : liên quan khoa học — Lab Hoá hợp HS từ Lớp 8+ + SV Y/Dược
+// Sinh viên (role='student') ẨN hết các game 'kid' + 'k12'; chỉ thấy 'all'
+// + 'cs' (nếu major CNTT) + 'sci' (nếu major Y/Dược/Hoá). Teacher thấy tất.
+//
+// Mobile chỉ hiện 3 quick-link đầu (CSS @media @ ev-quicklinks).
 const QUICK_LINKS = [
-  { href: '/cay-tri-thuc.html',  ic: '🌳', title: 'Cây Tri Thức của em' },
-  { href: '/pet-tri-thuc.html',  ic: '🐉', title: 'Pet Tri Thức (Tiziamon)' },
-  { href: '/bang-phong-than.html', ic: '🏆', title: 'Bảng Phong Thần' },
-  { href: '/bao-so-hoc.html',    ic: '⛈️', title: 'Bão Số Học (luyện tính)' },
-  { href: '/lab-hoa-ao.html',    ic: '🧪', title: 'Lab Hoá Học Ảo' },
-  { href: '/do-chu-ghep-van.html', ic: '🔤', title: 'Đố Chữ Ghép Vần' },
-  { href: '/ban-do-vn.html',     ic: '🗺️', title: 'Bản đồ Việt Nam Tri Thức' },
-  { href: '/pixel-art-studio.html', ic: '🎨', title: 'Pixel Art Studio' },
-  { href: '/code-quest.html',    ic: '🤖', title: 'Code Quest (lập trình kéo thả)' },
+  { href: '/cay-tri-thuc.html',     ic: '🌳', title: 'Cây Tri Thức của em',           audience: 'all'  },
+  { href: '/bang-phong-than.html',  ic: '🏆', title: 'Bảng Phong Thần',               audience: 'all'  },
+  { href: '/pet-tri-thuc.html',     ic: '🐉', title: 'Pet Tri Thức (Tiziamon)',        audience: 'k12'  },
+  { href: '/bao-so-hoc.html',       ic: '⛈️', title: 'Bão Số Học (luyện tính)',       audience: 'kid'  },
+  { href: '/lab-hoa-ao.html',       ic: '🧪', title: 'Lab Hoá Học Ảo',                audience: 'sci'  },
+  { href: '/do-chu-ghep-van.html',  ic: '🔤', title: 'Đố Chữ Ghép Vần',               audience: 'kid'  },
+  { href: '/ban-do-vn.html',        ic: '🗺️', title: 'Bản đồ Việt Nam Tri Thức',      audience: 'all'  },
+  { href: '/pixel-art-studio.html', ic: '🎨', title: 'Pixel Art Studio',              audience: 'all'  },
+  { href: '/code-quest.html',       ic: '🤖', title: 'Code Quest (lập trình kéo thả)', audience: 'cs'   },
 ];
-function quickLinksHtml() {
-  return `<span class="ev-quicklinks">${QUICK_LINKS.map(q =>
+
+// Ngành ĐH liên quan CS/khoa học — quyết định Code Quest / Lab Hoá có hiện không.
+const CS_MAJORS  = new Set(['it', 'engineering']);
+const SCI_MAJORS = new Set(['pharmacy', 'medicine', 'nursing', 'natural-sciences']);
+
+function isAudienceMatch(audience, user) {
+  if (audience === 'all') return true;
+  if (!user) return audience === 'kid' || audience === 'k12'; // guest = HS demo
+  if (user.role === 'teacher') return true;                   // GV thấy tất để demo
+  if (user.role === 'pupil') {
+    const g = Number(user.grade) || 0;
+    if (audience === 'kid')  return g >= 0 && g <= 5;          // Mầm non (g=0) + Tiểu học
+    if (audience === 'teen') return g >= 6 && g <= 12;
+    if (audience === 'k12')  return g >= 0 && g <= 12;
+    if (audience === 'cs')   return g >= 6;                    // THCS+ làm Code Quest OK
+    if (audience === 'sci')  return g >= 8;                    // Lớp 8+ học Hoá
+  }
+  if (user.role === 'student') {
+    const m = user.major || '';
+    if (audience === 'cs')  return CS_MAJORS.has(m);
+    if (audience === 'sci') return SCI_MAJORS.has(m);
+    return false;                                              // SV không thấy game 'kid' / 'k12' / 'teen'
+  }
+  return false;
+}
+
+function quickLinksHtml(user) {
+  const visible = QUICK_LINKS.filter(q => isAudienceMatch(q.audience, user));
+  if (!visible.length) return '';
+  return `<span class="ev-quicklinks">${visible.map(q =>
     `<a href="${q.href}" title="${q.title}" aria-label="${q.title}">${q.ic}</a>`
   ).join('')}</span>`;
 }
@@ -291,7 +328,7 @@ function render(host, user) {
       <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
       ${breadcrumbHtml()}
       <span class="ev-spacer"></span>
-      ${quickLinksHtml()}
+      ${quickLinksHtml(user)}
       <span id="ev-bell-slot"></span>
       <a href="pricing.html" class="ev-plan-pill" style="background:rgba(168,85,247,.22);color:#a855f7;text-decoration:none">✨ Xem gói</a>
       <span class="ev-anon" style="margin-left:10px">Chưa đăng nhập · <a href="login.html">Đăng nhập</a></span>
@@ -332,7 +369,7 @@ function render(host, user) {
     <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
     ${breadcrumbHtml()}
     <span class="ev-spacer"></span>
-    ${quickLinksHtml()}
+    ${quickLinksHtml(user)}
     <span id="ev-bell-slot"></span>
     <div class="ev-user-wrap" id="ev-user-wrap">
       <button class="ev-user" id="ev-user-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Xem hồ sơ">
