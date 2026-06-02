@@ -124,6 +124,9 @@ const PUBLIC_PATH_PREFIXES = [
   // KHÔNG bằng cookie — VNPay gọi server-to-server không kèm session. create-order
   // KHÔNG nằm ở đây nên vẫn yêu cầu đăng nhập.
   '/api/payment/vnpay/',
+  // Webhook ScoreUp (& các vendor sau này) — auth bằng HMAC qua header riêng,
+  // KHÔNG cookie. Receiver tự verify chữ ký rồi mới trust payload.
+  '/api/webhooks/',
   // Bundle JS/scenarios không phải bí mật — guest cần để render trang chủ + trường Mầm non.
   '/js/',
   // Bản đồ khuôn viên (iframe nhúng vào school.html) — không có bí mật, là HTML/JS thuần.

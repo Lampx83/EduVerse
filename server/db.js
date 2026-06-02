@@ -1148,3 +1148,100 @@ export function recordScenarioRunDb(user_id, family_id, stars = 0, score = 0) {
     lastTs: Number(row.last_ts) || 0,
   } : null;
 }
+
+// ============================================================
+// ScoreUp integration tables
+// ============================================================
+//   question_attempts    — lưu mỗi lần HS làm 1 câu hỏi (ScoreUp không lưu giúp)
+//   webhook_events_seen  — dedup theo event_id khi ScoreUp POST webhook (xem
+//                          server/contexts/integration/scoreup-webhook.js)
+// ============================================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS question_attempts (
+    id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id                INTEGER NOT NULL,
+    school_id              INTEGER NOT NULL DEFAULT 1,
+    scoreup_question_id    TEXT,                       -- id câu hỏi bên ScoreUp
+    question_external_id   TEXT,                       -- external_id tizia:* (nếu Tizia tự đẩy)
+    subject_id             TEXT,
+    chapter_id             TEXT,
+    answers_json           TEXT,                       -- JSON đáp án HS chọn
+    correct                INTEGER NOT NULL DEFAULT 0, -- 0/1
+    score                  REAL    NOT NULL DEFAULT 0, -- 0..1 (mcq_multi tính %)
+    duration_ms            INTEGER,
+    created_at             INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_qa_user    ON question_attempts(user_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_qa_school  ON question_attempts(school_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_qa_subject ON question_attempts(subject_id, chapter_id);
+  CREATE INDEX IF NOT EXISTS idx_qa_qid     ON question_attempts(scoreup_question_id);
+
+  -- Dedup webhook ScoreUp theo event_id (UUID v4). Cleanup > 7 ngày bằng cron riêng.
+  CREATE TABLE IF NOT EXISTS scoreup_webhook_events_seen (
+    event_id     TEXT PRIMARY KEY,
+    event_type   TEXT,
+    occurred_at  INTEGER,
+    processed_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_swes_processed ON scoreup_webhook_events_seen(processed_at);
+`);
+
+const insertQAStmt = db.prepare(`
+  INSERT INTO question_attempts
+    (user_id, school_id, scoreup_question_id, question_external_id,
+     subject_id, chapter_id, answers_json, correct, score, duration_ms, created_at)
+  VALUES (@user_id, @school_id, @scoreup_question_id, @question_external_id,
+          @subject_id, @chapter_id, @answers_json, @correct, @score, @duration_ms, @t)
+`);
+
+/** Lưu 1 attempt câu hỏi (gọi từ route /api/quiz/attempt). */
+export function recordQuestionAttempt({
+  user_id, school_id = 1, scoreup_question_id = null, question_external_id = null,
+  subject_id = null, chapter_id = null, answers = null,
+  correct = false, score = 0, duration_ms = null,
+}) {
+  const info = insertQAStmt.run({
+    user_id: Number(user_id),
+    school_id: Number(school_id) || 1,
+    scoreup_question_id: scoreup_question_id ? String(scoreup_question_id) : null,
+    question_external_id: question_external_id ? String(question_external_id) : null,
+    subject_id: subject_id ? String(subject_id) : null,
+    chapter_id: chapter_id ? String(chapter_id) : null,
+    answers_json: answers != null ? JSON.stringify(answers).slice(0, 4000) : null,
+    correct: correct ? 1 : 0,
+    score: Math.max(0, Math.min(1, Number(score) || 0)),
+    duration_ms: Number.isFinite(duration_ms) ? Math.floor(duration_ms) : null,
+    t: Date.now(),
+  });
+  return { id: info.lastInsertRowid };
+}
+
+/** Trả N attempt gần nhất của 1 user (cho dashboard học sinh / phụ huynh). */
+export function getRecentQuestionAttempts(user_id, limit = 50) {
+  return db.prepare(`
+    SELECT id, scoreup_question_id, subject_id, chapter_id, correct, score, duration_ms, created_at
+    FROM question_attempts WHERE user_id = ?
+    ORDER BY created_at DESC LIMIT ?
+  `).all(Number(user_id), Math.min(Math.max(Number(limit) || 50, 1), 500));
+}
+
+// ── ScoreUp webhook dedup helpers (xem scoreup-webhook.js) ──
+const insertSeenStmt = db.prepare(`
+  INSERT OR IGNORE INTO scoreup_webhook_events_seen (event_id, event_type, occurred_at, processed_at)
+  VALUES (?, ?, ?, ?)
+`);
+/** Return true nếu event đã thấy rồi (dedup); false nếu mới insert. */
+export function markScoreUpEventSeen(eventId, eventType, occurredAt) {
+  if (!eventId) return false;
+  const info = insertSeenStmt.run(
+    String(eventId), eventType ? String(eventType) : null,
+    Number(occurredAt) || null, Date.now(),
+  );
+  return info.changes === 0; // 0 = đã tồn tại (duplicate)
+}
+/** Xoá event > 7 ngày — gọi từ cron nhẹ (không bắt buộc, table không quá nặng). */
+export function pruneScoreUpEventsSeen(olderThanMs = 7 * 24 * 3600 * 1000) {
+  const cutoff = Date.now() - olderThanMs;
+  return db.prepare(`DELETE FROM scoreup_webhook_events_seen WHERE processed_at < ?`).run(cutoff).changes;
+}

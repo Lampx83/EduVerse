@@ -10,6 +10,9 @@ import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
 import { reviewAndDecideRequest, getDecisionsForRequest, getRecentDecisions } from './contexts/ai-agent/decisions.js';
 import { attachAppProxies } from './app-proxy.js';
+import { attachScoreUpWebhook } from './contexts/integration/scoreup-webhook.js';
+import * as scoreup from './integrations/scoreup.js';
+import { recordQuestionAttempt, getRecentQuestionAttempts } from './db.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
@@ -254,6 +257,11 @@ attachAppProxies(app, [
   },
 ].map((c) => ({ ...c, publicPath: c.publicPath || c.mount, backHref: `${BASE_PATH || ''}/apps.html` })));
 
+// ScoreUp webhook receiver — POST /api/webhooks/scoreup với express.raw()
+// (cần raw bytes để verify HMAC). MUST nằm trước express.json. Auth gate đã
+// whitelist '/api/webhooks/' để webhook ScoreUp không có session vẫn qua được.
+attachScoreUpWebhook(app);
+
 app.use(express.json({ limit: '64kb' }));
 // CSRF double-submit (R4) — sau express.json (cần req.body cho fallback _csrf).
 // Log-only mặc định; CSRF_ENFORCE=1 để chặn (khi FE đã gửi header X-CSRF-Token).
@@ -390,6 +398,121 @@ r.post('/api/scenario-runs', requireAuth, async (req, res) => {
     console.warn('[scenario-runs] POST failed', e?.message);
     res.status(500).json({ error: 'db_error' });
   }
+});
+
+// ── Quiz qua ScoreUp ──────────────────────────────────────────────
+// Tizia KHÔNG tự lưu câu hỏi nữa (xem memory: project_quiz_code_apis). Mọi câu
+// trắc nghiệm lấy từ ScoreUp Public API qua adapter server/integrations/scoreup.js.
+// Server proxy giúp: (1) giấu X-API-Key khỏi browser, (2) cache theo URL ở
+// adapter để giảm rate-limit, (3) chấm điểm + lưu attempt vào DB Tizia.
+//
+r.get('/api/quiz/subjects', requireAuth, async (req, res) => {
+  if (!scoreup.isConfigured()) return res.status(503).json({ error: 'scoreup_not_configured' });
+  try {
+    const data = await scoreup.listSubjects({
+      page: Number(req.query.page) || 1,
+      limit: Math.min(Math.max(Number(req.query.limit) || 50, 1), 100),
+      faculty: req.query.faculty,
+    });
+    res.json(data);
+  } catch (e) {
+    console.warn('[quiz/subjects]', e.message);
+    res.status(e.status || 502).json({ error: 'scoreup_error', message: e.message });
+  }
+});
+
+r.get('/api/quiz/chapters', requireAuth, async (req, res) => {
+  const sid = String(req.query.subject_id || '');
+  if (!sid) return res.status(400).json({ error: 'subject_id required' });
+  if (!scoreup.isConfigured()) return res.status(503).json({ error: 'scoreup_not_configured' });
+  try {
+    res.json(await scoreup.listChapters(sid));
+  } catch (e) {
+    res.status(e.status || 502).json({ error: 'scoreup_error', message: e.message });
+  }
+});
+
+// Lấy N câu random — client không bao giờ thấy correct_answer (server chấm).
+r.get('/api/quiz/random', requireAuth, async (req, res) => {
+  if (!scoreup.isConfigured()) return res.status(503).json({ error: 'scoreup_not_configured' });
+  const subjectId = req.query.subject_id;
+  const chapterId = req.query.chapter_id;
+  if (!subjectId && !chapterId) {
+    return res.status(400).json({ error: 'subject_id_or_chapter_id_required' });
+  }
+  try {
+    const data = await scoreup.getRandomQuestions({
+      subject_id: subjectId, chapter_id: chapterId,
+      level: req.query.level, bloom_level: req.query.bloom_level,
+      question_type: req.query.question_type, grade_level: req.query.grade_level,
+      curriculum: req.query.curriculum, lang: req.query.lang, tags: req.query.tags,
+      limit: Math.min(Math.max(Number(req.query.limit) || 10, 1), 100),
+    });
+    // Mask đáp án cho client — server giữ scope read:answer nhưng FE không cần biết.
+    const items = (data.items || []).map((q) => {
+      const { correct_answer, correct_answers, correct_index, explanation, ...safe } = q;
+      return safe;
+    });
+    res.json({ status: data.status, items, count: data.count });
+  } catch (e) {
+    console.warn('[quiz/random]', e.message);
+    res.status(e.status || 502).json({ error: 'scoreup_error', message: e.message });
+  }
+});
+
+// Submit câu trả lời: server fetch lại câu để chấm (không tin client), lưu attempt.
+r.post('/api/quiz/attempt', requireAuth, async (req, res) => {
+  if (!scoreup.isConfigured()) return res.status(503).json({ error: 'scoreup_not_configured' });
+  const qid = String(req.body?.question_id || '');
+  const userAnswer = req.body?.answer; // string hoặc array (mcq_multi/matching/ordering)
+  const durationMs = Number.isFinite(req.body?.durationMs) ? Math.floor(req.body.durationMs) : null;
+  if (!qid) return res.status(400).json({ error: 'question_id required' });
+
+  try {
+    const data = await scoreup.getQuestion(qid);
+    const q = data.data || data;
+    if (!q?.id) return res.status(404).json({ error: 'question_not_found' });
+
+    const correctSet = new Set(
+      Array.isArray(q.correct_answers) ? q.correct_answers.map(String)
+      : (q.correct_answer != null ? [String(q.correct_answer)] : []),
+    );
+    const userArr = Array.isArray(userAnswer) ? userAnswer.map(String)
+      : (userAnswer != null ? [String(userAnswer)] : []);
+
+    // Score: tỉ lệ overlap (mcq_single → 0/1, mcq_multi → %).
+    let score = 0, correct = false;
+    if (correctSet.size > 0) {
+      const userSet = new Set(userArr);
+      const intersect = [...correctSet].filter((k) => userSet.has(k)).length;
+      const wrong = [...userSet].filter((k) => !correctSet.has(k)).length;
+      score = Math.max(0, (intersect - wrong) / correctSet.size);
+      correct = (q.question_type === 'mcq_multi')
+        ? (intersect === correctSet.size && wrong === 0)
+        : (userArr.length === 1 && correctSet.has(userArr[0]));
+    }
+
+    const attempt = recordQuestionAttempt({
+      user_id: req.user.id, school_id: req.schoolId,
+      scoreup_question_id: q.id, question_external_id: q.external_id,
+      subject_id: q.subject_id, chapter_id: q.chapter_id,
+      answers: userArr, correct, score, duration_ms: durationMs,
+    });
+
+    res.json({
+      ok: true, attempt_id: attempt.id, correct, score,
+      correct_answers: [...correctSet],
+      explanation: q.explanation || null,
+    });
+  } catch (e) {
+    console.warn('[quiz/attempt]', e.message);
+    res.status(e.status || 502).json({ error: 'scoreup_error', message: e.message });
+  }
+});
+
+r.get('/api/quiz/recent', requireAuth, (req, res) => {
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 500);
+  res.json({ items: getRecentQuestionAttempts(req.user.id, limit) });
 });
 
 // Trục 3: ?role=pupil|student|teacher → trả về badge phù hợp audience + 'all'.

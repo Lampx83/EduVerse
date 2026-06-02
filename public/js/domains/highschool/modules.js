@@ -2,95 +2,109 @@
 // Trường THPT — Module list (GDPT 2018)
 // ============================================================
 // yearLevel = thứ tự lớp trong cấp (1→Lớp 10 … 3→Lớp 12), khớp DOMAIN.yearLabels.
-// Lớp 10: định hướng phân ban · Lớp 11: chuyên sâu · Lớp 12: ôn thi tốt nghiệp THPT.
-// Quiz auto-stub khi chưa có scenario thật (trường đang ở mức preview).
+// Lớp 10: định hướng phân ban · Lớp 11: chuyên sâu · Lớp 12: ôn thi tốt nghiệp.
+//
+// ID prefix KHỚP scenarios `public/js/scenarios/lop10/<môn>.js` (H10TOAN/H10NV/
+// H10TA/H10LY/H10HOA…) để getScenariosForModule prefix-match đúng. Trước đây
+// dùng prefix `H-T10` không khớp `H10TOAN-w01-quiz` → mọi module rỗng / stub.
+//
+// knowledgeQuiz trỏ tuần 1: `${id}-w01-quiz`.
 // ============================================================
 
 const M = (id, title, yl, subject, stars, prereq, description) => ({
   category: 'curriculum', id, title, yearLevel: yl, subject,
-  scenarioIds: [`${id}-quiz`], knowledgeQuiz: `${id}-quiz`,
+  scenarioIds: [`${id}-w01-quiz`], knowledgeQuiz: `${id}-w01-quiz`,
   minStarsToUnlock: stars, ...(prereq ? { prerequisites: [prereq] } : {}), description,
 });
 
 /** @type {import('../../engine/types.js').CourseModule[]} */
 export const MODULES = [
   // ───────── Toán ─────────
-  M('H-T10', 'Toán 10', 1, 'toan', 0, null,
-    'Mệnh đề – tập hợp · bất phương trình & hệ bậc nhất hai ẩn · hàm số bậc hai · hệ thức lượng trong tam giác · vectơ · thống kê & xác suất.'),
-  M('H-T11', 'Toán 11', 2, 'toan', 3, 'H-T10',
-    'Hàm số lượng giác · dãy số – cấp số cộng/nhân · giới hạn · đạo hàm · quan hệ song song & vuông góc trong không gian · xác suất.'),
-  M('H-T12', 'Toán 12', 3, 'toan', 6, 'H-T11',
-    'Khảo sát & vẽ đồ thị hàm số · luỹ thừa – mũ – logarit · nguyên hàm – tích phân · số phức · phương pháp toạ độ trong không gian.'),
+  M('H10TOAN', 'Toán 10', 1, 'toan', 0, null,
+    'Mệnh đề – tập hợp · bất phương trình & hệ bậc nhất 2 ẩn · hàm số bậc 2 · hệ thức lượng trong tam giác · vectơ · thống kê & xác suất.'),
+  M('H11TOAN', 'Toán 11', 2, 'toan', 3, 'H10TOAN',
+    'Hàm số lượng giác · dãy số – cấp số · giới hạn · đạo hàm · quan hệ song song & vuông góc trong không gian · xác suất có điều kiện.'),
+  M('H12TOAN', 'Toán 12', 3, 'toan', 6, 'H11TOAN',
+    'Khảo sát & vẽ đồ thị · luỹ thừa – mũ – logarit · nguyên hàm – tích phân · số phức · phương pháp toạ độ trong không gian · ÔN THI TỐT NGHIỆP THPT.'),
 
   // ───────── Ngữ văn ─────────
-  M('H-V10', 'Ngữ văn 10', 1, 'ngu-van', 0, null,
-    'Thần thoại & sử thi · thơ Đường luật · chèo/tuồng · văn nghị luận · thực hành tiếng Việt: từ Hán Việt, biện pháp tu từ.'),
-  M('H-V11', 'Ngữ văn 11', 2, 'ngu-van', 3, 'H-V10',
-    'Truyện ngắn hiện đại · thơ mới · tuỳ bút – tản văn · bi kịch · nghị luận xã hội & văn học · đặc điểm ngôn ngữ nói và viết.'),
-  M('H-V12', 'Ngữ văn 12', 3, 'ngu-van', 6, 'H-V11',
-    'Văn học cách mạng · truyện & kí hiện đại · phong cách ngôn ngữ · viết nghị luận có lập luận chặt · ôn thi tốt nghiệp THPT.'),
+  M('H10NV', 'Ngữ văn 10', 1, 'ngu-van', 0, null,
+    'Thần thoại & sử thi · thơ Đường luật · chèo/tuồng · văn nghị luận · từ Hán Việt, biện pháp tu từ. Truyện Kiều, Nguyễn Trãi.'),
+  M('H11NV', 'Ngữ văn 11', 2, 'ngu-van', 3, 'H10NV',
+    'Truyện ngắn hiện đại (Hai đứa trẻ, Chí Phèo, Chữ người tử tù) · thơ mới (Vội vàng, Tràng giang, Đây thôn Vĩ Dạ) · tuỳ bút – tản văn · nghị luận XH/VH.'),
+  M('H12NV', 'Ngữ văn 12', 3, 'ngu-van', 6, 'H11NV',
+    'Tây Tiến, Việt Bắc, Đất Nước, Sóng · Vợ chồng A Phủ, Vợ nhặt, Rừng xà nu, Chiếc thuyền ngoài xa · nghị luận luyện đề · ÔN THI TỐT NGHIỆP THPT.'),
 
   // ───────── Tiếng Anh ─────────
-  M('H-E10', 'Tiếng Anh 10', 1, 'tieng-anh', 0, null,
-    'Family life · humans & the environment · music · gender equality. Ngữ pháp: thì hiện tại/quá khứ, to-infinitive, gerund; kĩ năng 4 kỹ năng.'),
-  M('H-E11', 'Tiếng Anh 11', 2, 'tieng-anh', 3, 'H-E10',
-    'Generation gap · global warming · cities of the future. Mệnh đề quan hệ, câu điều kiện, bị động; viết đoạn & thuyết trình.'),
-  M('H-E12', 'Tiếng Anh 12', 3, 'tieng-anh', 6, 'H-E11',
-    'Life stories · urbanisation · career choices. Reported speech, mệnh đề trạng ngữ; luyện đề thi tốt nghiệp THPT.'),
+  M('H10TA', 'Tiếng Anh 10', 1, 'tieng-anh', 0, null,
+    'Global Success: Family Life, Humans & Environment, Music, Community, Inventions, Gender Equality, ASEAN. Tenses, passive, conditional 1-3, modals.'),
+  M('H11TA', 'Tiếng Anh 11', 2, 'tieng-anh', 3, 'H10TA',
+    'Generation Gap, Caring for Those in Need, ASEAN, Global Warming, Cities of the Future. Inversion, cleft sentences, reduced relative clauses.'),
+  M('H12TA', 'Tiếng Anh 12', 3, 'tieng-anh', 6, 'H11TA',
+    'Life Stories, Urbanisation, AI, Career, Lifelong Learning. Reported speech full, conditionals mixed, phrasal verbs. ÔN THI TỐT NGHIỆP THPT.'),
 
-  // ───────── Vật lí (ban KHTN) ─────────
-  M('H-L10', 'Vật lí 10', 1, 'vat-li', 0, null,
-    'Động học & động lực học · các định luật Newton · công – năng lượng – công suất · động lượng · chuyển động tròn & biến dạng vật rắn.'),
-  M('H-L11', 'Vật lí 11', 2, 'vat-li', 3, 'H-L10',
-    'Dao động cơ · sóng · điện trường · dòng điện không đổi · điện trở & nguồn điện · thực hành đo lường điện.'),
-  M('H-L12', 'Vật lí 12', 3, 'vat-li', 6, 'H-L11',
-    'Dao động & sóng điện từ · dòng điện xoay chiều · sóng ánh sáng · lượng tử ánh sáng · vật lí hạt nhân · ôn thi THPT.'),
+  // ───────── Vật lý (ban KHTN) ─────────
+  M('H10LY', 'Vật lí 10', 1, 'vat-li', 0, null,
+    'Động học (vận tốc, gia tốc, rơi tự do, ném ngang/xiên) · 3 định luật Newton · công – năng lượng · va chạm · chất khí · nội năng.'),
+  M('H11LY', 'Vật lí 11', 2, 'vat-li', 3, 'H10LY',
+    'Dao động cơ điều hoà · sóng cơ/âm/điện từ · điện trường – điện thế · dòng điện không đổi · cảm ứng điện từ.'),
+  M('H12LY', 'Vật lí 12', 3, 'vat-li', 6, 'H11LY',
+    'Dao động & giao thoa · dòng điện xoay chiều (RLC, máy biến áp) · sóng ánh sáng · lượng tử · hạt nhân nguyên tử · ÔN THI TỐT NGHIỆP.'),
 
   // ───────── Hoá học (ban KHTN) ─────────
-  M('H-H10', 'Hoá học 10', 1, 'hoa-hoc', 0, null,
-    'Cấu tạo nguyên tử · bảng tuần hoàn · liên kết hoá học · phản ứng oxi hoá – khử · năng lượng & tốc độ phản ứng · nhóm halogen.'),
-  M('H-H11', 'Hoá học 11', 2, 'hoa-hoc', 3, 'H-H10',
-    'Cân bằng hoá học · nitơ – lưu huỳnh · đại cương hoá hữu cơ · hydrocarbon · dẫn xuất halogen – alcohol – phenol.'),
-  M('H-H12', 'Hoá học 12', 3, 'hoa-hoc', 6, 'H-H11',
-    'Ester – lipid · carbohydrate · amine – amino acid – protein · polymer · đại cương kim loại · ôn thi tốt nghiệp THPT.'),
+  M('H10HOA', 'Hoá học 10', 1, 'hoa-hoc', 0, null,
+    'Cấu tạo nguyên tử (orbital s/p/d/f) · bảng tuần hoàn · liên kết (ion, cộng hoá trị, hydro) · oxi hoá – khử · năng lượng & tốc độ phản ứng · halogen.'),
+  M('H11HOA', 'Hoá học 11', 2, 'hoa-hoc', 3, 'H10HOA',
+    'Cân bằng hoá học · pH – chỉ thị · nitơ – photpho · cacbon – silic · đại cương hoá hữu cơ · hidrocarbon · ancol – phenol – andehit – axit.'),
+  M('H12HOA', 'Hoá học 12', 3, 'hoa-hoc', 6, 'H11HOA',
+    'Ester – lipid · carbohydrate · amine – amino acid – protein · polymer · đại cương kim loại · ÔN THI TỐT NGHIỆP THPT.'),
 
-  // ───────── Sinh học (ban KHTN) ─────────
-  M('H-B10', 'Sinh học 10', 1, 'sinh-hoc', 0, null,
-    'Thành phần hoá học của tế bào · cấu trúc tế bào · trao đổi chất & chuyển hoá năng lượng · phân bào · công nghệ vi sinh vật.'),
-  M('H-B11', 'Sinh học 11', 2, 'sinh-hoc', 3, 'H-B10',
-    'Trao đổi chất & chuyển hoá ở sinh vật · cảm ứng · sinh trưởng – phát triển · sinh sản ở thực vật và động vật.'),
-  M('H-B12', 'Sinh học 12', 3, 'sinh-hoc', 6, 'H-B11',
-    'Cơ sở phân tử & nhiễm sắc thể của di truyền · quy luật di truyền · di truyền quần thể · tiến hoá · sinh thái học · ôn thi THPT.'),
+  // ───────── Sinh học (ban KHTN) — Lớp 10 đã có scenarios sinh-hoc.js ─────────
+  M('H10SINH', 'Sinh học 10', 1, 'sinh-hoc', 0, null,
+    'Thành phần hoá học của tế bào · cấu trúc tế bào · trao đổi chất qua màng · phân bào (nguyên phân – giảm phân) · công nghệ vi sinh vật.'),
+  // Lớp 11/12 Sinh học chưa có scenarios riêng — vẫn list để học sinh thấy lộ trình.
+  M('H11SINH', 'Sinh học 11', 2, 'sinh-hoc', 3, 'H10SINH',
+    'Trao đổi chất ở sinh vật · cảm ứng · sinh trưởng – phát triển · sinh sản TV/ĐV. (Scenarios đang biên soạn).'),
+  M('H12SINH', 'Sinh học 12', 3, 'sinh-hoc', 6, 'H11SINH',
+    'ADN – gen – NST · quy luật di truyền · tiến hoá · sinh thái học · ÔN THI THPT. (Scenarios đang biên soạn).'),
 
-  // ───────── Lịch sử (ban KHXH) ─────────
-  M('H-S10', 'Lịch sử 10', 1, 'lich-su', 0, null,
-    'Sử học là gì · các nền văn minh thế giới cổ – trung đại · văn minh Đông Nam Á · cộng đồng các dân tộc Việt Nam.'),
-  M('H-S11', 'Lịch sử 11', 2, 'lich-su', 3, 'H-S10',
-    'Cách mạng tư sản & CNTB · CNXH từ 1917 · quá trình giành độc lập của Đông Nam Á · công cuộc cải cách & bảo vệ Tổ quốc.'),
-  M('H-S12', 'Lịch sử 12', 3, 'lich-su', 6, 'H-S11',
-    'Trật tự thế giới sau 1945 · ASEAN · cách mạng Việt Nam 1930–1975 · công cuộc Đổi mới · hội nhập quốc tế · ôn thi THPT.'),
+  // ───────── Lịch sử (ban KHXH) — Lớp 10 đã có scenarios lich-su.js ─────────
+  M('H10SU', 'Lịch sử 10', 1, 'lich-su', 0, null,
+    'Sử học là gì · văn minh thế giới cổ-trung đại (Hy Lạp, La Mã, Trung Quốc, Ấn Độ) · ĐNA trước CN · VN cổ đại (Văn Lang-Âu Lạc) → Tây Sơn.'),
+  M('H11SU', 'Lịch sử 11', 2, 'lich-su', 3, 'H10SU',
+    'Cách mạng tư sản & CNTB · CNXH từ 1917 · giành độc lập của ĐNA · cải cách & bảo vệ Tổ quốc. (Scenarios đang biên soạn).'),
+  M('H12SU', 'Lịch sử 12', 3, 'lich-su', 6, 'H11SU',
+    'Trật tự thế giới sau 1945 · ASEAN · CMVN 1930-1975 · Đổi mới · hội nhập quốc tế · ÔN THI THPT. (Scenarios đang biên soạn).'),
 
-  // ───────── Địa lí (ban KHXH) ─────────
-  M('H-D10', 'Địa lí 10', 1, 'dia-li', 0, null,
-    'Địa lí tự nhiên đại cương · thạch quyển – khí quyển – thuỷ quyển · địa lí dân cư · các nguồn lực & cơ cấu kinh tế.'),
-  M('H-D11', 'Địa lí 11', 2, 'dia-li', 3, 'H-D10',
-    'Toàn cầu hoá & khu vực hoá · một số tổ chức quốc tế · địa lí các khu vực và quốc gia tiêu biểu (Hoa Kì, Trung Quốc, Nhật Bản, ASEAN).'),
-  M('H-D12', 'Địa lí 12', 3, 'dia-li', 6, 'H-D11',
-    'Địa lí tự nhiên & dân cư Việt Nam · chuyển dịch cơ cấu kinh tế · các ngành & vùng kinh tế · biển đảo · ôn thi tốt nghiệp THPT.'),
+  // ───────── Địa lí (ban KHXH) — Lớp 10 đã có scenarios dia-ly.js ─────────
+  M('H10DIA', 'Địa lí 10', 1, 'dia-li', 0, null,
+    'Trái Đất trong vũ trụ · các vành đai khí hậu · dân cư – xã hội · nông nghiệp – công nghiệp – dịch vụ · môi trường – tài nguyên.'),
+  M('H11DIA', 'Địa lí 11', 2, 'dia-li', 3, 'H10DIA',
+    'Toàn cầu hoá & khu vực hoá · địa lí các quốc gia tiêu biểu (Hoa Kỳ, TQ, Nhật Bản, EU, ASEAN). (Scenarios đang biên soạn).'),
+  M('H12DIA', 'Địa lí 12', 3, 'dia-li', 6, 'H11DIA',
+    'Địa lí tự nhiên & dân cư VN · các ngành & vùng kinh tế · biển đảo · ÔN THI TỐT NGHIỆP THPT. (Scenarios đang biên soạn).'),
 
   // ───────── GD Kinh tế & Pháp luật (ban KHXH) ─────────
-  M('H-G10', 'GD Kinh tế & Pháp luật 10', 1, 'gdktpl', 0, null,
+  M('H10GDCD', 'GD Kinh tế & Pháp luật 10', 1, 'gdcd', 0, null,
     'Nền kinh tế & các chủ thể · thị trường – giá cả · ngân sách – thuế · hệ thống chính trị & pháp luật nước CHXHCN Việt Nam.'),
-  M('H-G11', 'GD Kinh tế & Pháp luật 11', 2, 'gdktpl', 3, 'H-G10',
-    'Cạnh tranh – cung cầu · lạm phát – thất nghiệp · đạo đức kinh doanh · quyền bình đẳng & các quyền tự do cơ bản của công dân.'),
-  M('H-G12', 'GD Kinh tế & Pháp luật 12', 3, 'gdktpl', 6, 'H-G11',
-    'Tăng trưởng & phát triển kinh tế · hội nhập kinh tế quốc tế · pháp luật lao động, kinh doanh & quyền con người.'),
+  M('H11GDCD', 'GD Kinh tế & Pháp luật 11', 2, 'gdcd', 3, 'H10GDCD',
+    'Cạnh tranh – cung cầu · lạm phát – thất nghiệp · đạo đức kinh doanh · quyền bình đẳng. (Scenarios đang biên soạn).'),
+  M('H12GDCD', 'GD Kinh tế & Pháp luật 12', 3, 'gdcd', 6, 'H11GDCD',
+    'Tăng trưởng & phát triển · hội nhập kinh tế · pháp luật lao động, kinh doanh & quyền con người. (Scenarios đang biên soạn).'),
 
   // ───────── Tin học ─────────
-  M('H-I10', 'Tin học 10', 1, 'tin-hoc', 0, null,
-    'Máy tính & xã hội tri thức · biểu diễn thông tin · mạng & Internet an toàn · lập trình cơ bản với Python (định hướng Tin học ứng dụng / Khoa học máy tính).'),
-  M('H-I11', 'Tin học 11', 2, 'tin-hoc', 3, 'H-I10',
-    'Cơ sở dữ liệu & hệ quản trị · kĩ thuật lập trình · thiết kế web (ICT) hoặc cấu trúc dữ liệu & thuật toán (CS).'),
-  M('H-I12', 'Tin học 12', 3, 'tin-hoc', 6, 'H-I11',
-    'Trí tuệ nhân tạo & khoa học dữ liệu nhập môn · dự án phần mềm · an toàn – đạo đức số · định hướng nghề CNTT.'),
+  M('H10TIN', 'Tin học 10', 1, 'tin-hoc', 0, null,
+    'Máy tính & xã hội tri thức · biểu diễn thông tin · mạng & Internet an toàn · lập trình Python (ICT/KHMT) · thuật toán cơ bản.'),
+  M('H11TIN', 'Tin học 11', 2, 'tin-hoc', 3, 'H10TIN',
+    'CSDL & hệ quản trị · kỹ thuật lập trình · thiết kế web (ICT) hoặc CTDL & thuật toán (KHMT). (Scenarios đang biên soạn).'),
+  M('H12TIN', 'Tin học 12', 3, 'tin-hoc', 6, 'H11TIN',
+    'AI & khoa học dữ liệu nhập môn · dự án phần mềm · an toàn – đạo đức số · định hướng nghề CNTT. (Scenarios đang biên soạn).'),
+
+  // ───────── Công nghệ (định hướng) ─────────
+  M('H10CN', 'Công nghệ 10', 1, 'cong-nghe', 0, null,
+    'Định hướng Trồng trọt hoặc Cơ khí · thiết kế kỹ thuật cơ bản · vẽ kỹ thuật. (Scenarios đang biên soạn).'),
+
+  // ───────── GD Quốc phòng - An ninh (bắt buộc) ─────────
+  M('H10GDQP', 'GD Quốc phòng - An ninh 10', 1, 'gdqp', 0, null,
+    'Lịch sử QĐND VN · truyền thống các quân chủng-binh chủng · kỹ thuật chiến thuật cơ bản (đội ngũ, bắn AK) · an ninh quốc gia.'),
 ];

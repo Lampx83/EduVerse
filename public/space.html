@@ -793,8 +793,9 @@ const SPACES_SECONDARY = {
         {h:'Khuôn viên Trường THCS'},
         {ul:['Dãy phòng học theo khối lớp 6 – 7 – 8 – 9','Phòng học bộ môn: KHTN, Tin học, Ngoại ngữ, Nghệ thuật, Công nghệ','Khu hỗ trợ: Thư viện, Phòng Y tế, Phòng Đoàn – Đội, Phòng truyền thống','Khu thể chất: Nhà đa năng, sân bóng đá, sân bóng rổ','Sân chào cờ, vườn trường, căng tin & bãi xe đạp']},
         {note:'Bấm từng toà nhà trên bản đồ khuôn viên để vào không gian học tương ứng.'}]},
-      // Cây Tri Thức — dashboard cá nhân của HS THCS
-      {ic:'🌳',name:'Cây Tri Thức của em',rd:'Trực quan hoá tiến độ học: mỗi tuần hoàn thành = 1 lá xanh. Lá đầy đủ → cây xum xuê!',href:'/cay-tri-thuc.html'}],
+      // Cây Tri Thức — dashboard cá nhân của HS THCS, đặt ở Hiệu bộ là entry chính
+      {ic:'🌳',name:'Cây Tri Thức của em',rd:'Trực quan hoá tiến độ học: mỗi tuần hoàn thành = 1 lá xanh. Lá đầy đủ → cây xum xuê!',href:'/cay-tri-thuc.html'},
+      {ic:'🏆',name:'Bảng Phong Thần Tizia',rd:'Xếp hạng học tập theo tuần / tháng / mọi thời điểm — đặt mục tiêu lên top!',href:'/bang-phong-than.html'}],
     skills:['Hiểu nội quy nhà trường','Tham gia xây dựng trường lớp'],
     quiz:[{q:'Khi đến lớp, học sinh nên?',o:['Đi học đúng giờ, chuẩn bị bài đầy đủ','Đến muộn cũng được','Bỏ đồng phục','Không cần soạn bài'],a:0},
       {q:'Của công trong trường (bàn ghế, thiết bị) cần được?',o:['Giữ gìn & bảo vệ','Vẽ bậy lên','Dùng tuỳ tiện rồi bỏ','Mang về nhà'],a:0},
@@ -1353,8 +1354,16 @@ const SPACES_PRIMARY = {
       {q:'27 + 5 = ?',o:['32','22','31','37'],a:0},
       {q:'Từ nào chỉ con vật?',o:['Con gà','Cái bàn','Chạy','Xanh'],a:0}]},
 
-  g3:{emoji:'3️⃣',name:'Lớp 3',accent:'#22c55e',intro:'Lớp 3 — thành thạo bảng nhân chia, tính chu vi và viết đoạn văn ngắn.',
-    rooms:[{ic:'➗',name:'Toán lớp 3',rd:'Bảng nhân/chia 6–9, chu vi, số đến 100 000.',href:'/module.html?domain=primary&module=P3'},
+  g3:{emoji:'3️⃣',name:'Lớp 3',accent:'#22c55e',intro:'Lớp 3 — đầy đủ 9 môn × 35 tuần theo GDPT 2018. Thành thạo bảng nhân chia, tính chu vi và viết đoạn văn ngắn.',
+    rooms:[{ic:'➗',name:'Toán lớp 3',rd:'Bảng nhân/chia 6–9, chu vi, số đến 100 000, kg-g, ml-lít, tiền VN, hình hộp.',href:'/module.html?domain=primary&module=P3'},
+      {ic:'📖',name:'Tiếng Việt lớp 3',rd:'Đọc hiểu, từ loại, kiểu câu Ai-làm gì/thế nào, MRVT, viết thư - biên bản.',href:'/module.html?domain=primary&module=P3TV'},
+      {ic:'🇬🇧',name:'Tiếng Anh lớp 3',rd:'Greetings, family, friends, body, toys, school subjects, food, animals.',href:'/module.html?domain=primary&module=P3TA'},
+      {ic:'🌏',name:'TN-XH lớp 3',rd:'Họ hàng, cộng đồng, ATGT, phòng chống xâm hại, thực-động vật, hệ tuần hoàn.',href:'/module.html?domain=primary&module=P3TNXH'},
+      {ic:'💝',name:'Đạo đức lớp 3',rd:'Yêu Tổ quốc, kính thầy cô, tự lập, trung thực, an toàn mạng.',href:'/module.html?domain=primary&module=P3DD'},
+      {ic:'🎵',name:'Âm nhạc lớp 3',rd:'Nhịp 3/4, móc đơn, recorder, gõ đệm, dân ca 3 miền.',href:'/module.html?domain=primary&module=P3AN'},
+      {ic:'🎨',name:'Mĩ thuật lớp 3',rd:'Màu nóng-lạnh, in mộc bản, phong cảnh, Origami, tranh Tết.',href:'/module.html?domain=primary&module=P3MT'},
+      {ic:'⚽',name:'GDTC lớp 3',rd:'Bài thể dục liên hoàn, chạy 30m, bật xa, nhảy dây, đá cầu, trò chơi dân gian.',href:'/module.html?domain=primary&module=P3GDTC'},
+      {ic:'🌟',name:'HĐ trải nghiệm lớp 3',rd:'Kế hoạch tuần, sinh nhật, an toàn xe đạp, Đội Thiếu niên, dã ngoại.',href:'/module.html?domain=primary&module=P3HDTN'},
       // Bão Số Học level Medium — phù hợp nhân chia lớp 3
       {ic:'⛈️',name:'Bão Số Học (Medium)',rd:'Phép tính rơi mức trung — luyện nhân chia trong 100, trừ có nhớ tốc độ.',href:'/bao-so-hoc.html'},
       {ic:'📖',name:'Tiếng Việt 3 — Từ & câu',rd:'Từ chỉ sự vật, hoạt động, đặc điểm.',panel:[
@@ -1373,8 +1382,18 @@ const SPACES_PRIMARY = {
       {q:'Chu vi hình vuông cạnh 5cm là?',o:['20cm','10cm','25cm','15cm'],a:0},
       {q:'Từ "ngoan" là từ chỉ?',o:['Đặc điểm','Sự vật','Hoạt động','Số lượng'],a:0}]},
 
-  g4:{emoji:'4️⃣',name:'Lớp 4',accent:'#0ea5e9',intro:'Lớp 4 — phân số, dấu hiệu chia hết và bắt đầu môn Khoa học, Lịch sử & Địa lí.',
-    rooms:[{ic:'➗',name:'Toán lớp 4',rd:'Phân số, dấu hiệu chia hết, diện tích, góc.',href:'/module.html?domain=primary&module=P4'},
+  g4:{emoji:'4️⃣',name:'Lớp 4',accent:'#0ea5e9',intro:'Lớp 4 — đầy đủ 11 môn × 35 tuần theo GDPT 2018. Phân số, dấu hiệu chia hết và bắt đầu môn Khoa học, Lịch sử & Địa lí, Công nghệ.',
+    rooms:[{ic:'➗',name:'Toán lớp 4',rd:'Số đến lớp triệu, phân số (4 phép), dấu hiệu chia hết, góc, hình bình hành.',href:'/module.html?domain=primary&module=P4'},
+      {ic:'📖',name:'Tiếng Việt lớp 4',rd:'Danh-động-tính từ, kiểu câu, MRVT, văn miêu tả đồ vật-cây cối-con vật.',href:'/module.html?domain=primary&module=P4TV'},
+      {ic:'🇬🇧',name:'Tiếng Anh lớp 4',rd:'Present simple/continuous, can/can\'t, past simple, future will/going to.',href:'/module.html?domain=primary&module=P4TA'},
+      {ic:'🔬',name:'Khoa học lớp 4',rd:'Nước, không khí, ánh sáng, nhiệt, âm thanh, thực-động vật, dinh dưỡng.',href:'/module.html?domain=primary&module=P4KH'},
+      {ic:'🗺️',name:'Lịch sử & Địa lý 4',rd:'Bản đồ, các vùng VN, Văn Lang-Âu Lạc, Lý-Trần, Lê Lợi, Quang Trung.',href:'/module.html?domain=primary&module=P4LSDL'},
+      {ic:'💝',name:'Đạo đức lớp 4',rd:'Yêu thương, kính thầy cô, biết ơn người lao động, trung thực, tiết kiệm.',href:'/module.html?domain=primary&module=P4DD'},
+      {ic:'🎵',name:'Âm nhạc lớp 4',rd:'Nhịp 2/4 - 3/4, recorder, dân ca vùng, Em yêu hòa bình, Bàn tay mẹ.',href:'/module.html?domain=primary&module=P4AN'},
+      {ic:'🎨',name:'Mĩ thuật lớp 4',rd:'Bố cục cân đối, tĩnh vật, chân dung, in mộc bản, thiết kế logo.',href:'/module.html?domain=primary&module=P4MT'},
+      {ic:'⚽',name:'GDTC lớp 4',rd:'Bài thể dục 8 động tác, chạy 60m, bật xa, nhảy dây tập thể, đá cầu.',href:'/module.html?domain=primary&module=P4GDTC'},
+      {ic:'🌟',name:'HĐ trải nghiệm lớp 4',rd:'Kỹ năng học tập, làm việc nhóm, dã ngoại, các nghề, ngày lễ lớn.',href:'/module.html?domain=primary&module=P4HDTN'},
+      {ic:'🔧',name:'Công nghệ lớp 4',rd:'Hoa cây cảnh, chậu cây tự chế, an toàn lao động, lắp ghép, máy tính cá nhân.',href:'/module.html?domain=primary&module=P4CN'},
       {ic:'📖',name:'Tiếng Việt 4 — Câu & văn',rd:'Câu kể, câu hỏi, câu cảm; viết bài văn.',panel:[
         {h:'Các kiểu câu'},
         {ul:['Câu kể: thuật lại sự việc, kết thúc bằng dấu chấm','Câu hỏi: hỏi điều chưa biết, kết thúc bằng dấu chấm hỏi','Câu cảm: bộc lộ cảm xúc, thường có "ôi, chao, biết bao!"']},
@@ -1393,8 +1412,18 @@ const SPACES_PRIMARY = {
       {q:'Số nào chia hết cho 5?',o:['25','22','13','9'],a:0},
       {q:'Nước sôi và bốc hơi khi nào?',o:['Khi bị đun nóng (100°C)','Khi gặp lạnh','Khi để trong tủ đá','Khi trộn muối'],a:0}]},
 
-  g5:{emoji:'5️⃣',name:'Lớp 5',accent:'#8b5cf6',intro:'Lớp 5 — số thập phân, tỉ số phần trăm, hình học; chuẩn bị hành trang lên THCS.',
-    rooms:[{ic:'➗',name:'Toán lớp 5',rd:'Số thập phân, tỉ số phần trăm, diện tích – thể tích, vận tốc.',href:'/module.html?domain=primary&module=P5'},
+  g5:{emoji:'5️⃣',name:'Lớp 5',accent:'#8b5cf6',intro:'Lớp 5 — đầy đủ 11 môn × 35 tuần. Số thập phân, tỉ số phần trăm, hình học; chuẩn bị hành trang lên THCS.',
+    rooms:[{ic:'➗',name:'Toán lớp 5',rd:'Phân số, số thập phân (4 phép), thể tích, tam giác/thang/tròn, %, vận tốc.',href:'/module.html?domain=primary&module=P5'},
+      {ic:'📖',name:'Tiếng Việt lớp 5',rd:'Đại từ, quan hệ từ, câu ghép, liên kết câu, tả người-cảnh, viết đơn-báo cáo.',href:'/module.html?domain=primary&module=P5TV'},
+      {ic:'🇬🇧',name:'Tiếng Anh lớp 5',rd:'Past simple full, will/going to, so sánh, can/should, daily routine, jobs.',href:'/module.html?domain=primary&module=P5TA'},
+      {ic:'🔬',name:'Khoa học lớp 5',rd:'Sự sinh sản, dậy thì, an toàn dùng thuốc, năng lượng, hỗn hợp, môi trường.',href:'/module.html?domain=primary&module=P5KH'},
+      {ic:'🗺️',name:'Lịch sử & Địa lý 5',rd:'Pháp xâm lược, Đảng CSVN, CMT8, 2/9/1945, ĐBP, 30/4/1975, đổi mới.',href:'/module.html?domain=primary&module=P5LSDL'},
+      {ic:'💝',name:'Đạo đức lớp 5',rd:'Biết ơn tổ tiên, tự lập, có trách nhiệm, tôn trọng phụ nữ, yêu hoà bình.',href:'/module.html?domain=primary&module=P5DD'},
+      {ic:'🎵',name:'Âm nhạc lớp 5',rd:'Recorder nâng cao, hợp xướng, nhạc cụ dân tộc, nhịp 4/4, Reo vang bình minh.',href:'/module.html?domain=primary&module=P5AN'},
+      {ic:'🎨',name:'Mĩ thuật lớp 5',rd:'Phối cảnh, tĩnh vật nâng cao, chân dung tự hoạ, in tranh khắc gỗ, thiệp 3D.',href:'/module.html?domain=primary&module=P5MT'},
+      {ic:'⚽',name:'GDTC lớp 5',rd:'Thể dục 10 động tác, chạy 80m, đá cầu 3 người, cầu lông, bơi sải, kéo co.',href:'/module.html?domain=primary&module=P5GDTC'},
+      {ic:'🌟',name:'HĐ trải nghiệm lớp 5',rd:'Chuẩn bị lên cấp 2, tự lập, dã ngoại, ngày lễ lớn, tổng kết cấp 1.',href:'/module.html?domain=primary&module=P5HDTN'},
+      {ic:'🔧',name:'Công nghệ lớp 5',rd:'Trồng rau, chăm gà-cá cảnh, an toàn điện, máy vi tính, làm bếp đơn giản.',href:'/module.html?domain=primary&module=P5CN'},
       {ic:'📖',name:'Tiếng Việt 5 — Viết văn',rd:'Liên kết câu; văn tả & kể.',panel:[
         {h:'Viết bài văn hay'},
         {ul:['Liên kết câu bằng từ nối, lặp từ, thay thế từ','Văn tả: tả người, tả cảnh có quan sát & cảm xúc','Văn kể: kể lại sự việc theo trình tự']},
@@ -1488,7 +1517,7 @@ const SPACES_PRIMARY = {
         {ul:['Khăn quàng đỏ là một phần của lá cờ Tổ quốc','Đội viên đeo khăn quàng khi đến trường và sinh hoạt','Chào kiểu Đội: bàn tay phải giơ cao trên đầu']},
         {note:'Đeo khăn quàng ngay ngắn thể hiện em là Đội viên gương mẫu.'}]},
       {ic:'🤝',name:'Kĩ năng & hoạt động',rd:'Làm việc tốt mỗi ngày.',panel:[
-        {mcq:[{q:'"Làm nghìn việc tốt" — việc nào là việc tốt?',o:['Giúp bạn, nhặt được của rơi trả lại','Nói dối thầy cô','Bắt nạt bạn nhỏ','Bỏ học đi chơi'],a:0,fb:'Việc tốt là giúp đỡ mọi người, thật thà và trung thực.'}]},
+        {mcq:[{q:'"Làm nghìn việc tốt" — việc nào là việc tốt?',o:['Giúp bạn, nhặt được của rơi trả lại','Nói dối thầy cô','Bắt nạt bạn nhỏ','Bỏ học đi chơi'],a:0,fb:'Việc tốt là giúp đỡ mọi người, thật thà và trung thực.'}]}]},
       // Pet Tri Thức — Tiziamon là "linh vật Đội" của em
       {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Nuôi Tiziamon — sinh vật ảo tiến hoá theo XP. Trả lời quiz để cho Pet ăn!',href:'/pet-tri-thuc.html'}],
     skills:['Sinh hoạt tập thể','Tinh thần Đội viên'],
@@ -1700,7 +1729,9 @@ const SPACES_PRESCHOOL = {
         {note:'Ngủ trưa 60–90 phút giúp bé tỉnh táo và vui chơi cả buổi chiều.'}]},
       {ic:'🙏',name:'Lễ phép với cô bác',rd:'Cảm ơn người nấu cơm cho bé.',panel:[
         {mcq:[{q:'Khi nhận cơm từ cô bác cấp dưỡng, bé nên nói gì?',o:['"Cháu cảm ơn cô (bác) ạ"','Không cần nói gì','"Đưa nhanh lên"','Chạy đi luôn'],a:0,fb:'Bé lễ phép cảm ơn cô bác đã chuẩn bị bữa ăn ngon cho mình nhé!'}]},
-        {note:'Cảm ơn người lớn là một thói quen rất đẹp của bé ngoan.'}]}],
+        {note:'Cảm ơn người lớn là một thói quen rất đẹp của bé ngoan.'}]},
+      // Bảng Phong Thần phiên bản "Bé ngoan của tuần" — Mầm non cũng cần được xếp hạng vui
+      {ic:'🏆',name:'Bảng Bé Ngoan',rd:'Bé ngoan của tuần / tháng — cô ghi nhận bé nào chăm chỉ, lễ phép, đoàn kết nhất.',href:'/bang-phong-than.html'}],
     skills:['Ăn uống đủ chất','Vệ sinh & nề nếp'],
     quiz:[
       {q:'Trước khi ăn cơm, bé cần làm gì?',o:['Rửa tay sạch','Ăn ngay không cần rửa','Xem tivi','Chạy nhảy'],a:0},

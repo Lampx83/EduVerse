@@ -1,19 +1,26 @@
 // ============================================================
-// Lớp 8 — Barrel lý thuyết tuần: gộp 5 môn core × 35 tuần
+// Lớp 8 — Barrel lý thuyết tuần (dynamic + try/catch như lop9/lop10).
+// Mỗi file lessons trả về map { weekId → lesson }, key trùng id quiz.
+// File thiếu được skip để không vỡ build khi sinh nội dung từng đợt.
 // ============================================================
-// Mỗi file export 1 map { weekId → lesson } (key trùng id quiz).
-// Merge thành LOP8_LESSONS để _index.js (cùng cấp lop8/) gắn vào scenario.lesson.
-// ============================================================
-import { S8TOAN_LESSONS  } from './toan.js';
-import { S8NV_LESSONS    } from './ngu-van.js';
-import { S8TA_LESSONS    } from './tieng-anh.js';
-import { S8KHTN_LESSONS  } from './khtn.js';
-import { S8LSDL_LESSONS  } from './lich-su-dia.js';
+let m_toan = {}, m_nv = {}, m_ta = {}, m_khtn = {}, m_lsdl = {};
+let m_gdcd = {}, m_cn = {}, m_th = {}, m_gdtc = {}, m_nt = {}, m_hdtn = {}, m_gddp = {};
+
+try { ({ S8TOAN_LESSONS: m_toan } = await import('./toan.js')); } catch {}
+try { ({ S8NV_LESSONS:   m_nv   } = await import('./ngu-van.js')); } catch {}
+try { ({ S8TA_LESSONS:   m_ta   } = await import('./tieng-anh.js')); } catch {}
+try { ({ S8KHTN_LESSONS: m_khtn } = await import('./khtn.js')); } catch {}
+try { ({ S8LSDL_LESSONS: m_lsdl } = await import('./lich-su-dia.js')); } catch {}
+try { ({ S8GDCD_LESSONS: m_gdcd } = await import('./gdcd.js')); } catch {}
+try { ({ S8CN_LESSONS:   m_cn   } = await import('./cong-nghe.js')); } catch {}
+try { ({ S8TIN_LESSONS:  m_th   } = await import('./tin-hoc.js')); } catch {}
+try { ({ S8GDTC_LESSONS: m_gdtc } = await import('./gdtc.js')); } catch {}
+try { ({ S8NT_LESSONS:   m_nt   } = await import('./nghe-thuat.js')); } catch {}
+try { ({ S8HDTN_LESSONS: m_hdtn } = await import('./hdtn.js')); } catch {}
+try { ({ S8GDDP_LESSONS: m_gddp } = await import('./gd-dia-phuong.js')); } catch {}
 
 export const LOP8_LESSONS = {
-  ...S8TOAN_LESSONS,
-  ...S8NV_LESSONS,
-  ...S8TA_LESSONS,
-  ...S8KHTN_LESSONS,
-  ...S8LSDL_LESSONS,
+  ...(m_toan || {}), ...(m_nv || {}), ...(m_ta || {}), ...(m_khtn || {}), ...(m_lsdl || {}),
+  ...(m_gdcd || {}), ...(m_cn || {}), ...(m_th || {}), ...(m_gdtc || {}), ...(m_nt || {}),
+  ...(m_hdtn || {}), ...(m_gddp || {}),
 };
