@@ -210,9 +210,7 @@ window.SPACES_HIGHSCHOOL = {
         {timeline:[{t:'Thành lập',d:'Những ngày đầu xây dựng trường.'},{t:'Phát triển',d:'Mở rộng cơ sở vật chất & đội ngũ.'},
           {t:'Thành tích',d:'Học sinh giỏi, đỗ đại học, giải phong trào.'},{t:'Hôm nay',d:'Tiếp nối truyền thống, hội nhập số.'}]}]},
       {ic:'🤝',name:'Công dân & kĩ năng sống',rd:'Quyền & nghĩa vụ công dân.',panel:[
-        {mcq:[{q:'Công dân Việt Nam đủ bao nhiêu tuổi có quyền bầu cử đại biểu Quốc hội?',o:['Đủ 18 tuổi','Đủ 15 tuổi','Đủ 16 tuổi','Đủ 21 tuổi'],a:0,fb:'Đủ 18 tuổi có quyền bầu cử; đủ 21 tuổi có quyền ứng cử đại biểu Quốc hội & HĐND.'}]}]},
-      // Pet Tri Thức — Tiziamon stage "legendary" cho HS THPT đã có hành trình dài
-      {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Pet đã đi cùng em từ Mầm non — giờ vào THPT là dragon. Tiếp tục nuôi để biến thân legendary!',href:'/pet-tri-thuc.html'}],
+        {mcq:[{q:'Công dân Việt Nam đủ bao nhiêu tuổi có quyền bầu cử đại biểu Quốc hội?',o:['Đủ 18 tuổi','Đủ 15 tuổi','Đủ 16 tuổi','Đủ 21 tuổi'],a:0,fb:'Đủ 18 tuổi có quyền bầu cử; đủ 21 tuổi có quyền ứng cử đại biểu Quốc hội & HĐND.'}]}]}],
     skills:['Hiểu tổ chức Đoàn','Ý thức công dân'],
     quiz:[{q:'Đoàn TNCS Hồ Chí Minh được thành lập ngày nào?',o:['26/3/1931','2/9/1945','20/11/1982','19/5/1890'],a:0},
       {q:'Công dân đủ 18 tuổi có quyền?',o:['Bầu cử','Không có quyền nào','Miễn mọi nghĩa vụ','Tự đặt ra luật'],a:0},
