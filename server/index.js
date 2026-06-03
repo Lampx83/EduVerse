@@ -4,7 +4,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb, getUserState, putUserState } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb, getUserState, putUserState, UserStateValueTooLargeError } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
@@ -436,6 +436,14 @@ function _putUserStateHandler(req, res) {
     const n = putUserState(req.user.id, body);
     res.json({ ok: true, written: n });
   } catch (e) {
+    // Value > 32KB: trả 413 + key + max để client biết phải chunk/nén thay vì
+    // truncate ngầm (truncate JSON giữa chừng → hỏng dữ liệu vĩnh viễn ở hydrate).
+    if (e instanceof UserStateValueTooLargeError) {
+      return res.status(413).json({
+        error: 'value_too_large',
+        key: e.key, size: e.size, maxBytes: e.maxBytes,
+      });
+    }
     console.warn('[user-state] write failed', e?.message);
     res.status(500).json({ error: 'db_error' });
   }

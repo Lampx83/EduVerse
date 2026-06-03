@@ -141,6 +141,11 @@ function clearAccountScopedKeys() {
           k.startsWith('tizia:welcome:') ||
           k.startsWith('codelab:') ||
           k.startsWith('webplayground:') ||
+          // it-code-lab + it-web-playground dùng prefix 'tizia:it:' — phải
+          // wipe khi đổi tài khoản trên cùng browser, kẻo state-sync union
+          // 'solved' set + drafts của user cũ vào row server của user mới.
+          k.startsWith('tizia:it:codelab:') ||
+          k === 'tizia:it:webplay' ||
           k.startsWith('do-chu-ghep-van.')) {
         toRemove.push(k);
       }

@@ -361,6 +361,28 @@ const _seedCompetencies = db.transaction(() => {
 });
 try { _seedCompetencies(); } catch (e) { console.warn('[db] seed competencies failed', e.message); }
 
+// Auto-migrate skills catalog: nếu competencies đã seed nhưng bảng skills rỗng
+// (DB cũ vừa upgrade, hoặc volume mới) → tự chạy script catalog migration để
+// 164 skill rows nạp ngay lần boot đầu, không cần docker exec thủ công.
+// Idempotent qua INSERT OR IGNORE trong script. Skip nếu skills > 0 hoặc
+// scripts/ không tồn tại trong image (dev local trước khi build Docker).
+try {
+  const _skillCount = db.prepare(`SELECT COUNT(*) AS n FROM skills`).get().n;
+  if (_skillCount === 0) {
+    const _scriptPath = path.resolve(__dirname, '..', 'scripts', 'migrate-skills-catalog.js');
+    if (fs.existsSync(_scriptPath)) {
+      console.log('[db] skills empty — auto-running catalog migration…');
+      // Dynamic import async — không block init. Lỗi → log, server vẫn boot.
+      import(_scriptPath).then(() => {
+        const n = db.prepare(`SELECT COUNT(*) AS n FROM skills`).get().n;
+        console.log(`[db] skills catalog auto-seeded: ${n} rows`);
+      }).catch(e => console.warn('[db] auto-migrate skills failed:', e.message));
+    } else {
+      console.log('[db] skills empty + no migration script (dev mode?). Run: node scripts/migrate-skills-catalog.js');
+    }
+  }
+} catch (e) { console.warn('[db] skills auto-migrate check failed', e.message); }
+
 // Multi-tenancy: mọi write ghi school_id, mọi read cross-user lọc theo school_id.
 // Tham số @school_id bắt buộc ở các statement có ảnh hưởng tenant. Caller lấy từ
 // req.schoolId (attachTenant middleware) — xem server/contexts/identity/tenant.js.
@@ -1577,11 +1599,28 @@ export function getUserState(user_id) {
   return out;
 }
 
+// Cap 32KB/value để chống abuse. THROW (không truncate) — truncate JSON
+// giữa chừng tạo string không hợp lệ → hydrate sẽ ghi đè localStorage bằng
+// JSON hỏng, làm consumer (vd tutor.history JSON.parse) crash. Route handler
+// bắt error này, trả 413 cho client để client biết phải nén/chunk trước.
+const MAX_VALUE_BYTES = 32_000;
+
+export class UserStateValueTooLargeError extends Error {
+  constructor(key, size) {
+    super(`user_state value too large: key="${key}" size=${size} > ${MAX_VALUE_BYTES}`);
+    this.code = 'value_too_large';
+    this.key = key;
+    this.size = size;
+    this.maxBytes = MAX_VALUE_BYTES;
+  }
+}
+
 /**
  * Upsert nhiều key cùng lúc. `entries` là object { key: value, ... }; value
  * dạng string (client đã JSON.stringify). value rỗng/null → xoá row.
  *
  * Trả số key đã ghi để client biết quota còn lại.
+ * Throw UserStateValueTooLargeError nếu bất kỳ value nào > 32KB.
  */
 export function putUserState(user_id, entries) {
   if (!entries || typeof entries !== 'object') return 0;
@@ -1594,8 +1633,10 @@ export function putUserState(user_id, entries) {
       if (v == null || v === '') {
         _deleteUserStateStmt.run(Number(user_id), key);
       } else {
-        // Cap 32KB/value để chống abuse; client nên break-up nếu dài hơn.
-        const value = String(v).slice(0, 32_000);
+        const value = String(v);
+        if (value.length > MAX_VALUE_BYTES) {
+          throw new UserStateValueTooLargeError(key, value.length);
+        }
         _upsertUserStateStmt.run(Number(user_id), key, value, now);
       }
       written += 1;

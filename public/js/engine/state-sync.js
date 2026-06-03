@@ -166,7 +166,15 @@ export async function hydrateFromServer() {
     }
   }
 
-  _snapshot = snapshotLocalWhitelist();
+  // Snapshot phải là TRẠNG THÁI SERVER (remote), không phải state đã merge local.
+  // Nếu snapshot = merged-local thì diffSnapshot() ngay sau sẽ = {} → push 0,
+  // local-greater delta (vd math6.gold local=500 vs server=200) không bao giờ
+  // tới server. Lưu remote value làm baseline để flush kế phát hiện delta.
+  _snapshot = new Map();
+  for (const [k, entry] of Object.entries(remote)) {
+    if (!isWhitelisted(k)) continue;
+    _snapshot.set(k, entry?.value ?? '');
+  }
   _booted = true;
 
   // Lập tức push lên server nếu merge ra giá trị khác remote (local lớn hơn).

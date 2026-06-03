@@ -11,7 +11,7 @@
  * offline. Versioning theo SW_VERSION — bump khi đổi shell danh sách.
  */
 
-const SW_VERSION = 'tizia-2026-06-02-thpt-modules-wired';
+const SW_VERSION = 'tizia-2026-06-03-state-sync-fix';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const IMAGE_CACHE = `${SW_VERSION}-img`;
