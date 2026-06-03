@@ -4,6 +4,7 @@
 
 import { KEYS, lsGet, lsSet } from './engine/storage.js';
 import { loadWalletFromServer, clearLocalWallet } from './engine/wallet.js';
+import { hydrateFromServer as hydrateUserState, flushNow as flushUserState, resetSync as resetUserState } from './engine/state-sync.js';
 
 let _me = null;      // { id, username, display_name, role } hoặc null
 let _mePromise = null;
@@ -81,11 +82,16 @@ export async function completeProfile({ grade, major, cohort, schoolName }) {
 
 export async function logout() {
   try { window.tiziaTrack?.('logout', {}); } catch {}
+  // Flush user-state pending lên server TRƯỚC khi gọi /logout (sau khi
+  // logout, cookie bị xoá → mọi PUT sẽ 401). Best-effort: nếu mạng lỗi thì
+  // chấp nhận mất delta đó, lần đăng nhập kế server hydrate bằng giá trị cũ.
+  try { await flushUserState(); } catch {}
   try {
     await fetch(`${A}/logout`, { method: 'POST', credentials: 'same-origin' });
   } catch {}
   _me = null;
   _mePromise = null;
+  resetUserState();
   // Xoá cache `tizia:me` + ví local. clearLocalWallet cũng reset _tabOwnerUid
   // và session guards trong wallet.js.
   try { localStorage.removeItem('tizia:me'); } catch {}
@@ -202,6 +208,9 @@ function syncToLocal(user) {
   lsSet(KEYS.PLAYER_NAME, user.display_name);
   lsSet(KEYS.ROLE, user.role);
   loadWalletFromServer().catch(() => {});
+  // Hydrate user-state KV (mini-game stars, code drafts, tutor history…).
+  // Bất đồng bộ — không block UI. Sau khi xong sẽ tự đăng ký listener flush.
+  hydrateUserState().catch(() => {});
 }
 
 // Truy cập đồng bộ — chỉ khả dụng sau khi fetchMe() đã chạy hoặc sau login().

@@ -4,7 +4,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb, getUserState, putUserState } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
@@ -15,7 +15,7 @@ import { attachCodelabWebhook } from './contexts/integration/codelab-webhook.js'
 import * as scoreup from './integrations/scoreup.js';
 import * as codelab from './integrations/codelab.js';
 import { countCodelabAcceptedProblems } from './db.js';
-import { recordQuestionAttempt, getRecentQuestionAttempts, getSrsStateByPrefix, recordSrsReview } from './db.js';
+import { recordQuestionAttempt, getRecentQuestionAttempts, getSrsStateByPrefix, recordSrsReview, pruneScoreUpEventsSeen } from './db.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
@@ -407,6 +407,43 @@ r.post('/api/scenario-runs', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'db_error' });
   }
 });
+
+// ── User-state KV (generic) ──────────────────────────────────────
+// Đồng bộ các state local-only nhỏ (math2/math6 stars, code-lab drafts,
+// tutor history, …) lên server theo whitelist phía client. Mỗi key cap 32KB,
+// tối đa ~200 key/user (đủ rộng so với nhu cầu thực tế).
+//
+// GET /api/user-state                   → { key: { value, updatedAt } }
+// PUT /api/user-state  body: { key:val }  upsert (value rỗng = xoá)
+r.get('/api/user-state', requireAuth, (req, res) => {
+  try {
+    res.json(getUserState(req.user.id));
+  } catch (e) {
+    console.warn('[user-state] GET failed', e?.message);
+    res.status(500).json({ error: 'db_error' });
+  }
+});
+function _putUserStateHandler(req, res) {
+  const body = req.body || {};
+  if (typeof body !== 'object' || Array.isArray(body)) {
+    return res.status(400).json({ error: 'body must be object {key: value}' });
+  }
+  const keys = Object.keys(body);
+  if (keys.length > 100) {
+    return res.status(413).json({ error: 'too many keys in one request (max 100)' });
+  }
+  try {
+    const n = putUserState(req.user.id, body);
+    res.json({ ok: true, written: n });
+  } catch (e) {
+    console.warn('[user-state] write failed', e?.message);
+    res.status(500).json({ error: 'db_error' });
+  }
+}
+r.put('/api/user-state', requireAuth, _putUserStateHandler);
+// POST alias dùng cho navigator.sendBeacon (chỉ hỗ trợ POST) khi tab unload.
+// sendBeacon vẫn gửi cookie nên requireAuth hoạt động bình thường.
+r.post('/api/user-state', requireAuth, _putUserStateHandler);
 
 // ── Quiz qua ScoreUp ──────────────────────────────────────────────
 // Tizia KHÔNG tự lưu câu hỏi nữa (xem memory: project_quiz_code_apis). Mọi câu
@@ -1045,6 +1082,18 @@ if (BASE_PATH) {
 
 const httpServer = http.createServer(app);
 attachRoom(httpServer, BASE_PATH);
+// Prune scoreup_webhook_events_seen mỗi 6h, giữ 7 ngày. Bảng nhỏ nhưng dedup
+// theo event_id sẽ tích luỹ nếu ScoreUp gửi vài nghìn event/ngày — cleanup để
+// tránh phình index. Không cần block startup.
+setInterval(() => {
+  try {
+    const n = pruneScoreUpEventsSeen();
+    if (n > 0) console.log(`[scoreup-webhook] pruned ${n} old event rows`);
+  } catch (e) {
+    console.warn('[scoreup-webhook] prune error:', e.message);
+  }
+}, 6 * 3600 * 1000).unref?.();
+
 httpServer.listen(PORT, HOST, () => {
   console.log(`[tizia] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
   const oauthList = listEnabledProviders();

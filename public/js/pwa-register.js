@@ -75,3 +75,14 @@
     setTimeout(() => wrap.remove(), 20000);
   }
 })();
+
+// Sync localStorage ↔ server cho mọi page có pwa-register (≈ toàn site).
+// Dynamic import vì pwa-register.js được load dạng script thường (không
+// type=module). state-sync.js tự kiểm `tizia:me` rồi mới hydrate — guest
+// (chưa login) sẽ no-op an toàn. Lỗi import không chặn pwa lifecycle.
+try {
+  // Đường dẫn tương đối phải khớp ngữ cảnh script gốc (./js/pwa-register.js).
+  // Trên Safari cũ không hỗ trợ dynamic import — fail im, không gãy site.
+  import('./engine/state-sync.js').catch(() => {});
+} catch {}
+
