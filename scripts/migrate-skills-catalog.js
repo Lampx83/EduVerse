@@ -158,10 +158,28 @@ if (Object.keys(COMP_BY_CODE).length === 0) {
   process.exit(1);
 }
 
+// Load overrides (manual map fix các trường hợp heuristic sai). File có thể
+// không tồn tại ở repo cũ; skill nào không có override sẽ dùng heuristic.
+const OVERRIDES_PATH = path.resolve(__dirname, '..', 'server', 'skills-overrides.json');
+let OVERRIDES = {};
+try {
+  if (fs.existsSync(OVERRIDES_PATH)) {
+    const raw = JSON.parse(fs.readFileSync(OVERRIDES_PATH, 'utf8'));
+    // Bỏ key meta-doc (_doc, _format) chỉ giữ skill_code → comp_code thực.
+    for (const k of Object.keys(raw)) {
+      if (!k.startsWith('_')) OVERRIDES[k] = raw[k];
+    }
+    console.log(`[overrides] loaded ${Object.keys(OVERRIDES).length} skill override`);
+  }
+} catch (e) { console.warn(`[overrides] failed to load: ${e.message}`); }
+
 const insertSkill = db.prepare(`
   INSERT OR IGNORE INTO skills (code, name, competency_id, domain, grade_min, grade_max, description, created_at)
   VALUES (@code, @name, @competency_id, @domain, @grade_min, @grade_max, @description, @created_at)
 `);
+// UPDATE để áp override lên row đã insert lần trước (idempotent — nếu
+// competency_id đã đúng thì UPDATE no-op về mặt logic).
+const updateCompetency = db.prepare(`UPDATE skills SET competency_id = ? WHERE code = ?`);
 
 const mapping = {}; // { 'pharmacy/admin': ['code1','code2',...], ... }
 const stats = { domains: 0, spaces: 0, skills: 0, byCompetency: {} };
@@ -179,10 +197,13 @@ for (const blk of DOMAIN_BLOCKS) {
     stats.spaces++;
     const codes = [];
     for (const skillName of sp.skills) {
-      const compCode = mapToCompetency(skillName);
+      const skillCode = `${blk.domain}__${sp.space_id}__${slugify(skillName)}`;
+      // Override THẮNG heuristic. Nếu override trỏ tới comp không tồn tại → log + fallback.
+      const overrideCode = OVERRIDES[skillCode];
+      const heuristicCode = mapToCompetency(skillName);
+      const compCode = overrideCode && COMP_BY_CODE[overrideCode] ? overrideCode : heuristicCode;
       const compId = COMP_BY_CODE[compCode];
       if (!compId) { console.warn(`[skip] không có competency ${compCode}`); continue; }
-      const skillCode = `${blk.domain}__${sp.space_id}__${slugify(skillName)}`;
       codes.push(skillCode);
       stats.byCompetency[compCode] = (stats.byCompetency[compCode] || 0) + 1;
       stats.skills++;
@@ -203,6 +224,19 @@ for (const blk of DOMAIN_BLOCKS) {
 
 if (!DRY) {
   runTx(allRows);
+  // Áp override LẦN HAI cho row đã tồn tại từ migration lần trước (UPDATE).
+  // INSERT OR IGNORE phía trên không update row có code đã tồn tại.
+  let updated = 0;
+  const updateTx = db.transaction(() => {
+    for (const [code, compCode] of Object.entries(OVERRIDES)) {
+      const compId = COMP_BY_CODE[compCode];
+      if (!compId) continue;
+      const r = updateCompetency.run(compId, code);
+      if (r.changes > 0) updated++;
+    }
+  });
+  updateTx();
+  console.log(`[overrides] applied ${updated} UPDATE qua catalog cũ`);
   fs.writeFileSync(MAPPING_OUT, JSON.stringify(mapping, null, 2) + '\n');
   console.log(`[ok] đã ghi mapping → ${path.relative(process.cwd(), MAPPING_OUT)}`);
 }

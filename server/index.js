@@ -30,7 +30,7 @@ import { attachBilling } from './contexts/billing/index.js';
 import { attachIntegration } from './contexts/integration/index.js';
 import { attachAdmin, requireAdmin } from './contexts/admin/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
-import { attachSkills, grantSkillsForSpace } from './skills.js';
+import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
 // Payment context — chỉ nạp khi PAYMENT_ENABLED=1 (dynamic import bên dưới) để bảng
 // payment + route KHÔNG xuất hiện ở deployment chưa bật thanh toán.
@@ -401,7 +401,21 @@ r.post('/api/scenario-runs', requireAuth, async (req, res) => {
   const score = Number(req.body?.score) || 0;
   try {
     const row = await recordScenarioRunDb(req.user.id, familyId, stars, score);
-    res.json({ familyId, ...(row || {}) });
+    // Grant skills nếu familyId có mapping (skills-scenario-map.json) và HS
+    // đạt ngưỡng (score≥70 hoặc stars≥2). Fire-and-best-effort: lỗi không
+    // block response của scenario-runs. UNIQUE đảm bảo idempotent.
+    let skillsGranted = null;
+    try {
+      const g = grantSkillsForScenario({
+        user_id: req.user.id,
+        school_id: req.schoolId ?? 1,
+        family_id: familyId,
+        score: row?.best_score ?? score,
+        stars: row?.best_stars ?? stars,
+      });
+      if (g.granted_count > 0) skillsGranted = g;
+    } catch (e) { console.warn('[scenario-runs] grant skills failed', e?.message); }
+    res.json({ familyId, ...(row || {}), skillsGranted });
   } catch (e) {
     console.warn('[scenario-runs] POST failed', e?.message);
     res.status(500).json({ error: 'db_error' });

@@ -1,0 +1,33 @@
+{
+  "_doc": "Override competency cho skill mà heuristic regex map sai. Key = skill.code (slug); value = competency.code. Migrator áp override SAU heuristic; auto-migrate ở db.js init cũng đọc file này để UPDATE row đã insert.",
+  "_format": "skill_code: competency_code",
+
+  "pharmacy__sim__giao_tiep_duoc_benh_nhan_segue": "NL_GIAO_TIEP",
+
+  "primary__health__ve_sinh_ca_nhan": "NL_THE_CHAT",
+  "highschool__canteen__dinh_duong_hop_li": "NL_THE_CHAT",
+  "highschool__gym__ren_luyen_the_chat": "NL_THE_CHAT",
+
+  "highschool__bike__an_toan_giao_thong": "PC_TRACH_NHIEM",
+  "highschool__medical__phong_tranh_te_nan": "PC_TRACH_NHIEM",
+  "highschool__lab_phys__an_toan_dien": "PC_TRACH_NHIEM",
+
+  "highschool__computer__an_toan_mang": "NL_TIN_HOC",
+  "highschool__computer__lap_trinh_python_co_ban": "NL_TIN_HOC",
+  "it__dblab__bao_mat_du_lieu": "NL_TIN_HOC",
+  "it__netlab__giao_thuc_cong": "NL_TIN_HOC",
+  "it__ailab__phan_biet_kieu_hoc": "NL_TIN_HOC",
+
+  "highschool__lab_bio__dung_kinh_hien_vi": "NL_KHOA_HOC",
+  "highschool__lab_bio__hieu_di_truyen_co_ban": "NL_KHOA_HOC",
+  "pharmacy__museum__nhan_biet_hien_vat_nganh_duoc": "NL_KHOA_HOC",
+
+  "highschool__youth__hieu_to_chuc_doan": "PC_YEU_NUOC",
+  "highschool__gym__kien_thuc_qp_an": "PC_YEU_NUOC",
+  "secondary__tradition__noi_guong_nguoi_tot": "PC_YEU_NUOC",
+
+  "secondary__tech__ki_thuat_doi_song": "NL_CONG_NGHE",
+  "pharmacy__lab_org__ky_nang_chuan_do": "NL_CONG_NGHE",
+
+  "highschool__hall__hoat_dong_tap_the": "NL_GIAO_TIEP"
+}

@@ -1,0 +1,15 @@
+{
+  "_doc": "Mapping familyId scenario → skill_codes. Khi POST /api/scenario-runs với best_score ≥70 hoặc stars ≥2, server grant các skill này cho HS. Có thể trỏ tới skill cross-domain (vd P2-prac-mul thuộc primary nhưng cũng củng cố preschool dem_toi_10). Catalog tay — KHÔNG tự sinh.",
+  "_format": "familyId: [skill_code, ...]",
+
+  "P1-prac-add":             ["primary__g1__dem_cong_tru_trong_100"],
+  "P1-prac-sub":             ["primary__g1__dem_cong_tru_trong_100"],
+  "P1-prac-match-addsub":    ["primary__g1__dem_cong_tru_trong_100"],
+  "P1-prac-quick":           ["primary__g1__dem_cong_tru_trong_100"],
+  "P2-prac-mul":             ["primary__g3__nhan_chia_thanh_thao"],
+  "P2-prac-add-carry":       ["primary__g3__nhan_chia_thanh_thao"],
+  "P2-prac-sub-borrow":      ["primary__g3__nhan_chia_thanh_thao"],
+  "P2-prac-div":             ["primary__g3__nhan_chia_thanh_thao"],
+  "P2-prac-match-mul":       ["primary__g3__nhan_chia_thanh_thao"],
+  "P2-prac-quick":           ["primary__g3__nhan_chia_thanh_thao"]
+}

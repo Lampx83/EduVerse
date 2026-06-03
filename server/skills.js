@@ -16,8 +16,11 @@ import { db } from './db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MAPPING_PATH = path.resolve(__dirname, 'skills-mapping.json');
+const SCENARIO_MAP_PATH = path.resolve(__dirname, 'skills-scenario-map.json');
 
 export const GRANT_THRESHOLD = Number(process.env.SKILLS_GRANT_THRESHOLD) || 70;
+// Stars ≥ STAR_THRESHOLD đủ để grant nếu không có score (scenario stars 0-3).
+const STAR_THRESHOLD = 2;
 const VALID_SOURCE_TYPES = new Set(['attempt', 'scenario_run', 'lesson', 'mini_game', 'manual']);
 const VALID_DOMAINS = new Set(['pharmacy', 'secondary', 'it', 'primary', 'preschool', 'highschool']);
 
@@ -35,6 +38,17 @@ try {
 } catch (e) {
   console.warn(`[skills] failed to load mapping: ${e.message}`);
 }
+
+// Load scenario→skill mapping. Cùng pattern với SPACE_SKILLS — empty object
+// nếu file thiếu (no-op grants).
+let SCENARIO_SKILLS = {};
+try {
+  if (fs.existsSync(SCENARIO_MAP_PATH)) {
+    const raw = JSON.parse(fs.readFileSync(SCENARIO_MAP_PATH, 'utf8'));
+    for (const k of Object.keys(raw)) if (!k.startsWith('_')) SCENARIO_SKILLS[k] = raw[k];
+    console.log(`[skills] loaded scenario map: ${Object.keys(SCENARIO_SKILLS).length} familyId → skill_codes`);
+  }
+} catch (e) { console.warn(`[skills] scenario map load failed: ${e.message}`); }
 
 // Reload mapping at runtime (admin hook nếu cần). Hiện chưa expose route, để
 // dành Phase 4 khi có admin UI quản lý catalog.
@@ -198,6 +212,45 @@ export function getUserSkillTree(user_id) {
 }
 
 /**
+ * Grant skills khi HS hoàn thành scenario. Gate: score ≥ threshold HOẶC stars ≥ 2.
+ * Mapping familyId → skill_codes đọc từ skills-scenario-map.json. Idempotent qua
+ * UNIQUE(user_id, skill_id). No-op nếu familyId chưa có mapping.
+ */
+export function grantSkillsForScenario({ user_id, school_id, family_id, score, stars }) {
+  if (!user_id || !family_id) return { granted_count: 0, skipped_reason: 'missing args' };
+  const codes = SCENARIO_SKILLS[family_id] || [];
+  if (codes.length === 0) return { granted_count: 0, skipped_reason: `no mapping for ${family_id}` };
+
+  const passByScore = Number.isFinite(score) && score >= GRANT_THRESHOLD;
+  const passByStars = Number.isFinite(stars) && stars >= STAR_THRESHOLD;
+  if (!passByScore && !passByStars) {
+    return { granted_count: 0, skipped_reason: `score=${score} stars=${stars} dưới ngưỡng` };
+  }
+
+  const rows = lookupSkillIdsByCodes.all(JSON.stringify(codes));
+  if (rows.length === 0) return { granted_count: 0, skipped_reason: 'skill codes not found in DB' };
+
+  const now = Date.now();
+  const newly = [];
+  const tx = db.transaction(() => {
+    for (const r of rows) {
+      const info = insertUserSkill.run({
+        school_id: school_id ?? 1,
+        user_id,
+        skill_id: r.id,
+        earned_at: now,
+        source_type: 'scenario_run',
+        source_id: String(family_id).slice(0, 80),
+        score: passByScore ? Math.round(score) : null,
+      });
+      if (info.changes > 0) newly.push(r.code);
+    }
+  });
+  tx();
+  return { granted_count: newly.length, newly_granted_codes: newly };
+}
+
+/**
  * Tổng đếm nhanh cho banner "Bạn đã đạt X/Y kỹ năng".
  */
 export function getUserSkillSummary(user_id) {
@@ -267,5 +320,66 @@ export function attachSkills(router, { requireAuth }) {
     const comps = listCompetenciesStmt.all();
     const skills = db.prepare(`SELECT code, name, competency_id, domain, grade_min, grade_max FROM skills ORDER BY competency_id, name`).all();
     res.json({ competencies: comps, skills });
+  });
+
+  // GET /api/skills/child/:child_id — PH xem cây năng lực của 1 con.
+  // Quyền: req.user phải là parent qua family_links. Trả 403 nếu không link.
+  router.get('/api/skills/child/:child_id', requireAuth, (req, res) => {
+    const child_id = Number(req.params.child_id);
+    if (!Number.isFinite(child_id)) return res.status(400).json({ error: 'invalid child_id' });
+    const link = db.prepare(`
+      SELECT 1 FROM family_links WHERE parent_user_id = ? AND child_user_id = ? LIMIT 1
+    `).get(req.user.id, child_id);
+    if (!link && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'not_parent_of_child' });
+    }
+    const child = db.prepare(`SELECT id, display_name, role, grade FROM users WHERE id = ?`).get(child_id);
+    if (!child) return res.status(404).json({ error: 'child_not_found' });
+    res.json({
+      child: { id: child.id, display_name: child.display_name, role: child.role, grade: child.grade },
+      summary: getUserSkillSummary(child_id),
+      tree: getUserSkillTree(child_id),
+    });
+  });
+
+  // GET /api/skills/class/:class_code — GV xem tổng hợp năng lực của lớp.
+  // Quyền: chỉ teacher (role=teacher) đã tạo class đó hoặc admin. Trả về:
+  //   { class, members: [{ display_name, summary: {earned,total} }], aggregate: tree }
+  // aggregate roll-up theo display_name → user_id (link qua users.display_name).
+  router.get('/api/skills/class/:class_code', requireAuth, (req, res) => {
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'teacher_only' });
+    }
+    const class_code = String(req.params.class_code || '').trim().slice(0, 16);
+    if (!class_code) return res.status(400).json({ error: 'class_code required' });
+    const cls = db.prepare(`SELECT id, code, name, teacher_name, created_at FROM classes WHERE code = ?`).get(class_code);
+    if (!cls) return res.status(404).json({ error: 'class_not_found' });
+
+    // Đếm rough quyền: GV chỉ xem được class do mình tạo (teacher_name khớp
+    // display_name). Admin xem tất cả. Không khớp → 403.
+    if (req.user.role === 'teacher' && cls.teacher_name !== req.user.display_name) {
+      return res.status(403).json({ error: 'not_class_teacher' });
+    }
+
+    // Tìm HS trong lớp: lấy distinct player_name từ attempts có class_code,
+    // join với users để lấy user_id. Có player guest (không có user_id) → skip.
+    const members = db.prepare(`
+      SELECT u.id AS user_id, u.display_name, u.grade,
+        (SELECT COUNT(*) FROM user_skills WHERE user_id = u.id) AS earned
+      FROM (SELECT DISTINCT player_name FROM attempts WHERE class_code = ?) p
+      JOIN users u ON u.display_name = p.player_name
+      ORDER BY earned DESC, u.display_name
+    `).all(class_code);
+    const total = db.prepare(`SELECT COUNT(*) AS n FROM skills`).get().n;
+    res.json({
+      class: cls,
+      total_skills: total,
+      members: members.map(m => ({
+        user_id: m.user_id,
+        display_name: m.display_name,
+        grade: m.grade,
+        summary: { earned: m.earned, total },
+      })),
+    });
   });
 }

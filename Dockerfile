@@ -20,6 +20,10 @@ COPY --from=tizia-deps /app/node_modules ./node_modules
 COPY package*.json ./
 COPY server/ ./server/
 COPY public/ ./public/
+# scripts/ chứa migration một-lần (vd skills catalog). Cần có trong image để
+# db.js init có thể tự gọi nếu phát hiện bảng skills/competencies rỗng. Chỉ
+# +~30KB nên rẻ.
+COPY scripts/ ./scripts/
 
 RUN mkdir -p /data && chown -R node:node /data /app
 USER node
