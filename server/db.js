@@ -276,6 +276,91 @@ db.exec(`
     ON notifications(request_id);
 `);
 
+// Khung năng lực GDPT 2018: 5 phẩm chất + 10 năng lực (catalog tham chiếu của Bộ
+// GD-ĐT). Mỗi `skill` (kỹ năng cụ thể HS đạt được tại 1 space/lesson/mini-game)
+// thuộc 1 competency cha → cho phép roll-up báo cáo theo khung quốc gia. Catalog
+// dùng chung cho mọi tenant nên KHÔNG có school_id (cùng 1 khung GDPT 2018).
+// `user_skills` là bảng earned (theo user_id, có school_id để báo cáo trường).
+// kind: pham_chat (5) | nang_luc_chung (3) | nang_luc_chuyen_mon (7).
+db.exec(`
+  CREATE TABLE IF NOT EXISTS competencies (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    code        TEXT    NOT NULL UNIQUE,        -- vd 'PC_CHAM_CHI', 'NL_TIN_HOC'
+    kind        TEXT    NOT NULL,               -- 'pham_chat' | 'nang_luc_chung' | 'nang_luc_chuyen_mon'
+    name        TEXT    NOT NULL,
+    description TEXT,
+    sort_order  INTEGER NOT NULL DEFAULT 0,
+    created_at  INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS skills (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    code           TEXT    NOT NULL UNIQUE,     -- slug ổn định, vd 'preschool_g0_dem_1_5'
+    name           TEXT    NOT NULL,            -- text hiển thị (giữ nguyên bản gốc)
+    competency_id  INTEGER NOT NULL,
+    domain         TEXT,                        -- preschool | primary | secondary | highschool | pharmacy | it (NULL = chung)
+    grade_min      INTEGER,                     -- 0=Mầm non, 1..12 (NULL = mọi cấp)
+    grade_max      INTEGER,
+    description    TEXT,
+    created_at     INTEGER NOT NULL,
+    FOREIGN KEY (competency_id) REFERENCES competencies(id) ON DELETE RESTRICT
+  );
+  CREATE INDEX IF NOT EXISTS idx_skills_competency ON skills(competency_id);
+  CREATE INDEX IF NOT EXISTS idx_skills_domain     ON skills(domain, grade_min, grade_max);
+
+  -- HS đạt skill khi: hoàn thành scenario, đạt quiz ≥70%, hoàn thành mini-game.
+  -- UNIQUE(user_id, skill_id) → 1 skill chỉ tính 1 lần (lần đạt đầu tiên).
+  -- source_type/source_id để truy ngược nguồn grant (audit + UI "đạt được khi nào").
+  CREATE TABLE IF NOT EXISTS user_skills (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    school_id    INTEGER NOT NULL DEFAULT 1,
+    user_id      INTEGER NOT NULL,
+    skill_id     INTEGER NOT NULL,
+    earned_at    INTEGER NOT NULL,
+    source_type  TEXT,                          -- 'attempt' | 'scenario_run' | 'lesson' | 'mini_game' | 'manual'
+    source_id    TEXT,                          -- id của nguồn (string vì có thể là scenario code)
+    score        INTEGER,                       -- 0..100, score của lần grant (NULL nếu không áp dụng)
+    UNIQUE(user_id, skill_id),
+    FOREIGN KEY (user_id)  REFERENCES users(id)  ON DELETE CASCADE,
+    FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_user_skills_user   ON user_skills(user_id, earned_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_user_skills_skill  ON user_skills(skill_id, earned_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_user_skills_school ON user_skills(school_id, earned_at DESC);
+`);
+
+// Seed 15 competencies GDPT 2018 — idempotent qua INSERT OR IGNORE theo code.
+// Nguồn: Thông tư 32/2018/TT-BGDĐT (Chương trình GDPT tổng thể).
+const _seedCompetencies = db.transaction(() => {
+  const ins = db.prepare(`
+    INSERT OR IGNORE INTO competencies (code, kind, name, description, sort_order, created_at)
+    VALUES (@code, @kind, @name, @description, @sort_order, @created_at)
+  `);
+  const now = Date.now();
+  const rows = [
+    // 5 phẩm chất
+    { code: 'PC_YEU_NUOC',    kind: 'pham_chat', name: 'Yêu nước',     description: 'Yêu Tổ quốc, yêu đồng bào, có ý thức gìn giữ và phát huy truyền thống dân tộc.', sort_order: 1 },
+    { code: 'PC_NHAN_AI',     kind: 'pham_chat', name: 'Nhân ái',      description: 'Yêu thương con người, tôn trọng sự khác biệt, sẵn sàng giúp đỡ người khác.', sort_order: 2 },
+    { code: 'PC_CHAM_CHI',    kind: 'pham_chat', name: 'Chăm chỉ',     description: 'Ham học, ham làm, kiên trì vượt khó trong học tập và lao động.', sort_order: 3 },
+    { code: 'PC_TRUNG_THUC',  kind: 'pham_chat', name: 'Trung thực',   description: 'Thật thà, ngay thẳng, dám nhận lỗi và sửa lỗi.', sort_order: 4 },
+    { code: 'PC_TRACH_NHIEM', kind: 'pham_chat', name: 'Trách nhiệm',  description: 'Có trách nhiệm với bản thân, gia đình, nhà trường, xã hội và môi trường.', sort_order: 5 },
+    // 3 năng lực chung
+    { code: 'NL_TU_CHU',      kind: 'nang_luc_chung', name: 'Tự chủ và tự học',                    description: 'Tự nhận thức, tự tin, tự lập kế hoạch và tự đánh giá việc học.', sort_order: 10 },
+    { code: 'NL_GIAO_TIEP',   kind: 'nang_luc_chung', name: 'Giao tiếp và hợp tác',                description: 'Sử dụng ngôn ngữ hiệu quả, lắng nghe, làm việc nhóm.', sort_order: 11 },
+    { code: 'NL_GQVD',        kind: 'nang_luc_chung', name: 'Giải quyết vấn đề và sáng tạo',        description: 'Phát hiện vấn đề, đề xuất giải pháp, tư duy phản biện và sáng tạo.', sort_order: 12 },
+    // 7 năng lực chuyên môn
+    { code: 'NL_NGON_NGU',    kind: 'nang_luc_chuyen_mon', name: 'Ngôn ngữ',          description: 'Đọc, viết, nói, nghe tiếng Việt và ngoại ngữ.', sort_order: 20 },
+    { code: 'NL_TINH_TOAN',   kind: 'nang_luc_chuyen_mon', name: 'Tính toán',         description: 'Tư duy toán học, mô hình hoá, giải toán.', sort_order: 21 },
+    { code: 'NL_KHOA_HOC',    kind: 'nang_luc_chuyen_mon', name: 'Khoa học',          description: 'Tìm hiểu tự nhiên, xã hội bằng phương pháp khoa học.', sort_order: 22 },
+    { code: 'NL_CONG_NGHE',   kind: 'nang_luc_chuyen_mon', name: 'Công nghệ',         description: 'Hiểu, sử dụng, đánh giá công nghệ; thiết kế kỹ thuật.', sort_order: 23 },
+    { code: 'NL_TIN_HOC',     kind: 'nang_luc_chuyen_mon', name: 'Tin học',           description: 'Ứng dụng CNTT, tư duy máy tính, an toàn số.', sort_order: 24 },
+    { code: 'NL_THAM_MY',     kind: 'nang_luc_chuyen_mon', name: 'Thẩm mỹ',           description: 'Cảm thụ, sáng tạo nghệ thuật (Âm nhạc, Mỹ thuật).', sort_order: 25 },
+    { code: 'NL_THE_CHAT',    kind: 'nang_luc_chuyen_mon', name: 'Thể chất',          description: 'Vận động, rèn luyện sức khoẻ, dinh dưỡng và an toàn.', sort_order: 26 },
+  ];
+  for (const r of rows) ins.run({ ...r, created_at: now });
+});
+try { _seedCompetencies(); } catch (e) { console.warn('[db] seed competencies failed', e.message); }
+
 // Multi-tenancy: mọi write ghi school_id, mọi read cross-user lọc theo school_id.
 // Tham số @school_id bắt buộc ở các statement có ảnh hưởng tenant. Caller lấy từ
 // req.schoolId (attachTenant middleware) — xem server/contexts/identity/tenant.js.
@@ -1185,6 +1270,28 @@ db.exec(`
     processed_at INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_swes_processed ON scoreup_webhook_events_seen(processed_at);
+
+  -- ── Codelab submissions tracking (xem contexts/integration/codelab-webhook.js) ──
+  -- PK (submission_id, status) cho phép lưu nhiều bước trạng thái nếu Codelab fire
+  -- nhiều event cùng 1 submission (queued → running → accepted). Hiện Codelab chỉ
+  -- fire 'submission.completed' nên thường có 1 row/submission, nhưng schema mở.
+  CREATE TABLE IF NOT EXISTS codelab_submissions (
+    submission_id     TEXT    NOT NULL,
+    status            TEXT    NOT NULL,
+    problem_slug      TEXT,
+    external_user_ref TEXT,        -- "tizia:user:<id>"
+    user_id           INTEGER,     -- parse từ external_user_ref nếu match
+    score             REAL,
+    passed_cases      INTEGER,
+    total_cases       INTEGER,
+    language_id       INTEGER,
+    completed_at      INTEGER,     -- ms epoch
+    processed_at      INTEGER NOT NULL,
+    PRIMARY KEY (submission_id, status)
+  );
+  CREATE INDEX IF NOT EXISTS idx_cls_user      ON codelab_submissions(user_id, completed_at);
+  CREATE INDEX IF NOT EXISTS idx_cls_ext_ref   ON codelab_submissions(external_user_ref, completed_at);
+  CREATE INDEX IF NOT EXISTS idx_cls_problem   ON codelab_submissions(problem_slug, status);
 `);
 
 const insertQAStmt = db.prepare(`
@@ -1244,4 +1351,183 @@ export function markScoreUpEventSeen(eventId, eventType, occurredAt) {
 export function pruneScoreUpEventsSeen(olderThanMs = 7 * 24 * 3600 * 1000) {
   const cutoff = Date.now() - olderThanMs;
   return db.prepare(`DELETE FROM scoreup_webhook_events_seen WHERE processed_at < ?`).run(cutoff).changes;
+}
+
+// ── Codelab submissions dedup + tracking (xem contexts/integration/codelab-webhook.js) ──
+const insertCodelabSubStmt = db.prepare(`
+  INSERT OR IGNORE INTO codelab_submissions
+    (submission_id, status, problem_slug, external_user_ref, user_id,
+     score, passed_cases, total_cases, language_id, completed_at, processed_at)
+  VALUES (@submission_id, @status, @problem_slug, @external_user_ref, @user_id,
+          @score, @passed_cases, @total_cases, @language_id, @completed_at, @processed_at)
+`);
+
+/**
+ * Record 1 webhook delivery. Trả {firstSeen: bool, userId: number|null}.
+ * - firstSeen=false → cặp (submissionId, status) đã tồn tại → caller skip side-effects.
+ * - userId parse từ external_user_ref ("tizia:user:42" → 42) — null nếu format khác.
+ */
+export function recordCodelabSubmission({
+  submissionId, status, problemSlug = null, externalUserRef = null,
+  score = null, passedCases = null, totalCases = null, languageId = null,
+  completedAt = null,
+}) {
+  if (!submissionId || !status) return { firstSeen: false, userId: null };
+  let userId = null;
+  if (typeof externalUserRef === 'string') {
+    const m = /^tizia:user:(\d+)$/.exec(externalUserRef);
+    if (m) userId = Number(m[1]);
+  }
+  const info = insertCodelabSubStmt.run({
+    submission_id: String(submissionId),
+    status: String(status),
+    problem_slug: problemSlug ? String(problemSlug) : null,
+    external_user_ref: externalUserRef ? String(externalUserRef) : null,
+    user_id: userId,
+    score: score != null ? Number(score) : null,
+    passed_cases: passedCases != null ? Math.floor(Number(passedCases)) : null,
+    total_cases:  totalCases  != null ? Math.floor(Number(totalCases))  : null,
+    language_id:  languageId  != null ? Math.floor(Number(languageId))  : null,
+    completed_at: completedAt != null ? Math.floor(Number(completedAt)) : null,
+    processed_at: Date.now(),
+  });
+  return { firstSeen: info.changes > 0, userId };
+}
+
+/** User đã ACCEPTED bài này lần nào trước đó chưa? Để cộng XP một-lần duy nhất. */
+export function hasAcceptedCodelabProblem(userId, problemSlug, excludeSubmissionId = null) {
+  if (!userId || !problemSlug) return false;
+  const row = db.prepare(`
+    SELECT 1 FROM codelab_submissions
+    WHERE user_id = ? AND problem_slug = ? AND status = 'accepted'
+      ${excludeSubmissionId ? 'AND submission_id != ?' : ''}
+    LIMIT 1
+  `).get(...(excludeSubmissionId ? [userId, problemSlug, excludeSubmissionId] : [userId, problemSlug]));
+  return Boolean(row);
+}
+
+/** Bao nhiêu bài Codelab đã accepted của user (dùng cho badge / dashboard). */
+export function countCodelabAcceptedProblems(userId) {
+  if (!userId) return 0;
+  const row = db.prepare(`
+    SELECT COUNT(DISTINCT problem_slug) AS n
+    FROM codelab_submissions WHERE user_id = ? AND status = 'accepted'
+  `).get(userId);
+  return row?.n || 0;
+}
+
+// ============================================================
+// Spaced repetition (SM-2-lite) — cá nhân hoá "Củng cố kiến thức"
+// ============================================================
+// Mỗi card_key là 1 câu hỏi (vd 'space:mam:c01'). State per (user, card) lưu
+// ease/interval/due_at để picker FE quyết câu nào tới hạn ôn. Tách khỏi
+// question_attempts vì attempts là log append-only, còn srs_cards là state
+// hiện tại (upsert mỗi lần review).
+db.exec(`
+  CREATE TABLE IF NOT EXISTS srs_cards (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL,
+    school_id     INTEGER NOT NULL DEFAULT 1,
+    card_key      TEXT    NOT NULL,
+    ease          REAL    NOT NULL DEFAULT 2.5,
+    interval_d    REAL    NOT NULL DEFAULT 0,
+    reps          INTEGER NOT NULL DEFAULT 0,
+    lapses        INTEGER NOT NULL DEFAULT 0,
+    total_reviews INTEGER NOT NULL DEFAULT 0,
+    due_at        INTEGER NOT NULL,
+    last_correct  INTEGER NOT NULL DEFAULT 0,
+    last_seen     INTEGER NOT NULL,
+    UNIQUE(user_id, card_key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_srs_user_due ON srs_cards(user_id, due_at);
+  CREATE INDEX IF NOT EXISTS idx_srs_user_key ON srs_cards(user_id, card_key);
+`);
+
+const getSrsByPrefixStmt = db.prepare(`
+  SELECT card_key, ease, interval_d, reps, lapses, total_reviews,
+         due_at, last_correct, last_seen
+  FROM srs_cards
+  WHERE user_id = ? AND card_key LIKE ? ESCAPE '\\'
+`);
+const getSrsCardStmt = db.prepare(`
+  SELECT ease, interval_d, reps, lapses, total_reviews, due_at, last_correct, last_seen
+  FROM srs_cards WHERE user_id = ? AND card_key = ?
+`);
+const upsertSrsStmt = db.prepare(`
+  INSERT INTO srs_cards
+    (user_id, school_id, card_key, ease, interval_d, reps, lapses,
+     total_reviews, due_at, last_correct, last_seen)
+  VALUES (@user_id, @school_id, @card_key, @ease, @interval_d, @reps, @lapses,
+          @total_reviews, @due_at, @last_correct, @last_seen)
+  ON CONFLICT(user_id, card_key) DO UPDATE SET
+    ease=excluded.ease,
+    interval_d=excluded.interval_d,
+    reps=excluded.reps,
+    lapses=excluded.lapses,
+    total_reviews=excluded.total_reviews,
+    due_at=excluded.due_at,
+    last_correct=excluded.last_correct,
+    last_seen=excluded.last_seen
+`);
+
+/** SM-2-lite step. correct=true/false là 2 outcome duy nhất (đủ cho mầm non). */
+function sm2Step(prev, correct) {
+  let ease = Number(prev?.ease) || 2.5;
+  let interval_d = Number(prev?.interval_d) || 0;
+  let reps = Number(prev?.reps) || 0;
+  let lapses = Number(prev?.lapses) || 0;
+  let total_reviews = Number(prev?.total_reviews) || 0;
+  total_reviews += 1;
+  if (!correct) {
+    reps = 0;
+    lapses += 1;
+    interval_d = 0;                       // ôn lại trong session sau
+    ease = Math.max(1.3, ease - 0.2);
+  } else {
+    reps += 1;
+    if (reps === 1) interval_d = 1;
+    else if (reps === 2) interval_d = 3;
+    else interval_d = Math.max(1, Math.round(interval_d * ease));
+    ease = Math.min(2.8, ease + 0.06);
+  }
+  return { ease, interval_d, reps, lapses, total_reviews };
+}
+
+/** Trả về SRS state cho mọi card_key bắt đầu bằng prefix (vd 'space:mam:'). */
+export function getSrsStateByPrefix(user_id, prefix) {
+  const safe = String(prefix).replace(/[\\%_]/g, (c) => '\\' + c) + '%';
+  return getSrsByPrefixStmt.all(Number(user_id), safe);
+}
+
+/** Ghi 1 lần review. Tự upsert + cập nhật SM-2 từ state cũ. */
+export function recordSrsReview({ user_id, school_id = 1, card_key, correct }) {
+  const prev = getSrsCardStmt.get(Number(user_id), String(card_key)) || null;
+  const next = sm2Step(prev, !!correct);
+  const now = Date.now();
+  const row = {
+    user_id: Number(user_id),
+    school_id: Number(school_id) || 1,
+    card_key: String(card_key),
+    ease: next.ease,
+    interval_d: next.interval_d,
+    reps: next.reps,
+    lapses: next.lapses,
+    total_reviews: next.total_reviews,
+    due_at: now + Math.round(next.interval_d * 86400000),
+    last_correct: correct ? 1 : 0,
+    last_seen: now,
+  };
+  upsertSrsStmt.run(row);
+  return {
+    card_key: row.card_key,
+    ease: row.ease,
+    interval_d: row.interval_d,
+    reps: row.reps,
+    lapses: row.lapses,
+    total_reviews: row.total_reviews,
+    due_at: row.due_at,
+    last_correct: row.last_correct,
+    last_seen: row.last_seen,
+  };
 }

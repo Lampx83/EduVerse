@@ -34,8 +34,17 @@
   .chip b { color:var(--accent); }
   /* quiz */
   .quiz { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px 20px; margin-top:12px; }
+  .quiz-meta { display:flex; align-items:center; gap:10px; margin:-6px 0 12px; font-size:12.5px; opacity:.8; flex-wrap:wrap; }
+  .quiz-meta .reroll { margin-left:auto; background:rgba(255,255,255,.08); border:1px solid var(--border); color:#fff;
+    padding:5px 11px; border-radius:8px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .quiz-meta .reroll:hover { background:rgba(255,255,255,.16); }
   .q { margin:0 0 14px; }
-  .q .qt { font-weight:700; margin-bottom:8px; font-size:14.5px; }
+  .q .qt { font-weight:700; margin-bottom:8px; font-size:14.5px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .q .qb { font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700; line-height:1.5; white-space:nowrap; }
+  .q .qb.lapse { background:rgba(251,113,133,.18); color:#fb7185; border:1px solid rgba(251,113,133,.4); }
+  .q .qb.due   { background:rgba(34,197,94,.18);  color:#22c55e; border:1px solid rgba(34,197,94,.4); }
+  .q .qb.new   { background:rgba(56,189,248,.18); color:#38bdf8; border:1px solid rgba(56,189,248,.4); }
+  .q .qb.review-early { background:rgba(167,139,250,.18); color:#a78bfa; border:1px solid rgba(167,139,250,.4); }
   .q .opt { display:block; width:100%; text-align:left; background:rgba(255,255,255,.05); border:1px solid var(--border); color:#fff;
     padding:9px 13px; border-radius:10px; margin:6px 0; cursor:pointer; font-family:inherit; font-size:13.5px; transition:background .12s; }
   .q .opt:hover { background:rgba(255,255,255,.12); }
@@ -860,7 +869,7 @@ const SPACES_SECONDARY = {
         {mcq:[{q:'Thấy bạn bị bắt nạt ở trường, em nên?',o:['Can ngăn nếu an toàn & báo thầy cô','Quay video đăng mạng','Hùa theo trêu chọc','Mặc kệ, không liên quan'],a:0,fb:'Không thờ ơ với bạo lực học đường: hỗ trợ bạn & báo người lớn để được giúp đỡ.'},
           {q:'Để làm việc nhóm hiệu quả, cần?',o:['Lắng nghe, phân công & tôn trọng ý kiến','Tự làm hết một mình','Ai nói to thì nghe','Tranh cãi cho thắng'],a:0,fb:'Làm việc nhóm tốt: phân công rõ, lắng nghe và tôn trọng lẫn nhau.'}]}]},
       // Pet Tri Thức — linh vật Đội. THCS thì pet đã ở stage "teen"
-      {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Pet Tri Thức tiến hoá theo XP. Sinh hoạt Đội đều đặn → Pet thành dragon!',href:'/pet-tri-thuc.html'}],
+      {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Pet Tri Thức tiến hoá theo XP. Sinh hoạt Đội đều đặn → Pet thành dragon!',href:'/pet-tri-thuc.html?grade=thcs'}],
     skills:['Tinh thần đồng đội','Kĩ năng sống tích cực'],
     quiz:[{q:'Điều thứ hai trong 5 điều Bác Hồ dạy?',o:['Học tập tốt, lao động tốt','Yêu Tổ quốc, yêu đồng bào','Khiêm tốn, thật thà, dũng cảm','Giữ gìn vệ sinh thật tốt'],a:0},
       {q:'Tên đầy đủ của Đội?',o:['Đội Thiếu niên Tiền phong Hồ Chí Minh','Đoàn Thanh niên','Hội Sinh viên','Hội Chữ thập đỏ'],a:0},
@@ -1519,7 +1528,7 @@ const SPACES_PRIMARY = {
       {ic:'🤝',name:'Kĩ năng & hoạt động',rd:'Làm việc tốt mỗi ngày.',panel:[
         {mcq:[{q:'"Làm nghìn việc tốt" — việc nào là việc tốt?',o:['Giúp bạn, nhặt được của rơi trả lại','Nói dối thầy cô','Bắt nạt bạn nhỏ','Bỏ học đi chơi'],a:0,fb:'Việc tốt là giúp đỡ mọi người, thật thà và trung thực.'}]}]},
       // Pet Tri Thức — Tiziamon là "linh vật Đội" của em
-      {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Nuôi Tiziamon — sinh vật ảo tiến hoá theo XP. Trả lời quiz để cho Pet ăn!',href:'/pet-tri-thuc.html'}],
+      {ic:'🐉',name:'Tiziamon — linh vật của em',rd:'Nuôi Tiziamon — sinh vật ảo tiến hoá theo XP. Trả lời quiz để cho Pet ăn!',href:'/pet-tri-thuc.html?grade=tieu-hoc'}],
     skills:['Sinh hoạt tập thể','Tinh thần Đội viên'],
     quiz:[{q:'Khăn quàng đỏ tượng trưng cho?',o:['Một phần lá cờ Tổ quốc','Một chiếc khăn bình thường','Đồng phục thể thao','Khăn lau bảng'],a:0},
       {q:'Tên đầy đủ của Đội là?',o:['Đội Thiếu niên Tiền phong Hồ Chí Minh','Đội bóng đá','Đội văn nghệ','Đội trực nhật'],a:0},
@@ -1647,12 +1656,29 @@ const SPACES_PRESCHOOL = {
         {check:['Chào cô khi đến lớp','Rửa tay trước khi ăn','Cất giày dép gọn gàng','Đi vệ sinh đúng nơi','Ngủ trưa không nói chuyện']},
         {note:'Mỗi việc tốt cô sẽ tặng bé một bông hoa bé ngoan!'}]},
       // Pet Tri Thức — Tiziamon là "thú cưng" của bé, dễ tương tác đầu đời
-      {ic:'🐉',name:'Bé nuôi Tiziamon',rd:'Sinh vật ảo của bé — bé trả lời câu hỏi để cho Tiziamon ăn và lớn lên.',href:'/pet-tri-thuc.html'}],
+      {ic:'🐉',name:'Bé nuôi Tiziamon',rd:'Sinh vật ảo của bé — bé trả lời câu hỏi để cho Tiziamon ăn và lớn lên.',href:'/pet-tri-thuc.html?grade=mam-non'}],
     skills:['Đếm 1–5','Nhận biết màu sắc'],
+    // 18 câu cho lớp Mầm — đếm 1-5, màu, ngón tay, con vật quen. id ổn định
+    // cho spaced-quiz.js (KHÔNG đổi id cũ — đổi sẽ mất state SRS của bé).
     quiz:[
-      {q:'🍎🍎🍎 — Có mấy quả táo?',o:['2','3','4','5'],a:1},
-      {q:'Quả chuối 🍌 có màu gì?',o:['Đỏ','Vàng','Xanh dương','Đen'],a:1},
-      {q:'Một bàn tay ✋ có mấy ngón?',o:['3','4','5','6'],a:2}]},
+      {id:'mam-c01',q:'🍎🍎🍎 — Có mấy quả táo?',o:['2','3','4','5'],a:1},
+      {id:'mam-c02',q:'Quả chuối 🍌 có màu gì?',o:['Đỏ','Vàng','Xanh dương','Đen'],a:1},
+      {id:'mam-c03',q:'Một bàn tay ✋ có mấy ngón?',o:['3','4','5','6'],a:2},
+      {id:'mam-c04',q:'⭐⭐ — Có mấy ngôi sao?',o:['1','2','3','4'],a:1},
+      {id:'mam-c05',q:'🐤🐤🐤🐤 — Có mấy chú gà con?',o:['2','3','4','5'],a:2},
+      {id:'mam-c06',q:'Quả cà chua 🍅 thường có màu gì?',o:['Đỏ','Xanh dương','Tím','Đen'],a:0},
+      {id:'mam-c07',q:'Lá cây 🍃 có màu gì?',o:['Xanh lá','Đỏ','Tím','Hồng'],a:0},
+      {id:'mam-c08',q:'Bầu trời ban ngày có màu gì?',o:['Đen','Xanh dương','Vàng','Đỏ'],a:1},
+      {id:'mam-c09',q:'Con mèo 🐱 kêu thế nào?',o:['Gâu gâu','Meo meo','Cạp cạp','Ò ó o'],a:1},
+      {id:'mam-c10',q:'Con chó 🐶 kêu thế nào?',o:['Gâu gâu','Meo meo','Chiếp chiếp','Ụt ịt'],a:0},
+      {id:'mam-c11',q:'🍓 — Đây là quả gì?',o:['Dâu tây','Nho','Táo','Chuối'],a:0},
+      {id:'mam-c12',q:'Sau số 1 là số mấy?',o:['0','2','3','5'],a:1},
+      {id:'mam-c13',q:'Sau số 4 là số mấy?',o:['3','5','6','0'],a:1},
+      {id:'mam-c14',q:'🐰 — Con thỏ có mấy tai?',o:['1','2','3','4'],a:1},
+      {id:'mam-c15',q:'Một bé có mấy mắt? 👀',o:['1','2','3','4'],a:1},
+      {id:'mam-c16',q:'Mặt trời ☀️ thường có màu gì?',o:['Xanh','Vàng / Cam','Tím','Đen'],a:1},
+      {id:'mam-c17',q:'Củ cà rốt 🥕 có màu gì?',o:['Cam','Xanh dương','Đen','Hồng'],a:0},
+      {id:'mam-c18',q:'Con vịt 🦆 kêu thế nào?',o:['Cạp cạp','Meo meo','Gâu gâu','Ò ó o'],a:0}]},
 
   choi:{emoji:'🐤',name:'Lớp Chồi · 4 tuổi',accent:'#f59e0b',
     intro:'Lớp Chồi — các bé 4 tuổi đã đếm được tới 10, nhận biết hình tròn–vuông–tam giác và bắt đầu kể chuyện cùng cô.',
@@ -1676,9 +1702,23 @@ const SPACES_PRESCHOOL = {
         {note:'Chơi vui nhưng không xô đẩy bạn nhé!'}]}],
     skills:['Đếm tới 10','Nhận biết hình tròn–vuông–tam giác'],
     quiz:[
-      {q:'🚗🚗🚗🚗 — Có mấy chiếc ô tô?',o:['3','4','5','6'],a:1},
-      {q:'Quả bóng ⚽ có dạng hình gì?',o:['Hình vuông','Hình tròn','Hình tam giác','Ngôi sao'],a:1},
-      {q:'Hình tam giác 🔺 có mấy cạnh?',o:['2','3','4','5'],a:1}]},
+      {id:'choi-c01',q:'🚗🚗🚗🚗 — Có mấy chiếc ô tô?',o:['3','4','5','6'],a:1},
+      {id:'choi-c02',q:'Quả bóng ⚽ có dạng hình gì?',o:['Hình vuông','Hình tròn','Hình tam giác','Ngôi sao'],a:1},
+      {id:'choi-c03',q:'Hình tam giác 🔺 có mấy cạnh?',o:['2','3','4','5'],a:1},
+      {id:'choi-c04',q:'Hình vuông ⬛ có mấy cạnh?',o:['3','4','5','6'],a:1},
+      {id:'choi-c05',q:'🍪🍪🍪🍪🍪 — Có mấy chiếc bánh?',o:['4','5','6','7'],a:1},
+      {id:'choi-c06',q:'Sau số 5 là số mấy?',o:['4','6','7','9'],a:1},
+      {id:'choi-c07',q:'Sau số 9 là số mấy?',o:['8','10','11','12'],a:1},
+      {id:'choi-c08',q:'Cái nón 🧢 — đỉnh nón giống hình gì?',o:['Hình tròn','Hình tam giác','Hình vuông','Trái tim'],a:1},
+      {id:'choi-c09',q:'Đếm tới 10, số nào ĐỨNG GIỮA (số thứ 5)?',o:['3','5','6','7'],a:1},
+      {id:'choi-c10',q:'Trong câu chuyện Rùa và Thỏ, ai về đích trước?',o:['Thỏ','Rùa','Cả hai cùng về','Sư tử'],a:1},
+      {id:'choi-c11',q:'Bài học từ chuyện Rùa và Thỏ là?',o:['Chăm chỉ, kiên trì sẽ thành công','Chạy nhanh là quan trọng','Ngủ nhiều là tốt','Không cần cố gắng'],a:0},
+      {id:'choi-c12',q:'Hai cộng một là mấy? 2 + 1 = ?',o:['2','3','4','5'],a:1},
+      {id:'choi-c13',q:'Ba cộng hai là mấy? 3 + 2 = ?',o:['4','5','6','7'],a:1},
+      {id:'choi-c14',q:'Ngôi sao ⭐ có mấy cánh?',o:['3','4','5','6'],a:2},
+      {id:'choi-c15',q:'Hình tròn ⭕ có mấy cạnh thẳng?',o:['0 (không có cạnh thẳng)','1','3','4'],a:0},
+      {id:'choi-c16',q:'Bé chơi cùng bạn cần?',o:['Vui vẻ, không xô đẩy','Tranh đồ chơi','Đẩy bạn ngã','Cãi nhau'],a:0},
+      {id:'choi-c17',q:'🐻🐻 và 🐻🐻🐻 — bên nào nhiều gấu hơn?',o:['Bên 2 con','Bên 3 con','Bằng nhau','Không biết'],a:1}]},
 
   la:{emoji:'🦋',name:'Lớp Lá · 5 tuổi',accent:'#22c55e',
     intro:'Lớp Lá — các bé 5 tuổi đã lớn, sẵn sàng vào lớp 1! So sánh nhiều–ít, tập tô chữ-số và biết tự lập những việc nhỏ.',
@@ -1708,9 +1748,24 @@ const SPACES_PRESCHOOL = {
       {ic:'🌳',name:'Cây Tri Thức của bé',rd:'Mỗi tuần học = 1 chiếc lá lên cây. Cây xanh tốt → bé sẵn sàng vào lớp 1!',href:'/cay-tri-thuc.html'}],
     skills:['Đếm tới 20 · So sánh nhiều/ít','Sẵn sàng vào lớp 1'],
     quiz:[
-      {q:'Sau số 9 là số mấy?',o:['8','10','11','19'],a:1},
-      {q:'🖐️🖐️ — Hai bàn tay có tất cả mấy ngón?',o:['5','8','10','15'],a:2},
-      {q:'Số 0 có nghĩa là gì?',o:['Rất nhiều','Một','Không có gì','Mười'],a:2}]},
+      {id:'la-c01',q:'Sau số 9 là số mấy?',o:['8','10','11','19'],a:1},
+      {id:'la-c02',q:'🖐️🖐️ — Hai bàn tay có tất cả mấy ngón?',o:['5','8','10','15'],a:2},
+      {id:'la-c03',q:'Số 0 có nghĩa là gì?',o:['Rất nhiều','Một','Không có gì','Mười'],a:2},
+      {id:'la-c04',q:'🍬🍬🍬 và 🍬🍬 — bên nào NHIỀU kẹo hơn?',o:['Bên 3 kẹo','Bên 2 kẹo','Bằng nhau','Không có'],a:0},
+      {id:'la-c05',q:'5 + 3 = ?',o:['7','8','9','10'],a:1},
+      {id:'la-c06',q:'10 − 2 = ?',o:['6','7','8','12'],a:2},
+      {id:'la-c07',q:'Số nào LỚN HƠN: 7 hay 4?',o:['7','4','Bằng nhau','Không so sánh được'],a:0},
+      {id:'la-c08',q:'Số nào BÉ HƠN: 12 hay 18?',o:['12','18','Bằng nhau','Không biết'],a:0},
+      {id:'la-c09',q:'Đếm tới 20, sau số 15 là số mấy?',o:['14','16','17','20'],a:1},
+      {id:'la-c10',q:'Cầm bút đúng cách dùng mấy ngón tay?',o:['1 ngón','2 ngón','3 ngón','5 ngón'],a:2},
+      {id:'la-c11',q:'Khi tô chữ, bé tô từ đâu sang đâu?',o:['Trái sang phải','Phải sang trái','Dưới lên trên','Lộn xộn'],a:0},
+      {id:'la-c12',q:'Trước khi ngủ trưa, bé nên?',o:['Đánh răng, vệ sinh','Ăn thật no kẹo','Xem điện thoại','Chạy nhảy ầm ĩ'],a:0},
+      {id:'la-c13',q:'Bé tự làm được việc nào? (sẵn sàng vào lớp 1)',o:['Tự xếp dép, cài cúc áo','Để cô làm hết','Khóc nhè','Chạy ra ngoài'],a:0},
+      {id:'la-c14',q:'Đến lớp 1, bé cần chuẩn bị gì?',o:['Sách, vở, bút và đi học đúng giờ','Đồ chơi để chơi cả ngày','Không cần gì','TV và bánh kẹo'],a:0},
+      {id:'la-c15',q:'4 + 4 = ?',o:['6','7','8','9'],a:2},
+      {id:'la-c16',q:'10 − 5 = ?',o:['3','4','5','6'],a:2},
+      {id:'la-c17',q:'Số 10 có mấy chữ số?',o:['1','2','3','10'],a:1},
+      {id:'la-c18',q:'🐔 và 🐔🐔🐔 — bên nào ÍT gà hơn?',o:['Bên 1 con','Bên 3 con','Bằng nhau','Không biết'],a:0}]},
 
   canteen:{emoji:'🍱',name:'Nhà ăn & Bán trú',accent:'#f97316',
     intro:'Nhà ăn bán trú — bé ăn trưa đủ chất, rửa tay sạch và ngủ trưa ngoan để chiều có sức học và chơi.',
@@ -1734,9 +1789,21 @@ const SPACES_PRESCHOOL = {
       {ic:'🏆',name:'Bảng Bé Ngoan',rd:'Bé ngoan của tuần / tháng — cô ghi nhận bé nào chăm chỉ, lễ phép, đoàn kết nhất.',href:'/bang-phong-than.html'}],
     skills:['Ăn uống đủ chất','Vệ sinh & nề nếp'],
     quiz:[
-      {q:'Trước khi ăn cơm, bé cần làm gì?',o:['Rửa tay sạch','Ăn ngay không cần rửa','Xem tivi','Chạy nhảy'],a:0},
-      {q:'Một bữa ăn cân đối nên có?',o:['Chỉ toàn bánh kẹo','Cơm, đạm, rau và canh','Chỉ nước ngọt','Chỉ cơm trắng'],a:1},
-      {q:'Khi nhận cơm từ cô bác, bé nên?',o:['"Cháu cảm ơn cô ạ"','Không nói gì','"Đưa nhanh"','Chạy đi'],a:0}]},
+      {id:'canteen-c01',q:'Trước khi ăn cơm, bé cần làm gì?',o:['Rửa tay sạch','Ăn ngay không cần rửa','Xem tivi','Chạy nhảy'],a:0},
+      {id:'canteen-c02',q:'Một bữa ăn cân đối nên có?',o:['Chỉ toàn bánh kẹo','Cơm, đạm, rau và canh','Chỉ nước ngọt','Chỉ cơm trắng'],a:1},
+      {id:'canteen-c03',q:'Khi nhận cơm từ cô bác, bé nên?',o:['"Cháu cảm ơn cô ạ"','Không nói gì','"Đưa nhanh"','Chạy đi'],a:0},
+      {id:'canteen-c04',q:'Rửa tay đúng cách có mấy bước?',o:['3 bước','4 bước','6 bước','10 bước'],a:2},
+      {id:'canteen-c05',q:'Sau khi đi vệ sinh, bé phải làm gì?',o:['Rửa tay sạch bằng xà phòng','Đi luôn','Ăn cơm liền','Lau tay vào áo'],a:0},
+      {id:'canteen-c06',q:'Trong giờ ngủ trưa, bé nên?',o:['Nằm yên, không nói chuyện','Chơi đùa với bạn','Hát to','Chạy nhảy quanh phòng'],a:0},
+      {id:'canteen-c07',q:'Loại đồ uống tốt nhất cho bé?',o:['Nước lọc, sữa','Nước ngọt có ga','Nước đá có siro','Cà phê'],a:0},
+      {id:'canteen-c08',q:'Bé thấy thức ăn rơi xuống sàn thì?',o:['Bỏ vào thùng rác, lấy phần mới','Vẫn ăn tiếp','Đá ra xa','Khóc ầm lên'],a:0},
+      {id:'canteen-c09',q:'Khi ăn, bé KHÔNG nên?',o:['Vừa ăn vừa chạy nhảy','Nhai kỹ','Ngồi ngay ngắn','Cảm ơn cô'],a:0},
+      {id:'canteen-c10',q:'Bé bị no rồi nhưng cô múc thêm cơm, bé nên?',o:['Lễ phép thưa "Cháu xin đủ rồi ạ"','Đẩy bát ra','Đổ cơm xuống đất','Khóc'],a:0},
+      {id:'canteen-c11',q:'Trước khi đi ngủ trưa, bé nên?',o:['Đi vệ sinh, đánh răng','Ăn thêm kẹo','Xem TV','Chạy nhảy'],a:0},
+      {id:'canteen-c12',q:'Bé thấy bạn không có thìa, bé nên?',o:['Báo cô giáo / chia sẻ với bạn','Mặc kệ bạn','Cười bạn','Lấy thêm cho mình'],a:0},
+      {id:'canteen-c13',q:'Trong nhóm "đạm" (chất giúp bé lớn) gồm?',o:['Thịt, cá, trứng, đậu','Kẹo, bánh','Nước ngọt','Khoai tây chiên'],a:0},
+      {id:'canteen-c14',q:'Rau xanh giúp bé?',o:['Tốt cho tiêu hoá, nhiều vitamin','Béo phì','Sâu răng','Mệt mỏi'],a:0},
+      {id:'canteen-c15',q:'Khi ăn cơm xong, bé nên?',o:['Cảm ơn cô, lau miệng, cất bát','Bỏ chạy ngay','Quăng bát','Ngủ luôn tại bàn'],a:0}]},
 };
 
 const SPACE_SETS = { pharmacy: SPACES_PHARMACY, secondary: SPACES_SECONDARY, it: SPACES_IT, primary: SPACES_PRIMARY, preschool: SPACES_PRESCHOOL };
@@ -1759,7 +1826,6 @@ const roomCard=(r,idx)=> r.href
 
 wrap.style.setProperty('--accent', S.accent);
 wrap.innerHTML = `
-  <div class="top"><a class="back" href="/school.html?domain=${dom}#campus-hero">← Khuôn viên trường</a></div>
   <div class="banner" style="background:linear-gradient(120deg, ${S.accent}33, rgba(255,255,255,.04));--accent:${S.accent}">
     <div class="ic">${S.emoji}</div><h1>${S.name}</h1><p>${S.intro}</p>
   </div>
@@ -2025,24 +2091,150 @@ function initMatch(body,b){
   }));
 }
 
-// quiz
+// ---- Củng cố kiến thức — CÁ NHÂN HOÁ qua spaced-quiz.js (SM-2-lite) ----
+// Trước đây render thẳng S.quiz (3 câu cố định). Giờ:
+//  1. Mỗi câu có id ổn định (vd 'mam-c03') → bind state SRS per (user, card).
+//  2. Khi vào trang: fetch state (server nếu login, localStorage nếu guest).
+//  3. Picker chọn 4-5 câu = ưu tiên câu sai gần đây (🔁) + đến hạn ôn (🎯)
+//     + câu mới (🆕), trộn ngẫu nhiên nhẹ.
+//  4. Sau khi nộp: gửi review từng câu lên server (hoặc local) để SM-2 cập
+//     nhật ease/interval/due_at.
+//  5. Nút "🎲 Đổi bộ câu" pick lại → tránh nhàm khi bé học liên tục.
+const QUIZ_SIZE = 5;                        // mỗi lần hiển thị 5 câu
+const SRS_PREFIX = `space:${dom}:${id}:`;   // vd space:preschool:mam:
 const quizEl=document.getElementById('quiz');
-quizEl.innerHTML = S.quiz.map((q,i)=>`<div class="q" data-i="${i}"><div class="qt">${i+1}. ${q.q}</div>${q.o.map((o,j)=>`<button class="opt" data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div>`).join('')
-  + `<button class="submit" id="qs">Nộp & xem kết quả</button><div class="result" id="qr"></div>`;
-const picked={};
-quizEl.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
-  const qi=+b.dataset.q; picked[qi]=+b.dataset.o;
-  quizEl.querySelectorAll(`.opt[data-q="${qi}"]`).forEach(x=>x.style.outline='none');
-  b.style.outline='2px solid '+S.accent; }));
-document.getElementById('qs').addEventListener('click',()=>{
+let _srsState = null;                       // load 1 lần, reuse khi re-roll
+let _picked = {};                           // index câu trong bộ đang hiển thị → option index
+let _currentBatch = [];                     // mảng câu đang hiển thị
+
+const BADGE_HTML = {
+  lapse: '<span class="qb lapse">🔁 Ôn lại</span>',
+  due:   '<span class="qb due">🎯 Đến hạn</span>',
+  new:   '<span class="qb new">🆕 Câu mới</span>',
+  'review-early': '<span class="qb review-early">✨ Bonus</span>',
+};
+
+function renderQuiz(){
+  if(!_currentBatch.length){
+    quizEl.innerHTML = '<p style="opacity:.7">Chưa có câu hỏi nào — bé thử lại sau nhé.</p>';
+    return;
+  }
+  _picked = {};
+  const dueCount = _currentBatch.filter(c => c._badge==='due' || c._badge==='lapse').length;
+  const newCount = _currentBatch.filter(c => c._badge==='new').length;
+  const stateNote = _srsState && _srsState.source==='local'
+    ? 'Đang lưu ở thiết bị này (bé chưa đăng nhập).'
+    : 'Đồng bộ theo tài khoản của bé. 📡';
+  quizEl.innerHTML = `
+    <div class="quiz-meta">
+      <span>🧠 Bộ câu hôm nay: <b>${dueCount}</b> ôn lại · <b>${newCount}</b> câu mới · ${stateNote}</span>
+      <button class="reroll" id="qreroll" type="button">🎲 Đổi bộ câu</button>
+    </div>
+    ${_currentBatch.map((q,i)=>`
+      <div class="q" data-i="${i}">
+        <div class="qt"><span>${i+1}. ${q.q}</span>${BADGE_HTML[q._badge]||''}</div>
+        ${q.o.map((o,j)=>`<button class="opt" data-q="${i}" data-o="${j}" type="button">${o}</button>`).join('')}
+      </div>`).join('')}
+    <button class="submit" id="qs" type="button">Nộp & xem kết quả</button>
+    <div class="result" id="qr"></div>
+  `;
+  quizEl.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    const qi=+b.dataset.q; _picked[qi]=+b.dataset.o;
+    quizEl.querySelectorAll(`.opt[data-q="${qi}"]`).forEach(x=>x.style.outline='none');
+    b.style.outline='2px solid '+S.accent;
+  }));
+  document.getElementById('qs').addEventListener('click', submitQuiz);
+  document.getElementById('qreroll').addEventListener('click', rerollQuiz);
+}
+
+async function submitQuiz(){
   let correct=0;
-  S.quiz.forEach((q,i)=>{ quizEl.querySelectorAll(`.opt[data-q="${i}"]`).forEach(b=>{ const o=+b.dataset.o;
-    b.classList.remove('correct','wrong'); if(o===q.a) b.classList.add('correct'); else if(picked[i]===o) b.classList.add('wrong'); });
-    if(picked[i]===q.a) correct++; });
+  const sq = await getSpacedQuizModule();
+  _currentBatch.forEach((q,i)=>{
+    quizEl.querySelectorAll(`.opt[data-q="${i}"]`).forEach(b=>{
+      const o=+b.dataset.o;
+      b.classList.remove('correct','wrong');
+      if(o===q.a) b.classList.add('correct');
+      else if(_picked[i]===o) b.classList.add('wrong');
+    });
+    const isCorrect = (_picked[i]===q.a);
+    if(isCorrect) correct++;
+    // Ghi review SRS — fire-and-forget. Server trả state mới, ta cập nhật lại _srsState.
+    if(sq && q.id){
+      sq.recordReview(SRS_PREFIX+q.id, isCorrect).then(updated=>{
+        if(_srsState) _srsState.map[SRS_PREFIX+q.id] = updated;
+      }).catch(()=>{});
+    }
+  });
   const r=document.getElementById('qr'); r.classList.add('show');
-  r.innerHTML = `Bạn đúng <b>${correct}/${S.quiz.length}</b> câu. ${correct===S.quiz.length?'Xuất sắc! ':''}Kỹ năng được củng cố: <b>${S.skills.join(' · ')}</b>.`;
+  const total=_currentBatch.length;
+  const accuracy = total>0 ? Math.round((correct/total)*100) : 0;
+  r.innerHTML = `Bạn đúng <b>${correct}/${total}</b> câu. ${correct===total?'Xuất sắc! ':''}Kỹ năng được củng cố: <b>${S.skills.join(' · ')}</b>. <br><span style="opacity:.8;font-size:13px">Các câu sai sẽ xuất hiện lại sớm, câu đúng sẽ giãn dần theo nhịp ôn tập 1 → 3 → 7 ngày…</span>`;
   try{ const k='tizia:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}'); d[id]=Math.max(d[id]||0, correct); localStorage.setItem(k, JSON.stringify(d)); }catch(e){}
-});
+  // Grant skills theo khung GDPT 2018 — chỉ gọi khi đạt ngưỡng (server cũng chặn).
+  // Fire-and-forget: lỗi (chưa login / network) không block UI. Khi có skill mới
+  // mở khoá → bổ sung dòng toast vào kết quả.
+  if (accuracy >= 70 && window.fetch) {
+    fetch('/api/skills/grant', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'same-origin',
+      body: JSON.stringify({ domain: dom, space_id: id, score: accuracy, source_type: 'attempt', source_id: 'space-quiz' }),
+    }).then(res => res.ok ? res.json() : null).then(data => {
+      if (!data || !data.newly_granted || data.newly_granted.length===0) return;
+      const names = data.newly_granted.map(s => `<b>${esc(s.name)}</b>`).join(', ');
+      const banner = document.createElement('div');
+      banner.style.cssText = 'margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(110,231,183,.15);border:1px solid rgba(110,231,183,.4);font-size:14px';
+      banner.innerHTML = `🎉 Mở khoá ${data.newly_granted.length} kỹ năng mới: ${names}`;
+      r.appendChild(banner);
+      toast(`+${data.newly_granted.length} kỹ năng mới!`);
+    }).catch(()=>{});
+  }
+}
+
+async function rerollQuiz(){
+  const sq = await getSpacedQuizModule();
+  if(!sq) return;
+  // Re-load state để pick lại với due_at mới (sau khi vừa submit).
+  _srsState = await sq.loadSrsState(SRS_PREFIX);
+  // Map id của card → key có prefix để khớp với state.
+  const pool = (S.quiz||[]).filter(q=>q && q.id).map(q=>({...q, id: SRS_PREFIX+q.id}));
+  const picked = sq.pickPersonalizedQuiz(pool, QUIZ_SIZE, _srsState);
+  // Strip prefix khỏi id để render giữ id gốc (vd 'mam-c03').
+  _currentBatch = picked.map(c=>({...c, id: c.id.slice(SRS_PREFIX.length)}));
+  renderQuiz();
+}
+
+let _sqPromise = null;
+function getSpacedQuizModule(){
+  if(!_sqPromise) _sqPromise = import('/js/engine/spaced-quiz.js').catch(e=>{
+    console.warn('[spaced-quiz] import failed', e);
+    return null;
+  });
+  return _sqPromise;
+}
+
+(async function bootQuiz(){
+  // Pool có id → cá nhân hoá. Nếu thiếu id (legacy domain khác) → render đơn giản 5 câu đầu.
+  const pool = (S.quiz||[]).filter(q=>q);
+  const hasIds = pool.length && pool.every(q=>q.id);
+  if(!hasIds){
+    _currentBatch = pool.slice(0, QUIZ_SIZE).map(q=>({...q, _badge:'new'}));
+    renderQuiz();
+    return;
+  }
+  const sq = await getSpacedQuizModule();
+  if(!sq){
+    _currentBatch = pool.slice(0, QUIZ_SIZE).map(q=>({...q, _badge:'new'}));
+    renderQuiz();
+    return;
+  }
+  _srsState = await sq.loadSrsState(SRS_PREFIX);
+  const prefixedPool = pool.map(q=>({...q, id: SRS_PREFIX+q.id}));
+  const picked = sq.pickPersonalizedQuiz(prefixedPool, QUIZ_SIZE, _srsState);
+  _currentBatch = picked.map(c=>({...c, id: c.id.slice(SRS_PREFIX.length)}));
+  renderQuiz();
+})();
 </script>
 <script src="./js/pwa-register.js" defer></script>
 <script src="./js/tutor-floating.js" data-domain="general" defer></script>

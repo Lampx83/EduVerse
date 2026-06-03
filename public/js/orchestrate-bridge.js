@@ -32,7 +32,14 @@
     try { return (localStorage.getItem(KEY_CLASS) || '').toUpperCase(); } catch { return ''; }
   }
   function getName() {
-    try { return localStorage.getItem(KEY_NAME) || 'Ẩn danh'; } catch { return 'Ẩn danh'; }
+    // Ưu tiên tên đã được auth.js syncToLocal set (tizia:playerName) để mỗi user
+    // hiện ra trong roster GV bằng tên thật. KEY_NAME ('player.name') giữ làm
+    // fallback cho code legacy.
+    try {
+      return localStorage.getItem('tizia:playerName')
+          || localStorage.getItem(KEY_NAME)
+          || 'Ẩn danh';
+    } catch { return 'Ẩn danh'; }
   }
   function pageName() {
     return (location.pathname.split('/').pop() || 'index.html').replace(/^\//, '');

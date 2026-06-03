@@ -204,6 +204,7 @@
   import { ScenarioEngine } from './js/engine/index.js';
   import { getScenariosForModule } from './js/scenarios/index.js';
   import { renderWeeklyLesson } from './js/engine/weekly-lesson.js';
+  import { hydrateScenarioFromScoreUp } from './js/engine/scoreup-client.js';
   import { MODULES as PHARMACY_MODULES } from './js/engine/learning-path.js';
   import { getPlayerName, getClassCode } from './js/api.js';
   import { loadActiveDomain, getActiveDomainId, isGamifiedDomain } from './js/engine/domain.js';
@@ -435,7 +436,7 @@
     engine.start();
   }
 
-  function startScenario(id) {
+  async function startScenario(id) {
     picker.innerHTML = '';
     app.innerHTML = '';
     // Ưu tiên dynamic cache (id sinh random) trước khi rơi về scenarios tĩnh
@@ -452,9 +453,22 @@
         scenario,
         grade: moduleMeta?.yearLevel || 2,
         subjectLabel: SUBJECT_LABEL,
-        onStartQuiz: () => runEngine(scenario),
+        // Khi HS bấm "Làm bài kiểm tra": hydrate câu hỏi từ ScoreUp (kho 20k+
+        // câu — xem memory: project_quiz_code_apis) thay vì hardcode. Fallback
+        // về scenario.questions cũ nếu lookup/fetch fail (offline-friendly).
+        onStartQuiz: async () => {
+          const hydrated = await hydrateScenarioFromScoreUp(scenario);
+          runEngine(hydrated);
+        },
         onStartBonus: (bonus) => runEngine(bonus),
       });
+      return;
+    }
+    // Scenario quiz không có lesson (THCS/THPT/đại học) — vẫn thử hydrate từ
+    // ScoreUp nếu có metadata (grade+subject+week), giữ hardcode nếu không.
+    if (scenario.kind === 'quiz' && Number.isFinite(scenario.week)) {
+      const hydrated = await hydrateScenarioFromScoreUp(scenario);
+      runEngine(hydrated);
       return;
     }
     runEngine(scenario);

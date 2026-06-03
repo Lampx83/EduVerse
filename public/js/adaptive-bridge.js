@@ -16,9 +16,15 @@
 
 const BASE = location.pathname.includes('/ps/') ? '/ps' : '';
 
+// Đọc tên user từ `tizia:playerName` (auth.js syncToLocal set khi login). Các
+// key cũ 'player.name' / 'playerName' (không prefix) bị logout xoá → giữ làm
+// fallback nhưng ưu tiên key auth-managed để tránh lẫn user trên cùng browser.
 function learner() {
   try {
-    return (localStorage.getItem('player.name') || localStorage.getItem('playerName') || 'Ẩn danh').slice(0, 40);
+    return (localStorage.getItem('tizia:playerName')
+         || localStorage.getItem('player.name')
+         || localStorage.getItem('playerName')
+         || 'Ẩn danh').slice(0, 40);
   } catch {
     return 'Ẩn danh';
   }

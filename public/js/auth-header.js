@@ -231,11 +231,11 @@ function getPageTitle() {
 function breadcrumbHtml() {
   if (isHomePage()) return '';
   const title = esc(getPageTitle());
+  // Logo Tizia (ev-brand) đã link về trang chủ → không cần thêm "🏠 Trang chủ"
+  // trong breadcrumb (dư). Giữ nút ← cho thao tác "quay lại trang trước".
   return `
     <button class="ev-back" id="ev-back-btn" type="button" title="Quay lại trang trước" aria-label="Quay lại trang trước">←</button>
     <nav class="ev-crumbs" aria-label="Breadcrumb">
-      <a href="./" class="crumb-home" title="Về trang chủ">🏠 Trang chủ</a>
-      <span class="sep">›</span>
       <span class="leaf" aria-current="page">${title}</span>
     </nav>
   `;

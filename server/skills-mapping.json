@@ -1,0 +1,302 @@
+{
+  "pharmacy/admin": [
+    "pharmacy__admin__hieu_co_cau_truong",
+    "pharmacy__admin__phap_che_dang_ky_thuoc",
+    "pharmacy__admin__canh_giac_duoc"
+  ],
+  "pharmacy/lecture": [
+    "pharmacy__lecture__nam_ly_thuyet_cot_loi",
+    "pharmacy__lecture__thuat_ngu_anh_duoc",
+    "pharmacy__lecture__dao_duc_nghe_nghiep"
+  ],
+  "pharmacy/library": [
+    "pharmacy__library__tra_cuu_ebm",
+    "pharmacy__library__thong_ke_nghien_cuu",
+    "pharmacy__library__viet_hoc_thuat"
+  ],
+  "pharmacy/hall": [
+    "pharmacy__hall__thuyet_trinh",
+    "pharmacy__hall__lam_viec_nhom",
+    "pharmacy__hall__bao_cao_khoa_hoc"
+  ],
+  "pharmacy/lab_org": [
+    "pharmacy__lab_org__ky_nang_chuan_do",
+    "pharmacy__lab_org__an_toan_phong_thi_nghiem",
+    "pharmacy__lab_org__nhan_biet_dung_cu"
+  ],
+  "pharmacy/lab_qc": [
+    "pharmacy__lab_qc__chay_doc_tlc",
+    "pharmacy__lab_qc__phuong_phap_dinh_luong",
+    "pharmacy__lab_qc__qc_qa_theo_duoc_dien"
+  ],
+  "pharmacy/lab_micro": [
+    "pharmacy__lab_micro__ky_thuat_vo_khuan",
+    "pharmacy__lab_micro__doc_khang_sinh_do"
+  ],
+  "pharmacy/gmp": [
+    "pharmacy__gmp__quy_trinh_bao_che",
+    "pharmacy__gmp__phan_biet_8_dang_thuoc",
+    "pharmacy__gmp__5_nguyen_tac_gmp"
+  ],
+  "pharmacy/clinpharm": [
+    "pharmacy__clinpharm__phat_hien_tuong_tac_drp",
+    "pharmacy__clinpharm__tu_duy_lam_sang_soap",
+    "pharmacy__clinpharm__hieu_pk_tdm"
+  ],
+  "pharmacy/garden": [
+    "pharmacy__garden__nhan_dien_duoc_lieu",
+    "pharmacy__garden__biet_hoat_chat_nhom",
+    "pharmacy__garden__hieu_yhct_co_ban"
+  ],
+  "pharmacy/clinic": [
+    "pharmacy__clinic__xu_tri_cap_cuu",
+    "pharmacy__clinic__duoc_lam_sang_theo_khoa",
+    "pharmacy__clinic__an_toan_thuoc_lieu_dac_biet"
+  ],
+  "pharmacy/gpp": [
+    "pharmacy__gpp__sap_xep_thuoc_theo_atc",
+    "pharmacy__gpp__cap_phat_tu_van_gpp",
+    "pharmacy__gpp__sang_loc_co_do_chuyen_kham"
+  ],
+  "pharmacy/sim": [
+    "pharmacy__sim__giao_tiep_duoc_benh_nhan_segue",
+    "pharmacy__sim__ky_nang_osce",
+    "pharmacy__sim__so_cap_cuu_cpr_aed"
+  ],
+  "pharmacy/canteen": [
+    "pharmacy__canteen__can_bang_hoc_tap_nghi_ngoi",
+    "pharmacy__canteen__tu_cham_soc_suc_khoe"
+  ],
+  "pharmacy/dorm": [
+    "pharmacy__dorm__tu_quan_ly_hoc_tap",
+    "pharmacy__dorm__duy_tri_dong_luc",
+    "pharmacy__dorm__dinh_huong_nghe_nghiep"
+  ],
+  "pharmacy/museum": [
+    "pharmacy__museum__hieu_lich_su_truyen_thong_nganh",
+    "pharmacy__museum__nhan_biet_hien_vat_nganh_duoc"
+  ],
+  "secondary/grade6": [
+    "secondary__grade6__lam_quen_cap_thcs",
+    "secondary__grade6__tu_hoc_co_ke_hoach"
+  ],
+  "secondary/grade7": [
+    "secondary__grade7__tu_duy_logic",
+    "secondary__grade7__tu_luyen_de_co_phan_hoi"
+  ],
+  "secondary/grade8": [
+    "secondary__grade8__bien_doi_dai_so",
+    "secondary__grade8__doc_hieu_van_ban"
+  ],
+  "secondary/grade9": [
+    "secondary__grade9__tong_hop_kien_thuc",
+    "secondary__grade9__lap_ke_hoach_on_thi"
+  ],
+  "secondary/lab": [
+    "secondary__lab__thao_tac_thi_nghiem_an_toan",
+    "secondary__lab__quan_sat_giai_thich_hien_tuong"
+  ],
+  "secondary/computer": [
+    "secondary__computer__an_toan_so",
+    "secondary__computer__tu_duy_thuat_toan"
+  ],
+  "secondary/english": [
+    "secondary__english__mo_rong_von_tu",
+    "secondary__english__phan_xa_giao_tiep"
+  ],
+  "secondary/artmusic": [
+    "secondary__artmusic__choi_dan_co_ban",
+    "secondary__artmusic__cam_thu_tham_my",
+    "secondary__artmusic__pha_mau_ve_tu_do"
+  ],
+  "secondary/admin": [
+    "secondary__admin__hieu_noi_quy_nha_truong",
+    "secondary__admin__tham_gia_xay_dung_truong_lop"
+  ],
+  "secondary/library": [
+    "secondary__library__doc_hieu_ghi_chep",
+    "secondary__library__phuong_phap_tu_hoc"
+  ],
+  "secondary/tradition": [
+    "secondary__tradition__tu_hao_truyen_thong",
+    "secondary__tradition__noi_guong_nguoi_tot"
+  ],
+  "secondary/youthunion": [
+    "secondary__youthunion__tinh_than_dong_doi",
+    "secondary__youthunion__ki_nang_song_tich_cuc"
+  ],
+  "secondary/gym": [
+    "secondary__gym__van_dong_an_toan",
+    "secondary__gym__tinh_than_the_thao"
+  ],
+  "secondary/tech": [
+    "secondary__tech__ki_thuat_doi_song",
+    "secondary__tech__tu_duy_lam_du_an_stem"
+  ],
+  "secondary/medical": [
+    "secondary__medical__so_cuu_tu_cham_soc",
+    "secondary__medical__loi_song_lanh_manh"
+  ],
+  "secondary/canteen": [
+    "secondary__canteen__an_uong_lanh_manh",
+    "secondary__canteen__ung_xu_van_minh"
+  ],
+  "it/admin": [
+    "it__admin__hieu_chuong_trinh_dao_tao",
+    "it__admin__dinh_huong_nghe_nghiep_cntt"
+  ],
+  "it/lecture": [
+    "it__lecture__nam_ly_thuyet_cot_loi",
+    "it__lecture__thuat_ngu_tieng_anh_cntt",
+    "it__lecture__dao_duc_nghe_nghiep"
+  ],
+  "it/library": [
+    "it__library__tra_cuu_doc_tai_lieu",
+    "it__library__dong_gop_open_source",
+    "it__library__viet_hoc_thuat"
+  ],
+  "it/hall": [
+    "it__hall__thuyet_trinh_ky_thuat",
+    "it__hall__lam_viec_nhom",
+    "it__hall__tinh_than_hackathon"
+  ],
+  "it/codelab": [
+    "it__codelab__viet_debug_code",
+    "it__codelab__dung_git",
+    "it__codelab__thoi_quen_clean_code"
+  ],
+  "it/algolab": [
+    "it__algolab__chon_dung_cau_truc_du_lieu",
+    "it__algolab__phan_tich_big_o",
+    "it__algolab__tu_duy_giai_thuat"
+  ],
+  "it/dblab": [
+    "it__dblab__viet_sql_truy_van",
+    "it__dblab__thiet_ke_chuan_hoa_csdl",
+    "it__dblab__bao_mat_du_lieu"
+  ],
+  "it/netlab": [
+    "it__netlab__hieu_mo_hinh_osi_tcp_ip",
+    "it__netlab__giao_thuc_cong",
+    "it__netlab__co_ban_dia_chi_ip"
+  ],
+  "it/seclab": [
+    "it__seclab__tu_duy_phong_thu_owasp",
+    "it__seclab__mat_ma_can_ban",
+    "it__seclab__dao_duc_an_ninh_mang"
+  ],
+  "it/ailab": [
+    "it__ailab__hieu_quy_trinh_ml",
+    "it__ailab__phan_biet_kieu_hoc",
+    "it__ailab__tranh_overfitting"
+  ],
+  "it/webstudio": [
+    "it__webstudio__lam_chu_html_css_js",
+    "it__webstudio__responsive_a11y",
+    "it__webstudio__hieu_mobile_dev"
+  ],
+  "it/startuphub": [
+    "it__startuphub__tu_duy_mo_hinh_kinh_doanh",
+    "it__startuphub__xay_mvp_hoc_nhanh",
+    "it__startuphub__hieu_cong_nghe_moi"
+  ],
+  "it/cloudcenter": [
+    "it__cloudcenter__hieu_mo_hinh_cloud",
+    "it__cloudcenter__container_hoa_ung_dung",
+    "it__cloudcenter__tu_duy_ci_cd_mo_rong"
+  ],
+  "it/canteen": [
+    "it__canteen__can_bang_hoc_nghi",
+    "it__canteen__tu_cham_soc_suc_khoe"
+  ],
+  "it/dorm": [
+    "it__dorm__tu_quan_ly_hoc_tap",
+    "it__dorm__dat_muc_tieu_smart",
+    "it__dorm__xay_portfolio_nghe_nghiep"
+  ],
+  "it/museum": [
+    "it__museum__hieu_lich_su_nganh",
+    "it__museum__biet_danh_nhan_may_tinh"
+  ],
+  "primary/g1": [
+    "primary__g1__dem_cong_tru_trong_100",
+    "primary__g1__bat_dau_biet_doc"
+  ],
+  "primary/g2": [
+    "primary__g2__9_mon_gdpt_2018_day_du",
+    "primary__g2__moi_mon_36_tuan_hk1_hk2",
+    "primary__g2__1700_cau_hoi_ca_nam_hoc"
+  ],
+  "primary/g3": [
+    "primary__g3__nhan_chia_thanh_thao",
+    "primary__g3__viet_doan_van_ngan"
+  ],
+  "primary/g4": [
+    "primary__g4__phan_so_hinh_hoc",
+    "primary__g4__bat_dau_khoa_hoc_su_dia"
+  ],
+  "primary/g5": [
+    "primary__g5__so_thap_phan_phan_tram",
+    "primary__g5__san_sang_len_lop_6"
+  ],
+  "primary/library": [
+    "primary__library__van_hoa_doc",
+    "primary__library__yeu_sach_tu_hoc"
+  ],
+  "primary/english": [
+    "primary__english__tu_vung_co_ban",
+    "primary__english__mau_cau_chao_hoi"
+  ],
+  "primary/computer": [
+    "primary__computer__dung_internet_an_toan",
+    "primary__computer__biet_cac_bo_phan_may_tinh"
+  ],
+  "primary/admin": [
+    "primary__admin__hieu_noi_quy_truong",
+    "primary__admin__ghi_nho_5_dieu_bac_ho_day"
+  ],
+  "primary/doi": [
+    "primary__doi__sinh_hoat_tap_the",
+    "primary__doi__tinh_than_doi_vien"
+  ],
+  "primary/health": [
+    "primary__health__ve_sinh_ca_nhan",
+    "primary__health__an_uong_lanh_manh"
+  ],
+  "primary/art": [
+    "primary__art__nhan_biet_pha_mau",
+    "primary__art__sang_tao_nghe_thuat"
+  ],
+  "primary/music": [
+    "primary__music__biet_7_not_nhac",
+    "primary__music__hat_giu_nhip"
+  ],
+  "primary/science": [
+    "primary__science__hieu_hien_tuong_tu_nhien",
+    "primary__science__y_thuc_bao_ve_moi_truong"
+  ],
+  "primary/canteen": [
+    "primary__canteen__an_uong_du_chat",
+    "primary__canteen__giu_ve_sinh_an_uong"
+  ],
+  "primary/gym": [
+    "primary__gym__van_dong_dung_cach",
+    "primary__gym__choi_an_toan_doan_ket"
+  ],
+  "preschool/mam": [
+    "preschool__mam__dem_1_5",
+    "preschool__mam__nhan_biet_mau_sac"
+  ],
+  "preschool/choi": [
+    "preschool__choi__dem_toi_10",
+    "preschool__choi__nhan_biet_hinh_tron_vuong_tam_giac"
+  ],
+  "preschool/la": [
+    "preschool__la__dem_toi_20_so_sanh_nhieu_it",
+    "preschool__la__san_sang_vao_lop_1"
+  ],
+  "preschool/canteen": [
+    "preschool__canteen__an_uong_du_chat",
+    "preschool__canteen__ve_sinh_ne_nep"
+  ]
+}

@@ -136,6 +136,9 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/campus-layout/',
   // Danh sách model cho palette editor — không có dữ liệu nhạy cảm.
   '/api/campus-models',
+  // Catalog khung GDPT 2018 (5 phẩm chất + 10 năng lực + 164 sub-skill) — public
+  // để trang giới thiệu năng lực render cho cả khách. /me, /grant, /space vẫn requireAuth.
+  '/api/skills/catalog',
   '/manifest.webmanifest', '/sw.js', '/favicon',
   '/vendor/', '/models/',
 ];

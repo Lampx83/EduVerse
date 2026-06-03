@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>💻 Code Lab · Trường CNTT · Tizia</title>
+<meta name="description" content="Luyện lập trình Python/C++/Java trên NEU Codelab — chạy code thật trong sandbox, chấm tự động bằng test case." />
 <style>
   :root { --bg-1:#0b1220; --bg-2:#0f1830; --accent:#38bdf8; --accent-2:#22c55e;
     --card:rgba(255,255,255,.05); --border:rgba(255,255,255,.12); --ok:#22c55e; --bad:#ef4444; }
@@ -69,7 +70,10 @@
 <body>
 <div class="top">
   <a class="back" id="back" href="/school.html?domain=it#campus-hero">← Khuôn viên trường</a>
-  <div><h1>💻 Code Lab <span class="sub">— viết JavaScript &amp; chạy thật</span></h1></div>
+  <div>
+    <h1>💻 Code Lab <span class="sub">— Python · C++ · Java · NEU Online Judge</span></h1>
+  </div>
+  <select id="langSel" style="margin-left:auto;background:rgba(255,255,255,.08);color:#fff;border:1px solid var(--border);border-radius:9px;padding:7px 10px;font-size:13px;"></select>
   <div class="prog" id="prog">0/0 bài</div>
 </div>
 <div class="layout">
@@ -78,11 +82,12 @@
     <div class="done-banner" id="doneBanner">🎉 <b>Xuất sắc!</b> Bạn đã vượt qua mọi thử thách. Đây là cách một trường CNTT thật vận hành: viết code → chạy → vượt test.</div>
     <div class="prob" id="prob"></div>
     <div class="ed-wrap">
-      <div class="ed-lbl">Trình soạn code · Tab = 2 dấu cách · code chạy trong Web Worker (tự dừng nếu quá 3 giây)</div>
+      <div class="ed-lbl">Trình soạn code · Tab = 2 dấu cách · chạy thật trên NEU Codelab (sandbox Judge0)</div>
       <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
     </div>
     <div class="controls">
-      <button class="btn run" id="runBtn">▶ Chạy &amp; chấm</button>
+      <button class="btn run" id="runBtn">▶ Chạy thử</button>
+      <button class="btn run" id="submitBtn" style="background:var(--accent-2); color:#04210f;">✓ Nộp bài</button>
       <button class="btn ghost" id="resetBtn">↺ Đặt lại</button>
       <button class="btn sol" id="solBtn">Xem gợi ý</button>
       <span class="hint" id="hint"></span>
@@ -93,8 +98,22 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ====== Bộ thử thách (viết hàm → test tự động) ======
-const CHALLENGES = [
+// ====== Code Lab — UI gọi Codelab API thật ======
+// Mọi bài + chạy code + chấm điểm đều đi qua /api/codelab/* (server proxy
+// giấu X-API-Key + gắn externalUserRef = "tizia:user:<id>" từ session).
+// Spec: https://fit.neu.edu.vn/codelab/api-backend/docs
+
+// Contest dành riêng cho module Tizia-CNTT — Codelab tạo contest này với
+// các bài Python cơ bản (I1.1) + giải thuật (I2.1). Đổi ?contest=<slug> qua
+// query string nếu muốn xem contest khác (vd code-race).
+const PARAMS = new URLSearchParams(location.search);
+const CONTEST_SLUG = PARAMS.get('contest') || 'tizia-it-i11'; // convention
+const PREFERRED_LANGS = ['python', 'cpp', 'c++', 'java', 'javascript']; // ưu tiên hiển thị
+
+// Fallback bộ thử thách OFFLINE — chỉ hiển thị khi server Codelab chưa cấu
+// hình (CODELAB_API_KEY rỗng → /api/codelab/problems trả 503). Bộ này
+// chạy local trong Web Worker để demo UI vẫn dùng được khi dev offline.
+const FALLBACK_CHALLENGES = [
   { id:'sumTwo', cat:'Cơ bản', title:'Tổng hai số', fnName:'sumTwo',
     desc:'Viết hàm <code>sumTwo(a, b)</code> trả về tổng của hai số.',
     starter:'function sumTwo(a, b) {\n  // viết code ở đây\n  \n}',
@@ -150,50 +169,327 @@ const CHALLENGES = [
     sol:'function sortAsc(arr) {\n  return [...arr].sort((a, b) => a - b);\n}' },
 ];
 
-const DONE_KEY = 'tizia:it:codelab:solved';
-const codeKey = id => 'tizia:it:codelab:code:' + id;
-function loadSolved(){ try { return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]')); } catch(e){ return new Set(); } }
-function saveSolved(set){ try { localStorage.setItem(DONE_KEY, JSON.stringify([...set])); } catch(e){} }
-let solved = loadSolved();
-let current = CHALLENGES[0];
+// ====== State runtime ======
+let MODE = 'codelab';                   // 'codelab' | 'offline'
+let PROBLEMS = [];                      // [{ slug, name, difficulty, tag, ... }] từ API
+let LANGUAGES = [];                     // [{ id, name, label }] từ /api/codelab/languages
+let CURRENT_LANG = null;                // language object đang chọn
+let CURRENT = null;                     // problem hoặc challenge đang mở
+let SOLVED = new Set();                 // slug đã accepted (lấy từ /me/stats + cache local)
+let CHALLENGES = [];                    // list được render — bind theo MODE
 
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const fmt = v => { try { return JSON.stringify(v); } catch(e){ return String(v); } };
+// ====== Helpers ======
+const $   = id => document.getElementById(id);
+const esc = s  => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const fmt = v  => { try { return JSON.stringify(v); } catch(e){ return String(v); } };
+const codeKey = id => `tizia:it:codelab:code:${MODE}:${(CURRENT_LANG && CURRENT_LANG.id) || 'def'}:${id}`;
+const LOCAL_SOLVED_KEY = 'tizia:it:codelab:solved';
+
+function loadLocalSolved(){
+  try { return new Set(JSON.parse(localStorage.getItem(LOCAL_SOLVED_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function saveLocalSolved(set){
+  try { localStorage.setItem(LOCAL_SOLVED_KEY, JSON.stringify([...set])); } catch {}
+}
+
+let toastT;
+function showToast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+async function fetchJson(url, opts){
+  const res = await fetch(url, { credentials:'same-origin', ...opts });
+  let body = null;
+  try { body = await res.json(); } catch {}
+  if (!res.ok) throw Object.assign(new Error(body?.message || body?.error || res.statusText), { status: res.status, body });
+  return body;
+}
+
+// ====== BOOT ======
+async function boot(){
+  // Probe ngôn ngữ trước — nếu 503 codelab_not_configured → fallback offline.
+  try {
+    const langs = await fetchJson('/api/codelab/languages');
+    LANGUAGES = (langs?.items || langs || []).map(l => ({
+      id:    Number(l.id),
+      name:  String(l.name || '').toLowerCase(),
+      label: l.name || `Lang ${l.id}`,
+    }));
+    if (!LANGUAGES.length) throw new Error('no_languages');
+  } catch (e) {
+    console.warn('[codelab] languages fetch failed, fallback offline:', e.message);
+    return bootOfflineMode();
+  }
+
+  // Sắp ngôn ngữ ưa thích lên đầu.
+  LANGUAGES.sort((a,b) => {
+    const ai = PREFERRED_LANGS.findIndex(p => a.name.includes(p));
+    const bi = PREFERRED_LANGS.findIndex(p => b.name.includes(p));
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+  CURRENT_LANG = LANGUAGES[0];
+  renderLangSelect();
+
+  // Load problems từ contest Tizia.
+  try {
+    const data = await fetchJson(`/api/codelab/problems?contest=${encodeURIComponent(CONTEST_SLUG)}&limit=50`);
+    PROBLEMS = (data?.items || data?.data || data || []).filter(p => p && p.slug);
+    if (!PROBLEMS.length) {
+      // Contest rỗng → load tất cả problems (mode catalog).
+      const all = await fetchJson('/api/codelab/problems?limit=50');
+      PROBLEMS = (all?.items || all?.data || []).filter(p => p && p.slug);
+    }
+  } catch (e) {
+    console.warn('[codelab] problems fetch failed:', e.message);
+  }
+
+  if (!PROBLEMS.length) return bootOfflineMode();
+
+  CHALLENGES = PROBLEMS.map(p => ({
+    id: p.slug,
+    slug: p.slug,
+    cat: (p.tags && p.tags[0]?.name) || p.difficulty || 'Codelab',
+    title: p.name || p.slug,
+    desc: p.description || p.statement || 'Mở bài để xem đề chi tiết.',
+    difficulty: p.difficulty,
+    starter: '',
+  }));
+
+  // Load đã giải từ server (Codelab là nguồn chân lý).
+  try {
+    const stats = await fetchJson('/api/codelab/me/stats');
+    // me/stats chỉ trả count — chi tiết slug em lấy qua submissions latest.
+    // Đơn giản hoá: cộng dồn từ localStorage + cập nhật khi submit.
+    SOLVED = loadLocalSolved();
+    if (stats?.acceptedProblems != null) {
+      $('prog').title = `Đã pass: ${stats.acceptedProblems} bài Codelab (toàn thời gian)`;
+    }
+  } catch { SOLVED = loadLocalSolved(); }
+
+  renderList();
+  if (CHALLENGES.length) selectChallenge(CHALLENGES[0].id);
+}
+
+function bootOfflineMode(){
+  MODE = 'offline';
+  CHALLENGES = FALLBACK_CHALLENGES;
+  SOLVED = loadLocalSolved();
+  $('langSel').style.display = 'none';
+  document.querySelector('.top h1 .sub').textContent = '— chế độ offline (Codelab chưa cấu hình)';
+  $('submitBtn').style.display = 'none'; // offline không nộp được
+  renderList();
+  if (CHALLENGES.length) selectChallenge(CHALLENGES[0].id);
+}
+
+// ====== Render ======
+function renderLangSelect(){
+  $('langSel').innerHTML = LANGUAGES.map(l =>
+    `<option value="${l.id}">${esc(l.label)}</option>`).join('');
+  $('langSel').value = String(CURRENT_LANG.id);
+  $('langSel').addEventListener('change', e => {
+    CURRENT_LANG = LANGUAGES.find(l => l.id === Number(e.target.value)) || LANGUAGES[0];
+    if (CURRENT) loadCodeForCurrent();
+  });
+}
 
 function renderList(){
   const cats = [...new Set(CHALLENGES.map(c => c.cat))];
   $('list').innerHTML = cats.map(cat =>
-    `<h2>${cat}</h2>` + CHALLENGES.filter(c => c.cat === cat).map(c =>
-      `<div class="ch ${solved.has(c.id)?'solved':''} ${c.id===current.id?'active':''}" data-id="${c.id}">
-        <span class="st">${solved.has(c.id)?'✓':''}</span>
+    `<h2>${esc(cat)}</h2>` + CHALLENGES.filter(c => c.cat === cat).map(c =>
+      `<div class="ch ${SOLVED.has(c.id)?'solved':''} ${CURRENT && c.id===CURRENT.id?'active':''}" data-id="${esc(c.id)}">
+        <span class="st">${SOLVED.has(c.id)?'✓':''}</span>
         <span class="nm">${esc(c.title)}</span>
+        ${c.difficulty ? `<span class="lv">${esc(c.difficulty)}</span>` : ''}
       </div>`).join('')).join('');
-  $('list').querySelectorAll('.ch').forEach(el => el.addEventListener('click', () => select(el.dataset.id)));
-  $('prog').textContent = `${solved.size}/${CHALLENGES.length} bài`;
-  $('doneBanner').classList.toggle('show', solved.size === CHALLENGES.length);
+  $('list').querySelectorAll('.ch').forEach(el =>
+    el.addEventListener('click', () => selectChallenge(el.dataset.id)));
+  $('prog').textContent = `${SOLVED.size}/${CHALLENGES.length} bài`;
+  $('doneBanner').classList.toggle('show', SOLVED.size > 0 && SOLVED.size === CHALLENGES.length);
 }
 
-function select(id){
+async function selectChallenge(id){
   const ch = CHALLENGES.find(c => c.id === id); if(!ch) return;
-  current = ch;
-  $('prob').innerHTML = `<h3>${esc(ch.title)}<span class="tag">${esc(ch.cat)}</span></h3><p>${ch.desc}</p>
-    <p class="ex">Ví dụ test: <code>${esc(ch.fnName)}(${esc(fmt(ch.tests[0].args).slice(1,-1))})</code> → <code>${esc(fmt(ch.tests[0].expected))}</code></p>`;
-  let saved = ''; try { saved = localStorage.getItem(codeKey(id)) || ''; } catch(e){}
-  $('code').value = saved || ch.starter;
+  CURRENT = ch;
+  renderList();
+
+  // Codelab: lazy-load description khi click (tránh tải dư cả 50 bài).
+  if (MODE === 'codelab' && !ch._loaded) {
+    try {
+      const detail = await fetchJson(`/api/codelab/problems/${encodeURIComponent(ch.slug)}`);
+      const p = detail?.data || detail;
+      ch.desc = p?.statement || p?.description || ch.desc;
+      ch.starter = pickStarter(p, CURRENT_LANG);
+      ch.samples = p?.sampleTests || p?.samples || [];
+      ch._loaded = true;
+    } catch (e) {
+      $('prob').innerHTML = `<h3>${esc(ch.title)}</h3><p>⚠️ Không tải được đề: ${esc(e.message)}</p>`;
+      return;
+    }
+  }
+
+  const sampleHtml = (ch.samples && ch.samples[0])
+    ? `<p class="ex"><b>Ví dụ:</b><br><span class="k">vào:</span> <code>${esc(ch.samples[0].input || '')}</code><br><span class="k">ra:</span> <code>${esc(ch.samples[0].output || '')}</code></p>`
+    : (ch.tests && ch.tests[0])
+      ? `<p class="ex">Ví dụ: <code>${esc(ch.fnName)}(${esc(fmt(ch.tests[0].args).slice(1,-1))})</code> → <code>${esc(fmt(ch.tests[0].expected))}</code></p>`
+      : '';
+  $('prob').innerHTML = `<h3>${esc(ch.title)}${ch.cat ? `<span class="tag">${esc(ch.cat)}</span>` : ''}</h3>
+    <div>${escDesc(ch.desc)}</div>${sampleHtml}`;
+
+  loadCodeForCurrent();
   $('results').classList.remove('show'); $('results').innerHTML = '';
   $('hint').textContent = '';
-  renderList();
 }
 
-// Tab → 2 spaces
-$('code').addEventListener('keydown', e => {
-  if (e.key === 'Tab'){ e.preventDefault(); const t = e.target, s = t.selectionStart, en = t.selectionEnd;
-    t.value = t.value.slice(0,s) + '  ' + t.value.slice(en); t.selectionStart = t.selectionEnd = s + 2; }
-});
-$('code').addEventListener('input', () => { try { localStorage.setItem(codeKey(current.id), $('code').value); } catch(e){} });
+function loadCodeForCurrent(){
+  let saved = '';
+  try { saved = localStorage.getItem(codeKey(CURRENT.id)) || ''; } catch {}
+  $('code').value = saved || CURRENT.starter || '';
+}
 
-// ====== Chạy code an toàn trong Web Worker (có timeout) ======
+// Lời giải khởi tạo (skeleton) tuỳ ngôn ngữ. Codelab có thể trả starterCode
+// theo `languages[].starterCode`. Nếu không có thì để trống.
+function pickStarter(problem, lang){
+  if (!problem || !lang) return '';
+  const langs = problem.languages || problem.starterByLang || [];
+  const hit = langs.find?.(l => Number(l.id) === lang.id || (l.name||'').toLowerCase().includes(lang.name));
+  return hit?.starterCode || hit?.starter || '';
+}
+
+// Cho phép desc có HTML từ Codelab (đã sanitize phía Codelab — tin tưởng).
+// Nếu là plain text → bọc <p>.
+function escDesc(s){
+  if (!s) return '';
+  if (/<\w+/.test(s)) return s; // có tag → giữ nguyên
+  return `<p>${esc(s).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+}
+
+// ====== Run / Submit ======
+async function runOnce(){
+  if (MODE === 'offline') return runOffline();
+
+  const code = $('code').value;
+  if (!code.trim()) { showToast('Hãy viết code trước nhé'); return; }
+
+  $('runBtn').disabled = true; $('runBtn').textContent = '⏳ Đang chạy…';
+  try {
+    // Codelab: dùng /run-code với expected_output = sample đầu (nếu có) để FE
+    // tự render pass/fail; còn /submit mới chấm toàn bộ testcase ẩn.
+    const sample = CURRENT.samples?.[0];
+    const data = await fetchJson('/api/codelab/run', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        source_code: code,
+        language_id: CURRENT_LANG.id,
+        stdin: sample?.input || '',
+        expected_output: sample?.output || undefined,
+        wait: true,
+      }),
+    });
+    renderRunResult(data, sample);
+  } catch (e) {
+    $('results').classList.add('show');
+    $('results').innerHTML = `<div class="res-head fail">⛔ Lỗi: ${esc(e.message)}</div>`;
+  } finally {
+    $('runBtn').disabled = false; $('runBtn').textContent = '▶ Chạy thử';
+  }
+}
+
+async function submitOnce(){
+  if (MODE === 'offline') { showToast('Chế độ offline không nộp bài'); return; }
+  const code = $('code').value;
+  if (!code.trim()) { showToast('Hãy viết code trước nhé'); return; }
+  $('submitBtn').disabled = true; $('submitBtn').textContent = '⏳ Đang chấm…';
+  try {
+    const data = await fetchJson('/api/codelab/submit', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        problemSlug: CURRENT.slug,
+        contestSlug: CONTEST_SLUG,
+        language_id: CURRENT_LANG.id,
+        source_code: code,
+      }),
+    });
+    // Submission tạo xong nhưng có thể chưa chấm xong (Judge0 async). Poll
+    // 5 lần × 1.5s cho đến khi status cuối.
+    const subId = data?.id || data?.submissionId;
+    if (!subId) throw new Error('Codelab không trả submission ID');
+    showToast('Đã nộp — đang chấm…');
+    let final = null;
+    for (let i = 0; i < 10; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      try {
+        const cur = await fetchJson(`/api/codelab/submissions/${encodeURIComponent(subId)}`);
+        const s = (cur?.status || '').toLowerCase();
+        if (s && s !== 'queued' && s !== 'running' && s !== 'pending') { final = cur; break; }
+      } catch {}
+    }
+    if (!final) {
+      $('results').classList.add('show');
+      $('results').innerHTML = `<div class="res-head">⏳ Đang chấm, chưa có kết quả. Mở lại tab sau ít phút nhé (webhook sẽ tự cộng XP khi xong).</div>`;
+      return;
+    }
+    renderSubmitResult(final);
+  } catch (e) {
+    $('results').classList.add('show');
+    $('results').innerHTML = `<div class="res-head fail">⛔ Nộp bài lỗi: ${esc(e.message)}</div>`;
+  } finally {
+    $('submitBtn').disabled = false; $('submitBtn').textContent = '✓ Nộp bài';
+  }
+}
+
+function renderRunResult(data, sample){
+  const box = $('results'); box.classList.add('show');
+  // Judge0 status: id 3=Accepted. Có thể nằm trong data.status hoặc data.result.
+  const r = data?.result || data;
+  const stdout = r?.stdout || r?.output || '';
+  const stderr = r?.stderr || r?.compile_output || '';
+  const statusName = r?.status?.description || r?.statusName || (r?.status?.id === 3 ? 'Accepted' : 'Run done');
+  const passed = sample && sample.output && stdout.trim() === String(sample.output).trim();
+  const head = passed
+    ? `<div class="res-head pass">✅ Khớp ví dụ mẫu (${esc(statusName)})</div>`
+    : sample
+      ? `<div class="res-head fail">⚠️ ${esc(statusName)} — chưa khớp ví dụ mẫu</div>`
+      : `<div class="res-head">▶ ${esc(statusName)}</div>`;
+  box.innerHTML = head +
+    (sample ? `<div class="case ${passed?'pass':'fail'}"><div class="mark">${passed?'✓':'✗'}</div>
+      <div class="det">
+        <div><span class="k">stdin:</span> ${esc(sample.input || '')}</div>
+        <div><span class="k">mong đợi:</span> <code>${esc(sample.output || '')}</code></div>
+        <div><span class="k">nhận:</span> <code>${esc(stdout)}</code></div>
+      </div></div>` : '') +
+    (stdout ? `<div class="console show"><div class="ttl">stdout</div>${esc(stdout)}</div>` : '') +
+    (stderr ? `<div class="console show"><div class="ttl">stderr</div>${esc(stderr)}</div>` : '');
+}
+
+function renderSubmitResult(sub){
+  const box = $('results'); box.classList.add('show');
+  const status = (sub.status || '').toLowerCase();
+  const passed = sub.passedCases ?? sub.passed_test_cases ?? 0;
+  const total  = sub.totalCases  ?? sub.total_test_cases  ?? 0;
+  const accepted = status === 'accepted';
+  const head = accepted
+    ? `<div class="res-head pass">✅ Vượt tất cả ${passed}/${total} test! (Codelab Accepted)</div>`
+    : `<div class="res-head fail">⚠️ ${esc(sub.status || 'Failed')} — ${passed}/${total} test</div>`;
+  box.innerHTML = head + (sub.message ? `<div class="console show"><div class="ttl">message</div>${esc(sub.message)}</div>` : '');
+
+  if (accepted && !SOLVED.has(CURRENT.id)) {
+    SOLVED.add(CURRENT.id); saveLocalSolved(SOLVED); renderList();
+    showToast(SOLVED.size === CHALLENGES.length ? '🏆 Hoàn thành toàn bộ Code Lab!' : '✓ Đã giải: ' + CURRENT.title);
+    // Cập nhật badge sảnh trường — webhook cộng XP riêng phía server.
+    try {
+      const k='tizia:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}');
+      d.codelab = Math.max(d.codelab || 0, SOLVED.size);
+      d.algolab = Math.max(d.algolab || 0, SOLVED.size);
+      localStorage.setItem(k, JSON.stringify(d));
+    } catch {}
+  }
+}
+
+// ====== Offline mode (fallback engine cũ) ======
 const WORKER_SRC = `self.onmessage = function(e){
   var d = e.data, logs = [];
   var cap = function(){ logs.push([].slice.call(arguments).map(function(x){ try { return typeof x==='object'? JSON.stringify(x): String(x); } catch(_){ return String(x);} }).join(' ')); };
@@ -212,65 +508,77 @@ const WORKER_SRC = `self.onmessage = function(e){
   } catch(err){ self.postMessage({ ok:false, error:String(err), logs:logs }); }
 };`;
 
-function runInWorker(code, ch){
+function runOffline(){
+  const code = $('code').value;
   return new Promise(resolve => {
     let w;
     try { w = new Worker(URL.createObjectURL(new Blob([WORKER_SRC], {type:'application/javascript'}))); }
     catch(e){ resolve({ ok:false, error:'Không tạo được Worker: ' + e, logs:[] }); return; }
-    const timer = setTimeout(() => { w.terminate(); resolve({ ok:false, error:'Hết thời gian (3s) — kiểm tra vòng lặp vô hạn?', logs:[] }); }, 3000);
+    const timer = setTimeout(() => { w.terminate(); resolve({ ok:false, error:'Hết thời gian (3s)', logs:[] }); }, 3000);
     w.onmessage = ev => { clearTimeout(timer); w.terminate(); resolve(ev.data); };
     w.onerror = ev => { clearTimeout(timer); w.terminate(); resolve({ ok:false, error: ev.message || 'Lỗi khi chạy code', logs:[] }); };
-    w.postMessage({ code, fnName: ch.fnName, tests: ch.tests });
+    w.postMessage({ code, fnName: CURRENT.fnName, tests: CURRENT.tests });
+  }).then(data => {
+    const box = $('results'); box.classList.add('show');
+    if (!data.ok) { box.innerHTML = `<div class="res-head fail">⛔ Lỗi: ${esc(data.error)}</div>`; return; }
+    const passed = data.results.filter(r => r.pass).length;
+    const allPass = passed === data.results.length;
+    const rows = data.results.map(r => `<div class="case ${r.pass?'pass':'fail'}"><div class="mark">${r.pass?'✓':'✗'}</div>
+      <div class="det">
+        <div><span class="k">vào:</span> ${esc(CURRENT.fnName)}(${esc(fmt(r.args).slice(1,-1))})</div>
+        <div><span class="k">mong đợi:</span> ${esc(fmt(r.expected))} <span class="k">nhận:</span> ${esc(fmt(r.got))}</div>
+      </div></div>`).join('');
+    box.innerHTML = `<div class="res-head ${allPass?'pass':'fail'}">${allPass?'✅ Vượt '+passed+'/'+data.results.length+' test!':'⚠️ Đúng '+passed+'/'+data.results.length+' test'}</div>${rows}`;
+    if (allPass && !SOLVED.has(CURRENT.id)) {
+      SOLVED.add(CURRENT.id); saveLocalSolved(SOLVED); renderList();
+      showToast('✓ Đã giải: ' + CURRENT.title);
+    }
   });
 }
 
-async function run(){
-  const code = $('code').value;
-  $('runBtn').disabled = true; $('runBtn').textContent = '⏳ Đang chạy…';
-  const data = await runInWorker(code, current);
-  $('runBtn').disabled = false; $('runBtn').textContent = '▶ Chạy & chấm';
-  const box = $('results'); box.classList.add('show');
-  const logsHtml = (data.logs && data.logs.length)
-    ? `<div class="console show"><div class="ttl">console.log</div>${esc(data.logs.join('\n'))}</div>` : '';
-  if (!data.ok){
-    box.innerHTML = `<div class="res-head fail">⛔ Lỗi: ${esc(data.error || 'không xác định')}</div>${logsHtml}`;
+// ====== Wiring ======
+$('code').addEventListener('keydown', e => {
+  if (e.key === 'Tab'){ e.preventDefault(); const t = e.target, s = t.selectionStart, en = t.selectionEnd;
+    t.value = t.value.slice(0,s) + '  ' + t.value.slice(en); t.selectionStart = t.selectionEnd = s + 2; }
+});
+$('code').addEventListener('input', () => {
+  if (CURRENT) try { localStorage.setItem(codeKey(CURRENT.id), $('code').value); } catch {}
+});
+
+$('runBtn').addEventListener('click', runOnce);
+$('submitBtn').addEventListener('click', submitOnce);
+$('resetBtn').addEventListener('click', () => {
+  if (!CURRENT) return;
+  $('code').value = CURRENT.starter || '';
+  try { localStorage.removeItem(codeKey(CURRENT.id)); } catch {}
+  $('code').focus();
+});
+$('solBtn').addEventListener('click', async () => {
+  if (!CURRENT) return;
+  if (MODE === 'offline') {
+    if ($('hint').dataset.shown === CURRENT.id) { $('code').value = CURRENT.sol; $('hint').textContent='Đã chèn lời giải mẫu — đọc hiểu rồi tự viết lại.'; }
+    else { $('hint').dataset.shown = CURRENT.id; $('hint').textContent='Bấm lần nữa để chèn lời giải mẫu.'; }
     return;
   }
-  const passed = data.results.filter(r => r.pass).length;
-  const allPass = passed === data.results.length;
-  const rows = data.results.map(r => `
-    <div class="case ${r.pass?'pass':'fail'}">
-      <div class="mark">${r.pass?'✓':'✗'}</div>
-      <div class="det">
-        <div><span class="k">vào:</span> ${esc(current.fnName)}(${esc(fmt(r.args).slice(1,-1))})</div>
-        <div><span class="k">mong đợi:</span> ${esc(fmt(r.expected))} &nbsp; <span class="k">nhận:</span> ${esc(fmt(r.got))}</div>
-      </div>
-    </div>`).join('');
-  box.innerHTML = `<div class="res-head ${allPass?'pass':'fail'}">${allPass?'✅ Vượt tất cả '+passed+'/'+data.results.length+' test!':'⚠️ Đúng '+passed+'/'+data.results.length+' test'}</div>${rows}${logsHtml}`;
-  if (allPass && !solved.has(current.id)){
-    solved.add(current.id); saveSolved(solved); renderList();
-    showToast(solved.size === CHALLENGES.length ? '🏆 Hoàn thành toàn bộ Code Lab!' : '✓ Đã giải: ' + current.title);
-    try { const k='tizia:space:done'; const d=JSON.parse(localStorage.getItem(k)||'{}');
-      d.codelab=Math.max(d.codelab||0, solved.size); d.algolab=Math.max(d.algolab||0, solved.size);
-      localStorage.setItem(k, JSON.stringify(d)); } catch(e){}
-  } else if (allPass){ renderList(); }
-}
-
-let toastT;
-function showToast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
-
-$('runBtn').addEventListener('click', run);
-$('resetBtn').addEventListener('click', () => { $('code').value = current.starter; try{ localStorage.removeItem(codeKey(current.id)); }catch(e){} $('code').focus(); });
-$('solBtn').addEventListener('click', () => {
-  if ($('hint').dataset.shown === current.id){ $('code').value = current.sol; $('hint').textContent='Đã chèn lời giải mẫu — hãy đọc hiểu rồi tự viết lại.'; }
-  else { $('hint').dataset.shown = current.id; $('hint').textContent='Bấm lần nữa để chèn lời giải mẫu vào trình soạn.'; }
+  // Codelab: hỏi /answer — server tự enforce "phải pass mới được xem".
+  try {
+    const data = await fetchJson(`/api/codelab/problems/${encodeURIComponent(CURRENT.slug)}/answer`);
+    const ans = data?.answers?.find(a => Number(a.languageId) === CURRENT_LANG.id) || data?.answers?.[0];
+    const code = ans?.files?.[0]?.content || ans?.code || '';
+    if (code) { $('code').value = code; $('hint').textContent = 'Đã chèn lời giải mẫu Codelab.'; }
+    else { $('hint').textContent = 'Bài này chưa có đáp án mẫu.'; }
+  } catch (e) {
+    if (e.body?.code === 'USER_HAS_NOT_SOLVED' || e.status === 403) {
+      $('hint').textContent = 'Phải pass bài này trước thì Codelab mới cho xem lời giải.';
+    } else $('hint').textContent = '⚠️ Lấy lời giải lỗi: ' + e.message;
+  }
 });
-document.addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey) && e.key === 'Enter') run(); });
+document.addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey) && e.key === 'Enter') runOnce(); });
 
 // giữ tham số domain cho nút back
-(function(){ const d=new URLSearchParams(location.search).get('domain'); if(d) $('back').href='/school.html?domain='+encodeURIComponent(d)+'#campus-hero'; })();
+(function(){ const d=PARAMS.get('domain'); if(d) $('back').href='/school.html?domain='+encodeURIComponent(d)+'#campus-hero'; })();
 
-renderList(); select(CHALLENGES[0].id);
+boot();
 </script>
 </body>
 </html>

@@ -604,14 +604,33 @@ function _satisfies(trigger, ctx) {
 export function getProgress() {
   try {
     const raw = lsGet(PROGRESS_KEY);
-    return raw ? JSON.parse(raw) : {};
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    // Cross-user pollution guard: progress stamp uid khi save. Nếu uid hiện tại
+    // khác → vứt, trả map rỗng (server scenario-runs / wallet là nguồn chân lý
+    // cho XP/coin; progress chỉ là cache stars để render module list).
+    const curUid = _currentUid();
+    if (curUid != null && obj && obj._uid != null && obj._uid !== curUid) {
+      try { localStorage.removeItem(PROGRESS_KEY); } catch {}
+      return {};
+    }
+    // Loại field nội bộ _uid khỏi map trả ra để caller không lẫn vào module id.
+    const { _uid, ...stars } = obj || {};
+    return stars;
   } catch {
     return {};
   }
 }
 
 export function setProgress(p) {
-  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch {}
+  // Stamp uid; nếu chưa biết user (chưa login xong) → bỏ qua giống wallet, tránh
+  // tạo ví "vô chủ" lẫn sang user kế.
+  const curUid = _currentUid();
+  if (curUid == null) return;
+  if (_isStaleTab()) return;
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...p, _uid: curUid }));
+  } catch {}
 }
 
 /** Cập nhật stars cho 1 module (chỉ nếu cao hơn lần trước). */

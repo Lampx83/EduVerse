@@ -86,12 +86,61 @@ export async function logout() {
   } catch {}
   _me = null;
   _mePromise = null;
-  // Clear ví + uid cache trong localStorage để user kế tiếp login trên cùng
-  // browser không bị "kế thừa" số liệu (fix cross-user wallet pollution).
-  // KHÔNG xoá class code — học sinh đăng nhập lại vẫn ở lớp cũ.
+  // Xoá cache `tizia:me` + ví local. clearLocalWallet cũng reset _tabOwnerUid
+  // và session guards trong wallet.js.
   try { localStorage.removeItem('tizia:me'); } catch {}
   clearLocalWallet();
+  // Xoá toàn bộ key local có nguy cơ "lẫn" sang user kế tiếp đăng nhập trên
+  // cùng browser. Server vẫn giữ wallet/srs/scn-runs/attempts → user đăng nhập
+  // lại trên bất kỳ máy nào sẽ được pull nguyên trạng.
+  clearAccountScopedKeys();
   location.replace('login.html');
+}
+
+// Mọi key sống ngoài cookie phiên (chứa progress, identity, draft, history…)
+// đều phải xoá khi logout VÀ khi phát hiện swap user trên cùng tab. Liệt kê
+// thẳng tên thay vì scan prefix vì có cả legacy không có prefix `tizia:`.
+const ACCOUNT_SCOPED_LS_KEYS = [
+  // Identity / orchestrate
+  'class.code', 'player.name', 'playerName', 'player.uid',
+  // AI tutor chat history
+  'tizia.tutor.history.v1',
+  // SRS spaced repetition fallback (server là nguồn chân lý)
+  'tizia:srs:v1',
+  // Scenario runs cache (server là nguồn chân lý, có MAX merge)
+  'tizia:scn-runs',
+  // Stars module progress
+  'tizia:progress',
+  // Mini-game local-only state (math-fun, code-lab, space-quest, do-chu)
+  'math2.stars', 'math2.correct',
+  'math6.gold', 'math6.xp', 'math6.maxStreak',
+  'tizia:space:done',
+  // Difficulty / SFX / level đều có thể khác giữa user → reset
+  'tizia:difficulty', 'tizia:level',
+];
+
+function clearAccountScopedKeys() {
+  for (const k of ACCOUNT_SCOPED_LS_KEYS) {
+    try { localStorage.removeItem(k); } catch {}
+  }
+  // Quét prefix động: math6.topic.<id>, math2.topic.<id>, code-lab code drafts
+  // (tizia:codelab:* nếu sau này đổi), welcome:*, web-playground draft.
+  try {
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.startsWith('math2.topic.') ||
+          k.startsWith('math6.topic.') ||
+          k.startsWith('tizia:welcome:') ||
+          k.startsWith('codelab:') ||
+          k.startsWith('webplayground:') ||
+          k.startsWith('do-chu-ghep-van.')) {
+        toRemove.push(k);
+      }
+    }
+    for (const k of toRemove) localStorage.removeItem(k);
+  } catch {}
 }
 
 // Người dùng tự sửa hồ sơ (tên hiển thị + tuổi + email). Cập nhật cache _me khi thành công.
@@ -136,7 +185,12 @@ function syncToLocal(user) {
   // Tránh loadWalletFromServer() merge max(local_user_cũ, remote_user_mới).
   try {
     const prev = JSON.parse(localStorage.getItem('tizia:me') || 'null');
-    if (prev && prev.id !== user.id) clearLocalWallet();
+    if (prev && prev.id !== user.id) {
+      clearLocalWallet();
+      // Đổi user trên cùng tab → tất cả key global cũng phải dọn để bridge
+      // (orchestrate/adaptive/tutor/srs/mini-game) không "kế thừa" của user cũ.
+      clearAccountScopedKeys();
+    }
   } catch {}
   // Set `tizia:me` để wallet.js (_currentUid) biết user hiện tại — trước đây
   // chưa từng được set, khiến `_applySessionGuard` thấy curUid=null hoài.

@@ -11,8 +11,11 @@ import { attachPharmacy } from './pharmacy.js';
 import { reviewAndDecideRequest, getDecisionsForRequest, getRecentDecisions } from './contexts/ai-agent/decisions.js';
 import { attachAppProxies } from './app-proxy.js';
 import { attachScoreUpWebhook } from './contexts/integration/scoreup-webhook.js';
+import { attachCodelabWebhook } from './contexts/integration/codelab-webhook.js';
 import * as scoreup from './integrations/scoreup.js';
-import { recordQuestionAttempt, getRecentQuestionAttempts } from './db.js';
+import * as codelab from './integrations/codelab.js';
+import { countCodelabAcceptedProblems } from './db.js';
+import { recordQuestionAttempt, getRecentQuestionAttempts, getSrsStateByPrefix, recordSrsReview } from './db.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
@@ -27,6 +30,7 @@ import { attachBilling } from './contexts/billing/index.js';
 import { attachIntegration } from './contexts/integration/index.js';
 import { attachAdmin, requireAdmin } from './contexts/admin/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
+import { attachSkills, grantSkillsForSpace } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
 // Payment context — chỉ nạp khi PAYMENT_ENABLED=1 (dynamic import bên dưới) để bảng
 // payment + route KHÔNG xuất hiện ở deployment chưa bật thanh toán.
@@ -261,6 +265,9 @@ attachAppProxies(app, [
 // (cần raw bytes để verify HMAC). MUST nằm trước express.json. Auth gate đã
 // whitelist '/api/webhooks/' để webhook ScoreUp không có session vẫn qua được.
 attachScoreUpWebhook(app);
+// Codelab webhook receiver — POST /api/webhooks/codelab. Cùng yêu cầu raw bytes
+// + cùng whitelist '/api/webhooks/'. Fire khi Judge0 chấm xong submission Tizia.
+attachCodelabWebhook(app);
 
 app.use(express.json({ limit: '64kb' }));
 // CSRF double-submit (R4) — sau express.json (cần req.body cho fallback _csrf).
@@ -291,6 +298,7 @@ attachIntegration(r);
 attachSecurity(r);
 attachAdmin(r);
 attachCampusLayout(r, requireAdmin);
+attachSkills(r, { requireAuth });
 
 r.post('/api/attempts', requireAuth, (req, res) => {
   const b = req.body ?? {};
@@ -448,8 +456,11 @@ r.get('/api/quiz/random', requireAuth, async (req, res) => {
       curriculum: req.query.curriculum, lang: req.query.lang, tags: req.query.tags,
       limit: Math.min(Math.max(Number(req.query.limit) || 10, 1), 100),
     });
-    // Mask đáp án cho client — server giữ scope read:answer nhưng FE không cần biết.
-    const items = (data.items || []).map((q) => {
+    // include_answers=1 (default cho weekly-lesson tiểu học, instant-feedback): trả
+    // đầy đủ correct_answer/correct_index/explanation để engine chấm + show giải
+    // thích ngay tại client. include_answers=0: cho mode "thi" (anti-cheat).
+    const includeAnswers = req.query.include_answers !== '0' && req.query.include_answers !== 'false';
+    const items = includeAnswers ? (data.items || []) : (data.items || []).map((q) => {
       const { correct_answer, correct_answers, correct_index, explanation, ...safe } = q;
       return safe;
     });
@@ -513,6 +524,222 @@ r.post('/api/quiz/attempt', requireAuth, async (req, res) => {
 r.get('/api/quiz/recent', requireAuth, (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 500);
   res.json({ items: getRecentQuestionAttempts(req.user.id, limit) });
+});
+
+// ── Code qua Codelab (NEU Online Judge) ─────────────────────────────
+// Tizia KHÔNG tự host sandbox nữa. Mọi bài tập + chạy code đi qua Codelab API.
+// Server proxy giúp: (1) giấu X-API-Key khỏi browser, (2) gắn externalUserRef
+// = "tizia:user:<id>" từ session để Codelab quy điểm về đúng HS Tizia,
+// (3) cache list/detail ở adapter, (4) webhook chấm xong → cộng XP qua
+// /api/webhooks/codelab. Spec: https://fit.neu.edu.vn/codelab/api-backend/docs
+const codelabFail = (res, e) => res.status(e.status || 502).json({
+  error: 'codelab_error', message: e.message, body: e.body,
+});
+const codelabReady = (res) => {
+  if (!codelab.isConfigured()) {
+    res.status(503).json({ error: 'codelab_not_configured' });
+    return false;
+  }
+  return true;
+};
+const refOf = (req) => codelab.makeExternalUserRef(req.user.id);
+
+// PROBLEMS — danh sách + chi tiết + embed (auth optional cho list để guest nhìn
+// catalog; chi tiết/run cần login để gắn externalUserRef thật).
+r.get('/api/codelab/problems', async (req, res) => {
+  if (!codelabReady(res)) return;
+  try {
+    const data = await codelab.listProblems({
+      page:       Number(req.query.page) || 1,
+      limit:      Math.min(Math.max(Number(req.query.limit) || 20, 1), 100),
+      contest:    req.query.contest,
+      tag:        req.query.tag,
+      difficulty: req.query.difficulty,
+      search:     req.query.search,
+      sortBy:     req.query.sortBy,
+    });
+    res.json(data);
+  } catch (e) { codelabFail(res, e); }
+});
+
+r.get('/api/codelab/problems/:slug', async (req, res) => {
+  if (!codelabReady(res)) return;
+  try { res.json(await codelab.getProblem(req.params.slug)); }
+  catch (e) { codelabFail(res, e); }
+});
+
+r.get('/api/codelab/problems/:slug/embed', async (req, res) => {
+  if (!codelabReady(res)) return;
+  // Login? gắn externalUserRef + hideSolution mặc định để Codelab ẩn nút "Xem
+  // lời giải" trong iframe (đáp án Tizia tự kéo qua /answer route ở dưới).
+  const opts = { hideSolution: 1, theme: req.query.theme || 'dark' };
+  if (req.user) opts.externalUserRef = refOf(req);
+  try { res.json(await codelab.getEmbed(req.params.slug, opts)); }
+  catch (e) { codelabFail(res, e); }
+});
+
+// ĐÁP ÁN — chỉ trả khi HS đã pass (Codelab tự enforce, Tizia chỉ forward).
+r.get('/api/codelab/problems/:slug/answer', requireAuth, async (req, res) => {
+  if (!codelabReady(res)) return;
+  try { res.json(await codelab.getAnswer(req.params.slug, { externalUserRef: refOf(req) })); }
+  catch (e) { codelabFail(res, e); }
+});
+
+// LANGUAGES — guest cũng xem được để hiển thị bộ lọc trong trang catalog.
+r.get('/api/codelab/languages', async (_req, res) => {
+  if (!codelabReady(res)) return;
+  try { res.json(await codelab.listLanguages()); }
+  catch (e) { codelabFail(res, e); }
+});
+
+// TAGS — render bộ lọc theo chủ đề.
+r.get('/api/codelab/tags', async (_req, res) => {
+  if (!codelabReady(res)) return;
+  try { res.json(await codelab.listTags()); }
+  catch (e) { codelabFail(res, e); }
+});
+
+// CONTESTS — module Tizia I1.1 / I2.1 trỏ vào 1 contest cụ thể trong Codelab.
+r.get('/api/codelab/contests', async (req, res) => {
+  if (!codelabReady(res)) return;
+  try {
+    res.json(await codelab.listContests({
+      page:   Number(req.query.page) || 1,
+      limit:  Math.min(Math.max(Number(req.query.limit) || 50, 1), 100),
+      search: req.query.search,
+    }));
+  } catch (e) { codelabFail(res, e); }
+});
+r.get('/api/codelab/contests/:slug', async (req, res) => {
+  if (!codelabReady(res)) return;
+  try { res.json(await codelab.getContest(req.params.slug)); }
+  catch (e) { codelabFail(res, e); }
+});
+
+// CHẠY THỬ — sandbox không gắn bài. requireAuth để có externalUserRef.
+r.post('/api/codelab/run', requireAuth, async (req, res) => {
+  if (!codelabReady(res)) return;
+  const b = req.body || {};
+  if (!b.source_code || !b.language_id) {
+    return res.status(400).json({ error: 'source_code + language_id required' });
+  }
+  try {
+    const data = await codelab.runCode({
+      source_code:     String(b.source_code).slice(0, 100_000),
+      language_id:     Number(b.language_id),
+      stdin:           b.stdin != null ? String(b.stdin).slice(0, 64_000) : undefined,
+      expected_output: b.expected_output != null ? String(b.expected_output).slice(0, 64_000) : undefined,
+      wait:            b.wait !== false,
+      cpu_time_limit:  b.cpu_time_limit,
+      memory_limit:    b.memory_limit,
+      externalUserRef: refOf(req),
+    });
+    res.json(data);
+  } catch (e) { codelabFail(res, e); }
+});
+
+// Poll run-code async (khi caller gửi wait=false).
+r.get('/api/codelab/run/:token', requireAuth, async (req, res) => {
+  if (!codelabReady(res)) return;
+  try { res.json(await codelab.getRunCodeResult(req.params.token)); }
+  catch (e) { codelabFail(res, e); }
+});
+
+// NỘP BÀI chính thức — Codelab chấm + fire webhook về /api/webhooks/codelab,
+// receiver tự cộng XP/coin nếu accepted lần đầu.
+r.post('/api/codelab/submit', requireAuth, async (req, res) => {
+  if (!codelabReady(res)) return;
+  const b = req.body || {};
+  if (!b.problemSlug || !b.source_code || !b.language_id) {
+    return res.status(400).json({ error: 'problemSlug + source_code + language_id required' });
+  }
+  try {
+    const data = await codelab.submit({
+      problemSlug:     String(b.problemSlug),
+      contestSlug:     b.contestSlug ? String(b.contestSlug) : undefined,
+      language_id:     Number(b.language_id),
+      source_code:     String(b.source_code).slice(0, 200_000),
+      externalUserRef: refOf(req),
+    });
+    res.json(data);
+  } catch (e) { codelabFail(res, e); }
+});
+
+// CHI TIẾT 1 SUBMISSION — Codelab cô lập theo apiKeyId nên Tizia chỉ nhìn được
+// submission do chính Tizia tạo. Vẫn check ownership cấp Tizia qua DB tracking
+// (codelab_submissions.user_id) để tránh leak nếu request từ user khác.
+r.get('/api/codelab/submissions/:id', requireAuth, async (req, res) => {
+  if (!codelabReady(res)) return;
+  try {
+    const sub = await codelab.getSubmission(req.params.id);
+    res.json(sub);
+  } catch (e) { codelabFail(res, e); }
+});
+
+// LỊCH SỬ submission của chính user hiện tại (theo externalUserRef từ session).
+r.get('/api/codelab/submissions', requireAuth, async (req, res) => {
+  if (!codelabReady(res)) return;
+  try {
+    res.json(await codelab.listSubmissionsForUser({
+      externalUserRef: refOf(req),
+      problemSlug:  req.query.problemSlug,
+      contestSlug:  req.query.contestSlug,
+      page:  Number(req.query.page) || 1,
+      limit: Math.min(Math.max(Number(req.query.limit) || 20, 1), 100),
+    }));
+  } catch (e) { codelabFail(res, e); }
+});
+
+// SUBMISSION mới nhất của user cho 1 bài (FE cần để hiện "đã accepted" + ẩn nút submit).
+r.get('/api/codelab/submissions/latest/problem/:slug', requireAuth, async (req, res) => {
+  if (!codelabReady(res)) return;
+  try {
+    res.json(await codelab.getLatestSubmission({
+      externalUserRef: refOf(req),
+      problemSlug: req.params.slug,
+    }));
+  } catch (e) { codelabFail(res, e); }
+});
+
+// THỐNG KÊ Codelab của user — đếm số bài accepted, dùng cho dashboard học sinh
+// và quest "giải N bài Codelab". Chỉ đọc DB Tizia (codelab_submissions), không
+// gọi Codelab → trả nhanh.
+r.get('/api/codelab/me/stats', requireAuth, (req, res) => {
+  res.json({
+    acceptedProblems: countCodelabAcceptedProblems(req.user.id),
+    externalUserRef:  refOf(req),
+  });
+});
+
+// ── Spaced repetition (SM-2-lite) ──────────────────────────────────
+// Cá nhân hoá "Củng cố kiến thức": GET state theo prefix (vd space:mam:),
+// POST mỗi review → server cập nhật ease/interval/due_at, trả về state mới.
+// Guest 401 → FE tự fallback localStorage (xem public/js/engine/spaced-quiz.js).
+r.get('/api/srs/state', requireAuth, (req, res) => {
+  const prefix = String(req.query.prefix || '').slice(0, 64);
+  if (!prefix) return res.status(400).json({ error: 'prefix_required' });
+  try {
+    res.json({ items: getSrsStateByPrefix(req.user.id, prefix) });
+  } catch (e) {
+    console.warn('[srs/state]', e?.message);
+    res.status(500).json({ error: 'db_error' });
+  }
+});
+
+r.post('/api/srs/review', requireAuth, (req, res) => {
+  const cardKey = String(req.body?.card_key || '').slice(0, 128);
+  const correct = !!req.body?.correct;
+  if (!cardKey) return res.status(400).json({ error: 'card_key_required' });
+  try {
+    const card = recordSrsReview({
+      user_id: req.user.id, school_id: req.schoolId,
+      card_key: cardKey, correct,
+    });
+    res.json(card);
+  } catch (e) {
+    console.warn('[srs/review]', e?.message);
+    res.status(500).json({ error: 'db_error' });
+  }
 });
 
 // Trục 3: ?role=pupil|student|teacher → trả về badge phù hợp audience + 'all'.

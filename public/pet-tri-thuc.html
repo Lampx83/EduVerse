@@ -26,6 +26,7 @@
   .pet-name-wrap { margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
   .pet-name-wrap input { background:rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.6); padding:7px 13px; border-radius:18px; font-size:13px; font-weight:700; color:var(--ink); font-family:inherit; max-width:160px; }
   .pet-name-wrap button { background:var(--accent); color:#fff; border:none; padding:7px 13px; border-radius:18px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .grade-pill { background:rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.6); border-radius:18px; padding:6px 10px; font-size:12.5px; font-weight:800; color:var(--ink); font-family:inherit; cursor:pointer; }
 
   /* Layout */
   main { padding:80px 14px 24px; max-width:980px; margin:0 auto; display:grid; gap:16px; grid-template-columns: 1fr; }
@@ -128,6 +129,15 @@
   <!-- Stats panel -->
   <div class="card stats">
     <h3>📊 Trạng thái Tiziamon</h3>
+    <div style="display:flex;align-items:center;gap:8px;margin:0 0 12px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:800;color:var(--ink-soft);">🎓 Cấp học:</span>
+      <select id="grade-select" class="grade-pill" title="Chọn cấp học để pet hỏi câu phù hợp">
+        <option value="mam-non">🐤 Mầm non (3–5 tuổi)</option>
+        <option value="tieu-hoc">🎒 Tiểu học (lớp 1–5)</option>
+        <option value="thcs">📚 THCS (lớp 6–9)</option>
+        <option value="thpt">🎓 THPT (lớp 10–12)</option>
+      </select>
+    </div>
     <div class="stat-row">
       <span class="ic">❤️</span>
       <span class="lbl">HP</span>
@@ -212,48 +222,160 @@ const DEFAULT_STATE = {
   streak: 0, lastVisit: '', name: 'Tiziamon',
 };
 
-// ── Bank câu hỏi inline (≥30 câu, chia 3 chủ đề) ──
-const QUIZ_BANK = {
-  feed: [ // Toán đơn giản
-    { q:'7 + 8 = ?', a:'15', o:['13','15','17','16'] },
-    { q:'12 × 3 = ?', a:'36', o:['33','36','39','42'] },
-    { q:'45 - 19 = ?', a:'26', o:['24','25','26','27'] },
-    { q:'72 ÷ 8 = ?', a:'9', o:['7','8','9','10'] },
-    { q:'Số nào lẻ? 24, 36, 47, 50', a:'47', o:['24','36','47','50'] },
-    { q:'Nửa của 86 là?', a:'43', o:['41','42','43','44'] },
-    { q:'9 × 9 = ?', a:'81', o:['72','81','99','90'] },
-    { q:'100 - 67 = ?', a:'33', o:['33','37','27','43'] },
-    { q:'Hình vuông có mấy cạnh bằng nhau?', a:'4', o:['2','3','4','5'] },
-    { q:'1 giờ = ? phút', a:'60', o:['30','45','60','90'] },
-    { q:'15 + 27 = ?', a:'42', o:['40','41','42','43'] },
-    { q:'8 × 7 = ?', a:'56', o:['54','56','58','63'] },
-  ],
-  study: [ // Tiếng Việt
-    { q:'Từ trái nghĩa với "chăm chỉ" là?', a:'lười biếng', o:['siêng năng','lười biếng','cần cù','vui vẻ'] },
-    { q:'Câu "Em yêu mẹ" có mấy từ?', a:'3', o:['2','3','4','5'] },
-    { q:'Từ nào KHÔNG phải danh từ?', a:'chạy', o:['mèo','bàn','chạy','hoa'] },
-    { q:'"Bầu trời" thuộc loại từ gì?', a:'danh từ', o:['danh từ','động từ','tính từ','số từ'] },
-    { q:'Đồng nghĩa với "vui vẻ"?', a:'phấn khởi', o:['buồn bã','phấn khởi','tức giận','sợ hãi'] },
-    { q:'Câu kể kết thúc bằng dấu gì?', a:'dấu chấm', o:['dấu chấm','dấu hỏi','dấu than','dấu phẩy'] },
-    { q:'Truyện "Tấm Cám" thuộc thể loại?', a:'cổ tích', o:['ngụ ngôn','cổ tích','truyện cười','thơ'] },
-    { q:'Ai là tác giả "Lão Hạc"?', a:'Nam Cao', o:['Tô Hoài','Nam Cao','Nguyễn Du','Xuân Quỳnh'] },
-    { q:'Từ láy nào sau đây?', a:'long lanh', o:['long lanh','sách vở','học tập','ăn cơm'] },
-    { q:'"Học, học nữa, học mãi" là của?', a:'Lê-nin', o:['Bác Hồ','Lê-nin','Khổng Tử','Newton'] },
-    { q:'Câu nào là câu hỏi?', a:'Mấy giờ rồi?', o:['Trời nắng quá!','Mấy giờ rồi?','Tôi đi học.','Hoa rất đẹp.'] },
-    { q:'Bài thơ "Lượm" của ai?', a:'Tố Hữu', o:['Tố Hữu','Nguyễn Du','Hồ Xuân Hương','Trần Đăng Khoa'] },
-  ],
-  // play câu hỏi sinh động — đếm vật / kiến thức chung
-  // mini-game riêng (đếm emoji) sẽ override khi action=play
+// ── Bank câu hỏi inline — chia theo CẤP HỌC để phù hợp lứa tuổi ──
+// mam-non: 3–5 tuổi · đếm 1–5, màu, hình, kỹ năng sống
+// tieu-hoc: lớp 1–5 · cộng trừ <100, nhân chia đơn giản, từ loại cơ bản
+// thcs: lớp 6–9 · toán phân số/số nguyên, văn THCS, kiến thức chung
+// thpt: lớp 10–12 · toán nâng cao, văn học VN, kiến thức XH
+const QUIZ_BANKS = {
+  'mam-non': {
+    feed: [ // Đếm số 1–5 + so sánh đơn giản
+      { q:'🐤🐤 — Có mấy chú gà?', a:'2', o:['1','2','3','4'] },
+      { q:'🍎🍎🍎 — Có mấy quả táo?', a:'3', o:['2','3','4','5'] },
+      { q:'⭐ — Có mấy ngôi sao?', a:'1', o:['1','2','3','4'] },
+      { q:'🐠🐠🐠🐠 — Có mấy con cá?', a:'4', o:['2','3','4','5'] },
+      { q:'🌸🌸🌸🌸🌸 — Có mấy bông hoa?', a:'5', o:['3','4','5','6'] },
+      { q:'Một bàn tay ✋ có mấy ngón?', a:'5', o:['3','4','5','6'] },
+      { q:'1 + 1 = ?', a:'2', o:['1','2','3','4'] },
+      { q:'2 + 1 = ?', a:'3', o:['2','3','4','5'] },
+      { q:'3 + 1 = ?', a:'4', o:['3','4','5','6'] },
+      { q:'Bé có 2 viên kẹo, mẹ cho thêm 1. Bé có mấy viên?', a:'3', o:['2','3','4','5'] },
+      { q:'Con voi 🐘 to hay con kiến 🐜 to?', a:'Con voi', o:['Con voi','Con kiến','Bằng nhau','Không biết'] },
+      { q:'Cây nào cao hơn? 🌳 hay 🌱', a:'🌳', o:['🌳','🌱','Bằng nhau','Không biết'] },
+    ],
+    study: [ // Màu sắc · hình · con vật · kỹ năng sống
+      { q:'Quả chuối 🍌 màu gì?', a:'Vàng', o:['Đỏ','Vàng','Xanh dương','Đen'] },
+      { q:'Lá cây 🍃 thường màu gì?', a:'Xanh lá', o:['Đỏ','Xanh lá','Tím','Hồng'] },
+      { q:'Quả cà chua 🍅 màu gì?', a:'Đỏ', o:['Đỏ','Vàng','Xanh','Trắng'] },
+      { q:'Bầu trời 🌤️ ban ngày màu gì?', a:'Xanh dương', o:['Đen','Xanh dương','Đỏ','Tím'] },
+      { q:'Con gì kêu "meo meo"?', a:'Mèo', o:['Chó','Mèo','Vịt','Bò'] },
+      { q:'Con gì kêu "gâu gâu"?', a:'Chó', o:['Chó','Mèo','Gà','Lợn'] },
+      { q:'Con gì kêu "ò ó o" vào buổi sáng?', a:'Gà trống', o:['Gà trống','Chim','Vịt','Mèo'] },
+      { q:'Khi đến lớp bé làm gì đầu tiên?', a:'Chào cô', o:['Chào cô','Ngủ ngay','Khóc','Chạy ra ngoài'] },
+      { q:'Trước khi ăn bé phải làm gì?', a:'Rửa tay', o:['Xem TV','Rửa tay','Ngủ','Chạy'] },
+      { q:'Bóng tròn ⚽ có hình gì?', a:'Tròn', o:['Tròn','Vuông','Tam giác','Sao'] },
+      { q:'Mặt trời 🌞 có hình gì?', a:'Tròn', o:['Tròn','Vuông','Tam giác','Chữ nhật'] },
+      { q:'Bé yêu ai nhất ở nhà?', a:'Bố mẹ', o:['Bố mẹ','Người lạ','Không ai','TV'] },
+    ],
+  },
+
+  'tieu-hoc': {
+    feed: [ // Cộng trừ <100, nhân chia bảng 2–5
+      { q:'5 + 3 = ?', a:'8', o:['7','8','9','10'] },
+      { q:'7 + 8 = ?', a:'15', o:['13','15','17','16'] },
+      { q:'10 - 4 = ?', a:'6', o:['5','6','7','8'] },
+      { q:'15 + 12 = ?', a:'27', o:['25','27','29','24'] },
+      { q:'20 - 7 = ?', a:'13', o:['12','13','14','15'] },
+      { q:'2 × 3 = ?', a:'6', o:['5','6','7','8'] },
+      { q:'5 × 4 = ?', a:'20', o:['15','18','20','25'] },
+      { q:'3 × 6 = ?', a:'18', o:['15','16','18','21'] },
+      { q:'10 ÷ 2 = ?', a:'5', o:['3','4','5','6'] },
+      { q:'12 ÷ 3 = ?', a:'4', o:['3','4','5','6'] },
+      { q:'Hình vuông có mấy cạnh?', a:'4', o:['2','3','4','5'] },
+      { q:'Hình tam giác có mấy cạnh?', a:'3', o:['2','3','4','5'] },
+      { q:'1 tuần có mấy ngày?', a:'7', o:['5','6','7','8'] },
+      { q:'Số liền sau của 9 là?', a:'10', o:['8','9','10','11'] },
+    ],
+    study: [ // Tiếng Việt lớp 1–5
+      { q:'Chữ cái đầu tiên trong bảng chữ cái là?', a:'A', o:['A','B','O','Z'] },
+      { q:'Từ "mèo" có mấy tiếng?', a:'1', o:['1','2','3','4'] },
+      { q:'"Bàn ghế" có mấy tiếng?', a:'2', o:['1','2','3','4'] },
+      { q:'Câu "Em yêu mẹ" có mấy từ?', a:'3', o:['2','3','4','5'] },
+      { q:'Câu kể kết thúc bằng dấu gì?', a:'Dấu chấm', o:['Dấu chấm','Dấu hỏi','Dấu than','Dấu phẩy'] },
+      { q:'Câu hỏi kết thúc bằng dấu gì?', a:'Dấu chấm hỏi', o:['Dấu chấm','Dấu chấm hỏi','Dấu chấm than','Dấu phẩy'] },
+      { q:'"Cái bàn" là loại từ gì?', a:'Danh từ', o:['Danh từ','Động từ','Tính từ','Số từ'] },
+      { q:'"Chạy" là loại từ gì?', a:'Động từ', o:['Danh từ','Động từ','Tính từ','Số từ'] },
+      { q:'Đồng nghĩa với "vui vẻ"?', a:'Phấn khởi', o:['Buồn bã','Phấn khởi','Tức giận','Sợ hãi'] },
+      { q:'Trái nghĩa với "cao"?', a:'Thấp', o:['Lớn','Thấp','Nhỏ','Đẹp'] },
+      { q:'Thủ đô Việt Nam là?', a:'Hà Nội', o:['TP.HCM','Hà Nội','Huế','Đà Nẵng'] },
+      { q:'Mặt trời mọc ở hướng nào?', a:'Đông', o:['Đông','Tây','Nam','Bắc'] },
+    ],
+  },
+
+  'thcs': {
+    feed: [ // Toán lớp 6–9
+      { q:'12 × 3 = ?', a:'36', o:['33','36','39','42'] },
+      { q:'45 - 19 = ?', a:'26', o:['24','25','26','27'] },
+      { q:'72 ÷ 8 = ?', a:'9', o:['7','8','9','10'] },
+      { q:'Số nào lẻ? 24, 36, 47, 50', a:'47', o:['24','36','47','50'] },
+      { q:'Nửa của 86 là?', a:'43', o:['41','42','43','44'] },
+      { q:'9 × 9 = ?', a:'81', o:['72','81','99','90'] },
+      { q:'100 - 67 = ?', a:'33', o:['33','37','27','43'] },
+      { q:'1 giờ = ? phút', a:'60', o:['30','45','60','90'] },
+      { q:'Số nguyên tố nhỏ nhất?', a:'2', o:['1','2','3','5'] },
+      { q:'(-3) + 5 = ?', a:'2', o:['-2','2','-8','8'] },
+      { q:'2² + 3² = ?', a:'13', o:['10','12','13','25'] },
+      { q:'√49 = ?', a:'7', o:['6','7','8','9'] },
+    ],
+    study: [ // Văn THCS
+      { q:'Từ trái nghĩa với "chăm chỉ" là?', a:'Lười biếng', o:['Siêng năng','Lười biếng','Cần cù','Vui vẻ'] },
+      { q:'Từ nào KHÔNG phải danh từ?', a:'Chạy', o:['Mèo','Bàn','Chạy','Hoa'] },
+      { q:'Truyện "Tấm Cám" thuộc thể loại?', a:'Cổ tích', o:['Ngụ ngôn','Cổ tích','Truyện cười','Thơ'] },
+      { q:'Từ láy nào sau đây?', a:'Long lanh', o:['Long lanh','Sách vở','Học tập','Ăn cơm'] },
+      { q:'Bài thơ "Lượm" của ai?', a:'Tố Hữu', o:['Tố Hữu','Nguyễn Du','Hồ Xuân Hương','Trần Đăng Khoa'] },
+      { q:'Câu "Mưa rơi tí tách" sử dụng biện pháp tu từ gì?', a:'Từ tượng thanh', o:['So sánh','Nhân hoá','Từ tượng thanh','Ẩn dụ'] },
+      { q:'"Học, học nữa, học mãi" là của?', a:'Lê-nin', o:['Bác Hồ','Lê-nin','Khổng Tử','Newton'] },
+      { q:'"Dế Mèn phiêu lưu ký" tác giả?', a:'Tô Hoài', o:['Tô Hoài','Nam Cao','Nguyễn Du','Xuân Quỳnh'] },
+      { q:'Việt Nam có bao nhiêu tỉnh/thành?', a:'63', o:['54','58','63','64'] },
+      { q:'Năm Bác Hồ ra đi tìm đường cứu nước?', a:'1911', o:['1908','1911','1920','1945'] },
+    ],
+  },
+
+  'thpt': {
+    feed: [ // Toán THPT
+      { q:'sin 30° = ?', a:'1/2', o:['1/2','√2/2','√3/2','1'] },
+      { q:'cos 60° = ?', a:'1/2', o:['1/2','√2/2','√3/2','0'] },
+      { q:'log₁₀ 100 = ?', a:'2', o:['1','2','10','100'] },
+      { q:'2⁵ = ?', a:'32', o:['16','25','32','64'] },
+      { q:'Đạo hàm của x² là?', a:'2x', o:['x','2x','x²','2x²'] },
+      { q:'Số phần tử của tập {1,2,3,4,5}?', a:'5', o:['4','5','6','10'] },
+      { q:'Giải: 2x + 4 = 10. x = ?', a:'3', o:['2','3','4','5'] },
+      { q:'Số nghiệm thực của x² + 1 = 0?', a:'0', o:['0','1','2','vô số'] },
+      { q:'lim(x→0) sin(x)/x = ?', a:'1', o:['0','1','∞','không xác định'] },
+      { q:'Tổ hợp C(5,2) = ?', a:'10', o:['5','10','15','20'] },
+    ],
+    study: [ // Văn học VN + kiến thức XH
+      { q:'Ai là tác giả "Truyện Kiều"?', a:'Nguyễn Du', o:['Nguyễn Du','Hồ Xuân Hương','Tố Hữu','Nam Cao'] },
+      { q:'Ai là tác giả "Lão Hạc"?', a:'Nam Cao', o:['Tô Hoài','Nam Cao','Nguyễn Du','Xuân Quỳnh'] },
+      { q:'"Vợ chồng A Phủ" của tác giả nào?', a:'Tô Hoài', o:['Tô Hoài','Kim Lân','Nguyễn Tuân','Nam Cao'] },
+      { q:'"Người lái đò sông Đà" của?', a:'Nguyễn Tuân', o:['Nguyễn Tuân','Tô Hoài','Hoàng Phủ Ngọc Tường','Nam Cao'] },
+      { q:'Tuyên ngôn Độc lập 2/9/1945 do ai đọc?', a:'Hồ Chí Minh', o:['Hồ Chí Minh','Trường Chinh','Phạm Văn Đồng','Võ Nguyên Giáp'] },
+      { q:'Chiến thắng Điện Biên Phủ năm?', a:'1954', o:['1945','1954','1968','1975'] },
+      { q:'Năm thống nhất đất nước?', a:'1975', o:['1954','1968','1975','1986'] },
+      { q:'Diện tích Việt Nam khoảng?', a:'331.000 km²', o:['200.000 km²','331.000 km²','500.000 km²','1 triệu km²'] },
+      { q:'Sông dài nhất Việt Nam?', a:'Sông Đồng Nai', o:['Sông Hồng','Sông Mê Kông','Sông Đồng Nai','Sông Đà'] },
+      { q:'"Sóng" là bài thơ nổi tiếng của?', a:'Xuân Quỳnh', o:['Xuân Quỳnh','Hồ Xuân Hương','Tố Hữu','Chế Lan Viên'] },
+    ],
+  },
 };
-// Thêm vài câu kiến thức chung cho cả 2 bank
-QUIZ_BANK.feed.push(
-  { q:'Bao nhiêu phần tư bằng 1?', a:'4/4', o:['1/4','2/4','3/4','4/4'] },
-  { q:'Số nguyên tố nhỏ nhất?', a:'2', o:['1','2','3','5'] },
-);
-QUIZ_BANK.study.push(
-  { q:'Thủ đô Việt Nam là?', a:'Hà Nội', o:['TP.HCM','Hà Nội','Huế','Đà Nẵng'] },
-  { q:'Mặt trời mọc ở hướng nào?', a:'Đông', o:['Đông','Tây','Nam','Bắc'] },
-);
+
+// Range đếm cho mini-game "play" theo cấp
+const COUNT_RANGE = {
+  'mam-non': { min:1, max:5,  fillerMin:2, fillerMax:5  },
+  'tieu-hoc':{ min:3, max:12, fillerMin:5, fillerMax:10 },
+  'thcs':    { min:5, max:20, fillerMin:10,fillerMax:18 },
+  'thpt':    { min:5, max:25, fillerMin:10,fillerMax:20 },
+};
+
+// ── Detect grade từ URL ?grade= → localStorage → default mam-non ──
+const GRADE_KEY = 'pet-tri-thuc.grade';
+const VALID_GRADES = ['mam-non','tieu-hoc','thcs','thpt'];
+function detectGrade() {
+  try {
+    const u = new URLSearchParams(location.search);
+    const fromUrl = u.get('grade');
+    if (fromUrl && VALID_GRADES.includes(fromUrl)) {
+      localStorage.setItem(GRADE_KEY, fromUrl);
+      return fromUrl;
+    }
+    const stored = localStorage.getItem(GRADE_KEY);
+    if (stored && VALID_GRADES.includes(stored)) return stored;
+  } catch {}
+  return 'mam-non';
+}
+let currentGrade = detectGrade();
+function getQuizBank() { return QUIZ_BANKS[currentGrade] || QUIZ_BANKS['mam-non']; }
+function getCountRange() { return COUNT_RANGE[currentGrade] || COUNT_RANGE['mam-non']; }
 
 // ── State management ──
 function loadState() {
@@ -640,9 +762,10 @@ function pickRandom(arr, n) {
 
 function openQuiz(action) {
   if (action === 'play') return openCountGame();
-  const bank = QUIZ_BANK[action];
+  const bank = getQuizBank()[action];
+  if (!bank || !bank.length) { toast('Chưa có câu hỏi cho cấp này.', 'bad'); return; }
   const q = bank[Math.floor(Math.random()*bank.length)];
-  const labels = { feed:'🍎 Cho pet ăn (Toán)', study:'📖 Pet học bài (Văn)' };
+  const labels = { feed:'🍎 Cho pet ăn (Toán)', study:'📖 Pet học bài (Văn / Nhận biết)' };
   modalTitle.textContent = labels[action];
   // Shuffle options
   const opts = [...q.o].sort(() => Math.random()-0.5);
@@ -692,17 +815,20 @@ function openCountGame() {
   modalTitle.textContent = '🎮 Đếm thật nhanh!';
   const emojis = ['🍎','🍌','🍓','⭐','🐱','🌸','🎈','🌈'];
   const target = emojis[Math.floor(Math.random()*emojis.length)];
-  const total = 5 + Math.floor(Math.random()*16); // 5..20
+  const range = getCountRange();
+  const total = range.min + Math.floor(Math.random()*(range.max - range.min + 1));
   // Sinh chuỗi emoji ngẫu nhiên, có 'total' lần xuất hiện 'target'
   const fillers = emojis.filter(e => e !== target);
   const arr = [];
   for (let i = 0; i < total; i++) arr.push(target);
-  for (let i = 0; i < 10 + Math.floor(Math.random()*8); i++) arr.push(fillers[Math.floor(Math.random()*fillers.length)]);
+  const fillerCount = range.fillerMin + Math.floor(Math.random()*(range.fillerMax - range.fillerMin + 1));
+  for (let i = 0; i < fillerCount; i++) arr.push(fillers[Math.floor(Math.random()*fillers.length)]);
   arr.sort(() => Math.random()-0.5);
-  // 4 options bao quanh đáp án đúng
+  // 4 options bao quanh đáp án đúng (giới hạn dương)
   const opts = new Set([total]);
+  const spread = currentGrade === 'mam-non' ? 2 : 3;
   while (opts.size < 4) {
-    const d = total + (Math.floor(Math.random()*7) - 3);
+    const d = total + (Math.floor(Math.random()*(spread*2+1)) - spread);
     if (d > 0 && d !== total) opts.add(d);
   }
   const optArr = [...opts].sort(() => Math.random()-0.5);
@@ -753,6 +879,20 @@ document.getElementById('petname-save').addEventListener('click', () => {
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
 
+// ── Grade selector ──
+const GRADE_LABEL = { 'mam-non':'Mầm non', 'tieu-hoc':'Tiểu học', 'thcs':'THCS', 'thpt':'THPT' };
+(function initGradeSelect(){
+  const sel = document.getElementById('grade-select');
+  if (!sel) return;
+  sel.value = currentGrade;
+  sel.addEventListener('change', () => {
+    if (!VALID_GRADES.includes(sel.value)) return;
+    currentGrade = sel.value;
+    try { localStorage.setItem(GRADE_KEY, currentGrade); } catch {}
+    toast(`📚 Đã chuyển sang câu hỏi ${GRADE_LABEL[currentGrade]}`, 'info');
+  });
+})();
+
 // ── Boot ──
 updateStreak();
 renderStats();
@@ -760,8 +900,10 @@ renderPet();
 // Welcome toast theo cấp
 setTimeout(() => {
   const stage = getStage(state.level);
-  if (state.level === 0) toast(`🥚 Trứng đang chờ ấp. Trả lời câu hỏi để pet nở!`, 'info');
-  else toast(`👋 ${state.name} (cấp ${state.level}, ${stage.name}) chào em!`, 'info');
+  const gradeLbl = GRADE_LABEL[currentGrade] || '';
+  const suffix = gradeLbl ? ` · câu hỏi ${gradeLbl}` : '';
+  if (state.level === 0) toast(`🥚 Trứng đang chờ ấp${suffix}. Trả lời câu hỏi để pet nở!`, 'info');
+  else toast(`👋 ${state.name} (cấp ${state.level}, ${stage.name})${suffix}`, 'info');
 }, 500);
 </script>
 </body>
