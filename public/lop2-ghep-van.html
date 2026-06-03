@@ -83,7 +83,7 @@
       <div class="target" id="target">—</div>
       <div class="meaning" id="meaning"></div>
     </div>
-    <div class="built" id="built"><span class="placeholder">bấm 1 âm đầu + 1 vần…</span></div>
+    <div class="built" id="built"><span class="placeholder">bấm 1 âm đầu + 1 vần + 1 dấu thanh…</span></div>
     <div class="pool">
       <h3>🔠 Âm đầu</h3>
       <div class="tiles" id="onsets"></div>
@@ -91,6 +91,10 @@
     <div class="pool">
       <h3>🎵 Vần</h3>
       <div class="tiles" id="rhymes"></div>
+    </div>
+    <div class="pool">
+      <h3>🎶 Dấu thanh</h3>
+      <div class="tiles" id="tones"></div>
     </div>
     <div class="progress-bar"><div class="fill" id="bar"></div></div>
     <div class="feedback" id="fb"></div>
@@ -121,19 +125,32 @@ import { getPlayerName, submitAttempt } from '/js/api.js';
 // Bộ dữ liệu — 12 tiếng phổ biến lớp 2, mỗi tiếng = âm đầu + vần
 // (Không xét dấu thanh — HS chỉ cần ghép đúng âm đầu + vần)
 // ─────────────────────────────────────────────────────────────
+// 6 dấu thanh tiếng Việt: ngang (không dấu) · huyền · sắc · hỏi · ngã · nặng
+const TONES = [
+  { id:'ngang', label:'(không dấu)', sym:'a' },
+  { id:'huyen', label:'huyền',       sym:'à' },
+  { id:'sac',   label:'sắc',         sym:'á' },
+  { id:'hoi',   label:'hỏi',         sym:'ả' },
+  { id:'nga',   label:'ngã',         sym:'ã' },
+  { id:'nang',  label:'nặng',        sym:'ạ' },
+];
+
 const ROUNDS = [
-  { word: 'bàn',  onset: 'b',  rhyme: 'an',  meaning: 'đồ vật để ngồi học' },
-  { word: 'mèo',  onset: 'm',  rhyme: 'eo',  meaning: 'con vật kêu meo meo' },
-  { word: 'cá',   onset: 'c',  rhyme: 'a',   meaning: 'bơi dưới nước' },
-  { word: 'tay',  onset: 't',  rhyme: 'ay',  meaning: 'bộ phận cơ thể để cầm nắm' },
-  { word: 'sách', onset: 's',  rhyme: 'ach', meaning: 'để đọc, để học' },
-  { word: 'chim', onset: 'ch', rhyme: 'im',  meaning: 'biết bay, có cánh' },
-  { word: 'mây',  onset: 'm',  rhyme: 'ay',  meaning: 'trên trời, trắng xốp' },
-  { word: 'ngày', onset: 'ng', rhyme: 'ay',  meaning: 'có ánh nắng (≠ đêm)' },
-  { word: 'trường', onset: 'tr', rhyme: 'ương', meaning: 'nơi em đi học' },
-  { word: 'nhà',  onset: 'nh', rhyme: 'a',   meaning: 'nơi em ở cùng gia đình' },
-  { word: 'biển', onset: 'b',  rhyme: 'iên', meaning: 'rất nhiều nước mặn' },
-  { word: 'cây',  onset: 'c',  rhyme: 'ay',  meaning: 'có gốc, có lá' },
+  { word: 'bàn',    onset: 'b',  rhyme: 'an',   tone:'huyen', meaning: 'đồ vật để ngồi học' },
+  { word: 'mèo',    onset: 'm',  rhyme: 'eo',   tone:'huyen', meaning: 'con vật kêu meo meo' },
+  { word: 'cá',     onset: 'c',  rhyme: 'a',    tone:'sac',   meaning: 'bơi dưới nước' },
+  { word: 'tay',    onset: 't',  rhyme: 'ay',   tone:'ngang', meaning: 'bộ phận cơ thể để cầm nắm' },
+  { word: 'sách',   onset: 's',  rhyme: 'ach',  tone:'sac',   meaning: 'để đọc, để học' },
+  { word: 'chim',   onset: 'ch', rhyme: 'im',   tone:'ngang', meaning: 'biết bay, có cánh' },
+  { word: 'mây',    onset: 'm',  rhyme: 'ay',   tone:'ngang', meaning: 'trên trời, trắng xốp' },
+  { word: 'ngày',   onset: 'ng', rhyme: 'ay',   tone:'huyen', meaning: 'có ánh nắng (≠ đêm)' },
+  { word: 'trường', onset: 'tr', rhyme: 'ương', tone:'huyen', meaning: 'nơi em đi học' },
+  { word: 'nhà',    onset: 'nh', rhyme: 'a',    tone:'huyen', meaning: 'nơi em ở cùng gia đình' },
+  { word: 'biển',   onset: 'b',  rhyme: 'iên',  tone:'hoi',   meaning: 'rất nhiều nước mặn' },
+  { word: 'cây',    onset: 'c',  rhyme: 'ay',   tone:'ngang', meaning: 'có gốc, có lá' },
+  { word: 'mũ',     onset: 'm',  rhyme: 'u',    tone:'nga',   meaning: 'đội lên đầu' },
+  { word: 'cọ',     onset: 'c',  rhyme: 'o',    tone:'nang',  meaning: 'cây hoặc dụng cụ chà' },
+  { word: 'cảnh',   onset: 'c',  rhyme: 'anh',  tone:'hoi',   meaning: 'phong cảnh em nhìn thấy' },
 ];
 
 function shuffle(arr) {
@@ -150,11 +167,11 @@ const N_ROUNDS = 10;
 let rounds = shuffle(ROUNDS).slice(0, N_ROUNDS);
 let idx = 0;
 let score = 0;
-let selOnset = null, selRhyme = null;
+let selOnset = null, selRhyme = null, selTone = null;
 const startTime = Date.now();
 
 const $ = id => document.getElementById(id);
-const wordToBuilt = () => `${selOnset || '_'} + ${selRhyme || '_'}`;
+const toneLabel = id => TONES.find(t => t.id === id)?.label || id;
 
 function renderRound() {
   const r = rounds[idx];
@@ -165,16 +182,22 @@ function renderRound() {
   $('score').textContent = score;
   $('bar').style.width = ((idx / N_ROUNDS) * 100) + '%';
 
-  // tạo phân tâm: 4 âm đầu (1 đúng + 3 giả) + 4 vần (1 đúng + 3 giả)
+  // tạo phân tâm: 4 âm đầu + 4 vần + 4 dấu thanh (1 đúng + 3 giả)
   const ALL_ONSETS = ['b','m','c','t','s','ch','ng','tr','nh','x','d','l','k','h'];
-  const ALL_RHYMES = ['an','eo','a','ay','ach','im','ương','iên','ưa','ai','ong','ung','am','ong'];
+  const ALL_RHYMES = ['an','eo','a','ay','ach','im','ương','iên','ưa','ai','ong','ung','am','o','u','anh'];
   const onsetPool = shuffle([r.onset, ...shuffle(ALL_ONSETS.filter(x => x !== r.onset)).slice(0, 3)]);
   const rhymePool = shuffle([r.rhyme, ...shuffle(ALL_RHYMES.filter(x => x !== r.rhyme)).slice(0, 3)]);
+  // Dấu thanh: 4 lựa chọn (1 đúng + 3 sai), ưu tiên hiển thị "ngang" nếu đúng để bé hiểu "không cần thêm dấu"
+  const tonePool = shuffle([r.tone, ...shuffle(TONES.map(t=>t.id).filter(x => x !== r.tone)).slice(0, 3)]);
 
   $('onsets').innerHTML = onsetPool.map(o => `<button class="tile" data-kind="onset" data-v="${o}">${o}</button>`).join('');
   $('rhymes').innerHTML = rhymePool.map(o => `<button class="tile" data-kind="rhyme" data-v="${o}">${o}</button>`).join('');
+  $('tones').innerHTML = tonePool.map(id => {
+    const t = TONES.find(x => x.id === id);
+    return `<button class="tile" data-kind="tone" data-v="${id}" title="${t.label}">${t.sym} <span style="opacity:.55;font-size:13px;font-weight:600">${t.label}</span></button>`;
+  }).join('');
 
-  selOnset = null; selRhyme = null;
+  selOnset = null; selRhyme = null; selTone = null;
   updateBuilt();
   $('fb').className = 'feedback';
   $('checkBtn').disabled = true;
@@ -189,32 +212,38 @@ function onTile(e) {
   const v = t.dataset.v;
   // bỏ chọn cũ cùng nhóm
   document.querySelectorAll(`.tile[data-kind="${kind}"]`).forEach(x => x.classList.remove('selected'));
-  if (kind === 'onset') { selOnset = (selOnset === v) ? null : v; }
-  else                  { selRhyme = (selRhyme === v) ? null : v; }
-  if ((kind === 'onset' && selOnset) || (kind === 'rhyme' && selRhyme)) t.classList.add('selected');
+  if (kind === 'onset')      selOnset = (selOnset === v) ? null : v;
+  else if (kind === 'rhyme') selRhyme = (selRhyme === v) ? null : v;
+  else                       selTone  = (selTone  === v) ? null : v;
+  if ((kind === 'onset' && selOnset) || (kind === 'rhyme' && selRhyme) || (kind === 'tone' && selTone)) t.classList.add('selected');
   updateBuilt();
 }
 
 function updateBuilt() {
-  if (selOnset || selRhyme) {
-    $('built').innerHTML = `<span style="color:#f97316">${selOnset || '_'}</span> <span style="opacity:.4">+</span> <span style="color:#f97316">${selRhyme || '_'}</span>`;
+  if (selOnset || selRhyme || selTone) {
+    const toneSym = selTone ? TONES.find(t=>t.id===selTone).sym : '_';
+    $('built').innerHTML = `<span style="color:#f97316">${selOnset || '_'}</span>
+      <span style="opacity:.4">+</span>
+      <span style="color:#f97316">${selRhyme || '_'}</span>
+      <span style="opacity:.4">+</span>
+      <span style="color:#f97316">${toneSym}</span>`;
   } else {
-    $('built').innerHTML = '<span class="placeholder">bấm 1 âm đầu + 1 vần…</span>';
+    $('built').innerHTML = '<span class="placeholder">bấm 1 âm đầu + 1 vần + 1 dấu thanh…</span>';
   }
-  $('checkBtn').disabled = !(selOnset && selRhyme);
+  $('checkBtn').disabled = !(selOnset && selRhyme && selTone);
 }
 
 function check() {
   const r = rounds[idx];
-  const ok = (selOnset === r.onset && selRhyme === r.rhyme);
+  const ok = (selOnset === r.onset && selRhyme === r.rhyme && selTone === r.tone);
   const fb = $('fb');
   if (ok) {
     score++;
     fb.className = 'feedback ok show';
-    fb.innerHTML = `✓ Giỏi quá! <b>${r.onset}</b> + <b>${r.rhyme}</b> = <b>${r.word}</b>`;
+    fb.innerHTML = `✓ Giỏi quá! <b>${r.onset}</b> + <b>${r.rhyme}</b> + dấu <b>${toneLabel(r.tone)}</b> = <b>${r.word}</b>`;
   } else {
     fb.className = 'feedback bad show';
-    fb.innerHTML = `Chưa đúng. Đáp án: <b>${r.onset}</b> + <b>${r.rhyme}</b> = <b>${r.word}</b>`;
+    fb.innerHTML = `Chưa đúng. Đáp án: <b>${r.onset}</b> + <b>${r.rhyme}</b> + dấu <b>${toneLabel(r.tone)}</b> = <b>${r.word}</b>`;
   }
   $('score').textContent = score;
   $('checkBtn').disabled = true;
@@ -252,7 +281,7 @@ function finish() {
 }
 
 $('clearBtn').addEventListener('click', () => {
-  selOnset = null; selRhyme = null;
+  selOnset = null; selRhyme = null; selTone = null;
   document.querySelectorAll('.tile').forEach(t => t.classList.remove('selected'));
   updateBuilt();
 });

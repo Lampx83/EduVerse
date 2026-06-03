@@ -20,17 +20,64 @@
   body { display:flex; flex-direction:column; }
   #game { position:relative; width:100%; flex:1; min-height:0; overflow:hidden; }
 
-  /* Cloud BG */
-  .cloud-bg { position:absolute; top:0; left:0; right:0; height:160px; opacity:.35;
-    background: radial-gradient(ellipse 90% 80% at 20% 30%, #fff4 0%, transparent 60%),
-                radial-gradient(ellipse 80% 70% at 70% 40%, #fff3 0%, transparent 60%);
-    animation: drift-cloud 30s linear infinite;
+  /* Tầng bão nền: 3 lớp mây xám xanh trôi với tốc độ khác nhau (parallax) */
+  .cloud-bg { position:absolute; inset:0; pointer-events:none; opacity:.55; z-index:0;
+    background:
+      radial-gradient(ellipse 60% 55% at 10% 15%, rgba(255,255,255,.22) 0%, transparent 62%),
+      radial-gradient(ellipse 50% 45% at 38% 8%,  rgba(255,255,255,.18) 0%, transparent 60%),
+      radial-gradient(ellipse 65% 50% at 70% 18%, rgba(255,255,255,.22) 0%, transparent 60%),
+      radial-gradient(ellipse 55% 45% at 92% 10%, rgba(255,255,255,.18) 0%, transparent 60%);
+    background-size: 100% 240px;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    animation: drift-cloud 28s linear infinite;
+    filter: blur(2px);
   }
-  @keyframes drift-cloud { from { background-position: 0 0, 0 0; } to { background-position: 200px 0, -150px 0; } }
+  .cloud-bg.layer2 { opacity:.32; height:140px; top:60px;
+    background:
+      radial-gradient(ellipse 70% 60% at 25% 30%, rgba(255,255,255,.30) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 75% 35%, rgba(255,255,255,.26) 0%, transparent 60%);
+    animation: drift-cloud-rev 42s linear infinite;
+    filter: blur(3px);
+  }
+  @keyframes drift-cloud      { from { transform: translateX(0); }    to { transform: translateX(-180px); } }
+  @keyframes drift-cloud-rev  { from { transform: translateX(-220px); } to { transform: translateX(0); } }
 
-  /* Lightning flashes on combo */
-  .flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition: opacity .08s; }
-  .flash.on { opacity:.35; }
+  /* Mưa rơi nền (CSS-only): 1 dải mưa lặp + 1 dải mưa lệch để có chiều sâu */
+  .rain { position:absolute; inset:0; pointer-events:none; z-index:1; opacity:.55;
+    background-image:
+      linear-gradient(transparent 0%, rgba(180,220,255,.30) 50%, transparent 100%);
+    background-size: 2px 90px;
+    background-repeat: repeat;
+    animation: rain-fall 0.55s linear infinite;
+  }
+  .rain.layer2 { opacity:.30; background-size: 2px 60px; animation-duration: 0.42s; transform: translateX(20px); }
+  .rain.layer3 { opacity:.18; background-size: 1px 120px; animation-duration: 0.78s; transform: translateX(-15px); }
+  @keyframes rain-fall { from { background-position: 0 -90px; } to { background-position: 0 90px; } }
+
+  /* Sét nền tự đánh ngẫu nhiên 4-8s/lần để tạo không khí bão */
+  .ambient-bolt { position:absolute; top:0; bottom:0; width:3px; pointer-events:none; z-index:2;
+    background: linear-gradient(180deg, rgba(255,255,255,.95) 0%, rgba(56,189,248,.7) 50%, transparent 100%);
+    box-shadow: 0 0 18px 4px rgba(255,255,255,.7), 0 0 60px 10px rgba(56,189,248,.45);
+    opacity: 0; transform-origin: top center;
+  }
+  .ambient-bolt.fire { animation: bolt-strike .35s ease-out; }
+  @keyframes bolt-strike {
+    0%   { opacity: 0; transform: scaleY(0); }
+    15%  { opacity: 1; transform: scaleY(1); }
+    35%  { opacity: .8; }
+    55%  { opacity: 0; }
+    65%  { opacity: .9; }
+    100% { opacity: 0; transform: scaleY(1); }
+  }
+
+  /* Lightning flashes on combo (full-screen white flash) */
+  .flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; transition: opacity .08s; z-index:3; }
+  .flash.on { opacity:.45; }
+
+  /* Đảm bảo HUD + đáp án + drops nằm trên các lớp nền */
+  .hud, #answers, .drop, .modal, .pop, .bolt { z-index: 5; }
+  .hud { z-index: 8; }
 
   /* HUD */
   .hud { position:absolute; top:14px; left:14px; right:14px; z-index:5; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
@@ -102,6 +149,11 @@
 
 <div id="game">
   <div class="cloud-bg"></div>
+  <div class="cloud-bg layer2"></div>
+  <div class="rain"></div>
+  <div class="rain layer2"></div>
+  <div class="rain layer3"></div>
+  <div class="ambient-bolt" id="ambient-bolt"></div>
   <div class="flash" id="flash"></div>
 
   <div class="hud">
@@ -332,11 +384,38 @@ function start(lvl) {
   // Steady spawn loop (in case onAnswer didn't trigger one)
   clearInterval(spawnTimer);
   spawnTimer = setInterval(() => { if (!currentDrop) spawn(); }, LEVELS[level].spawnMs);
+  startAmbientStorm();
 }
+
+// Sét nền tự đánh ngẫu nhiên 3-7s/lần, kèm chớp trắng nhẹ → tạo "không khí bão"
+// Chạy LIÊN TỤC kể cả lúc đang ở modal/start để bé thấy bão ngay khi vào trang.
+let ambientTimer = null;
+function startAmbientStorm() {
+  clearTimeout(ambientTimer);
+  const fire = () => {
+    const bolt = $('#ambient-bolt');
+    if (bolt) {
+      bolt.style.left = (8 + Math.random() * 84) + '%';
+      bolt.classList.remove('fire');
+      void bolt.offsetWidth;
+      bolt.classList.add('fire');
+      const flash = $('#flash');
+      if (flash) {
+        flash.classList.add('on');
+        setTimeout(() => flash.classList.remove('on'), 90);
+      }
+    }
+    ambientTimer = setTimeout(fire, 2800 + Math.random() * 4000);
+  };
+  ambientTimer = setTimeout(fire, 800 + Math.random() * 1200);
+}
+// Kick off ngay khi tải trang để có không khí bão từ màn chọn level
+startAmbientStorm();
 
 function gameOver() {
   running = false;
   clearInterval(spawnTimer);
+  // KHÔNG dừng ambient storm — giữ không khí bão ở màn Game Over để bé tiếp tục thấy mưa+sét
   if (currentDrop) { currentDrop.remove(); currentDrop = null; }
   $('#answers').innerHTML = '';
   $('#over-score').textContent = score;
