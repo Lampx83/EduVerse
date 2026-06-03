@@ -29,5 +29,19 @@
   "secondary__tech__ki_thuat_doi_song": "NL_CONG_NGHE",
   "pharmacy__lab_org__ky_nang_chuan_do": "NL_CONG_NGHE",
 
-  "highschool__hall__hoat_dong_tap_the": "NL_GIAO_TIEP"
+  "highschool__hall__hoat_dong_tap_the": "NL_GIAO_TIEP",
+
+  "_p5_cleanup": "Phase 5 — giảm fallback NL_TU_CHU từ 19.8% xuống <10%",
+  "pharmacy__lecture__nam_ly_thuyet_cot_loi": "NL_KHOA_HOC",
+  "it__lecture__nam_ly_thuyet_cot_loi":        "NL_TIN_HOC",
+  "pharmacy__library__tra_cuu_ebm":            "NL_NGON_NGU",
+  "highschool__library__tra_cuu_danh_gia_nguon": "NL_NGON_NGU",
+  "it__library__tra_cuu_doc_tai_lieu":         "NL_NGON_NGU",
+  "it__ailab__tranh_overfitting":              "NL_TIN_HOC",
+  "highschool__lab_bio__tu_duy_sinh_thai":     "NL_KHOA_HOC",
+  "highschool__arts__tu_duy_tham_mi":          "NL_THAM_MY",
+  "highschool__lab_phys__xu_li_so_lieu_sai_so": "NL_TINH_TOAN",
+  "highschool__lab_chem__doc_bang_tuan_hoan":  "NL_KHOA_HOC",
+  "highschool__youth__y_thuc_cong_dan":        "PC_TRACH_NHIEM",
+  "highschool__bike__y_thuc_ki_luat":          "PC_TRACH_NHIEM"
 }

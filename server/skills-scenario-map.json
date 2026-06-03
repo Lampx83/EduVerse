@@ -2,14 +2,38 @@
   "_doc": "Mapping familyId scenario → skill_codes. Khi POST /api/scenario-runs với best_score ≥70 hoặc stars ≥2, server grant các skill này cho HS. Có thể trỏ tới skill cross-domain (vd P2-prac-mul thuộc primary nhưng cũng củng cố preschool dem_toi_10). Catalog tay — KHÔNG tự sinh.",
   "_format": "familyId: [skill_code, ...]",
 
+  "_p1_lop1": "Lớp 1 — đếm + cộng trừ trong 100",
   "P1-prac-add":             ["primary__g1__dem_cong_tru_trong_100"],
   "P1-prac-sub":             ["primary__g1__dem_cong_tru_trong_100"],
   "P1-prac-match-addsub":    ["primary__g1__dem_cong_tru_trong_100"],
   "P1-prac-quick":           ["primary__g1__dem_cong_tru_trong_100"],
+
+  "_p2_lop2": "Lớp 2 — cộng trừ nâng cao + bắt đầu nhân chia (g2 chưa có skill nhân chia riêng → trỏ về g3)",
+  "P2-prac-add-carry":       ["primary__g1__dem_cong_tru_trong_100"],
+  "P2-prac-sub-borrow":      ["primary__g1__dem_cong_tru_trong_100"],
   "P2-prac-mul":             ["primary__g3__nhan_chia_thanh_thao"],
-  "P2-prac-add-carry":       ["primary__g3__nhan_chia_thanh_thao"],
-  "P2-prac-sub-borrow":      ["primary__g3__nhan_chia_thanh_thao"],
   "P2-prac-div":             ["primary__g3__nhan_chia_thanh_thao"],
   "P2-prac-match-mul":       ["primary__g3__nhan_chia_thanh_thao"],
-  "P2-prac-quick":           ["primary__g3__nhan_chia_thanh_thao"]
+  "P2-prac-quick":           ["primary__g3__nhan_chia_thanh_thao"],
+
+  "_p3_lop3": "Lớp 3 — nhân chia thành thạo + chu vi",
+  "P3-prac-mul":             ["primary__g3__nhan_chia_thanh_thao"],
+  "P3-prac-mul3digit":       ["primary__g3__nhan_chia_thanh_thao"],
+  "P3-prac-match-muldiv":    ["primary__g3__nhan_chia_thanh_thao"],
+  "P3-prac-perimeter-rect":  ["primary__g4__phan_so_hinh_hoc"],
+  "P3-prac-perimeter-square":["primary__g4__phan_so_hinh_hoc"],
+
+  "_p4_lop4": "Lớp 4 — số lớn + phân số + hình học (diện tích)",
+  "P4-prac-add-big":         ["primary__g3__nhan_chia_thanh_thao"],
+  "P4-prac-mul-bignum":      ["primary__g3__nhan_chia_thanh_thao"],
+  "P4-prac-match-frac":      ["primary__g4__phan_so_hinh_hoc"],
+  "P4-prac-area-rect":       ["primary__g4__phan_so_hinh_hoc"],
+  "P4-prac-quick":           ["primary__g4__phan_so_hinh_hoc"],
+
+  "_p5_lop5": "Lớp 5 — số thập phân, phần trăm, thể tích → sẵn sàng vào lớp 6",
+  "P5-prac-decimal-add":     ["primary__g5__so_thap_phan_phan_tram"],
+  "P5-prac-decimal-mul10":   ["primary__g5__so_thap_phan_phan_tram"],
+  "P5-prac-percent":         ["primary__g5__so_thap_phan_phan_tram"],
+  "P5-prac-match-percent":   ["primary__g5__so_thap_phan_phan_tram"],
+  "P5-prac-cube-volume":     ["primary__g4__phan_so_hinh_hoc", "primary__g5__san_sang_len_lop_6"]
 }

@@ -75,6 +75,26 @@
   .empty-state p { color:var(--text-soft); margin:0 0 14px; }
   .empty-state a { display:inline-block; background:var(--accent); color:#1f1147; padding:10px 18px; border-radius:12px; font-weight:700; text-decoration:none; }
 
+  /* Switcher: xem cây năng lực của ai (bản thân / con / HS trong lớp) */
+  .switcher { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; padding:10px 12px; background:var(--card-2); border:1px solid var(--border); border-radius:14px; align-items:center; }
+  .switcher b { font-size:13px; color:var(--text-soft); margin-right:6px; }
+  .switcher .pill { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.06); border:1px solid var(--border); padding:6px 12px; border-radius:14px; font-size:13px; cursor:pointer; transition:background .12s; }
+  .switcher .pill:hover { background:rgba(255,255,255,.12); }
+  .switcher .pill.active { background:var(--accent); color:#1f1147; border-color:var(--accent); font-weight:700; }
+  .switcher .pill .who { opacity:.7; font-size:11px; }
+  .switcher .pill.active .who { opacity:.85; color:#3a2410; }
+  .switcher select { background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:10px; font-family:inherit; font-size:13px; }
+
+  /* Class roster — list HS trong lớp (cho GV) */
+  .class-roster { margin-bottom:18px; }
+  .class-roster .roster-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; }
+  .class-roster .stu { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px 12px; cursor:pointer; transition:border-color .12s; }
+  .class-roster .stu:hover { border-color:var(--accent); }
+  .class-roster .stu .name { font-weight:700; font-size:14px; }
+  .class-roster .stu .mini-bar { height:6px; border-radius:6px; background:rgba(255,255,255,.07); margin-top:6px; overflow:hidden; }
+  .class-roster .stu .mini-bar > i { display:block; height:100%; background:linear-gradient(90deg, var(--good), var(--accent)); transition:width .4s; }
+  .class-roster .stu .sub { font-size:11.5px; color:var(--text-soft); margin-top:4px; display:flex; justify-content:space-between; }
+
   /* Modal show all skills của 1 competency */
   .modal { position:fixed; inset:0; background:rgba(8,11,22,.72); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
   .modal.show { display:flex; }
@@ -124,12 +144,15 @@ const COMP_ICON = {
 
 function esc(s){ return String(s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
-async function load(){
+// State chung: context hiện tại (self | child | classMember) + tree đã load.
+let _state = { context: 'self', label: 'Em', subject: null, me: null, children: [], classes: [] };
+
+async function init(){
   const wrap = document.getElementById('wrap');
-  let data;
+  // 1) Lấy info user hiện tại
   try {
-    const res = await fetch('/api/skills/me', { credentials:'same-origin' });
-    if (res.status === 401) {
+    const meRes = await fetch('/api/auth/me', { credentials:'same-origin' });
+    if (meRes.status === 401) {
       wrap.innerHTML = `<div class="empty-state">
         <h3>🔐 Em chưa đăng nhập</h3>
         <p>Đăng nhập để theo dõi cây năng lực theo khung GDPT 2018.</p>
@@ -137,21 +160,147 @@ async function load(){
       </div>`;
       return;
     }
-    if (!res.ok) throw new Error('fetch failed: ' + res.status);
-    data = await res.json();
+    const meData = await meRes.json();
+    _state.me = meData.user || meData;
   } catch(e) {
     wrap.innerHTML = `<div class="empty-state"><h3>⚠️ Không tải được</h3><p>${esc(e.message)}</p></div>`;
     return;
   }
 
+  // 2) Song song: list con (qua family_links) + list lớp (nếu role=teacher)
+  const [childrenData, classesData] = await Promise.all([
+    fetch('/api/family/me', { credentials:'same-origin' }).then(r => r.ok ? r.json() : { children: [] }).catch(() => ({ children: [] })),
+    (_state.me?.role === 'teacher' || _state.me?.role === 'admin')
+      ? fetch('/api/classes', { credentials:'same-origin' }).then(r => r.ok ? r.json() : []).catch(() => [])
+      : Promise.resolve([])
+  ]);
+  _state.children = childrenData?.children || [];
+  // GV chỉ thấy lớp do mình tạo (teacher_name khớp display_name); admin thấy tất.
+  _state.classes = (classesData || []).filter(c =>
+    _state.me?.role === 'admin' || c.teacher_name === _state.me?.display_name
+  );
+
+  // 3) Load mặc định: bản thân.
+  await loadSubject({ context: 'self', label: 'Bản thân (' + (_state.me?.display_name || 'tôi') + ')' });
+}
+
+async function loadSubject(subject){
+  const wrap = document.getElementById('wrap');
+  _state.context = subject.context;
+  _state.label = subject.label;
+  _state.subject = subject;
+  wrap.innerHTML = renderSwitcher() + '<div class="loading">Đang tải…</div>';
+  bindSwitcher();
+
+  let data;
+  try {
+    let url = '/api/skills/me';
+    if (subject.context === 'child') url = `/api/skills/child/${subject.child_id}`;
+    else if (subject.context === 'class') url = `/api/skills/class/${encodeURIComponent(subject.class_code)}`;
+    const res = await fetch(url, { credentials:'same-origin' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    data = await res.json();
+  } catch(e) {
+    wrap.innerHTML = renderSwitcher() + `<div class="empty-state"><h3>⚠️ Lỗi tải</h3><p>${esc(e.message)}</p></div>`;
+    bindSwitcher();
+    return;
+  }
+
+  if (subject.context === 'class') {
+    renderClassRoster(data, subject);
+    return;
+  }
+
+  renderTree(data, subject);
+}
+
+function renderSwitcher(){
+  const pills = [];
+  const isActive = (k, extra='') => (_state.context === k && (!extra || _state.subject?.class_code === extra || _state.subject?.child_id == extra)) ? ' active' : '';
+  pills.push(`<button class="pill${isActive('self')}" data-ctx="self">👤 Bản thân<span class="who">${esc(_state.me?.display_name||'')}</span></button>`);
+  for (const c of _state.children) {
+    pills.push(`<button class="pill${isActive('child', String(c.id))}" data-ctx="child" data-id="${c.id}">👶 ${esc(c.display_name)}<span class="who">con</span></button>`);
+  }
+  for (const cls of _state.classes) {
+    pills.push(`<button class="pill${isActive('class', cls.code)}" data-ctx="class" data-code="${esc(cls.code)}">🎓 ${esc(cls.name || cls.code)}<span class="who">lớp</span></button>`);
+  }
+  if (pills.length === 1) return ''; // chỉ self → ẩn switcher
+  return `<div class="switcher"><b>Xem cây năng lực của:</b>${pills.join('')}</div>`;
+}
+
+function bindSwitcher(){
+  document.querySelectorAll('.switcher .pill').forEach(b => {
+    b.addEventListener('click', () => {
+      const ctx = b.dataset.ctx;
+      if (ctx === 'self') loadSubject({ context:'self', label:'Bản thân' });
+      else if (ctx === 'child') {
+        const id = +b.dataset.id;
+        const c = _state.children.find(x => x.id === id);
+        loadSubject({ context:'child', label:'Con: '+ (c?.display_name||id), child_id: id });
+      } else if (ctx === 'class') {
+        const code = b.dataset.code;
+        const cls = _state.classes.find(x => x.code === code);
+        loadSubject({ context:'class', label:'Lớp: '+ (cls?.name||code), class_code: code });
+      }
+    });
+  });
+}
+
+function renderClassRoster(data, subject){
+  const wrap = document.getElementById('wrap');
+  const members = data.members || [];
+  const cls = data.class || {};
+  const total = data.total_skills || 0;
+  const switcher = renderSwitcher();
+  let html = switcher + `
+    <div class="hero">
+      <div class="hero-text">
+        <h2>🎓 Lớp <span style="color:var(--good)">${esc(cls.name || cls.code)}</span></h2>
+        <p>${members.length} HS trong lớp. Bấm vào HS để xem cây năng lực chi tiết. (Chỉ HS đã làm bài qua mã lớp <code style="background:rgba(255,255,255,.07);padding:2px 6px;border-radius:6px">${esc(cls.code)}</code> mới hiển thị.)</p>
+      </div>
+    </div>
+  `;
+  if (members.length === 0) {
+    html += `<div class="empty-state"><h3>👥 Chưa có HS nào</h3><p>HS làm bài với class_code=<b>${esc(cls.code)}</b> sẽ tự xuất hiện ở đây.</p></div>`;
+  } else {
+    html += '<div class="class-roster"><div class="roster-grid">';
+    for (const m of members) {
+      const pct = total > 0 ? Math.round((m.summary.earned/total)*100) : 0;
+      html += `<div class="stu" data-uid="${m.user_id}" data-name="${esc(m.display_name)}">
+        <div class="name">${esc(m.display_name)}</div>
+        <div class="mini-bar"><i style="width:${pct}%"></i></div>
+        <div class="sub"><span>${m.summary.earned}/${total} kỹ năng</span><span>${pct}%</span></div>
+      </div>`;
+    }
+    html += '</div></div>';
+  }
+  wrap.innerHTML = html;
+  bindSwitcher();
+  wrap.querySelectorAll('.stu').forEach(el => {
+    el.addEventListener('click', () => loadSubject({
+      context:'child', // dùng endpoint /child/:id (admin/teacher có quyền)
+      label: 'HS: ' + el.dataset.name,
+      child_id: +el.dataset.uid,
+    }));
+  });
+}
+
+function renderTree(data, subject){
+  const wrap = document.getElementById('wrap');
   const summary = data.summary || { earned:0, total:0 };
   const tree = data.tree || [];
+  const child = data.child;
   const pct = summary.total > 0 ? Math.round((summary.earned / summary.total) * 100) : 0;
 
-  // Hero donut
-  const CIRC = 2 * Math.PI * 52; // r=52
+  // Hero donut + tiêu đề tuỳ context
+  const CIRC = 2 * Math.PI * 52;
   const arcLen = (pct / 100) * CIRC;
-  const heroHtml = `
+  const whoName = child ? esc(child.display_name) : 'Em';
+  const sub = subject.context === 'self'
+    ? 'Mỗi kỹ năng thuộc 1 trong <b>5 phẩm chất</b> hoặc <b>10 năng lực</b> của Chương trình GDPT 2018. Hoàn thành quiz tại mỗi không gian (đạt ≥70%) để mở khoá kỹ năng mới.'
+    : `Cây năng lực của <b>${whoName}</b> theo khung Chương trình GDPT 2018. Bạn đang xem ở chế độ ${subject.context === 'child' ? 'phụ huynh / quản lý' : 'giáo viên'}.`;
+  const switcher = renderSwitcher();
+  const heroHtml = switcher + `
     <div class="hero">
       <div class="donut" aria-label="Tiến độ tổng">
         <svg viewBox="0 0 120 120">
@@ -162,12 +311,12 @@ async function load(){
         <div class="center"><div class="pct">${pct}%</div><div class="lbl">Tiến độ</div></div>
       </div>
       <div class="hero-text">
-        <h2>Em đã đạt <span style="color:var(--good)">${summary.earned}</span> / ${summary.total} kỹ năng</h2>
-        <p>Mỗi kỹ năng thuộc 1 trong <b>5 phẩm chất</b> hoặc <b>10 năng lực</b> của Chương trình GDPT 2018. Hoàn thành quiz tại mỗi không gian (đạt ≥70%) để mở khoá kỹ năng mới.</p>
-        <div class="hero-cta">
+        <h2>${whoName} đã đạt <span style="color:var(--good)">${summary.earned}</span> / ${summary.total} kỹ năng</h2>
+        <p>${sub}</p>
+        ${subject.context === 'self' ? `<div class="hero-cta">
           <a href="/index.html">🏫 Khám phá các trường</a>
           <a class="ghost" href="/cay-tri-thuc.html">🌳 Cây Tri Thức</a>
-        </div>
+        </div>` : ''}
       </div>
     </div>
   `;
@@ -228,6 +377,7 @@ async function load(){
     html += '</div>';
   }
   wrap.innerHTML = html;
+  bindSwitcher();
 
   // Bind "Xem tất cả" → modal
   wrap.querySelectorAll('.more[data-comp]').forEach(btn => {
@@ -272,7 +422,7 @@ document.getElementById('m-close').addEventListener('click', ()=> document.getEl
 document.getElementById('modal').addEventListener('click', e=> { if (e.target.id==='modal') document.getElementById('modal').classList.remove('show'); });
 document.addEventListener('keydown', e => { if (e.key==='Escape') document.getElementById('modal').classList.remove('show'); });
 
-load();
+init();
 </script>
 </body>
 </html>
