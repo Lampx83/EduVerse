@@ -112,9 +112,11 @@ function spawn(){
   const x = 10 + Math.random()*(sw-72);
   el.style.left=x+'px'; el.style.top='-60px';
   stage.appendChild(el);
-  drops.push({el,x,y:-60,vy: 0.05 + Math.random()*0.05, cat: it.cat});
+  // Lớp 2 — giảm tốc rơi gần 1/2 (px/ms): 0.025–0.045 → ~10s chạm thùng.
+  drops.push({el,x,y:-60,vy: 0.025 + Math.random()*0.020, cat: it.cat});
   attachDrag(el);
-  spawnT=setTimeout(spawn, 1300 - Math.min(600, right*30));
+  // Khoảng spawn giãn ra (2s → tối thiểu 1.2s) để bé có thời gian xử lý từng vật.
+  spawnT=setTimeout(spawn, Math.max(1200, 2000 - right*25));
 }
 
 function tick(ts){
