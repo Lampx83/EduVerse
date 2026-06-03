@@ -20,6 +20,10 @@ import { db } from '../server/db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SPACE_HTML = path.resolve(__dirname, '..', 'public', 'space.html');
+// Highschool space defs nằm tách ra public/js/spaces-highschool.js (window-attached
+// để không phình space.html). Migrator nối nội dung 2 file rồi parse chung — cùng
+// định dạng `const SPACES_X = {...};` nên parser không cần đổi.
+const SPACES_HS  = path.resolve(__dirname, '..', 'public', 'js', 'spaces-highschool.js');
 const MAPPING_OUT = path.resolve(__dirname, '..', 'server', 'skills-mapping.json');
 
 const DRY = process.argv.includes('--dry');
@@ -33,6 +37,7 @@ const DOMAIN_BLOCKS = [
   { var: 'SPACES_IT',         domain: 'it',         grade_min: null, grade_max: null },
   { var: 'SPACES_PRIMARY',    domain: 'primary',    grade_min: 1,    grade_max: 5    },
   { var: 'SPACES_PRESCHOOL',  domain: 'preschool',  grade_min: 0,    grade_max: 0    },
+  { var: 'SPACES_HIGHSCHOOL', domain: 'highschool', grade_min: 10,   grade_max: 12   },
 ];
 
 // ---- Heuristic: skill text → competency code ----
@@ -137,7 +142,14 @@ function parseDomainBlock(src, varName) {
 
 // ---- main ----
 const src = fs.readFileSync(SPACE_HTML, 'utf8');
-const html = src;
+// spaces-highschool.js dùng `window.SPACES_HIGHSCHOOL = {...}` thay vì
+// `const SPACES_HIGHSCHOOL`. Normalise để parser cùng pattern.
+let hsSrc = '';
+try {
+  hsSrc = fs.readFileSync(SPACES_HS, 'utf8')
+    .replace(/window\.SPACES_HIGHSCHOOL\s*=\s*\{/, 'const SPACES_HIGHSCHOOL = {');
+} catch (e) { console.warn(`[parse] không đọc được ${SPACES_HS}: ${e.message}`); }
+const html = src + '\n' + hsSrc;
 
 const compStmt = db.prepare(`SELECT code, id FROM competencies`);
 const COMP_BY_CODE = Object.fromEntries(compStmt.all().map(r => [r.code, r.id]));

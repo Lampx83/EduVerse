@@ -298,5 +298,80 @@
   "preschool/canteen": [
     "preschool__canteen__an_uong_du_chat",
     "preschool__canteen__ve_sinh_ne_nep"
+  ],
+  "highschool/admin": [
+    "highschool__admin__hieu_co_cau_truong",
+    "highschool__admin__chon_phan_ban_phu_hop",
+    "highschool__admin__dinh_huong_nghe_nghiep"
+  ],
+  "highschool/grade10": [
+    "highschool__grade10__hoc_chu_dong",
+    "highschool__grade10__dinh_huong_phan_ban",
+    "highschool__grade10__hoc_du_11_mon_lop_10"
+  ],
+  "highschool/grade11": [
+    "highschool__grade11__hoc_chuyen_sau",
+    "highschool__grade11__lam_du_an_lam_viec_nhom",
+    "highschool__grade11__hoc_du_10_mon_lop_11"
+  ],
+  "highschool/grade12": [
+    "highschool__grade12__chien_luoc_on_thi",
+    "highschool__grade12__dang_ki_xet_tuyen",
+    "highschool__grade12__on_9_mon_thi_tot_nghiep"
+  ],
+  "highschool/lab_phys": [
+    "highschool__lab_phys__ki_nang_thi_nghiem",
+    "highschool__lab_phys__an_toan_dien",
+    "highschool__lab_phys__xu_li_so_lieu_sai_so"
+  ],
+  "highschool/lab_chem": [
+    "highschool__lab_chem__thi_nghiem_hoa_hoc",
+    "highschool__lab_chem__an_toan_hoa_chat",
+    "highschool__lab_chem__doc_bang_tuan_hoan"
+  ],
+  "highschool/lab_bio": [
+    "highschool__lab_bio__dung_kinh_hien_vi",
+    "highschool__lab_bio__hieu_di_truyen_co_ban",
+    "highschool__lab_bio__tu_duy_sinh_thai"
+  ],
+  "highschool/computer": [
+    "highschool__computer__lap_trinh_python_co_ban",
+    "highschool__computer__an_toan_mang",
+    "highschool__computer__tu_duy_thuat_toan"
+  ],
+  "highschool/library": [
+    "highschool__library__tra_cuu_danh_gia_nguon",
+    "highschool__library__doc_hieu_hieu_qua"
+  ],
+  "highschool/hall": [
+    "highschool__hall__thuyet_trinh",
+    "highschool__hall__hoat_dong_tap_the"
+  ],
+  "highschool/youth": [
+    "highschool__youth__hieu_to_chuc_doan",
+    "highschool__youth__y_thuc_cong_dan"
+  ],
+  "highschool/arts": [
+    "highschool__arts__cam_thu_nghe_thuat",
+    "highschool__arts__tu_duy_tham_mi"
+  ],
+  "highschool/canteen": [
+    "highschool__canteen__dinh_duong_hop_li",
+    "highschool__canteen__ve_sinh_an_toan_thuc_pham",
+    "highschool__canteen__van_minh_ung_xu"
+  ],
+  "highschool/medical": [
+    "highschool__medical__so_cap_cuu_co_ban",
+    "highschool__medical__cham_soc_suc_khoe_tinh_than",
+    "highschool__medical__phong_tranh_te_nan"
+  ],
+  "highschool/gym": [
+    "highschool__gym__ren_luyen_the_chat",
+    "highschool__gym__kien_thuc_qp_an"
+  ],
+  "highschool/bike": [
+    "highschool__bike__an_toan_giao_thong",
+    "highschool__bike__y_thuc_ki_luat",
+    "highschool__bike__van_hoa_giao_thong"
   ]
 }
