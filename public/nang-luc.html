@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎯 Năng lực của em · Tizia</title>
+<meta name="description" content="Cây năng lực của HS theo khung GDPT 2018 (Thông tư 32/2018): 5 phẩm chất + 10 năng lực. Theo dõi tiến độ kỹ năng đã đạt qua tất cả các trường." />
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root {
+    --bg:#0b1020; --bg-2:#101733; --card:#151c3a; --card-2:#1d2547;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185;
+    --pham-chat:#f472b6; --nl-chung:#60a5fa; --nl-chuyen:#a78bfa;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%; font-family:'Inter','Be Vietnam Pro',system-ui,sans-serif; color:var(--text);
+    background: radial-gradient(1200px 700px at 20% 0%, rgba(96,165,250,.12), transparent 70%),
+                radial-gradient(900px 600px at 90% 30%, rgba(167,139,250,.10), transparent 70%),
+                var(--bg);
+  }
+  a { color:inherit; }
+  .top { position:sticky; top:0; z-index:20; backdrop-filter:blur(12px); background:rgba(11,16,32,.7); border-bottom:1px solid var(--border);
+    padding:12px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .back { text-decoration:none; padding:7px 14px; border-radius:18px; background:rgba(255,255,255,.08); border:1px solid var(--border); font-size:13px; font-weight:600; }
+  .back:hover { background:rgba(255,255,255,.16); }
+  .top h1 { margin:0; font-size:18px; }
+  .top .meta { margin-left:auto; font-size:13px; color:var(--text-soft); }
+
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 18px 80px; }
+  .hero { background: linear-gradient(135deg, rgba(251,191,36,.18), rgba(251,191,36,.03));
+    border:1px solid rgba(251,191,36,.35); border-radius:18px; padding:22px 24px; margin-bottom:24px;
+    display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  .donut { position:relative; width:120px; height:120px; flex-shrink:0; }
+  .donut svg { width:100%; height:100%; transform:rotate(-90deg); }
+  .donut .track { fill:none; stroke:rgba(255,255,255,.08); stroke-width:12; }
+  .donut .arc { fill:none; stroke:var(--accent); stroke-width:12; stroke-linecap:round; transition:stroke-dashoffset .6s ease-out; }
+  .donut .center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .donut .pct { font-size:24px; font-weight:800; color:var(--accent); }
+  .donut .lbl { font-size:11px; color:var(--text-soft); font-weight:600; }
+  .hero-text { flex:1; min-width:260px; }
+  .hero-text h2 { margin:0 0 6px; font-size:22px; }
+  .hero-text p  { margin:0; font-size:14px; color:var(--text-soft); line-height:1.55; }
+  .hero-cta { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .hero-cta a { background:var(--accent); color:#1f1147; text-decoration:none; padding:8px 14px; border-radius:12px; font-weight:700; font-size:13px; }
+  .hero-cta a:hover { filter:brightness(1.08); }
+  .hero-cta a.ghost { background:rgba(255,255,255,.08); color:var(--text); border:1px solid var(--border); }
+
+  .kind-title { display:flex; align-items:center; gap:10px; margin:28px 0 12px; font-size:16px; font-weight:700; }
+  .kind-title .dot { width:10px; height:10px; border-radius:50%; }
+  .kind-title.pham-chat .dot { background:var(--pham-chat); }
+  .kind-title.nl-chung  .dot { background:var(--nl-chung); }
+  .kind-title.nl-chuyen .dot { background:var(--nl-chuyen); }
+  .kind-title .sub { font-size:12.5px; font-weight:500; color:var(--text-soft); margin-left:auto; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px; }
+  .comp { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 18px; transition:transform .15s, border-color .15s; }
+  .comp:hover { border-color:rgba(251,191,36,.4); }
+  .comp.empty { opacity:.62; }
+  .comp h3 { margin:0 0 6px; font-size:15.5px; display:flex; align-items:center; gap:8px; }
+  .comp h3 .ic { font-size:20px; }
+  .comp .desc { font-size:12.5px; color:var(--text-soft); margin:0 0 12px; line-height:1.5; min-height:36px; }
+  .bar { height:8px; border-radius:8px; background:rgba(255,255,255,.07); overflow:hidden; margin-bottom:10px; }
+  .bar > i { display:block; height:100%; border-radius:8px; background:linear-gradient(90deg, var(--good), var(--accent)); transition:width .5s ease-out; }
+  .progress-line { display:flex; justify-content:space-between; font-size:12px; color:var(--text-soft); margin-bottom:8px; }
+  .progress-line b { color:var(--good); }
+  .skill-list { display:flex; gap:6px; flex-wrap:wrap; }
+  .skill-list .chip { background:rgba(16,185,129,.16); border:1px solid rgba(16,185,129,.4); color:var(--good); padding:4px 10px; border-radius:14px; font-size:11.5px; font-weight:500; }
+  .skill-list .more { background:rgba(255,255,255,.06); border:1px dashed var(--border); color:var(--text-soft); padding:4px 10px; border-radius:14px; font-size:11.5px; cursor:pointer; }
+  .empty-msg { font-size:12.5px; color:var(--text-soft); font-style:italic; }
+
+  .loading { text-align:center; padding:60px 20px; color:var(--text-soft); }
+  .empty-state { text-align:center; padding:40px 20px; background:var(--card); border:1px dashed var(--border); border-radius:14px; }
+  .empty-state h3 { margin:0 0 8px; }
+  .empty-state p { color:var(--text-soft); margin:0 0 14px; }
+  .empty-state a { display:inline-block; background:var(--accent); color:#1f1147; padding:10px 18px; border-radius:12px; font-weight:700; text-decoration:none; }
+
+  /* Modal show all skills của 1 competency */
+  .modal { position:fixed; inset:0; background:rgba(8,11,22,.72); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  .modal.show { display:flex; }
+  .modal-box { background:var(--card); border:1px solid var(--border); border-radius:16px; max-width:560px; width:100%; max-height:80vh; overflow:auto; padding:22px 24px; }
+  .modal-box h2 { margin:0 0 4px; }
+  .modal-box .desc { color:var(--text-soft); font-size:13.5px; margin:0 0 14px; }
+  .modal-box .skill-row { padding:10px 0; border-top:1px solid var(--border); font-size:13.5px; display:flex; align-items:center; gap:10px; }
+  .modal-box .skill-row .src { font-size:11.5px; color:var(--text-soft); margin-left:auto; }
+  .modal-box .x { position:absolute; cursor:pointer; }
+  .modal-box .close-btn { background:rgba(255,255,255,.08); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:10px; cursor:pointer; font-family:inherit; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="back" href="/index.html">← Trang chủ</a>
+  <h1>🎯 Năng lực của em</h1>
+  <span class="meta">Khung Chương trình GDPT 2018 (TT 32/2018)</span>
+</div>
+
+<div class="wrap" id="wrap">
+  <div class="loading">Đang tải cây năng lực…</div>
+</div>
+
+<div class="modal" id="modal"><div class="modal-box">
+  <h2 id="m-name"></h2>
+  <p class="desc" id="m-desc"></p>
+  <div id="m-body"></div>
+  <button class="close-btn" id="m-close">Đóng</button>
+</div></div>
+
+<script>
+const KIND_META = {
+  pham_chat:           { label: '5 Phẩm chất',         cls: 'pham-chat', icon: '💖' },
+  nang_luc_chung:      { label: '3 Năng lực chung',    cls: 'nl-chung',  icon: '🧭' },
+  nang_luc_chuyen_mon: { label: '7 Năng lực chuyên môn', cls: 'nl-chuyen', icon: '🛠️' },
+};
+const DOMAIN_LABEL = {
+  preschool: 'Mầm non', primary: 'Tiểu học', secondary: 'THCS', highschool: 'THPT',
+  pharmacy: 'Trường Dược', it: 'Trường CNTT'
+};
+const COMP_ICON = {
+  PC_YEU_NUOC: '🇻🇳', PC_NHAN_AI: '🤝', PC_CHAM_CHI: '🐝', PC_TRUNG_THUC: '🕊️', PC_TRACH_NHIEM: '🛡️',
+  NL_TU_CHU: '🧭', NL_GIAO_TIEP: '💬', NL_GQVD: '💡',
+  NL_NGON_NGU: '📚', NL_TINH_TOAN: '🔢', NL_KHOA_HOC: '🔬', NL_CONG_NGHE: '⚙️',
+  NL_TIN_HOC: '💻', NL_THAM_MY: '🎨', NL_THE_CHAT: '⚽',
+};
+
+function esc(s){ return String(s||'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+async function load(){
+  const wrap = document.getElementById('wrap');
+  let data;
+  try {
+    const res = await fetch('/api/skills/me', { credentials:'same-origin' });
+    if (res.status === 401) {
+      wrap.innerHTML = `<div class="empty-state">
+        <h3>🔐 Em chưa đăng nhập</h3>
+        <p>Đăng nhập để theo dõi cây năng lực theo khung GDPT 2018.</p>
+        <a href="/login.html">Đăng nhập</a>
+      </div>`;
+      return;
+    }
+    if (!res.ok) throw new Error('fetch failed: ' + res.status);
+    data = await res.json();
+  } catch(e) {
+    wrap.innerHTML = `<div class="empty-state"><h3>⚠️ Không tải được</h3><p>${esc(e.message)}</p></div>`;
+    return;
+  }
+
+  const summary = data.summary || { earned:0, total:0 };
+  const tree = data.tree || [];
+  const pct = summary.total > 0 ? Math.round((summary.earned / summary.total) * 100) : 0;
+
+  // Hero donut
+  const CIRC = 2 * Math.PI * 52; // r=52
+  const arcLen = (pct / 100) * CIRC;
+  const heroHtml = `
+    <div class="hero">
+      <div class="donut" aria-label="Tiến độ tổng">
+        <svg viewBox="0 0 120 120">
+          <circle class="track" cx="60" cy="60" r="52"></circle>
+          <circle class="arc"   cx="60" cy="60" r="52"
+            stroke-dasharray="${arcLen} ${CIRC - arcLen}"></circle>
+        </svg>
+        <div class="center"><div class="pct">${pct}%</div><div class="lbl">Tiến độ</div></div>
+      </div>
+      <div class="hero-text">
+        <h2>Em đã đạt <span style="color:var(--good)">${summary.earned}</span> / ${summary.total} kỹ năng</h2>
+        <p>Mỗi kỹ năng thuộc 1 trong <b>5 phẩm chất</b> hoặc <b>10 năng lực</b> của Chương trình GDPT 2018. Hoàn thành quiz tại mỗi không gian (đạt ≥70%) để mở khoá kỹ năng mới.</p>
+        <div class="hero-cta">
+          <a href="/index.html">🏫 Khám phá các trường</a>
+          <a class="ghost" href="/cay-tri-thuc.html">🌳 Cây Tri Thức</a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Group competencies by kind
+  const byKind = { pham_chat: [], nang_luc_chung: [], nang_luc_chuyen_mon: [] };
+  for (const node of tree) {
+    const k = node.competency.kind;
+    if (byKind[k]) byKind[k].push(node);
+  }
+
+  let html = heroHtml;
+  if (summary.earned === 0) {
+    html += `<div class="empty-state">
+      <h3>🌱 Hãy bắt đầu khám phá!</h3>
+      <p>Em chưa đạt kỹ năng nào — vào một không gian (ví dụ Trường Mầm non → Lớp Mầm) và làm quiz đạt ≥70% để mở khoá.</p>
+      <a href="/school.html?domain=preschool">🏫 Vào Trường Mầm non</a>
+    </div>`;
+  }
+
+  for (const kind of ['pham_chat', 'nang_luc_chung', 'nang_luc_chuyen_mon']) {
+    const list = byKind[kind];
+    if (!list || list.length === 0) continue;
+    const meta = KIND_META[kind];
+    const totalEarned = list.reduce((s,n)=>s+n.earned_skills.length, 0);
+    const totalAll    = list.reduce((s,n)=>s+n.total_skills, 0);
+    html += `<div class="kind-title ${meta.cls}"><span class="dot"></span>${meta.icon} ${meta.label}<span class="sub">${totalEarned}/${totalAll} kỹ năng</span></div>`;
+    html += '<div class="grid">';
+    for (const node of list) {
+      const c = node.competency;
+      const earned = node.earned_skills.length;
+      const total = node.total_skills;
+      const compPct = total > 0 ? Math.round((earned/total)*100) : 0;
+      const isEmpty = earned === 0;
+      const icon = COMP_ICON[c.code] || '⭐';
+      const earnedChips = node.earned_skills.slice(0, 4).map(s =>
+        `<span class="chip" title="${esc(s.domain ? DOMAIN_LABEL[s.domain] : '')}">${esc(s.name)}</span>`
+      ).join('');
+      const more = earned > 4 ? `<span class="more" data-comp="${c.code}">+${earned - 4} khác</span>` : '';
+      const all  = (earned > 0 || total > 0) ? `<span class="more" data-comp="${c.code}">Xem tất cả ${total} kỹ năng →</span>` : '';
+      html += `
+        <div class="comp ${isEmpty ? 'empty' : ''}">
+          <h3><span class="ic">${icon}</span>${esc(c.name)}</h3>
+          <p class="desc">${esc(c.description||'')}</p>
+          <div class="progress-line">
+            <span>Tiến độ</span>
+            <span><b>${earned}</b>/${total} (${compPct}%)</span>
+          </div>
+          <div class="bar"><i style="width:${compPct}%"></i></div>
+          <div class="skill-list">
+            ${isEmpty ? '<span class="empty-msg">Chưa có kỹ năng nào — vào trường và làm quiz đi em!</span>' : earnedChips + more}
+            ${isEmpty ? '' : ''}
+          </div>
+          ${total > earned && !isEmpty ? `<div style="margin-top:8px"><span class="more" data-comp="${c.code}">Xem ${total - earned} kỹ năng chưa đạt →</span></div>` : ''}
+        </div>
+      `;
+    }
+    html += '</div>';
+  }
+  wrap.innerHTML = html;
+
+  // Bind "Xem tất cả" → modal
+  wrap.querySelectorAll('.more[data-comp]').forEach(btn => {
+    btn.addEventListener('click', () => openCompModal(btn.dataset.comp, tree));
+  });
+}
+
+async function openCompModal(compCode, tree){
+  const node = tree.find(n => n.competency.code === compCode);
+  if (!node) return;
+  const c = node.competency;
+  document.getElementById('m-name').textContent = `${COMP_ICON[c.code]||'⭐'} ${c.name}`;
+  document.getElementById('m-desc').textContent = c.description || '';
+  // Cần list TOÀN BỘ skill của competency (cả chưa đạt) — gọi catalog API.
+  const body = document.getElementById('m-body');
+  body.innerHTML = '<p style="color:var(--text-soft)">Đang tải…</p>';
+  try {
+    const res = await fetch('/api/skills/catalog');
+    const cat = await res.json();
+    const compId = cat.competencies.find(x => x.code === compCode)?.id;
+    if (!compId) { body.innerHTML = '<p>Không tìm thấy năng lực này.</p>'; return; }
+    const all = cat.skills.filter(s => s.competency_id === compId);
+    const earnedSet = new Set(node.earned_skills.map(s => s.code));
+    const earnedBySource = new Map(node.earned_skills.map(s => [s.code, s]));
+    body.innerHTML = all.map(s => {
+      const isEarned = earnedSet.has(s.code);
+      const src = earnedBySource.get(s.code);
+      const domainLabel = s.domain ? DOMAIN_LABEL[s.domain] || s.domain : '';
+      return `<div class="skill-row">
+        <span style="font-size:16px">${isEarned ? '✅' : '⬜'}</span>
+        <span style="${isEarned?'':'opacity:.65'}">${esc(s.name)}</span>
+        <span class="src">${esc(domainLabel)}${src?.score != null ? ' · '+src.score+'%' : ''}</span>
+      </div>`;
+    }).join('') || '<p style="color:var(--text-soft)">Năng lực này chưa có kỹ năng cụ thể nào trong catalog.</p>';
+  } catch(e) {
+    body.innerHTML = `<p>Lỗi tải catalog: ${esc(e.message)}</p>`;
+  }
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('m-close').addEventListener('click', ()=> document.getElementById('modal').classList.remove('show'));
+document.getElementById('modal').addEventListener('click', e=> { if (e.target.id==='modal') document.getElementById('modal').classList.remove('show'); });
+document.addEventListener('keydown', e => { if (e.key==='Escape') document.getElementById('modal').classList.remove('show'); });
+
+load();
+</script>
+</body>
+</html>

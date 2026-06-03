@@ -1531,3 +1531,76 @@ export function recordSrsReview({ user_id, school_id = 1, card_key, correct }) {
     last_seen: row.last_seen,
   };
 }
+
+// ============================================================
+// user_state — Generic KV store per-user, dùng cho mọi state mini-game/draft
+// không có table riêng. Mục tiêu: đổi máy không mất data (vd math2.stars,
+// code-lab drafts, tutor history, …) mà không cần thiết kế 1 bảng cho mỗi
+// loại. Client sync qua `state-sync.js` (hydrate lúc load, push lúc tab ẩn).
+//
+// Key có whitelist phía client (tránh đẩy mọi key tạp lên DB) + có cap size.
+// Value lưu nguyên text (client tự stringify) — server không parse.
+// ============================================================
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_state (
+    user_id    INTEGER NOT NULL,
+    key        TEXT    NOT NULL,
+    value      TEXT    NOT NULL DEFAULT '',
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (user_id, key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_user_state_user ON user_state(user_id);
+`);
+
+const _getUserStateAllStmt = db.prepare(
+  `SELECT key, value, updated_at FROM user_state WHERE user_id = ?`
+);
+const _upsertUserStateStmt = db.prepare(`
+  INSERT INTO user_state (user_id, key, value, updated_at)
+  VALUES (?, ?, ?, ?)
+  ON CONFLICT(user_id, key) DO UPDATE SET
+    value      = excluded.value,
+    updated_at = excluded.updated_at
+`);
+const _deleteUserStateStmt = db.prepare(
+  `DELETE FROM user_state WHERE user_id = ? AND key = ?`
+);
+
+/** Lấy toàn bộ KV của 1 user. Trả { key: { value, updatedAt } }. */
+export function getUserState(user_id) {
+  const rows = _getUserStateAllStmt.all(Number(user_id));
+  const out = {};
+  for (const r of rows) {
+    out[r.key] = { value: r.value, updatedAt: Number(r.updated_at) || 0 };
+  }
+  return out;
+}
+
+/**
+ * Upsert nhiều key cùng lúc. `entries` là object { key: value, ... }; value
+ * dạng string (client đã JSON.stringify). value rỗng/null → xoá row.
+ *
+ * Trả số key đã ghi để client biết quota còn lại.
+ */
+export function putUserState(user_id, entries) {
+  if (!entries || typeof entries !== 'object') return 0;
+  const now = Date.now();
+  let written = 0;
+  const tx = db.transaction((items) => {
+    for (const [k, v] of items) {
+      const key = String(k || '').slice(0, 128);
+      if (!key) continue;
+      if (v == null || v === '') {
+        _deleteUserStateStmt.run(Number(user_id), key);
+      } else {
+        // Cap 32KB/value để chống abuse; client nên break-up nếu dài hơn.
+        const value = String(v).slice(0, 32_000);
+        _upsertUserStateStmt.run(Number(user_id), key, value, now);
+      }
+      written += 1;
+    }
+  });
+  tx(Object.entries(entries));
+  return written;
+}
