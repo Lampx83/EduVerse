@@ -252,9 +252,13 @@ async function boot(){
     slug: p.slug,
     cat: (p.tags && p.tags[0]?.name) || p.difficulty || 'Codelab',
     title: p.name || p.slug,
-    desc: p.description || p.statement || 'Mở bài để xem đề chi tiết.',
+    desc: '',                                  // load khi click (GET /problems/:slug)
     difficulty: p.difficulty,
-    starter: '',
+    // Mỗi bài chỉ cho phép 1 vài ngôn ngữ (problems.languages[].id). Filter list
+    // bên trái theo CURRENT_LANG.id để chỉ hiển thị bài hỗ trợ ngôn ngữ đang chọn.
+    langIds: (p.languages || []).map(l => Number(l.id)),
+    rawLanguages: p.languages || [],            // dùng để pickStarter ngay từ list
+    starter: pickStarter({ languages: p.languages || [] }, CURRENT_LANG),
   }));
 
   // Load đã giải từ server (Codelab là nguồn chân lý).
@@ -290,14 +294,40 @@ function renderLangSelect(){
   $('langSel').value = String(CURRENT_LANG.id);
   $('langSel').addEventListener('change', e => {
     CURRENT_LANG = LANGUAGES.find(l => l.id === Number(e.target.value)) || LANGUAGES[0];
-    if (CURRENT) loadCodeForCurrent();
+    // Bài hiện tại không hỗ trợ ngôn ngữ mới → unselect.
+    if (CURRENT && CURRENT.langIds?.length && !CURRENT.langIds.includes(CURRENT_LANG.id)) {
+      CURRENT = null;
+      $('prob').innerHTML = '<p style="opacity:.55;padding:6px 4px">Chọn 1 bài ở danh sách bên trái — danh sách đã lọc theo ngôn ngữ vừa chọn.</p>';
+      $('code').value = '';
+      $('results').classList.remove('show');
+    } else if (CURRENT) {
+      // Cùng bài nhưng ngôn ngữ khác → reload template từ Codelab.
+      CURRENT._loaded = false;
+      selectChallenge(CURRENT.id);
+    }
+    renderList();
   });
 }
 
+// Filter bài theo CURRENT_LANG.id. Nếu bài có langIds rỗng (legacy) → coi như
+// chấp nhận mọi ngôn ngữ để không ẩn nhầm.
+function visibleChallenges(){
+  return CHALLENGES.filter(c => !c.langIds?.length || c.langIds.includes(CURRENT_LANG.id));
+}
+
 function renderList(){
-  const cats = [...new Set(CHALLENGES.map(c => c.cat))];
+  const visible = visibleChallenges();
+  if (!visible.length) {
+    $('list').innerHTML = `<p style="opacity:.6;padding:18px 10px;font-size:13px;line-height:1.55">
+      Chưa có bài Codelab nào hỗ trợ <b>${esc(CURRENT_LANG.label)}</b> trong contest này.
+      Đổi ngôn ngữ ở dropdown trên cùng, hoặc thêm <code>?contest=&lt;slug&gt;</code> vào URL để thử contest khác.
+    </p>`;
+    $('prog').textContent = `0/0 bài`;
+    return;
+  }
+  const cats = [...new Set(visible.map(c => c.cat))];
   $('list').innerHTML = cats.map(cat =>
-    `<h2>${esc(cat)}</h2>` + CHALLENGES.filter(c => c.cat === cat).map(c =>
+    `<h2>${esc(cat)}</h2>` + visible.filter(c => c.cat === cat).map(c =>
       `<div class="ch ${SOLVED.has(c.id)?'solved':''} ${CURRENT && c.id===CURRENT.id?'active':''}" data-id="${esc(c.id)}">
         <span class="st">${SOLVED.has(c.id)?'✓':''}</span>
         <span class="nm">${esc(c.title)}</span>
@@ -305,8 +335,8 @@ function renderList(){
       </div>`).join('')).join('');
   $('list').querySelectorAll('.ch').forEach(el =>
     el.addEventListener('click', () => selectChallenge(el.dataset.id)));
-  $('prog').textContent = `${SOLVED.size}/${CHALLENGES.length} bài`;
-  $('doneBanner').classList.toggle('show', SOLVED.size > 0 && SOLVED.size === CHALLENGES.length);
+  $('prog').textContent = `${SOLVED.size}/${visible.length} bài`;
+  $('doneBanner').classList.toggle('show', SOLVED.size > 0 && SOLVED.size === visible.length);
 }
 
 async function selectChallenge(id){
@@ -314,14 +344,18 @@ async function selectChallenge(id){
   CURRENT = ch;
   renderList();
 
-  // Codelab: lazy-load description khi click (tránh tải dư cả 50 bài).
+  // Codelab: lazy-load đề + sample khi click (endpoint /problems/:slug có nhiều
+  // field hơn list, gồm problemStatement/inputFormat/outputFormat/constraints/samples).
   if (MODE === 'codelab' && !ch._loaded) {
+    $('prob').innerHTML = `<h3>${esc(ch.title)}</h3><p style="opacity:.5">Đang tải đề…</p>`;
     try {
       const detail = await fetchJson(`/api/codelab/problems/${encodeURIComponent(ch.slug)}`);
       const p = detail?.data || detail;
-      ch.desc = p?.statement || p?.description || ch.desc;
+      ch.desc    = formatProblemDesc(p);
       ch.starter = pickStarter(p, CURRENT_LANG);
-      ch.samples = p?.sampleTests || p?.samples || [];
+      ch.samples = Array.isArray(p?.samples) ? p.samples : [];
+      // Cập nhật rawLanguages từ detail (có thể chi tiết hơn list)
+      ch.rawLanguages = p?.languages || ch.rawLanguages;
       ch._loaded = true;
     } catch (e) {
       $('prob').innerHTML = `<h3>${esc(ch.title)}</h3><p>⚠️ Không tải được đề: ${esc(e.message)}</p>`;
@@ -329,13 +363,23 @@ async function selectChallenge(id){
     }
   }
 
-  const sampleHtml = (ch.samples && ch.samples[0])
-    ? `<p class="ex"><b>Ví dụ:</b><br><span class="k">vào:</span> <code>${esc(ch.samples[0].input || '')}</code><br><span class="k">ra:</span> <code>${esc(ch.samples[0].output || '')}</code></p>`
+  // Render đề + sample. Codelab `samples` thường có shape {input, output} hoặc
+  // {sampleInput, sampleOutput} — bắt cả 2.
+  const sampleHtml = (ch.samples && ch.samples.length)
+    ? ch.samples.map((s, i) => `
+        <div class="case" style="border-top:1px solid var(--border);margin-top:6px;padding-top:8px">
+          <div class="mark" style="color:#7dd3fc">#${i+1}</div>
+          <div class="det">
+            <div><span class="k">vào:</span> <code>${esc(s.input ?? s.sampleInput ?? '')}</code></div>
+            <div><span class="k">ra:</span> <code>${esc(s.output ?? s.sampleOutput ?? '')}</code></div>
+            ${s.explanation ? `<div><span class="k">giải thích:</span> ${esc(s.explanation)}</div>` : ''}
+          </div>
+        </div>`).join('')
     : (ch.tests && ch.tests[0])
       ? `<p class="ex">Ví dụ: <code>${esc(ch.fnName)}(${esc(fmt(ch.tests[0].args).slice(1,-1))})</code> → <code>${esc(fmt(ch.tests[0].expected))}</code></p>`
       : '';
   $('prob').innerHTML = `<h3>${esc(ch.title)}${ch.cat ? `<span class="tag">${esc(ch.cat)}</span>` : ''}</h3>
-    <div>${escDesc(ch.desc)}</div>${sampleHtml}`;
+    <div class="desc">${ch.desc || '<p style="opacity:.5">Bài này không có mô tả.</p>'}</div>${sampleHtml}`;
 
   loadCodeForCurrent();
   $('results').classList.remove('show'); $('results').innerHTML = '';
@@ -345,16 +389,43 @@ async function selectChallenge(id){
 function loadCodeForCurrent(){
   let saved = '';
   try { saved = localStorage.getItem(codeKey(CURRENT.id)) || ''; } catch {}
-  $('code').value = saved || CURRENT.starter || '';
+  // Re-pick starter mỗi lần load (ngôn ngữ có thể vừa đổi).
+  const starter = MODE === 'codelab'
+    ? pickStarter({ languages: CURRENT.rawLanguages || [] }, CURRENT_LANG)
+    : (CURRENT.starter || '');
+  $('code').value = saved || starter || '';
 }
 
-// Lời giải khởi tạo (skeleton) tuỳ ngôn ngữ. Codelab có thể trả starterCode
-// theo `languages[].starterCode`. Nếu không có thì để trống.
+/**
+ * Lấy starter code đúng ngôn ngữ. Schema thật Codelab:
+ *   problem.languages[i] = { id: <judge0_id>, template: { files: { solution: "code…" } } }
+ * Fallback các tên field cũ để an toàn.
+ */
 function pickStarter(problem, lang){
   if (!problem || !lang) return '';
-  const langs = problem.languages || problem.starterByLang || [];
-  const hit = langs.find?.(l => Number(l.id) === lang.id || (l.name||'').toLowerCase().includes(lang.name));
-  return hit?.starterCode || hit?.starter || '';
+  const langs = problem.languages || [];
+  const hit = langs.find(l => Number(l.id) === Number(lang.id));
+  if (!hit) return '';
+  return hit.template?.files?.solution
+      ?? hit.template?.solution
+      ?? hit.starterCode
+      ?? hit.starter
+      ?? '';
+}
+
+/**
+ * Compose mô tả bài từ các field markdown của Codelab:
+ * problemStatement (chính) + inputFormat + outputFormat + constraints + note.
+ */
+function formatProblemDesc(p){
+  if (!p) return '';
+  const blocks = [];
+  if (p.problemStatement) blocks.push(escDesc(p.problemStatement));
+  if (p.inputFormat)      blocks.push(`<h4 style="margin:12px 0 4px;font-size:13px;color:#7dd3fc">📥 Input</h4>${escDesc(p.inputFormat)}`);
+  if (p.outputFormat)     blocks.push(`<h4 style="margin:12px 0 4px;font-size:13px;color:#7dd3fc">📤 Output</h4>${escDesc(p.outputFormat)}`);
+  if (p.constraints)      blocks.push(`<h4 style="margin:12px 0 4px;font-size:13px;color:#fbbf24">⚖️ Ràng buộc</h4>${escDesc(p.constraints)}`);
+  if (p.note)             blocks.push(`<h4 style="margin:12px 0 4px;font-size:13px;color:#a78bfa">💡 Lưu ý</h4>${escDesc(p.note)}`);
+  return blocks.join('\n');
 }
 
 // Cho phép desc có HTML từ Codelab (đã sanitize phía Codelab — tin tưởng).

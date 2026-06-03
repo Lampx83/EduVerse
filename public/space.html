@@ -1330,9 +1330,7 @@ const SPACES_IT = {
 // ====== TRƯỜNG TIỂU HỌC — không gian bên trong từng toà (lớp 1–5 + phòng chức năng) ======
 const SPACES_PRIMARY = {
   g1:{emoji:'1️⃣',name:'Lớp 1',accent:'#ef4444',intro:'Lớp 1 — những bước đầu tiên: tập đếm, tập đọc và làm quen trường lớp. Học mà chơi, chơi mà học!',
-    rooms:[{ic:'➗',name:'Toán lớp 1',rd:'Đếm & so sánh số trong 100, cộng trừ không nhớ, hình cơ bản.',href:'/module.html?domain=primary&module=P1'},
-      // Bão Số Học — arcade luyện tính nhẩm phù hợp lớp 1-2 (level Easy)
-      {ic:'⛈️',name:'Bão Số Học (luyện tính)',rd:'Phép tính rơi như mưa — bấm đáp án nhanh trước khi chạm đất. Combo cao = sét đánh!',href:'/bao-so-hoc.html'},
+    rooms:[{ic:'➗',name:'Toán lớp 1',rd:'Đếm & so sánh số trong 100, cộng trừ không nhớ, hình cơ bản. Có mini-game Bão Số Học bên trong.',href:'/module.html?domain=primary&module=P1'},
       {ic:'📖',name:'Tiếng Việt 1 — Học vần',rd:'Học âm, vần và tập đọc trơn.',panel:[
         {h:'Bắt đầu biết đọc'},
         {ul:['Học các âm và vần, ghép lại thành tiếng','Đánh vần rồi đọc trơn cả tiếng','Đọc to, rõ ràng từng câu ngắn','Tập viết chữ thường và chữ hoa']},
@@ -1353,26 +1351,42 @@ const SPACES_PRIMARY = {
       {q:'5 + 3 = ?',o:['8','7','9','6'],a:0},
       {q:'Hình nào có 3 cạnh?',o:['Hình tam giác','Hình tròn','Hình vuông','Hình chữ nhật'],a:0}]},
 
-  g2:{emoji:'2️⃣',name:'Lớp 2',accent:'#f59e0b',intro:'Lớp 2 — Đầy đủ 9 môn theo GDPT 2018 · Mỗi môn 36 tuần (HK1: tuần 1-18 · HK2: tuần 19-36, tuần 22 nghỉ Tết) · Bám sát SGK Cánh Diều / Kết nối tri thức / Chân trời sáng tạo.',
+  g2:{emoji:'2️⃣',name:'Lớp 2',accent:'#f59e0b',intro:'Lớp 2 — Đầy đủ 9 môn theo GDPT 2018 (mỗi môn 36 tuần) · Mỗi môn đi kèm 1 mini-game riêng: Bão Số Học (Toán), Ghép Vần (TV), Memory Match (Anh), Phản Xạ Cầu Thủ (GDTC), Đô-Rê-Mi Bay (ÂN), Pixel Art (MT), Phân Loại Rác (HĐTN), Bản đồ 63 tỉnh (TN&XH), Đúng hay Sai (Đạo đức).',
     rooms:[
+      // ── 9 môn × mỗi môn 1 mini-game khác nhau (đặt liền sau môn để dễ tìm) ──
       {ic:'➗',name:'Toán lớp 2',rd:'HK1: Cộng trừ có nhớ, bảng nhân 2-5. HK2: Bảng chia, đơn vị đo, số đến 1000, tiền VN, chu vi.',href:'/module.html?domain=primary&module=P2'},
-      // Mini-game arcade luyện tính nhẩm — bổ trợ cho phòng Toán
-      {ic:'⛈️',name:'Bão Số Học (arcade)',rd:'Phép tính rơi như mưa — bấm đáp án nhanh để né "bão". Combo cao sét đánh, điểm gấp đôi!',href:'/bao-so-hoc.html'},
+      {ic:'⛈️',name:'Bão Số Học (Toán)',rd:'Phép tính rơi như mưa — bấm đáp án đúng để né "bão", combo cao mở sét đánh điểm gấp đôi.',href:'/bao-so-hoc.html'},
+
       {ic:'📖',name:'Tiếng Việt lớp 2',rd:'HK1: Đọc-hiểu, từ chỉ sự vật/hoạt động/đặc điểm, mẫu câu Ai là gì?. HK2: Dấu câu, mở rộng vốn từ, viết đoạn 3-5 câu.',href:'/module.html?domain=primary&module=P2TV'},
+      {ic:'🔤',name:'Ghép Vần (Tiếng Việt)',rd:'Mini-game riêng cho lớp 2: kéo các chữ cái để ghép thành tiếng, có phát âm và nghĩa kèm theo.',href:'/lop2-ghep-van.html'},
+
       {ic:'🇬🇧',name:'Tiếng Anh lớp 2',rd:'HK1: Greetings, numbers 1-10, colors, body, family. HK2: Animals, food, classroom, weekdays, weather.',href:'/module.html?domain=primary&module=P2TA'},
+      {ic:'🎴',name:'Memory Match (Tiếng Anh)',rd:'Lật thẻ ghép cặp Anh ↔ Việt, càng ít lượt càng nhiều điểm — luyện trí nhớ từ vựng.',href:'/lop2-anh-memory.html'},
+
       {ic:'⚽',name:'Giáo dục thể chất lớp 2',rd:'HK1: Đội hình đội ngũ, bài thể dục phát triển chung, đi-chạy-nhảy. HK2: Ném-bắt bóng, tâng cầu, trò chơi dân gian.',href:'/module.html?domain=primary&module=P2GDTC'},
+      {ic:'🏃',name:'Phản Xạ Cầu Thủ (GDTC)',rd:'Bóng/cầu hiện ngẫu nhiên trên sân — bấm thật nhanh để ghi bàn trong 30 giây, luyện phản xạ.',href:'/lop2-the-thao.html'},
+
       {ic:'🎵',name:'Âm nhạc lớp 2',rd:'HK1: Bài hát thiếu nhi, cao độ-trường độ, tiết tấu. HK2: Đọc nhạc Đô-Rê-Mi, vận động theo nhạc, trống-mõ-thanh phách.',href:'/module.html?domain=primary&module=P2AN'},
+      {ic:'🎶',name:'Đô-Rê-Mi Bay (Âm nhạc)',rd:'7 nốt Đô-Rê-Mi-Fa-Son-La-Si rơi xuống — gõ phím A-S-D-F-G-H-J đúng nhịp để ghi combo.',href:'/lop2-am-nhac.html'},
+
       {ic:'🎨',name:'Mĩ thuật lớp 2',rd:'HK1: Màu cơ bản, trang trí, vẽ gia đình-trường học, nặn đất. HK2: Xé dán, tranh dân gian Đông Hồ, đề tài lễ hội.',href:'/module.html?domain=primary&module=P2MT'},
+      {ic:'🖌️',name:'Pixel Art Studio (Mĩ thuật)',rd:'Studio vẽ pixel 16×16 / 32×32 — tự do sáng tạo tác phẩm rồi lưu lại khoe bạn bè.',href:'/pixel-art-studio.html'},
+
       {ic:'🎪',name:'Hoạt động trải nghiệm lớp 2',rd:'HK1: Tự phục vụ, vệ sinh cá nhân, ứng xử trong gia đình-nhà trường. HK2: An toàn giao thông, môi trường, làm việc nhà, định hướng nghề.',href:'/module.html?domain=primary&module=P2HDTN'},
+      {ic:'♻️',name:'Phân Loại Rác (HĐTN)',rd:'Kéo từng vật vào 3 thùng Tái chế / Hữu cơ / Vô cơ — bảo vệ môi trường ngay từ lớp 2.',href:'/lop2-phan-loai-rac.html'},
+
       {ic:'🌍',name:'Tự nhiên & Xã hội lớp 2',rd:'HK1: Gia đình (thế hệ, nghề người thân), trường học, cộng đồng địa phương. HK2: Thực-động vật, cơ thể người, Mặt Trời-Mặt Trăng.',href:'/module.html?domain=primary&module=P2TNXH'},
-      {ic:'🤝',name:'Đạo đức lớp 2',rd:'HK1: Yêu lao động, kính trọng thầy cô, yêu ông bà cha mẹ, giúp bạn. HK2: Trung thực, bảo vệ của công, yêu quê hương, vệ sinh công cộng.',href:'/module.html?domain=primary&module=P2DD'}],
+      {ic:'🗺️',name:'Bản đồ Tri thức 63 tỉnh (TN&XH)',rd:'Khám phá 63 tỉnh thành — đặc sản, danh lam và quiz địa lý, gắn bài "cộng đồng địa phương".',href:'/ban-do-vn.html'},
+
+      {ic:'🤝',name:'Đạo đức lớp 2',rd:'HK1: Yêu lao động, kính trọng thầy cô, yêu ông bà cha mẹ, giúp bạn. HK2: Trung thực, bảo vệ của công, yêu quê hương, vệ sinh công cộng.',href:'/module.html?domain=primary&module=P2DD'},
+      {ic:'✅',name:'Đúng hay Sai (Đạo đức)',rd:'15 tình huống đời thường — vuốt phải nếu đúng, vuốt trái nếu sai, học hành vi tốt.',href:'/lop2-dao-duc.html'}],
     skills:['9 môn GDPT 2018 đầy đủ','Mỗi môn 36 tuần (HK1+HK2)','~1700 câu hỏi cả năm học'],
     quiz:[{q:'2 × 4 = ?',o:['8','6','10','24'],a:0},
       {q:'27 + 5 = ?',o:['32','22','31','37'],a:0},
       {q:'Từ nào chỉ con vật?',o:['Con gà','Cái bàn','Chạy','Xanh'],a:0}]},
 
   g3:{emoji:'3️⃣',name:'Lớp 3',accent:'#22c55e',intro:'Lớp 3 — đầy đủ 9 môn × 35 tuần theo GDPT 2018. Thành thạo bảng nhân chia, tính chu vi và viết đoạn văn ngắn.',
-    rooms:[{ic:'➗',name:'Toán lớp 3',rd:'Bảng nhân/chia 6–9, chu vi, số đến 100 000, kg-g, ml-lít, tiền VN, hình hộp.',href:'/module.html?domain=primary&module=P3'},
+    rooms:[{ic:'➗',name:'Toán lớp 3',rd:'Bảng nhân/chia 6–9, chu vi, số đến 100 000, kg-g, ml-lít, tiền VN, hình hộp. Có mini-game Bão Số Học bên trong.',href:'/module.html?domain=primary&module=P3'},
       {ic:'📖',name:'Tiếng Việt lớp 3',rd:'Đọc hiểu, từ loại, kiểu câu Ai-làm gì/thế nào, MRVT, viết thư - biên bản.',href:'/module.html?domain=primary&module=P3TV'},
       {ic:'🇬🇧',name:'Tiếng Anh lớp 3',rd:'Greetings, family, friends, body, toys, school subjects, food, animals.',href:'/module.html?domain=primary&module=P3TA'},
       {ic:'🌏',name:'TN-XH lớp 3',rd:'Họ hàng, cộng đồng, ATGT, phòng chống xâm hại, thực-động vật, hệ tuần hoàn.',href:'/module.html?domain=primary&module=P3TNXH'},
@@ -1381,8 +1395,6 @@ const SPACES_PRIMARY = {
       {ic:'🎨',name:'Mĩ thuật lớp 3',rd:'Màu nóng-lạnh, in mộc bản, phong cảnh, Origami, tranh Tết.',href:'/module.html?domain=primary&module=P3MT'},
       {ic:'⚽',name:'GDTC lớp 3',rd:'Bài thể dục liên hoàn, chạy 30m, bật xa, nhảy dây, đá cầu, trò chơi dân gian.',href:'/module.html?domain=primary&module=P3GDTC'},
       {ic:'🌟',name:'HĐ trải nghiệm lớp 3',rd:'Kế hoạch tuần, sinh nhật, an toàn xe đạp, Đội Thiếu niên, dã ngoại.',href:'/module.html?domain=primary&module=P3HDTN'},
-      // Bão Số Học level Medium — phù hợp nhân chia lớp 3
-      {ic:'⛈️',name:'Bão Số Học (Medium)',rd:'Phép tính rơi mức trung — luyện nhân chia trong 100, trừ có nhớ tốc độ.',href:'/bao-so-hoc.html'},
       {ic:'📖',name:'Tiếng Việt 3 — Từ & câu',rd:'Từ chỉ sự vật, hoạt động, đặc điểm.',panel:[
         {h:'Luyện từ và câu'},
         {cards:[{ic:'🍎',t:'Từ chỉ sự vật',d:'bàn, cây, mẹ, con mèo…'},{ic:'🏃',t:'Từ chỉ hoạt động',d:'chạy, đọc, hát…'},{ic:'🌈',t:'Từ chỉ đặc điểm',d:'cao, xanh, ngoan…'}]},
@@ -1430,7 +1442,7 @@ const SPACES_PRIMARY = {
       {q:'Nước sôi và bốc hơi khi nào?',o:['Khi bị đun nóng (100°C)','Khi gặp lạnh','Khi để trong tủ đá','Khi trộn muối'],a:0}]},
 
   g5:{emoji:'5️⃣',name:'Lớp 5',accent:'#8b5cf6',intro:'Lớp 5 — đầy đủ 11 môn × 35 tuần. Số thập phân, tỉ số phần trăm, hình học; chuẩn bị hành trang lên THCS.',
-    rooms:[{ic:'➗',name:'Toán lớp 5',rd:'Phân số, số thập phân (4 phép), thể tích, tam giác/thang/tròn, %, vận tốc.',href:'/module.html?domain=primary&module=P5'},
+    rooms:[{ic:'➗',name:'Toán lớp 5',rd:'Phân số, số thập phân (4 phép), thể tích, tam giác/thang/tròn, %, vận tốc. Có mini-game Bão Số Học bên trong.',href:'/module.html?domain=primary&module=P5'},
       {ic:'📖',name:'Tiếng Việt lớp 5',rd:'Đại từ, quan hệ từ, câu ghép, liên kết câu, tả người-cảnh, viết đơn-báo cáo.',href:'/module.html?domain=primary&module=P5TV'},
       {ic:'🇬🇧',name:'Tiếng Anh lớp 5',rd:'Past simple full, will/going to, so sánh, can/should, daily routine, jobs.',href:'/module.html?domain=primary&module=P5TA'},
       {ic:'🔬',name:'Khoa học lớp 5',rd:'Sự sinh sản, dậy thì, an toàn dùng thuốc, năng lượng, hỗn hợp, môi trường.',href:'/module.html?domain=primary&module=P5KH'},
@@ -1452,8 +1464,6 @@ const SPACES_PRIMARY = {
       {ic:'🗺️',name:'Lịch sử & Địa lí 5',rd:'Các mốc lịch sử & địa lí Việt Nam.',panel:[
         {timeline:[{t:'Dựng nước',d:'Văn Lang – Âu Lạc.'},{t:'Đấu tranh giữ nước',d:'Các cuộc kháng chiến chống ngoại xâm.'},{t:'1945',d:'Bác Hồ đọc Tuyên ngôn Độc lập.'},{t:'1975',d:'Đất nước thống nhất.'}]},
         {note:'Việt Nam nằm ở Đông Nam Á, có nhiều dân tộc cùng chung sống.'}]},
-      // Bão Số Học level Hard — phù hợp toán lớp 5 (4 phép trong 1000)
-      {ic:'⛈️',name:'Bão Số Học (Hard)',rd:'Mức khó: +, −, ×, ÷ trong 1000. Combo cao mở sét đánh!',href:'/bao-so-hoc.html'},
       // Bản đồ VN — ôn LS-ĐL lớp 5
       {ic:'🗺️',name:'Bản đồ Tri thức 63 tỉnh',rd:'63 tỉnh thành — đặc sản, danh lam, quiz địa lý. Ôn lại trước khi lên cấp 2.',href:'/ban-do-vn.html'}],
     skills:['Số thập phân & phần trăm','Sẵn sàng lên lớp 6'],

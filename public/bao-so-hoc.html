@@ -15,7 +15,10 @@
     color:#fff; background: linear-gradient(180deg,var(--bg-1),var(--bg-2) 55%,var(--bg-3));
     overflow:hidden;
   }
-  #game { position:relative; width:100%; height:100vh; min-height:600px; overflow:hidden; }
+  /* Server tự inject sticky header ~52px; dùng flex để #game lấy phần còn lại,
+     tránh tràn 100vh khiến hàng đáp án bị đẩy ra ngoài viewport. */
+  body { display:flex; flex-direction:column; }
+  #game { position:relative; width:100%; flex:1; min-height:0; overflow:hidden; }
 
   /* Cloud BG */
   .cloud-bg { position:absolute; top:0; left:0; right:0; height:160px; opacity:.35;
@@ -45,7 +48,7 @@
   .drop.zap { animation: fall var(--dur,7s) linear forwards, zap .3s ease-out forwards; }
   @keyframes fall {
     0%   { top:-80px; }
-    100% { top: calc(100vh - 220px); }
+    100% { top: calc(100% - 220px); }
   }
   @keyframes zap {
     0%   { transform: scale(1); background: linear-gradient(180deg,#fff,#10b981); }
@@ -119,10 +122,13 @@
       <div class="ic">⛈️</div>
       <h1>Bão Số Học</h1>
       <p>Phép tính rơi như mưa. Bấm đáp án đúng trước khi chúng chạm đất nhé! Combo cao = sét đánh, điểm gấp đôi.</p>
-      <div class="levels">
+      <div class="levels" id="level-picker">
         <button class="lv on" data-lvl="easy">🐣 Lớp 1-2</button>
         <button class="lv" data-lvl="medium">🦊 Lớp 3-4</button>
         <button class="lv" data-lvl="hard">🦅 Lớp 5+</button>
+      </div>
+      <div class="levels" id="level-badge" style="display:none;">
+        <span class="lv on" id="lv-badge-text">🎓 Lớp của em</span>
       </div>
       <button class="start" id="btn-start">▶ Bắt đầu</button>
     </div>
@@ -370,16 +376,38 @@ function gameOver() {
   } catch {}
 }
 
-// Level pickers
-for (const btn of document.querySelectorAll('.lv')) {
+// Level pickers (chỉ hoạt động cho khách / user chưa khai lớp)
+for (const btn of document.querySelectorAll('#level-picker .lv')) {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.lv').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('#level-picker .lv').forEach(b => b.classList.remove('on'));
     btn.classList.add('on');
     level = btn.dataset.lvl;
   });
 }
 $('#btn-start').addEventListener('click', () => start(level));
 $('#btn-restart').addEventListener('click', () => start(level));
+
+// Tự nhận diện lớp từ profile — HS lớp nào vào thẳng level đó, không phải chọn.
+function gradeToLevel(g) {
+  const n = Number(g);
+  if (!Number.isFinite(n) || n < 1) return null;
+  if (n <= 2) return { lvl: 'easy',   label: '🐣 Lớp ' + n + ' · dễ' };
+  if (n <= 4) return { lvl: 'medium', label: '🦊 Lớp ' + n + ' · vừa' };
+  return        { lvl: 'hard',   label: '🦅 Lớp ' + n + ' · khó' };
+}
+(async function autoDetectGrade() {
+  try {
+    const r = await fetch('/api/auth/me', { credentials: 'include' });
+    if (!r.ok) return;
+    const data = await r.json();
+    const map = gradeToLevel(data?.user?.grade);
+    if (!map) return;
+    level = map.lvl;
+    $('#level-picker').style.display = 'none';
+    $('#level-badge').style.display = '';
+    $('#lv-badge-text').textContent = map.label;
+  } catch {}
+})();
 </script>
 </body>
 </html>
