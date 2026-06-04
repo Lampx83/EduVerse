@@ -414,7 +414,8 @@ function renderUsers() {
     <table>
       <thead><tr>
         <th>#</th><th>Username</th><th>Tên hiển thị</th><th>Vai trò</th>
-        <th>Gói</th><th>Trường</th><th title="Level tính từ XP">Lv</th>
+        <th>Gói</th><th>Tenant</th><th title="Trường HS đang theo học (mỗi tài khoản 1 trường)">🎓 Đang học</th>
+        <th title="Level tính từ XP">Lv</th>
         <th>XP</th><th>Coin</th><th title="Chuỗi ngày liên tục">🔥</th>
         <th>Email</th><th>Đăng nhập gần nhất</th><th></th>
       </tr></thead>
@@ -427,6 +428,7 @@ function renderUsers() {
           <td><span class="pill ${u.role}">${u.role}</span></td>
           <td><span class="pill">${esc(u.plan || 'free')}</span></td>
           <td>${u.school_id}</td>
+          <td style="font-size:12px">${u.enrolled_domain ? `<span class="pill" style="background:#16a34a;color:#fff">${esc(u.enrolled_domain)}</span>` : '<span style="opacity:.5">—</span>'}</td>
           <td style="font-weight:600;color:#a78bfa">${lvFromXp(u.xp || 0)}</td>
           <td style="font-size:12px">${u.xp != null ? u.xp : '—'}</td>
           <td style="font-size:12px">${u.coins != null ? u.coins : '—'}</td>
@@ -435,6 +437,7 @@ function renderUsers() {
           <td style="font-size:12px;opacity:.7">${fmt(u.last_login)}</td>
           <td class="actions" style="white-space:nowrap">
             <button class="btn" data-act="wallet" data-uid="${u.id}" title="Xem/sửa ví XP/coin">🎮</button>
+            <button class="btn" data-act="enroll" data-uid="${u.id}" data-domain="${esc(u.enrolled_domain || '')}" title="Đổi trường đang học">🎓</button>
             <button class="btn" data-act="role" data-uid="${u.id}" data-role="${u.role}" title="Đổi vai trò">👥</button>
             <button class="btn" data-act="edit" data-uid="${u.id}" title="Sửa thông tin">✏️</button>
             <button class="btn" data-act="pwd" data-uid="${u.id}" title="Đặt lại mật khẩu">🔑</button>
@@ -457,7 +460,56 @@ function renderUsers() {
       else if (b.dataset.act === 'wallet') openWalletModal(u);
       else if (b.dataset.act === 'pwd') openResetPwdModal(u);
       else if (b.dataset.act === 'del') confirmDeleteUser(u);
+      else if (b.dataset.act === 'enroll') openEnrollModal(u);
     });
+  });
+}
+
+// Admin set/đổi enrolled_domain của HS (vd HS chọn nhầm, hoặc admin reset).
+// Bucket cũ (ví/skill/level ở trường trước) KHÔNG bị xoá — chỉ ẩn vì query lọc
+// theo enrolled_domain hiện tại. Đổi sang giá trị NULL = bỏ gắn trường (admin).
+function openEnrollModal(u) {
+  const DOMAINS = [
+    ['preschool','🧸 Mầm non'], ['primary','🎒 Tiểu học'], ['secondary','📐 THCS'], ['highschool','🏫 THPT'],
+    ['pharmacy','💊 Dược'], ['it','💻 CNTT'], ['economics','📉 Kinh tế'], ['business','📈 Kinh doanh'],
+    ['finance','🏦 Tài chính'], ['medicine','⚕️ Y'], ['nursing','🩺 Điều dưỡng'], ['law','⚖️ Luật'],
+    ['education','🎓 Sư phạm'], ['engineering','⚙️ Kỹ thuật'], ['architecture','🏛️ Kiến trúc'],
+    ['languages','🗣️ Ngoại ngữ'], ['agriculture','🌾 Nông nghiệp'], ['tourism','🏖️ Du lịch'],
+    ['arts','🎨 Mỹ thuật'], ['media','📰 Truyền thông'], ['social-sciences','📚 KHXH&NV'],
+    ['natural-sciences','🔬 KHTN'], ['logistics','🚚 Logistics'], ['public-admin','🏢 Hành chính'],
+  ];
+  const cur = u.enrolled_domain || '';
+  const opts = DOMAINS.map(([id, label]) =>
+    `<option value="${id}" ${id === cur ? 'selected' : ''}>${label}</option>`).join('');
+  // Dùng overlay tự xây thay vì #modal-bg (chia sẻ với role/edit modal sẽ phức tạp).
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(6px);';
+  ov.innerHTML = `
+    <div style="background:#0f172a;border:1px solid #334155;color:#f1f5f9;border-radius:14px;padding:20px 22px;max-width:480px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.6)">
+      <h3 style="margin:0 0 4px;font-size:18px">🎓 Đặt/đổi trường đang học</h3>
+      <p style="font-size:13px;opacity:.7;margin:0 0 10px">@${esc(u.username)} · ${esc(u.display_name)} · hiện tại: <b>${cur || '— chưa chọn —'}</b></p>
+      <p style="font-size:12px;color:#fbbf24;margin:0 0 12px;line-height:1.5">Bucket cũ (ví, skill, level) ở trường trước <b>vẫn lưu</b> — quay lại trường đó sẽ khôi phục.</p>
+      <label style="font-size:12px;display:block;margin-bottom:5px">Trường mới</label>
+      <select id="enrollDomain" style="width:100%;padding:9px 11px;background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px;font-size:14px"><option value="">— (không gắn trường — chỉ admin)</option>${opts}</select>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button class="btn" data-close>Huỷ</button>
+        <button class="btn primary" id="enrollSave">Lưu</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  ov.querySelector('[data-close]').addEventListener('click', close);
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  ov.querySelector('#enrollSave').addEventListener('click', async () => {
+    const newDomain = ov.querySelector('#enrollDomain').value || null;
+    try {
+      await api(`/api/admin/users/${u.id}/enrollment`, { method: 'POST', body: JSON.stringify({ enrolled_domain: newDomain }) });
+      close();
+      toast('✓ Đã đổi trường' + (newDomain ? ' → ' + newDomain : ' (bỏ gắn trường)'));
+      await loadUsers();
+    } catch (e) {
+      toast('Lỗi: ' + (e.message || 'không lưu được'), 'err');
+    }
   });
 }
 
@@ -767,10 +819,121 @@ async function loadSimple(path, key, cols, fmtMap = {}) {
   $('#tabbody').innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
+// ─────────── Campus Editor ───────────
+const CAMPUS_DOMAINS = [
+  { domain:'preschool', label:'Mầm non',   emoji:'🌸' },
+  { domain:'primary',   label:'Tiểu học',  emoji:'🏫' },
+  { domain:'secondary', label:'THCS/THPT', emoji:'🏛️' },
+  { domain:'it',        label:'CNTT',      emoji:'💻' },
+  { domain:'pharmacy',  label:'Dược',      emoji:'💊' },
+];
+
+let _campusEditorDomain = null;
+let _campusLayoutCache  = null;
+
+async function loadCampus() {
+  const r = await api('/api/admin/campus-layouts');
+  const overrides = new Set((r.data?.layouts || []).map(x => x.domain));
+  const updatedMap = Object.fromEntries((r.data?.layouts || []).map(x => [x.domain, x.updated_at]));
+
+  $('#tabbody').innerHTML = `
+    <section class="section">
+      <h2 class="section-title">🗺️ Campus Editor <span class="line"></span></h2>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 18px">Chỉnh bố cục bản đồ 2.5D cho từng trường. Override lưu vào DB — Reset để về layout mặc định.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
+        ${CAMPUS_DOMAINS.map(c => `
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:28px">${c.emoji}</div>
+            <div>
+              <div style="font-weight:700;font-size:15px">${c.label}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">${
+                overrides.has(c.domain)
+                  ? `<span style="color:var(--ok)">● Override DB</span> · ${fmt(updatedMap[c.domain])}`
+                  : '<span style="color:var(--dim)">● Mặc định</span>'
+              }</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:auto">
+              <button class="btn primary" style="flex:1" data-campus-edit="${c.domain}" data-campus-label="${c.label} ${c.emoji}">✏️ Chỉnh sửa</button>
+              ${overrides.has(c.domain) ? `<button class="btn" style="color:var(--bad);border-color:var(--bad);background:rgba(239,68,68,.08)" data-campus-del="${c.domain}">↺</button>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+  `;
+
+  $('#tabbody').querySelectorAll('[data-campus-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openCampusEditor(btn.dataset.campusEdit, btn.dataset.campusLabel));
+  });
+  $('#tabbody').querySelectorAll('[data-campus-del]').forEach(btn => {
+    btn.addEventListener('click', () => resetCampusLayout(btn.dataset.campusDel));
+  });
+}
+
+function openCampusEditor(domain, label) {
+  _campusEditorDomain = domain;
+  _campusLayoutCache  = null;
+  const overlay = $('#campus-overlay');
+  overlay.style.display = 'flex';
+  $('#campus-overlay-title').textContent = `✏️ Campus Editor — ${label}`;
+  $('#campus-dirty-badge').style.display = 'none';
+  const iframe = $('#campus-iframe');
+  iframe.src = `/campus-proto/b-iso-canvas.html?domain=${domain}&edit=1`;
+}
+
+function closeCampusEditor() {
+  const overlay = $('#campus-overlay');
+  overlay.style.display = 'none';
+  $('#campus-iframe').src = '';
+  _campusEditorDomain = null;
+  _campusLayoutCache  = null;
+}
+
+async function saveCampusLayout() {
+  if (!_campusEditorDomain) return;
+  // Request state from iframe
+  $('#campus-iframe').contentWindow?.postMessage({ type: 'campus-cmd-state' }, '*');
+  // Wait for response (campus-state message sets _campusLayoutCache)
+  await new Promise(res => {
+    const t = setTimeout(res, 3000);
+    const check = setInterval(() => {
+      if (_campusLayoutCache) { clearInterval(check); clearTimeout(t); res(); }
+    }, 100);
+  });
+  if (!_campusLayoutCache) return toast('Không đọc được layout từ iframe', 'err');
+  const r = await api(`/api/admin/campus-layout/${_campusEditorDomain}`, {
+    method: 'POST', body: JSON.stringify({ layout: _campusLayoutCache }),
+  });
+  if (!r.ok) return toast('Lỗi lưu: ' + (r.data?.message || r.data?.error || r.status), 'err');
+  toast(`✓ Đã lưu campus ${_campusEditorDomain}`);
+  $('#campus-dirty-badge').style.display = 'none';
+  _campusLayoutCache = null;
+}
+
+async function resetCampusLayout(domain) {
+  if (!confirm(`Reset về layout mặc định cho "${domain}"? Override DB sẽ bị xoá.`)) return;
+  const r = await api(`/api/admin/campus-layout/${domain}`, { method: 'DELETE' });
+  if (!r.ok) return toast('Lỗi: ' + (r.data?.error || r.status), 'err');
+  toast(`✓ Đã reset campus ${domain}`);
+  if (_campusEditorDomain === domain) closeCampusEditor();
+  await loadCampus();
+}
+
+window.addEventListener('message', e => {
+  const m = e.data;
+  if (!m || !_campusEditorDomain) return;
+  if (m.type === 'campus-dirty') {
+    $('#campus-dirty-badge').style.display = 'inline-block';
+  } else if (m.type === 'campus-state') {
+    _campusLayoutCache = m.layout;
+  }
+});
+
 const TABS = {
   requests:  { label:'💡 Góp ý', load: loadRequests, badge: () => reqCache.filter(r => r.status === 'pending').length },
   users:     { label:'👥 Người dùng', load: loadUsers },
   schools:   { label:'🏫 Trường', load: loadSchools },
+  campus:    { label:'🗺️ Campus', load: loadCampus },
   decisions: { label:'🤖 Quyết định AI', load: () => loadSimple('/api/admin/ai-decisions?limit=200', 'decisions',
     ['id','request_id','action','status_applied','decided_by','confidence','created_at'], { created_at: fmt }) },
   content:   { label:'📚 Học liệu AI', load: () => loadSimpleWithDelete('/api/admin/content?limit=200', 'content',
@@ -1079,7 +1242,7 @@ async function refresh() {
 // ─────────── Init ───────────
 async function init() {
   const meR = await api('/api/auth/me');
-  $('#who').textContent = meR.data?.user ? '@' + meR.data.user.username : '';
+  const whoEl = $('#who'); if (whoEl) whoEl.textContent = meR.data?.user ? '@' + meR.data.user.username : '';
 
   await refresh();
 
@@ -1087,7 +1250,7 @@ async function init() {
   setInterval(refresh, 60_000);
 
   // Manual refresh
-  $('#refreshBtn').addEventListener('click', refresh);
+  $('#refreshBtn')?.addEventListener('click', refresh);
   document.addEventListener('keydown', e => {
     if (e.key === 'r' && !e.metaKey && !e.ctrlKey && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) {
       refresh();
@@ -1116,8 +1279,13 @@ async function init() {
   $('#sch-cancel').addEventListener('click', closeModal);
   $('#sch-submit').addEventListener('click', submitSchool);
 
+  // Campus editor overlay
+  $('#campus-close-btn').addEventListener('click', closeCampusEditor);
+  $('#campus-save-btn').addEventListener('click', saveCampusLayout);
+  $('#campus-reset-btn').addEventListener('click', () => _campusEditorDomain && resetCampusLayout(_campusEditorDomain));
+
   // Logout
-  $('#logoutBtn').addEventListener('click', async (e) => {
+  $('#logoutBtn')?.addEventListener('click', async (e) => {
     e.preventDefault();
     await fetch('/api/auth/logout', { method:'POST', credentials:'same-origin' });
     location.href = '/login.html';

@@ -208,6 +208,7 @@
   .osys .planet.bot { bottom: -16px; }
   .osys .planet.rt  { top: calc(50% - 16px); right: -16px; left: auto; margin-left: 0; }
   .osys .planet.lf  { top: calc(50% - 16px); left: -16px; margin-left: 0; }
+  .osys .planet { transition: opacity 0.35s ease; }
   .osys .planet.swap { opacity: 0; }
 
   /* Node Trái đất–Mặt trăng: Trái đất ở giữa (cố định), Mặt trăng xoay quanh */
@@ -489,8 +490,8 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
       <p class="tagline" style="opacity:.85;font-style:italic;font-size:13px;margin-top:-4px;letter-spacing:.3px;">The Intelligent Zone for Interactive Academy</p>
       <p class="tagline">Vũ trụ giáo dục <b>do AI điều hành</b> — học liệu, môi trường thực hành và <b>tự cải tiến mỗi ngày</b>. Học bằng 2D · 3D · VR · XR · Metaverse.</p>
       <div class="cta-row">
-        <a class="cta primary" id="hero-enter" href="#schools">🏫 Vào trường của bạn</a>
-        <button class="cta ghost" id="hero-tutor-cta" type="button">🦉 Hỏi AI Tutor</button>
+        <a class="cta primary" id="hero-enter" href="#schools">Vào trường của bạn</a>
+        <button class="cta ghost" id="hero-tutor-cta" type="button">Hỏi AI Tutor</button>
       </div>
     </div>
 
@@ -802,6 +803,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     import { DOMAIN_META, DOMAIN_LEVELS, isGuestDomain, getRequiredPlan, canEnterDomain } from './js/engine/domain.js';
     import { fetchMe } from './js/auth.js';
     import { effectivePlanId, USER_PLANS } from './js/plans.js';
+    import { autoPromptEnrollIfNeeded } from './js/enrollment.js';
 
     const host = document.getElementById('school-clusters');
     const statusLabel = { ready: '✓ Sẵn sàng', preview: 'Preview', locked: '🔒 Sắp mở' };
@@ -809,7 +811,8 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
     // Chế độ KHÁCH: nếu chưa đăng nhập, các trường ≠ Mầm non bị khoá tạm với CTA
     // "Đăng nhập để mở". Không redirect, không nháy — giữ nguyên trang chủ.
-    const me = await fetchMe();
+    // User đã login + chưa chọn trường → bật modal Chọn trường (block UI).
+    const me = await autoPromptEnrollIfNeeded() ?? await fetchMe();
     const isGuest = !me;
     const myPlan = effectivePlanId(me);
 
@@ -840,6 +843,17 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
         ? ` <span class="sc-pill plus">✨ Cần Plus</span>` : '';
       const guestTag = needLogin
         ? ' <span class="sc-pill locked">🔐 Cần đăng nhập</span>' : '';
+      // Mỗi tài khoản 1 trường: badge "🎓 Đang học" cho trường mình + "👀 Tham
+      // quan" cho mọi trường khác (vẫn vào xem được nhưng không tương tác —
+      // Phase 4 sẽ disable nút submit/play khi vào). Admin bỏ qua (NULL).
+      let enrollTag = '';
+      if (me && !isGuest && me.enrolled_domain && !isComingSoon) {
+        if (me.enrolled_domain === d.id) {
+          enrollTag = ' <span class="sc-pill" style="background:#16a34a;color:#fff">🎓 Đang học</span>';
+        } else {
+          enrollTag = ' <span class="sc-pill" style="background:#64748b;color:#fff">👀 Tham quan</span>';
+        }
+      }
 
       let cta, attrs, t = 'a';
       if (isComingSoon) {
@@ -868,7 +882,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
             <div><div class="sc-name">${d.name}</div><div class="sc-short">${meta}</div></div>
           </div>
           <div class="sc-tagline">${d.tagline}</div>
-          <div class="sc-meta">${statusTag}${planTag}${guestTag}</div>
+          <div class="sc-meta">${statusTag}${planTag}${guestTag}${enrollTag}</div>
           <div class="sc-cta">${cta}</div>
         </${t}>`;
     }
@@ -895,16 +909,6 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   </script>
 </div>
 
-<!-- Tài khoản & logo đã chuyển sang header trên cùng (./js/auth-header.js).
-     Top-bar này chỉ còn ô "Mã lớp" cho SV tham gia lớp do GV tạo. -->
-<div class="top-bar" style="grid-template-columns:1fr">
-  <div>
-    <label>🎓</label>
-    <input id="class-input" placeholder="Mã lớp (6 ký tự)" maxlength="12" style="text-transform:uppercase;font-family:monospace;font-weight:700" />
-    <button id="class-join" style="background:#0ea5e9">Vào lớp</button>
-    <span class="saved" id="class-saved"></span>
-  </div>
-</div>
 
 <!-- ============ CÔNG CỤ CHUNG (chỉ giáo viên) ============ -->
 <!-- Hệ thống đang mở cho SINH VIÊN. Phần công cụ giáo viên ẩn mặc định,
@@ -964,11 +968,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 </div>
 
 <footer>
-  <b>Tizia</b> — The Intelligent Zone for Interactive Academy<br>
-  Backend: Node.js + Express + SQLite + WebSocket trên cổng <code>8041</code> ·
-  Chạy: <code>npm install &amp;&amp; npm start</code> ·
-  Deploy: Docker / Portainer (xem README)<br>
-  Tương thích: Chrome / Edge / Safari · Hand tracking cần webcam hoặc VR headset
+  <b>Tizia</b> — The Intelligent Zone for Interactive Academy
 </footer>
 
 <script type="module">
