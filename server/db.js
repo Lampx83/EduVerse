@@ -171,6 +171,14 @@ try { db.exec(`ALTER TABLE users ADD COLUMN major TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN cohort TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN school_name TEXT`); } catch {}
 
+// enrolled_domain = trường HS/SV đang theo học (1 trong DOMAIN_META). NULL = chưa
+// chọn (FE bắt mở modal). Mỗi tài khoản tại 1 thời điểm chỉ THAM GIA 1 trường:
+// ví/xp/coin/level/skill đều theo (user_id, domain). Đổi trường = tạo bucket mới,
+// bucket cũ vẫn còn trong DB (ẩn) nên nếu quay lại trường cũ thì khôi phục.
+// Admin: NULL (không gắn trường, có quyền tương tác mọi trường — bypass gate).
+try { db.exec(`ALTER TABLE users ADD COLUMN enrolled_domain TEXT`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_enrolled_domain ON users(enrolled_domain)`); } catch {}
+
 // Trục 4: family plan + school code. family_links cho phép 1 PH link n con HS
 // (parent_user_id phải là role='teacher' hoặc 'student' tuổi >=18 — kiểm ở app
 // layer, không hard-enforce DB). Plan của parent được kế thừa xuống con khi
@@ -309,18 +317,21 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_skills_domain     ON skills(domain, grade_min, grade_max);
 
   -- HS đạt skill khi: hoàn thành scenario, đạt quiz ≥70%, hoàn thành mini-game.
-  -- UNIQUE(user_id, skill_id) → 1 skill chỉ tính 1 lần (lần đạt đầu tiên).
+  -- UNIQUE(user_id, skill_id, domain) → 1 skill chỉ tính 1 lần TRONG MỖI TRƯỜNG;
+  -- HS đổi trường → bucket domain mới làm lại từ đầu (bucket domain cũ vẫn ở DB).
   -- source_type/source_id để truy ngược nguồn grant (audit + UI "đạt được khi nào").
+  -- domain '' = legacy bucket (skill grant trước khi user chọn trường).
   CREATE TABLE IF NOT EXISTS user_skills (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     school_id    INTEGER NOT NULL DEFAULT 1,
     user_id      INTEGER NOT NULL,
     skill_id     INTEGER NOT NULL,
+    domain       TEXT    NOT NULL DEFAULT '',
     earned_at    INTEGER NOT NULL,
     source_type  TEXT,                          -- 'attempt' | 'scenario_run' | 'lesson' | 'mini_game' | 'manual'
     source_id    TEXT,                          -- id của nguồn (string vì có thể là scenario code)
     score        INTEGER,                       -- 0..100, score của lần grant (NULL nếu không áp dụng)
-    UNIQUE(user_id, skill_id),
+    UNIQUE(user_id, skill_id, domain),
     FOREIGN KEY (user_id)  REFERENCES users(id)  ON DELETE CASCADE,
     FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
   );
@@ -328,6 +339,54 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_user_skills_skill  ON user_skills(skill_id, earned_at DESC);
   CREATE INDEX IF NOT EXISTS idx_user_skills_school ON user_skills(school_id, earned_at DESC);
 `);
+
+// Migration: tách user_skills theo (user_id, skill_id, domain). Khi user đổi trường,
+// skill cũ giữ ở bucket domain cũ (ẩn khỏi /nang-luc.html trường mới) — quay lại
+// trường cũ sẽ tự hiện lại nhờ cùng (user_id, domain). Idempotent: chỉ migrate khi
+// chưa có cột `domain`.
+{
+  const cols = db.prepare(`PRAGMA table_info('user_skills')`).all();
+  if (cols.length > 0 && !cols.some(c => c.name === 'domain')) {
+    db.exec('BEGIN');
+    try {
+      db.exec(`
+        CREATE TABLE user_skills_new (
+          id           INTEGER PRIMARY KEY AUTOINCREMENT,
+          school_id    INTEGER NOT NULL DEFAULT 1,
+          user_id      INTEGER NOT NULL,
+          skill_id     INTEGER NOT NULL,
+          domain       TEXT    NOT NULL DEFAULT '',
+          earned_at    INTEGER NOT NULL,
+          source_type  TEXT,
+          source_id    TEXT,
+          score        INTEGER,
+          UNIQUE(user_id, skill_id, domain),
+          FOREIGN KEY (user_id)  REFERENCES users(id)  ON DELETE CASCADE,
+          FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
+        );
+        INSERT INTO user_skills_new
+          (id, school_id, user_id, skill_id, domain, earned_at, source_type, source_id, score)
+        SELECT id, school_id, user_id, skill_id, '', earned_at, source_type, source_id, score
+        FROM user_skills;
+        DROP TABLE user_skills;
+        ALTER TABLE user_skills_new RENAME TO user_skills;
+        CREATE INDEX idx_user_skills_user   ON user_skills(user_id, earned_at DESC);
+        CREATE INDEX idx_user_skills_skill  ON user_skills(skill_id, earned_at DESC);
+        CREATE INDEX idx_user_skills_school ON user_skills(school_id, earned_at DESC);
+        CREATE INDEX idx_user_skills_domain ON user_skills(user_id, domain, earned_at DESC);
+      `);
+      db.exec('COMMIT');
+      console.log('[db] migrated user_skills → per-domain');
+    } catch (e) { db.exec('ROLLBACK'); console.warn('[db] user_skills migration failed', e.message); throw e; }
+  } else if (cols.length === 0) {
+    // chưa migrate qua schema cũ — nhánh này không xảy ra vì CREATE TABLE phía trên
+    // đã chạy. Để an toàn nếu file db mới hoàn toàn, tạo index domain riêng.
+    try { db.exec(`CREATE INDEX IF NOT EXISTS idx_user_skills_domain ON user_skills(user_id, domain, earned_at DESC)`); } catch {}
+  } else {
+    // đã có cột domain → đảm bảo index tồn tại
+    try { db.exec(`CREATE INDEX IF NOT EXISTS idx_user_skills_domain ON user_skills(user_id, domain, earned_at DESC)`); } catch {}
+  }
+}
 
 // Seed 15 competencies GDPT 2018 — idempotent qua INSERT OR IGNORE theo code.
 // Nguồn: Thông tư 32/2018/TT-BGDĐT (Chương trình GDPT tổng thể).
@@ -772,7 +831,7 @@ const getUserByUsernameStmt = db.prepare(`
 const getUserByIdStmt = db.prepare(`
   SELECT id, username, display_name, role, age, email, avatar_url, school_id, created_at, last_login,
          plan, plan_expires_at, billing_cycle,
-         grade, major, cohort, school_name
+         grade, major, cohort, school_name, enrolled_domain
   FROM users WHERE id = ?
 `);
 const setUserPlanStmt = db.prepare(`
@@ -788,7 +847,7 @@ const insertSessionStmt = db.prepare(`
 const getSessionStmt = db.prepare(`
   SELECT s.token, s.user_id, s.expires_at,
          u.username, u.display_name, u.role, u.school_id,
-         u.plan, u.plan_expires_at
+         u.plan, u.plan_expires_at, u.enrolled_domain
   FROM sessions s JOIN users u ON u.id = s.user_id
   WHERE s.token = ? AND s.expires_at > @now
 `);
@@ -1048,16 +1107,18 @@ export function listRedemptionsForUser(user_id) {
   return listRedemptionsForUserStmt.all(Number(user_id));
 }
 
-// ── User wallets ──
-// Ví XP/coin/streak/daily-quest per-user. Trước đây toàn bộ state nằm ở localStorage
-// (key tizia:wallet:v1) → mất ngay khi đổi máy / clear cache / dùng cửa sổ ẩn danh,
-// và nhiều user trên cùng máy dùng chung 1 ví. Bảng này khoá theo user_id để
-// XP/level theo người, không theo trình duyệt. Các trường JSON (achievements,
-// modules_by_day, daily, quests_claimed) lưu nguyên payload từ client để giữ
-// engine pure-client; server chỉ là kho đồng bộ + clamp số.
+// ── User wallets (per-domain) ──
+// Ví XP/coin/streak/daily-quest per-user PER-TRƯỜNG. Mỗi tài khoản tại 1 thời điểm
+// chỉ tham gia 1 trường (users.enrolled_domain). Tiến trình theo (user_id, domain):
+// đổi trường = tạo bucket mới, level/coin/xp/streak ở bucket cũ vẫn lưu (ẩn) để
+// nếu quay lại trường cũ thì khôi phục liền — anh Lâm chốt giữ ẩn, không xoá.
+//
+// domain '' (rỗng) = legacy bucket: ví của user CHƯA chọn trường (tài khoản cũ
+// trước khi triển khai per-school) hoặc admin (admin không bound vào trường).
 db.exec(`
   CREATE TABLE IF NOT EXISTS user_wallets (
-    user_id          INTEGER PRIMARY KEY,
+    user_id          INTEGER NOT NULL,
+    domain           TEXT    NOT NULL DEFAULT '',
     coins            INTEGER NOT NULL DEFAULT 0,
     xp               INTEGER NOT NULL DEFAULT 0,
     streak           INTEGER NOT NULL DEFAULT 0,
@@ -1072,19 +1133,77 @@ db.exec(`
     daily            TEXT    NOT NULL DEFAULT '{}',
     quests_claimed   TEXT    NOT NULL DEFAULT '{}',
     updated_at       INTEGER NOT NULL,
+    PRIMARY KEY (user_id, domain),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 `);
 
-const getUserWalletStmt = db.prepare(`SELECT * FROM user_wallets WHERE user_id = ?`);
+// Migration legacy → per-domain: nếu user_wallets cũ chỉ có PK user_id (chưa có
+// cột domain) thì recreate với composite PK. Toàn bộ row cũ vào bucket '' để FE
+// tự "khớp" sau lần đầu gọi /api/me/enroll (lúc đó BE merge bucket '' → bucket
+// domain user chọn). Idempotent: chỉ migrate khi thiếu cột domain.
+{
+  const cols = db.prepare(`PRAGMA table_info('user_wallets')`).all();
+  if (cols.length > 0 && !cols.some(c => c.name === 'domain')) {
+    db.exec('BEGIN');
+    try {
+      db.exec(`
+        CREATE TABLE user_wallets_new (
+          user_id          INTEGER NOT NULL,
+          domain           TEXT    NOT NULL DEFAULT '',
+          coins            INTEGER NOT NULL DEFAULT 0,
+          xp               INTEGER NOT NULL DEFAULT 0,
+          streak           INTEGER NOT NULL DEFAULT 0,
+          longest_streak   INTEGER NOT NULL DEFAULT 0,
+          streak_shields   INTEGER NOT NULL DEFAULT 0,
+          last_visit_day   TEXT    NOT NULL DEFAULT '',
+          achievements     TEXT    NOT NULL DEFAULT '[]',
+          vr_sessions      INTEGER NOT NULL DEFAULT 0,
+          meta_sessions    INTEGER NOT NULL DEFAULT 0,
+          quizzes_passed   INTEGER NOT NULL DEFAULT 0,
+          modules_by_day   TEXT    NOT NULL DEFAULT '{}',
+          daily            TEXT    NOT NULL DEFAULT '{}',
+          quests_claimed   TEXT    NOT NULL DEFAULT '{}',
+          updated_at       INTEGER NOT NULL,
+          PRIMARY KEY (user_id, domain),
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        INSERT INTO user_wallets_new
+          (user_id, domain, coins, xp, streak, longest_streak, streak_shields,
+           last_visit_day, achievements, vr_sessions, meta_sessions,
+           quizzes_passed, modules_by_day, daily, quests_claimed, updated_at)
+        SELECT
+          user_id, '', coins, xp, streak, longest_streak, streak_shields,
+          last_visit_day, achievements, vr_sessions, meta_sessions,
+          quizzes_passed, modules_by_day, daily, quests_claimed, updated_at
+        FROM user_wallets;
+        DROP TABLE user_wallets;
+        ALTER TABLE user_wallets_new RENAME TO user_wallets;
+      `);
+      db.exec('COMMIT');
+      console.log('[db] migrated user_wallets → per-domain');
+    } catch (e) { db.exec('ROLLBACK'); console.warn('[db] user_wallets migration failed', e.message); throw e; }
+  }
+}
+
+const getUserWalletStmt = db.prepare(`SELECT * FROM user_wallets WHERE user_id = ? AND domain = ?`);
+// Khi caller không truyền domain → fallback: enrolled_domain của user (đọc users
+// table). User chưa enroll → '' (legacy bucket). Admin (enrolled_domain NULL) cũng
+// rơi vào '' — phù hợp vì admin không bound vào trường nào.
+const _getEnrolledDomainStmt = db.prepare(`SELECT enrolled_domain FROM users WHERE id = ?`);
+function _resolveDomain(user_id, domain) {
+  if (typeof domain === 'string') return domain;
+  const row = _getEnrolledDomainStmt.get(Number(user_id));
+  return row?.enrolled_domain || '';
+}
 const upsertUserWalletStmt = db.prepare(`
-  INSERT INTO user_wallets (user_id, coins, xp, streak, longest_streak, streak_shields,
+  INSERT INTO user_wallets (user_id, domain, coins, xp, streak, longest_streak, streak_shields,
                             last_visit_day, achievements, vr_sessions, meta_sessions,
                             quizzes_passed, modules_by_day, daily, quests_claimed, updated_at)
-  VALUES (@user_id, @coins, @xp, @streak, @longest_streak, @streak_shields,
+  VALUES (@user_id, @domain, @coins, @xp, @streak, @longest_streak, @streak_shields,
           @last_visit_day, @achievements, @vr_sessions, @meta_sessions,
           @quizzes_passed, @modules_by_day, @daily, @quests_claimed, @updated_at)
-  ON CONFLICT(user_id) DO UPDATE SET
+  ON CONFLICT(user_id, domain) DO UPDATE SET
     coins          = excluded.coins,
     xp             = excluded.xp,
     streak         = excluded.streak,
@@ -1101,9 +1220,15 @@ const upsertUserWalletStmt = db.prepare(`
     updated_at     = excluded.updated_at
 `);
 
-/** Đọc ví của 1 user. Trả null nếu chưa có row (caller fallback ví rỗng). */
-export function getUserWallet(user_id) {
-  const row = getUserWalletStmt.get(Number(user_id));
+/**
+ * Đọc ví của 1 user TRONG 1 TRƯỜNG. Caller không truyền `domain` → tự tra
+ * `users.enrolled_domain` (admin/chưa-enroll → bucket ''). Trả null nếu user chưa
+ * có row ở bucket đó → FE fallback ví rỗng (đúng yêu cầu "sang trường mới = làm
+ * lại"). Bucket cũ vẫn còn trong DB, không bị mất.
+ */
+export function getUserWallet(user_id, domain) {
+  const d = _resolveDomain(user_id, domain);
+  const row = getUserWalletStmt.get(Number(user_id), d);
   if (!row) return null;
   // Parse các trường JSON; lỗi parse → giá trị mặc định an toàn.
   const parse = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
@@ -1160,8 +1285,9 @@ function _mergeModulesByDay(cur = {}, inc = {}) {
  * @param {object} opts
  * @param {boolean} [opts.monotonic=true] - false để ghi đè cứng (admin chỉnh tay).
  */
-export function upsertUserWallet(user_id, w = {}, { monotonic = true } = {}) {
-  const cur = getUserWallet(user_id) || {};
+export function upsertUserWallet(user_id, w = {}, { monotonic = true, domain } = {}) {
+  const d = _resolveDomain(user_id, domain);
+  const cur = getUserWallet(user_id, d) || {};
   const pick = (k, def = 0) => (w[k] !== undefined ? w[k] : (cur[k] ?? def));
   // Monotonic ↑ : lấy max(server, client). Không monotonic → lấy client (last-write).
   const up = (k, max = 1e9) => {
@@ -1177,6 +1303,7 @@ export function upsertUserWallet(user_id, w = {}, { monotonic = true } = {}) {
 
   upsertUserWalletStmt.run({
     user_id:        Number(user_id),
+    domain:         d,
     coins:          up('coins', 1e12),
     xp:             up('xp', 1e12),
     longest_streak: up('longestStreak', 10000),
@@ -1193,7 +1320,23 @@ export function upsertUserWallet(user_id, w = {}, { monotonic = true } = {}) {
     quests_claimed: _toJson(pick('questsClaimed', {}), {}),
     updated_at:     Date.now(),
   });
-  return getUserWallet(user_id);
+  return getUserWallet(user_id, d);
+}
+
+// ─── Enrollment helpers (mỗi tài khoản 1 trường tại 1 thời điểm) ───
+// Đọc enrolled_domain của user. Trả null nếu chưa chọn (FE bắt mở modal).
+export function getEnrolledDomain(user_id) {
+  const row = _getEnrolledDomainStmt.get(Number(user_id));
+  return row?.enrolled_domain || null;
+}
+const _setEnrolledDomainStmt = db.prepare(`UPDATE users SET enrolled_domain = ? WHERE id = ?`);
+// Set/đổi trường. domain=null cho phép admin reset. KHÔNG đụng tới user_wallets /
+// user_skills bucket cũ — chúng vẫn lưu (ẩn vì query luôn lọc theo domain hiện
+// tại). User quay lại trường cũ → bucket cũ tự hiện lại đúng tiến trình.
+export function setEnrolledDomain(user_id, domain) {
+  const d = (domain == null || domain === '') ? null : String(domain).slice(0, 40);
+  _setEnrolledDomainStmt.run(d, Number(user_id));
+  return d;
 }
 
 console.log(`[db] SQLite open at ${dbPath}`);

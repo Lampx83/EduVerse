@@ -189,6 +189,14 @@
   <div class="modal-body" id="m-body"></div>
 </div></div>
 
+<!-- Per-school view-only gate (Phase 4): nếu user vào space của trường KHÔNG
+     phải mình → banner đỏ + dim mọi nút submit/play + chặn fetch ghi. -->
+<script type="module">
+  import { applyViewOnlyGate } from '/js/enrollment.js';
+  const dom = new URLSearchParams(location.search).get('domain') || 'pharmacy';
+  applyViewOnlyGate(dom);
+</script>
+
 <script>
 const SPACES_PHARMACY = {
   admin:{emoji:'⚙️',name:'Hành chính – Hiệu bộ',accent:'#94a3b8',intro:'Trung tâm điều hành & thông tin của Trường Dược: theo dõi tiến độ, tiếp nhận yêu cầu cải tiến, tìm hiểu về trường.',
@@ -1055,7 +1063,7 @@ const SPACES_IT = {
       {q:'Yếu tố quan trọng nhất của một demo hackathon?',o:['Luồng chính chạy được & rõ ràng','Giao diện cực kỳ cầu kỳ','Nhiều màu sắc','Nhạc nền'],a:0}]},
 
   codelab:{emoji:'💻',name:'Lab Lập trình',accent:'#38bdf8',intro:'Phòng thực hành lập trình: viết code, debug, dùng Git và rèn thói quen clean code.',
-    rooms:[{ic:'💻',name:'Code Lab — viết & chạy code',rd:'Viết JavaScript, chạy thật, chấm tự động.',href:'/it-code-lab.html?domain=it'},
+    rooms:[{ic:'💻',name:'Code Lab — Python nhập môn',rd:'6 bài Python cơ bản (I/O, vòng lặp, rẽ nhánh, chuỗi) — chấm trên NEU Codelab.',href:'/it-code-lab.html?domain=it&contest=325049'},
       {ic:'⚡',name:'Thử thách giải thuật',rd:'Giải nhanh bài nhỏ.',panel:[{h:'Khởi động tư duy lập trình'},{mcq:[{q:'Đảo ngược chuỗi "abc" được?',o:['"cba"','"abc"','"bca"','Báo lỗi'],a:0,fb:'Đảo ngược thứ tự: c-b-a.'},{q:'Tổng 1+2+…+100 bằng?',o:['5050','100','1000','5000'],a:0,fb:'Công thức n(n+1)/2 = 100×101/2 = 5050.'},{q:'Kiểm tra một số là chẵn dùng phép?',o:['n % 2 == 0','n / 2','n * 2','n + 2'],a:0,fb:'Số dư khi chia 2 bằng 0 ⇒ số chẵn.'}]}]},
       {ic:'🐞',name:'Quy trình debug',rd:'Tìm & sửa lỗi có hệ thống.',panel:[
         {h:'Debug như một kỹ sư'},
@@ -1077,7 +1085,7 @@ const SPACES_IT = {
 
   algolab:{emoji:'🌳',name:'Lab Giải thuật & CTDL',accent:'#4ade80',intro:'Cấu trúc dữ liệu và giải thuật: chọn đúng cấu trúc, phân tích độ phức tạp, luyện tư duy giải bài.',
     rooms:[{ic:'📊',name:'Trực quan giải thuật — xem từng bước',rd:'Bubble/Selection/Insertion/Merge/Quick chạy động: so sánh, hoán đổi, Big-O + củng cố.',href:'/it-algo-viz.html?domain=it'},
-      {ic:'🧮',name:'Code Lab — luyện giải thuật',rd:'Cài & chạy thuật toán, vượt bộ test.',href:'/it-code-lab.html?domain=it'},
+      {ic:'🧮',name:'Code Lab — CTDL & Giải thuật',rd:'6 bài Python (đệ quy, sắp xếp, hai con trỏ, GCD) — chấm trên NEU Codelab.',href:'/it-code-lab.html?domain=it&contest=255760'},
       // Code Quest — game block-based dành cho SV CNTT khởi động tư duy thuật toán
       {ic:'🤖',name:'Code Quest — sandbox tư duy',rd:'Block-based puzzle 10 level — luyện tư duy phân tích bài + cấu trúc lặp/rẽ nhánh.',href:'/code-quest.html'},
       {ic:'🧗',name:'Luyện giải bài',rd:'Chọn thuật toán & cấu trúc đúng.',panel:[{h:'Chọn đúng công cụ cho bài toán'},{mcq:[{q:'Tìm một phần tử trong MẢNG ĐÃ SẮP XẾP nhanh nhất bằng?',o:['Tìm kiếm nhị phân O(log n)','Duyệt tuyến tính O(n)','Sắp xếp lại rồi duyệt','Chọn ngẫu nhiên'],a:0,fb:'Mảng đã sắp xếp ⇒ binary search O(log n).'},{q:'Hàng đợi công việc xử lý theo thứ tự đến nên dùng?',o:['Queue (FIFO)','Stack (LIFO)','Mảng ngẫu nhiên','Cây nhị phân'],a:0,fb:'Đến trước xử lý trước ⇒ Queue.'},{q:'Liên tục lấy phần tử NHỎ NHẤT nên dùng?',o:['Min-heap (priority queue)','Mảng thường','Stack','Hash map'],a:0,fb:'Heap cho lấy min/max ở O(log n).'}]}]},
@@ -2198,13 +2206,17 @@ async function submitQuiz(){
 
 async function rerollQuiz(){
   const sq = await getSpacedQuizModule();
-  if(!sq) return;
+  const pool = await getQuizPool();
+  if(!sq){
+    // Không có SRS: shuffle pool và lấy QUIZ_SIZE câu mới.
+    _currentBatch = shuffleArray(pool).slice(0, QUIZ_SIZE).map(q=>({...q, _badge:'new'}));
+    renderQuiz();
+    return;
+  }
   // Re-load state để pick lại với due_at mới (sau khi vừa submit).
   _srsState = await sq.loadSrsState(SRS_PREFIX);
-  // Map id của card → key có prefix để khớp với state.
-  const pool = (S.quiz||[]).filter(q=>q && q.id).map(q=>({...q, id: SRS_PREFIX+q.id}));
-  const picked = sq.pickPersonalizedQuiz(pool, QUIZ_SIZE, _srsState);
-  // Strip prefix khỏi id để render giữ id gốc (vd 'mam-c03').
+  const prefixed = pool.filter(q=>q && q.id).map(q=>({...q, id: SRS_PREFIX+q.id}));
+  const picked = sq.pickPersonalizedQuiz(prefixed, QUIZ_SIZE, _srsState);
   _currentBatch = picked.map(c=>({...c, id: c.id.slice(SRS_PREFIX.length)}));
   renderQuiz();
 }
@@ -2216,6 +2228,71 @@ function getSpacedQuizModule(){
     return null;
   });
   return _sqPromise;
+}
+
+// Shuffle Fisher-Yates — dùng cho fallback khi không có SRS.
+function shuffleArray(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// ----- Pool mở rộng: nạp ngân hàng câu hỏi tuần (lop2..lop5) -----
+// S.quiz chỉ có ~3 câu seed mỗi grade — không đủ random. Trang module.html dùng
+// ngân hàng /js/scenarios/lopN/_index.js (~1700 câu/grade). Ở đây ta lazy-load
+// cùng nguồn đó, flatten về shape {q,o,a,id} để feed picker SRS.
+const EXTENDED_POOL_LOADERS = {
+  'primary:g2': () => import('/js/scenarios/lop2/_index.js').then(m => m.PRIMARY_LOP2_SCENARIOS),
+  'primary:g3': () => import('/js/scenarios/lop3/_index.js').then(m => m.PRIMARY_LOP3_SCENARIOS),
+  'primary:g4': () => import('/js/scenarios/lop4/_index.js').then(m => m.PRIMARY_LOP4_SCENARIOS).catch(()=>null),
+  'primary:g5': () => import('/js/scenarios/lop5/_index.js').then(m => m.PRIMARY_LOP5_SCENARIOS).catch(()=>null),
+};
+
+function flattenScenarioBank(bank){
+  // bank: { scenarioId: { questions:[{stem,choices,answer,explanation}, ...] } }
+  const out = [];
+  if(!bank || typeof bank !== 'object') return out;
+  for(const [scId, sc] of Object.entries(bank)){
+    const qs = Array.isArray(sc?.questions) ? sc.questions : [];
+    qs.forEach((qx, idx) => {
+      if(!qx || !Array.isArray(qx.choices)) return;
+      const ans = Number(qx.answer);
+      if(!(ans>=0 && ans<qx.choices.length)) return;
+      out.push({
+        id: `${scId}:q${idx+1}`,
+        q:  String(qx.stem||'').trim(),
+        o:  qx.choices.map(c=>String(c)),
+        a:  ans,
+      });
+    });
+  }
+  return out;
+}
+
+let _poolPromise = null;
+function getQuizPool(){
+  if(_poolPromise) return _poolPromise;
+  const key = `${dom}:${id}`;
+  const loader = EXTENDED_POOL_LOADERS[key];
+  const seed = (S.quiz||[]).filter(q=>q).map((q,i)=>({...q, id: q.id || `${id}-seed-${i+1}`}));
+  if(!loader){
+    _poolPromise = Promise.resolve(seed);
+    return _poolPromise;
+  }
+  _poolPromise = loader()
+    .then(bank => {
+      const extra = flattenScenarioBank(bank);
+      // Ưu tiên ngân hàng tuần; seed làm fallback nếu bank rỗng (lỗi import).
+      return extra.length ? extra : seed;
+    })
+    .catch(err => {
+      console.warn('[space] extended pool load failed', err);
+      return seed;
+    });
+  return _poolPromise;
 }
 
 // ===== Skill chip earned state =====
@@ -2249,17 +2326,16 @@ async function refreshSkillChips(){
 refreshSkillChips();
 
 (async function bootQuiz(){
-  // Pool có id → cá nhân hoá. Nếu thiếu id (legacy domain khác) → render đơn giản 5 câu đầu.
-  const pool = (S.quiz||[]).filter(q=>q);
-  const hasIds = pool.length && pool.every(q=>q.id);
-  if(!hasIds){
-    _currentBatch = pool.slice(0, QUIZ_SIZE).map(q=>({...q, _badge:'new'}));
-    renderQuiz();
+  // Pool = ngân hàng tuần (lop2..lop5) nếu có, fallback về S.quiz seed.
+  const pool = await getQuizPool();
+  if(!pool.length){
+    quizEl.innerHTML = '<p style="opacity:.7">Chưa có câu hỏi nào — bé thử lại sau nhé.</p>';
     return;
   }
   const sq = await getSpacedQuizModule();
   if(!sq){
-    _currentBatch = pool.slice(0, QUIZ_SIZE).map(q=>({...q, _badge:'new'}));
+    // Không có SRS (lỗi import / guest offline) → shuffle để khỏi lặp.
+    _currentBatch = shuffleArray(pool).slice(0, QUIZ_SIZE).map(q=>({...q, _badge:'new'}));
     renderQuiz();
     return;
   }

@@ -57,29 +57,32 @@ const Q = {
     (SELECT COUNT(*) FROM requests r WHERE r.school_id=s.id) AS requests
     FROM schools s ORDER BY s.id`),
   createSchool: db.prepare(`INSERT INTO schools (code,name,domain,created_at) VALUES (@code,@name,@domain,@t)`),
-  // LEFT JOIN user_wallets để admin nhìn được level/XP/coin/streak — wallet là
-  // nguồn chân lý cho game-state. Row chưa có wallet → các field NULL → FE
-  // hiển thị "—" / Lv1 mặc định.
+  // LEFT JOIN user_wallets BUCKET trường HS đang theo học (enrolled_domain). Vì
+  // user_wallets giờ là composite (user_id, domain), nếu không filter domain thì
+  // user có nhiều bucket sẽ ra nhiều row → sai số liệu admin. enrolled_domain
+  // NULL (admin/chưa enroll) → bucket '' = legacy.
   users: db.prepare(`
     SELECT u.id, u.username, u.display_name, u.role, u.school_id, u.email,
            u.plan, u.plan_expires_at, u.billing_cycle, u.created_at, u.last_login,
+           u.enrolled_domain,
            w.xp, w.coins, w.streak, w.longest_streak, w.last_visit_day,
            w.quizzes_passed, w.updated_at AS wallet_updated_at
     FROM users u
-    LEFT JOIN user_wallets w ON w.user_id = u.id
+    LEFT JOIN user_wallets w
+      ON w.user_id = u.id AND w.domain = COALESCE(u.enrolled_domain, '')
     WHERE (@school_id IS NULL OR u.school_id=@school_id)
     ORDER BY u.created_at DESC LIMIT @limit
   `),
-  // Wallet chi tiết của 1 user (achievements + modules_by_day + daily). FE
-  // dùng cho modal "xem ví của HS/SV" trong admin.
+  // Wallet chi tiết — cùng nguyên tắc: chỉ ví trường HS đang học.
   userWalletDetail: db.prepare(`
-    SELECT u.id, u.username, u.display_name, u.role,
+    SELECT u.id, u.username, u.display_name, u.role, u.enrolled_domain,
            w.coins, w.xp, w.streak, w.longest_streak, w.streak_shields,
            w.last_visit_day, w.achievements, w.vr_sessions, w.meta_sessions,
            w.quizzes_passed, w.modules_by_day, w.daily, w.quests_claimed,
            w.updated_at
     FROM users u
-    LEFT JOIN user_wallets w ON w.user_id = u.id
+    LEFT JOIN user_wallets w
+      ON w.user_id = u.id AND w.domain = COALESCE(u.enrolled_domain, '')
     WHERE u.id = ?
   `),
   setUserRole: db.prepare(`UPDATE users SET role=@role WHERE id=@id`),
@@ -129,6 +132,20 @@ export function attachAdmin(r) {
     if (!['pupil', 'student', 'teacher', 'admin'].includes(role)) return res.status(400).json({ error: 'invalid_role' });
     Q.setUserRole.run({ id: Number(req.params.id), role });
     res.json({ ok: true });
+  });
+
+  // Admin set/đổi enrolled_domain. value=null → bỏ gắn trường (admin/no-school).
+  // Bucket ví/skill cũ KHÔNG bị xoá (đúng chính sách giữ ẩn — anh Lâm xác nhận).
+  r.post('/api/admin/users/:id/enrollment', requireAdmin, async (req, res) => {
+    const { setEnrolledDomain } = await import('../../db.js');
+    const { ENROLLABLE_DOMAINS } = await import('../identity/auth.js');
+    const raw = req.body?.enrolled_domain;
+    const target = (raw == null || raw === '') ? null : String(raw);
+    if (target != null && !ENROLLABLE_DOMAINS.has(target)) {
+      return res.status(400).json({ error: 'invalid_domain', valid: [...ENROLLABLE_DOMAINS] });
+    }
+    setEnrolledDomain(Number(req.params.id), target);
+    res.json({ ok: true, enrolled_domain: target });
   });
 
   // GET /api/admin/users/:id/wallet — chi tiết ví game của 1 HS/SV. Parse JSON

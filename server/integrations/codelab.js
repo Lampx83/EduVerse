@@ -214,22 +214,89 @@ export async function getRunCodeResult(token) {
 // ============================================================
 
 /**
- * Nộp bài chính thức cho 1 problem (có thể trong contest).
+ * Nộp bài chính thức cho 1 problem. Codelab DTO POST /submissions yêu cầu:
+ *   - problemId (MongoId)        ← Tizia có problemSlug → resolve qua getProblem
+ *   - language: { id, name }     ← build từ languages cache
+ *   - isMultipleFiles: boolean
+ *   - answer: { structure: FileNode, filesDetail: [{id, content}], currentFile }
+ *   - inContest, contestId       ← optional, dùng nếu submit trong contest
+ * Adapter wrap toàn bộ chỗ này để caller chỉ cần gửi slug + language_id + code.
+ *
  * @param {object} input
  * @param {string} input.problemSlug
- * @param {string} [input.contestSlug]
+ * @param {string} [input.contestSlug]   — slug contest (số, vd "325049")
  * @param {number} input.language_id
  * @param {string} input.source_code
- * @param {string} input.externalUserRef       — "tizia:user:<id>" (bắt buộc)
- * @param {string} [input.callback_url]        — override webhook URL
- * @param {string} [input.idempotencyKey]      — caller-supplied, default UUID v4
+ * @param {string} input.externalUserRef — "tizia:user:<id>" (bắt buộc)
+ * @param {string} [input.callbackUrl]   — override defaultCallbackUrl
+ * @param {string} [input.idempotencyKey]
  */
 export async function submit(input) {
-  const { externalUserRef, idempotencyKey, ...rest } = input || {};
+  const {
+    problemSlug, contestSlug, language_id,
+    source_code, externalUserRef, callbackUrl, idempotencyKey,
+  } = input || {};
   if (!externalUserRef) throw new Error('externalUserRef required');
-  if (!rest.problemSlug) throw new Error('problemSlug required');
+  if (!problemSlug) throw new Error('problemSlug required');
+  if (!language_id) throw new Error('language_id required');
+  if (typeof source_code !== 'string') throw new Error('source_code required');
+
+  // 1) Resolve problemSlug → problemId (Mongo _id). Cache trong adapter.
+  const problem = await getProblem(problemSlug);
+  const problemId = (problem?.data || problem)?._id;
+  if (!problemId) throw new Error(`Cannot resolve problemId for slug "${problemSlug}"`);
+
+  // 2) Resolve language_id → { id, name } (Codelab DTO yêu cầu cả name).
+  const langs = await listLanguages();
+  const arr = Array.isArray(langs) ? langs : (langs?.items || langs?.data || []);
+  const lang = arr.find((l) => Number(l.id) === Number(language_id));
+  if (!lang) throw new Error(`language_id ${language_id} không có trong Codelab`);
+
+  // 3) Build answer tree đúng schema Codelab. Cần CẢ 3 field:
+  //    - structure: cây file (id/name/type) — phải có children
+  //    - files: object map {fileId: codeString} — runtime đọc cái này
+  //    - filesDetail: [{id, fileName, content}] — UI client editor cần
+  //    - currentFile: id file đang focus
+  //  Validation runtime của Codelab có error message rõ ràng nên field nào sai
+  //  sẽ thấy ngay trong response 422.
+  const answer = {
+    structure: {
+      id: 'root', name: 'root', type: 'folder',
+      children: [{ id: 'solution', name: 'solution', type: 'file' }],
+    },
+    files: { solution: source_code },
+    filesDetail: [{
+      id: 'solution',
+      fileName: 'solution',
+      content: source_code,
+      languageId: Number(lang.id),
+      languageName: String(lang.name),
+    }],
+    currentFile: 'solution',
+  };
+
+  const body = {
+    problemId: String(problemId),
+    language: { id: Number(lang.id), name: String(lang.name) },
+    isMultipleFiles: false,
+    answer,
+    isTest: false,
+    isCustomInput: false,
+    externalUserRef,
+  };
+  if (contestSlug) {
+    // Codelab DTO yêu cầu contestId là Mongo ObjectId (24 hex). Slug số (vd
+    // "325049") không hợp lệ → resolve qua mapping Tizia-side.
+    const { getContestMongoId } = await import('./codelab-contests.js');
+    const mongoId = getContestMongoId(String(contestSlug));
+    if (!mongoId) throw new Error(`contestSlug "${contestSlug}" chưa có mapping mongoId (xem codelab-contests.js)`);
+    body.inContest = true;
+    body.contestId = mongoId;
+  }
+  if (callbackUrl) body.callbackUrl = callbackUrl;
+
   return _request('POST', '/submissions', {
-    body: { ...rest, externalUserRef },
+    body,
     headers: { 'Idempotency-Key': idempotencyKey || randomUUID() },
   });
 }

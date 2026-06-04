@@ -14,12 +14,13 @@ import { attachScoreUpWebhook } from './contexts/integration/scoreup-webhook.js'
 import { attachCodelabWebhook } from './contexts/integration/codelab-webhook.js';
 import * as scoreup from './integrations/scoreup.js';
 import * as codelab from './integrations/codelab.js';
+import { getContestProblemSlugs, getContestName, hasContestMapping } from './integrations/codelab-contests.js';
 import { countCodelabAcceptedProblems } from './db.js';
 import { recordQuestionAttempt, getRecentQuestionAttempts, getSrsStateByPrefix, recordSrsReview, pruneScoreUpEventsSeen } from './db.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
-import { attachUser, makeAuthGate, makeProfileGate, requireAuth, attachAuth } from './contexts/identity/auth.js';
+import { attachUser, makeAuthGate, makeProfileGate, requireAuth, requireEnrolled, attachAuth } from './contexts/identity/auth.js';
 import { attachOAuth, listEnabledProviders } from './contexts/identity/oauth.js';
 import { attachTenant } from './contexts/identity/tenant.js';
 import { attachSeo } from './contexts/seo/index.js';
@@ -298,9 +299,9 @@ attachIntegration(r);
 attachSecurity(r);
 attachAdmin(r);
 attachCampusLayout(r, requireAdmin);
-attachSkills(r, { requireAuth });
+attachSkills(r, { requireAuth, requireEnrolled });
 
-r.post('/api/attempts', requireAuth, (req, res) => {
+r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
   const b = req.body ?? {};
   const version = String(b.version || '');
   if (!isValidVersion(version)) {
@@ -377,7 +378,10 @@ r.get('/api/confusion', (req, res) => {
 r.get('/api/wallet', requireAuth, (req, res) => {
   res.json(getUserWallet(req.user.id) || null);
 });
-r.put('/api/wallet', requireAuth, (req, res) => {
+// PUT ghi ví → bắt phải đã chọn trường (requireEnrolled). Ví ghi vào bucket của
+// trường HS đang theo học (helper tự đọc enrolled_domain). FE submit thử ở trường
+// khác sẽ bị 403 view_only (FE Phase 4 đã ẩn nút submit từ trước, đây là lớp 2).
+r.put('/api/wallet', requireAuth, requireEnrolled, (req, res) => {
   const w = upsertUserWallet(req.user.id, req.body || {});
   res.json(w);
 });
@@ -394,7 +398,7 @@ r.get('/api/scenario-runs', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'db_error' });
   }
 });
-r.post('/api/scenario-runs', requireAuth, async (req, res) => {
+r.post('/api/scenario-runs', requireAuth, requireEnrolled, async (req, res) => {
   const familyId = String(req.body?.familyId || '').trim().slice(0, 64);
   if (!familyId) return res.status(400).json({ error: 'familyId required' });
   const stars = Number(req.body?.stars) || 0;
@@ -531,7 +535,7 @@ r.get('/api/quiz/random', requireAuth, async (req, res) => {
 });
 
 // Submit câu trả lời: server fetch lại câu để chấm (không tin client), lưu attempt.
-r.post('/api/quiz/attempt', requireAuth, async (req, res) => {
+r.post('/api/quiz/attempt', requireAuth, requireEnrolled, async (req, res) => {
   if (!scoreup.isConfigured()) return res.status(503).json({ error: 'scoreup_not_configured' });
   const qid = String(req.body?.question_id || '');
   const userAnswer = req.body?.answer; // string hoặc array (mcq_multi/matching/ordering)
@@ -605,13 +609,34 @@ const refOf = (req) => codelab.makeExternalUserRef(req.user.id);
 
 // PROBLEMS — danh sách + chi tiết + embed (auth optional cho list để guest nhìn
 // catalog; chi tiết/run cần login để gắn externalUserRef thật).
+//
+// Khi gọi với ?contest=<slug>: dùng mapping Tizia-side (xem codelab-contests.js)
+// vì endpoint /contests/{slug} của Codelab hiện chưa handle system principal
+// (controller crash với userToken undefined). Khi bug Codelab fix, có thể bỏ
+// mapping và chuyển sang gọi codelab.getContest(slug) trực tiếp.
 r.get('/api/codelab/problems', async (req, res) => {
   if (!codelabReady(res)) return;
   try {
+    const contestSlug = req.query.contest ? String(req.query.contest) : null;
+    if (contestSlug && hasContestMapping(contestSlug)) {
+      const slugs = getContestProblemSlugs(contestSlug);
+      // Fetch chi tiết từng bài song song. Adapter cache 5 phút → lần 2 nhanh.
+      const items = await Promise.all(slugs.map((s) =>
+        codelab.getProblem(s).catch((e) => {
+          console.warn(`[codelab] getProblem ${s} fail:`, e.message);
+          return null;
+        }),
+      ));
+      return res.json({
+        data: items.filter(Boolean),
+        contestName: getContestName(contestSlug),
+        contestSlug,
+      });
+    }
+    // Fallback: list toàn bộ catalog Codelab (filter qua tag/difficulty).
     const data = await codelab.listProblems({
       page:       Number(req.query.page) || 1,
       limit:      Math.min(Math.max(Number(req.query.limit) || 20, 1), 100),
-      contest:    req.query.contest,
       tag:        req.query.tag,
       difficulty: req.query.difficulty,
       search:     req.query.search,
@@ -676,7 +701,7 @@ r.get('/api/codelab/contests/:slug', async (req, res) => {
 });
 
 // CHẠY THỬ — sandbox không gắn bài. requireAuth để có externalUserRef.
-r.post('/api/codelab/run', requireAuth, async (req, res) => {
+r.post('/api/codelab/run', requireAuth, requireEnrolled, async (req, res) => {
   if (!codelabReady(res)) return;
   const b = req.body || {};
   if (!b.source_code || !b.language_id) {
@@ -706,7 +731,7 @@ r.get('/api/codelab/run/:token', requireAuth, async (req, res) => {
 
 // NỘP BÀI chính thức — Codelab chấm + fire webhook về /api/webhooks/codelab,
 // receiver tự cộng XP/coin nếu accepted lần đầu.
-r.post('/api/codelab/submit', requireAuth, async (req, res) => {
+r.post('/api/codelab/submit', requireAuth, requireEnrolled, async (req, res) => {
   if (!codelabReady(res)) return;
   const b = req.body || {};
   if (!b.problemSlug || !b.source_code || !b.language_id) {
@@ -732,6 +757,74 @@ r.get('/api/codelab/submissions/:id', requireAuth, async (req, res) => {
   try {
     const sub = await codelab.getSubmission(req.params.id);
     res.json(sub);
+  } catch (e) { codelabFail(res, e); }
+});
+
+// CLAIM REWARD — workaround cho bug Codelab: queue processor không fire webhook
+// khi update status terminal qua polling (chỉ fire khi callbackRunCode trực tiếp).
+// FE polling /submissions/:id, khi thấy Accepted → POST claim → server verify
+// với Codelab, ghi codelab_submissions + cộng XP/coin. Idempotent qua PK
+// (submission_id, status).
+//
+// Khi bug Codelab fix + webhook về đều đặn, có thể giữ endpoint này như fallback
+// (record same row 2 lần là no-op nhờ INSERT OR IGNORE).
+r.post('/api/codelab/me/claim/:submissionId', requireAuth, requireEnrolled, async (req, res) => {
+  if (!codelabReady(res)) return;
+  try {
+    const submissionId = String(req.params.submissionId);
+    const sub = await codelab.getSubmission(submissionId);
+    // Chống user khác claim hộ: Codelab phải xác nhận submission do CHÍNH user
+    // Tizia hiện tại tạo, qua externalUserRef.
+    const expectedRef = refOf(req);
+    const actualRef = sub.externalUserRef;
+    if (actualRef && actualRef !== expectedRef) {
+      return res.status(403).json({ error: 'forbidden_not_owner', expected: expectedRef, got: actualRef });
+    }
+    // Map status numeric (Codelab StatusSubmissionEnum) → name string cho DB.
+    // 3 Accepted | 4 WrongAnswer | 5..9 Error variants | 1..2 InProgress
+    const STATUS_MAP = {
+      3: 'accepted', 4: 'wrong_answer',
+      5: 'time_limit', 6: 'compile_error', 7: 'runtime_error',
+      8: 'system_error', 9: 'memory_limit',
+    };
+    const statusName = STATUS_MAP[sub.status] || `status_${sub.status}`;
+    if (sub.status === 1 || sub.status === 2) {
+      return res.status(409).json({ error: 'not_yet_completed', status: sub.status });
+    }
+
+    // Re-use logic webhook: ghi DB (dedup), cộng XP nếu accepted lần đầu.
+    const { recordCodelabSubmission, hasAcceptedCodelabProblem, getUserWallet: gw, upsertUserWallet: uw } = await import('./db.js');
+
+    // Lookup problem slug: sub.problem có thể là object populated hoặc id thuần.
+    let problemSlug = sub.problemSlug || sub.problem?.slug || null;
+    if (!problemSlug && sub.problem) {
+      // problem có thể là _id mongo string. Adapter không có getById nên skip.
+      // Hậu quả: codelab_submissions.problem_slug = null khi missing.
+    }
+
+    const { firstSeen, userId } = recordCodelabSubmission({
+      submissionId, status: statusName, problemSlug,
+      externalUserRef: actualRef || expectedRef,
+      score: sub.score, passedCases: sub.passedCases || sub.passed_test_cases,
+      totalCases: sub.totalCases || sub.total_test_cases,
+      languageId: sub.language?.id, completedAt: Date.now(),
+    });
+
+    let reward = null;
+    if (firstSeen && statusName === 'accepted' && userId && problemSlug) {
+      // Exclude row VỪA INSERT khỏi check — nếu không, hasAcceptedCodelabProblem
+      // sẽ thấy chính row mới này và luôn return true → never reward.
+      if (!hasAcceptedCodelabProblem(userId, problemSlug, submissionId)) {
+        const cur = gw(userId) || {};
+        uw(userId, {
+          xp: (cur.xp || 0) + 20,
+          coins: (cur.coins || 0) + 5,
+          quizzesPassed: (cur.quizzesPassed || 0) + 1,
+        }, { monotonic: true });
+        reward = { xp: 20, coin: 5 };
+      }
+    }
+    res.json({ ok: true, status: statusName, firstSeen, reward });
   } catch (e) { codelabFail(res, e); }
 });
 
@@ -785,7 +878,7 @@ r.get('/api/srs/state', requireAuth, (req, res) => {
   }
 });
 
-r.post('/api/srs/review', requireAuth, (req, res) => {
+r.post('/api/srs/review', requireAuth, requireEnrolled, (req, res) => {
   const cardKey = String(req.body?.card_key || '').slice(0, 128);
   const correct = !!req.body?.correct;
   if (!cardKey) return res.status(400).json({ error: 'card_key_required' });
@@ -918,7 +1011,9 @@ r.get('/api/achievements', (req, res) => {
 });
 
 // ── Requests — "Ban điều hành AI" inbox ──
-r.post('/api/requests', (req, res) => {
+r.post('/api/requests', requireAuth, requireEnrolled, (req, res) => {
+  // requireEnrolled đã đảm bảo body.domain == enrolled_domain (nếu có) → HS chỉ
+  // gửi yêu cầu trong trường đang theo học. Admin bypass (gửi mọi trường).
   const b = req.body ?? {};
   const domain = String(b.domain || '').trim();
   const title = String(b.title || '').trim();

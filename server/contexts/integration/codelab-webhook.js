@@ -67,9 +67,13 @@ function verifySignature(rawBody, headerVal) {
   } catch { return { ok: false, reason: 'verify_throw' }; }
 }
 
-function applyRewards(userId, problemSlug) {
-  // Chỉ thưởng khi HS chưa từng accepted bài này.
-  if (hasAcceptedCodelabProblem(userId, problemSlug)) return { granted: false, reason: 'already_solved' };
+function applyRewards(userId, problemSlug, currentSubmissionId) {
+  // Chỉ thưởng khi HS chưa từng accepted bài này — exclude row vừa insert
+  // (recordCodelabSubmission ở caller insert trước, nếu không exclude thì check
+  // sẽ thấy chính row mới và luôn return true → không bao giờ thưởng).
+  if (hasAcceptedCodelabProblem(userId, problemSlug, currentSubmissionId)) {
+    return { granted: false, reason: 'already_solved' };
+  }
   const cur = getUserWallet(userId) || {};
   upsertUserWallet(userId, {
     xp:           (cur.xp || 0) + REWARD_XP_PER_PROBLEM,
@@ -133,7 +137,7 @@ export function attachCodelabWebhook(app) {
       let reward = null;
       try {
         if (status === 'accepted' && userId && problemSlug) {
-          reward = applyRewards(userId, problemSlug);
+          reward = applyRewards(userId, problemSlug, submissionId);
         }
         // Nếu cần invalidate cache list submission của user (sau này Tizia có
         // endpoint cache theo userId), gọi tại đây:

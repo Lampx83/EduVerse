@@ -8,7 +8,7 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; font-family: 'Inter', system-ui, sans-serif;
     background: linear-gradient(180deg, #cfeecb 0%, #d9f3d2 60%, #eafff0 100%); }
-  #c { display: block; }
+  #c { display: block; touch-action: none; }
   /* Legend dạng CARD phân nhóm (req #1 Enderboy mục 7) ------------------------
      Mỗi nhóm có heading nhỏ + danh sách dòng. Glassmorphism nhẹ qua backdrop. */
   #legend { position:fixed; left:16px; bottom:16px; z-index:12; background:rgba(255,255,255,.92); border-radius:14px; padding:10px 14px 11px; box-shadow:0 8px 24px rgba(0,0,0,.2); color:#1f2937; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); max-height:62vh; overflow:auto; min-width: 220px; }
@@ -1218,7 +1218,10 @@ function applyZoom(){
 function resize(){ const w=innerWidth,h=innerHeight;
   canvas.width=w*DPR; canvas.height=h*DPR; canvas.style.width=w+'px'; canvas.style.height=h+'px';
   hit.width=w*DPR; hit.height=h*DPR;
-  ox=baseOx(w)+_panOx; oy=baseOy(h)+_panOy;
+  // ox/oy là toạ độ gốc của world; pan được apply VIA ctx.setTransform trong
+  // applyZoom() (tx += _panOx*DPR). Nếu cộng _panOx vào ox ở đây nữa sẽ bị
+  // double-count (1 lần ở world coord, 1 lần ở canvas transform) → kéo lệch.
+  ox=baseOx(w); oy=baseOy(h);
   applyZoom(); draw(); }
 addEventListener('resize', resize); resize();
 
@@ -1261,6 +1264,42 @@ canvas.addEventListener('wheel', e=>{
 window.__zoomIn  = ()=>{ _zoom=clampZoom(_zoom*1.2); applyZoom(); draw(); };
 window.__zoomOut = ()=>{ _zoom=clampZoom(_zoom*0.8); applyZoom(); draw(); };
 window.__zoomReset=()=>{ _zoom=clampZoom(1); _panOx=0; _panOy=0; resize(); };
+
+// ── Pan camera bằng kéo chuột/touch trên nền ──
+// View mode: kéo nền (không trúng building/facility/decor) để di chuyển camera.
+// Edit mode: vẫn pan được khi kéo nền — EDIT pointerdown phía dưới chỉ start drag
+// khi hit nhà/decor; nền rỗng thì để outer handler này pan.
+let _camPan = null;
+let _suppressNextClick = false;
+canvas.addEventListener('pointerdown', e=>{
+  if(e.button!==0) return;
+  if(_placeMode || _wallMode) return;
+  if(hitAt(e.clientX, e.clientY)) return;   // có item → không pan, để click/edit-drag xử lý
+  _camPan = { sx:e.clientX, sy:e.clientY, ox:_panOx, oy:_panOy, moved:false, pid:e.pointerId };
+  try { canvas.setPointerCapture(e.pointerId); } catch {}
+  canvas.style.cursor = 'grabbing';
+});
+canvas.addEventListener('pointermove', e=>{
+  if(!_camPan) return;
+  const dx = e.clientX - _camPan.sx, dy = e.clientY - _camPan.sy;
+  if(!_camPan.moved && Math.hypot(dx,dy) > 3) _camPan.moved = true;
+  _panOx = _camPan.ox + dx;
+  _panOy = _camPan.oy + dy;
+  applyZoom(); draw();
+});
+function _endCamPan(){
+  if(!_camPan) return;
+  const moved = _camPan.moved;
+  _camPan = null;
+  canvas.style.cursor = 'default';
+  if(moved){
+    // Sau khi kéo xong, click/touchend sẽ fire ngay → nuốt 1 lần để không enter nhầm.
+    _suppressNextClick = true;
+    setTimeout(()=>{ _suppressNextClick = false; }, 0);
+  }
+}
+canvas.addEventListener('pointerup', _endCamPan);
+canvas.addEventListener('pointercancel', _endCamPan);
 
 // Cần cập nhật hitAt để transform ngược toạ độ click → canvas CSS coords
 // hitAt nhận clientX/Y → cần compensate zoom+pan
@@ -1404,9 +1443,13 @@ function handleTap(cx, cy){
   if(h.kind === 'building') enter(h.item, h.idx);
   else enter(h.item, null);
 }
-canvas.addEventListener('click', e=> handleTap(e.clientX, e.clientY));
+canvas.addEventListener('click', e=>{
+  if(_suppressNextClick){ _suppressNextClick = false; return; }
+  handleTap(e.clientX, e.clientY);
+});
 // Trên touch, tránh delay 300ms và đảm bảo phản hồi ngay cả khi click bị nuốt
 canvas.addEventListener('touchend', e=>{
+  if(_suppressNextClick){ _suppressNextClick = false; return; }
   if(e.changedTouches && e.changedTouches.length){
     const t = e.changedTouches[0];
     e.preventDefault();

@@ -114,9 +114,51 @@
   <span class="meta">Khung Chương trình GDPT 2018 (TT 32/2018)</span>
 </div>
 
+<!-- Per-school enrollment: hiện trường đang theo học + nút Đổi trường. Render
+     bằng module script bên dưới để dùng showEnrollmentModal/DOMAIN_META. -->
+<div id="enrollment-host"></div>
+
 <div class="wrap" id="wrap">
   <div class="loading">Đang tải cây năng lực…</div>
 </div>
+
+<script type="module">
+  import { DOMAIN_META } from './js/engine/domain.js';
+  import { getMe, showEnrollmentModal } from './js/enrollment.js';
+  const host = document.getElementById('enrollment-host');
+  const me = await getMe();
+  if (me && me.role !== 'admin') {
+    const cur = me.enrolled_domain;
+    const meta = cur ? DOMAIN_META.find(d => d.id === cur) : null;
+    host.innerHTML = `
+      <style>
+        #enrollment-host .es { max-width:880px; margin:14px auto 6px; background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; box-shadow:0 4px 12px rgba(0,0,0,.04); }
+        #enrollment-host .es-ic { font-size:34px; }
+        #enrollment-host .es-body { flex:1; min-width:200px; }
+        #enrollment-host .es-lbl { font-size:11px; letter-spacing:1.2px; color:#64748b; font-weight:800; text-transform:uppercase; }
+        #enrollment-host .es-name { font-size:17px; font-weight:800; color:#0f172a; }
+        #enrollment-host .es-sub { font-size:12.5px; color:#64748b; margin-top:2px; }
+        #enrollment-host .es-btn { background:#0f172a; color:#fff; border:0; border-radius:10px; padding:9px 15px; font-weight:700; cursor:pointer; font-size:13px; font-family:inherit; }
+        #enrollment-host .es-btn:hover { background:#1e293b; }
+      </style>
+      <div class="es">
+        <div class="es-ic">${meta ? meta.icon : '❓'}</div>
+        <div class="es-body">
+          <div class="es-lbl">Trường đang theo học</div>
+          <div class="es-name">${meta ? meta.name : 'Chưa chọn trường'}</div>
+          <div class="es-sub">${meta ? meta.tagline : 'Hãy chọn một trường để bắt đầu theo dõi năng lực.'}</div>
+        </div>
+        <button class="es-btn" id="es-switch">${cur ? '🔄 Đổi trường' : '🎓 Chọn trường'}</button>
+      </div>
+    `;
+    host.querySelector('#es-switch').addEventListener('click', async () => {
+      try {
+        await showEnrollmentModal({ mode: cur ? 'switch' : 'enroll', current: cur });
+        location.reload();   // reload để cây năng lực vẽ lại theo trường mới
+      } catch { /* user huỷ */ }
+    });
+  }
+</script>
 
 <div class="modal" id="modal"><div class="modal-box">
   <h2 id="m-name"></h2>

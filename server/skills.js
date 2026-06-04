@@ -69,10 +69,13 @@ const lookupSkillIdsByCodes = db.prepare(`
 
 const insertUserSkill = db.prepare(`
   INSERT OR IGNORE INTO user_skills
-    (school_id, user_id, skill_id, earned_at, source_type, source_id, score)
-  VALUES (@school_id, @user_id, @skill_id, @earned_at, @source_type, @source_id, @score)
+    (school_id, user_id, skill_id, domain, earned_at, source_type, source_id, score)
+  VALUES (@school_id, @user_id, @skill_id, @domain, @earned_at, @source_type, @source_id, @score)
 `);
 
+// Cây skill HIỆN TẠI của user — chỉ trong bucket trường đang theo học. Khi đổi
+// trường, bucket cũ vẫn còn nhưng filter loại ra → "sang trường mới làm lại từ
+// đầu" theo yêu cầu của anh Lâm.
 const getUserSkillsStmt = db.prepare(`
   SELECT
     s.id           AS skill_id,
@@ -93,9 +96,15 @@ const getUserSkillsStmt = db.prepare(`
   FROM user_skills us
   JOIN skills s       ON s.id = us.skill_id
   JOIN competencies c ON c.id = s.competency_id
-  WHERE us.user_id = ?
+  WHERE us.user_id = ? AND us.domain = ?
   ORDER BY c.sort_order, s.name
 `);
+// Lookup enrolled_domain cho fallback khi caller chưa thread domain.
+const _userEnrolledDomainStmt = db.prepare(`SELECT enrolled_domain FROM users WHERE id = ?`);
+function _resolveSkillDomain(user_id, domain) {
+  if (typeof domain === 'string') return domain;
+  return _userEnrolledDomainStmt.get(Number(user_id))?.enrolled_domain || '';
+}
 
 const listCompetenciesStmt = db.prepare(`
   SELECT id, code, kind, name, description, sort_order FROM competencies ORDER BY sort_order
@@ -136,12 +145,17 @@ export function grantSkillsForSpace({ user_id, school_id, domain, space_id, scor
   const now = Date.now();
   const newly = [];
   const already = [];
+  // Skill được gắn cùng bucket = trường HS đang theo học. Vì grantSkillsForSpace
+  // luôn nhận `domain` (trường của space) và Phase 2 sẽ chặn cross-domain ở
+  // middleware → bucket grant chắc chắn khớp với enrolled_domain.
+  const skillDomain = String(domain);
   const tx = db.transaction(() => {
     for (const r of rows) {
       const info = insertUserSkill.run({
         school_id: school_id ?? 1,
         user_id,
         skill_id: r.id,
+        domain: skillDomain,
         earned_at: now,
         source_type,
         source_id: source_id != null ? String(source_id).slice(0, 80) : null,
@@ -173,13 +187,14 @@ export function grantSkillsForSpace({ user_id, school_id, domain, space_id, scor
  * Trả cây năng lực + tiến độ của 1 user.
  * Shape: [{ competency: {...}, total_skills, earned_skills: [...] }, ...]
  */
-export function getUserSkillTree(user_id) {
+export function getUserSkillTree(user_id, domain) {
   if (!user_id) return [];
+  const d = _resolveSkillDomain(user_id, domain);
   const allComps = listCompetenciesStmt.all();
   const totals = Object.fromEntries(
     countSkillsPerCompetencyStmt.all().map(r => [r.competency_id, r.n])
   );
-  const earnedRows = getUserSkillsStmt.all(user_id);
+  const earnedRows = getUserSkillsStmt.all(user_id, d);
 
   // Group earned by competency_id
   const byComp = new Map();
@@ -216,7 +231,7 @@ export function getUserSkillTree(user_id) {
  * Mapping familyId → skill_codes đọc từ skills-scenario-map.json. Idempotent qua
  * UNIQUE(user_id, skill_id). No-op nếu familyId chưa có mapping.
  */
-export function grantSkillsForScenario({ user_id, school_id, family_id, score, stars }) {
+export function grantSkillsForScenario({ user_id, school_id, family_id, score, stars, domain }) {
   if (!user_id || !family_id) return { granted_count: 0, skipped_reason: 'missing args' };
   const codes = SCENARIO_SKILLS[family_id] || [];
   if (codes.length === 0) return { granted_count: 0, skipped_reason: `no mapping for ${family_id}` };
@@ -230,6 +245,10 @@ export function grantSkillsForScenario({ user_id, school_id, family_id, score, s
   const rows = lookupSkillIdsByCodes.all(JSON.stringify(codes));
   if (rows.length === 0) return { granted_count: 0, skipped_reason: 'skill codes not found in DB' };
 
+  // Bucket trường: caller có thể không truyền domain (scenario chung) → fallback
+  // enrolled_domain của user. Middleware Phase 2 đã chặn cross-domain trước khi
+  // tới đây nên bucket luôn khớp với trường HS đang theo học.
+  const skillDomain = _resolveSkillDomain(user_id, domain);
   const now = Date.now();
   const newly = [];
   const tx = db.transaction(() => {
@@ -238,6 +257,7 @@ export function grantSkillsForScenario({ user_id, school_id, family_id, score, s
         school_id: school_id ?? 1,
         user_id,
         skill_id: r.id,
+        domain: skillDomain,
         earned_at: now,
         source_type: 'scenario_run',
         source_id: String(family_id).slice(0, 80),
@@ -253,9 +273,10 @@ export function grantSkillsForScenario({ user_id, school_id, family_id, score, s
 /**
  * Tổng đếm nhanh cho banner "Bạn đã đạt X/Y kỹ năng".
  */
-export function getUserSkillSummary(user_id) {
+export function getUserSkillSummary(user_id, domain) {
   if (!user_id) return { earned: 0, total: 0 };
-  const earned = db.prepare(`SELECT COUNT(*) AS n FROM user_skills WHERE user_id = ?`).get(user_id).n;
+  const d = _resolveSkillDomain(user_id, domain);
+  const earned = db.prepare(`SELECT COUNT(*) AS n FROM user_skills WHERE user_id = ? AND domain = ?`).get(user_id, d).n;
   const total = db.prepare(`SELECT COUNT(*) AS n FROM skills`).get().n;
   return { earned, total };
 }
@@ -268,12 +289,14 @@ export function getSpaceSkillCodes(domain, space_id) {
 }
 
 // ---- Express routes ----
-export function attachSkills(router, { requireAuth }) {
-  // GET /api/skills/me — cây năng lực của user đang login.
+export function attachSkills(router, { requireAuth, requireEnrolled }) {
+  // GET /api/skills/me — cây năng lực của user đang login, lọc theo trường
+  // user đang theo học (enrolled_domain). Skill earn ở trường cũ KHÔNG hiện.
   router.get('/api/skills/me', requireAuth, (req, res) => {
-    const tree = getUserSkillTree(req.user.id);
-    const summary = getUserSkillSummary(req.user.id);
-    res.json({ summary, tree });
+    const d = req.user.enrolled_domain || '';
+    const tree = getUserSkillTree(req.user.id, d);
+    const summary = getUserSkillSummary(req.user.id, d);
+    res.json({ summary, tree, enrolled_domain: d || null });
   });
 
   // GET /api/skills/space?domain=...&space_id=... — list skill_codes của 1 space
@@ -286,20 +309,22 @@ export function attachSkills(router, { requireAuth }) {
     }
     const codes = getSpaceSkillCodes(domain, space_id);
     if (codes.length === 0) return res.json({ skills: [] });
+    const userDomain = req.user.enrolled_domain || '';
     const rows = db.prepare(`
       SELECT s.code, s.name, c.code AS comp_code, c.name AS comp_name,
-        EXISTS(SELECT 1 FROM user_skills us WHERE us.user_id = ? AND us.skill_id = s.id) AS earned
+        EXISTS(SELECT 1 FROM user_skills us
+               WHERE us.user_id = ? AND us.skill_id = s.id AND us.domain = ?) AS earned
       FROM skills s JOIN competencies c ON c.id = s.competency_id
       WHERE s.code IN (SELECT value FROM json_each(?))
       ORDER BY c.sort_order, s.name
-    `).all(req.user.id, JSON.stringify(codes));
+    `).all(req.user.id, userDomain, JSON.stringify(codes));
     res.json({ skills: rows.map(r => ({ ...r, earned: !!r.earned })) });
   });
 
   // POST /api/skills/grant — grant skills cho user khi đạt mốc 1 space.
   // Body: { domain, space_id, score, source_type, source_id? }.
   // score là 0..100. Server tự kiểm threshold + idempotent qua UNIQUE.
-  router.post('/api/skills/grant', requireAuth, (req, res) => {
+  router.post('/api/skills/grant', requireAuth, requireEnrolled, (req, res) => {
     const b = req.body || {};
     const result = grantSkillsForSpace({
       user_id: req.user.id,

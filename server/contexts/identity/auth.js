@@ -6,6 +6,7 @@ import {
   createUser, getUserByUsername, getUserById, touchLogin, updateDisplayName, updateUserEditable,
   createSession, getSession, deleteSession,
   resolveSchoolByEmail, getSchoolByCode, getBestParentPlanForChild,
+  getEnrolledDomain, setEnrolledDomain,
 } from '../../db.js';
 import { effectivePlan, effectivePlanWithFamily, meetsPlan, USER_PLANS } from '../billing/user-plans.js';
 
@@ -77,6 +78,9 @@ export function getCurrentUser(req) {
     school_id: sess.school_id,   // cần cho attachTenant (multi-tenant enforcement)
     plan: sess.plan || 'free',
     plan_expires_at: sess.plan_expires_at || null,
+    // Per-school enrollment: NULL = chưa chọn trường → FE bắt mở modal. Admin
+    // cũng để NULL, bypass requireEnrollment middleware (Phase 2).
+    enrolled_domain: sess.enrolled_domain || null,
     token: sess.token,
   };
 }
@@ -91,6 +95,43 @@ export function attachUser(req, _res, next) {
 export function requireAuth(req, res, next) {
   if (!req.user) req.user = getCurrentUser(req);
   if (!req.user) return res.status(401).json({ error: 'unauthorized', needLogin: true });
+  next();
+}
+
+// ── Middleware: bắt buộc đã chọn trường (enrolled_domain) ──
+// Mỗi tài khoản tại 1 thời điểm chỉ THAM GIA 1 trường. Mọi route ghi (submit
+// quiz, run code, grant skill, sync wallet, scenario-runs, requests…) yêu cầu:
+//   1. Đã đăng nhập (requireAuth).
+//   2. Đã chọn trường (enrolled_domain != null) — admin bypass.
+//   3. Nếu request có `domain` (body/query) → phải khớp enrolled_domain.
+//      Khác trường → 403 viewOnly để FE bật banner "Bạn chỉ tham quan trường này".
+//
+// Admin (role='admin'): bypass cả 2/3 — có quyền thao tác trên mọi trường để
+// chấm/duyệt. Giáo viên/phụ huynh: vẫn enforce (sẽ exempt sau khi xử lý xong
+// luồng riêng cho 2 role này).
+export function requireEnrolled(req, res, next) {
+  if (!req.user) req.user = getCurrentUser(req);
+  if (!req.user) return res.status(401).json({ error: 'unauthorized', needLogin: true });
+  if (req.user.role === 'admin') return next();
+  const enrolled = req.user.enrolled_domain || null;
+  if (!enrolled) {
+    return res.status(403).json({
+      error: 'enrollment_required',
+      needEnroll: true,
+      message: 'Bạn cần chọn trường để bắt đầu học.',
+    });
+  }
+  // Kiểm cross-domain nếu request có chỉ định trường mục tiêu
+  const target = (req.body && req.body.domain) || (req.query && req.query.domain) || null;
+  if (target && String(target) !== enrolled) {
+    return res.status(403).json({
+      error: 'view_only',
+      viewOnly: true,
+      your_school: enrolled,
+      target_school: String(target),
+      message: 'Bạn đang tham quan trường khác — chỉ xem được, không tương tác/làm bài/chơi game.',
+    });
+  }
   next();
 }
 
@@ -153,8 +194,15 @@ const PUBLIC_PATH_EXACT = new Set([
   '/', '/index.html',
   '/apps.html',
   '/school.html',
+  // Không gian (phòng học) trong từng trường — guest xem được như school.html.
+  // FE tự khoá nếu domain ngoài GUEST_DOMAINS (xem public/js/engine/domain.js).
+  '/space.html',
   '/subject.html', '/module.html', '/lesson.html', '/weekly-lesson.html',
   '/quiz.html',
+  // Mini-game lớp 2 (primary domain — nằm trong GUEST_DOMAINS). Standalone,
+  // guest chơi được; mọi /api/* ghi tiến độ vẫn yêu cầu login.
+  '/lop2-ghep-van.html', '/lop2-am-nhac.html', '/lop2-anh-memory.html',
+  '/lop2-dao-duc.html', '/lop2-phan-loai-rac.html', '/lop2-the-thao.html',
   // Cây Tri Thức — visualize tuần học đã hoàn thành. Trang đọc-only, guest cũng xem
   // được (render empty state nếu chưa có dữ liệu trong wallet/scenario-runs).
   '/cay-tri-thuc.html',
@@ -214,6 +262,14 @@ const VALID_STUDENT_MAJORS = new Set([
   'law', 'education', 'engineering', 'architecture', 'languages', 'agriculture',
   'tourism', 'arts', 'media', 'social-sciences', 'natural-sciences',
   'logistics', 'public-admin',
+]);
+
+// Mỗi tài khoản 1 trường tại 1 thời điểm. Union HS-K12 + ĐH (= VALID_STUDENT_MAJORS).
+// FE đọc cùng danh sách qua DOMAIN_META (public/js/engine/domain.js). Nếu thêm
+// trường mới, cập nhật cả 2 nơi.
+export const ENROLLABLE_DOMAINS = new Set([
+  'preschool', 'primary', 'secondary', 'highschool',
+  ...VALID_STUDENT_MAJORS,
 ]);
 
 /** Profile đã đủ thông tin để vào app chưa? Teacher luôn đủ; pupil cần grade;
@@ -377,6 +433,10 @@ export function attachAuth(r) {
         inherited_from_parent: inheritedFromParent,
         // Trục 1: phân biệt HS/SV
         grade: full.grade, major: full.major, cohort: full.cohort, school_name: full.school_name,
+        // Mỗi tài khoản 1 trường tại 1 thời điểm. NULL = chưa chọn → FE bắt mở
+        // modal. Admin (role='admin') để NULL = không bound vào trường, bypass
+        // requireEnrollment ở mọi /api/* ghi.
+        enrolled_domain: full.enrolled_domain || null,
         profile_complete: isProfileComplete(full),
         default_route: defaultRouteForUser(full),
       } : null,
@@ -474,6 +534,50 @@ export function attachAuth(r) {
       user: full,
       redirectTo: defaultRouteForUser(full),
     });
+  });
+
+  // ── Per-school enrollment ───────────────────────────────────────────
+  // POST /api/me/enroll {domain}: chọn trường LẦN ĐẦU. Chỉ chấp nhận khi user
+  // chưa có enrolled_domain (tránh dùng để bypass switch-school). Sau khi gọi,
+  // mọi route ghi (wallet, scenario-runs, skills/grant, requests…) đi qua bucket
+  // mới. Bucket cũ (domain='') vẫn lưu → admin có thể truy xuất nếu cần audit.
+  r.post('/api/me/enroll', (req, res) => {
+    if (!req.user) req.user = getCurrentUser(req);
+    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+    const domain = String(req.body?.domain || '').trim().slice(0, 40);
+    if (!ENROLLABLE_DOMAINS.has(domain)) {
+      return res.status(400).json({ error: 'invalid domain', valid: [...ENROLLABLE_DOMAINS] });
+    }
+    const cur = getEnrolledDomain(req.user.id);
+    if (cur) {
+      return res.status(409).json({
+        error: 'already_enrolled',
+        enrolled_domain: cur,
+        message: 'Bạn đã chọn trường rồi. Nếu muốn đổi trường, dùng /api/me/switch-school.',
+      });
+    }
+    setEnrolledDomain(req.user.id, domain);
+    res.json({ ok: true, enrolled_domain: domain });
+  });
+
+  // POST /api/me/switch-school {domain}: đổi trường. Bucket cũ (ví/skill/level
+  // ở trường trước) KHÔNG bị xoá — chỉ ẩn vì query luôn lọc theo enrolled_domain
+  // hiện tại. Quay lại trường cũ → bucket cũ tự hiện lại đúng tiến trình. FE phải
+  // hiện cảnh báo "đổi trường = bắt đầu lại XP/coin/level/skill ở trường mới"
+  // trước khi gọi (anh Lâm xác nhận giữ ẩn, không xoá).
+  r.post('/api/me/switch-school', (req, res) => {
+    if (!req.user) req.user = getCurrentUser(req);
+    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+    const domain = String(req.body?.domain || '').trim().slice(0, 40);
+    if (!ENROLLABLE_DOMAINS.has(domain)) {
+      return res.status(400).json({ error: 'invalid domain', valid: [...ENROLLABLE_DOMAINS] });
+    }
+    const previous = getEnrolledDomain(req.user.id);
+    if (previous === domain) {
+      return res.json({ ok: true, enrolled_domain: domain, unchanged: true });
+    }
+    setEnrolledDomain(req.user.id, domain);
+    res.json({ ok: true, enrolled_domain: domain, previous_domain: previous });
   });
 }
 

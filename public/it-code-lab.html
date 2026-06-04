@@ -500,10 +500,18 @@ async function submitOnce(){
     }
     if (!final) {
       $('results').classList.add('show');
-      $('results').innerHTML = `<div class="res-head">⏳ Đang chấm, chưa có kết quả. Mở lại tab sau ít phút nhé (webhook sẽ tự cộng XP khi xong).</div>`;
+      $('results').innerHTML = `<div class="res-head">⏳ Đang chấm, chưa có kết quả. Mở lại tab sau ít phút nhé (XP sẽ tự cộng khi xong).</div>`;
       return;
     }
     renderSubmitResult(final);
+    // Claim XP/coin — workaround cho bug Codelab webhook race. Server verify
+    // submission với Codelab trước khi cộng XP nên client không spoof được.
+    try {
+      const claim = await fetchJson(`/api/codelab/me/claim/${encodeURIComponent(subId)}`, { method: 'POST' });
+      if (claim?.reward) {
+        showToast(`+${claim.reward.xp} XP, +${claim.reward.coin} coin 🎉`);
+      }
+    } catch (e) { console.warn('[claim]', e.message); }
   } catch (e) {
     $('results').classList.add('show');
     $('results').innerHTML = `<div class="res-head fail">⛔ Nộp bài lỗi: ${esc(e.message)}</div>`;

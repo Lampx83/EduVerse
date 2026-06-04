@@ -55,16 +55,21 @@ export const MODULES = [
 
   // ──────────── PRACTICE / SKILL ────────────
   // directHref → mở thẳng practice site, không qua scenario engine.
-  { category: 'practice', id: 'IP01', title: 'Startup Lab — Khởi nghiệp số',    subject: 'startup-lab',  scenarioIds: [], directHref: '/it-code-lab.html',       minStarsToUnlock: 18, icon: '🚀' },
-  { category: 'practice', id: 'IP02', title: 'Hackathon 48h',                   subject: 'hackathon',    scenarioIds: [], directHref: '/it-code-lab.html',       minStarsToUnlock: 12, icon: '⚡' },
-  { category: 'practice', id: 'IP03', title: 'CTF Lab — Capture The Flag',     subject: 'ctf-lab',       scenarioIds: [], directHref: '/it-ctf-web.html',        minStarsToUnlock: 18, icon: '🚩' },
-  { category: 'practice', id: 'IP04', title: 'Open Source Contribution Lab',  subject: 'open-source',   scenarioIds: [], directHref: '/it-code-lab.html',       minStarsToUnlock: 12, icon: '🐙' },
+  // Note: ?contest=<slug> trỏ vào contest Tizia đã tạo trên Codelab (xem
+  // server/integrations/codelab-contests.js). 325049 = Python nhập môn (I1.1),
+  // 255760 = CTDL & GT (I2.1), 511768 = Code Race 5 bài.
+  { category: 'practice', id: 'IP01', title: 'Startup Lab — Khởi nghiệp số',    subject: 'startup-lab',  scenarioIds: [], directHref: '/it-code-lab.html?contest=325049',  minStarsToUnlock: 18, icon: '🚀' },
+  { category: 'practice', id: 'IP02', title: 'Hackathon 48h',                   subject: 'hackathon',    scenarioIds: [], directHref: '/it-code-lab.html?contest=511768',  minStarsToUnlock: 12, icon: '⚡' },
+  { category: 'practice', id: 'IP03', title: 'CTF Lab — Capture The Flag',     subject: 'ctf-lab',       scenarioIds: [], directHref: '/it-ctf-web.html',                  minStarsToUnlock: 18, icon: '🚩' },
+  { category: 'practice', id: 'IP04', title: 'Open Source Contribution Lab',  subject: 'open-source',   scenarioIds: [], directHref: '/it-code-lab.html?contest=325049',  minStarsToUnlock: 12, icon: '🐙' },
 
   // ──────────── CAREER ────────────
-  // Career modules dùng practice sites tương ứng nghề.
-  { category: 'career', id: 'IC01', title: 'Software Engineer',                 subject: 'career', scenarioIds: [], directHref: '/it-code-lab.html',         minStarsToUnlock: 18, icon: '👨‍💻' },
-  { category: 'career', id: 'IC02', title: 'Data Scientist',                    subject: 'career', scenarioIds: [], directHref: '/it-sql-playground.html',   minStarsToUnlock: 18, icon: '📊' },
-  { category: 'career', id: 'IC03', title: 'DevOps Engineer',                   subject: 'career', scenarioIds: [], directHref: '/it-code-lab.html',         minStarsToUnlock: 18, icon: '☁️' },
+  // Career modules dùng practice sites tương ứng nghề. Module dùng Code Lab
+  // trỏ contest phù hợp nghề: SE → CTDL&GT (kiến thức cốt lõi), DevOps → Python
+  // nhập môn (DevOps cần kỹ năng scripting).
+  { category: 'career', id: 'IC01', title: 'Software Engineer',                 subject: 'career', scenarioIds: [], directHref: '/it-code-lab.html?contest=255760', minStarsToUnlock: 18, icon: '👨‍💻' },
+  { category: 'career', id: 'IC02', title: 'Data Scientist',                    subject: 'career', scenarioIds: [], directHref: '/it-sql-playground.html',          minStarsToUnlock: 18, icon: '📊' },
+  { category: 'career', id: 'IC03', title: 'DevOps Engineer',                   subject: 'career', scenarioIds: [], directHref: '/it-code-lab.html?contest=325049', minStarsToUnlock: 18, icon: '☁️' },
   { category: 'career', id: 'IC04', title: 'Security Engineer',                 subject: 'career', scenarioIds: [], directHref: '/it-cipher-ctf.html',       minStarsToUnlock: 24, icon: '🔒' },
   { category: 'career', id: 'IC05', title: 'Mobile Developer',                  subject: 'career', scenarioIds: [], directHref: '/it-web-playground.html',   minStarsToUnlock: 18, icon: '📱' },
   { category: 'career', id: 'IC06', title: 'AI / ML Engineer',                  subject: 'career', scenarioIds: [], directHref: '/it-algo-viz.html',         minStarsToUnlock: 24, icon: '🤖' },

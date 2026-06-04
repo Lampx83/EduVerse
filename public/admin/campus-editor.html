@@ -671,6 +671,12 @@ window.addEventListener('message', e=>{
 
 // init
 (async()=>{
+  // Nếu URL có ?domain=... (vd link "✏️ Sửa campus" trên school.html truyền domain
+  // user đang xem) → set dropdown trước khi load để admin không phải chọn lại.
+  const urlDomain = new URLSearchParams(location.search).get('domain');
+  if (urlDomain && [...dom.options].some(o => o.value === urlDomain)) {
+    dom.value = urlDomain;
+  }
   await loadCsrf();
   reloadIframe();
   await loadFromServer();
