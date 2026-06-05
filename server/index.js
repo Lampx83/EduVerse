@@ -36,6 +36,8 @@ import { attachLearning, updateIrt } from './contexts/learning/index.js';
 import { attachPresence } from './contexts/multiplayer/presence.js';
 import { attachUgc } from './contexts/ugc/index.js';
 import { attachEconomy, addBpXp } from './contexts/economy/index.js';
+import { attachParentReport } from './contexts/parent-report/index.js';
+import { attachSchoolOnboard } from './contexts/school-onboard/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -314,6 +316,10 @@ attachLearning(r);
 attachUgc(r);
 // Economy — Battle Pass + Skin Shop + Daily Login Bonus
 attachEconomy(r);
+// Parent Weekly Report
+attachParentReport(r);
+// School Onboarding Wizard (admin)
+attachSchoolOnboard(r);
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
   const b = req.body ?? {};
