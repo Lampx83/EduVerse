@@ -1890,10 +1890,31 @@ function renderBlocks(blocks){
           </details>`;
       }
     }
+    // {ul}/{ol} có vibe "quy trình thí nghiệm" cho THCS/THPT → Experiment Stages tự bước.
+    if((b.ul || b.ol) && (dom==='highschool' || dom==='secondary')){
+      const items = b.ul || b.ol;
+      const txt = items.join(' ').toLowerCase();
+      // Heuristic: ol thường là procedural; ul nếu có keyword "bước/quy trình/thí nghiệm/đo/lắp"
+      // hoặc nếu là {ol} (đã có thứ tự inherently) → Experiment Stages.
+      const looksProc = !!b.ol || /bước|quy trình|thí nghiệm|thao tác|đo |lắp|chuẩn bị|thực hiện/i.test(txt);
+      if(looksProc && items.length >= 3){
+        const i = _pr.push({t:'stages', steps: items}) - 1;
+        return `<div class="pr-sec" data-sec="${i}"></div>`;
+      }
+    }
     if(b.ul) return `<ul>${b.ul.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
     if(b.ol) return `<ol>${b.ol.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`;
     if(b.cards) return `<div class="mb-cards">${b.cards.map(c=>`<div class="mb-card" data-card><div class="ci">${c.ic||''}</div><div class="ct">${esc(c.t)}</div><div class="cd">${esc(c.d)}</div><div class="more"></div></div>`).join('')}</div>`;
-    if(b.timeline) return `<ul class="timeline">${b.timeline.map(t=>`<li><div class="tl-t">${esc(t.t)}</div><div class="tl-d">${esc(t.d)}</div></li>`).join('')}</ul>`;
+    // Timeline interactive cho primary/secondary/highschool (click mở chi tiết).
+    // Mầm non vẫn dùng kiểu tĩnh đơn giản.
+    if(b.timeline){
+      if(dom==='primary' || dom==='secondary' || dom==='highschool'){
+        const i = _pr.push({t:'timeline', events: b.timeline}) - 1;
+        const isPrimary = (dom==='primary');
+        return `<div class="${isPrimary?'pr-prm':'pr-sec'}" data-${isPrimary?'prm':'sec'}="${i}"></div>`;
+      }
+      return `<ul class="timeline">${b.timeline.map(t=>`<li><div class="tl-t">${esc(t.t)}</div><div class="tl-d">${esc(t.d)}</div></li>`).join('')}</ul>`;
+    }
     // THCS/THPT + flashcard ≥4 thẻ → upgrade thành Memory Match (lật cặp, có timer).
     // Cấp khác hoặc <4 thẻ thì giữ kiểu flash flip cũ.
     if(b.flash){
@@ -1926,6 +1947,11 @@ function renderBlocks(blocks){
           return `<div class="pr-sec" data-sec="${i}"></div>`;
         }
       }
+      // Tiểu học: checklist → Quest Line (chặng đường có pet bay theo).
+      if(dom==='primary'){
+        const i=_pr.push({t:'quest', items:b.check})-1;
+        return `<div class="pr-prm" data-prm="${i}"></div>`;
+      }
       return `<ul class="checklist">${b.check.map((x,i)=>`<li><label><input type="checkbox" data-ck="${i}"> <span>${esc(x)}</span></label></li>`).join('')}</ul><div class="ck-prog">0/${b.check.length} hoàn thành</div>`;
     }
     // Block tường minh: {hazard: [...]}, {planner: [...]}, {memory: [...]}, {trace: ...}.
@@ -1944,6 +1970,35 @@ function renderBlocks(blocks){
       const i=_pr.push({t:'memory', pairs})-1;
       return `<div class="pr-sec" data-sec="${i}"></div>`;
     }
+    // {stages: [...]} — quy trình thí nghiệm theo bước.
+    if(b.stages){
+      const steps = Array.isArray(b.stages) ? b.stages : (b.stages.steps || []);
+      const i=_pr.push({t:'stages', steps})-1;
+      return `<div class="pr-sec" data-sec="${i}"></div>`;
+    }
+    // {procedure: [...]} — kéo bước vào đúng thứ tự (THCS/THPT).
+    if(b.procedure){
+      const steps = Array.isArray(b.procedure) ? b.procedure : (b.procedure.steps || []);
+      const i=_pr.push({t:'procedure', steps})-1;
+      return `<div class="pr-sec" data-sec="${i}"></div>`;
+    }
+    // {calc: {formula, vars, compute, unit}} — máy tính công thức tương tác.
+    if(b.calc){
+      const i=_pr.push({t:'calc', cfg:b.calc})-1;
+      return `<div class="pr-sec" data-sec="${i}"></div>`;
+    }
+    // {treasure: [...]} — săn kho báu (tiểu học).
+    if(b.treasure){
+      const items = Array.isArray(b.treasure) ? b.treasure : (b.treasure.items || []);
+      const i=_pr.push({t:'treasure', items})-1;
+      return `<div class="pr-prm" data-prm="${i}"></div>`;
+    }
+    // {quest: [...]} — chặng đường (tiểu học).
+    if(b.quest){
+      const items = Array.isArray(b.quest) ? b.quest : (b.quest.items || []);
+      const i=_pr.push({t:'quest', items})-1;
+      return `<div class="pr-prm" data-prm="${i}"></div>`;
+    }
     // {trace: 'A'} hoặc {trace: ['A','O','0','3']} — tô chữ/số (mầm non).
     if(b.trace){
       const glyphs = Array.isArray(b.trace) ? b.trace : [b.trace];
@@ -1952,10 +2007,14 @@ function renderBlocks(blocks){
     }
     if(b.goal) return `<div class="goal-in"><input id="goal-input" placeholder="VD: Hoàn thành 3 module bào chế tuần này" /><button id="goal-save">Lưu</button></div><div class="goal-saved" id="goal-saved"></div>`;
     if(b.mcq){
-      // Mầm non: render Big Bubble Cards (đáp án to, TTS đọc to, confetti).
       if(dom==='preschool'){
         const i=_pr.push({t:'mcq-ps', items:b.mcq})-1;
         return `<div class="pr-ps" data-ps="${i}"></div>`;
+      }
+      // Tiểu học: adventure cute MCQ (font vừa, có pet icon, không TTS).
+      if(dom==='primary'){
+        const i=_pr.push({t:'mcq-prm', items:b.mcq})-1;
+        return `<div class="pr-prm" data-prm="${i}"></div>`;
       }
       return b.mcq.map(m=>`<div class="mcq" data-a="${m.a}"><div class="mcq-q">${esc(m.q)}</div>${m.o.map((o,j)=>`<button class="mcq-o" data-i="${j}">${esc(o)}</button>`).join('')}<div class="mcq-fb">${esc(m.fb||'')}</div></div>`).join('');
     }
@@ -1999,17 +2058,37 @@ function openRoom(r){
     body.querySelector('#goal-save').addEventListener('click',()=>{ const v=gIn.value.trim(); if(!v) return;
       try{ localStorage.setItem(gKey,v); }catch(e){} show(v); gIn.value=''; toast('Đã lưu mục tiêu!'); }); }
   body.querySelectorAll('.pr[data-pr]').forEach(el=>initPractice(el, _pr[+el.dataset.pr]));
-  // THCS/THPT blocks: Hazard / Memory Match / Day Planner.
+  // THCS/THPT blocks: Hazard / Memory Match / Day Planner / Stages / Procedure / Calc / Timeline.
   const secNodes = body.querySelectorAll('.pr-sec[data-sec]');
   if(secNodes.length){
-    import('/js/engine/secondary-ui.js?v=p3').then(ui => {
+    import('/js/engine/secondary-ui.js?v=p5').then(ui => {
       secNodes.forEach(node => {
         const d = _pr[+node.dataset.sec];
         if(d.t === 'hazard') ui.renderHazardScene(node, d.items, () => toast('🏆 Đã rà soát đủ nguy cơ — phòng thí nghiệm an toàn!'));
         else if(d.t === 'memory') ui.renderMemoryMatch(node, d.pairs, ({seconds}) => toast(`🏆 Ghép xong sau ${seconds}s!`));
         else if(d.t === 'planner') ui.renderDayPlanner(node, d.items, ({score, total}) => toast(`Kế hoạch: ${score}/${total} điểm`));
+        else if(d.t === 'stages') ui.renderExperimentStages(node, d.steps, { onDone: () => toast('🏆 Hoàn tất quy trình!') });
+        else if(d.t === 'procedure') ui.renderProcedureSort(node, d.steps, { onDone: ({score,total}) => toast(`Sắp xếp: ${score}/${total} đúng`) });
+        else if(d.t === 'calc') ui.renderFormulaCalc(node, d.cfg);
+        else if(d.t === 'timeline'){
+          // Timeline cho THCS/THPT dùng kiểu primary interactive (đẹp + click expand).
+          import('/js/engine/primary-ui.js?v=p4').then(pu => pu.renderInteractiveTimeline(node, d.events));
+        }
       });
     }).catch(err => console.warn('[secondary-ui] load fail', err));
+  }
+  // Tiểu học blocks: Quest / Treasure / Quiz inline / Timeline.
+  const prmNodes = body.querySelectorAll('.pr-prm[data-prm]');
+  if(prmNodes.length){
+    import('/js/engine/primary-ui.js?v=p4').then(ui => {
+      prmNodes.forEach(node => {
+        const d = _pr[+node.dataset.prm];
+        if(d.t === 'quest') ui.renderQuestLine(node, d.items, () => toast('🏆 Hoàn thành cả chặng!'));
+        else if(d.t === 'treasure') ui.renderTreasureHunt(node, d.items, () => toast('🏆 Tìm hết kho báu!'));
+        else if(d.t === 'mcq-prm') ui.renderQuizPrimaryInline(node, d.items);
+        else if(d.t === 'timeline') ui.renderInteractiveTimeline(node, d.events);
+      });
+    }).catch(err => console.warn('[primary-ui] load fail', err));
   }
   // Mầm non blocks: Sticker Board / Trace Canvas (dynamic import — không bắt cấp khác tải).
   const psNodes = body.querySelectorAll('.pr-ps[data-ps]');
