@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>+ Tạo Quest mới · Tizia</title>
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root {
+    --bg:#0b1020; --bg-2:#101733; --card:#151c3a; --card-2:#1d2547;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185; --purple:#a78bfa;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%;
+    font-family:'Inter','Be Vietnam Pro',system-ui,sans-serif; color:var(--text);
+    background:var(--bg);
+  }
+  a { color:inherit; }
+  .top { position:sticky; top:0; z-index:20; backdrop-filter:blur(12px);
+    background:rgba(11,16,32,.7); border-bottom:1px solid var(--border);
+    padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  .back { text-decoration:none; padding:7px 14px; border-radius:18px;
+    background:rgba(255,255,255,.08); border:1px solid var(--border);
+    font-size:13px; font-weight:600; color:inherit; }
+  .top h1 { margin:0; font-size:18px; }
+  .top .pub-btn { margin-left:auto; padding:9px 18px; border-radius:12px;
+    background:linear-gradient(135deg, var(--good), #10b981); color:#052e16;
+    border:none; cursor:pointer; font:800 13px 'Inter'; }
+  .top .pub-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+  .wrap { max-width:780px; margin:0 auto; padding:20px 18px 80px; }
+  .panel { background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:18px; margin-bottom:14px; }
+  .panel label { display:block; font-size:11px; letter-spacing:1px; color:var(--text-soft);
+    font-weight:700; text-transform:uppercase; margin-bottom:6px; }
+  .panel input, .panel textarea, .panel select {
+    width:100%; padding:10px 12px; border-radius:10px;
+    background:rgba(0,0,0,.3); border:1px solid var(--border);
+    color:#fff; font-family:inherit; font-size:14px;
+  }
+  .panel input:focus, .panel textarea:focus, .panel select:focus {
+    outline:none; border-color:var(--accent);
+  }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  .q-list { display:flex; flex-direction:column; gap:12px; }
+  .q-item { background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; position:relative; }
+  .q-item .q-num { position:absolute; top:14px; left:-12px;
+    width:26px; height:26px; border-radius:50%;
+    background:var(--purple); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:12px; }
+  .q-item .q-text-input { width:100%; padding:8px 10px; border-radius:8px;
+    background:rgba(0,0,0,.3); border:1px solid var(--border); color:#fff;
+    font-family:inherit; font-size:14px; margin-bottom:8px; }
+  .q-item .opt-row { display:flex; gap:8px; align-items:center; margin-bottom:5px; }
+  .q-item .opt-row input[type=radio] { accent-color:var(--good); }
+  .q-item .opt-row input[type=text] { flex:1; padding:6px 10px; border-radius:8px;
+    background:rgba(0,0,0,.3); border:1px solid var(--border); color:#fff;
+    font-family:inherit; font-size:13px; }
+  .q-item .opt-row .rm { background:none; border:none; color:var(--bad); cursor:pointer; font-size:14px; }
+  .q-item .q-actions { display:flex; gap:8px; margin-top:8px; }
+  .q-item .q-actions button { padding:6px 12px; border-radius:8px;
+    background:rgba(255,255,255,.06); border:1px solid var(--border); color:#fff;
+    cursor:pointer; font-size:12px; }
+  .q-item .q-actions .del { color:var(--bad); border-color:rgba(239,68,68,.3); }
+
+  .add-q { padding:14px; background:rgba(167,139,250,.10);
+    border:1px dashed rgba(167,139,250,.5); border-radius:12px;
+    color:var(--purple); text-align:center; cursor:pointer; font-weight:700;
+    font-size:13.5px; }
+  .add-q:hover { background:rgba(167,139,250,.18); }
+
+  .msg { padding:10px 14px; border-radius:10px; margin-top:14px; font-size:13px; }
+  .msg.err { background:rgba(239,68,68,.10); color:#fda4af; border-left:3px solid var(--bad); }
+  .msg.ok { background:rgba(34,197,94,.10); color:#86efac; border-left:3px solid var(--good); }
+</style>
+</head>
+<body>
+<header id="auth-header"></header>
+<script type="module" src="../js/auth-header.js"></script>
+
+<div class="top">
+  <a class="back" href="/ugc/index.html">← Marketplace</a>
+  <h1>+ Tạo Quest mới</h1>
+  <button class="pub-btn" id="pub">📢 Đăng quest</button>
+</div>
+
+<div class="wrap">
+  <div class="panel">
+    <label>Tên quest</label>
+    <input id="title" maxlength="100" placeholder="VD: 10 câu Toán siêu cấp lớp 2">
+  </div>
+  <div class="panel">
+    <label>Mô tả</label>
+    <textarea id="desc" rows="2" maxlength="500" placeholder="Một câu giới thiệu — gì sẽ học, dành cho ai…"></textarea>
+    <div class="row" style="margin-top:10px">
+      <div>
+        <label>Môn</label>
+        <select id="subject">
+          <option value="">— Chọn môn —</option>
+          <option value="toan">📐 Toán</option>
+          <option value="van">📚 Văn</option>
+          <option value="anh">🇬🇧 Tiếng Anh</option>
+          <option value="khoa-hoc">🔬 Khoa học</option>
+          <option value="su-dia">🌏 Sử Địa</option>
+          <option value="tin-hoc">💻 Tin học</option>
+          <option value="khac">🎲 Khác</option>
+        </select>
+      </div>
+      <div>
+        <label>Lớp</label>
+        <select id="grade">
+          <option value="">— Tất cả —</option>
+          <option value="1">Lớp 1</option>
+          <option value="2">Lớp 2</option>
+          <option value="3">Lớp 3</option>
+          <option value="4">Lớp 4</option>
+          <option value="5">Lớp 5</option>
+          <option value="6">Lớp 6</option>
+          <option value="7">Lớp 7</option>
+          <option value="8">Lớp 8</option>
+          <option value="9">Lớp 9</option>
+          <option value="10">Lớp 10</option>
+          <option value="11">Lớp 11</option>
+          <option value="12">Lớp 12</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin:24px 0 12px;color:var(--text-soft);font-size:13px;letter-spacing:.6px;text-transform:uppercase">Câu hỏi (3–15 câu)</h3>
+  <div class="q-list" id="qs"></div>
+  <div class="add-q" id="add-q">+ Thêm câu hỏi</div>
+
+  <div id="msg"></div>
+</div>
+
+<script type="module">
+let questions = [
+  { text:'', options:['', ''], correct:0 },
+  { text:'', options:['', ''], correct:0 },
+  { text:'', options:['', ''], correct:0 },
+];
+
+function render() {
+  const wrap = document.getElementById('qs');
+  wrap.innerHTML = questions.map((q, i) => `
+    <div class="q-item" data-i="${i}">
+      <div class="q-num">${i+1}</div>
+      <input class="q-text-input" placeholder="Nội dung câu hỏi" value="${esc(q.text)}" data-field="text">
+      ${q.options.map((o, j) => `
+        <div class="opt-row">
+          <input type="radio" name="c-${i}" value="${j}" ${q.correct === j ? 'checked' : ''}>
+          <input type="text" placeholder="Đáp án ${String.fromCharCode(65+j)}" value="${esc(o)}" data-opt="${j}">
+          ${q.options.length > 2 ? `<button class="rm" data-rm-opt="${j}">×</button>` : ''}
+        </div>
+      `).join('')}
+      <div class="q-actions">
+        ${q.options.length < 6 ? `<button data-add-opt>+ Thêm đáp án</button>` : ''}
+        ${questions.length > 3 ? `<button class="del" data-del-q>🗑 Xoá câu này</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  wrap.querySelectorAll('.q-item').forEach(el => {
+    const i = Number(el.dataset.i);
+    el.querySelector('[data-field=text]').addEventListener('input', e => { questions[i].text = e.target.value; });
+    el.querySelectorAll('[data-opt]').forEach(inp => {
+      inp.addEventListener('input', e => { questions[i].options[Number(inp.dataset.opt)] = e.target.value; });
+    });
+    el.querySelectorAll('input[type=radio]').forEach(r => {
+      r.addEventListener('change', () => { questions[i].correct = Number(r.value); });
+    });
+    el.querySelectorAll('[data-rm-opt]').forEach(b => {
+      b.addEventListener('click', () => {
+        const j = Number(b.dataset.rmOpt);
+        questions[i].options.splice(j, 1);
+        if (questions[i].correct >= questions[i].options.length) questions[i].correct = 0;
+        render();
+      });
+    });
+    el.querySelector('[data-add-opt]')?.addEventListener('click', () => {
+      questions[i].options.push('');
+      render();
+    });
+    el.querySelector('[data-del-q]')?.addEventListener('click', () => {
+      questions.splice(i, 1);
+      render();
+    });
+  });
+}
+render();
+
+document.getElementById('add-q').addEventListener('click', () => {
+  if (questions.length >= 15) return alert('Tối đa 15 câu');
+  questions.push({ text:'', options:['', ''], correct:0 });
+  render();
+});
+
+document.getElementById('pub').addEventListener('click', async () => {
+  const title = document.getElementById('title').value.trim();
+  const description = document.getElementById('desc').value.trim();
+  const subject_tag = document.getElementById('subject').value;
+  const grade_tag = document.getElementById('grade').value;
+  const msg = document.getElementById('msg');
+  msg.innerHTML = '';
+
+  if (!title) { msg.innerHTML = '<div class="msg err">Hãy nhập tên quest</div>'; return; }
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    if (!q.text.trim()) { msg.innerHTML = `<div class="msg err">Câu ${i+1}: thiếu nội dung</div>`; return; }
+    if (q.options.some(o => !o.trim())) {
+      msg.innerHTML = `<div class="msg err">Câu ${i+1}: có đáp án để trống</div>`; return;
+    }
+  }
+
+  try {
+    const r = await fetch('/api/ugc/quests', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ title, description, subject_tag, grade_tag, questions }),
+      credentials:'same-origin',
+    });
+    const data = await r.json();
+    if (!r.ok) { msg.innerHTML = `<div class="msg err">Lỗi: ${esc(data.error || 'Không rõ')}</div>`; return; }
+    msg.innerHTML = `<div class="msg ok">✓ Đăng thành công! Chuyển hướng…</div>`;
+    setTimeout(() => location.href = '/ugc/index.html', 1200);
+  } catch (e) {
+    msg.innerHTML = `<div class="msg err">Lỗi mạng: ${esc(e.message)}</div>`;
+  }
+});
+
+function esc(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+
+<script type="module" src="../js/engagement-hud.js?v=2026-06-05-r2"></script>
+<script type="module" src="../js/pet-widget.js?v=2026-06-05"></script>
+</body>
+</html>

@@ -34,6 +34,7 @@ import { attachEngagement, trackEngagementProgress } from './contexts/engagement
 import { addLeagueWeekXp } from './contexts/engagement/league.js';
 import { attachLearning, updateIrt } from './contexts/learning/index.js';
 import { attachPresence } from './contexts/multiplayer/presence.js';
+import { attachUgc } from './contexts/ugc/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -308,6 +309,8 @@ attachSkills(r, { requireAuth, requireEnrolled });
 attachEngagement(r);
 // Learning depth — Knowledge graph + Adaptive next-question (Trục B — Khanmigo/Squirrel)
 attachLearning(r);
+// UGC marketplace — Quest Builder + Play + Like/Flag (Trục C — Roblox Edu)
+attachUgc(r);
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
   const b = req.body ?? {};

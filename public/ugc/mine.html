@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📂 Quest của tôi · Tizia</title>
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root {
+    --bg:#0b1020; --bg-2:#101733; --card:#151c3a;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185; --purple:#a78bfa;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; font-family:'Inter','Be Vietnam Pro',sans-serif; color:var(--text); background:var(--bg); min-height:100%; }
+  a { color:inherit; }
+  .top { position:sticky; top:0; z-index:20; backdrop-filter:blur(12px);
+    background:rgba(11,16,32,.7); border-bottom:1px solid var(--border);
+    padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  .back { text-decoration:none; padding:7px 14px; border-radius:18px;
+    background:rgba(255,255,255,.08); border:1px solid var(--border);
+    font-size:13px; font-weight:600; color:inherit; }
+  .top h1 { margin:0; font-size:18px; }
+  .top .actions { margin-left:auto; }
+  .top .actions a { text-decoration:none; padding:8px 14px; border-radius:12px;
+    background:linear-gradient(135deg, var(--accent), #f97316);
+    color:#1e293b; font-size:13px; font-weight:700; }
+
+  .wrap { max-width:780px; margin:0 auto; padding:20px 18px 80px; }
+
+  .stats {
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;
+    margin-bottom:20px;
+  }
+  .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:12px; text-align:center; }
+  .stat-card .v { font-size:22px; font-weight:800; color:var(--accent); }
+  .stat-card .l { font-size:11px; color:var(--text-soft); letter-spacing:.6px; text-transform:uppercase; }
+
+  .quest-list { display:flex; flex-direction:column; gap:10px; }
+  .quest-row { background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; display:flex; gap:14px; align-items:center; }
+  .quest-row .info { flex:1; min-width:0; }
+  .quest-row .nm { font-weight:700; font-size:14px; margin-bottom:4px; }
+  .quest-row .meta { font-size:11.5px; color:var(--text-soft); }
+  .quest-row .stats-mini { display:flex; gap:10px; font-size:12px; }
+  .quest-row .stats-mini b { color:var(--accent); }
+  .empty { text-align:center; padding:60px 20px; color:var(--text-soft); }
+</style>
+</head>
+<body>
+<header id="auth-header"></header>
+<script type="module" src="../js/auth-header.js"></script>
+
+<div class="top">
+  <a class="back" href="/ugc/index.html">← Marketplace</a>
+  <h1>📂 Quest của tôi</h1>
+  <div class="actions"><a href="/ugc/create.html">+ Tạo mới</a></div>
+</div>
+
+<div class="wrap">
+  <div class="stats" id="stats">
+    <div class="stat-card"><div class="v" id="s-q">0</div><div class="l">Quest đã tạo</div></div>
+    <div class="stat-card"><div class="v" id="s-p">0</div><div class="l">Lượt chơi</div></div>
+    <div class="stat-card"><div class="v" id="s-l">0</div><div class="l">Lượt thích</div></div>
+  </div>
+  <div class="quest-list" id="list">
+    <div class="empty">Đang tải…</div>
+  </div>
+</div>
+
+<script type="module">
+async function load() {
+  try {
+    const [statsRes, mineRes] = await Promise.all([
+      fetch('/api/ugc/me/stats', { credentials:'same-origin' }),
+      fetch('/api/ugc/mine', { credentials:'same-origin' }),
+    ]);
+    if (statsRes.ok) {
+      const s = await statsRes.json();
+      document.getElementById('s-q').textContent = s.quests || 0;
+      document.getElementById('s-p').textContent = s.total_plays || 0;
+      document.getElementById('s-l').textContent = s.total_likes || 0;
+    }
+    if (!mineRes.ok) {
+      document.getElementById('list').innerHTML = `<div class="empty">Hãy đăng nhập.</div>`;
+      return;
+    }
+    const data = await mineRes.json();
+    if (!data.items || data.items.length === 0) {
+      document.getElementById('list').innerHTML = `<div class="empty">
+        <p>Chưa có quest nào.</p>
+        <a href="/ugc/create.html" style="display:inline-block;padding:10px 22px;background:var(--accent);color:#1e293b;border-radius:12px;font-weight:700;text-decoration:none">+ Tạo quest đầu tiên</a>
+      </div>`;
+      return;
+    }
+    document.getElementById('list').innerHTML = data.items.map(q => `
+      <div class="quest-row">
+        <div class="info">
+          <div class="nm">${esc(q.title)}</div>
+          <div class="meta">${q.questions.length} câu · ${esc(q.subject_tag || '')}${q.grade_tag ? ' · Lớp ' + esc(q.grade_tag) : ''}</div>
+        </div>
+        <div class="stats-mini">
+          <div>▶ <b>${q.plays}</b></div>
+          <div>❤ <b>${q.likes}</b></div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('list').innerHTML = `<div class="empty" style="color:var(--bad)">Lỗi: ${e.message}</div>`;
+  }
+}
+function esc(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+load();
+</script>
+
+<script type="module" src="../js/engagement-hud.js?v=2026-06-05-r2"></script>
+<script type="module" src="../js/pet-widget.js?v=2026-06-05"></script>
+</body>
+</html>

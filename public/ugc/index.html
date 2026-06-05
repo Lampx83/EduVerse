@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎨 Quest Marketplace · Tizia</title>
+<meta name="description" content="Khám phá quest do GV và HS tự tạo — chơi, like, hoặc tự làm quest mới. Creator được trả coin từ player." />
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root {
+    --bg:#0b1020; --bg-2:#101733; --card:#151c3a; --card-2:#1d2547;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185; --purple:#a78bfa;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%;
+    font-family:'Inter','Be Vietnam Pro',system-ui,sans-serif; color:var(--text);
+    background: radial-gradient(900px 600px at 10% 0%, rgba(167,139,250,.12), transparent 70%),
+                radial-gradient(900px 600px at 90% 30%, rgba(34,197,94,.10), transparent 70%),
+                var(--bg);
+  }
+  a { color:inherit; }
+  .top { position:sticky; top:0; z-index:20; backdrop-filter:blur(12px);
+    background:rgba(11,16,32,.7); border-bottom:1px solid var(--border);
+    padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  .back { text-decoration:none; padding:7px 14px; border-radius:18px;
+    background:rgba(255,255,255,.08); border:1px solid var(--border);
+    font-size:13px; font-weight:600; color:inherit; }
+  .top h1 { margin:0; font-size:18px; }
+  .top .actions { margin-left:auto; display:flex; gap:8px; }
+  .top .actions a { text-decoration:none; padding:8px 14px; border-radius:12px;
+    background:linear-gradient(135deg, var(--accent), #f97316);
+    color:#1e293b; font-size:13px; font-weight:700; }
+
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 18px 80px; }
+
+  .filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+  .filter { padding:7px 14px; border-radius:18px;
+    background:rgba(255,255,255,.05); border:1px solid var(--border);
+    font-size:12.5px; cursor:pointer; transition:background .12s; }
+  .filter:hover { background:rgba(255,255,255,.10); }
+  .filter.cur { background:var(--purple); color:#fff; border-color:var(--purple); font-weight:700; }
+
+  .quest-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; }
+  .quest-card { background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:16px; cursor:pointer; transition:transform .15s, border-color .15s; }
+  .quest-card:hover { transform:translateY(-2px); border-color:var(--purple); }
+  .quest-card .title { font-size:15px; font-weight:800; margin-bottom:6px; line-height:1.35; }
+  .quest-card .desc { font-size:12.5px; color:var(--text-soft); margin-bottom:10px; line-height:1.45;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .quest-card .tags { display:flex; gap:6px; margin-bottom:10px; }
+  .quest-card .tag { font-size:10.5px; padding:2px 8px; border-radius:999px;
+    background:rgba(167,139,250,.18); color:#c4b5fd; font-weight:700; }
+  .quest-card .meta { display:flex; gap:10px; font-size:11.5px; color:var(--text-soft);
+    border-top:1px solid var(--border); padding-top:10px; margin-top:8px; }
+  .quest-card .meta b { color:var(--accent); }
+  .quest-card .creator { display:flex; align-items:center; gap:6px; }
+  .quest-card .creator .ava { width:18px; height:18px; border-radius:50%;
+    background:linear-gradient(135deg, var(--accent), #f97316); color:#1e293b;
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; }
+
+  .empty { text-align:center; padding:60px 20px; color:var(--text-soft); }
+  .loading { text-align:center; padding:40px; color:var(--text-soft); }
+
+  /* Play modal */
+  .play-bg {
+    position:fixed; inset:0; z-index:200;
+    background:rgba(2,6,23,.78); backdrop-filter:blur(8px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    opacity:0; pointer-events:none; transition:opacity .25s;
+  }
+  .play-bg.open { opacity:1; pointer-events:auto; }
+  .play {
+    width:min(560px, 100%);
+    background:linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border:1px solid rgba(167,139,250,.4);
+    border-radius:18px; padding:24px;
+    color:#fff; max-height:90vh; overflow-y:auto;
+  }
+  .play h2 { margin:0 0 6px; font-size:20px; }
+  .play .meta-row { font-size:12px; color:var(--text-soft); margin-bottom:16px; }
+  .play .q-text { font-size:15px; font-weight:600; margin:14px 0 8px; }
+  .play .opt { display:block; padding:10px 14px; margin:6px 0;
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10);
+    border-radius:10px; cursor:pointer; font-size:14px;
+    transition:background .12s, border-color .12s; }
+  .play .opt:hover { background:rgba(167,139,250,.10); border-color:rgba(167,139,250,.4); }
+  .play .opt.sel { background:rgba(167,139,250,.20); border-color:var(--purple); }
+  .play .opt.ok  { background:rgba(34,197,94,.22); border-color:var(--good); }
+  .play .opt.bad { background:rgba(239,68,68,.18); border-color:var(--bad); }
+  .play .actions { display:flex; gap:10px; margin-top:18px; }
+  .play .actions button {
+    padding:10px 20px; border-radius:12px; border:none; cursor:pointer;
+    font:700 13px 'Inter';
+  }
+  .play .actions .submit { background:linear-gradient(135deg, var(--purple), #6366f1); color:#fff; }
+  .play .actions .submit:disabled { opacity:.5; cursor:not-allowed; }
+  .play .actions .close { background:rgba(255,255,255,.08); color:#fff; }
+  .play .progress { display:flex; gap:4px; margin-bottom:14px; }
+  .play .progress .pip { flex:1; height:4px; border-radius:3px; background:rgba(255,255,255,.08); }
+  .play .progress .pip.done { background:var(--purple); }
+  .play .progress .pip.cur { background:var(--accent); }
+
+  .play .result {
+    text-align:center; padding:20px;
+  }
+  .play .result .score {
+    font-size:60px; font-weight:800;
+    background:linear-gradient(135deg, var(--accent), var(--good));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .play .result .reward {
+    display:inline-block; margin:10px 0;
+    padding:8px 16px; background:rgba(251,191,36,.15);
+    border:1px solid rgba(251,191,36,.4); border-radius:999px;
+    color:#fde68a; font-weight:700;
+  }
+</style>
+</head>
+<body>
+<header id="auth-header"></header>
+<script type="module" src="../js/auth-header.js"></script>
+
+<div class="top">
+  <a class="back" href="/index.html">← Trang chủ</a>
+  <h1>🎨 Quest Marketplace</h1>
+  <div class="actions">
+    <a href="/ugc/create.html">+ Tạo quest</a>
+    <a href="/ugc/mine.html" style="background:rgba(255,255,255,.08);color:#fff">📂 Của tôi</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="filters" id="filters">
+    <div class="filter cur" data-subject="">Tất cả</div>
+    <div class="filter" data-subject="toan">📐 Toán</div>
+    <div class="filter" data-subject="van">📚 Văn</div>
+    <div class="filter" data-subject="anh">🇬🇧 Anh</div>
+    <div class="filter" data-subject="khoa-hoc">🔬 Khoa học</div>
+    <div class="filter" data-subject="su-dia">🌏 Sử Địa</div>
+    <div class="filter" data-subject="tin-hoc">💻 Tin học</div>
+    <div class="filter" data-subject="khac">🎲 Khác</div>
+  </div>
+
+  <div class="quest-grid" id="grid">
+    <div class="loading" style="grid-column:1/-1">Đang tải…</div>
+  </div>
+</div>
+
+<div class="play-bg" id="play-bg">
+  <div class="play" data-play></div>
+</div>
+
+<script type="module">
+let currentSubject = '';
+let playState = null;
+
+async function load() {
+  const grid = document.getElementById('grid');
+  try {
+    const r = await fetch('/api/ugc/quests?subject=' + encodeURIComponent(currentSubject) + '&limit=30');
+    const data = await r.json();
+    if (!data.items || data.items.length === 0) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+        <p>Chưa có quest nào trong mục này.</p>
+        <a href="/ugc/create.html" style="display:inline-block;padding:10px 22px;background:var(--accent);color:#1e293b;border-radius:12px;font-weight:700;text-decoration:none">+ Tạo quest đầu tiên</a>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = data.items.map(q => `
+      <div class="quest-card" data-id="${q.id}">
+        <div class="title">${esc(q.title)}</div>
+        <div class="desc">${esc(q.description || '— không có mô tả —')}</div>
+        <div class="tags">
+          ${q.subject_tag ? `<span class="tag">${esc(q.subject_tag)}</span>` : ''}
+          ${q.grade_tag ? `<span class="tag">Lớp ${esc(q.grade_tag)}</span>` : ''}
+          <span class="tag">${q.questions.length} câu</span>
+        </div>
+        <div class="meta">
+          <div class="creator">
+            <span class="ava">${esc((q.creator.name||'?').charAt(0).toUpperCase())}</span>
+            ${esc(q.creator.name || '?')}
+          </div>
+          <div>▶ <b>${q.plays}</b></div>
+          <div>❤ <b>${q.likes}</b></div>
+        </div>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.quest-card').forEach(c => {
+      c.addEventListener('click', () => openPlay(Number(c.dataset.id)));
+    });
+  } catch (e) {
+    grid.innerHTML = `<p style="color:var(--bad);grid-column:1/-1">Lỗi: ${e.message}</p>`;
+  }
+}
+
+async function openPlay(id) {
+  try {
+    const r = await fetch('/api/ugc/quests/' + id);
+    const data = await r.json();
+    if (!data.quest) return;
+    playState = {
+      quest: data.quest,
+      cur: 0,
+      answers: [],
+      finished: false,
+    };
+    document.getElementById('play-bg').classList.add('open');
+    renderPlay();
+  } catch {}
+}
+
+function renderPlay() {
+  const p = playState;
+  const el = document.querySelector('[data-play]');
+  if (p.finished) return renderResult();
+  const q = p.quest.questions[p.cur];
+  const pips = p.quest.questions.map((_, i) => {
+    const cls = i < p.cur ? 'done' : i === p.cur ? 'cur' : '';
+    return `<div class="pip ${cls}"></div>`;
+  }).join('');
+  el.innerHTML = `
+    <h2>${esc(p.quest.title)}</h2>
+    <div class="meta-row">Câu ${p.cur+1}/${p.quest.questions.length} · By ${esc(p.quest.creator.name||'?')}</div>
+    <div class="progress">${pips}</div>
+    <div class="q-text">${esc(q.text)}</div>
+    <div>
+      ${q.options.map((o, i) => `
+        <label class="opt" data-i="${i}">
+          <input type="radio" name="opt" value="${i}" style="margin-right:8px"> ${esc(o)}
+        </label>
+      `).join('')}
+    </div>
+    <div class="actions">
+      <button class="submit" data-next disabled>${p.cur === p.quest.questions.length - 1 ? '✓ Hoàn tất' : 'Câu kế →'}</button>
+      <button class="close" data-close>Bỏ</button>
+    </div>
+  `;
+  el.querySelectorAll('.opt').forEach(o => {
+    o.addEventListener('click', () => {
+      el.querySelectorAll('.opt').forEach(x => x.classList.remove('sel'));
+      o.classList.add('sel');
+      o.querySelector('input').checked = true;
+      p.selected = Number(o.dataset.i);
+      el.querySelector('[data-next]').disabled = false;
+    });
+  });
+  el.querySelector('[data-next]').addEventListener('click', () => {
+    p.answers.push(p.selected);
+    p.selected = null;
+    if (p.cur + 1 < p.quest.questions.length) {
+      p.cur++;
+      renderPlay();
+    } else {
+      submitPlay();
+    }
+  });
+  el.querySelector('[data-close]').addEventListener('click', closePlay);
+}
+
+async function submitPlay() {
+  try {
+    const r = await fetch('/api/ugc/quests/' + playState.quest.id + '/play', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ answers: playState.answers }), credentials:'same-origin',
+    });
+    const data = await r.json();
+    playState.result = data;
+    playState.finished = true;
+    renderResult();
+    try { window.__tziaEngagementHud?.refresh(); } catch {}
+  } catch (e) {
+    alert('Lỗi nộp bài: ' + e.message);
+  }
+}
+
+function renderResult() {
+  const r = playState.result;
+  document.querySelector('[data-play]').innerHTML = `
+    <div class="result">
+      <h2>${esc(playState.quest.title)}</h2>
+      <div class="score">${r.score}%</div>
+      <p style="color:var(--text-soft)">Em đúng ${r.correct}/${r.total} câu</p>
+      ${(r.reward.coin > 0 || r.reward.xp > 0)
+        ? `<div class="reward">+${r.reward.coin} 🪙 · +${r.reward.xp} ✨</div>`
+        : `<p style="color:var(--text-soft)">Đạt < 50% — không có thưởng. Thử lại nhé!</p>`}
+      <div class="actions" style="justify-content:center">
+        <button class="submit" data-like>❤ Thích quest</button>
+        <button class="close" data-close>Đóng</button>
+      </div>
+    </div>
+  `;
+  document.querySelector('[data-like]').addEventListener('click', async () => {
+    await fetch('/api/ugc/quests/' + playState.quest.id + '/like', { method:'POST', credentials:'same-origin' });
+    closePlay();
+    load();
+  });
+  document.querySelector('[data-close]').addEventListener('click', closePlay);
+}
+
+function closePlay() {
+  document.getElementById('play-bg').classList.remove('open');
+  playState = null;
+}
+
+document.getElementById('filters').addEventListener('click', (e) => {
+  const f = e.target.closest('.filter');
+  if (!f) return;
+  document.querySelectorAll('.filter').forEach(x => x.classList.remove('cur'));
+  f.classList.add('cur');
+  currentSubject = f.dataset.subject;
+  load();
+});
+document.getElementById('play-bg').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closePlay();
+});
+
+function esc(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+load();
+</script>
+
+<script type="module" src="../js/engagement-hud.js?v=2026-06-05-r2"></script>
+<script type="module" src="../js/onboarding-60s.js?v=2026-06-05"></script>
+<script type="module" src="../js/pet-widget.js?v=2026-06-05"></script>
+</body>
+</html>
