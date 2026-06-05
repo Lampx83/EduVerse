@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>✨ Tính năng Tizia · Tổng quan</title>
+<meta name="description" content="Tổng quan toàn bộ tính năng Tizia — vũ trụ giáo dục ảo với HUD engagement, AI tutor Socratic, pet, combat, multiplayer, Battle Pass, shop, UGC marketplace." />
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root {
+    --bg:#0b1020; --card:#151c3a;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185; --purple:#a78bfa;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%;
+    font-family:'Inter','Be Vietnam Pro',sans-serif; color:var(--text);
+    background: radial-gradient(900px 600px at 10% 0%, rgba(251,191,36,.10), transparent 70%),
+                radial-gradient(900px 600px at 90% 30%, rgba(167,139,250,.12), transparent 70%),
+                radial-gradient(700px 500px at 50% 100%, rgba(34,197,94,.08), transparent 70%),
+                var(--bg);
+  }
+  a { color:inherit; text-decoration:none; }
+  .top { position:sticky; top:0; z-index:20; backdrop-filter:blur(12px);
+    background:rgba(11,16,32,.7); border-bottom:1px solid var(--border);
+    padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  .back { padding:7px 14px; border-radius:18px;
+    background:rgba(255,255,255,.08); border:1px solid var(--border);
+    font-size:13px; font-weight:600; }
+  .top h1 { margin:0; font-size:18px; }
+
+  .wrap { max-width:1100px; margin:0 auto; padding:30px 18px 80px; }
+
+  .hero { text-align:center; padding:30px 16px 40px; }
+  .hero h2 { font-size:36px; margin:0 0 12px; line-height:1.2;
+    background:linear-gradient(135deg, #fbbf24, #ec4899, #a78bfa);
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p { font-size:16px; color:var(--text-soft); max-width:640px; margin:0 auto; line-height:1.6; }
+
+  .pillars { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:30px; }
+  .pillar { background:var(--card); border:1px solid var(--border);
+    border-radius:18px; padding:24px; text-align:center; }
+  .pillar.A { border-color:rgba(251,191,36,.45); box-shadow:0 8px 24px rgba(251,191,36,.10); }
+  .pillar.B { border-color:rgba(167,139,250,.45); box-shadow:0 8px 24px rgba(167,139,250,.12); }
+  .pillar.C { border-color:rgba(34,197,94,.45); box-shadow:0 8px 24px rgba(34,197,94,.10); }
+  .pillar .ico { font-size:48px; display:block; margin-bottom:8px; }
+  .pillar .lbl { font-size:11px; letter-spacing:1.5px; color:var(--text-soft); font-weight:800; text-transform:uppercase; margin-bottom:4px; }
+  .pillar h3 { margin:0 0 8px; font-size:18px; }
+  .pillar p { color:var(--text-soft); font-size:13.5px; margin:0; line-height:1.5; }
+
+  .section-title {
+    display:flex; align-items:center; gap:10px; margin:30px 0 14px;
+    font-size:18px; font-weight:800;
+  }
+  .section-title .pill {
+    padding:3px 12px; border-radius:999px; font-size:11px; font-weight:800;
+    letter-spacing:.6px;
+  }
+  .section-title .pill.A { background:rgba(251,191,36,.18); color:var(--accent); }
+  .section-title .pill.B { background:rgba(167,139,250,.18); color:var(--purple); }
+  .section-title .pill.C { background:rgba(34,197,94,.18); color:var(--good); }
+  .section-title .pill.B2B { background:rgba(96,165,250,.18); color:#60a5fa; }
+
+  .feat-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px; }
+  .feat { background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:16px; transition:transform .15s, border-color .15s; }
+  .feat:hover { transform:translateY(-2px); border-color:var(--accent); }
+  .feat .ic { font-size:32px; line-height:1; margin-bottom:8px; }
+  .feat .nm { font-weight:800; font-size:14.5px; margin-bottom:4px; }
+  .feat .desc { font-size:12.5px; color:var(--text-soft); line-height:1.5; margin-bottom:10px; min-height:48px; }
+  .feat .go {
+    display:inline-block; padding:6px 12px; border-radius:10px;
+    background:linear-gradient(135deg, var(--accent), #f97316); color:#1e293b;
+    font-size:12px; font-weight:700;
+  }
+
+  .stat-row { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:30px 0; }
+  .stat-row .s { background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:18px; text-align:center; }
+  .stat-row .v { font-size:28px; font-weight:800; color:var(--accent); }
+  .stat-row .l { font-size:11.5px; color:var(--text-soft); letter-spacing:.5px; text-transform:uppercase; }
+
+  @media (max-width:700px) {
+    .pillars { grid-template-columns:1fr; }
+    .hero h2 { font-size:28px; }
+    .stat-row { grid-template-columns:repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<header id="auth-header"></header>
+<script type="module" src="./js/auth-header.js"></script>
+
+<div class="top">
+  <a class="back" href="/index.html">← Trang chủ</a>
+  <h1>✨ Tính năng</h1>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h2>Vũ trụ giáo dục ảo hoàn chỉnh</h2>
+    <p>Tizia kết hợp engagement loop của Duolingo, depth học sâu của Khanmigo,
+    và game world của Prodigy/CodeCombat — vào 1 nền tảng theo GDPT 2018.</p>
+  </div>
+
+  <div class="pillars">
+    <div class="pillar A">
+      <span class="ico">🔥</span>
+      <div class="lbl">Trục A</div>
+      <h3>Gây nghiện hằng ngày</h3>
+      <p>Streak · Hearts · Daily Quest · League · Daily Login Bonus · Battle Pass</p>
+    </div>
+    <div class="pillar B">
+      <span class="ico">🧠</span>
+      <div class="lbl">Trục B</div>
+      <h3>Học thật, không phải làm bài cho có</h3>
+      <p>Knowledge Graph · Adaptive IRT · Socratic AI · Mastery · Parent Portal</p>
+    </div>
+    <div class="pillar C">
+      <span class="ico">🌍</span>
+      <div class="lbl">Trục C</div>
+      <h3>Thế giới game đáng chơi</h3>
+      <p>Pet · Combat · Code-trong-game · Multiplayer · UGC Marketplace</p>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="s"><div class="v">25+</div><div class="l">Trang/Feature mới</div></div>
+    <div class="s"><div class="v">35+</div><div class="l">Bảng DB</div></div>
+    <div class="s"><div class="v">80+</div><div class="l">API endpoint</div></div>
+    <div class="s"><div class="v">3</div><div class="l">Ngôn ngữ (vi/en/id)</div></div>
+  </div>
+
+  <div class="section-title">Trục A — Engagement <span class="pill A">DUOLINGO</span></div>
+  <div class="feat-grid">
+    <a class="feat" href="/index.html"><div class="ic">🔥</div><div class="nm">HUD Streak + Hearts</div><div class="desc">Floating widget góc phải mọi trang. Daily Quest 3 ô. Auto-refill hearts 30 phút.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/league.html"><div class="ic">🏆</div><div class="nm">League tuần</div><div class="desc">6 tier Đồng→Kim cương. Top 5 lên hạng, bottom 5 xuống. Reset Chủ nhật.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/battle-pass.html"><div class="ic">🎖</div><div class="nm">Battle Pass</div><div class="desc">Mùa 2 tháng, 30 tier free + premium. Mở Premium 5000 🪙.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/cua-hang.html"><div class="ic">🛒</div><div class="nm">Cửa hàng skin</div><div class="desc">12+ item: pet-skin, frame avatar, emoji pack, danh hiệu. 4 rarity.</div><div class="go">Mở →</div></a>
+  </div>
+
+  <div class="section-title">Trục B — Học sâu thật <span class="pill B">KHANMIGO</span></div>
+  <div class="feat-grid">
+    <a class="feat" href="/hoc-thong-minh.html"><div class="ic">🧠</div><div class="nm">Học thông minh (Adaptive)</div><div class="desc">θ IRT điều chỉnh độ khó câu hỏi theo trình độ. Đề xuất skill kế tiếp.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/nang-luc.html"><div class="ic">🎯</div><div class="nm">Cây năng lực</div><div class="desc">207 kỹ năng × 15 competency GDPT 2018. Bar "đã đạt" + "thành thạo".</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/parent/dashboard.html"><div class="ic">👨‍👩‍👧</div><div class="nm">Parent Dashboard</div><div class="desc">PH theo dõi streak/league/mastery của từng con real-time.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/parent/report.html"><div class="ic">📄</div><div class="nm">Báo cáo tuần PDF</div><div class="desc">In/Save as PDF — engagement + activity + tips cho phụ huynh.</div><div class="go">Mở →</div></a>
+  </div>
+
+  <div class="section-title">Trục C — Game world <span class="pill C">PRODIGY</span></div>
+  <div class="feat-grid">
+    <a class="feat" href="/tran-dau.html"><div class="ic">⚔</div><div class="nm">Trận đấu kiến thức</div><div class="desc">Combat-by-quiz: hạ 8 boss bằng câu trả lời đúng.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/lap-trinh-game.html"><div class="ic">💻</div><div class="nm">Lập trình game</div><div class="desc">5 level — viết JS để điều khiển 🤖 đi, quẹo, nhặt coin.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/campus-mp.html"><div class="ic">🌍</div><div class="nm">Campus đa người chơi</div><div class="desc">WebSocket presence + chat + 4 phòng. Avatar = pet sprite.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/ugc/index.html"><div class="ic">🎨</div><div class="nm">Quest Marketplace</div><div class="desc">GV/HS tự tạo quest, người chơi xong trả 70% coin về creator.</div><div class="go">Mở →</div></a>
+  </div>
+
+  <div class="section-title">Cho Giáo viên & Trường <span class="pill B2B">B2B</span></div>
+  <div class="feat-grid">
+    <a class="feat" href="/gv/team-quest.html"><div class="ic">👨‍🏫</div><div class="nm">Team Quest GV</div><div class="desc">Mở quest tuần cho lớp, cả lớp gom XP để mở reward chung.</div><div class="go">Mở →</div></a>
+    <a class="feat" href="/admin/school-wizard.html"><div class="ic">🏫</div><div class="nm">School Wizard (Admin)</div><div class="desc">Tạo trường mới trong 10 phút: tên + icon → lớp → import HS CSV.</div><div class="go">Mở →</div></a>
+  </div>
+
+  <div class="section-title">Nền tảng & Polish</div>
+  <div class="feat-grid">
+    <a class="feat" href="javascript:window.__tziaShowOnboarding?.()"><div class="ic">👋</div><div class="nm">Onboarding 60s</div><div class="desc">Modal 4 bước cho user mới: tên + lớp + pet + spotlight HUD.</div><div class="go">Chạy lại</div></a>
+    <a class="feat" href="javascript:window.__tziaShowDaily?.()"><div class="ic">🎁</div><div class="nm">Daily Login Bonus</div><div class="desc">Popup 1 lần/ngày, chuỗi 7 ngày, ngày 7 jackpot.</div><div class="go">Chạy lại</div></a>
+    <a class="feat" href="javascript:void(window.__tziaPetWidget?.openDrawer?.())"><div class="ic">🦉</div><div class="nm">Pet đồng hành</div><div class="desc">Bubble góc trái, 6 pet, 3 stage tiến hoá, feed bằng coin.</div><div class="go">Mở drawer</div></a>
+    <a class="feat" href="javascript:(async()=>{const l=window.__tziaI18n;if(!l)return;const next={vi:'en',en:'id',id:'vi'}[l.getLocale()];await l.setLocale(next);alert('Locale = '+next)})()"><div class="ic">🌐</div><div class="nm">i18n VI/EN/ID</div><div class="desc">3 locale với data-i18n binding. Persist localStorage.</div><div class="go">Switch locale</div></a>
+  </div>
+
+</div>
+
+<script type="module" src="./js/engagement-hud.js?v=2026-06-05-r2"></script>
+<script type="module" src="./js/pet-widget.js?v=2026-06-05"></script>
+<script type="module" src="./js/daily-login.js?v=2026-06-05"></script>
+</body>
+</html>
