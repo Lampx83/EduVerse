@@ -452,7 +452,7 @@
 <!-- Engagement HUD (Streak · Hearts · Daily Quest) — Trục A. Versioned path để
      bypass SW stale-while-revalidate cho lần ship đầu. -->
 <script type="module" src="./js/engagement-hud.js?v=2026-06-05-r2"></script>
-<script type="module" src="./js/onboarding-60s.js?v=2026-06-05"></script>
+<script type="module" src="./js/onboarding-60s.js?v=2026-06-05-r2"></script>
 <script type="module" src="./js/pet-widget.js?v=2026-06-05"></script>
 <script type="module" src="./js/daily-login.js?v=2026-06-05"></script>
 
@@ -641,51 +641,107 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   </div>
 </div>
 <script type="module">
+  // ================ DASHBOARD (refactored) ================
+  // SINGLE SOURCE OF TRUTH: fetch /api/dashboard/me — server hợp nhất:
+  //   - wallet (XP/coins/streak)
+  //   - engagement (streak cross-domain, hearts, daily quests SERVER)
+  //   - league (XP tuần)
+  //   - personal rank (Đồng→Cao thủ)
+  //   - skills earned
+  //   - recommendation (dựa quiz attempts thật, không hardcoded)
+  // KHÔNG dùng wallet local + quest local nữa — tránh 2 hệ thống song song.
   import { loadActiveDomain, getActiveDomainId, isGamifiedDomain } from './js/engine/domain.js';
-  import { onLogin, getProgress, getDailyQuests, streakAtRisk } from './js/engine/wallet.js';
-  import { recommendNext, nextMilestone } from './js/engine/gamification.js';
-  import { renderWalletPills, renderDailyQuests, renderContinueCard, showAchievementToast } from './js/engine/path-renderer.js';
-  import { ALL_SCENARIOS } from './js/scenarios/index.js';
+  import { renderContinueCard, showAchievementToast } from './js/engine/path-renderer.js';
 
   try {
-    const loginEvent = onLogin();              // streak + daily check-in
-    // Bảng điều khiển game hoá CHỈ hiện cho Tiểu học + THCS.
+    // Bảng điều khiển CHỈ hiện cho Tiểu học + THCS (legacy gating).
     if (!isGamifiedDomain(getActiveDomainId())) throw new Error('not-gamified');
-    const dom = await loadActiveDomain();
-    const { MODULES, SUBJECTS, DOMAIN } = dom;
-    const progress = getProgress();
 
-    // hasContent = có experiences[] hoặc scenario thật (prefix module-)
-    const scenarioIds = new Set(Object.values(ALL_SCENARIOS).map(s => s?.id).filter(Boolean));
-    const hasContent = (id) => {
-      const m = MODULES.find(x => x.id === id); if (!m) return false;
-      if ((m.experiences || []).length > 0) return true;
-      for (const sid of (m.scenarioIds || [])) if (scenarioIds.has(sid)) return true;
-      for (const sid of scenarioIds) if (sid.startsWith(m.id + '-')) return true;
-      return false;
-    };
-    const subjectLabels = {}; for (const [k, v] of Object.entries(SUBJECTS || {})) subjectLabels[k] = v.label;
-    const rec = recommendNext(MODULES, progress, hasContent);
-    const milestone = nextMilestone(MODULES, progress, hasContent, subjectLabels);
+    const r = await fetch('/api/dashboard/me', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error('dashboard-auth-required');
+    const data = await r.json();
+    if (!data.ok) throw new Error('dashboard-error');
 
     document.getElementById('dashboard').style.display = '';
-    const renderPills = (w) => renderWalletPills(document.getElementById('dash-identity'), {
-      wallet: w, progress, modules: MODULES, atRisk: streakAtRisk(),
-    });
-    renderPills(loginEvent.wallet);
-    // Ví được hydrate từ server sau khi auth.js gọi loadWalletFromServer() —
-    // re-render khi xong để hiển thị đúng XP/level từ DB.
-    window.addEventListener('tizia:wallet-synced', (e) => {
-      try { renderPills(e.detail); renderDailyQuests(document.getElementById('dash-quests'), getDailyQuests()); } catch {}
-    });
-    renderContinueCard(document.getElementById('dash-continue'), { rec, domain: DOMAIN, milestone });
-    renderDailyQuests(document.getElementById('dash-quests'), getDailyQuests());
 
-    if (loginEvent.milestone) {
-      setTimeout(() => showAchievementToast({
-        icon: '🔥', title: `Chuỗi ${loginEvent.milestone.streak} ngày!`,
-        desc: `+${loginEvent.milestone.coin} coin · +${loginEvent.milestone.xp} XP${loginEvent.milestone.shield ? ' · 🛡️ +1 khiên streak' : ''}`,
-      }), 700);
+    // ── Identity card: avatar + rank + level + XP bar ──
+    const p = data.personal;
+    const eng = data.engagement || {};
+    const titleHtml = `${p.rank.icon} ${p.rank.name} · ${p.title}`;
+    const nextHtml = p.rank.next
+      ? `Còn ${p.rank.levels_to_next} cấp → ${p.rank.next.icon} ${p.rank.next.name}`
+      : `Đã đạt hạng cao nhất 👑`;
+    const atRiskHtml = (eng.streak > 0 && eng.streak < 30)
+      ? `<span class="streak-risk" title="Học 1 bài hôm nay để giữ chuỗi!">⚠️ giữ chuỗi hôm nay</span>`
+      : '';
+    document.getElementById('dash-identity').innerHTML = `
+      <div class="identity-bar" style="--rank-color:${p.rank.color}">
+        <div class="ib-avatar">🐣</div>
+        <div class="ib-main">
+          <div class="ib-top">
+            <span class="ib-rank">${titleHtml}</span>
+          </div>
+          <div class="ib-levelrow">
+            <span class="ib-lvl">Lv.${p.level}</span>
+            <div class="ib-xpbar"><i style="width:${p.xp_pct}%"></i></div>
+            <span class="ib-xp">${p.xp_into_level}/${p.xp_span} XP</span>
+          </div>
+          <div class="ib-next">${nextHtml}</div>
+        </div>
+      </div>
+      <div class="wallet-row" id="wallet-row">
+        <span class="wallet-pill stars"><span class="wp-icon">🎯</span><span class="wp-val">${data.skills.earned}</span> kỹ năng</span>
+        <span class="wallet-pill coins"><span class="wp-icon">🪙</span><span class="wp-val">${data.wallet.coins}</span> coin</span>
+        <span class="wallet-pill streak"><span class="wp-icon">🔥</span><span class="wp-val">${eng.streak || 0}</span> ngày</span>
+        ${atRiskHtml}
+        <span class="wallet-pill achievements"><span class="wp-icon">🏆</span><span class="wp-val">${data.wallet.achievements}</span> huy hiệu</span>
+        ${data.league ? `<span class="wallet-pill" style="background:rgba(167,139,250,.18);color:#c4b5fd;border-color:rgba(167,139,250,.3)"><span class="wp-icon">${data.league.tier.icon}</span><span class="wp-val">${data.league.tier.label}</span> · #${data.league.my_rank || '-'}</span>` : ''}
+      </div>
+    `;
+
+    // ── Continue card: server recommendation thật ──
+    const rec = data.recommendation;
+    const continueHost = document.getElementById('dash-continue');
+    if (rec) {
+      continueHost.innerHTML = `
+        <a href="${rec.url}" class="continue-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;background:linear-gradient(135deg, rgba(251,191,36,.18), rgba(251,191,36,.05));border:1px solid rgba(251,191,36,.4);border-radius:16px;text-decoration:none;color:inherit;transition:transform .15s">
+          <div style="font-size:42px">${rec.emoji}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;color:#cbd5e1;letter-spacing:.6px;text-transform:uppercase;font-weight:700">${rec.action}</div>
+            <div style="font-size:18px;font-weight:800;margin:3px 0;color:#fde68a">${rec.subject_name}</div>
+            <div style="font-size:12.5px;color:#cbd5e1">${rec.reason}</div>
+          </div>
+          <div style="background:#fbbf24;color:#1e293b;padding:10px 16px;border-radius:12px;font-weight:800;font-size:13px;white-space:nowrap">Học ngay →</div>
+        </a>
+      `;
+    }
+
+    // ── Daily Quests: SERVER source (engagement_daily_quests) ──
+    const KIND_ICO = { lesson:'📘', quiz:'❓', minigame:'🎮', code:'💻' };
+    const questsHost = document.getElementById('dash-quests');
+    if (eng.quests && eng.quests.length > 0) {
+      questsHost.innerHTML = `
+        <div style="background:var(--card,#151c3a);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-weight:800;font-size:14px">📋 Nhiệm vụ hôm nay</div>
+            <div style="color:#86efac;font-size:13px;font-weight:700">${eng.quests_done || 0}/${eng.quests_total || 3}</div>
+          </div>
+          ${eng.quests.map(q => {
+            const pct = Math.min(100, Math.round((q.progress/q.target)*100));
+            const done = q.progress >= q.target;
+            return `
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.05)">
+                <span style="font-size:18px">${KIND_ICO[q.kind] || '⭐'}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:600">${q.label}</div>
+                  <div style="height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:4px"><div style="height:100%;background:linear-gradient(90deg,#22c55e,#4ade80);width:${pct}%"></div></div>
+                </div>
+                <div style="font-size:12px;color:${done?'#86efac':'#cbd5e1'};font-weight:700;white-space:nowrap">${q.progress}/${q.target}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
     }
   } catch (e) { console.warn('[dashboard] init skipped', e); }
 </script>

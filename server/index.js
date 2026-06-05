@@ -44,6 +44,7 @@ import { attachLiveQuizHttp, attachLiveQuizWs } from './contexts/live-quiz/index
 import { attachSrs } from './contexts/srs/index.js';
 import { attachSmartNotif, logActivity } from './contexts/smart-notif/index.js';
 import { attachFeatureGate } from './contexts/feature-gate/index.js';
+import { attachDashboard } from './contexts/dashboard/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -338,6 +339,8 @@ attachSrs(r);
 attachSmartNotif(r);
 // Feature Gate — Progressive Disclosure (Duolingo-style)
 attachFeatureGate(r);
+// Dashboard — single source of truth (personal + engagement + league + recs)
+attachDashboard(r);
 
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
