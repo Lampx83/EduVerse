@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>👨‍🏫 Team Quest GV · Tizia</title>
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root {
+    --bg:#0b1020; --card:#151c3a;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185; --purple:#a78bfa;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%;
+    font-family:'Inter','Be Vietnam Pro',sans-serif; color:var(--text);
+    background: radial-gradient(900px 600px at 20% 0%, rgba(34,197,94,.10), transparent 70%),
+                var(--bg);
+  }
+  a { color:inherit; }
+  .top { position:sticky; top:0; z-index:20; backdrop-filter:blur(12px);
+    background:rgba(11,16,32,.7); border-bottom:1px solid var(--border);
+    padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  .back { text-decoration:none; padding:7px 14px; border-radius:18px;
+    background:rgba(255,255,255,.08); border:1px solid var(--border);
+    font-size:13px; font-weight:600; color:inherit; }
+  .top h1 { margin:0; font-size:18px; }
+
+  .wrap { max-width:960px; margin:24px auto 80px; padding:0 18px; }
+
+  .panel { background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:18px; margin-bottom:14px; }
+  .panel h3 { margin:0 0 10px; font-size:14px; color:var(--text-soft);
+    letter-spacing:.6px; text-transform:uppercase; }
+
+  .class-picker { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .class-picker .c { padding:7px 14px; border-radius:18px;
+    background:rgba(255,255,255,.05); border:1px solid var(--border);
+    font-size:13px; cursor:pointer; font-weight:700; }
+  .class-picker .c:hover { background:rgba(255,255,255,.10); }
+  .class-picker .c.cur { background:var(--good); color:#052e16; border-color:var(--good); }
+
+  /* Form create */
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  label { display:block; font-size:11px; color:var(--text-soft);
+    font-weight:700; letter-spacing:.5px; text-transform:uppercase; margin:10px 0 5px; }
+  input, textarea, select {
+    width:100%; padding:9px 12px; border-radius:10px;
+    background:rgba(0,0,0,.3); border:1px solid var(--border); color:#fff;
+    font-family:inherit; font-size:13.5px;
+  }
+  button.create {
+    margin-top:14px; padding:10px 22px; border-radius:12px;
+    background:linear-gradient(135deg, var(--good), #10b981); color:#052e16;
+    border:none; cursor:pointer; font:800 13px 'Inter';
+  }
+
+  /* Active quests */
+  .quest-card { background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:18px; margin-bottom:12px; }
+  .quest-card .title { font-size:16px; font-weight:800; margin-bottom:4px; }
+  .quest-card .meta { font-size:12px; color:var(--text-soft); margin-bottom:12px; }
+  .quest-card .meta b { color:var(--accent); }
+  .progress-bar { height:14px; background:rgba(0,0,0,.4); border-radius:8px;
+    overflow:hidden; position:relative; margin:8px 0; border:1px solid var(--border); }
+  .progress-bar > i {
+    display:block; height:100%;
+    background:linear-gradient(90deg, var(--accent), var(--good));
+    transition:width .5s;
+  }
+  .progress-bar.done > i { background:linear-gradient(90deg, var(--good), #10b981); }
+  .progress-bar .lbl {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:11.5px; text-shadow:0 1px 2px rgba(0,0,0,.6);
+  }
+  .reward-chip { display:inline-block; padding:4px 10px; border-radius:14px;
+    background:rgba(251,191,36,.15); color:var(--accent); font-size:12px; font-weight:700; margin:4px 0; }
+  .contribs { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .contribs h4 { margin:0 0 8px; font-size:11px; color:var(--text-soft); letter-spacing:.5px;
+    text-transform:uppercase; font-weight:700; }
+  .contrib-row { display:flex; align-items:center; gap:10px; padding:6px 0; font-size:13px; }
+  .contrib-row .rk { width:22px; font-weight:800; color:var(--text-soft); }
+  .contrib-row .nm { flex:1; }
+  .contrib-row .xp { color:var(--good); font-weight:700; }
+
+  /* Leaderboard */
+  .lb-row { display:flex; align-items:center; gap:10px; padding:10px 12px;
+    border-top:1px solid rgba(255,255,255,.04); font-size:13.5px; }
+  .lb-row:first-child { border-top:none; }
+  .lb-row .rk { width:30px; font-weight:800; color:var(--text-soft); }
+  .lb-row .rk.top1 { color:#fbbf24; }
+  .lb-row .rk.top2 { color:#c0c0c0; }
+  .lb-row .rk.top3 { color:#cd7f32; }
+  .lb-row .nm { flex:1; font-weight:700; }
+  .lb-row .stats { display:flex; gap:14px; font-size:12px; color:var(--text-soft); }
+  .lb-row .stats b { color:var(--accent); }
+
+  .empty, .loading { text-align:center; padding:30px; color:var(--text-soft); }
+</style>
+</head>
+<body>
+<header id="auth-header"></header>
+<script type="module" src="../js/auth-header.js"></script>
+
+<div class="top">
+  <a class="back" href="/teacher.html">← GV</a>
+  <h1>👨‍🏫 Team Quest + Bảng xếp hạng lớp</h1>
+</div>
+
+<div class="wrap">
+  <div class="class-picker" id="cls"></div>
+
+  <div class="panel">
+    <h3>+ Tạo Team Quest mới</h3>
+    <label>Tiêu đề</label>
+    <input id="t-title" maxlength="100" placeholder="VD: Tuần này cả lớp đạt 5000 XP để mở khoá quà">
+    <label>Mô tả (optional)</label>
+    <textarea id="t-desc" rows="2" placeholder="Một câu nhắc HS"></textarea>
+    <div class="row2">
+      <div>
+        <label>Target XP</label>
+        <input id="t-target" type="number" min="100" max="50000" value="3000">
+      </div>
+      <div>
+        <label>Thời hạn (ngày)</label>
+        <input id="t-days" type="number" min="1" max="30" value="7">
+      </div>
+      <div>
+        <label>Reward Coin / HS</label>
+        <input id="t-coin" type="number" min="0" max="2000" value="200">
+      </div>
+      <div>
+        <label>Reward XP / HS</label>
+        <input id="t-xp" type="number" min="0" max="2000" value="100">
+      </div>
+    </div>
+    <button class="create" id="create">📢 Tạo Quest</button>
+  </div>
+
+  <div class="panel">
+    <h3>🔥 Team Quest đang chạy</h3>
+    <div id="active"><div class="empty">Chưa có quest nào.</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>🏆 Bảng xếp hạng lớp (tuần này)</h3>
+    <div id="lb"><div class="empty">Đang tải…</div></div>
+  </div>
+</div>
+
+<script type="module">
+let currentClass = '';
+
+async function init() {
+  try {
+    const r = await fetch('/api/teacher/classes', { credentials:'same-origin' });
+    if (r.status === 403) {
+      document.getElementById('cls').innerHTML = `<div class="empty">Chức năng chỉ dành cho GV/Admin.</div>`;
+      return;
+    }
+    const d = await r.json();
+    if (!d.classes || d.classes.length === 0) {
+      document.getElementById('cls').innerHTML = `<div class="empty">Chưa có lớp nào.</div>`;
+      return;
+    }
+    document.getElementById('cls').innerHTML = d.classes.map((c, i) => `
+      <div class="c ${i===0 ? 'cur' : ''}" data-code="${esc(c.code)}">${esc(c.name)} (${esc(c.code)})</div>
+    `).join('');
+    currentClass = d.classes[0].code;
+    document.getElementById('cls').addEventListener('click', (e) => {
+      const el = e.target.closest('.c');
+      if (!el) return;
+      document.querySelectorAll('.class-picker .c').forEach(x => x.classList.remove('cur'));
+      el.classList.add('cur');
+      currentClass = el.dataset.code;
+      loadAll();
+    });
+    await loadAll();
+  } catch (e) {
+    document.getElementById('cls').innerHTML = `<div class="empty">Lỗi: ${e.message}</div>`;
+  }
+}
+
+async function loadAll() {
+  await Promise.all([loadActive(), loadLeaderboard()]);
+}
+
+async function loadActive() {
+  try {
+    const r = await fetch('/api/teacher/team-quest/active?class_code=' + encodeURIComponent(currentClass), { credentials:'same-origin' });
+    const d = await r.json();
+    if (!d.items || d.items.length === 0) {
+      document.getElementById('active').innerHTML = `<div class="empty">Chưa có quest nào — hãy tạo!</div>`;
+      return;
+    }
+    document.getElementById('active').innerHTML = d.items.map(q => {
+      const pct = Math.min(100, Math.round((q.total_xp / q.target_xp) * 100));
+      const daysLeft = Math.max(0, Math.ceil((q.ends_at - Date.now()) / 86400_000));
+      return `
+        <div class="quest-card">
+          <div class="title">${esc(q.title)}</div>
+          <div class="meta">${esc(q.description || '')} · <b>${q.contrib_count}</b> HS đã đóng góp · Còn <b>${daysLeft}</b> ngày</div>
+          <div class="progress-bar ${pct>=100?'done':''}">
+            <i style="width:${pct}%"></i>
+            <div class="lbl">${q.total_xp} / ${q.target_xp} XP (${pct}%)</div>
+          </div>
+          <div class="reward-chip">Reward: +${q.reward_coin}🪙 +${q.reward_xp}✨ mỗi HS</div>
+          <div class="contribs">
+            <h4>🏅 Top đóng góp</h4>
+            ${q.top_contributors.length === 0
+              ? '<div class="empty" style="padding:10px">Chưa có ai đóng góp.</div>'
+              : q.top_contributors.map((c, i) => `
+                <div class="contrib-row">
+                  <span class="rk">${i+1}</span>
+                  <span class="nm">${esc(c.display_name || '?')}</span>
+                  <span class="xp">${c.xp_contributed} XP</span>
+                </div>
+              `).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    document.getElementById('active').innerHTML = `<div class="empty">Lỗi: ${e.message}</div>`;
+  }
+}
+
+async function loadLeaderboard() {
+  try {
+    const r = await fetch('/api/teacher/class/' + encodeURIComponent(currentClass) + '/leaderboard', { credentials:'same-origin' });
+    const d = await r.json();
+    if (!d.leaderboard || d.leaderboard.length === 0) {
+      document.getElementById('lb').innerHTML = `<div class="empty">Chưa có HS nào hoạt động.</div>`;
+      return;
+    }
+    document.getElementById('lb').innerHTML = d.leaderboard.map((u, i) => `
+      <div class="lb-row">
+        <span class="rk ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i+1}</span>
+        <span class="nm">${esc(u.display_name || '?')}</span>
+        <span class="stats">
+          <span>🔥 <b>${u.streak}</b></span>
+          <span>⭐ <b>${u.week_xp}</b> XP</span>
+          <span>🎯 <b>${u.skills_earned}</b> kỹ năng</span>
+        </span>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('lb').innerHTML = `<div class="empty">Lỗi: ${e.message}</div>`;
+  }
+}
+
+document.getElementById('create').addEventListener('click', async () => {
+  const body = {
+    class_code: currentClass,
+    title: document.getElementById('t-title').value.trim(),
+    description: document.getElementById('t-desc').value.trim(),
+    target_xp: Number(document.getElementById('t-target').value),
+    duration_days: Number(document.getElementById('t-days').value),
+    reward_coin: Number(document.getElementById('t-coin').value),
+    reward_xp: Number(document.getElementById('t-xp').value),
+  };
+  if (!body.title) return alert('Hãy nhập tiêu đề');
+  const r = await fetch('/api/teacher/team-quest', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body), credentials:'same-origin',
+  });
+  const d = await r.json();
+  if (!d.ok) return alert(d.error || 'Lỗi');
+  document.getElementById('t-title').value = '';
+  document.getElementById('t-desc').value = '';
+  loadActive();
+});
+
+function esc(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+init();
+</script>
+
+<script type="module" src="../js/engagement-hud.js?v=2026-06-05-r2"></script>
+<script type="module" src="../js/pet-widget.js?v=2026-06-05"></script>
+<script type="module" src="../js/daily-login.js?v=2026-06-05"></script>
+</body>
+</html>
