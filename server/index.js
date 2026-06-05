@@ -33,6 +33,7 @@ import { attachAdmin, requireAdmin } from './contexts/admin/index.js';
 import { attachEngagement, trackEngagementProgress } from './contexts/engagement/index.js';
 import { addLeagueWeekXp } from './contexts/engagement/league.js';
 import { attachLearning, updateIrt } from './contexts/learning/index.js';
+import { attachPresence } from './contexts/multiplayer/presence.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -1224,6 +1225,7 @@ if (BASE_PATH) {
 
 const httpServer = http.createServer(app);
 attachRoom(httpServer, BASE_PATH);
+attachPresence(httpServer);  // /ws-presence — multiplayer campus avatars
 // Prune scoreup_webhook_events_seen mỗi 6h, giữ 7 ngày. Bảng nhỏ nhưng dedup
 // theo event_id sẽ tích luỹ nếu ScoreUp gửi vài nghìn event/ngày — cleanup để
 // tránh phình index. Không cần block startup.

@@ -472,6 +472,10 @@ export function attachRoom(httpServer, basePath = '') {
       labWss.handleUpgrade(req, socket, head, (ws) => labWss.emit('connection', ws, req));
     } else if (pathname === orchestrate.PATH) {
       orchestrate.wss.handleUpgrade(req, socket, head, (ws) => orchestrate.wss.emit('connection', ws, req));
+    } else if (pathname === basePath + '/ws-presence') {
+      // /ws-presence handled by attachPresence (registered separately, see
+      // server/contexts/multiplayer/presence.js). KHÔNG destroy ở đây — để
+      // listener của presence (prependListener) xử lý.
     } else {
       socket.destroy();
     }
