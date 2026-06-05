@@ -7,6 +7,8 @@ import { PLAN_BADGES, USER_PLANS, effectivePlanId } from './plans.js';
 // Engagement HUD (Streak · Hearts · Daily Quest) — tự mount cho user đã login.
 // Side-effect import: chỉ cần load là HUD xuất hiện top-right.
 import './engagement-hud.js';
+// Onboarding 60s cho user mới — modal 4 bước, tự bypass nếu đã hoàn thành.
+import './onboarding-60s.js';
 
 const ROLE_LABEL = {
   pupil:   { ico: '🎒', label: 'Học sinh' },

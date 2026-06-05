@@ -411,7 +411,21 @@ Giải thích đơn giản, có ví dụ, không dùng thuật ngữ tiếng Anh
 Khích lệ tích cực, giọng văn ấm áp như anh/chị lớn.`,
 };
 
-async function handleTutorChat({ domain = 'general', grade, context, history = [], message, styleNote }) {
+// Socratic mode — không cho đáp án trực tiếp, chỉ hỏi gợi mở để HS tự nghĩ ra.
+// Lấy cảm hứng từ Khanmigo (Khan Academy AI tutor).
+const SOCRATIC_PROMPT = `
+CHẾ ĐỘ SOCRATIC (BẮT BUỘC TUÂN THỦ):
+- TUYỆT ĐỐI KHÔNG đưa đáp án/lời giải trực tiếp, ngay cả khi HS yêu cầu nhiều lần.
+- Phương pháp: phân tích câu hỏi HS, rồi đặt 1-2 câu hỏi gợi mở để HS tự nhận ra hướng đi.
+- Nếu HS sai, hỏi ngược: "Em đã thử nghĩ về ... chưa?" hoặc "Theo em, ... thì sao?"
+- Chỉ khi HS đã rất gần đáp án (đã viết được công thức/bước cuối) thì mới xác nhận "Đúng rồi! Em vừa làm được X" rồi tóm gọn.
+- Nếu HS bảo "cho đáp án đi", lịch sự từ chối + nói "thầy/cô tin em làm được" + đặt câu hỏi mới chia nhỏ vấn đề.
+- Khen ngợi nỗ lực ("ý này hay đó!"), không khen kết quả khi chưa đúng.
+- Mỗi lần trả lời TỐI ĐA 3 câu — ngắn, tập trung vào 1 câu hỏi gợi mở.
+- Với câu hỏi tính toán đơn giản (vd "22×6"), vẫn KHÔNG cho đáp án — hỏi "Em ước lượng kết quả khoảng bao nhiêu trước? 20×6 thì sao?"
+`;
+
+async function handleTutorChat({ domain = 'general', grade, context, history = [], message, styleNote, mode = 'direct' }) {
   if (!message || typeof message !== 'string') {
     throw new Error('message is required');
   }
@@ -419,14 +433,19 @@ async function handleTutorChat({ domain = 'general', grade, context, history = [
   const contextLine = context ? `Học sinh đang ở trang/lab: ${context}.` : '';
   const gradeLine = grade ? `Trình độ: lớp ${grade}.` : '';
   const styleLine = styleNote ? `Lưu ý phong cách: ${styleNote}` : '';
+  const isSocratic = String(mode).toLowerCase() === 'socratic';
+  const socraticLine = isSocratic ? SOCRATIC_PROMPT : '';
 
-  const fullSystem = [sys, contextLine, gradeLine, styleLine].filter(Boolean).join('\n\n')
+  const fullSystem = [sys, contextLine, gradeLine, styleLine, socraticLine].filter(Boolean).join('\n\n')
     + '\n\nLUẬT NGÔN NGỮ (TUYỆT ĐỐI):'
     + '\n- Người dùng hỏi bằng ngôn ngữ nào, trả lời bằng đúng ngôn ngữ đó (mặc định TIẾNG VIỆT).'
     + '\n- TUYỆT ĐỐI KHÔNG trả lời bằng tiếng Trung (中文), tiếng Nhật, tiếng Hàn, hay bất kỳ ngôn ngữ nào khác trừ khi người dùng yêu cầu rõ ràng.'
     + '\n- KHÔNG tự ý dịch câu hỏi của người dùng sang ngôn ngữ khác. Nếu họ viết "22*6 bằng mấy" thì trả lời thẳng bằng tiếng Việt (ví dụ: "22 × 6 = 132"), không lặp lại câu hỏi bằng ngôn ngữ khác.'
-    + '\n- Với câu hỏi tính toán/số học, trả lời trực tiếp kết quả + giải thích ngắn, KHÔNG diễn giải dài dòng.'
-    + '\n\nLUẬT TRÌNH BÀY: ngắn gọn (3–6 câu cho câu hỏi thông thường, dài hơn nếu cần giải thuật/code). KHÔNG mở đầu bằng "Tất nhiên rồi!" hay "Tôi sẽ giúp bạn". Vào thẳng nội dung.';
+    + (isSocratic ? '' : '\n- Với câu hỏi tính toán/số học, trả lời trực tiếp kết quả + giải thích ngắn, KHÔNG diễn giải dài dòng.')
+    + '\n\nLUẬT TRÌNH BÀY: '
+    + (isSocratic
+        ? 'Tối đa 3 câu, vào thẳng câu hỏi gợi mở. KHÔNG đáp án.'
+        : 'ngắn gọn (3–6 câu cho câu hỏi thông thường, dài hơn nếu cần giải thuật/code). KHÔNG mở đầu bằng "Tất nhiên rồi!" hay "Tôi sẽ giúp bạn". Vào thẳng nội dung.');
 
   // Multi-turn — đưa history vào, sau đó message hiện tại
   const messages = [
@@ -445,7 +464,7 @@ async function handleTutorChat({ domain = 'general', grade, context, history = [
     console.warn('[ai-tutor] ollama failed, fallback template:', e?.message || e);
     reply = templateTutorReply(domain, message);
   }
-  return { reply: reply.trim(), domain, model: OLLAMA_MODEL };
+  return { reply: reply.trim(), domain, mode: isSocratic ? 'socratic' : 'direct', model: OLLAMA_MODEL };
 }
 
 function templateTutorReply(domain, message) {

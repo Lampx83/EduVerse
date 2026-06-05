@@ -95,10 +95,31 @@
       .edututor-head .title { font-weight: 700; font-size: 15px; }
       .edututor-head .sub { font-size: 11px; opacity: 0.75; }
       .edututor-head .close {
-        margin-left: auto; background: none; border: none; color: white;
+        background: none; border: none; color: white;
         font-size: 18px; cursor: pointer; opacity: 0.7;
       }
       .edututor-head .close:hover { opacity: 1; }
+      /* Toggle Socratic — đặt ngay trước nút Close */
+      .edututor-mode {
+        margin-left: auto;
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 11.5px; font-weight: 700;
+        padding: 4px 9px; border-radius: 999px;
+        background: rgba(167,139,250,0.18);
+        border: 1px solid rgba(167,139,250,0.4);
+        cursor: pointer; user-select: none;
+        transition: background 0.15s;
+      }
+      .edututor-mode:hover { background: rgba(167,139,250,0.32); }
+      .edututor-mode input { margin: 0; cursor: pointer; accent-color: #a78bfa; }
+      .edututor-mode input:checked ~ span { color: #c4b5fd; }
+      .edututor-msg.sys {
+        background: rgba(167,139,250,0.10);
+        border: 1px dashed rgba(167,139,250,0.4);
+        color: #c4b5fd;
+        margin: 8px 0; padding: 8px 12px; border-radius: 8px;
+        font-size: 12px; text-align: center;
+      }
       .edututor-msgs {
         flex: 1; overflow-y: auto; padding: 14px 16px;
         display: flex; flex-direction: column; gap: 10px;
@@ -167,6 +188,7 @@
 
     const panel = document.createElement('div');
     panel.id = 'edututor-panel';
+    const initMode = localStorage.getItem('edututor_mode') === 'socratic' ? 'socratic' : 'direct';
     panel.innerHTML = `
       <div class="edututor-head">
         <div class="ico">🦉</div>
@@ -174,6 +196,10 @@
           <div class="title">AI Tutor · Tizia</div>
           <div class="sub">Lĩnh vực: <span id="edututor-domain">${DOMAIN_LABEL[autoDomain] || autoDomain}</span></div>
         </div>
+        <label class="edututor-mode" title="Socratic: AI không cho đáp án, chỉ hỏi gợi mở để em tự nghĩ ra (như Khanmigo).">
+          <input type="checkbox" id="edututor-mode-toggle" ${initMode === 'socratic' ? 'checked' : ''}>
+          <span>🤔 Socratic</span>
+        </label>
         <button class="close" id="edututor-close" title="Đóng">✕</button>
       </div>
       <div class="edututor-msgs" id="edututor-msgs"></div>
@@ -191,6 +217,19 @@
     document.getElementById('edututor-mic').addEventListener('click', toggleMic);
     document.getElementById('edututor-ta').addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCurrent(); }
+    });
+    document.getElementById('edututor-mode-toggle').addEventListener('change', (e) => {
+      const m = e.target.checked ? 'socratic' : 'direct';
+      localStorage.setItem('edututor_mode', m);
+      // Toast nhỏ trong panel để user biết đã đổi.
+      const msgs = document.getElementById('edututor-msgs');
+      const note = document.createElement('div');
+      note.className = 'edututor-msg sys';
+      note.innerHTML = m === 'socratic'
+        ? '🤔 <b>Socratic ON</b> — Thầy AI sẽ không cho đáp án mà hỏi ngược để em tự nghĩ ra.'
+        : '💡 <b>Trực tiếp ON</b> — Thầy AI sẽ giải đáp thẳng.';
+      msgs.appendChild(note);
+      msgs.scrollTop = msgs.scrollHeight;
     });
 
     renderQuickPrompts();
@@ -304,6 +343,8 @@
           history: history.slice(-MAX_HISTORY).slice(0, -1),
           message: text,
           styleNote: TUTOR_STYLE_DOC[autoDomain] || TUTOR_STYLE_DOC.general,
+          // Socratic mode — đọc từ localStorage, mặc định OFF.
+          mode: localStorage.getItem('edututor_mode') === 'socratic' ? 'socratic' : 'direct',
         }),
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
