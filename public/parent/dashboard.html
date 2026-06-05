@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>👨‍👩‍👧 Bảng theo dõi học tập · Tizia</title>
+<meta name="description" content="Phụ huynh theo dõi việc học của con: streak hằng ngày, tier League tuần, mastery năng lực 207 kỹ năng GDPT 2018." />
+<link rel="icon" href="/favicon.ico" />
+<style>
+  :root {
+    --bg:#0b1020; --bg-2:#101733; --card:#151c3a; --card-2:#1d2547;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%;
+    font-family:'Inter','Be Vietnam Pro',system-ui,sans-serif; color:var(--text);
+    background: radial-gradient(900px 600px at 20% 0%, rgba(96,165,250,.10), transparent 70%),
+                radial-gradient(900px 600px at 90% 30%, rgba(34,197,94,.08), transparent 70%),
+                var(--bg);
+  }
+  a { color:inherit; }
+  .top { position:sticky; top:0; z-index:20; backdrop-filter:blur(12px);
+    background:rgba(11,16,32,.7); border-bottom:1px solid var(--border);
+    padding:12px 18px; display:flex; align-items:center; gap:14px; }
+  .back { text-decoration:none; padding:7px 14px; border-radius:18px;
+    background:rgba(255,255,255,.08); border:1px solid var(--border);
+    font-size:13px; font-weight:600; color:inherit; }
+  .top h1 { margin:0; font-size:18px; }
+
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 18px 80px; }
+
+  .empty-state { text-align:center; padding:60px 20px; background:var(--card);
+    border:1px dashed var(--border); border-radius:16px; }
+  .empty-state h3 { margin:0 0 10px; }
+  .empty-state p { color:var(--text-soft); margin:0 0 16px; max-width:480px; margin-left:auto; margin-right:auto; }
+  .empty-state .btn { display:inline-block; background:var(--accent); color:#1f1147;
+    padding:10px 22px; border-radius:12px; font-weight:700; text-decoration:none; }
+
+  .children-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:18px; }
+  .child-card { background:var(--card); border:1px solid var(--border); border-radius:18px;
+    padding:18px 20px; transition:transform .15s, border-color .15s; }
+  .child-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+
+  .child-head { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .child-head .avatar { width:48px; height:48px; border-radius:50%;
+    background:linear-gradient(135deg, #fbbf24, #f97316); color:#1e293b;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; font-weight:800; flex-shrink:0; }
+  .child-head .info { flex:1; min-width:0; }
+  .child-head .name { font-size:16px; font-weight:800; }
+  .child-head .meta { font-size:11.5px; color:var(--text-soft); margin-top:2px; }
+
+  .stats-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px; }
+  .stat { background:rgba(255,255,255,.04); border:1px solid var(--border);
+    border-radius:12px; padding:10px 8px; text-align:center; }
+  .stat .lbl { font-size:10px; color:var(--text-soft); letter-spacing:1px;
+    text-transform:uppercase; font-weight:700; }
+  .stat .val { font-size:18px; font-weight:800; color:var(--accent); margin-top:3px; }
+  .stat .sub { font-size:10px; color:var(--text-soft); margin-top:1px; }
+
+  .league-chip { display:inline-flex; align-items:center; gap:6px;
+    padding:6px 12px; border-radius:999px;
+    background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.4);
+    font-weight:700; font-size:12.5px; margin-bottom:12px; }
+
+  .mastery-section { margin-top:14px; }
+  .mastery-section .label { font-size:12px; color:var(--text-soft); font-weight:700;
+    letter-spacing:.6px; text-transform:uppercase; margin-bottom:6px; }
+  .mastery-bar { height:10px; background:rgba(255,255,255,.06); border-radius:8px;
+    overflow:hidden; }
+  .mastery-bar > i { display:block; height:100%;
+    background:linear-gradient(90deg, #a78bfa, #ec4899); transition:width .5s; }
+  .mastery-meta { font-size:11.5px; color:var(--text-soft); margin-top:4px;
+    display:flex; justify-content:space-between; }
+  .mastery-meta b { color:var(--accent); }
+
+  .top-comp { margin-top:12px; }
+  .top-comp .comp { display:flex; align-items:center; gap:8px;
+    padding:6px 0; font-size:12.5px; color:var(--text-soft); }
+  .top-comp .comp .name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .top-comp .comp .pct { color:#a78bfa; font-weight:700; font-variant-numeric:tabular-nums; }
+
+  .quest-mini { display:flex; gap:5px; margin-top:14px; }
+  .quest-mini .q {
+    flex:1; height:8px; border-radius:5px; background:rgba(255,255,255,.08);
+    overflow:hidden; position:relative;
+  }
+  .quest-mini .q.done { background:linear-gradient(90deg, #22c55e, #4ade80); }
+  .quest-mini .q .fill {
+    height:100%; background:linear-gradient(90deg, #fbbf24, #f97316);
+    transition:width .4s;
+  }
+
+  .loading { text-align:center; padding:60px 20px; color:var(--text-soft); }
+
+  @media (max-width:540px) {
+    .stats-row { grid-template-columns:repeat(3, 1fr); gap:6px; }
+    .stat .val { font-size:16px; }
+  }
+</style>
+</head>
+<body>
+<header id="auth-header"></header>
+<script type="module" src="./../js/auth-header.js"></script>
+
+<div class="top">
+  <a class="back" href="/index.html">← Trang chủ</a>
+  <h1>👨‍👩‍👧 Bảng theo dõi học tập</h1>
+</div>
+
+<div class="wrap" id="wrap">
+  <div class="loading">Đang tải…</div>
+</div>
+
+<script type="module">
+const TIER_LABEL = { bronze:'Đồng', silver:'Bạc', gold:'Vàng', sapphire:'Lam ngọc', ruby:'Hồng ngọc', diamond:'Kim cương' };
+
+async function load() {
+  const wrap = document.getElementById('wrap');
+  try {
+    const res = await fetch('/api/parent/dashboard', { credentials: 'same-origin' });
+    if (res.status === 401) {
+      wrap.innerHTML = `<div class="empty-state"><h3>Cần đăng nhập</h3><p>Hãy đăng nhập tài khoản phụ huynh để xem dashboard.</p><a class="btn" href="/login.html">Đăng nhập →</a></div>`;
+      return;
+    }
+    if (!res.ok) throw new Error('http_' + res.status);
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    wrap.innerHTML = `<p style="color:var(--bad)">Lỗi tải: ${e.message}</p>`;
+  }
+}
+
+function render(d) {
+  const wrap = document.getElementById('wrap');
+  if (!d.children || d.children.length === 0) {
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <h3>👶 Chưa có con nào được liên kết</h3>
+        <p>Hãy liên kết tài khoản con với tài khoản phụ huynh của bạn để theo dõi việc học hằng ngày.</p>
+        <a class="btn" href="/family.html">+ Liên kết con</a>
+      </div>
+    `;
+    return;
+  }
+
+  let html = '<div class="children-grid">';
+  for (const c of d.children) {
+    html += renderChild(c);
+  }
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function renderChild(c) {
+  const eng = c.engagement || {};
+  const lg = c.league || {};
+  const sk = c.skills || {};
+  const initial = (c.display_name || '?').charAt(0).toUpperCase();
+  const tierIco = ({bronze:'🥉',silver:'🥈',gold:'🥇',sapphire:'💎',ruby:'🔴',diamond:'💠'})[lg.tier] || '🏅';
+  const lastActiveDays = eng.lastActiveDate ? daysSince(eng.lastActiveDate) : null;
+  const status = !eng.lastActiveDate ? '⏸️ Chưa hoạt động'
+    : lastActiveDays === 0 ? '🟢 Hôm nay'
+    : lastActiveDays === 1 ? '🟡 Hôm qua'
+    : `🔴 ${lastActiveDays} ngày trước`;
+
+  return `
+    <div class="child-card">
+      <div class="child-head">
+        <div class="avatar">${initial}</div>
+        <div class="info">
+          <div class="name">${esc(c.display_name || c.username)}</div>
+          <div class="meta">${roleLabel(c.role)} · ${esc(c.enrolled_domain || 'chưa chọn trường')} · ${status}</div>
+        </div>
+      </div>
+
+      <div class="league-chip">${tierIco} ${TIER_LABEL[lg.tier] || 'Chưa xếp hạng'} · ${lg.week_xp || 0} XP tuần</div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <div class="lbl">Streak</div>
+          <div class="val">🔥 ${eng.streak || 0}</div>
+          <div class="sub">kỷ lục ${eng.longestStreak || 0}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Hearts</div>
+          <div class="val">❤ ${eng.hearts ?? 0}/${eng.heartsMax || 5}</div>
+          <div class="sub">${eng.hearts === eng.heartsMax ? 'đầy' : 'đang hồi'}</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Quest</div>
+          <div class="val">${eng.questsDone || 0}/${eng.questsTotal || 3}</div>
+          <div class="sub">hôm nay</div>
+        </div>
+      </div>
+
+      <div class="quest-mini">
+        ${(eng.quests || []).map(q => {
+          const pct = Math.min(100, Math.round((q.progress/q.target)*100));
+          const done = q.progress >= q.target;
+          return `<div class="q ${done ? 'done' : ''}" title="${esc(q.label)}"><div class="fill" style="width:${pct}%"></div></div>`;
+        }).join('') || '<div class="q" style="opacity:.3"></div>'.repeat(3)}
+      </div>
+
+      <div class="mastery-section">
+        <div class="label">Năng lực GDPT 2018</div>
+        <div class="mastery-bar"><i style="width:${sk.overall_mastery_pct || 0}%"></i></div>
+        <div class="mastery-meta">
+          <span><b>${sk.earned || 0}/${sk.total || 207}</b> kỹ năng đã đạt</span>
+          <span>Thành thạo <b>${sk.overall_mastery_pct || 0}%</b></span>
+        </div>
+        ${sk.top_competencies && sk.top_competencies.length > 0 ? `
+          <div class="top-comp">
+            ${sk.top_competencies.map(t => `
+              <div class="comp">
+                <span class="name">${esc(t.name)}</span>
+                <span class="pct">${t.mastery_pct}%</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function esc(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function roleLabel(r) { return ({pupil:'🎒 HS', student:'🎓 SV', teacher:'👨‍🏫 GV', admin:'👑 Admin'}[r] || r || ''); }
+function daysSince(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  const today = new Date(); today.setUTCHours(0,0,0,0);
+  return Math.max(0, Math.floor((today - d) / 86400000));
+}
+
+load();
+</script>
+
+<script type="module" src="../js/engagement-hud.js?v=2026-06-05-r2"></script>
+<script type="module" src="../js/onboarding-60s.js?v=2026-06-05"></script>
+</body>
+</html>

@@ -10,6 +10,7 @@
 import { db, upsertUserWallet, getUserWallet } from '../../db.js';
 import { requireAuth } from '../identity/auth.js';
 import { attachLeague, addLeagueWeekXp } from './league.js';
+import { attachParentDashboard } from './parent.js';
 
 // ── Hằng số cấu hình ─────────────────────────────────────────
 const HEART_MAX = 5;
@@ -205,6 +206,35 @@ function genDailyQuests(userId, date) {
   return listQuestsStmt.all(userId, date);
 }
 
+// Lightweight snapshot CHỈ ĐỌC cho parent dashboard — không tự bump streak
+// (tránh "parent xem → con coi như đã active hôm nay").
+export function getEngagementReadOnly(userId) {
+  if (!userId) return null;
+  let row = getStateStmt.get(userId);
+  if (!row) return null;
+  // Refill hearts side-effect-free: tính ra giá trị hiển thị nhưng không persist.
+  let hearts = row.hearts;
+  if (hearts < HEART_MAX && row.hearts_refill_at && Date.now() >= row.hearts_refill_at) {
+    const elapsed = Date.now() - row.hearts_refill_at;
+    hearts = Math.min(HEART_MAX, hearts + 1 + Math.floor(elapsed / HEART_REFILL_MS));
+  }
+  const today = vnToday();
+  const quests = listQuestsStmt.all(userId, today);
+  return {
+    streak: row.streak,
+    longestStreak: row.longest_streak,
+    lastActiveDate: row.last_active_date,
+    hearts, heartsMax: HEART_MAX,
+    today,
+    quests: quests.map(q => ({
+      slot: q.slot, kind: q.kind, target: q.target, progress: q.progress,
+      claimed: !!q.claimed, label: q.label,
+    })),
+    questsDone: quests.filter(q => q.claimed).length,
+    questsTotal: quests.length || 3,
+  };
+}
+
 // Trả ảnh chụp state đầy đủ cho FE (state + quests hôm nay)
 function snapshot(userId) {
   let row = ensureState(userId);
@@ -318,6 +348,8 @@ export function attachEngagement(app) {
 
   // League routes (/api/league/me, /history, /tiers)
   attachLeague(app, requireAuth);
+  // Parent Portal (/api/parent/dashboard)
+  attachParentDashboard(app, requireAuth);
 
   // Claim quest. Body: { slot: 0|1|2 }
   app.post('/api/engagement/claim', requireAuth, (req, res) => {
