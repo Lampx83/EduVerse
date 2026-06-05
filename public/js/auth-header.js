@@ -9,6 +9,8 @@ import { PLAN_BADGES, USER_PLANS, effectivePlanId } from './plans.js';
 import './engagement-hud.js';
 // Onboarding 60s cho user mới — modal 4 bước, tự bypass nếu đã hoàn thành.
 import './onboarding-60s.js';
+// Pet đồng hành (Prodigy-style) — bubble góc dưới trái.
+import './pet-widget.js';
 
 const ROLE_LABEL = {
   pupil:   { ico: '🎒', label: 'Học sinh' },

@@ -11,6 +11,7 @@ import { db, upsertUserWallet, getUserWallet } from '../../db.js';
 import { requireAuth } from '../identity/auth.js';
 import { attachLeague, addLeagueWeekXp } from './league.js';
 import { attachParentDashboard } from './parent.js';
+import { attachPet, addPetXp } from './pet.js';
 
 // ── Hằng số cấu hình ─────────────────────────────────────────
 const HEART_MAX = 5;
@@ -301,7 +302,10 @@ function claimQuest(userId, slot, domain) {
   }, { monotonic: false, domain });
   // League: XP claim quest cũng đẩy vào bảng tuần.
   try { addLeagueWeekXp(userId, q.reward_xp); } catch {}
-  return { ok: true, rewardCoin: q.reward_coin, rewardXp: q.reward_xp };
+  // Pet đồng hành: nuôi pet bằng XP nhiệm vụ (Prodigy-style).
+  let petEvolution = null;
+  try { petEvolution = addPetXp(userId, Math.floor(q.reward_xp / 2)); } catch {}
+  return { ok: true, rewardCoin: q.reward_coin, rewardXp: q.reward_xp, petEvolution };
 }
 
 // ── Route binding ───────────────────────────────────────────
@@ -350,6 +354,8 @@ export function attachEngagement(app) {
   attachLeague(app, requireAuth);
   // Parent Portal (/api/parent/dashboard)
   attachParentDashboard(app, requireAuth);
+  // Pet đồng hành (/api/pet/me|switch|nickname|feed)
+  attachPet(app);
 
   // Claim quest. Body: { slot: 0|1|2 }
   app.post('/api/engagement/claim', requireAuth, (req, res) => {
