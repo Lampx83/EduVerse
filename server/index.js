@@ -30,6 +30,7 @@ import { sendGA4Event } from './contexts/analytics/ga4-mp.js';
 import { attachBilling } from './contexts/billing/index.js';
 import { attachIntegration } from './contexts/integration/index.js';
 import { attachAdmin, requireAdmin } from './contexts/admin/index.js';
+import { attachEngagement, trackEngagementProgress } from './contexts/engagement/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -300,6 +301,8 @@ attachSecurity(r);
 attachAdmin(r);
 attachCampusLayout(r, requireAdmin);
 attachSkills(r, { requireAuth, requireEnrolled });
+// Engagement loop — Streak / Hearts / Daily Quests (Trục A — Duolingo/Prodigy)
+attachEngagement(r);
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
   const b = req.body ?? {};
@@ -419,6 +422,8 @@ r.post('/api/scenario-runs', requireAuth, requireEnrolled, async (req, res) => {
       });
       if (g.granted_count > 0) skillsGranted = g;
     } catch (e) { console.warn('[scenario-runs] grant skills failed', e?.message); }
+    // Engagement: mỗi scenario hoàn thành (bất kể điểm) = 1 lượt minigame.
+    try { trackEngagementProgress(req.user.id, 'minigame', 1); } catch {}
     res.json({ familyId, ...(row || {}), skillsGranted });
   } catch (e) {
     console.warn('[scenario-runs] POST failed', e?.message);
@@ -572,6 +577,11 @@ r.post('/api/quiz/attempt', requireAuth, requireEnrolled, async (req, res) => {
       subject_id: q.subject_id, chapter_id: q.chapter_id,
       answers: userArr, correct, score, duration_ms: durationMs,
     });
+
+    // Tracking engagement: chỉ cộng tiến triển quest "quiz" khi câu đúng.
+    if (correct) {
+      try { trackEngagementProgress(req.user.id, 'quiz', 1); } catch {}
+    }
 
     res.json({
       ok: true, attempt_id: attempt.id, correct, score,

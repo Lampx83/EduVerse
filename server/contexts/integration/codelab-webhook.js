@@ -38,6 +38,7 @@ import {
   upsertUserWallet,
 } from '../../db.js';
 import { invalidateCacheByPrefix } from '../../integrations/codelab.js';
+import { trackEngagementProgress } from '../engagement/index.js';
 
 const WEBHOOK_SECRET = process.env.CODELAB_WEBHOOK_SECRET || '';
 const MAX_SKEW_SECONDS = 5 * 60;
@@ -138,6 +139,9 @@ export function attachCodelabWebhook(app) {
       try {
         if (status === 'accepted' && userId && problemSlug) {
           reward = applyRewards(userId, problemSlug, submissionId);
+          // Engagement: quest "code" tăng tiến độ khi accepted (kể cả không
+          // first-solve — HS làm lại bài khó vẫn được công 1 lượt nộp ăn điểm).
+          try { trackEngagementProgress(userId, 'code', 1); } catch {}
         }
         // Nếu cần invalidate cache list submission của user (sau này Tizia có
         // endpoint cache theo userId), gọi tại đây:

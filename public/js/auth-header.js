@@ -4,6 +4,9 @@
 
 import { bootstrapMe, currentUser, logout, updateProfile } from './auth.js';
 import { PLAN_BADGES, USER_PLANS, effectivePlanId } from './plans.js';
+// Engagement HUD (Streak · Hearts · Daily Quest) — tự mount cho user đã login.
+// Side-effect import: chỉ cần load là HUD xuất hiện top-right.
+import './engagement-hud.js';
 
 const ROLE_LABEL = {
   pupil:   { ico: '🎒', label: 'Học sinh' },
