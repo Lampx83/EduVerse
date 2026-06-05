@@ -39,6 +39,7 @@ import { attachEconomy, addBpXp } from './contexts/economy/index.js';
 import { attachParentReport } from './contexts/parent-report/index.js';
 import { attachSchoolOnboard } from './contexts/school-onboard/index.js';
 import { attachTeacher } from './contexts/teacher/index.js';
+import { attachExperiments, getVariant, checkFlag } from './contexts/experiments/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -323,6 +324,8 @@ attachParentReport(r);
 attachSchoolOnboard(r);
 // Teacher — Team Quest + Class Leaderboard
 attachTeacher(r);
+// Experiments + Feature Flags + Event Registry
+attachExperiments(r);
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
   const b = req.body ?? {};

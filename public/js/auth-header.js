@@ -13,6 +13,8 @@ import './onboarding-60s.js';
 import './pet-widget.js';
 // Daily Login Bonus — popup 1 lần/ngày khi chưa claim.
 import './daily-login.js';
+// i18n — auto-load bundle theo locale (vi/en/id).
+import './i18n.js';
 
 const ROLE_LABEL = {
   pupil:   { ico: '🎒', label: 'Học sinh' },
