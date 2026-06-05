@@ -32,6 +32,7 @@ import { attachIntegration } from './contexts/integration/index.js';
 import { attachAdmin, requireAdmin } from './contexts/admin/index.js';
 import { attachEngagement, trackEngagementProgress } from './contexts/engagement/index.js';
 import { addLeagueWeekXp } from './contexts/engagement/league.js';
+import { attachLearning, updateIrt } from './contexts/learning/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -304,6 +305,8 @@ attachCampusLayout(r, requireAdmin);
 attachSkills(r, { requireAuth, requireEnrolled });
 // Engagement loop — Streak / Hearts / Daily Quests (Trục A — Duolingo/Prodigy)
 attachEngagement(r);
+// Learning depth — Knowledge graph + Adaptive next-question (Trục B — Khanmigo/Squirrel)
+attachLearning(r);
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
   const b = req.body ?? {};
@@ -585,6 +588,15 @@ r.post('/api/quiz/attempt', requireAuth, requireEnrolled, async (req, res) => {
       try { trackEngagementProgress(req.user.id, 'quiz', 1); } catch {}
       try { addLeagueWeekXp(req.user.id, 5); } catch {}    // 5 XP / câu đúng
     }
+    // Update IRT θ user + b câu hỏi (cho cả đúng/sai).
+    try {
+      updateIrt({
+        user_id: req.user.id,
+        question_id: q.id,
+        subject_id: q.subject_id || '',
+        correct,
+      });
+    } catch {}
 
     res.json({
       ok: true, attempt_id: attempt.id, correct, score,
