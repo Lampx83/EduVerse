@@ -129,7 +129,7 @@
 
 <div class="top">
   <a class="back" href="/index.html">← Trang chủ</a>
-  <h1>🗺 Khám phá Tizia</h1>
+  <h1>🌌 Tính năng toàn vũ trụ Tizia</h1>
 </div>
 
 <div class="wrap" id="wrap">
@@ -150,7 +150,10 @@ const TIER_META = [
 async function load() {
   const wrap = document.getElementById('wrap');
   try {
-    const r = await fetch('/api/features/me', { credentials:'same-origin' });
+    // Trang toàn cảnh: chỉ features cross-school (global) — League, Pet, BP,
+    // Shop, Parent, Admin. Features riêng trường (Skills, Combat…) đã trong
+    // school.html của từng trường.
+    const r = await fetch('/api/features/me?scope=global', { credentials:'same-origin' });
     if (r.status === 401) {
       wrap.innerHTML = `<div style="text-align:center;padding:40px"><p>Hãy đăng nhập để xem hành trình của em.</p><a href="/login.html" class="back">Đăng nhập →</a></div>`;
       return;

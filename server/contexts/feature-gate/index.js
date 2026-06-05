@@ -22,76 +22,81 @@ import { db, getUserWallet } from '../../db.js';
 import { requireAuth } from '../identity/auth.js';
 
 // ── Feature catalog với rule ────────────────────────────────
+// `domains`: array — chỉ hiện feature ở các trường này. null = mọi trường.
+// `scope`: 'school' | 'global' — 'school' xuất hiện trong khám-phá của trường,
+//          'global' nằm ở HUD/widget toàn cục.
 const FEATURES = {
   // ───── Tier 0: Mặc định mở cho mọi user ─────
-  'home':          { tier: 0, name: 'Trang chủ', url: '/' },
-  'ai-tutor':      { tier: 0, name: 'AI Tutor 🦉', desc: 'Hỏi bài thầy AI bất cứ lúc nào' },
-  'school-mam':    { tier: 0, name: 'Trường Mầm non' },
-  'school-tieuhoc':{ tier: 0, name: 'Trường Tiểu học' },
+  'home':          { tier: 0, name: 'Trang chủ', url: '/', scope: 'global' },
+  'ai-tutor':      { tier: 0, name: 'AI Tutor 🦉', desc: 'Hỏi bài thầy AI bất cứ lúc nào', scope: 'school' },
+  'school-mam':    { tier: 0, name: 'Trường Mầm non', scope: 'global' },
+  'school-tieuhoc':{ tier: 0, name: 'Trường Tiểu học', scope: 'global' },
 
   // ───── Tier 1: Vào học lần đầu ─────
-  'hud-streak':    { tier: 1, name: 'Streak hằng ngày 🔥',
+  'hud-streak':    { tier: 1, name: 'Streak hằng ngày 🔥', scope: 'global',
                      unlock_text: 'Làm 1 câu quiz để mở' },
-  'daily-quest':   { tier: 1, name: 'Nhiệm vụ hôm nay 📋',
+  'daily-quest':   { tier: 1, name: 'Nhiệm vụ hôm nay 📋', scope: 'school',
                      unlock_text: 'Làm 1 câu quiz để mở' },
-  'daily-bonus':   { tier: 1, name: 'Thưởng đăng nhập 🎁',
+  'daily-bonus':   { tier: 1, name: 'Thưởng đăng nhập 🎁', scope: 'global',
                      unlock_text: 'Mở khi giữ streak 2 ngày' },
 
   // ───── Tier 2: Bắt đầu kiên trì ─────
-  'pet':           { tier: 2, name: 'Pet đồng hành 🐲', url: '/index.html',
+  'pet':           { tier: 2, name: 'Pet đồng hành 🐲', url: '/index.html', scope: 'global',
                      unlock_text: 'Mở khi giữ streak 3 ngày' },
-  'league':        { tier: 2, name: 'League tuần 🏆', url: '/league.html',
+  'league':        { tier: 2, name: 'League tuần 🏆', url: '/league.html', scope: 'global',
                      unlock_text: 'Mở khi streak ≥ 3 ngày' },
-  'school-thcs':   { tier: 2, name: 'Trường THCS' },
-  'school-thpt':   { tier: 2, name: 'Trường THPT' },
+  'school-thcs':   { tier: 2, name: 'Trường THCS', scope: 'global' },
+  'school-thpt':   { tier: 2, name: 'Trường THPT', scope: 'global' },
 
   // ───── Tier 3: HS chăm chỉ ─────
-  'skills':        { tier: 3, name: 'Cây năng lực 🎯', url: '/nang-luc.html',
+  'skills':        { tier: 3, name: 'Cây năng lực 🎯', url: '/nang-luc.html', scope: 'school',
                      unlock_text: 'Mở khi đã đúng 30 câu quiz' },
-  'combat':        { tier: 3, name: 'Trận đấu kiến thức ⚔', url: '/tran-dau.html',
+  'combat':        { tier: 3, name: 'Trận đấu kiến thức ⚔', url: '/tran-dau.html', scope: 'school',
                      unlock_text: 'Mở khi đã đúng 30 câu quiz' },
-  'shop':          { tier: 3, name: 'Cửa hàng skin 🛒', url: '/cua-hang.html',
+  'shop':          { tier: 3, name: 'Cửa hàng skin 🛒', url: '/cua-hang.html', scope: 'global',
                      unlock_text: 'Mở khi đã đúng 30 câu quiz' },
 
   // ───── Tier 4: Học sâu ─────
-  'adaptive':      { tier: 4, name: 'Học thông minh 🧠', url: '/hoc-thong-minh.html',
+  'adaptive':      { tier: 4, name: 'Học thông minh 🧠', url: '/hoc-thong-minh.html', scope: 'school',
                      unlock_text: 'Mở khi đạt 10 kỹ năng' },
-  'srs':           { tier: 4, name: 'Flashcards SRS 🃏', url: '/srs.html',
+  'srs':           { tier: 4, name: 'Flashcards SRS 🃏', url: '/srs.html', scope: 'school',
                      unlock_text: 'Mở khi đạt 10 kỹ năng' },
-  'campus-mp':     { tier: 4, name: 'Campus đa người chơi 🌍', url: '/campus-mp.html',
+  'campus-mp':     { tier: 4, name: 'Campus đa người chơi 🌍', url: '/campus-mp.html', scope: 'global',
                      unlock_text: 'Mở khi đạt 10 kỹ năng' },
 
   // ───── Tier 5: Học dài hạn ─────
-  'battle-pass':   { tier: 5, name: 'Battle Pass 🎖', url: '/battle-pass.html',
+  'battle-pass':   { tier: 5, name: 'Battle Pass 🎖', url: '/battle-pass.html', scope: 'global',
                      unlock_text: 'Mở khi học 30 ngày' },
-  'ugc-play':      { tier: 5, name: 'Quest Marketplace 🎨', url: '/ugc/index.html',
+  'ugc-play':      { tier: 5, name: 'Quest Marketplace 🎨', url: '/ugc/index.html', scope: 'school',
                      unlock_text: 'Mở khi học 30 ngày' },
-  'code-game':     { tier: 5, name: 'Lập trình game 💻', url: '/lap-trinh-game.html',
+  'code-game':     { tier: 5, name: 'Lập trình game 💻', url: '/lap-trinh-game.html', scope: 'school',
+                     // chỉ school CNTT + tiểu học/THCS/THPT
+                     domains: ['it', 'primary', 'secondary', 'highschool'],
                      unlock_text: 'Mở khi học 30 ngày' },
 
   // ───── Tier 6: Creator (cần Pro hoặc role teacher) ─────
-  'ugc-create':    { tier: 6, name: 'Tạo quest 🎨+', url: '/ugc/create.html',
+  'ugc-create':    { tier: 6, name: 'Tạo quest 🎨+', url: '/ugc/create.html', scope: 'school',
                      unlock_text: 'Cần gói Pro hoặc role GV' },
-  'ai-quiz-gen':   { tier: 6, name: 'AI Quiz Generator 🤖', url: '/ai-quiz-gen.html',
+  'ai-quiz-gen':   { tier: 6, name: 'AI Quiz Generator 🤖', url: '/ai-quiz-gen.html', scope: 'school',
                      unlock_text: 'Cần role GV/Admin' },
-  'live-quiz':     { tier: 6, name: 'Live Quiz host 🎤', url: '/live-quiz/host.html',
+  'live-quiz':     { tier: 6, name: 'Live Quiz host 🎤', url: '/live-quiz/host.html', scope: 'school',
                      unlock_text: 'Cần role GV/Admin' },
 
   // ───── Role-based: Parent ─────
-  'parent-dash':   { tier: 0, name: 'Bảng theo dõi con 👨‍👩‍👧', url: '/parent/dashboard.html',
+  'parent-dash':   { tier: 0, name: 'Bảng theo dõi con 👨‍👩‍👧', url: '/parent/dashboard.html', scope: 'global',
                      roles: ['student', 'teacher', 'admin'],
                      desc: 'Phụ huynh xem tiến độ con (cần link con)' },
-  'parent-report': { tier: 0, name: 'Báo cáo PDF tuần 📄', url: '/parent/report.html',
+  'parent-report': { tier: 0, name: 'Báo cáo PDF tuần 📄', url: '/parent/report.html', scope: 'global',
                      roles: ['student', 'teacher', 'admin'] },
 
   // ───── Role-based: Teacher ─────
-  'team-quest':    { tier: 0, name: 'Team Quest GV 👨‍🏫', url: '/gv/team-quest.html',
+  'team-quest':    { tier: 0, name: 'Team Quest GV 👨‍🏫', url: '/gv/team-quest.html', scope: 'school',
                      roles: ['teacher', 'admin'] },
 
   // ───── Role-based: Admin ─────
-  'school-wizard': { tier: 0, name: 'Tạo trường mới 🏫', url: '/admin/school-wizard.html',
+  'school-wizard': { tier: 0, name: 'Tạo trường mới 🏫', url: '/admin/school-wizard.html', scope: 'global',
                      roles: ['admin'] },
-  'admin-panel':   { tier: 0, name: 'Quản trị Tizia ⚙', url: '/admin.html',
+  'admin-panel':   { tier: 0, name: 'Quản trị Tizia ⚙', url: '/admin.html', scope: 'global',
                      roles: ['admin'] },
 };
 
@@ -158,18 +163,33 @@ function isFeatureUnlocked(featureKey, user, progress, userTier) {
   return userTier >= (f.tier || 0);
 }
 
+function isFeatureRelevantToDomain(f, domain) {
+  if (!domain) return true;             // không lọc
+  if (!f.domains) return true;          // mặc định mọi trường
+  return f.domains.includes(domain);
+}
+
 export function attachFeatureGate(router) {
   router.get('/api/features/me', requireAuth, (req, res) => {
     const progress = getUserProgress(req.user.id);
     const userTier = computeUserTier(progress, req.user.role);
+    // Query filter:
+    //   ?domain=primary  → chỉ feature relevant cho trường này
+    //   ?scope=school    → chỉ scope:'school' (đặt trong khám phá trường)
+    //   ?scope=global    → chỉ scope:'global'
+    const domain = String(req.query.domain || '');
+    const scope = String(req.query.scope || '');   // '', 'school', 'global'
     const out = {};
     for (const [key, def] of Object.entries(FEATURES)) {
+      if (scope && def.scope && def.scope !== scope) continue;
+      if (domain && !isFeatureRelevantToDomain(def, domain)) continue;
       const unlocked = isFeatureUnlocked(key, req.user, progress, userTier);
       out[key] = {
         unlocked,
         name: def.name,
         url: def.url || null,
         tier: def.tier || 0,
+        scope: def.scope || 'global',
         unlock_text: unlocked ? null : (def.unlock_text || ''),
         desc: def.desc || null,
       };
@@ -180,6 +200,7 @@ export function attachFeatureGate(router) {
       ok: true,
       user_tier: userTier,
       role: req.user.role,
+      domain: domain || null,
       progress,
       features: out,
       next_unlock: nextLocked ? { name: nextLocked.name, hint: nextLocked.unlock_text } : null,
