@@ -11,6 +11,8 @@ import './engagement-hud.js';
 import './onboarding-60s.js';
 // Pet đồng hành (Prodigy-style) — bubble góc dưới trái.
 import './pet-widget.js';
+// Daily Login Bonus — popup 1 lần/ngày khi chưa claim.
+import './daily-login.js';
 
 const ROLE_LABEL = {
   pupil:   { ico: '🎒', label: 'Học sinh' },

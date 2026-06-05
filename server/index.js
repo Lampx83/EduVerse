@@ -35,6 +35,7 @@ import { addLeagueWeekXp } from './contexts/engagement/league.js';
 import { attachLearning, updateIrt } from './contexts/learning/index.js';
 import { attachPresence } from './contexts/multiplayer/presence.js';
 import { attachUgc } from './contexts/ugc/index.js';
+import { attachEconomy, addBpXp } from './contexts/economy/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -311,6 +312,8 @@ attachEngagement(r);
 attachLearning(r);
 // UGC marketplace — Quest Builder + Play + Like/Flag (Trục C — Roblox Edu)
 attachUgc(r);
+// Economy — Battle Pass + Skin Shop + Daily Login Bonus
+attachEconomy(r);
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
   const b = req.body ?? {};

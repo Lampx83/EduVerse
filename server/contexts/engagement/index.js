@@ -12,6 +12,10 @@ import { requireAuth } from '../identity/auth.js';
 import { attachLeague, addLeagueWeekXp } from './league.js';
 import { attachParentDashboard } from './parent.js';
 import { attachPet, addPetXp } from './pet.js';
+// Battle Pass XP — added per engagement claim (cộng song song league XP)
+function bpHook(uid, xp) {
+  try { import('../economy/index.js').then(m => m.addBpXp(uid, xp)); } catch {}
+}
 
 // ── Hằng số cấu hình ─────────────────────────────────────────
 const HEART_MAX = 5;
@@ -305,6 +309,8 @@ function claimQuest(userId, slot, domain) {
   // Pet đồng hành: nuôi pet bằng XP nhiệm vụ (Prodigy-style).
   let petEvolution = null;
   try { petEvolution = addPetXp(userId, Math.floor(q.reward_xp / 2)); } catch {}
+  // Battle Pass season XP — engagement claim cũng cộng vào BP.
+  bpHook(userId, q.reward_xp);
   return { ok: true, rewardCoin: q.reward_coin, rewardXp: q.reward_xp, petEvolution };
 }
 
