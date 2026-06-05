@@ -40,6 +40,9 @@ import { attachParentReport } from './contexts/parent-report/index.js';
 import { attachSchoolOnboard } from './contexts/school-onboard/index.js';
 import { attachTeacher } from './contexts/teacher/index.js';
 import { attachExperiments, getVariant, checkFlag } from './contexts/experiments/index.js';
+import { attachLiveQuizHttp, attachLiveQuizWs } from './contexts/live-quiz/index.js';
+import { attachSrs } from './contexts/srs/index.js';
+import { attachSmartNotif, logActivity } from './contexts/smart-notif/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -326,6 +329,13 @@ attachSchoolOnboard(r);
 attachTeacher(r);
 // Experiments + Feature Flags + Event Registry
 attachExperiments(r);
+// Live Quiz HTTP routes (WebSocket /ws-live attached later khi có httpServer)
+attachLiveQuizHttp(r);
+// SRS Flashcards — review queue + decks
+attachSrs(r);
+// Smart Notifications — activity log + best-time-to-nudge analytics
+attachSmartNotif(r);
+
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
   const b = req.body ?? {};
@@ -1244,6 +1254,7 @@ if (BASE_PATH) {
 const httpServer = http.createServer(app);
 attachRoom(httpServer, BASE_PATH);
 attachPresence(httpServer);  // /ws-presence — multiplayer campus avatars
+attachLiveQuizWs(httpServer, BASE_PATH);  // /ws-live
 // Prune scoreup_webhook_events_seen mỗi 6h, giữ 7 ngày. Bảng nhỏ nhưng dedup
 // theo event_id sẽ tích luỹ nếu ScoreUp gửi vài nghìn event/ngày — cleanup để
 // tránh phình index. Không cần block startup.

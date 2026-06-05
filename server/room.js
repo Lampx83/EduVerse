@@ -476,6 +476,8 @@ export function attachRoom(httpServer, basePath = '') {
       // /ws-presence handled by attachPresence (registered separately, see
       // server/contexts/multiplayer/presence.js). KHÔNG destroy ở đây — để
       // listener của presence (prependListener) xử lý.
+    } else if (pathname === basePath + '/ws-live') {
+      // /ws-live handled by attachLiveQuiz (server/contexts/live-quiz).
     } else {
       socket.destroy();
     }

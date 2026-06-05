@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎮 Tham gia Live Quiz · Tizia</title>
+<style>
+  :root {
+    --bg:#0b1020; --card:#151c3a;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185; --purple:#a78bfa;
+    --color-A:#ef4444; --color-B:#3b82f6; --color-C:#fbbf24; --color-D:#22c55e;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100vh;
+    font-family:'Inter','Be Vietnam Pro',sans-serif; color:var(--text);
+    background: radial-gradient(ellipse at top, #4338ca, #1e1b4b 60%, #020617);
+    overflow-x:hidden;
+  }
+
+  .wrap { min-height:100vh; display:flex; flex-direction:column; padding:20px; }
+
+  .form-card {
+    max-width:380px; width:100%; margin:auto;
+    background:rgba(15,23,42,.85); backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.18); border-radius:22px;
+    padding:30px 26px; box-shadow:0 24px 64px rgba(0,0,0,.6);
+  }
+  .form-card h2 {
+    text-align:center; margin:0 0 4px; font-size:24px;
+    background:linear-gradient(135deg, var(--accent), #ec4899);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .form-card .sub { text-align:center; color:var(--text-soft); font-size:13.5px; margin-bottom:24px; }
+
+  .form-card label { display:block; font-size:11px; letter-spacing:.6px;
+    color:var(--text-soft); text-transform:uppercase; font-weight:700;
+    margin:14px 0 5px; }
+  .form-card input {
+    width:100%; padding:14px 16px; border-radius:12px;
+    background:rgba(0,0,0,.4); border:2px solid rgba(255,255,255,.1);
+    color:#fff; font-family:inherit; font-size:16px;
+    transition:border-color .15s;
+  }
+  .form-card input:focus { outline:none; border-color:var(--accent); }
+  .form-card input.pin {
+    font-size:32px; font-weight:800; text-align:center;
+    letter-spacing:10px; font-family:'JetBrains Mono', monospace;
+  }
+  .form-card button {
+    width:100%; margin-top:20px; padding:14px;
+    background:linear-gradient(135deg, var(--accent), #f97316); color:#1e293b;
+    border:none; border-radius:14px; cursor:pointer; font:800 16px 'Inter';
+    box-shadow:0 6px 22px rgba(251,146,60,.4);
+  }
+  .form-card button:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; }
+
+  .stage {
+    min-height:100vh; display:flex; flex-direction:column; padding:20px;
+  }
+  .stage .head {
+    text-align:center; padding:14px; background:rgba(15,23,42,.7);
+    border-radius:14px; margin-bottom:16px;
+  }
+  .stage .head .name { font-weight:800; color:var(--accent); }
+  .stage .head .score { font-size:14px; color:var(--text-soft); }
+  .stage .head .score b { color:var(--good); font-size:18px; }
+
+  .opts-grid {
+    flex:1; display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;
+    max-width:600px; margin:auto; width:100%;
+  }
+  .opt-btn {
+    padding:24px 16px; border-radius:18px; min-height:120px;
+    color:#fff; font-size:22px; font-weight:800;
+    border:none; cursor:pointer; transition:transform .12s;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);
+  }
+  .opt-btn:hover { transform:scale(1.03); }
+  .opt-btn:nth-child(1) { background:var(--color-A); }
+  .opt-btn:nth-child(2) { background:var(--color-B); }
+  .opt-btn:nth-child(3) { background:var(--color-C); color:#1e293b; }
+  .opt-btn:nth-child(4) { background:var(--color-D); color:#052e16; }
+  .opt-btn:disabled { opacity:.3; cursor:not-allowed; transform:scale(.95); }
+
+  .wait-card {
+    margin:auto; text-align:center; padding:40px 20px;
+  }
+  .wait-card .spin {
+    width:60px; height:60px; border:5px solid rgba(255,255,255,.2);
+    border-top-color:var(--accent); border-radius:50%;
+    animation:tz-spin 1s linear infinite; margin:0 auto 20px;
+  }
+  .wait-card .lg { font-size:22px; font-weight:800; margin-bottom:6px; }
+  .wait-card .sub { color:var(--text-soft); }
+  @keyframes tz-spin { to { transform:rotate(360deg); } }
+
+  .feedback {
+    text-align:center; padding:30px 20px;
+  }
+  .feedback .emo { font-size:80px; animation:tz-pop-bigger .5s ease-out; }
+  @keyframes tz-pop-bigger { from { transform:scale(0); } to { transform:scale(1); } }
+  .feedback h3 { font-size:24px; margin:14px 0 4px; }
+  .feedback.right h3 { color:var(--good); }
+  .feedback.wrong h3 { color:var(--bad); }
+  .feedback .score-chg { color:var(--accent); font-weight:700; font-size:16px; }
+
+  .end-card { text-align:center; padding:40px 20px; }
+  .end-card .trophy { font-size:80px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+const params = new URLSearchParams(location.search);
+const root = document.getElementById('root');
+const state = { pin: params.get('pin') || '', name:'', ws:null, score:0, currentQ:null, finished:false };
+
+function renderForm() {
+  root.innerHTML = `
+    <div class="wrap">
+      <div class="form-card">
+        <h2>🎮 Tham gia Live Quiz</h2>
+        <p class="sub">Hỏi GV để biết PIN.</p>
+        <label>PIN (6 chữ số)</label>
+        <input class="pin" id="pin" maxlength="6" placeholder="------" value="${state.pin}">
+        <label>Tên hiển thị</label>
+        <input id="name" maxlength="24" placeholder="Tên của em">
+        <button id="join">🚀 Vào phòng</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('pin').focus();
+  document.getElementById('join').addEventListener('click', join);
+  document.getElementById('name').addEventListener('keydown', e => { if (e.key === 'Enter') join(); });
+}
+
+function join() {
+  const pin = document.getElementById('pin').value.trim();
+  const name = document.getElementById('name').value.trim();
+  if (!/^\d{6}$/.test(pin)) return alert('PIN phải là 6 chữ số');
+  if (!name) return alert('Em nhập tên đi');
+  state.pin = pin; state.name = name;
+  connect();
+}
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${proto}//${location.host}/ws-live?pin=${state.pin}&role=player&name=${encodeURIComponent(state.name)}`);
+  state.ws = ws;
+  ws.onmessage = (e) => {
+    let msg; try { msg = JSON.parse(e.data); } catch { return; }
+    if (msg.type === 'error') {
+      root.innerHTML = `<div class="wrap"><div class="form-card" style="text-align:center"><h2>⚠ ${msg.error}</h2><a href="/live-quiz/join.html" style="color:#fbbf24">Thử lại →</a></div></div>`;
+      return;
+    }
+    if (msg.type === 'joined') {
+      renderWait();
+    } else if (msg.type === 'question') {
+      state.currentQ = msg;
+      renderQuestion();
+    } else if (msg.type === 'answer_ack') {
+      state.score = msg.score;
+      renderFeedback(msg.correct);
+    } else if (msg.type === 'question_end') {
+      renderInterstitial(msg);
+    } else if (msg.type === 'end') {
+      state.finished = true;
+      renderEnd(msg);
+    }
+  };
+  ws.onclose = () => {
+    if (!state.finished) renderWait('Mất kết nối — thử reload.');
+  };
+}
+
+function renderWait(text = 'Đang chờ GV bắt đầu…') {
+  root.innerHTML = `
+    <div class="stage">
+      <div class="head">
+        <div class="name">${esc(state.name)}</div>
+        <div class="score">Điểm: <b>${state.score}</b></div>
+      </div>
+      <div class="wait-card">
+        <div class="spin"></div>
+        <div class="lg">${esc(text)}</div>
+        <div class="sub">PIN: ${state.pin}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderQuestion() {
+  const q = state.currentQ;
+  root.innerHTML = `
+    <div class="stage">
+      <div class="head">
+        <div class="name">${esc(state.name)} · Câu ${q.index+1}/${q.total}</div>
+        <div class="score">Điểm: <b>${state.score}</b></div>
+      </div>
+      <div class="opts-grid">
+        ${q.options.map((o, i) => `
+          <button class="opt-btn" data-i="${i}">${String.fromCharCode(65+i)}</button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  root.querySelectorAll('.opt-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      root.querySelectorAll('.opt-btn').forEach(x => x.disabled = true);
+      state.ws.send(JSON.stringify({ type: 'answer', opt: Number(b.dataset.i) }));
+    });
+  });
+}
+
+function renderFeedback(correct) {
+  root.innerHTML = `
+    <div class="stage">
+      <div class="head">
+        <div class="name">${esc(state.name)}</div>
+        <div class="score">Điểm: <b>${state.score}</b></div>
+      </div>
+      <div class="feedback ${correct?'right':'wrong'}">
+        <div class="emo">${correct?'✓':'✗'}</div>
+        <h3>${correct?'Đúng rồi!':'Chưa đúng'}</h3>
+        ${correct ? `<div class="score-chg">+ điểm (đúng + thưởng tốc độ)</div>` : ''}
+        <div style="color:var(--text-soft);margin-top:10px">Đợi câu kế tiếp…</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderInterstitial(q) {
+  // Cho HS xem rank của mình
+  const me = q.leaderboard.findIndex(p => p.name === state.name) + 1;
+  root.innerHTML = `
+    <div class="stage">
+      <div class="head">
+        <div class="name">${esc(state.name)}</div>
+        <div class="score">Điểm: <b>${state.score}</b></div>
+      </div>
+      <div class="wait-card">
+        <div class="lg" style="font-size:28px;color:var(--accent)">Hạng #${me || '-'}</div>
+        <div class="sub">trên ${q.leaderboard.length} người</div>
+        <div class="spin" style="margin-top:20px"></div>
+        <div class="sub">Chờ câu kế tiếp…</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderEnd(msg) {
+  const me = msg.leaderboard.findIndex(p => p.name === state.name) + 1;
+  const top3 = msg.leaderboard.slice(0, 3);
+  root.innerHTML = `
+    <div class="stage">
+      <div class="end-card">
+        <div class="trophy">${me===1?'🥇':me===2?'🥈':me===3?'🥉':'🎮'}</div>
+        <h2 style="font-size:30px">Em xếp #${me || '-'}!</h2>
+        <p style="color:var(--text-soft)">Điểm: <b style="color:var(--good);font-size:24px">${state.score}</b></p>
+        <div style="margin-top:30px;text-align:left;max-width:340px;margin:30px auto 0">
+          <div style="font-size:11px;letter-spacing:1px;color:var(--text-soft);font-weight:700;text-transform:uppercase;margin-bottom:10px">Top 3</div>
+          ${top3.map((p, i) => `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.05);border-radius:10px;margin:4px 0">
+              <span style="font-size:20px">${['🥇','🥈','🥉'][i]}</span>
+              <span style="flex:1;font-weight:700">${esc(p.name)}</span>
+              <span style="color:var(--accent);font-weight:800">${p.score}</span>
+            </div>
+          `).join('')}
+        </div>
+        <a href="/live-quiz/join.html" style="display:inline-block;margin-top:30px;color:var(--accent);text-decoration:none;font-weight:700">+ Vào quiz khác →</a>
+      </div>
+    </div>
+  `;
+}
+
+function esc(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+renderForm();
+</script>
+</body>
+</html>

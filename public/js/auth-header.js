@@ -15,6 +15,8 @@ import './pet-widget.js';
 import './daily-login.js';
 // i18n — auto-load bundle theo locale (vi/en/id).
 import './i18n.js';
+// TTS Reader — toggle 🔊 đọc to bài cho tiểu học.
+import './tts-reader.js';
 
 const ROLE_LABEL = {
   pupil:   { ico: '🎒', label: 'Học sinh' },

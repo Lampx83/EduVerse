@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎤 Live Quiz Host · Tizia</title>
+<style>
+  :root {
+    --bg:#0b1020; --card:#151c3a;
+    --border:#2a3563; --text:#e6e9f5; --text-soft:#9aa3c7;
+    --accent:#fbbf24; --good:#34d399; --bad:#fb7185; --purple:#a78bfa;
+    --color-A:#ef4444; --color-B:#3b82f6; --color-C:#fbbf24; --color-D:#22c55e;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100vh;
+    font-family:'Inter','Be Vietnam Pro',sans-serif; color:var(--text);
+    background: radial-gradient(ellipse at top, #1e1b4b, #0f172a 60%, #020617);
+    overflow-x:hidden;
+  }
+
+  .pin-banner {
+    display:flex; align-items:center; gap:20px; padding:14px 24px;
+    background:rgba(15,23,42,.85); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+  }
+  .pin-banner .pin {
+    font-size:32px; font-weight:800; letter-spacing:6px;
+    background:linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .pin-banner .lbl { font-size:11px; letter-spacing:1px; color:var(--text-soft); }
+  .pin-banner .url { font-size:13px; color:var(--text-soft); margin-left:auto; }
+  .pin-banner .url b { color:var(--accent); font-family:monospace; }
+  .pin-banner .players-count { padding:6px 14px; background:rgba(34,197,94,.18);
+    color:var(--good); border-radius:18px; font-weight:700; font-size:13px; }
+
+  .stage { padding:30px 24px 60px; max-width:1000px; margin:0 auto; }
+
+  .lobby h2 {
+    font-size:38px; text-align:center; margin:30px 0 6px;
+    background:linear-gradient(135deg, var(--accent), #ec4899);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .lobby p { text-align:center; color:var(--text-soft); margin-bottom:30px; }
+  .lobby-players { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px;
+    background:rgba(255,255,255,.04); border:1px solid var(--border);
+    border-radius:18px; padding:18px; min-height:120px; }
+  .lobby-players .p {
+    padding:8px 14px; border-radius:14px;
+    background:linear-gradient(135deg, var(--purple), #6366f1); color:#fff;
+    font-weight:700; font-size:13.5px;
+    animation: tz-pop 0.3s ease-out;
+  }
+  @keyframes tz-pop { from { transform:scale(0); } to { transform:scale(1); } }
+  .start-btn {
+    display:block; margin:30px auto; padding:14px 40px; border-radius:16px;
+    background:linear-gradient(135deg, var(--good), #10b981); color:#052e16;
+    border:none; cursor:pointer; font:800 18px 'Inter';
+    box-shadow:0 10px 28px rgba(52,211,153,.35);
+    transition:transform .15s;
+  }
+  .start-btn:hover { transform:translateY(-2px) scale(1.02); }
+  .start-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  .q-stage { text-align:center; }
+  .q-num { font-size:13px; color:var(--text-soft); letter-spacing:1.5px;
+    text-transform:uppercase; font-weight:800; margin-bottom:6px; }
+  .q-text {
+    font-size:30px; font-weight:800; max-width:780px; margin:0 auto 18px;
+    line-height:1.3;
+  }
+  .timer {
+    width:80px; height:80px; margin:14px auto;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:32px; font-weight:800;
+    background:radial-gradient(circle, rgba(251,191,36,.3), transparent);
+    color:var(--accent);
+    border:3px solid var(--accent);
+    transition:transform .3s;
+  }
+  .timer.danger { color:var(--bad); border-color:var(--bad); animation:tz-pulse .8s ease-in-out infinite; }
+  @keyframes tz-pulse { 50% { transform:scale(1.1); } }
+
+  .opts {
+    display:grid; grid-template-columns:repeat(2, 1fr); gap:14px;
+    max-width:780px; margin:24px auto;
+  }
+  .opt {
+    padding:24px 18px; border-radius:18px; min-height:96px;
+    display:flex; align-items:center; gap:14px;
+    color:#fff; font-size:18px; font-weight:700;
+    border:none; cursor:default;
+  }
+  .opt .letter { width:42px; height:42px; border-radius:50%;
+    background:rgba(255,255,255,.25); display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:800; flex-shrink:0; }
+  .opt:nth-child(1) { background:var(--color-A); }
+  .opt:nth-child(2) { background:var(--color-B); }
+  .opt:nth-child(3) { background:var(--color-C); color:#1e293b; }
+  .opt:nth-child(4) { background:var(--color-D); color:#052e16; }
+  .opt.correct { outline:4px solid #fff; box-shadow:0 0 30px rgba(255,255,255,.5); }
+  .opt.dim { opacity:.35; }
+
+  .answer-progress {
+    margin:18px auto; max-width:500px; padding:10px 18px;
+    background:rgba(255,255,255,.06); border:1px solid var(--border); border-radius:18px;
+    text-align:center; color:var(--text-soft);
+  }
+  .answer-progress b { color:var(--good); }
+
+  .lb-stage { padding:30px 16px; }
+  .lb-stage h2 {
+    text-align:center; font-size:28px; margin:0 0 18px;
+    background:linear-gradient(135deg, var(--accent), var(--good));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .lb-row {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 18px; margin:6px auto; max-width:560px;
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    transition:transform .3s;
+  }
+  .lb-row.top1 { background:linear-gradient(135deg, rgba(251,191,36,.25), var(--card));
+    border-color:var(--accent); transform:scale(1.05); }
+  .lb-row.top2 { background:linear-gradient(135deg, rgba(192,192,192,.2), var(--card)); }
+  .lb-row.top3 { background:linear-gradient(135deg, rgba(205,127,50,.2), var(--card)); }
+  .lb-row .rk { font-size:24px; font-weight:800; width:48px; text-align:center; }
+  .lb-row .nm { flex:1; font-weight:700; }
+  .lb-row .sc { color:var(--accent); font-weight:800; font-size:20px;
+    font-variant-numeric:tabular-nums; }
+  .lb-row.correct .nm::after {
+    content:'✓ đúng'; margin-left:8px; color:var(--good);
+    font-size:11px; font-weight:700; padding:2px 8px; background:rgba(34,197,94,.15);
+    border-radius:8px;
+  }
+  .next-btn {
+    display:block; margin:24px auto; padding:12px 28px;
+    background:linear-gradient(135deg, var(--accent), #f97316); color:#1e293b;
+    border:none; border-radius:14px; cursor:pointer; font:800 14px 'Inter';
+  }
+
+  .end-stage { text-align:center; padding:40px 20px; }
+  .end-stage .trophy { font-size:80px; animation:tz-bounce 1.2s ease-in-out infinite; }
+  @keyframes tz-bounce { 50% { transform:translateY(-12px); } }
+
+  @media (max-width:640px) {
+    .pin-banner .pin { font-size:22px; }
+    .q-text { font-size:22px; }
+    .opts { grid-template-columns:1fr; }
+    .opt { padding:16px; min-height:64px; font-size:15px; }
+  }
+</style>
+</head>
+<body>
+<div class="pin-banner">
+  <div><div class="lbl">JOIN PIN</div><div class="pin" id="pin">------</div></div>
+  <div class="url">vào: <b id="join-url">/live-quiz/join.html</b></div>
+  <div class="players-count" id="pcount">0 người chơi</div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="lobby">
+    <h2>🎤 Phòng đang mở</h2>
+    <p>HS dùng PIN ở trên để join — không cần đăng nhập.</p>
+    <div class="lobby-players" id="lobby-players"></div>
+    <button class="start-btn" id="start" disabled>🚀 Bắt đầu (cần ≥ 1 HS)</button>
+  </div>
+</div>
+
+<script type="module">
+const params = new URLSearchParams(location.search);
+const pin = params.get('pin');
+if (!pin) { document.body.innerHTML = '<p style="text-align:center;padding:40px">Thiếu PIN.</p>'; throw new Error('no pin'); }
+
+document.getElementById('pin').textContent = pin;
+document.getElementById('join-url').textContent = `${location.host}/live-quiz/join.html?pin=${pin}`;
+
+const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+const ws = new WebSocket(`${proto}//${location.host}/ws-live?pin=${pin}&role=host`);
+const state = { players: new Map(), currentQ: -1, timerInt: null };
+
+ws.onmessage = (e) => {
+  let msg; try { msg = JSON.parse(e.data); } catch { return; }
+  if (msg.type === 'error') { alert('Lỗi: ' + msg.error); return; }
+  if (msg.type === 'host_ack') {
+    if (msg.snapshot.players) {
+      for (const p of msg.snapshot.players) state.players.set(p.id, p);
+      renderLobby();
+    }
+  } else if (msg.type === 'player_join') {
+    state.players.set(msg.player.id, { ...msg.player, score:0 });
+    renderLobby();
+  } else if (msg.type === 'player_leave') {
+    state.players.delete(msg.id);
+    renderLobby();
+  } else if (msg.type === 'question') {
+    state.currentQ = msg.index;
+    renderQuestion(msg);
+  } else if (msg.type === 'answer_progress') {
+    const el = document.getElementById('answer-progress-num');
+    if (el) el.innerHTML = `Đã trả lời: <b>${msg.answered}</b>/${msg.total}`;
+  } else if (msg.type === 'question_end') {
+    renderLeaderboard(msg);
+  } else if (msg.type === 'end') {
+    renderEnd(msg);
+  }
+};
+ws.onclose = () => { document.getElementById('stage').innerHTML += '<p style="text-align:center;color:#fda4af">🔴 Mất kết nối</p>'; };
+
+function renderLobby() {
+  document.getElementById('pcount').textContent = state.players.size + ' người chơi';
+  const lp = document.getElementById('lobby-players');
+  if (lp) {
+    lp.innerHTML = [...state.players.values()].map(p => `<span class="p">${esc(p.name)}</span>`).join('')
+      || '<div style="color:var(--text-soft);text-align:center;width:100%">Đang chờ HS join…</div>';
+  }
+  const start = document.getElementById('start');
+  if (start) {
+    start.disabled = state.players.size < 1;
+    start.textContent = state.players.size < 1 ? '🚀 Bắt đầu (cần ≥ 1 HS)' : '🚀 Bắt đầu!';
+  }
+}
+
+document.body.addEventListener('click', (e) => {
+  if (e.target.id === 'start') {
+    ws.send(JSON.stringify({ type: 'start' }));
+  } else if (e.target.id === 'next') {
+    ws.send(JSON.stringify({ type: 'next' }));
+  }
+});
+
+function renderQuestion(q) {
+  const totalSec = Math.ceil(q.time_ms / 1000);
+  document.getElementById('stage').innerHTML = `
+    <div class="q-stage">
+      <div class="q-num">Câu ${q.index + 1} / ${q.total}</div>
+      <div class="q-text">${esc(q.text)}</div>
+      <div class="timer" id="timer">${totalSec}</div>
+      <div class="opts">
+        ${q.options.map((o, i) => `
+          <div class="opt"><div class="letter">${String.fromCharCode(65+i)}</div>${esc(o)}</div>
+        `).join('')}
+      </div>
+      <div class="answer-progress" id="answer-progress-num">Đã trả lời: <b>0</b>/${state.players.size}</div>
+    </div>
+  `;
+  // Countdown
+  let left = totalSec;
+  clearInterval(state.timerInt);
+  state.timerInt = setInterval(() => {
+    left--;
+    const t = document.getElementById('timer');
+    if (t) {
+      t.textContent = left;
+      if (left <= 5) t.classList.add('danger');
+    }
+    if (left <= 0) clearInterval(state.timerInt);
+  }, 1000);
+}
+
+function renderLeaderboard(q) {
+  clearInterval(state.timerInt);
+  document.getElementById('stage').innerHTML = `
+    <div class="lb-stage">
+      <h2>🏆 Bảng xếp hạng sau câu ${q.index + 1}</h2>
+      <div>
+        ${q.leaderboard.slice(0, 10).map((p, i) => `
+          <div class="lb-row ${i===0?'top1':i===1?'top2':i===2?'top3':''} ${p.last_correct?'correct':''}">
+            <div class="rk">${i+1}</div>
+            <div class="nm">${esc(p.name)}</div>
+            <div class="sc">${p.score}</div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="next-btn" id="next">${q.index + 1 < state.players.size ? 'Câu kế tiếp →' : 'Câu kế tiếp →'}</button>
+    </div>
+  `;
+}
+
+function renderEnd(msg) {
+  clearInterval(state.timerInt);
+  document.getElementById('stage').innerHTML = `
+    <div class="end-stage">
+      <div class="trophy">🏆</div>
+      <h2 style="font-size:36px;margin:14px 0;background:linear-gradient(135deg, var(--accent), var(--good));-webkit-background-clip:text;color:transparent">Quiz kết thúc!</h2>
+      <p style="color:var(--text-soft);margin-bottom:24px">Top 3 — chúc mừng!</p>
+      <div>
+        ${msg.leaderboard.slice(0, 10).map((p, i) => `
+          <div class="lb-row ${i===0?'top1':i===1?'top2':i===2?'top3':''}">
+            <div class="rk">${['🥇','🥈','🥉'][i] || (i+1)}</div>
+            <div class="nm">${esc(p.name)}</div>
+            <div class="sc">${p.score}</div>
+          </div>
+        `).join('')}
+      </div>
+      <a href="/ai-quiz-gen.html" style="display:inline-block;margin-top:24px;padding:12px 24px;background:rgba(255,255,255,.08);color:#fff;border-radius:12px;text-decoration:none;font-weight:700">+ Tạo Live Quiz khác</a>
+    </div>
+  `;
+}
+
+function esc(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>

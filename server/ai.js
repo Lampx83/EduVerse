@@ -50,6 +50,7 @@ export function attachAi(r) {
   r.post('/api/ai/negotiate',         ...wrapAi('negotiate',         handleNegotiate));
   r.post('/api/ai/negotiate-grade',   ...wrapAi('negotiate-grade',   handleNegotiateGrade));
   r.post('/api/ai/pdf-explain',       ...wrapAi('pdf-explain',       handlePdfExplain));
+  r.post('/api/ai/quiz-generate',     ...wrapAi('quiz-generate',     handleQuizGenerate));
   r.post('/api/ai/pdf-quiz',          ...wrapAi('pdf-quiz',          handlePdfQuiz));
   r.post('/api/ai/practice-more',     ...wrapAi('practice-more',     handlePracticeMore));
   r.post('/api/ai/lesson-coach',      ...wrapAi('lesson-coach',      handleLessonCoach));
@@ -1137,3 +1138,68 @@ function safeParseJson(text) {
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
 }
+
+
+// ─────────────────────────────────────────────────────────────
+// QUIZ GENERATE — sinh UGC quest từ prompt (GV/HS tự tạo nhanh)
+// ─────────────────────────────────────────────────────────────
+
+async function handleQuizGenerate({ topic, grade, subject, count = 5, language = "vi", difficulty = "medium" }) {
+  if (!topic) throw new Error("topic required");
+  const N = Math.max(3, Math.min(15, Number(count) || 5));
+  const difficultyLabel = ({ easy: "dễ", medium: "trung bình", hard: "khó" }[difficulty] || "trung bình");
+
+  const system = `Bạn là chuyên gia soạn câu hỏi trắc nghiệm cho học sinh Việt Nam theo Chương trình GDPT 2018.
+Mọi câu hỏi: ngắn gọn, bám SGK, ngôn ngữ HS hiểu được.
+Đáp án: 4 lựa chọn (A, B, C, D), CHỈ 1 đúng. Đáp án sai phải HỢP LÝ — đừng vô lý.
+KHÔNG được dùng ký tự đặc biệt hoặc markdown.
+Trả về JSON pure (không markdown fence) theo schema:
+{
+  "title": "tiêu đề bộ quiz",
+  "description": "mô tả 1 câu",
+  "questions": [
+    { "text": "Nội dung câu hỏi", "options": ["A","B","C","D"], "correct": 0 }
+  ]
+}
+correct = index 0-3 của đáp án đúng.`;
+
+  const userPrompt = `Hãy sinh CHÍNH XÁC ${N} câu hỏi trắc nghiệm về chủ đề: "${topic}".
+${grade ? `Trình độ: Lớp ${grade}.` : ""}
+${subject ? `Môn: ${subject}.` : ""}
+Độ khó: ${difficultyLabel}.
+Ngôn ngữ: ${language === "en" ? "Tiếng Anh" : language === "id" ? "Bahasa Indonesia" : "Tiếng Việt"}.
+Trả về JSON đúng schema, không thêm text gì khác.`;
+
+  let raw;
+  try {
+    raw = await ollamaGenerate({
+      prompt: userPrompt, system, temperature: 0.4, json: true, maxTokens: 2500,
+    });
+  } catch (e) {
+    return { error: "ai_failed", detail: String(e?.message || e) };
+  }
+  const parsed = safeParseJson(raw);
+  const qs = Array.isArray(parsed.questions) ? parsed.questions : [];
+  // Validate + truncate
+  const cleaned = qs
+    .filter(q => q && typeof q.text === "string" && Array.isArray(q.options))
+    .map(q => ({
+      text: String(q.text).slice(0, 500),
+      options: q.options.slice(0, 6).map(o => String(o).slice(0, 200)),
+      correct: Math.max(0, Math.min(q.options.length - 1, Number(q.correct) || 0)),
+    }))
+    .filter(q => q.options.length >= 2);
+  if (cleaned.length < 3) {
+    return { error: "too_few_questions", got: cleaned.length };
+  }
+  return {
+    ok: true,
+    quest: {
+      title: String(parsed.title || `Quiz: ${topic}`).slice(0, 100),
+      description: String(parsed.description || `${cleaned.length} câu về ${topic}`).slice(0, 500),
+      questions: cleaned,
+    },
+    raw_count: qs.length,
+  };
+}
+
