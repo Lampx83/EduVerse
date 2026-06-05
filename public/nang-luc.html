@@ -62,6 +62,12 @@
   .comp .desc { font-size:12.5px; color:var(--text-soft); margin:0 0 12px; line-height:1.5; min-height:36px; }
   .bar { height:8px; border-radius:8px; background:rgba(255,255,255,.07); overflow:hidden; margin-bottom:10px; }
   .bar > i { display:block; height:100%; border-radius:8px; background:linear-gradient(90deg, var(--good), var(--accent)); transition:width .5s ease-out; }
+  /* Bar "thành thạo" — màu tím phân biệt với bar "đã đạt" (vàng/xanh) */
+  .bar.mastery > i { background:linear-gradient(90deg, #a78bfa, #ec4899); }
+  /* Skill chip có mini progress bar bên dưới — show độ thành thạo từng kỹ năng */
+  .skill-chip { display:inline-flex; flex-direction:column; align-items:stretch; gap:3px; }
+  .skill-chip .mini-bar { height:3px; background:rgba(255,255,255,.18); border-radius:2px; overflow:hidden; }
+  .skill-chip .mini-bar > i { display:block; height:100%; background:linear-gradient(90deg, #a78bfa, #34d399); transition:width .5s; }
   .progress-line { display:flex; justify-content:space-between; font-size:12px; color:var(--text-soft); margin-bottom:8px; }
   .progress-line b { color:var(--good); }
   .skill-list { display:flex; gap:6px; flex-wrap:wrap; }
@@ -391,26 +397,37 @@ function renderTree(data, subject){
       const c = node.competency;
       const earned = node.earned_skills.length;
       const total = node.total_skills;
-      const compPct = total > 0 ? Math.round((earned/total)*100) : 0;
+      const coveragePct = total > 0 ? Math.round((earned/total)*100) : 0;
+      // mastery_pct = avg mastery × coverage (đã tính ở backend). Hiển thị
+      // SONG SONG với coverage để HS biết "biết rộng" vs "biết sâu" khác nhau.
+      const masteryPct = node.mastery_pct ?? 0;
+      const avgMasteryPct = node.avg_mastery_pct ?? 0;
       const isEmpty = earned === 0;
       const icon = COMP_ICON[c.code] || '⭐';
-      const earnedChips = node.earned_skills.slice(0, 4).map(s =>
-        `<span class="chip" title="${esc(s.domain ? DOMAIN_LABEL[s.domain] : '')}">${esc(s.name)}</span>`
-      ).join('');
+      // Skill chip + mini mastery bar dưới mỗi chip (Trục B — "học sâu thật").
+      const renderChip = s => `
+        <span class="chip skill-chip" title="${esc(s.domain ? DOMAIN_LABEL[s.domain] : '')} · Thành thạo ${s.mastery_pct}%">
+          ${esc(s.name)}
+          <span class="mini-bar"><i style="width:${s.mastery_pct}%"></i></span>
+        </span>`;
+      const earnedChips = node.earned_skills.slice(0, 4).map(renderChip).join('');
       const more = earned > 4 ? `<span class="more" data-comp="${c.code}">+${earned - 4} khác</span>` : '';
-      const all  = (earned > 0 || total > 0) ? `<span class="more" data-comp="${c.code}">Xem tất cả ${total} kỹ năng →</span>` : '';
       html += `
         <div class="comp ${isEmpty ? 'empty' : ''}">
           <h3><span class="ic">${icon}</span>${esc(c.name)}</h3>
           <p class="desc">${esc(c.description||'')}</p>
           <div class="progress-line">
-            <span>Tiến độ</span>
-            <span><b>${earned}</b>/${total} (${compPct}%)</span>
+            <span>Đã đạt</span>
+            <span><b>${earned}</b>/${total} (${coveragePct}%)</span>
           </div>
-          <div class="bar"><i style="width:${compPct}%"></i></div>
+          <div class="bar"><i style="width:${coveragePct}%"></i></div>
+          <div class="progress-line" style="margin-top:10px">
+            <span>Thành thạo</span>
+            <span><b>${masteryPct}%</b><span style="opacity:.6;font-size:11px"> · TB ${avgMasteryPct}%</span></span>
+          </div>
+          <div class="bar mastery"><i style="width:${masteryPct}%"></i></div>
           <div class="skill-list">
             ${isEmpty ? '<span class="empty-msg">Chưa có kỹ năng nào — vào trường và làm quiz đi em!</span>' : earnedChips + more}
-            ${isEmpty ? '' : ''}
           </div>
           ${total > earned && !isEmpty ? `<div style="margin-top:8px"><span class="more" data-comp="${c.code}">Xem ${total - earned} kỹ năng chưa đạt →</span></div>` : ''}
         </div>
@@ -466,5 +483,6 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') document.getEl
 
 init();
 </script>
+<script type="module" src="./js/engagement-hud.js?v=2026-06-05"></script>
 </body>
 </html>

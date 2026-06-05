@@ -200,6 +200,11 @@ export function getUserSkillTree(user_id, domain) {
   const byComp = new Map();
   for (const r of earnedRows) {
     if (!byComp.has(r.competency_id)) byComp.set(r.competency_id, []);
+    // mastery_pct: thang 0-100. Nếu source_type='scenario_run' với score được
+    // grant → dùng score đó. Nếu earned mà score null (legacy grant) → 70 mặc
+    // định (ngưỡng pass). Chưa earned → 0 (chỉ vào "earned_skills" nếu đã đạt
+    // nên ở đây tối thiểu 70).
+    const mastery = (r.score != null) ? Math.max(0, Math.min(100, r.score)) : 70;
     byComp.get(r.competency_id).push({
       code: r.skill_code,
       name: r.skill_name,
@@ -210,20 +215,34 @@ export function getUserSkillTree(user_id, domain) {
       source_type: r.source_type,
       source_id: r.source_id,
       score: r.score,
+      mastery_pct: mastery,
     });
   }
 
-  return allComps.map(c => ({
-    competency: {
-      code: c.code,
-      kind: c.kind,
-      name: c.name,
-      description: c.description,
-      sort_order: c.sort_order,
-    },
-    total_skills: totals[c.id] || 0,
-    earned_skills: byComp.get(c.id) || [],
-  }));
+  return allComps.map(c => {
+    const earned = byComp.get(c.id) || [];
+    // Mastery competency = trung bình mastery_pct các skill đã đạt × (earned/total).
+    // Cách này thưởng cho HS càng học sâu (mastery cao) VÀ càng học rộng (nhiều skill).
+    const total = totals[c.id] || 0;
+    const avgMastery = earned.length > 0
+      ? earned.reduce((s, e) => s + e.mastery_pct, 0) / earned.length
+      : 0;
+    const coverage = total > 0 ? earned.length / total : 0;
+    const compMastery = Math.round(avgMastery * coverage);
+    return {
+      competency: {
+        code: c.code,
+        kind: c.kind,
+        name: c.name,
+        description: c.description,
+        sort_order: c.sort_order,
+      },
+      total_skills: total,
+      earned_skills: earned,
+      mastery_pct: compMastery,
+      avg_mastery_pct: Math.round(avgMastery),
+    };
+  });
 }
 
 /**

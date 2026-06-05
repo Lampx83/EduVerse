@@ -11,7 +11,7 @@
  * offline. Versioning theo SW_VERSION — bump khi đổi shell danh sách.
  */
 
-const SW_VERSION = 'tizia-2026-06-05-engagement-hud';
+const SW_VERSION = 'tizia-2026-06-05-engagement-hud-v2';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const IMAGE_CACHE = `${SW_VERSION}-img`;
@@ -117,8 +117,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS / CSS / JSON → Stale-While-Revalidate
+  // JS / CSS / JSON → Stale-While-Revalidate. EXCEPT các shell-script lõi
+  // (auth-header, engagement-hud, auth, api) → Network-first để bug-fix lan
+  // tới user trong cùng phiên, không cần đợi cache hết hạn 24h.
   if (isAsset(req)) {
+    const path = url.pathname;
+    const isCoreShell = /\/js\/(auth-header|engagement-hud|auth|api|enrollment|plans|sso|consent-banner|notifications-bell)\.js$/.test(path);
+    if (isCoreShell) {
+      event.respondWith((async () => {
+        const cache = await caches.open(RUNTIME_CACHE);
+        try {
+          const fresh = await fetch(req);
+          if (fresh && fresh.ok) cache.put(req, fresh.clone());
+          return fresh;
+        } catch {
+          const cached = await cache.match(req);
+          return cached || Response.error();
+        }
+      })());
+      return;
+    }
     event.respondWith((async () => {
       const cache = await caches.open(RUNTIME_CACHE);
       const cached = await cache.match(req);
