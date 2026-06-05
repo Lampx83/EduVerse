@@ -31,6 +31,7 @@ import { attachBilling } from './contexts/billing/index.js';
 import { attachIntegration } from './contexts/integration/index.js';
 import { attachAdmin, requireAdmin } from './contexts/admin/index.js';
 import { attachEngagement, trackEngagementProgress } from './contexts/engagement/index.js';
+import { addLeagueWeekXp } from './contexts/engagement/league.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -424,6 +425,7 @@ r.post('/api/scenario-runs', requireAuth, requireEnrolled, async (req, res) => {
     } catch (e) { console.warn('[scenario-runs] grant skills failed', e?.message); }
     // Engagement: mỗi scenario hoàn thành (bất kể điểm) = 1 lượt minigame.
     try { trackEngagementProgress(req.user.id, 'minigame', 1); } catch {}
+    try { addLeagueWeekXp(req.user.id, Math.max(5, Math.floor(score / 10))); } catch {}
     res.json({ familyId, ...(row || {}), skillsGranted });
   } catch (e) {
     console.warn('[scenario-runs] POST failed', e?.message);
@@ -581,6 +583,7 @@ r.post('/api/quiz/attempt', requireAuth, requireEnrolled, async (req, res) => {
     // Tracking engagement: chỉ cộng tiến triển quest "quiz" khi câu đúng.
     if (correct) {
       try { trackEngagementProgress(req.user.id, 'quiz', 1); } catch {}
+      try { addLeagueWeekXp(req.user.id, 5); } catch {}    // 5 XP / câu đúng
     }
 
     res.json({

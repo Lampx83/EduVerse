@@ -39,6 +39,7 @@ import {
 } from '../../db.js';
 import { invalidateCacheByPrefix } from '../../integrations/codelab.js';
 import { trackEngagementProgress } from '../engagement/index.js';
+import { addLeagueWeekXp } from '../engagement/league.js';
 
 const WEBHOOK_SECRET = process.env.CODELAB_WEBHOOK_SECRET || '';
 const MAX_SKEW_SECONDS = 5 * 60;
@@ -142,6 +143,8 @@ export function attachCodelabWebhook(app) {
           // Engagement: quest "code" tăng tiến độ khi accepted (kể cả không
           // first-solve — HS làm lại bài khó vẫn được công 1 lượt nộp ăn điểm).
           try { trackEngagementProgress(userId, 'code', 1); } catch {}
+          // League: cộng XP tuần (= reward XP nếu first-solve, hoặc fixed 5 nếu re-submit).
+          try { addLeagueWeekXp(userId, reward?.granted ? reward.xp : 5); } catch {}
         }
         // Nếu cần invalidate cache list submission của user (sau này Tizia có
         // endpoint cache theo userId), gọi tại đây:

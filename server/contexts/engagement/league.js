@@ -1,0 +1,302 @@
+// ============================================================
+// League tuần — Trục A (theo Duolingo league)
+// ============================================================
+// Mục tiêu: HS ganh đua hàng tuần để giữ retention. Một "season" = 7 ngày
+// (Mon 00:00 → Sun 23:59 VN). HS được xếp vào nhóm 30 người cùng tier; cuối
+// tuần top 5 lên tier, bottom 5 xuống tier. Tier:
+//   bronze → silver → gold → sapphire → ruby → diamond (6 tier)
+// XP tuần = XP cộng dồn trong season hiện tại (reset mỗi tuần).
+//
+// Self-contained schema (league_seasons + league_memberships + league_groups).
+// ============================================================
+
+import { db } from '../../db.js';
+
+const TIERS = ['bronze', 'silver', 'gold', 'sapphire', 'ruby', 'diamond'];
+const TIER_META = {
+  bronze:   { label: 'Đồng',     icon: '🥉', color: '#a07b3e' },
+  silver:   { label: 'Bạc',      icon: '🥈', color: '#c0c0c0' },
+  gold:     { label: 'Vàng',     icon: '🥇', color: '#fbbf24' },
+  sapphire: { label: 'Lam ngọc', icon: '💎', color: '#3b82f6' },
+  ruby:     { label: 'Hồng ngọc',icon: '🔴', color: '#ef4444' },
+  diamond:  { label: 'Kim cương',icon: '💠', color: '#06b6d4' },
+};
+const GROUP_SIZE = 30;
+const TZ_OFFSET_MIN = 7 * 60;
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS league_seasons (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    week_start      TEXT    NOT NULL UNIQUE,   -- 'YYYY-MM-DD' (thứ 2 VN)
+    started_at      INTEGER NOT NULL,
+    ended_at        INTEGER,                    -- null = season hiện tại
+    created_at      INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS league_groups (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    season_id       INTEGER NOT NULL,
+    tier            TEXT    NOT NULL,
+    seq             INTEGER NOT NULL,          -- thứ tự group trong tier
+    member_count    INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(season_id, tier, seq),
+    FOREIGN KEY (season_id) REFERENCES league_seasons(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS league_memberships (
+    season_id       INTEGER NOT NULL,
+    user_id         INTEGER NOT NULL,
+    group_id        INTEGER NOT NULL,
+    tier            TEXT    NOT NULL,          -- cache tier để query nhanh
+    week_xp         INTEGER NOT NULL DEFAULT 0,
+    final_rank      INTEGER,                    -- chỉ set khi season kết thúc
+    promoted        INTEGER DEFAULT 0,          -- 1 = lên tier
+    relegated       INTEGER DEFAULT 0,          -- 1 = xuống tier
+    PRIMARY KEY (season_id, user_id),
+    FOREIGN KEY (season_id) REFERENCES league_seasons(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id)  REFERENCES league_groups(id)  ON DELETE CASCADE,
+    FOREIGN KEY (user_id)   REFERENCES users(id)          ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_league_mem_group_xp
+    ON league_memberships(group_id, week_xp DESC);
+  CREATE INDEX IF NOT EXISTS idx_league_mem_user_season
+    ON league_memberships(user_id, season_id);
+
+  -- user_id → tier hiện tại (cache để khỏi tra ngược season). Set khi user
+  -- gia nhập league lần đầu hoặc cuối season được promote/relegate.
+  CREATE TABLE IF NOT EXISTS league_user_tier (
+    user_id         INTEGER PRIMARY KEY,
+    tier            TEXT    NOT NULL DEFAULT 'bronze',
+    updated_at      INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+`);
+
+// ── Time helpers ─────────────────────────────────────────────
+function vnNow() { return new Date(Date.now() + TZ_OFFSET_MIN * 60_000); }
+function startOfWeekMonVN(date = vnNow()) {
+  const d = new Date(date.getTime());
+  const day = d.getUTCDay() || 7;          // CN=0 → 7, Mon=1
+  d.setUTCDate(d.getUTCDate() - day + 1);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+function nextTier(t) { const i = TIERS.indexOf(t); return TIERS[Math.min(TIERS.length - 1, i + 1)]; }
+function prevTier(t) { const i = TIERS.indexOf(t); return TIERS[Math.max(0, i - 1)]; }
+
+// ── Statements ─────────────────────────────────────────────
+const getCurrentSeasonStmt = db.prepare(
+  `SELECT * FROM league_seasons WHERE ended_at IS NULL ORDER BY id DESC LIMIT 1`
+);
+const insertSeasonStmt = db.prepare(
+  `INSERT INTO league_seasons (week_start, started_at, created_at) VALUES (?, ?, ?)`
+);
+const endSeasonStmt = db.prepare(
+  `UPDATE league_seasons SET ended_at = ? WHERE id = ?`
+);
+
+const findOpenGroupStmt = db.prepare(`
+  SELECT * FROM league_groups
+   WHERE season_id = ? AND tier = ? AND member_count < ?
+   ORDER BY seq ASC LIMIT 1
+`);
+const maxGroupSeqStmt = db.prepare(
+  `SELECT MAX(seq) AS s FROM league_groups WHERE season_id = ? AND tier = ?`
+);
+const insertGroupStmt = db.prepare(
+  `INSERT INTO league_groups (season_id, tier, seq, member_count) VALUES (?, ?, ?, 0)`
+);
+const incGroupCountStmt = db.prepare(
+  `UPDATE league_groups SET member_count = member_count + 1 WHERE id = ?`
+);
+
+const getMembershipStmt = db.prepare(
+  `SELECT * FROM league_memberships WHERE season_id = ? AND user_id = ?`
+);
+const insertMembershipStmt = db.prepare(`
+  INSERT INTO league_memberships (season_id, user_id, group_id, tier, week_xp)
+  VALUES (?, ?, ?, ?, 0)
+`);
+const addWeekXpStmt = db.prepare(
+  `UPDATE league_memberships SET week_xp = week_xp + ? WHERE season_id = ? AND user_id = ?`
+);
+
+const groupBoardStmt = db.prepare(`
+  SELECT m.user_id, m.week_xp, m.tier,
+         u.display_name, u.role, u.enrolled_domain
+    FROM league_memberships m
+    JOIN users u ON u.id = m.user_id
+   WHERE m.group_id = ?
+   ORDER BY m.week_xp DESC, m.user_id ASC
+`);
+
+const getUserTierStmt = db.prepare(`SELECT tier FROM league_user_tier WHERE user_id = ?`);
+const upsertUserTierStmt = db.prepare(`
+  INSERT INTO league_user_tier (user_id, tier, updated_at) VALUES (?, ?, ?)
+  ON CONFLICT(user_id) DO UPDATE SET tier = excluded.tier, updated_at = excluded.updated_at
+`);
+
+// ── Core ────────────────────────────────────────────────────
+function ensureCurrentSeason() {
+  const cur = getCurrentSeasonStmt.get();
+  const thisMon = startOfWeekMonVN();
+  if (cur && cur.week_start === thisMon) return cur;
+  // Có season cũ đang mở mà week_start != tuần này → đã quá hạn, đóng + reset.
+  if (cur) {
+    rotateSeason(cur.id);                    // chốt xếp hạng + promote/relegate
+  }
+  const now = Date.now();
+  const info = insertSeasonStmt.run(thisMon, now, now);
+  return { id: info.lastInsertRowid, week_start: thisMon, started_at: now, ended_at: null };
+}
+
+function getOrCreateGroup(seasonId, tier) {
+  const open = findOpenGroupStmt.get(seasonId, tier, GROUP_SIZE);
+  if (open) return open;
+  const maxSeq = (maxGroupSeqStmt.get(seasonId, tier)?.s) || 0;
+  const info = insertGroupStmt.run(seasonId, tier, maxSeq + 1);
+  return { id: info.lastInsertRowid, season_id: seasonId, tier, seq: maxSeq + 1, member_count: 0 };
+}
+
+function ensureMembership(userId) {
+  const season = ensureCurrentSeason();
+  let m = getMembershipStmt.get(season.id, userId);
+  if (m) return { season, membership: m };
+  const tier = (getUserTierStmt.get(userId)?.tier) || 'bronze';
+  const group = getOrCreateGroup(season.id, tier);
+  insertMembershipStmt.run(season.id, userId, group.id, tier);
+  incGroupCountStmt.run(group.id);
+  upsertUserTierStmt.run(userId, tier, Date.now());
+  m = getMembershipStmt.get(season.id, userId);
+  return { season, membership: m };
+}
+
+/**
+ * Cộng XP tuần cho user (gọi từ chỗ grant XP: claim quest, codelab accepted,
+ * quiz correct... cộng lại đây). Idempotent theo nguồn — caller chịu dedup.
+ */
+export function addLeagueWeekXp(userId, xp) {
+  if (!userId || !Number.isFinite(xp) || xp <= 0) return;
+  const { season } = ensureMembership(userId);
+  addWeekXpStmt.run(Math.floor(xp), season.id, userId);
+}
+
+/**
+ * Lấy bảng xếp hạng group hiện tại của user.
+ */
+export function getLeagueBoardForUser(userId) {
+  const { season, membership } = ensureMembership(userId);
+  const board = groupBoardStmt.all(membership.group_id);
+  // Thêm rank
+  let rank = 0;
+  const enriched = board.map((row, i) => {
+    rank = i + 1;
+    return {
+      rank,
+      user_id: row.user_id,
+      display_name: row.display_name,
+      week_xp: row.week_xp,
+      is_me: row.user_id === userId,
+      role: row.role,
+    };
+  });
+  return {
+    season: { id: season.id, week_start: season.week_start },
+    tier: membership.tier,
+    tier_meta: TIER_META[membership.tier],
+    group_seq: board.length > 0 ? (board[0] && board[0].group_id) : null,
+    week_xp: membership.week_xp,
+    my_rank: enriched.find(r => r.is_me)?.rank || null,
+    board: enriched,
+    promotion_zone: 5,                      // top 5 → lên tier
+    relegation_zone: GROUP_SIZE - 5,        // bottom 5 → xuống tier (nếu group đủ 30)
+  };
+}
+
+/**
+ * Khoá 1 season: tính rank, promote/relegate, set ended_at. Idempotent — gọi
+ * 2 lần cùng 1 season chỉ xử lý lần đầu.
+ */
+export function rotateSeason(seasonId) {
+  const season = db.prepare(`SELECT * FROM league_seasons WHERE id = ?`).get(seasonId);
+  if (!season || season.ended_at) return { ok: false, reason: 'already_ended_or_missing' };
+  const groups = db.prepare(`SELECT * FROM league_groups WHERE season_id = ?`).all(seasonId);
+  let promoted = 0, relegated = 0;
+  const tx = db.transaction(() => {
+    for (const g of groups) {
+      const members = db.prepare(
+        `SELECT user_id, tier, week_xp FROM league_memberships
+          WHERE group_id = ? ORDER BY week_xp DESC, user_id ASC`
+      ).all(g.id);
+      members.forEach((m, idx) => {
+        const rank = idx + 1;
+        let newTier = m.tier;
+        let isPromoted = 0, isRelegated = 0;
+        if (rank <= 5) { newTier = nextTier(m.tier); if (newTier !== m.tier) isPromoted = 1; }
+        else if (members.length >= 20 && rank > members.length - 5) {
+          // Chỉ relegate khi group đủ đông (≥20) — tránh phạt oan group nhỏ.
+          newTier = prevTier(m.tier); if (newTier !== m.tier) isRelegated = 1;
+        }
+        db.prepare(`
+          UPDATE league_memberships
+             SET final_rank = ?, promoted = ?, relegated = ?
+           WHERE season_id = ? AND user_id = ?
+        `).run(rank, isPromoted, isRelegated, seasonId, m.user_id);
+        upsertUserTierStmt.run(m.user_id, newTier, Date.now());
+        if (isPromoted) promoted++;
+        if (isRelegated) relegated++;
+      });
+    }
+    endSeasonStmt.run(Date.now(), seasonId);
+  });
+  tx();
+  return { ok: true, promoted, relegated };
+}
+
+export function attachLeague(router, requireAuth) {
+  router.get('/api/league/me', requireAuth, (req, res) => {
+    try {
+      const data = getLeagueBoardForUser(req.user.id);
+      res.json({ ok: true, ...data });
+    } catch (e) {
+      console.error('[league] me error', e);
+      res.status(500).json({ ok: false, error: 'internal' });
+    }
+  });
+
+  // Lấy lịch sử các season trước của user (hiển thị badge promoted/relegated)
+  router.get('/api/league/history', requireAuth, (req, res) => {
+    const rows = db.prepare(`
+      SELECT m.season_id, m.tier, m.week_xp, m.final_rank, m.promoted, m.relegated,
+             s.week_start, s.ended_at
+        FROM league_memberships m
+        JOIN league_seasons s ON s.id = m.season_id
+       WHERE m.user_id = ? AND s.ended_at IS NOT NULL
+       ORDER BY s.ended_at DESC LIMIT 12
+    `).all(req.user.id);
+    res.json({ ok: true, items: rows, tiers: TIER_META });
+  });
+
+  // Catalog tier — public, FE render hệ thống tier
+  router.get('/api/league/tiers', (_req, res) => {
+    res.json({ tiers: TIERS, meta: TIER_META });
+  });
+}
+
+// Cron-lite: mỗi lần module load tự kiểm tra & rotate nếu cần. Cộng thêm
+// setInterval mỗi 30 phút để rotate ngay sau khi sang tuần mới (00:00 thứ 2 VN)
+// — không cần OS cron. Idempotent.
+function maybeRotate() {
+  try {
+    const cur = getCurrentSeasonStmt.get();
+    const thisMon = startOfWeekMonVN();
+    if (cur && cur.week_start !== thisMon) rotateSeason(cur.id);
+    ensureCurrentSeason();
+  } catch (e) {
+    console.warn('[league] rotate check failed', e.message);
+  }
+}
+maybeRotate();
+setInterval(maybeRotate, 30 * 60 * 1000);
+
+export { TIERS, TIER_META };

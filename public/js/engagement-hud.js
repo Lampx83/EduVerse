@@ -3,10 +3,13 @@
 // import module này 1 lần (auth-header.js đã import sẵn).
 
 const API = {
-  state: '/api/engagement/state',
-  ping:  '/api/engagement/ping',
-  claim: '/api/engagement/claim',
+  state:  '/api/engagement/state',
+  ping:   '/api/engagement/ping',
+  claim:  '/api/engagement/claim',
+  league: '/api/league/me',
 };
+
+const TIER_ICO = { bronze:'🥉', silver:'🥈', gold:'🥇', sapphire:'💎', ruby:'🔴', diamond:'💠' };
 
 const KIND_ICO = {
   lesson:   '📘',
@@ -36,6 +39,18 @@ const CSS = `
     background: rgba(15,23,42,0.95);
   }
   .tz-eng-hud[hidden] { display: none !important; }
+  .tz-eng-league {
+    display: inline-flex; align-items: center; gap: 4px;
+    text-decoration: none; color: inherit;
+    padding: 2px 6px; border-radius: 10px;
+    background: rgba(251,191,36,0.12);
+    border: 1px solid rgba(251,191,36,0.3);
+    font-weight: 700; font-size: 12px;
+    transition: background 0.15s;
+  }
+  .tz-eng-league:hover { background: rgba(251,191,36,0.25); }
+  .tz-eng-league .ico { font-size: 13px; line-height: 1; }
+  .tz-eng-league .tier { color: #fde68a; }
   .tz-eng-streak {
     display: inline-flex; align-items: center; gap: 4px;
     color: #fbbf24;
@@ -177,6 +192,10 @@ class EngagementHUD {
     hud.hidden = true;
     hud.title = 'Streak · Hearts · Nhiệm vụ hôm nay';
     hud.innerHTML = `
+      <a class="tz-eng-league" href="/league.html" title="League tuần — bấm xem bảng xếp hạng" data-league>
+        <span class="ico">🏆</span><span class="tier">…</span>
+      </a>
+      <span class="tz-eng-sep"></span>
       <span class="tz-eng-streak"><span class="flame">🔥</span><span class="num">0</span></span>
       <span class="tz-eng-sep"></span>
       <span class="tz-eng-hearts" data-h></span>
@@ -184,6 +203,8 @@ class EngagementHUD {
       <span class="tz-eng-sep"></span>
       <span class="tz-eng-quests">📋 <span class="badge">0</span></span>
     `;
+    // Bấm vào icon tier không trigger openDrawer — để link tự nhảy
+    hud.querySelector('.tz-eng-league').addEventListener('click', (e) => e.stopPropagation());
     hud.addEventListener('click', () => this.openDrawer());
     document.body.appendChild(hud);
     this.hud = hud;
@@ -212,15 +233,25 @@ class EngagementHUD {
 
   async refresh(silent = false) {
     try {
-      const res = await fetch(API.state, { credentials: 'same-origin' });
-      if (res.status === 401) {
-        // Guest — ẩn HUD im lặng. Không log để khỏi spam console khi /index.
+      const [stateRes, leagueRes] = await Promise.all([
+        fetch(API.state,  { credentials: 'same-origin' }),
+        fetch(API.league, { credentials: 'same-origin' }).catch(() => null),
+      ]);
+      if (stateRes.status === 401) {
+        // Guest — ẩn HUD im lặng.
         this.hud.hidden = true;
         return;
       }
-      if (!res.ok) throw new Error('http_' + res.status);
-      const data = await res.json();
+      if (!stateRes.ok) throw new Error('http_' + stateRes.status);
+      const data = await stateRes.json();
+      // League là optional — server tự ensureMembership; tuy nhiên nếu lỗi
+      // không block HUD.
+      let league = null;
+      if (leagueRes && leagueRes.ok) {
+        try { league = await leagueRes.json(); } catch {}
+      }
       this.state = data;
+      this.league = league;
       this.render();
       this.hud.hidden = false;
     } catch (e) {
@@ -231,6 +262,16 @@ class EngagementHUD {
   render() {
     const s = this.state;
     if (!s) return;
+    // League tier (nếu có)
+    const leagueEl = this.hud.querySelector('.tz-eng-league');
+    if (this.league && this.league.tier_meta) {
+      leagueEl.hidden = false;
+      leagueEl.querySelector('.ico').textContent = this.league.tier_meta.icon;
+      leagueEl.querySelector('.tier').textContent =
+        this.league.tier_meta.label + (this.league.my_rank ? ` #${this.league.my_rank}` : '');
+    } else {
+      leagueEl.hidden = true;
+    }
     // Streak
     this.hud.querySelector('.tz-eng-streak .num').textContent = s.streak;
     // Hearts dot row

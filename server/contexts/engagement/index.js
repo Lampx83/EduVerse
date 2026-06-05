@@ -9,6 +9,7 @@
 
 import { db, upsertUserWallet, getUserWallet } from '../../db.js';
 import { requireAuth } from '../identity/auth.js';
+import { attachLeague, addLeagueWeekXp } from './league.js';
 
 // ── Hằng số cấu hình ─────────────────────────────────────────
 const HEART_MAX = 5;
@@ -268,6 +269,8 @@ function claimQuest(userId, slot, domain) {
     coins: (cur.coins || 0) + q.reward_coin,
     xp:    (cur.xp    || 0) + q.reward_xp,
   }, { monotonic: false, domain });
+  // League: XP claim quest cũng đẩy vào bảng tuần.
+  try { addLeagueWeekXp(userId, q.reward_xp); } catch {}
   return { ok: true, rewardCoin: q.reward_coin, rewardXp: q.reward_xp };
 }
 
@@ -312,6 +315,9 @@ export function attachEngagement(app) {
     trackEngagementProgress(req.user.id, kind, amount);
     res.json({ ok: true });
   });
+
+  // League routes (/api/league/me, /history, /tiers)
+  attachLeague(app, requireAuth);
 
   // Claim quest. Body: { slot: 0|1|2 }
   app.post('/api/engagement/claim', requireAuth, (req, res) => {
