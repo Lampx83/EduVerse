@@ -257,6 +257,21 @@
 <div class="level-up" id="lvup">🎉 Lên cấp!</div>
 
 <script>
+// Mầm non: game ghép vần quá khó (cần biết đọc + đánh vần). Redirect sang
+// Ghép Chữ Cái (nhận diện chữ A-Á-Â) — phù hợp 3-5 tuổi.
+(function gateForPreschool() {
+  try {
+    const dom = new URLSearchParams(location.search).get('domain');
+    if (dom === 'preschool') { location.replace('/ghep-chu-cai.html'); return; }
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const g = d?.user?.grade;
+        if (g === 'N' || g === 0) location.replace('/ghep-chu-cai.html');
+      }).catch(()=>{});
+  } catch {}
+})();
+
 // ============================================================
 // Đố Chữ Ghép Vần — ghép âm tiết Tiếng Việt.
 // 3 cấp: easy (3-5 ký tự), medium (5-7), hard (7-10).

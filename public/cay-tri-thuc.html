@@ -48,8 +48,10 @@
   .trunk { fill: var(--trunk); }
   .trunk-dark { fill: var(--trunk-dark); }
   .branch { stroke: var(--trunk); fill:none; stroke-linecap:round; }
-  .leaf { transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .25s; transform-origin: center; cursor:pointer; }
-  .leaf:hover { transform: scale(1.25); filter: drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
+  /* KHÔNG dùng transform:scale ở hover — sẽ ghi đè inline transform="translate(...) rotate(...)"
+     của leaf → leaf bay về (0,0) lúc hover, gây flicker. Dùng filter highlight thay thế. */
+  .leaf { transition: filter .18s ease; cursor:pointer; }
+  .leaf:hover { filter: brightness(1.25) drop-shadow(0 3px 8px rgba(0,0,0,.45)); }
   .leaf.empty { opacity:.25; filter: grayscale(.6); }
   .leaf-label { font-size:11px; font-weight:700; fill:#fff; text-anchor:middle; pointer-events:none; }
   .fruit { transition: transform .4s cubic-bezier(.34,1.56,.64,1); transform-origin:center; }
@@ -364,8 +366,15 @@ function render() {
     el.addEventListener('mouseleave', hideTip);
     el.addEventListener('click', () => {
       const fid = el.dataset.fid;
-      // Navigate to module containing this scenario
-      window.location.href = `/module.html?id=${encodeURIComponent(fid)}`;
+      // module.html đọc param tên `module=` (không phải `id=`); thêm domain= để load
+      // đúng catalog (N* = preschool, P* = primary, S* = secondary, H* = highschool).
+      const dom = fid.startsWith('N') ? 'preschool'
+                : fid.startsWith('P') ? 'primary'
+                : fid.startsWith('S') ? 'secondary'
+                : fid.startsWith('H') ? 'highschool'
+                : '';
+      const qs = `module=${encodeURIComponent(fid)}${dom ? '&domain=' + dom : ''}`;
+      window.location.href = `/module.html?${qs}`;
     });
   }
 }

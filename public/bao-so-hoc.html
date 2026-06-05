@@ -174,12 +174,14 @@
       <div class="ic">⛈️</div>
       <h1>Bão Số Học</h1>
       <p>Phép tính rơi như mưa. Bấm đáp án đúng trước khi chúng chạm đất nhé! Combo cao = sét đánh, điểm gấp đôi.</p>
-      <div class="levels" id="level-picker">
+      <!-- Picker ẩn mặc định — luôn tự nhận diện cấp; chỉ hiện khi không có grade
+           (admin/guest test). Lớp nào chơi content lớp đó, không bắt chọn. -->
+      <div class="levels" id="level-picker" style="display:none;">
         <button class="lv on" data-lvl="easy">🐣 Lớp 1-2</button>
         <button class="lv" data-lvl="medium">🦊 Lớp 3-4</button>
         <button class="lv" data-lvl="hard">🦅 Lớp 5+</button>
       </div>
-      <div class="levels" id="level-badge" style="display:none;">
+      <div class="levels" id="level-badge">
         <span class="lv on" id="lv-badge-text">🎓 Lớp của em</span>
       </div>
       <button class="start" id="btn-start">▶ Bắt đầu</button>
@@ -475,17 +477,40 @@ function gradeToLevel(g) {
   return        { lvl: 'hard',   label: '🦅 Lớp ' + n + ' · khó' };
 }
 (async function autoDetectGrade() {
+  // Mầm non / preschool: game này không phù hợp (chưa biết phép tính).
+  // Redirect sang Đếm Quả Trên Cây trước khi load gì khác.
+  try {
+    const dom = new URLSearchParams(location.search).get('domain');
+    if (dom === 'preschool') { location.replace('/dem-qua.html'); return; }
+  } catch {}
+
+  let grade = null;
   try {
     const r = await fetch('/api/auth/me', { credentials: 'include' });
-    if (!r.ok) return;
-    const data = await r.json();
-    const map = gradeToLevel(data?.user?.grade);
-    if (!map) return;
+    if (r.ok) grade = (await r.json())?.user?.grade ?? null;
+  } catch {}
+
+  // Cũng redirect nếu profile cho biết HS đang là mầm non (grade < 1 hoặc grade==='N').
+  if (grade === 'N' || grade === 0) { location.replace('/dem-qua.html'); return; }
+
+  const map = gradeToLevel(grade);
+  if (map) {
+    // Có grade: lock vào cấp đó, không cho chọn.
     level = map.lvl;
-    $('#level-picker').style.display = 'none';
     $('#level-badge').style.display = '';
     $('#lv-badge-text').textContent = map.label;
-  } catch {}
+    $('#level-picker').style.display = 'none';
+  } else {
+    // Không có grade (admin/guest test) — vẫn ẩn picker mặc định, mặc định easy,
+    // nhưng cho phép mở picker bằng cách bấm vào badge.
+    $('#level-badge').style.display = '';
+    $('#lv-badge-text').textContent = '🐣 Mặc định: Lớp 1-2 (bấm để đổi)';
+    $('#lv-badge-text').style.cursor = 'pointer';
+    $('#lv-badge-text').addEventListener('click', () => {
+      $('#level-picker').style.display = '';
+      $('#level-badge').style.display = 'none';
+    });
+  }
 })();
 </script>
 </body>

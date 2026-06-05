@@ -83,8 +83,19 @@
   .modal-body li { margin:5px 0; font-size:14px; opacity:.92; }
   .mb-note { background:rgba(251,191,36,.12); border-left:3px solid var(--accent); padding:10px 14px; border-radius:8px; margin:4px 0 14px; font-size:13.5px; }
   .mb-cards { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); margin:4px 0 14px; }
-  .mb-card { background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:12px; padding:12px; }
-  .mb-card .ci { font-size:24px; } .mb-card .ct { font-weight:700; font-size:13.5px; margin:4px 0 2px; } .mb-card .cd { font-size:12.5px; opacity:.82; }
+  .mb-card { background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:12px; padding:12px;
+    cursor:pointer; transition: background .15s, transform .12s, border-color .15s; position:relative; overflow:hidden; }
+  .mb-card:hover { background:rgba(255,255,255,.1); border-color:var(--accent,#fbbf24); transform: translateY(-2px); }
+  .mb-card .ci { font-size:32px; transition: transform .25s; } .mb-card .ct { font-weight:700; font-size:13.5px; margin:6px 0 2px; } .mb-card .cd { font-size:12.5px; opacity:.82; }
+  .mb-card .more { font-size:11px; opacity:.55; margin-top:8px; }
+  .mb-card .more::before { content:'👆 Bấm xem thêm'; }
+  .mb-card.flipped { background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(34,197,94,.12));
+    border-color: #22c55e; }
+  .mb-card.flipped .ci { transform: scale(1.3) rotate(-8deg); }
+  .mb-card.flipped .more::before { content:'✓ Đã ghi nhớ — bấm lại để gập'; color:#86efac; }
+  .mb-card.flipped::after { content:'⭐'; position:absolute; top:6px; right:8px; font-size:14px;
+    animation: cardStar .5s cubic-bezier(.2,.9,.3,1.6); }
+  @keyframes cardStar { 0%{transform:scale(0) rotate(0)} 60%{transform:scale(1.3) rotate(20deg)} 100%{transform:scale(1) rotate(0)} }
   .timeline { list-style:none; padding:0; margin:4px 0 8px; }
   .timeline li { position:relative; padding:0 0 16px 26px; border-left:2px solid rgba(255,255,255,.18); }
   .timeline li:last-child { border-left-color:transparent; padding-bottom:0; }
@@ -1865,14 +1876,89 @@ function renderBlocks(blocks){
     if(b.h) return `<h4>${esc(b.h)}</h4>`;
     if(b.p) return `<p>${esc(b.p)}</p>`;
     if(b.note) return `<div class="mb-note">${esc(b.note)}</div>`;
+    // Mầm non + list (ul/ol) trông giống "Tập tô" → thay bằng Trace Canvas.
+    // Phải check TRƯỚC handler ul/ol mặc định, không thì handler cũ trả luôn <ol>.
+    if((b.ul || b.ol) && dom==='preschool'){
+      const items = b.ul || b.ol;
+      const looksTrace = items.some(s => /tô|cầm bút|nét/i.test(String(s)));
+      if(looksTrace){
+        const i = _pr.push({t:'trace', glyphs:['A','O','0','3']}) - 1;
+        return `<div class="pr-ps" data-ps="${i}"></div>
+          <details style="margin-top:10px;opacity:.75;font-size:13px;">
+            <summary>Gợi ý cho phụ huynh</summary>
+            <${b.ul?'ul':'ol'}>${items.map(x=>`<li>${esc(x)}</li>`).join('')}</${b.ul?'ul':'ol'}>
+          </details>`;
+      }
+    }
     if(b.ul) return `<ul>${b.ul.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
     if(b.ol) return `<ol>${b.ol.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`;
-    if(b.cards) return `<div class="mb-cards">${b.cards.map(c=>`<div class="mb-card"><div class="ci">${c.ic||''}</div><div class="ct">${esc(c.t)}</div><div class="cd">${esc(c.d)}</div></div>`).join('')}</div>`;
+    if(b.cards) return `<div class="mb-cards">${b.cards.map(c=>`<div class="mb-card" data-card><div class="ci">${c.ic||''}</div><div class="ct">${esc(c.t)}</div><div class="cd">${esc(c.d)}</div><div class="more"></div></div>`).join('')}</div>`;
     if(b.timeline) return `<ul class="timeline">${b.timeline.map(t=>`<li><div class="tl-t">${esc(t.t)}</div><div class="tl-d">${esc(t.d)}</div></li>`).join('')}</ul>`;
-    if(b.flash) return `<div class="flash-grid">${b.flash.map(f=>`<div class="flash"><div class="flash-inner"><div class="flash-face flash-front"><div class="fe">${f.e||''}</div><div class="fn">${esc(f.f)}</div></div><div class="flash-face flash-back">${esc(f.b)}</div></div></div>`).join('')}</div><div class="flash-hint">Bấm vào thẻ để lật xem đáp án</div>`;
-    if(b.check) return `<ul class="checklist">${b.check.map((x,i)=>`<li><label><input type="checkbox" data-ck="${i}"> <span>${esc(x)}</span></label></li>`).join('')}</ul><div class="ck-prog">0/${b.check.length} hoàn thành</div>`;
+    // THCS/THPT + flashcard ≥4 thẻ → upgrade thành Memory Match (lật cặp, có timer).
+    // Cấp khác hoặc <4 thẻ thì giữ kiểu flash flip cũ.
+    if(b.flash){
+      const isLab = (dom==='highschool' || dom==='secondary');
+      if(isLab && b.flash.length >= 4){
+        const i = _pr.push({t:'memory', pairs:b.flash}) - 1;
+        return `<div class="pr-sec" data-sec="${i}"></div>`;
+      }
+      return `<div class="flash-grid">${b.flash.map(f=>`<div class="flash"><div class="flash-inner"><div class="flash-face flash-front"><div class="fe">${f.e||''}</div><div class="fn">${esc(f.f)}</div></div><div class="flash-face flash-back">${esc(f.b)}</div></div></div>`).join('')}</div><div class="flash-hint">Bấm vào thẻ để lật xem đáp án</div>`;
+    }
+    // Checklist nâng cấp theo cấp học:
+    //  - Mầm non → Sticker Board (kéo dán vào Bảng Ngoan, TTS).
+    //  - THCS/THPT + content "an toàn" → Hazard Scene (click vùng nguy hiểm).
+    //  - THCS/THPT + content "thời gian biểu / ôn / học / ngủ" → Day Planner.
+    //  - Cấp khác / fallback giữ checkbox cũ.
+    if(b.check){
+      if(dom==='preschool'){
+        const i=_pr.push({t:'sticker', b:b})-1;
+        return `<div class="pr-ps" data-ps="${i}"></div>`;
+      }
+      const isLab = (dom==='highschool' || dom==='secondary');
+      if(isLab){
+        const txt = b.check.join(' ').toLowerCase();
+        if(/an toàn|nguy|cẩn|kiểm tra|ngắt|dây|phích|điện|hoá chất|ppe/i.test(txt)){
+          const i=_pr.push({t:'hazard', items:b.check})-1;
+          return `<div class="pr-sec" data-sec="${i}"></div>`;
+        }
+        if(/thời gian biểu|ôn|tự học|ngay sau|đặt câu hỏi|ngủ|kế hoạch/i.test(txt)){
+          const i=_pr.push({t:'planner', items:b.check})-1;
+          return `<div class="pr-sec" data-sec="${i}"></div>`;
+        }
+      }
+      return `<ul class="checklist">${b.check.map((x,i)=>`<li><label><input type="checkbox" data-ck="${i}"> <span>${esc(x)}</span></label></li>`).join('')}</ul><div class="ck-prog">0/${b.check.length} hoàn thành</div>`;
+    }
+    // Block tường minh: {hazard: [...]}, {planner: [...]}, {memory: [...]}, {trace: ...}.
+    if(b.hazard){
+      const items = Array.isArray(b.hazard) ? b.hazard : (b.hazard.items || []);
+      const i=_pr.push({t:'hazard', items})-1;
+      return `<div class="pr-sec" data-sec="${i}"></div>`;
+    }
+    if(b.planner){
+      const items = Array.isArray(b.planner) ? b.planner : (b.planner.items || []);
+      const i=_pr.push({t:'planner', items})-1;
+      return `<div class="pr-sec" data-sec="${i}"></div>`;
+    }
+    if(b.memory){
+      const pairs = Array.isArray(b.memory) ? b.memory : (b.memory.pairs || []);
+      const i=_pr.push({t:'memory', pairs})-1;
+      return `<div class="pr-sec" data-sec="${i}"></div>`;
+    }
+    // {trace: 'A'} hoặc {trace: ['A','O','0','3']} — tô chữ/số (mầm non).
+    if(b.trace){
+      const glyphs = Array.isArray(b.trace) ? b.trace : [b.trace];
+      const i = _pr.push({t:'trace', glyphs}) - 1;
+      return `<div class="pr-ps" data-ps="${i}"></div>`;
+    }
     if(b.goal) return `<div class="goal-in"><input id="goal-input" placeholder="VD: Hoàn thành 3 module bào chế tuần này" /><button id="goal-save">Lưu</button></div><div class="goal-saved" id="goal-saved"></div>`;
-    if(b.mcq) return b.mcq.map(m=>`<div class="mcq" data-a="${m.a}"><div class="mcq-q">${esc(m.q)}</div>${m.o.map((o,j)=>`<button class="mcq-o" data-i="${j}">${esc(o)}</button>`).join('')}<div class="mcq-fb">${esc(m.fb||'')}</div></div>`).join('');
+    if(b.mcq){
+      // Mầm non: render Big Bubble Cards (đáp án to, TTS đọc to, confetti).
+      if(dom==='preschool'){
+        const i=_pr.push({t:'mcq-ps', items:b.mcq})-1;
+        return `<div class="pr-ps" data-ps="${i}"></div>`;
+      }
+      return b.mcq.map(m=>`<div class="mcq" data-a="${m.a}"><div class="mcq-q">${esc(m.q)}</div>${m.o.map((o,j)=>`<button class="mcq-o" data-i="${j}">${esc(o)}</button>`).join('')}<div class="mcq-fb">${esc(m.fb||'')}</div></div>`).join('');
+    }
     if(b.piano){ const o=(typeof b.piano==='object')?b.piano:{}; const i=_pr.push({t:'piano',b:b})-1; return prShell(i,'🎹', o.title||'Đàn phím — chơi thử', o.sub||'Bấm phím để nghe nốt nhạc. Bấm ▶ để nghe câu mẫu rồi tự chơi theo.'); }
     if(b.rhythm){ const o=(typeof b.rhythm==='object')?b.rhythm:{}; const i=_pr.push({t:'rhythm',b:b})-1; return prShell(i,'🥁', o.title||'Tập gõ nhịp', o.sub||'Chọn nhịp 2/4, 3/4 hay 4/4 — bấm Bắt đầu rồi gõ theo phách (phách 1 là phách mạnh).'); }
     if(b.mixer){ const o=(typeof b.mixer==='object')?b.mixer:{}; const i=_pr.push({t:'mixer',b:b})-1; return prShell(i,'🎨', o.title||'Pha màu cơ bản', o.sub||'Bấm 2 màu cơ bản (Đỏ – Vàng – Lam) để xem màu pha ra. Thử pha đúng màu được yêu cầu.'); }
@@ -1898,6 +1984,8 @@ function openRoom(r){
   }
   body.innerHTML = renderBlocks(r.panel || [r.content || 'Nội dung đang được biên soạn.']);
   body.querySelectorAll('.flash').forEach(f=>f.addEventListener('click',()=>f.classList.toggle('flipped')));
+  // Cards interactive — bấm card để đánh dấu "đã ghi nhớ" (toggle), có animation sao.
+  body.querySelectorAll('.mb-card[data-card]').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('flipped')));
   body.querySelectorAll('.mcq').forEach(mc=>{ const a=+mc.dataset.a; mc.querySelectorAll('.mcq-o').forEach(o=>o.addEventListener('click',()=>{ if(mc.dataset.done) return; mc.dataset.done='1'; const pick=+o.dataset.i; mc.querySelectorAll('.mcq-o').forEach(x=>{ const xi=+x.dataset.i; if(xi===a) x.classList.add('correct'); else if(xi===pick) x.classList.add('wrong'); }); const fb=mc.querySelector('.mcq-fb'); if(fb&&fb.textContent.trim()) fb.classList.add('show'); })); });
   const prog=body.querySelector('.ck-prog');
   if(prog){ const boxes=[...body.querySelectorAll('input[data-ck]')];
@@ -1911,6 +1999,43 @@ function openRoom(r){
     body.querySelector('#goal-save').addEventListener('click',()=>{ const v=gIn.value.trim(); if(!v) return;
       try{ localStorage.setItem(gKey,v); }catch(e){} show(v); gIn.value=''; toast('Đã lưu mục tiêu!'); }); }
   body.querySelectorAll('.pr[data-pr]').forEach(el=>initPractice(el, _pr[+el.dataset.pr]));
+  // THCS/THPT blocks: Hazard / Memory Match / Day Planner.
+  const secNodes = body.querySelectorAll('.pr-sec[data-sec]');
+  if(secNodes.length){
+    import('/js/engine/secondary-ui.js?v=p3').then(ui => {
+      secNodes.forEach(node => {
+        const d = _pr[+node.dataset.sec];
+        if(d.t === 'hazard') ui.renderHazardScene(node, d.items, () => toast('🏆 Đã rà soát đủ nguy cơ — phòng thí nghiệm an toàn!'));
+        else if(d.t === 'memory') ui.renderMemoryMatch(node, d.pairs, ({seconds}) => toast(`🏆 Ghép xong sau ${seconds}s!`));
+        else if(d.t === 'planner') ui.renderDayPlanner(node, d.items, ({score, total}) => toast(`Kế hoạch: ${score}/${total} điểm`));
+      });
+    }).catch(err => console.warn('[secondary-ui] load fail', err));
+  }
+  // Mầm non blocks: Sticker Board / Trace Canvas (dynamic import — không bắt cấp khác tải).
+  const psNodes = body.querySelectorAll('.pr-ps[data-ps]');
+  if(psNodes.length){
+    import('/js/engine/preschool-ui.js?v=p3').then(ui => {
+      psNodes.forEach(node => {
+        const d = _pr[+node.dataset.ps];
+        if(d.t === 'sticker'){
+          ui.renderStickerBoard(node, d.b.check || [], () => toast('🎉 Bé giỏi quá! +10 sao'));
+        } else if(d.t === 'mcq-ps'){
+          ui.renderInlineQuizPreschool(node, d.items);
+        } else if(d.t === 'trace'){
+          let idx = 0;
+          const next = () => {
+            node.innerHTML = '';
+            if(idx >= d.glyphs.length){
+              node.innerHTML = '<div style="text-align:center;font-size:24px;font-weight:900;color:#16a34a;padding:24px;">🏆 Bé tô hết rồi! Giỏi quá!</div>';
+              return;
+            }
+            ui.renderTraceCanvas(node, d.glyphs[idx], { onDone: () => { idx++; next(); } });
+          };
+          next();
+        }
+      });
+    }).catch(err => console.warn('[preschool-ui] load fail', err));
+  }
   modal.classList.add('show'); body.scrollTop=0;
 }
 

@@ -25,6 +25,8 @@
 
 import { getDrug, findInteractions } from './drug-db.js';
 import { Assessment } from './assessment.js';
+import { getActiveDomainId } from './domain.js';
+import { renderQuizPreschool } from './preschool-ui.js';
 
 const RENDERERS = {
   'quiz':              renderQuiz,
@@ -131,11 +133,14 @@ export class ScenarioEngine {
 // ============================================================
 
 /**
- * Quiz dispatcher: bản game hoá (phản hồi tức thì) cho Tiểu học/THCS,
- * còn lại dùng bản cổ điển (chọn rồi Nộp bài).
+ * Quiz dispatcher: mầm non dùng Big Bubble (1 câu/màn, TTS, confetti);
+ * Tiểu học/THCS dùng instant feedback; còn lại dùng classic Nộp bài.
  * @param {ScenarioEngine} engine
  */
 function renderQuiz(engine, host) {
+  try {
+    if (getActiveDomainId() === 'preschool') return renderQuizPreschool(engine, host);
+  } catch {}
   if (engine.instantFeedback) return renderQuizInstant(engine, host);
   return renderQuizClassic(engine, host);
 }
