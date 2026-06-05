@@ -26,7 +26,12 @@
 import { getDrug, findInteractions } from './drug-db.js';
 import { Assessment } from './assessment.js';
 import { getActiveDomainId } from './domain.js';
-import { renderQuizPreschool } from './preschool-ui.js';
+// Cache-bust ?v=p7: server có Cache-Control max-age=86400, browser cache ES module
+// theo URL → khi đổi quiz dispatcher cần bump version để client load module mới.
+import { renderQuizPreschool } from './preschool-ui.js?v=p7';
+import { renderQuizPrimary } from './primary-ui.js?v=p7';
+import { renderQuizSecondary, renderQuizHighschool } from './secondary-ui.js?v=p7';
+import { renderQuizUniversity } from './university-ui.js?v=p7';
 
 const RENDERERS = {
   'quiz':              renderQuiz,
@@ -133,13 +138,25 @@ export class ScenarioEngine {
 // ============================================================
 
 /**
- * Quiz dispatcher: mầm non dùng Big Bubble (1 câu/màn, TTS, confetti);
- * Tiểu học/THCS dùng instant feedback; còn lại dùng classic Nộp bài.
+ * Quiz dispatcher: 4 tier UI/UX riêng biệt theo lứa tuổi.
+ *  - preschool  → Big Bubble Cards (cute, TTS, confetti)
+ *  - primary    → Adventure Quest (pet 🦊 cổ vũ, đáp án A/B/C/D vibrant, progress sao)
+ *  - secondary  → Modern Vibrant (streak counter, progress bar gradient)
+ *  - highschool → Focused Academic (dim theme, question nav, flag for review, timer)
+ *  - pharmacy/it/economics → University Exam (palette sidebar, confirm submit, breakdown)
+ *  - fallback   → classic Nộp bài / instant feedback theo engine config
  * @param {ScenarioEngine} engine
  */
 function renderQuiz(engine, host) {
   try {
-    if (getActiveDomainId() === 'preschool') return renderQuizPreschool(engine, host);
+    const dom = getActiveDomainId();
+    if (dom === 'preschool')  return renderQuizPreschool(engine, host);
+    if (dom === 'primary')    return renderQuizPrimary(engine, host);
+    if (dom === 'secondary')  return renderQuizSecondary(engine, host);
+    if (dom === 'highschool') return renderQuizHighschool(engine, host);
+    if (dom === 'pharmacy' || dom === 'it' || dom === 'economics') {
+      return renderQuizUniversity(engine, host);
+    }
   } catch {}
   if (engine.instantFeedback) return renderQuizInstant(engine, host);
   return renderQuizClassic(engine, host);

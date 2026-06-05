@@ -17,7 +17,7 @@ export { HERBS, getHerb, getHerbsByIndication, getHerbsByFamily } from './herb-d
 export { CASES, getCase, getCasesBySpecialty, getCasesByDifficulty } from './case-db.js';
 
 // RUNTIME
-export { ScenarioEngine } from './scenario-engine.js';
+export { ScenarioEngine } from './scenario-engine.js?v=p7';
 export { Assessment, scoreToStars } from './assessment.js';
 export { gradeSoap, patientTurn, evaluateRoleplay } from './ai-tutor.js';
 

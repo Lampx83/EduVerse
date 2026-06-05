@@ -133,6 +133,105 @@ function injectPrimaryStyles() {
     font-size:13.5px; line-height:1.55; }
   .ptl-event.opened .d-long { display:block; animation: qslPop .35s cubic-bezier(.2,.9,.3,1.6); }
   .ptl-hint { font-size:12.5px; opacity:.7; }
+
+  /* ── Quiz Primary — Adventure Cute (1 câu/màn, big options, pet companion) ── */
+  .pqz-wrap { display:flex; flex-direction:column; gap:18px; padding:8px 0 90px; position:relative; }
+  .pqz-progress { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; padding:6px 0; }
+  .pqz-progress .star { font-size: 22px; line-height:1; opacity:.4; transition: opacity .2s, transform .25s; }
+  .pqz-progress .star.cur { opacity:1; transform: scale(1.25); filter: drop-shadow(0 2px 4px rgba(251,191,36,.5)); }
+  .pqz-progress .star.done { opacity:1; }
+  .pqz-progress .star.wrong { opacity:1; filter: grayscale(.7); }
+
+  .pqz-card {
+    background: linear-gradient(135deg, rgba(255,255,255,.97), rgba(254,243,199,.92));
+    border-radius: 28px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,.28);
+    color:#1f1147; position:relative; }
+  .pqz-num { display:inline-block; background:#fbbf24; color:#1f1147; padding:5px 14px;
+    border-radius:999px; font-size:13px; font-weight:900; margin-bottom: 10px; }
+  .pqz-stem { font-size: clamp(20px, 2.8vw, 26px); font-weight:800; line-height:1.4; margin-bottom: 18px; }
+  .pqz-img { max-width:100%; border-radius:14px; margin: 6px 0 14px; }
+
+  .pqz-choices { display:grid; gap:12px; grid-template-columns: 1fr; }
+  @media (min-width: 600px) { .pqz-choices { grid-template-columns: 1fr 1fr; } }
+  .pqz-opt {
+    border: none; cursor: pointer; user-select:none;
+    background: #fff; padding: 16px 18px; border-radius: 18px;
+    font-family: inherit; font-size: clamp(16px, 2.1vw, 19px); font-weight:800; color:#1f1147;
+    text-align:left; display:flex; align-items:center; gap:14px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.12), 0 12px 22px rgba(0,0,0,.14);
+    transition: transform .15s, box-shadow .15s, background .15s;
+  }
+  .pqz-opt:hover:not(.is-disabled) { transform: translateY(-2px); box-shadow: 0 8px 0 rgba(0,0,0,.12), 0 16px 28px rgba(0,0,0,.2); }
+  .pqz-opt:active:not(.is-disabled) { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+  .pqz-opt.is-disabled { cursor:default; }
+  .pqz-opt .key {
+    flex:none; width:38px; height:38px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:900; color:#fff; }
+  .pqz-opt.c0 .key { background:#fbbf24; color:#1f1147; }
+  .pqz-opt.c1 .key { background:#ef4444; }
+  .pqz-opt.c2 .key { background:#22c55e; }
+  .pqz-opt.c3 .key { background:#3b82f6; }
+  .pqz-opt.c4 .key { background:#a855f7; }
+  .pqz-opt.c5 .key { background:#ec4899; }
+  .pqz-opt.is-correct {
+    background: linear-gradient(135deg, #bbf7d0, #86efac);
+    border: 3px solid #22c55e;
+    animation: pqzPop .55s cubic-bezier(.2,.9,.3,1.6);
+  }
+  .pqz-opt.is-correct .key { background:#16a34a; color:#fff; }
+  .pqz-opt.is-wrong {
+    background: linear-gradient(135deg, #fecaca, #fca5a5);
+    animation: pqzWob .45s ease;
+  }
+  .pqz-opt.is-wrong .key { background:#dc2626; }
+  .pqz-opt.is-show-correct {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 2px solid #fbbf24;
+  }
+  @keyframes pqzPop { 0%{transform:scale(1)} 40%{transform:scale(1.08)} 100%{transform:scale(1.02)} }
+  @keyframes pqzWob { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-12px)} 40%{transform:translateX(12px)} 60%{transform:translateX(-8px)} 80%{transform:translateX(8px)} }
+
+  .pqz-fb { margin-top: 14px; padding: 12px 16px; border-radius: 14px;
+    font-size: 15px; font-weight:700; line-height: 1.5;
+    background: rgba(255,255,255,.7); animation: pqzPop .35s cubic-bezier(.2,.9,.3,1.6); }
+  .pqz-fb.ok  { background: #d1fae5; color:#065f46; border-left: 4px solid #16a34a; }
+  .pqz-fb.bad { background: #fee2e2; color:#7f1d1d; border-left: 4px solid #dc2626; }
+
+  .pqz-pet { position:fixed; right: 20px; bottom: 90px; z-index: 40; font-size: 56px;
+    line-height: 1; pointer-events:none; user-select:none; transition: transform .35s cubic-bezier(.2,.9,.3,1.6);
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,.3)); }
+  .pqz-pet.happy { transform: translateY(-12px) rotate(-8deg) scale(1.15); }
+  .pqz-pet.sad { transform: translateY(6px) scale(.92); filter: grayscale(.4) drop-shadow(0 4px 8px rgba(0,0,0,.3)); }
+  .pqz-bubble { position:fixed; right: 80px; bottom: 110px; z-index: 40;
+    background:#fff; color:#1f1147; padding: 8px 14px; border-radius: 18px;
+    font-size: 14px; font-weight:800; box-shadow: 0 6px 14px rgba(0,0,0,.2);
+    pointer-events:none; opacity:0; transform: translateY(10px); transition: opacity .2s, transform .2s; }
+  .pqz-bubble.show { opacity:1; transform: translateY(0); }
+  .pqz-bubble::after { content:''; position:absolute; right:-10px; bottom: 10px;
+    border: 8px solid transparent; border-left-color: #fff; }
+
+  .pqz-footer { position:sticky; bottom:0; left:0; right:0;
+    background: linear-gradient(180deg, transparent, rgba(15,23,42,.95) 40%);
+    backdrop-filter: blur(8px); padding: 14px 16px 18px;
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    border-radius: 0 0 14px 14px; }
+  .pqz-stats { font-size: 14px; font-weight:800; opacity:.9; }
+  .pqz-next-btn { padding: 14px 28px; border:none; border-radius: 999px;
+    background: linear-gradient(90deg,#fbbf24,#f59e0b); color:#1f1147;
+    font-family: inherit; font-size: 17px; font-weight: 900; cursor:pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,.18), 0 12px 22px rgba(245,158,11,.4);
+    transition: transform .15s; }
+  .pqz-next-btn:hover { transform: translateY(-2px); }
+  .pqz-next-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.18); }
+  .pqz-next-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+  .pqz-done { text-align:center; padding: 32px 18px; background: linear-gradient(135deg,#fef3c7,#fed7aa);
+    border-radius: 28px; color: #1f1147; box-shadow: 0 16px 40px rgba(0,0,0,.28); }
+  .pqz-done .big { font-size: 84px; line-height:1; margin-bottom:8px; animation: pqzPop .6s cubic-bezier(.2,.9,.3,1.6); }
+  .pqz-done h2 { font-size: clamp(26px, 3.6vw, 32px); margin: 6px 0 8px; font-weight: 900; color: #b45309; }
+  .pqz-done .score { font-size: 56px; font-weight: 900; color:#16a34a; line-height:1; }
+  .pqz-done .stars-row { font-size: 40px; letter-spacing: 6px; margin: 8px 0 12px; }
   `;
   const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
 }
@@ -339,3 +438,173 @@ export function renderInteractiveTimeline(host, events) {
     ev.addEventListener('click', () => ev.classList.toggle('opened'));
   });
 }
+
+// ============================================================
+// renderQuizPrimary — Quiz cho Tiểu học. Adventure Cute vibe.
+// 1 câu/màn, options A/B/C/D card to + màu, pet 🦊 cổ vũ, progress sao.
+// Dùng từ scenario-engine.js qua dispatcher.
+// ============================================================
+/** @param {import('./scenario-engine.js').ScenarioEngine} engine */
+export function renderQuizPrimary(engine, host) {
+  injectPrimaryStyles();
+  const PETS = ['🦊', '🐻', '🐰', '🐼', '🐯', '🐨'];
+  const pet = PETS[Math.floor(Math.random() * PETS.length)];
+
+  const sc = engine.scenario;
+  const qs = sc.questions || [];
+  const total = qs.length;
+  const answers = new Array(total).fill(-1);
+  const correctness = new Array(total).fill(null); // null | true | false
+  let cur = 0;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'pqz-wrap';
+  host.appendChild(wrap);
+
+  // Pet companion + speech bubble
+  const petEl = document.createElement('div');
+  petEl.className = 'pqz-pet';
+  petEl.textContent = pet;
+  document.body.appendChild(petEl);
+  const bubble = document.createElement('div');
+  bubble.className = 'pqz-bubble';
+  document.body.appendChild(bubble);
+
+  function showBubble(text, kind, ms = 1400) {
+    bubble.textContent = text;
+    bubble.classList.add('show');
+    petEl.classList.remove('happy', 'sad');
+    if (kind === 'happy') petEl.classList.add('happy');
+    else if (kind === 'sad') petEl.classList.add('sad');
+    clearTimeout(bubble._t);
+    bubble._t = setTimeout(() => {
+      bubble.classList.remove('show');
+      petEl.classList.remove('happy', 'sad');
+    }, ms);
+  }
+
+  function progressHtml() {
+    return `<div class="pqz-progress">${qs.map((_, i) => {
+      let cls = '';
+      if (i === cur) cls = 'cur';
+      else if (correctness[i] === true) cls = 'done';
+      else if (correctness[i] === false) cls = 'wrong';
+      const sym = correctness[i] === true ? '⭐'
+                : correctness[i] === false ? '✖️'
+                : (i === cur ? '⭐' : '☆');
+      return `<span class="star ${cls}">${sym}</span>`;
+    }).join('')}</div>`;
+  }
+
+  function renderCard() {
+    const q = qs[cur];
+    const locked = correctness[cur] !== null;
+    wrap.innerHTML = `
+      ${progressHtml()}
+      <div class="pqz-card">
+        <span class="pqz-num">Câu ${cur + 1}/${total}</span>
+        <div class="pqz-stem">${String(q.stem || '').replace(/</g,'&lt;')}</div>
+        ${q.image ? `<img src="${q.image}" class="pqz-img" alt=""/>` : ''}
+        <div class="pqz-choices">
+          ${q.choices.map((c, ci) => `
+            <button type="button" class="pqz-opt c${ci % 6}${locked ? ' is-disabled' : ''}" data-ci="${ci}">
+              <span class="key">${String.fromCharCode(65 + ci)}</span>
+              <span>${String(c).replace(/</g,'&lt;')}</span>
+            </button>`).join('')}
+        </div>
+        <div class="pqz-fb" data-fb style="display:none;"></div>
+      </div>
+      <div class="pqz-footer">
+        <div class="pqz-stats">Câu ${cur + 1} / ${total} · Đúng: <b>${correctness.filter(c => c === true).length}</b></div>
+        <button type="button" class="pqz-next-btn" data-next>${
+          (cur === total - 1) ? (locked ? 'Xem kết quả 🏆' : 'Câu cuối nhé!') : 'Câu tiếp →'
+        }</button>
+      </div>
+    `;
+
+    const opts = wrap.querySelectorAll('.pqz-opt');
+    const fb = wrap.querySelector('[data-fb]');
+    const nextBtn = wrap.querySelector('[data-next]');
+    nextBtn.disabled = !locked;
+
+    // Nếu đã locked (quay lại câu cũ), hiện feedback luôn.
+    if (locked) {
+      opts.forEach(o => {
+        const ci = Number(o.dataset.ci);
+        if (ci === q.answer) o.classList.add('is-correct');
+        else if (ci === answers[cur]) o.classList.add('is-wrong');
+      });
+      const ok = correctness[cur];
+      fb.style.display = 'block';
+      fb.className = 'pqz-fb ' + (ok ? 'ok' : 'bad');
+      fb.innerHTML = ok
+        ? `<b>🎉 Đúng rồi!</b> ${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : '+10 ⭐'}`
+        : `<b>😅 Chưa đúng.</b> Đáp án đúng: <b>${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
+    }
+
+    opts.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('is-disabled')) return;
+        const ci = Number(btn.dataset.ci);
+        const ok = ci === q.answer;
+        answers[cur] = ci;
+        correctness[cur] = ok;
+        opts.forEach(o => {
+          o.classList.add('is-disabled');
+          const oci = Number(o.dataset.ci);
+          if (oci === q.answer) o.classList.add('is-correct');
+          if (oci === ci && !ok) o.classList.add('is-wrong');
+        });
+        fb.style.display = 'block';
+        fb.className = 'pqz-fb ' + (ok ? 'ok' : 'bad');
+        fb.innerHTML = ok
+          ? `<b>🎉 Chính xác!</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ' +10 ⭐'}`
+          : `<b>😅 Chưa đúng.</b> Đáp án đúng: <b>${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
+        if (ok) showBubble('Tuyệt vời!', 'happy');
+        else showBubble('Cố lên!', 'sad');
+        nextBtn.disabled = false;
+        if (cur === total - 1) nextBtn.textContent = 'Xem kết quả 🏆';
+        // Update progress stars
+        wrap.querySelector('.pqz-progress').outerHTML = progressHtml();
+      });
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (nextBtn.disabled) return;
+      if (cur < total - 1) {
+        cur++;
+        renderCard();
+        wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        renderDone();
+      }
+    });
+  }
+
+  function renderDone() {
+    const correctCount = correctness.filter(c => c === true).length;
+    const pct = total ? Math.round(correctCount / total * 100) : 0;
+    const stars = Math.max(1, Math.round((correctCount / total) * 3));
+    petEl.remove(); bubble.remove();
+    wrap.innerHTML = `
+      <div class="pqz-done">
+        <div class="big">${correctCount === total ? '🏆' : (correctCount >= total * 0.7 ? '🎉' : '💪')}</div>
+        <h2>${correctCount === total ? 'Hoàn hảo!' : (correctCount >= total * 0.7 ? 'Giỏi lắm!' : 'Cố lên nha!')}</h2>
+        <div class="score">${correctCount}/${total}</div>
+        <div class="stars-row">${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
+        <p style="opacity:.85;margin:6px 0 16px;font-size:16px;font-weight:700;">Em đạt ${pct}% — pet ${pet} tự hào về em!</p>
+        <button type="button" class="pqz-next-btn" data-final>Tiếp tục</button>
+      </div>
+    `;
+    wrap.querySelector('[data-final]').addEventListener('click', () => {
+      engine.complete({ answers, questions: qs });
+    });
+  }
+
+  // Cleanup pet khi user rời trang
+  const cleanup = () => { petEl.remove(); bubble.remove(); };
+  window.addEventListener('beforeunload', cleanup, { once: true });
+
+  renderCard();
+}
+

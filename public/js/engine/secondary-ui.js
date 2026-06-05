@@ -180,6 +180,160 @@ function injectSecondaryStyles() {
     color:#fff; padding:14px 18px; border-radius:14px; text-align:center;
     font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:800;
     box-shadow: 0 6px 18px rgba(16,163,74,.25); }
+
+  /* ── Quiz Secondary (THCS) — Modern Vibrant ── */
+  .sqz-wrap { display:flex; flex-direction:column; gap:14px; padding:8px 0 90px; }
+  .sqz-head { display:flex; align-items:center; gap:14px; padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(14,165,233,.16));
+    border-radius:14px; border:1px solid rgba(99,102,241,.4); font-size:14px; flex-wrap:wrap; }
+  .sqz-head .label { font-weight:800; }
+  .sqz-streak { display:inline-flex; align-items:center; gap:5px;
+    background:rgba(245,158,11,.2); border:1px solid rgba(245,158,11,.5);
+    color:#fde047; padding:3px 10px; border-radius:999px; font-weight:800; font-size:13px; }
+  .sqz-streak.fire { animation: sqzPulse 1.2s infinite; }
+  @keyframes sqzPulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)} 50%{box-shadow:0 0 0 6px rgba(245,158,11,0)} }
+  .sqz-prog { margin-left:auto; font-weight:700; opacity:.85; font-size:13px; }
+  .sqz-progbar { height: 6px; border-radius: 999px; background:rgba(255,255,255,.08); overflow:hidden; }
+  .sqz-progbar .fill { height:100%; background: linear-gradient(90deg,#6366f1,#0ea5e9,#22c55e);
+    transition: width .35s cubic-bezier(.2,.9,.3,1.6); }
+
+  .sqz-card { background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(99,102,241,.1));
+    border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 22px 24px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.18); }
+  .sqz-num { display:inline-block; background: linear-gradient(90deg,#6366f1,#0ea5e9);
+    color:#fff; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:800;
+    margin-bottom: 10px; letter-spacing:.5px; text-transform: uppercase; }
+  .sqz-stem { font-size: clamp(17px, 2.2vw, 21px); font-weight:700; line-height:1.55; margin-bottom:16px; color:#f8fafc; }
+  .sqz-img { max-width:100%; border-radius:12px; margin: 6px 0 14px; }
+
+  .sqz-choices { display:grid; gap:10px; grid-template-columns: 1fr; }
+  @media (min-width: 540px) { .sqz-choices { grid-template-columns: 1fr 1fr; } }
+  .sqz-opt { border:2px solid rgba(255,255,255,.14); cursor:pointer; user-select:none;
+    background: rgba(255,255,255,.04); padding: 13px 16px; border-radius: 14px;
+    font-family: inherit; font-size: clamp(14.5px, 1.9vw, 16px); font-weight:600; color:#f1f5f9;
+    text-align:left; display:flex; align-items:center; gap:12px;
+    transition: transform .12s, background .15s, border-color .15s, box-shadow .15s; }
+  .sqz-opt:hover:not(.is-disabled) { background:rgba(99,102,241,.18); border-color:#6366f1;
+    transform: translateY(-2px); box-shadow: 0 6px 14px rgba(99,102,241,.3); }
+  .sqz-opt:active:not(.is-disabled) { transform: translateY(0); }
+  .sqz-opt.is-disabled { cursor:default; }
+  .sqz-opt .key { flex:none; width:30px; height:30px; border-radius:8px;
+    background: rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-size:13px; }
+  .sqz-opt.is-correct { background: linear-gradient(135deg, rgba(34,197,94,.25), rgba(16,185,129,.15));
+    border-color: #22c55e; animation: sqzPop .55s cubic-bezier(.2,.9,.3,1.6); }
+  .sqz-opt.is-correct .key { background:#22c55e; color:#06281a; }
+  .sqz-opt.is-wrong { background: rgba(239,68,68,.18); border-color:#ef4444; animation: sqzWob .45s ease; }
+  .sqz-opt.is-wrong .key { background:#ef4444; color:#fff; }
+  @keyframes sqzPop { 0%{transform:scale(1)} 40%{transform:scale(1.04)} 100%{transform:scale(1.01)} }
+  @keyframes sqzWob { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+  .sqz-fb { margin-top: 12px; padding: 10px 14px; border-radius: 10px;
+    font-size: 14px; line-height:1.55; animation: sqzFade .3s ease; }
+  @keyframes sqzFade { from{opacity:0; transform:translateY(-4px)} to{opacity:1; transform:none} }
+  .sqz-fb.ok  { background: rgba(34,197,94,.14); border-left:3px solid #22c55e; color:#bbf7d0; }
+  .sqz-fb.bad { background: rgba(239,68,68,.14); border-left:3px solid #ef4444; color:#fecaca; }
+  .sqz-fb .xp { display:inline-block; background:rgba(253,224,71,.18); color:#fde047;
+    padding: 1px 8px; border-radius:999px; font-weight:800; margin-right: 6px; }
+
+  .sqz-footer { position:sticky; bottom:0; display:flex; gap:12px; align-items:center;
+    background: rgba(15,23,42,.92); backdrop-filter: blur(8px);
+    border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:12px 16px; }
+  .sqz-stats { font-size:13.5px; font-weight:700; opacity:.9; }
+  .sqz-next { margin-left:auto; padding:10px 22px; border:none; border-radius:10px;
+    background: linear-gradient(90deg,#6366f1,#0ea5e9); color:#fff;
+    font-family:inherit; font-size:14px; font-weight:800; cursor:pointer;
+    box-shadow: 0 4px 12px rgba(99,102,241,.4); transition: transform .12s; }
+  .sqz-next:hover { transform: translateY(-2px); }
+  .sqz-next:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
+  .sqz-next.ready { background: linear-gradient(90deg,#22c55e,#0ea5e9); }
+
+  .sqz-done { padding: 28px 20px; border-radius:18px;
+    background: linear-gradient(135deg, rgba(34,197,94,.16), rgba(99,102,241,.12));
+    border:1px solid rgba(34,197,94,.4); text-align:center; }
+  .sqz-done .big { font-size: 60px; line-height:1; margin-bottom:8px; }
+  .sqz-done h2 { margin: 4px 0 8px; font-size: clamp(22px, 3vw, 28px); }
+  .sqz-done .score { font-size: 44px; font-weight:900; color:#22c55e; }
+  .sqz-done .pct { opacity:.85; margin-top:6px; }
+
+  /* ── Quiz Highschool (THPT) — Focused Academic ── */
+  .hqz-wrap { display:flex; flex-direction:column; gap:14px; padding:8px 0 90px;
+    color: #e2e8f0; font-family: 'Inter','SF Pro Display',system-ui,sans-serif; }
+  .hqz-head { display:flex; align-items:center; gap:14px; padding: 10px 14px;
+    background: rgba(15,23,42,.6); border:1px solid rgba(255,255,255,.08);
+    border-radius:10px; font-size:13px; }
+  .hqz-head .badge { background:#1e293b; border:1px solid rgba(148,163,184,.3); padding:3px 10px;
+    border-radius:6px; font-weight:700; color:#cbd5e1; font-size:11.5px; letter-spacing:.5px; text-transform:uppercase; }
+  .hqz-timer { margin-left:auto; font-family: 'JetBrains Mono','SF Mono',monospace;
+    background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.1);
+    padding: 4px 12px; border-radius: 6px; font-weight:700; }
+  .hqz-prog { font-size:12.5px; opacity:.78; }
+
+  .hqz-card { background: rgba(15,23,42,.65); border:1px solid rgba(148,163,184,.18);
+    border-radius:10px; padding: 20px 22px; }
+  .hqz-num { display:inline-block; color:#64748b; font-size:12px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; margin-bottom: 8px; }
+  .hqz-num b { color: #fbbf24; }
+  .hqz-stem { font-size: 17px; line-height: 1.6; margin-bottom: 16px; }
+  .hqz-stem code, .hqz-stem .formula { font-family:'JetBrains Mono','SF Mono',monospace;
+    background: rgba(251,191,36,.1); padding:1px 6px; border-radius:4px; color:#fcd34d; }
+  .hqz-img { max-width:100%; border-radius:6px; margin: 6px 0 14px; }
+
+  .hqz-choices { display:flex; flex-direction:column; gap:8px; }
+  .hqz-opt { display:flex; gap:12px; align-items:flex-start;
+    background: rgba(15,23,42,.4); border:1px solid rgba(148,163,184,.2);
+    padding: 12px 14px; border-radius: 6px; cursor:pointer; text-align:left;
+    font-family: inherit; font-size: 15px; line-height:1.5; color:#e2e8f0;
+    transition: background .12s, border-color .12s; }
+  .hqz-opt:hover:not(.is-disabled) { background: rgba(99,102,241,.12); border-color:#6366f1; }
+  .hqz-opt.is-disabled { cursor:default; }
+  .hqz-opt .key { flex:none; width:28px; height:28px; border-radius:4px;
+    background: #334155; color: #cbd5e1; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; border:1px solid rgba(148,163,184,.25); }
+  .hqz-opt.is-correct { background: rgba(34,197,94,.18); border-color:#22c55e; }
+  .hqz-opt.is-correct .key { background:#22c55e; color:#06281a; border-color: #16a34a; }
+  .hqz-opt.is-wrong { background: rgba(239,68,68,.16); border-color:#ef4444; }
+  .hqz-opt.is-wrong .key { background:#ef4444; color:#fff; border-color: #dc2626; }
+
+  .hqz-fb { margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 14px; line-height: 1.55; }
+  .hqz-fb.ok  { background: rgba(34,197,94,.1); border-left:3px solid #22c55e; }
+  .hqz-fb.bad { background: rgba(239,68,68,.1); border-left:3px solid #ef4444; }
+  .hqz-fb code { font-family:'JetBrains Mono',monospace; background:rgba(0,0,0,.3); padding:0 5px; border-radius:3px; }
+
+  .hqz-flag { background:transparent; border:none; cursor:pointer; color:#64748b;
+    padding: 3px 8px; border-radius:4px; transition: all .15s; }
+  .hqz-flag:hover { background:rgba(251,191,36,.12); color:#fbbf24; }
+  .hqz-flag.on { color:#fbbf24; }
+
+  .hqz-nav { display:flex; gap:6px; flex-wrap:wrap; padding: 8px 4px; }
+  .hqz-nav-btn { width:34px; height:34px; border-radius:6px; border:1px solid rgba(148,163,184,.25);
+    background: rgba(15,23,42,.55); color:#cbd5e1; cursor:pointer;
+    font-weight:700; font-size:13px; font-family: inherit; transition: all .12s; }
+  .hqz-nav-btn:hover { background: #1e293b; border-color:#475569; }
+  .hqz-nav-btn.cur { background:#6366f1; color:#fff; border-color:#6366f1; }
+  .hqz-nav-btn.done { background: rgba(34,197,94,.2); border-color:#22c55e; color:#bbf7d0; }
+  .hqz-nav-btn.wrong { background: rgba(239,68,68,.18); border-color:#ef4444; color:#fecaca; }
+  .hqz-nav-btn.flagged::after { content:'⚑'; position:absolute; font-size:10px; transform: translate(11px, -10px); color:#fbbf24; }
+  .hqz-nav-btn { position:relative; }
+
+  .hqz-footer { position:sticky; bottom:0; display:flex; gap:12px; align-items:center;
+    background: rgba(15,23,42,.95); border:1px solid rgba(148,163,184,.2);
+    border-radius:8px; padding:12px 16px; }
+  .hqz-footer .stats { font-size:13px; }
+  .hqz-footer .actions { margin-left:auto; display:flex; gap:8px; }
+  .hqz-btn { padding: 8px 16px; border:1px solid rgba(148,163,184,.25);
+    background: rgba(15,23,42,.55); color:#e2e8f0; font-family:inherit; font-size:13.5px;
+    font-weight:700; cursor:pointer; border-radius:6px; transition: all .12s; }
+  .hqz-btn:hover { background:#1e293b; border-color:#64748b; }
+  .hqz-btn.primary { background:#6366f1; border-color:#6366f1; color:#fff; }
+  .hqz-btn.primary:hover { background:#4f46e5; }
+  .hqz-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+  .hqz-done { background: rgba(15,23,42,.65); border:1px solid rgba(148,163,184,.2);
+    border-radius:10px; padding: 28px; text-align:center; }
+  .hqz-done h2 { margin: 0 0 8px; font-size: 22px; color:#f8fafc; }
+  .hqz-done .score-big { font-size: 56px; font-weight:900; color:#fbbf24; line-height:1; font-family:'JetBrains Mono',monospace; }
+  .hqz-done .pct { font-size: 16px; opacity:.85; margin-top:6px; }
   `;
   const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
 }
@@ -732,4 +886,310 @@ export function renderFormulaCalc(host, cfg) {
       recompute();
     });
   });
+}
+
+// ============================================================
+// renderQuizSecondary — Quiz cho THCS. Modern vibrant + streak counter.
+// 1 câu/màn, accent gradient indigo→sky→emerald, progress bar.
+// ============================================================
+/** @param {import('./scenario-engine.js').ScenarioEngine} engine */
+export function renderQuizSecondary(engine, host) {
+  injectSecondaryStyles();
+  const sc = engine.scenario;
+  const qs = sc.questions || [];
+  const total = qs.length;
+  const answers = new Array(total).fill(-1);
+  const correctness = new Array(total).fill(null);
+  let cur = 0;
+  let streak = 0, maxStreak = 0;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'sqz-wrap';
+  host.appendChild(wrap);
+
+  function render() {
+    const q = qs[cur];
+    const locked = correctness[cur] !== null;
+    const doneCount = correctness.filter(c => c === true).length;
+    const pct = total ? Math.round(((cur + (locked ? 1 : 0)) / total) * 100) : 0;
+    wrap.innerHTML = `
+      <div class="sqz-head">
+        <span class="label">📚 Câu ${cur + 1}/${total}</span>
+        <span class="sqz-streak ${streak >= 3 ? 'fire' : ''}">${streak >= 3 ? '🔥' : '⚡'} Streak: <b>${streak}</b></span>
+        <span class="sqz-prog">${doneCount}/${total} đúng</span>
+      </div>
+      <div class="sqz-progbar"><div class="fill" style="width:${pct}%"></div></div>
+      <div class="sqz-card">
+        <span class="sqz-num">Câu ${cur + 1}</span>
+        <div class="sqz-stem">${String(q.stem || '').replace(/</g,'&lt;')}</div>
+        ${q.image ? `<img src="${q.image}" class="sqz-img" alt=""/>` : ''}
+        <div class="sqz-choices">
+          ${q.choices.map((c, ci) => `
+            <button type="button" class="sqz-opt${locked ? ' is-disabled' : ''}" data-ci="${ci}">
+              <span class="key">${String.fromCharCode(65 + ci)}</span>
+              <span>${String(c).replace(/</g,'&lt;')}</span>
+            </button>`).join('')}
+        </div>
+        <div class="sqz-fb" data-fb style="display:none;"></div>
+      </div>
+      <div class="sqz-footer">
+        <div class="sqz-stats">Streak cao nhất: <b>${maxStreak}</b></div>
+        <button type="button" class="sqz-next ${locked ? 'ready' : ''}" data-next ${locked ? '' : 'disabled'}>${
+          (cur === total - 1) ? (locked ? 'Xem kết quả →' : 'Câu cuối') : 'Câu tiếp →'
+        }</button>
+      </div>
+    `;
+
+    const opts = wrap.querySelectorAll('.sqz-opt');
+    const fb = wrap.querySelector('[data-fb]');
+    const nextBtn = wrap.querySelector('[data-next]');
+
+    if (locked) {
+      opts.forEach(o => {
+        const ci = Number(o.dataset.ci);
+        if (ci === q.answer) o.classList.add('is-correct');
+        else if (ci === answers[cur]) o.classList.add('is-wrong');
+      });
+      const ok = correctness[cur];
+      fb.style.display = 'block';
+      fb.className = 'sqz-fb ' + (ok ? 'ok' : 'bad');
+      fb.innerHTML = ok
+        ? `<span class="xp">+10 XP</span><b>Chính xác!</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`
+        : `<b>Chưa đúng.</b> Đáp án: <b>${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
+    }
+
+    opts.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('is-disabled')) return;
+        const ci = Number(btn.dataset.ci);
+        const ok = ci === q.answer;
+        answers[cur] = ci;
+        correctness[cur] = ok;
+        if (ok) { streak++; if (streak > maxStreak) maxStreak = streak; }
+        else streak = 0;
+        opts.forEach(o => {
+          o.classList.add('is-disabled');
+          const oci = Number(o.dataset.ci);
+          if (oci === q.answer) o.classList.add('is-correct');
+          if (oci === ci && !ok) o.classList.add('is-wrong');
+        });
+        fb.style.display = 'block';
+        fb.className = 'sqz-fb ' + (ok ? 'ok' : 'bad');
+        const bonus = ok && streak >= 3 ? ` 🔥 Streak x${streak}!` : '';
+        fb.innerHTML = ok
+          ? `<span class="xp">+10 XP${bonus}</span><b>Chính xác!</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`
+          : `<b>Chưa đúng.</b> Đáp án: <b>${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
+        // Refresh streak + progressbar
+        render._softUpdate = true;
+        const headHTML = wrap.querySelector('.sqz-head').outerHTML;
+        const barHTML = wrap.querySelector('.sqz-progbar').outerHTML;
+        // Patch just head + footer
+        const headEl = document.createElement('div'); headEl.innerHTML = headHTML;
+        wrap.querySelector('.sqz-head').replaceWith(headEl.firstChild);
+        nextBtn.disabled = false;
+        nextBtn.classList.add('ready');
+        if (cur === total - 1) nextBtn.textContent = 'Xem kết quả →';
+      });
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (nextBtn.disabled) return;
+      if (cur < total - 1) {
+        cur++;
+        render();
+        wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        renderDone();
+      }
+    });
+  }
+
+  function renderDone() {
+    const correct = correctness.filter(c => c === true).length;
+    const pct = total ? Math.round(correct / total * 100) : 0;
+    wrap.innerHTML = `
+      <div class="sqz-done">
+        <div class="big">${correct === total ? '🏆' : (correct >= total * 0.7 ? '🎯' : '💪')}</div>
+        <h2>${correct === total ? 'Hoàn hảo!' : (correct >= total * 0.7 ? 'Tốt lắm!' : 'Cố gắng thêm nha!')}</h2>
+        <div class="score">${correct}/${total}</div>
+        <div class="pct">${pct}% · Streak cao nhất: 🔥 ${maxStreak}</div>
+        <button type="button" class="sqz-next ready" data-final style="margin-top: 18px;">Tiếp tục →</button>
+      </div>
+    `;
+    wrap.querySelector('[data-final]').addEventListener('click', () => {
+      engine.complete({ answers, questions: qs });
+    });
+  }
+
+  render();
+}
+
+// ============================================================
+// renderQuizHighschool — Quiz cho THPT. Focused academic exam vibe.
+// Question palette nav, flag for review, timer, formula support, dim theme.
+// ============================================================
+/** @param {import('./scenario-engine.js').ScenarioEngine} engine */
+export function renderQuizHighschool(engine, host) {
+  injectSecondaryStyles();
+  const sc = engine.scenario;
+  const qs = sc.questions || [];
+  const total = qs.length;
+  const answers = new Array(total).fill(-1);
+  const correctness = new Array(total).fill(null);
+  const flagged = new Array(total).fill(false);
+  let cur = 0;
+  const startTs = Date.now();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'hqz-wrap';
+  host.appendChild(wrap);
+
+  // Timer
+  let timerHandle = null;
+  function fmtTime(ms) {
+    const s = Math.floor(ms / 1000);
+    return `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+  }
+
+  function navHtml() {
+    return `<div class="hqz-nav">${qs.map((_, i) => {
+      let cls = '';
+      if (i === cur) cls += ' cur';
+      else if (correctness[i] === true) cls += ' done';
+      else if (correctness[i] === false) cls += ' wrong';
+      if (flagged[i]) cls += ' flagged';
+      return `<button type="button" class="hqz-nav-btn${cls}" data-jump="${i}">${i + 1}</button>`;
+    }).join('')}</div>`;
+  }
+
+  function render() {
+    const q = qs[cur];
+    const locked = correctness[cur] !== null;
+    wrap.innerHTML = `
+      <div class="hqz-head">
+        <span class="badge">📝 ${sc.subject || 'Bài kiểm tra'}</span>
+        <span class="hqz-prog">Câu ${cur + 1}/${total}</span>
+        <span class="hqz-timer" data-timer>00:00</span>
+      </div>
+      ${navHtml()}
+      <div class="hqz-card">
+        <div class="hqz-num">CÂU <b>${cur + 1}</b> / ${total}
+          <button type="button" class="hqz-flag ${flagged[cur] ? 'on' : ''}" data-flag title="Đánh dấu để xem lại">⚑</button>
+        </div>
+        <div class="hqz-stem">${String(q.stem || '').replace(/</g,'&lt;')}</div>
+        ${q.image ? `<img src="${q.image}" class="hqz-img" alt=""/>` : ''}
+        <div class="hqz-choices">
+          ${q.choices.map((c, ci) => `
+            <button type="button" class="hqz-opt${locked ? ' is-disabled' : ''}" data-ci="${ci}">
+              <span class="key">${String.fromCharCode(65 + ci)}</span>
+              <span>${String(c).replace(/</g,'&lt;')}</span>
+            </button>`).join('')}
+        </div>
+        <div class="hqz-fb" data-fb style="display:none;"></div>
+      </div>
+      <div class="hqz-footer">
+        <div class="stats">Đúng: <b>${correctness.filter(c => c === true).length}</b>/${total} · Đã làm: <b>${correctness.filter(c => c !== null).length}</b></div>
+        <div class="actions">
+          <button type="button" class="hqz-btn" data-prev ${cur === 0 ? 'disabled' : ''}>← Câu trước</button>
+          <button type="button" class="hqz-btn primary" data-next>${
+            (cur === total - 1) ? 'Nộp bài' : 'Câu sau →'
+          }</button>
+        </div>
+      </div>
+    `;
+
+    if (!timerHandle) {
+      timerHandle = setInterval(() => {
+        const el = wrap.querySelector('[data-timer]');
+        if (el) el.textContent = fmtTime(Date.now() - startTs);
+      }, 1000);
+    }
+
+    const opts = wrap.querySelectorAll('.hqz-opt');
+    const fb = wrap.querySelector('[data-fb]');
+    if (locked) {
+      opts.forEach(o => {
+        const ci = Number(o.dataset.ci);
+        if (ci === q.answer) o.classList.add('is-correct');
+        else if (ci === answers[cur]) o.classList.add('is-wrong');
+      });
+      const ok = correctness[cur];
+      fb.style.display = 'block';
+      fb.className = 'hqz-fb ' + (ok ? 'ok' : 'bad');
+      fb.innerHTML = ok
+        ? `<b>Chính xác.</b>${q.explanation ? ' ' + String(q.explanation).replace(/</g,'&lt;') : ''}`
+        : `<b>Chưa đúng.</b> Đáp án: <b>${String.fromCharCode(65 + q.answer)}. ${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? '. ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
+    }
+
+    opts.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('is-disabled')) return;
+        const ci = Number(btn.dataset.ci);
+        const ok = ci === q.answer;
+        answers[cur] = ci;
+        correctness[cur] = ok;
+        opts.forEach(o => {
+          o.classList.add('is-disabled');
+          const oci = Number(o.dataset.ci);
+          if (oci === q.answer) o.classList.add('is-correct');
+          if (oci === ci && !ok) o.classList.add('is-wrong');
+        });
+        fb.style.display = 'block';
+        fb.className = 'hqz-fb ' + (ok ? 'ok' : 'bad');
+        fb.innerHTML = ok
+          ? `<b>Chính xác.</b>${q.explanation ? ' ' + String(q.explanation).replace(/</g,'&lt;') : ''}`
+          : `<b>Chưa đúng.</b> Đáp án: <b>${String.fromCharCode(65 + q.answer)}. ${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? '. ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
+        // Refresh nav state
+        const nav = wrap.querySelector('.hqz-nav');
+        const newNav = document.createElement('div'); newNav.innerHTML = navHtml();
+        nav.replaceWith(newNav.firstChild);
+        bindNav();
+        // Update stats
+        wrap.querySelector('.hqz-footer .stats').innerHTML = `Đúng: <b>${correctness.filter(c => c === true).length}</b>/${total} · Đã làm: <b>${correctness.filter(c => c !== null).length}</b>`;
+      });
+    });
+
+    wrap.querySelector('[data-flag]').addEventListener('click', () => {
+      flagged[cur] = !flagged[cur];
+      const btn = wrap.querySelector('[data-flag]');
+      btn.classList.toggle('on', flagged[cur]);
+      const nav = wrap.querySelector('.hqz-nav');
+      const newNav = document.createElement('div'); newNav.innerHTML = navHtml();
+      nav.replaceWith(newNav.firstChild);
+      bindNav();
+    });
+
+    wrap.querySelector('[data-prev]').addEventListener('click', () => { if (cur > 0) { cur--; render(); } });
+    wrap.querySelector('[data-next]').addEventListener('click', () => {
+      if (cur < total - 1) { cur++; render(); }
+      else renderDone();
+    });
+    bindNav();
+  }
+
+  function bindNav() {
+    wrap.querySelectorAll('[data-jump]').forEach(b => {
+      b.addEventListener('click', () => { cur = Number(b.dataset.jump); render(); });
+    });
+  }
+
+  function renderDone() {
+    if (timerHandle) clearInterval(timerHandle);
+    const correct = correctness.filter(c => c === true).length;
+    const pct = total ? Math.round(correct / total * 100) : 0;
+    const elapsed = fmtTime(Date.now() - startTs);
+    wrap.innerHTML = `
+      <div class="hqz-done">
+        <h2>${pct >= 80 ? '🏆 Xuất sắc' : pct >= 60 ? '✓ Đạt' : '⚠ Chưa đạt'}</h2>
+        <div class="score-big">${correct}/${total}</div>
+        <div class="pct">${pct}% · Thời gian: ${elapsed}</div>
+        <button type="button" class="hqz-btn primary" data-final style="margin-top: 20px;">Hoàn thành →</button>
+      </div>
+    `;
+    wrap.querySelector('[data-final]').addEventListener('click', () => {
+      engine.complete({ answers, questions: qs });
+    });
+  }
+
+  render();
 }
