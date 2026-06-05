@@ -227,6 +227,12 @@ const PUBLIC_PATH_EXACT = new Set([
   '/code-quest.html',
   // Trang bảng giá — khách phải xem được trước khi đăng ký/mua.
   '/pricing.html', '/pricing',
+  // Engagement / showcase pages — mới (Sprint W1+ → W3, Hour 1-6, Bonus). Guest
+  // xem được, các action /api/* sẽ trả 401 và FE degrade graceful.
+  '/kham-pha.html', '/tinh-nang.html',
+  '/league.html', '/battle-pass.html', '/cua-hang.html',
+  '/tran-dau.html', '/lap-trinh-game.html', '/hoc-thong-minh.html',
+  '/campus-mp.html', '/srs.html', '/ai-quiz-gen.html',
 ]);
 
 function isPublicPath(p) {

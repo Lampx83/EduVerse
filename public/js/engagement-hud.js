@@ -191,17 +191,19 @@ class EngagementHUD {
     hud.type = 'button';
     hud.hidden = true;
     hud.title = 'Streak · Hearts · Nhiệm vụ hôm nay';
+    // HUD MVP — chỉ Streak hiện trước. League/Quest auto-hide nếu feature
+    // chưa unlock (data-feature + data-feature-hide-if-locked).
     hud.innerHTML = `
-      <a class="tz-eng-league" href="/league.html" title="League tuần — bấm xem bảng xếp hạng" data-league>
+      <a class="tz-eng-league" href="/league.html" title="League tuần" data-league data-feature="league" data-feature-hide-if-locked>
         <span class="ico">🏆</span><span class="tier">…</span>
       </a>
-      <span class="tz-eng-sep"></span>
-      <span class="tz-eng-streak"><span class="flame">🔥</span><span class="num">0</span></span>
+      <span class="tz-eng-sep" data-feature="league" data-feature-hide-if-locked></span>
+      <span class="tz-eng-streak" data-feature="hud-streak"><span class="flame">🔥</span><span class="num">0</span></span>
       <span class="tz-eng-sep"></span>
       <span class="tz-eng-hearts" data-h></span>
       <span class="tz-eng-refill" hidden></span>
-      <span class="tz-eng-sep"></span>
-      <span class="tz-eng-quests">📋 <span class="badge">0</span></span>
+      <span class="tz-eng-sep" data-feature="daily-quest" data-feature-hide-if-locked></span>
+      <span class="tz-eng-quests" data-feature="daily-quest" data-feature-hide-if-locked>📋 <span class="badge">0</span></span>
     `;
     // Bấm vào icon tier không trigger openDrawer — để link tự nhảy
     hud.querySelector('.tz-eng-league').addEventListener('click', (e) => e.stopPropagation());

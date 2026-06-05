@@ -17,6 +17,8 @@ import './daily-login.js';
 import './i18n.js';
 // TTS Reader — toggle 🔊 đọc to bài cho tiểu học.
 import './tts-reader.js';
+// Feature Gate — Progressive disclosure (locked → 🔒, mở dần theo journey)
+import './feature-gate.js';
 
 const ROLE_LABEL = {
   pupil:   { ico: '🎒', label: 'Học sinh' },
@@ -346,8 +348,7 @@ function render(host, user) {
       <span class="ev-spacer"></span>
       ${quickLinksHtml(user)}
       <span id="ev-bell-slot"></span>
-      <a href="pricing.html" class="ev-plan-pill" style="background:rgba(168,85,247,.22);color:#a855f7;text-decoration:none">✨ Xem gói</a>
-      <span class="ev-anon" style="margin-left:10px">Chưa đăng nhập · <a href="login.html">Đăng nhập</a></span>
+      <span class="ev-anon"><a href="login.html">Đăng nhập</a></span>
     `;
     wireBackBtn(host);
     document.dispatchEvent(new CustomEvent('ev-header-mounted'));
@@ -376,10 +377,10 @@ function render(host, user) {
   const planRow = `<div class="pf-row"><span class="k">Gói cước</span><span class="v">${planPill(planId)}</span></div>`;
   const expireRow = (planId !== 'free' && planId !== 'guest' && user.plan_expires_at)
     ? `<div class="pf-row"><span class="k">Hết hạn</span><span class="v">${fmtExpire(user.plan_expires_at)}</span></div>` : '';
-  // CTA: free/guest → Nâng cấp Pro; plus → lên Pro; pro → chỉ "Quản lý gói"
-  const planCta = planId === 'pro'
-    ? `<a class="ev-plan-cta muted" href="pricing.html">Quản lý gói cước</a>`
-    : `<a class="ev-plan-cta" href="pricing.html">✨ Nâng cấp ${planId === 'plus' ? 'Pro' : 'Plus/Pro'}</a>`;
+  // CTA gói cước: giữ trung tính — không sparkle, không màu nổi, dòng nhỏ.
+  // Tế nhị: không nhồi cảm giác "hệ thống vì lợi nhuận" ở header. Người dùng
+  // chủ động click từ dropdown profile thì xem được.
+  const planCta = `<a class="ev-plan-cta muted" href="pricing.html" style="font-size:12px;opacity:.65;font-weight:500">Gói cước & thanh toán</a>`;
 
   host.innerHTML = `
     <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>

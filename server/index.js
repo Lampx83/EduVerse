@@ -43,6 +43,7 @@ import { attachExperiments, getVariant, checkFlag } from './contexts/experiments
 import { attachLiveQuizHttp, attachLiveQuizWs } from './contexts/live-quiz/index.js';
 import { attachSrs } from './contexts/srs/index.js';
 import { attachSmartNotif, logActivity } from './contexts/smart-notif/index.js';
+import { attachFeatureGate } from './contexts/feature-gate/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
@@ -335,6 +336,8 @@ attachLiveQuizHttp(r);
 attachSrs(r);
 // Smart Notifications — activity log + best-time-to-nudge analytics
 attachSmartNotif(r);
+// Feature Gate — Progressive Disclosure (Duolingo-style)
+attachFeatureGate(r);
 
 
 r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {

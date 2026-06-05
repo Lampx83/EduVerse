@@ -187,6 +187,14 @@ class PetWidget {
 
   async refresh(silent = false) {
     try {
+      // Gate: chỉ show Pet khi feature unlocked
+      try {
+        const f = window.__tziaFeatures;
+        if (f) {
+          await f.load();
+          if (!f.isUnlocked('pet')) { this.bubble.hidden = true; return; }
+        }
+      } catch {}
       const r = await fetch('/api/pet/me', { credentials: 'same-origin' });
       if (r.status === 401) { this.bubble.hidden = true; return; }
       if (!r.ok) throw new Error('http_' + r.status);

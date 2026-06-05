@@ -208,8 +208,8 @@
   .osys .planet.bot { bottom: -16px; }
   .osys .planet.rt  { top: calc(50% - 16px); right: -16px; left: auto; margin-left: 0; }
   .osys .planet.lf  { top: calc(50% - 16px); left: -16px; margin-left: 0; }
-  .osys .planet { transition: opacity 0.35s ease; }
-  .osys .planet.swap { opacity: 0; }
+  .osys .planet { transition: opacity 0.7s ease, filter 0.7s ease; }
+  .osys .planet.swap { opacity: 0; filter: blur(2px); }
 
   /* Node Trái đất–Mặt trăng: Trái đất ở giữa (cố định), Mặt trăng xoay quanh */
   .osys .binode { width: 72px; height: 72px; margin-left: -36px; background: transparent; border: none; box-shadow: none; }
@@ -498,7 +498,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
       <div class="cta-row">
         <a class="cta primary" id="hero-enter" href="#schools">Vào trường của bạn</a>
         <button class="cta ghost" id="hero-tutor-cta" type="button">Hỏi AI Tutor</button>
-        <a class="cta ghost" href="/tinh-nang.html">✨ Tất cả tính năng</a>
+        <a class="cta ghost" href="/kham-pha.html">🗺 Khám phá</a>
       </div>
     </div>
 
@@ -559,8 +559,8 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
         do { next = pool[Math.floor(Math.random() * pool.length)]; tries++; }
         while (next === el.textContent.trim() && tries < 6);
         el.classList.add('swap');
-        setTimeout(() => { el.textContent = next; el.classList.remove('swap'); }, 400);
-      }, 2200);
+        setTimeout(() => { el.textContent = next; el.classList.remove('swap'); }, 720);
+      }, 2600);
     })();
   </script>
 
@@ -825,12 +825,12 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
     const openCount = DOMAIN_META.filter(d => d.status !== 'locked').length;
     const planLine = isGuest
-      ? `bạn đang ở chế độ khách — chỉ vào được trường Mầm non, đăng nhập (miễn phí) để thêm Tiểu học`
+      ? `bạn đang ở chế độ khách — vào trường Mầm non, đăng nhập miễn phí để mở Tiểu học`
       : (myPlan === 'pro'
-          ? `gói Pro — tất cả trường + AI cá nhân hoá`
+          ? `chào ${(me.display_name || me.username || '')}, chúc một buổi học vui`
           : (myPlan === 'plus'
-              ? `gói Plus — tất cả trường, AI gợi ý cơ bản`
-              : `gói ${USER_PLANS[myPlan]?.name || 'Miễn phí'} — nâng cấp để mở thêm trường & AI`));
+              ? `chào ${(me.display_name || me.username || '')}, chúc một buổi học vui`
+              : `chào ${(me.display_name || me.username || '')}, chúc một buổi học vui`));
     document.getElementById('schools-hint').textContent = `${openCount}/${DOMAIN_META.length} trường đã mở · ${planLine}`;
 
     function card(d) {
@@ -845,9 +845,10 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
         ? '<span class="sc-meta-sub">Đang phát triển</span>'
         : `${d.shortName} · ${d.moduleCount} module`;
       const statusTag = `<span class="sc-pill ${d.status}">${statusLabel[d.status] || d.status}</span>`;
-      // Tag yêu cầu gói (chỉ hiện khi không phải coming-soon và yêu cầu > free)
-      const planTag = (!isComingSoon && required === 'plus')
-        ? ` <span class="sc-pill plus">✨ Cần Plus</span>` : '';
+      // KHÔNG hiển thị tag "Cần Plus" trên card — để giao diện không trông như
+      // pricing wall. Việc khoá theo gói vẫn áp dụng ở backend; user click vào
+      // sẽ thấy thông tin gói qua trang trung gian.
+      const planTag = '';
       const guestTag = needLogin
         ? ' <span class="sc-pill locked">🔐 Cần đăng nhập</span>' : '';
       // Mỗi tài khoản 1 trường: badge "🎓 Đang học" cho trường mình + "👀 Tham
@@ -871,8 +872,10 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
         cta = '🔐 Đăng nhập để vào';
         attrs = `href="login.html?return=${encodeURIComponent('/school.html?domain=' + d.id)}" title="Đăng nhập miễn phí để mở khoá"`;
       } else if (needUpgrade || guestLocked) {
-        cta = `✨ Nâng cấp ${USER_PLANS[required]?.name || 'Plus'}`;
-        attrs = `href="pricing.html?want=${encodeURIComponent(required)}&domain=${encodeURIComponent(d.id)}" title="Nâng cấp gói ${USER_PLANS[required]?.name} để vào trường ${d.name}"`;
+        // CTA trung tính — không gợi "phải trả tiền". Click vào sẽ tới trang
+        // thông tin gói (bao gồm cả tuỳ chọn miễn phí + trả phí).
+        cta = '🔒 Tạm chưa mở';
+        attrs = `href="pricing.html?want=${encodeURIComponent(required)}&domain=${encodeURIComponent(d.id)}" title="Trường ${d.name} chưa khả dụng với tài khoản hiện tại — xem điều kiện"`;
       } else {
         cta = '→ Vào trường';
         attrs = `href="school.html?domain=${encodeURIComponent(d.id)}"`;

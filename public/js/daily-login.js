@@ -166,11 +166,19 @@ class DailyLogin {
   }
 }
 
-// Auto-show 1 lần / ngày sau khi page load 1.5s
-function autoShow() {
+// Auto-show 1 lần / ngày sau khi page load 1.5s + feature unlocked
+async function autoShow() {
   const today = new Date(Date.now() + 7*3600_000).toISOString().slice(0, 10);
   if (localStorage.getItem(KEY_SHOWN) === today) return;
   if (window.__tziaDaily) return;
+  // Gate: chỉ show Daily Bonus khi feature unlocked
+  try {
+    const f = window.__tziaFeatures;
+    if (f) {
+      await f.load();
+      if (!f.isUnlocked('daily-bonus')) return;
+    }
+  } catch {}
   const dl = new DailyLogin();
   window.__tziaDaily = dl;
   setTimeout(() => dl.show(), 1500);
