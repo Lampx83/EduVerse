@@ -17,13 +17,37 @@ const CSS = `
   }
   .tz-pet-bubble:hover { transform: scale(1.08); box-shadow: 0 14px 36px rgba(0,0,0,0.5); }
   .tz-pet-bubble[hidden] { display: none !important; }
+  /* Inline trong header (auth-header có #ev-pet-slot) — bubble nhỏ gọn,
+     bỏ floating + animation idle để không nhảy trong header. */
+  #ev-pet-slot .tz-pet-bubble {
+    position: static; left: auto; bottom: auto;
+    width: 34px; height: 34px;
+    font-size: 19px;
+    box-shadow: none;
+    animation: none;
+    border-color: rgba(255,255,255,0.18);
+  }
+  #ev-pet-slot .tz-pet-bubble:hover { transform: scale(1.06); box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+  #ev-pet-slot .tz-pet-bubble .badge {
+    top: -5px; right: -6px;
+    font-size: 8.5px; padding: 1px 5px;
+    border-width: 1.5px;
+  }
+  /* Khi pet nằm trong header, drawer mở từ góc phải-trên thay vì từ bottom-left */
+  body:has(#ev-pet-slot .tz-pet-bubble) .tz-pet-drawer-bg {
+    align-items: flex-start; justify-content: flex-end;
+    padding: 72px 16px 16px;
+  }
   .tz-pet-bubble .badge {
-    position: absolute; top: -3px; right: -3px;
+    position: absolute; top: -4px; right: -8px;
     background: linear-gradient(135deg, #fbbf24, #f97316);
     color: #1e293b; font-size: 9.5px; font-weight: 800;
-    padding: 2px 5px; border-radius: 999px; line-height: 1;
+    padding: 2px 6px; border-radius: 999px; line-height: 1;
     border: 2px solid #0f172a;
+    white-space: nowrap;
   }
+  /* 0% là nhiễu thị giác — ẩn cho tới khi pet thật sự có tiến triển */
+  .tz-pet-bubble .badge[hidden] { display: none !important; }
   @keyframes tz-pet-idle {
     0%, 100% { transform: translateY(0) rotate(0); }
     50% { transform: translateY(-4px) rotate(2deg); }
@@ -106,9 +130,12 @@ const CSS = `
   }
   .tz-pet-drawer button:disabled { opacity: 0.5; cursor: not-allowed; }
   .tz-pet-drawer .switch-list {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
     margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);
+    max-height: 220px; overflow-y: auto;
   }
+  .tz-pet-drawer .switch-list::-webkit-scrollbar { width: 5px; }
+  .tz-pet-drawer .switch-list::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.3); border-radius: 5px; }
   .tz-pet-drawer .switch-list .p {
     text-align: center; padding: 8px 4px; border-radius: 10px;
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
@@ -152,8 +179,14 @@ class PetWidget {
     b.title = 'Pet đồng hành của em';
     b.innerHTML = `<span class="sprite">🦉</span>`;
     b.addEventListener('click', () => this.openDrawer());
-    document.body.appendChild(b);
+    const slot = document.getElementById('ev-pet-slot');
+    (slot || document.body).appendChild(b);
     this.bubble = b;
+    // Header có thể render sau khi pet đã mount — reparent vào slot khi sẵn sàng.
+    document.addEventListener('ev-header-mounted', () => {
+      const s = document.getElementById('ev-pet-slot');
+      if (s && this.bubble.parentElement !== s) s.appendChild(this.bubble);
+    });
 
     const bg = document.createElement('div');
     bg.className = 'tz-pet-drawer-bg';
@@ -222,7 +255,17 @@ class PetWidget {
       badge.className = 'badge';
       this.bubble.appendChild(badge);
     }
-    badge.textContent = this.pet.stage >= 2 ? '👑' : `${this.pet.progress_pct}%`;
+    const pct = this.pet.progress_pct || 0;
+    if (this.pet.stage >= 2) {
+      badge.hidden = false;
+      badge.textContent = '👑';
+    } else if (pct >= 1) {
+      badge.hidden = false;
+      badge.textContent = `${pct}%`;
+    } else {
+      // Pet mới — không đẩy badge "0%" che mất sprite. Chỉ hiện khi có XP.
+      badge.hidden = true;
+    }
   }
 
   openDrawer() {
@@ -239,7 +282,7 @@ class PetWidget {
         <div class="sprite">${p.sprite}</div>
         <div class="nm-box">
           <div class="nm">${esc(p.name)}</div>
-          <div class="stage">${p.stage_label} · ${esc(p.base_name)} ${p.subject ? '· ' + esc(p.subject) : ''}</div>
+          <div class="stage">${p.stage_label} · ${esc(p.base_name)}${p.personality ? ' · ' + esc(p.personality) : ''}</div>
         </div>
       </div>
       <div class="xp-line">

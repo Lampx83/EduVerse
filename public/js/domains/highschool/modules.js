@@ -103,8 +103,26 @@ export const MODULES = [
   // ───────── Công nghệ (định hướng) ─────────
   M('H10CN', 'Công nghệ 10', 1, 'cong-nghe', 0, null,
     'Định hướng Trồng trọt hoặc Cơ khí · thiết kế kỹ thuật cơ bản · vẽ kỹ thuật. (Scenarios đang biên soạn).'),
+  M('H11CN', 'Công nghệ 11', 2, 'cong-nghe', 3, 'H10CN',
+    'Trồng trọt (chế biến, bảo quản nông sản) hoặc Cơ khí chế tạo (vẽ kỹ thuật nâng cao, gia công). (Scenarios đang biên soạn).'),
+  M('H12CN', 'Công nghệ 12', 3, 'cong-nghe', 6, 'H11CN',
+    'Lâm nghiệp – Thuỷ sản hoặc Điện – Điện tử (mạch, cảm biến) · dự án ứng dụng. (Scenarios đang biên soạn).'),
 
-  // ───────── GD Quốc phòng - An ninh (bắt buộc) ─────────
+  // ───────── GD Quốc phòng - An ninh (bắt buộc theo GDPT 2018 — TT 32/2018) ─────────
   M('H10GDQP', 'GD Quốc phòng - An ninh 10', 1, 'gdqp', 0, null,
     'Lịch sử QĐND VN · truyền thống các quân chủng-binh chủng · kỹ thuật chiến thuật cơ bản (đội ngũ, bắn AK) · an ninh quốc gia.'),
+  M('H11GDQP', 'GD Quốc phòng - An ninh 11', 2, 'gdqp', 3, 'H10GDQP',
+    'Bảo vệ chủ quyền lãnh thổ – biên giới quốc gia · phòng chống tội phạm sử dụng công nghệ cao · điều lệnh đội ngũ. (Scenarios đang biên soạn).'),
+  M('H12GDQP', 'GD Quốc phòng - An ninh 12', 3, 'gdqp', 6, 'H11GDQP',
+    'Truyền thống bảo vệ Tổ quốc · an ninh phi truyền thống (mạng, môi trường) · kỹ thuật chiến đấu bộ binh. (Scenarios đang biên soạn).'),
+
+  // ───────── HĐ Trải nghiệm – Hướng nghiệp (bắt buộc) ─────────
+  // Module placeholder cho lộ trình UI. Học sinh thấy ở /space?domain=highschool;
+  // Tizia chưa tự host scenarios — sẽ migrate sang ScoreUp khi Phase 4 ready.
+  M('H10HDTN', 'HĐ Trải nghiệm 10', 1, 'htn', 0, null,
+    'Khám phá bản thân · định hướng nghề · trải nghiệm xã hội · trách nhiệm công dân. (Scenarios đang biên soạn).'),
+  M('H11HDTN', 'HĐ Trải nghiệm 11', 2, 'htn', 3, 'H10HDTN',
+    'Phát triển bản thân · trải nghiệm nghề · định hướng chọn ngành ĐH. (Scenarios đang biên soạn).'),
+  M('H12HDTN', 'HĐ Trải nghiệm 12', 3, 'htn', 6, 'H11HDTN',
+    'Định hướng tương lai · chuẩn bị thi tốt nghiệp & vào ĐH · trải nghiệm cộng đồng. (Scenarios đang biên soạn).'),
 ];

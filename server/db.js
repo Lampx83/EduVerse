@@ -157,6 +157,8 @@ try { db.exec(`ALTER TABLE users    ADD COLUMN school_id INTEGER NOT NULL DEFAUL
 try { db.exec(`ALTER TABLE classes  ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
 try { db.exec(`ALTER TABLE attempts ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
 try { db.exec(`ALTER TABLE requests ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
+// Đính kèm: JSON array [{url, name, mime, size, kind}]. kind = 'screenshot' | 'file'
+try { db.exec(`ALTER TABLE requests ADD COLUMN attachments TEXT`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_school    ON users(school_id)`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_classes_school  ON classes(school_id)`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_school ON attempts(school_id, created_at DESC)`); } catch {}
@@ -592,11 +594,11 @@ const VALID_REQ_TYPES = new Set(['game', 'theory', 'lab', 'skill', 'other']);
 const VALID_REQ_STATUS = new Set(['pending', 'reviewing', 'done', 'rejected']);
 
 const insertRequestStmt = db.prepare(`
-  INSERT INTO requests (school_id, domain, type, title, detail, student, status, votes, created_at, updated_at)
-  VALUES (@school_id, @domain, @type, @title, @detail, @student, 'pending', 1, @t, @t)
+  INSERT INTO requests (school_id, domain, type, title, detail, student, status, votes, created_at, updated_at, attachments)
+  VALUES (@school_id, @domain, @type, @title, @detail, @student, 'pending', 1, @t, @t, @attachments)
 `);
 const listRequestsStmt = db.prepare(`
-  SELECT id, domain, type, title, detail, student, status, votes, admin_note, created_at, updated_at
+  SELECT id, domain, type, title, detail, student, status, votes, admin_note, created_at, updated_at, attachments
   FROM requests WHERE domain = @domain AND school_id = @school_id
   ORDER BY (status='done') ASC, votes DESC, created_at DESC
   LIMIT @limit
@@ -607,9 +609,22 @@ const requestStatsStmt = db.prepare(`
   SELECT status, COUNT(*) AS n FROM requests WHERE domain = @domain AND school_id = @school_id GROUP BY status
 `);
 
-export function createRequest({ domain, type, title, detail, student, school_id = 1 }) {
+export function createRequest({ domain, type, title, detail, student, school_id = 1, attachments = null }) {
   const t = Date.now();
   const safeType = VALID_REQ_TYPES.has(type) ? type : 'other';
+  // Chuẩn hoá attachments: chấp nhận mảng object {url,name,mime,size,kind}; lưu JSON.
+  // Cap số lượng (≤10) + chỉ giữ field cần thiết để tránh user nhồi rác.
+  let attachJson = null;
+  if (Array.isArray(attachments) && attachments.length) {
+    const safe = attachments.slice(0, 10).map(a => ({
+      url: String(a?.url || '').slice(0, 500),
+      name: String(a?.name || '').slice(0, 200),
+      mime: String(a?.mime || '').slice(0, 100),
+      size: Number(a?.size) || 0,
+      kind: a?.kind === 'screenshot' ? 'screenshot' : 'file',
+    })).filter(a => a.url);
+    if (safe.length) attachJson = JSON.stringify(safe);
+  }
   const info = insertRequestStmt.run({
     school_id,
     domain: String(domain || '').slice(0, 40),
@@ -621,12 +636,23 @@ export function createRequest({ domain, type, title, detail, student, school_id 
     // mọi brief sản phẩm hợp lý; storage cost không đáng kể (SQLite TEXT).
     detail: detail ? String(detail).slice(0, 10000) : null,
     student: String(student || 'Ẩn danh').slice(0, 60),
+    attachments: attachJson,
     t,
   });
   return { id: info.lastInsertRowid, createdAt: t };
 }
 export function listRequests(domain, limit = 50, schoolId = 1) {
-  return listRequestsStmt.all({ domain: String(domain || ''), limit, school_id: schoolId });
+  const rows = listRequestsStmt.all({ domain: String(domain || ''), limit, school_id: schoolId });
+  // Parse JSON attachments cho FE; sai/cũ → trả mảng rỗng (tolerant).
+  for (const r of rows) {
+    if (r.attachments) {
+      try { r.attachments = JSON.parse(r.attachments); }
+      catch { r.attachments = []; }
+    } else {
+      r.attachments = [];
+    }
+  }
+  return rows;
 }
 export function voteRequest(id) {
   const info = voteRequestStmt.run({ id: Number(id), t: Date.now() });

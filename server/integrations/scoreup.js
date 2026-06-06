@@ -273,6 +273,73 @@ export async function getWeeklyQuiz({ subjectId, week, limit = 10, level, bloomL
   });
 }
 
+// ============================================================
+// CURRICULUM API (Phase 4 — yêu cầu ScoreUp v1.5+ upgrade)
+// ============================================================
+// Bốn endpoint dưới đây CHƯA TỒN TẠI ở ScoreUp hiện tại — sẽ có sau khi anh
+// chạy prompt `docs/upgrade-prompts/SCOREUP-UPGRADE.md` Phase 4. Tizia gọi
+// nhưng sẽ throw 404 cho tới khi ScoreUp publish v1.5. Caller (curriculum
+// loader) tự fallback sang `listSubjects/listChapters/listQuestions` cũ.
+//
+// Spec target:
+//   GET /curriculum/:gradeLevel                          → list grades + subjects
+//   GET /curriculum/:gradeLevel/:grade                   → list subjects của grade
+//   GET /curriculum/:grade/:subjectCode                  → list 35 tuần + status
+//   GET /curriculum/:grade/:subjectCode/week/:n          → questions tuần đó
+// ============================================================
+
+/**
+ * grade_level ∈ {preschool, primary, secondary, highschool, he}
+ * Trả list grades (preschool: n1/n2/n3 · primary: 1..5 · secondary: 6..9 ·
+ * highschool: 10..12 · he: freshman..senior) + subjects gắn với mỗi grade.
+ */
+export async function getCurriculumByLevel(gradeLevel) {
+  if (!gradeLevel) throw new Error('gradeLevel required');
+  return _cachedGet(`/curriculum/${encodeURIComponent(gradeLevel)}`, 6 * 60 * 60 * 1000);
+}
+
+/** Mở 1 lớp: trả subjects bắt buộc + tự chọn cho grade đó. */
+export async function getCurriculumByGrade(gradeLevel, grade) {
+  if (!gradeLevel || grade == null) throw new Error('gradeLevel + grade required');
+  return _cachedGet(`/curriculum/${encodeURIComponent(gradeLevel)}/${encodeURIComponent(grade)}`, 6 * 60 * 60 * 1000);
+}
+
+/**
+ * Mở 1 môn của 1 lớp: trả 35 tuần với status `{ week_no, has_data, question_count, last_updated }`.
+ * Tizia dùng để render lộ trình + đánh dấu tuần nào còn thiếu data.
+ */
+export async function getCurriculumSubject(grade, subjectCode) {
+  if (grade == null || !subjectCode) throw new Error('grade + subjectCode required');
+  return _cachedGet(`/curriculum/${encodeURIComponent(grade)}/${encodeURIComponent(subjectCode)}`, 60 * 60 * 1000);
+}
+
+/**
+ * Lấy questions cho 1 tuần: tham số limit/level/bloom giống `listQuestions`.
+ * Đây là API thay thế cho `getWeeklyQuiz()` (vốn dựa vào convention "Tuần X").
+ */
+export async function getCurriculumWeek(grade, subjectCode, weekNo, opts = {}) {
+  if (!subjectCode || weekNo == null) throw new Error('subjectCode + weekNo required');
+  const { limit = 10, level, bloomLevel } = opts;
+  const path = `/curriculum/${encodeURIComponent(grade)}/${encodeURIComponent(subjectCode)}/week/${encodeURIComponent(weekNo)}`;
+  return _cachedGet(`${path}${_qs({ limit, level, bloom_level: bloomLevel })}`, 30 * 60 * 1000);
+}
+
+/**
+ * Helper: thử Phase 4 trước, fallback Phase 1-3 cũ nếu ScoreUp chưa upgrade.
+ * Caller pattern khuyến nghị cho Tizia FE/loader.
+ */
+export async function getQuizForWeek({ grade, subjectCode, week, limit = 10, fallbackSubjectId }) {
+  try {
+    return await getCurriculumWeek(grade, subjectCode, week, { limit });
+  } catch (e) {
+    if (e.status === 404 && fallbackSubjectId) {
+      // ScoreUp chưa có Phase 4 → fallback random
+      return getWeeklyQuiz({ subjectId: fallbackSubjectId, week, limit });
+    }
+    throw e;
+  }
+}
+
 /** Có key chưa? Caller check trước khi gọi để fallback graceful. */
 export function isConfigured() { return Boolean(API_KEY); }
 

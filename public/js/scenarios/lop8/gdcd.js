@@ -15,6 +15,7 @@ export const S8GDCD_WEEKS = [
     Q('Ý nghĩa của tôn trọng lẽ phải?', ['Giúp xã hội ổn định, lành mạnh', 'Làm mọi người ghét mình', 'Mất bạn bè', 'Không có ý nghĩa gì'], 0, 'Tôn trọng lẽ phải giúp con người ứng xử phù hợp, làm xã hội ổn định, văn minh.'),
     Q('Trái với tôn trọng lẽ phải là?', ['Xuyên tạc, bóp méo sự thật', 'Trung thực', 'Thẳng thắn', 'Dũng cảm'], 0, 'Hành vi xuyên tạc, vu khống, bao che cái sai là trái với tôn trọng lẽ phải.'),
     Q('Tình huống: bạn em chép bài kiểm tra. Em nên?', ['Khuyên bạn dừng và báo thầy cô nếu bạn không nghe', 'Mặc kệ', 'Cùng chép cho vui', 'Khen bạn thông minh'], 0, 'Khuyên bạn và nhắc nhở là cách thể hiện tôn trọng lẽ phải, đồng thời giữ tình bạn.'),
+    Q('Tôn trọng lẽ phải khác với "ba phải" ở chỗ?', ['Cùng nghĩa', 'Tôn trọng lẽ phải kiên định với điều đúng; ba phải gió chiều nào theo chiều đó', 'Đều tốt', 'Đều xấu'], 1, 'Người tôn trọng lẽ phải kiên định, không như ba phải.'),
   ]),
 
   M(2, 'Liêm khiết', [
@@ -23,6 +24,7 @@ export const S8GDCD_WEEKS = [
     Q('Câu tục ngữ nào nói về liêm khiết?', ['Đói cho sạch, rách cho thơm', 'Ăn quả nhớ kẻ trồng cây', 'Lá lành đùm lá rách', 'Một con ngựa đau cả tàu bỏ cỏ'], 0, '"Đói cho sạch, rách cho thơm" đề cao liêm khiết dù khó khăn.'),
     Q('Ý nghĩa của liêm khiết với xã hội?', ['Không có ý nghĩa', 'Làm xã hội nghèo đi', 'Tạo bất công', 'Giúp xã hội trong sạch, văn minh'], 3, 'Liêm khiết là nền tảng đạo đức, giúp xã hội phát triển bền vững và công bằng.'),
     Q('Tình huống: nhặt được ví có 5 triệu. Em sẽ?', ['Mua đồ chơi', 'Lấy luôn vì không ai biết', 'Chia cho bạn bè', 'Tìm cách trả lại chủ'], 3, 'Hành vi liêm khiết là trả lại, dù không ai biết.'),
+    Q('Người liêm khiết được mọi người?', ['Coi thường', 'Xa lánh', 'Tin tưởng, kính trọng, tin cậy giao việc', 'Cười nhạo'], 2, 'Liêm khiết tạo uy tín và lòng tin.'),
   ]),
 
   M(3, 'Tôn trọng người khác', [
@@ -31,6 +33,7 @@ export const S8GDCD_WEEKS = [
     Q('Hành vi nào KHÔNG tôn trọng người khác?', ['Chế giễu khuyết tật của người khác', 'Chào hỏi lễ phép', 'Lắng nghe ý kiến', 'Giúp đỡ người già'], 0, 'Chế giễu khuyết tật là vi phạm phẩm giá người khác.'),
     Q('Vì sao phải tôn trọng người khác?', ['Để được người khác tôn trọng lại', 'Vì pháp luật bắt buộc tất cả', 'Để được khen', 'Để có quà'], 0, 'Mình tôn trọng người khác thì mới được người khác tôn trọng lại — quan hệ hai chiều.'),
     Q('Tôn trọng người khác thể hiện qua?', ['Chỉ lời nói', 'Chỉ hành vi', 'Lời nói, hành vi, thái độ', 'Chỉ trang phục'], 2, 'Tôn trọng thể hiện qua tổng hoà lời nói, hành vi và thái độ ứng xử.'),
+    Q('Tôn trọng người khác KHÔNG đồng nghĩa với?', ['Bình đẳng', 'Lễ phép', 'Đồng ý với mọi quan điểm dù sai', 'Lắng nghe'], 2, 'Tôn trọng khác với đồng tình mọi quan điểm sai.'),
   ]),
 
   M(4, 'Giữ chữ tín', [

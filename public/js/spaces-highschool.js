@@ -346,7 +346,7 @@ window.SPACES_HIGHSCHOOL = {
         {note:'Tập thể dục đều đặn giúp tăng sức khoẻ, giảm căng thẳng và học tập tốt hơn.'}]},
       {ic:'🪖',name:'Giáo dục QP – AN',rd:'Kiến thức quốc phòng – an ninh.',panel:[
         {ul:['Đội ngũ từng người không có súng','Hiểu biết chung về quốc phòng toàn dân','Kĩ thuật bắn súng tiểu liên AK (lí thuyết & an toàn)','Phòng tránh tai nạn bom mìn, vật liệu nổ','Trách nhiệm bảo vệ Tổ quốc của công dân']}]},
-      {ic:'⚡',name:'Phản xạ & thể lực',rd:'Trò chơi phản xạ nhanh.',href:'/time-attack.html'}],
+      {ic:'⚡',name:'Phản xạ & thể lực',rd:'Phản Xạ Cầu Thủ — mini-game thể thao.',href:'/lop2-the-thao.html'}],
     skills:['Rèn luyện thể chất','Kiến thức QP – AN'],
     quiz:[{q:'Lợi ích của tập thể dục đều đặn?',o:['Tăng sức khoẻ & tinh thần','Gây mệt mỏi kéo dài','Giảm trí nhớ','Không có lợi ích'],a:0},
       {q:'Môn Giáo dục QP – AN ở THPT giúp học sinh?',o:['Hiểu trách nhiệm bảo vệ Tổ quốc','Trở thành quân nhân chuyên nghiệp','Được miễn học các môn khác','Không học gì hữu ích'],a:0},

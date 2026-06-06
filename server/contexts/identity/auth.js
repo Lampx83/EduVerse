@@ -182,6 +182,10 @@ const PUBLIC_PATH_PREFIXES = [
   '/api/skills/catalog',
   '/manifest.webmanifest', '/sw.js', '/favicon',
   '/vendor/', '/models/',
+  // Đính kèm yêu cầu (ảnh chụp màn hình / file HS gửi cho "Ban điều hành AI").
+  // GET công khai vì inbox /api/requests cũng công khai; POST upload đã có
+  // requireAuth + requireEnrolled gate riêng ở route /api/requests/attachments.
+  '/uploads/requests/',
 ];
 const PUBLIC_PATH_EXACT = new Set([
   '/login.html', '/register.html', '/login', '/register',

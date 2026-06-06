@@ -56,6 +56,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, '..');
 const PUBLIC_DIR = path.resolve(ROOT_DIR, 'public');
 const MEDIAPIPE_DIR = path.resolve(ROOT_DIR, 'node_modules', '@mediapipe', 'tasks-vision');
+// Thư mục lưu ảnh/file đính kèm cho "Ban điều hành AI". Tạo lười khi cần.
+// File phục vụ qua /uploads/requests/... (mount express.static phía dưới).
+const REQUEST_UPLOADS_DIR = path.resolve(ROOT_DIR, 'data', 'uploads', 'requests');
 const PORT = Number(process.env.PORT) || 8041;
 const HOST = process.env.HOST || '0.0.0.0';
 // Optional path prefix when deployed behind a reverse proxy at a sub-path
@@ -1071,6 +1074,66 @@ r.get('/api/achievements', (req, res) => {
 });
 
 // ── Requests — "Ban điều hành AI" inbox ──
+// POST /api/requests/attachments — nhận raw binary 1 file (ảnh chụp màn hình,
+// hoặc file đính kèm tuỳ chọn). FE gửi body = bytes file, header:
+//   Content-Type: <mime>
+//   X-Filename:   <tên gốc>  (optional)
+//   X-Kind:       'screenshot' | 'file'  (optional, default 'file')
+// Lý do tách route + raw thay vì multipart: tránh thêm dep (multer) + payload
+// đơn giản (1 file/req). Trả URL public + meta để FE nhồi vào array attachments.
+const REQUEST_UPLOAD_MIME_WHITELIST = new Set([
+  'image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml',
+  'application/pdf', 'text/plain', 'text/csv',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword', 'application/vnd.ms-excel', 'application/vnd.ms-powerpoint',
+  'application/zip',
+]);
+const MIME_TO_EXT = {
+  'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp',
+  'image/gif': '.gif', 'image/svg+xml': '.svg', 'application/pdf': '.pdf',
+  'text/plain': '.txt', 'text/csv': '.csv',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+  'application/msword': '.doc', 'application/vnd.ms-excel': '.xls',
+  'application/vnd.ms-powerpoint': '.ppt', 'application/zip': '.zip',
+};
+r.post('/api/requests/attachments',
+  requireAuth, requireEnrolled,
+  express.raw({ type: () => true, limit: '8mb' }),
+  async (req, res) => {
+    try {
+      const mime = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+      if (!REQUEST_UPLOAD_MIME_WHITELIST.has(mime)) {
+        return res.status(415).json({ error: 'unsupported_media_type', mime, message: 'Định dạng file không hỗ trợ.' });
+      }
+      const buf = req.body;
+      if (!Buffer.isBuffer(buf) || buf.length === 0) {
+        return res.status(400).json({ error: 'empty_body', message: 'File rỗng.' });
+      }
+      const rawName = String(req.headers['x-filename'] || '').slice(0, 200);
+      const kind = String(req.headers['x-kind'] || 'file').toLowerCase() === 'screenshot' ? 'screenshot' : 'file';
+      // Sanitize tên hiển thị: loại bỏ ký tự nguy hiểm để tránh XSS khi render trong inbox.
+      const safeName = rawName.replace(/[\\/\x00-\x1f<>"|?*]/g, '_').trim()
+        || (kind === 'screenshot' ? 'screenshot.png' : 'attachment');
+      // Phân thư mục theo ngày để dễ housekeeping + tránh 1 dir quá đông.
+      const day = new Date().toISOString().slice(0, 10);
+      const targetDir = path.join(REQUEST_UPLOADS_DIR, day);
+      await fs.mkdir(targetDir, { recursive: true });
+      const ext = MIME_TO_EXT[mime] || path.extname(safeName).toLowerCase().slice(0, 8) || '';
+      const fname = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
+      const fpath = path.join(targetDir, fname);
+      await fs.writeFile(fpath, buf);
+      const url = `/uploads/requests/${day}/${fname}`;
+      res.json({ ok: true, url, name: safeName, mime, size: buf.length, kind });
+    } catch (err) {
+      console.warn('[requests/attachments] upload failed:', err?.message || err);
+      res.status(500).json({ error: 'upload_failed', message: 'Không lưu được file.' });
+    }
+  });
+
 r.post('/api/requests', requireAuth, requireEnrolled, (req, res) => {
   // requireEnrolled đã đảm bảo body.domain == enrolled_domain (nếu có) → HS chỉ
   // gửi yêu cầu trong trường đang theo học. Admin bypass (gửi mọi trường).
@@ -1082,6 +1145,7 @@ r.post('/api/requests', requireAuth, requireEnrolled, (req, res) => {
   const row = createRequest({
     school_id: req.schoolId,
     domain, type: b.type, title, detail: b.detail, student: b.student,
+    attachments: Array.isArray(b.attachments) ? b.attachments : null,
   });
   res.json({ ok: true, ...row });
 
@@ -1174,7 +1238,9 @@ r.get('/api/export.csv', (_req, res) => {
 //   data-no-auth-header, data-no-notifications-bell, data-no-suggestion-fab.
 // Tránh phải sửa thủ công 59+ file.
 const HEADER_TAG = `<script type="module" src="js/auth-header.js"></script>`;
-const SGF_TAG = `<script type="module" src="js/suggestion-fab.js"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
+// ?v=attach1 — cache-bust khi rollout tính năng đính kèm ảnh chụp/file vào FAB
+// Đề nghị (max-age=86400). Bump version mỗi khi thay đổi UX bài bản của FAB.
+const SGF_TAG = `<script type="module" src="js/suggestion-fab.js?v=attach1"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
 // Analytics: chỉ gtag loader (analytics.js). Consent banner đã được bỏ theo
 // yêu cầu user (jun 2026) — gây phiền và che nội dung. Analytics vẫn hoạt
 // động theo mặc định "denied" (xem analytics.js) cho đến khi có cơ chế consent
@@ -1218,6 +1284,14 @@ r.get(/.*/, async (req, res, next) => {
 });
 
 // Vendored MediaPipe (mounted as relative path inside the Router)
+// Đính kèm "Ban điều hành AI" — ảnh chụp màn hình + file của HS gửi kèm yêu cầu.
+// Read-only (POST đi qua /api/requests/attachments có gate). Cache vài giờ vì
+// asset bất biến (tên file random, ghi đè bất khả thi). NO directory listing.
+r.use('/uploads/requests', express.static(REQUEST_UPLOADS_DIR, {
+  fallthrough: false,
+  index: false,
+  setHeaders: (res) => { res.setHeader('Cache-Control', 'public, max-age=3600'); },
+}));
 r.use('/vendor/mediapipe', express.static(MEDIAPIPE_DIR, {
   maxAge: '7d',
   setHeaders: (res, p) => {

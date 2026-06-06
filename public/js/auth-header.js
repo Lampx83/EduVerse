@@ -35,17 +35,29 @@ const CSS = `
     border-bottom: 1px solid rgba(255,255,255,0.08);
     backdrop-filter: blur(14px);
     color: white; font-family: 'Inter', system-ui, sans-serif;
+    /* Một số trang đặt rule "header { max-width: 800px }" cho header riêng
+       của trang — selector theo tag sẽ trúng luôn auth-header và bóp 800px.
+       Reset cứng để auth-header luôn full-width, kệ trang đang style thế nào. */
+    max-width: none; width: auto; box-sizing: border-box;
+  }
+  .ev-header .ev-brand-stack {
+    display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; line-height: 1.1;
   }
   .ev-header .ev-brand {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-weight: 800; font-size: 16px; letter-spacing: -0.2px;
+    display: inline-flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 19px; letter-spacing: -0.2px;
     color: white; text-decoration: none;
   }
-  .ev-header .ev-brand .logo { font-size: 22px; line-height: 1; }
+  .ev-header .ev-brand .logo { font-size: 30px; line-height: 1; }
   .ev-header .ev-brand .name {
     background: linear-gradient(135deg, #ffffff 0%, #fbbf24 60%, #f97316 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
+  .ev-header .ev-tagline {
+    font-size: 12px; font-style: italic; opacity: 0.72; letter-spacing: 0.2px;
+    margin-left: 40px; white-space: nowrap;
+  }
+  @media (max-width: 720px) { .ev-header .ev-tagline { display: none; } }
   .ev-header .ev-spacer { flex: 1; }
 
   /* Nút Quay lại + breadcrumb — chỉ hiện ở trang trong */
@@ -71,6 +83,17 @@ const CSS = `
 
   /* Slot chứa chuông notification (do notifications-bell.js mount vào) */
   #ev-bell-slot { display: inline-flex; align-items: center; }
+  /* Slot chứa engagement HUD (Streak · Hearts · Quest) — engagement-hud.js
+     sẽ reparent .tz-eng-hud vào đây nếu slot tồn tại, để bar hiển thị inline
+     trong header thay vì floating top-right. */
+  #ev-eng-slot { display: inline-flex; align-items: center; }
+  /* Slot chứa pet bubble — pet-widget.js sẽ reparent .tz-pet-bubble vào đây
+     để gọn cùng các HUD khác. */
+  #ev-pet-slot { display: inline-flex; align-items: center; }
+  @media (max-width: 720px) {
+    /* Trên mobile header đã chật — ẩn HUD inline, chỉ giữ nút chuông + tài khoản */
+    #ev-eng-slot, #ev-pet-slot { display: none; }
+  }
 
   /* Quick-link 5 mini-game / trải nghiệm trực quan — luôn hiện ở mọi trang.
      Trước đây chỉ ẩn trong "Khám phá thêm" cuối trang chủ, user không tìm thấy. */
@@ -240,6 +263,11 @@ function getPageTitle() {
   if (explicit) return explicit;
   let t = (document.title || '').trim();
   t = t.replace(/\s*[·•|–—-]\s*Tizia\s*$/i, '').replace(/^Tizia\s*[·•|–—-]\s*/i, '');
+  // Tiêu đề dài kiểu "Trường ảo — Mầm non · Tiểu học · …" → chỉ giữ phần đầu
+  // trước em-dash để breadcrumb gọn. Trang muốn override hoàn toàn thì dùng
+  // <body data-page-title="…">.
+  const dashIdx = t.search(/\s+[—–]\s+/);
+  if (dashIdx > 0) t = t.slice(0, dashIdx).trim();
   return t || 'Trang';
 }
 
@@ -340,13 +368,27 @@ function quickLinksHtml(user) {
   return '';
 }
 
+function isIndexPage() {
+  const p = (location.pathname || '').replace(/\/+$/, '');
+  return p === '' || p === '/index' || /\/index\.html?$/i.test(p);
+}
+
+function brandHtml() {
+  const tagline = isIndexPage()
+    ? '<span class="ev-tagline">The Intelligent Zone for Interactive Academy</span>'
+    : '';
+  return `<div class="ev-brand-stack"><a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>${tagline}</div>`;
+}
+
 function render(host, user) {
   if (!user) {
     host.innerHTML = `
-      <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
+      ${brandHtml()}
       ${breadcrumbHtml()}
       <span class="ev-spacer"></span>
       ${quickLinksHtml(user)}
+      <span id="ev-eng-slot"></span>
+      <span id="ev-pet-slot"></span>
       <span id="ev-bell-slot"></span>
       <span class="ev-anon"><a href="login.html">Đăng nhập</a></span>
     `;
@@ -383,10 +425,12 @@ function render(host, user) {
   const planCta = `<a class="ev-plan-cta muted" href="pricing.html" style="font-size:12px;opacity:.65;font-weight:500">Gói cước & thanh toán</a>`;
 
   host.innerHTML = `
-    <a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>
+    ${brandHtml()}
     ${breadcrumbHtml()}
     <span class="ev-spacer"></span>
     ${quickLinksHtml(user)}
+    <span id="ev-eng-slot"></span>
+    <span id="ev-pet-slot"></span>
     <span id="ev-bell-slot"></span>
     <div class="ev-user-wrap" id="ev-user-wrap">
       <button class="ev-user" id="ev-user-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Xem hồ sơ">
@@ -502,6 +546,21 @@ function render(host, user) {
   });
 }
 
+// Header phải sát cạnh trình duyệt. Nhiều trang set `body { padding: 24px 16px }`
+// cho nội dung — nếu header là con của body thì bị đẩy vào trong. Đo padding
+// của body rồi bù bằng margin âm để header tràn ra mép viewport, kệ trang đang
+// padding bao nhiêu. Phải đo lại khi resize vì padding hay đổi theo @media.
+function syncEdgeMargins(host) {
+  if (!host || host.parentElement !== document.body) return;
+  const cs = getComputedStyle(document.body);
+  const pt = parseFloat(cs.paddingTop) || 0;
+  const pl = parseFloat(cs.paddingLeft) || 0;
+  const pr = parseFloat(cs.paddingRight) || 0;
+  host.style.marginTop = pt ? `-${pt}px` : '';
+  host.style.marginLeft = pl ? `-${pl}px` : '';
+  host.style.marginRight = pr ? `-${pr}px` : '';
+}
+
 export async function mountAuthHeader() {
   if (document.body?.dataset?.noAuthHeader !== undefined) return null;
   try { if (window.top !== window.self) return null; } catch { /* cross-origin iframe */ return null; }
@@ -515,11 +574,14 @@ export async function mountAuthHeader() {
     document.body.prepend(host);
   }
   host.className = 'ev-header';
+  syncEdgeMargins(host);
+  window.addEventListener('resize', () => syncEdgeMargins(host), { passive: true });
   // Vẽ tạm với cache (nếu có) để giảm nháy.
   const cached = currentUser();
   if (cached) render(host, cached);
   const user = await bootstrapMe({ redirectOnFail: false });
   render(host, user);
+  syncEdgeMargins(host);
   return user;
 }
 

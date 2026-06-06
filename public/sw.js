@@ -11,7 +11,7 @@
  * offline. Versioning theo SW_VERSION — bump khi đổi shell danh sách.
  */
 
-const SW_VERSION = 'tizia-2026-06-05-engagement-hud-v2';
+const SW_VERSION = 'tizia-2026-06-05-brand-tagline-v4';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const IMAGE_CACHE = `${SW_VERSION}-img`;
@@ -127,7 +127,9 @@ self.addEventListener('fetch', (event) => {
       event.respondWith((async () => {
         const cache = await caches.open(RUNTIME_CACHE);
         try {
-          const fresh = await fetch(req);
+          // cache: 'reload' bypasses HTTP disk cache — đảm bảo bug-fix lan tới
+          // user trong cùng phiên, không bị max-age=86400 của static handler giữ lại
+          const fresh = await fetch(req, { cache: 'reload' });
           if (fresh && fresh.ok) cache.put(req, fresh.clone());
           return fresh;
         } catch {

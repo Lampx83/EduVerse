@@ -39,6 +39,25 @@ const CSS = `
     background: rgba(15,23,42,0.95);
   }
   .tz-eng-hud[hidden] { display: none !important; }
+  /* Inline trong header (auth-header có #ev-eng-slot) — bỏ position fixed,
+     bỏ shadow, giảm padding, cao vừa header. */
+  #ev-eng-slot .tz-eng-hud {
+    position: static; top: auto; right: auto;
+    padding: 4px 10px 4px 6px;
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: none;
+    gap: 8px;
+    font-size: 12px;
+  }
+  #ev-eng-slot .tz-eng-hud:hover {
+    transform: none;
+    background: rgba(255,255,255,0.1);
+  }
+  #ev-eng-slot .tz-eng-hud .tz-eng-streak .flame { font-size: 15px; }
+  #ev-eng-slot .tz-eng-hud .tz-eng-streak .num { font-size: 13px; }
+  #ev-eng-slot .tz-eng-hud .tz-eng-hearts { font-size: 12px; }
+  #ev-eng-slot .tz-eng-hud .tz-eng-league { font-size: 11px; padding: 1px 5px; }
   .tz-eng-league {
     display: inline-flex; align-items: center; gap: 4px;
     text-decoration: none; color: inherit;
@@ -208,8 +227,15 @@ class EngagementHUD {
     // Bấm vào icon tier không trigger openDrawer — để link tự nhảy
     hud.querySelector('.tz-eng-league').addEventListener('click', (e) => e.stopPropagation());
     hud.addEventListener('click', () => this.openDrawer());
-    document.body.appendChild(hud);
+    const slot = document.getElementById('ev-eng-slot');
+    (slot || document.body).appendChild(hud);
     this.hud = hud;
+    // Header có thể render SAU khi HUD đã mount — khi auth-header phát sự kiện
+    // mount, re-parent vào slot để bar nằm gọn trong header.
+    document.addEventListener('ev-header-mounted', () => {
+      const s = document.getElementById('ev-eng-slot');
+      if (s && this.hud.parentElement !== s) s.appendChild(this.hud);
+    });
 
     const bg = document.createElement('div');
     bg.className = 'tz-eng-drawer-bg';

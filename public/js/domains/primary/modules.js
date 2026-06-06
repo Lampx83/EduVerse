@@ -7,12 +7,14 @@
 // ============================================================
 
 // Helper tạo module curriculum cho 1 môn × 1 lớp.
+// opts.optional = true → môn tự chọn theo GDPT 2018 (vd Ngoại ngữ 1 ở L1-L2).
 const M = (id, title, year, subject, descr, opts = {}) => ({
   category: 'curriculum', id, title, yearLevel: year, subject,
   scenarioIds: [opts.firstId || `${id}-w01-quiz`],
   knowledgeQuiz: opts.firstId || `${id}-w01-quiz`,
   minStarsToUnlock: opts.minStars ?? 0,
   ...(opts.prerequisites ? { prerequisites: opts.prerequisites } : {}),
+  ...(opts.optional ? { optional: true } : {}),
   description: descr,
 });
 
@@ -23,8 +25,9 @@ export const MODULES = [
     '35 tuần (HK1: vị trí, số 1–10, hình cơ bản, cộng-trừ trong 10. HK2: số đến 100, cộng-trừ 2 chữ số, cm, đồng hồ, tiền VN).'),
   M('P1TV',   'Tiếng Việt lớp 1',    1, 'tieng-viet',
     '35 tuần (HK1: tư thế viết, âm đơn-ghép, vần đơn. HK2: vần phức, đọc đoạn, chính tả, từ loại, câu kể-hỏi-cảm).'),
-  M('P1TA',   'Tiếng Anh lớp 1',     1, 'tieng-anh',
-    '35 tuần (HK1: greetings, numbers, colors, family, body, classroom. HK2: animals, food, weather, clothes, action verbs).'),
+  M('P1TA',   'Tiếng Anh lớp 1 (tự chọn)',  1, 'tieng-anh',
+    '35 tuần (HK1: greetings, numbers, colors, family, body, classroom. HK2: animals, food, weather, clothes, action verbs). Môn TỰ CHỌN theo TT 32/2018 (Ngoại ngữ 1 chỉ bắt buộc từ L3).',
+    { optional: true }),
   M('P1TNXH', 'TN-XH lớp 1',         1, 'tnxh',
     '35 tuần (HK1: gia đình, lớp học, an toàn nhà-trường, ATGT, cơ thể, vệ sinh. HK2: cây-con vật, mùa, Mặt Trời-Trăng, môi trường).'),
   M('P1DD',   'Đạo đức lớp 1',       1, 'dao-duc',
@@ -44,8 +47,9 @@ export const MODULES = [
     { minStars: 3, prerequisites: ['P1'] }),
   M('P2TV',   'Tiếng Việt lớp 2',    2, 'tieng-viet',
     '36 tuần (HK1: ôn âm vần, tập đọc, từ loại, mẫu câu. HK2: dấu câu, vốn từ, viết đoạn 3-5 câu).'),
-  M('P2TA',   'Tiếng Anh lớp 2',     2, 'tieng-anh',
-    '36 tuần (HK1: greetings, numbers, colors, body, family. HK2: animals, food, weather, days, toys, likes).'),
+  M('P2TA',   'Tiếng Anh lớp 2 (tự chọn)', 2, 'tieng-anh',
+    '36 tuần (HK1: greetings, numbers, colors, body, family. HK2: animals, food, weather, days, toys, likes). Môn TỰ CHỌN theo TT 32/2018 (Ngoại ngữ 1 chỉ bắt buộc từ L3).',
+    { optional: true }),
   M('P2GDTC', 'GDTC lớp 2',          2, 'gdtc',
     '36 tuần — đội hình, bài thể dục PTC, đi-chạy-nhảy, nhảy dây, tâng cầu, ném-bắt, trò chơi dân gian.'),
   M('P2AN',   'Âm nhạc lớp 2',       2, 'am-nhac',

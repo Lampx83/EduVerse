@@ -3,6 +3,8 @@
 // + legacy tabs (Góp ý / Người dùng / Trường / AI / Học liệu / Gói cước).
 // Auto-refresh 60s, vanilla — không phụ thuộc thư viện ngoài.
 
+import { DOMAIN_META } from './engine/domain.js';
+
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -163,6 +165,41 @@ function deltaCmp(now, prev) {
   return { cls:'dn', icon:'↓', text:`${diff} (${pct}%)` };
 }
 
+// Mapping KPI → tab đích + selector vùng cần cuộn tới (highlight bằng .kpi-flash)
+const KPI_NAV = {
+  schools:          { tab:'schools' },
+  users:            { tab:'users' },
+  attempts:         { tab:'dashboard', focus:'#chart-attempts' },
+  requests_pending: { tab:'requests', filter:'pending' },
+  ai_decisions:     { tab:'dashboard', focus:'#chart-tokens-model' },
+  ai_tokens_24h:    { tab:'dashboard', focus:'#chart-tokens' },
+  active_sessions:  { tab:'users' },
+  events:           { tab:'dashboard', focus:'#activity-feed' },
+  requests:         { tab:'requests', filter:'all' },
+};
+
+async function navigateKpi(k) {
+  const nav = KPI_NAV[k];
+  if (!nav) return;
+  if (nav.tab && nav.tab !== currentTab) {
+    if (nav.tab === 'requests' && nav.filter) reqFilter = nav.filter;
+    await showTab(nav.tab);
+  } else if (nav.tab === 'requests' && nav.filter) {
+    reqFilter = nav.filter;
+    renderRequests();
+  }
+  if (nav.focus) {
+    setTimeout(() => {
+      const el = document.querySelector(nav.focus);
+      if (!el) return;
+      const target = el.closest('.panel') || el.closest('.section') || el;
+      target.scrollIntoView({ behavior:'smooth', block:'center' });
+      target.classList.add('kpi-flash');
+      setTimeout(() => target.classList.remove('kpi-flash'), 1500);
+    }, 50);
+  }
+}
+
 function renderKpi(overview) {
   const d = overview.delta || {};
   const heroCards = [
@@ -174,8 +211,6 @@ function renderKpi(overview) {
   const subCards = [
     { k:'ai_decisions', label:'Quyết định AI', icon:'🤖', cls:'info' },
     { k:'ai_tokens_24h', label:'AI tokens 24h', icon:'⚡', cls:'info', fallback:'—' },
-    { k:'ai_content', label:'Học liệu AI', icon:'📚' },
-    { k:'paid_schools', label:'Trường trả phí', icon:'💳', cls:'ok' },
     { k:'active_sessions', label:'Tài khoản còn phiên', icon:'🟢', cls:'ok' },
     { k:'events', label:'Sự kiện', icon:'📊' },
     { k:'requests', label:'Tổng góp ý', icon:'✉️' },
@@ -184,8 +219,9 @@ function renderKpi(overview) {
     const v = overview[c.k];
     if (v == null && !c.fallback) return '';
     const dlt = c.delta ? `<div class="delta ${c.delta.cls}">${c.delta.icon} ${c.delta.text} <small>· ${c.deltaLabel}</small></div>` : '';
+    const navAttr = KPI_NAV[c.k] ? ` data-nav="${c.k}" title="Bấm để xem chi tiết"` : '';
     return `
-      <div class="kpi ${c.cls || ''} ${c.k === 'requests_pending' && v > 0 ? 'pending' : ''}">
+      <div class="kpi ${c.cls || ''} ${c.k === 'requests_pending' && v > 0 ? 'pending' : ''}"${navAttr}>
         <div class="label">${c.label}</div>
         <div class="value">${v != null ? fmtNum(v) : c.fallback}</div>
         ${dlt}
@@ -262,7 +298,7 @@ function renderSystem(sys) {
 let reqCache = [];
 let reqFilter = 'all';
 let userCache = [];
-let currentTab = 'requests';
+let currentTab = 'dashboard';
 
 async function loadRequests() {
   const r = await api('/api/admin/requests?limit=300');
@@ -615,12 +651,12 @@ function confirmDeleteUser(u) {
 }
 
 // ─── CRUD Schools ───
-async function loadSchools() {
+async function loadSchools(host = $('#tabbody')) {
   const r = await api('/api/admin/schools');
   const schools = r.data.schools || [];
   schoolsCache = schools;
-  const host = $('#tabbody');
   host.innerHTML = `
+    <h2 class="section-title">🏫 Danh sách trường <span class="line"></span></h2>
     <div class="toolbar">
       <span style="font-size:12px;opacity:.6">Tổng: <b>${schools.length}</b> trường</span>
       <div class="spacer"></div>
@@ -652,8 +688,8 @@ async function loadSchools() {
       </tbody>
     </table>
   `;
-  $('#schoolCreate').addEventListener('click', () => openSchoolModal(null));
-  $('#schoolRefresh').addEventListener('click', loadSchools);
+  host.querySelector('#schoolCreate').addEventListener('click', () => openSchoolModal(null));
+  host.querySelector('#schoolRefresh').addEventListener('click', () => showTab(currentTab));
   host.querySelectorAll('[data-act][data-sid]').forEach(b => {
     if (b.hasAttribute('disabled')) return;
     b.addEventListener('click', () => {
@@ -692,7 +728,7 @@ async function submitSchool() {
   if (!r.ok) return toast('Lỗi: ' + (r.data?.message || r.data?.error || r.status), 'err');
   toast(isEdit ? '✓ Đã cập nhật trường' : '✓ Đã tạo trường');
   closeModal();
-  if (currentTab === 'schools') await loadSchools();
+  if (currentTab === 'schools') await showTab('schools');
 }
 function confirmDeleteSchool(s) {
   openConfirm({
@@ -704,7 +740,7 @@ function confirmDeleteSchool(s) {
       if (!r.ok) return toast('Lỗi: ' + (r.data?.message || r.data?.error || r.status), 'err');
       toast('✓ Đã xoá trường ' + r.data.deleted);
       closeModal();
-      await loadSchools();
+      await showTab('schools');
     },
   });
 }
@@ -820,65 +856,102 @@ async function loadSimple(path, key, cols, fmtMap = {}) {
 }
 
 // ─────────── Campus Editor ───────────
-const CAMPUS_DOMAINS = [
-  { domain:'preschool', label:'Mầm non',   emoji:'🌸' },
-  { domain:'primary',   label:'Tiểu học',  emoji:'🏫' },
-  { domain:'secondary', label:'THCS/THPT', emoji:'🏛️' },
-  { domain:'it',        label:'CNTT',      emoji:'💻' },
-  { domain:'pharmacy',  label:'Dược',      emoji:'💊' },
-];
+// Single source of truth: DOMAIN_META (engine/domain.js) — đảm bảo admin
+// luôn ngang với trang chủ (parity), không drift khi thêm trường mới.
+// 'ready' + 'preview' = trường đã mở (có editor); 'locked' = hiển thị badge,
+// editor vẫn cho mở để admin chuẩn bị layout trước khi go-live.
+const CAMPUS_DOMAINS = DOMAIN_META.map(d => ({
+  domain: d.id,
+  label:  d.shortName || d.name,
+  emoji:  d.icon || '🏫',
+  status: d.status,
+  level:  d.level,
+}));
 
 let _campusEditorDomain = null;
 let _campusLayoutCache  = null;
 
-async function loadCampus() {
+async function loadCampus(host = $('#tabbody')) {
   const r = await api('/api/admin/campus-layouts');
   const overrides = new Set((r.data?.layouts || []).map(x => x.domain));
   const updatedMap = Object.fromEntries((r.data?.layouts || []).map(x => [x.domain, x.updated_at]));
 
-  $('#tabbody').innerHTML = `
-    <section class="section">
-      <h2 class="section-title">🗺️ Campus Editor <span class="line"></span></h2>
-      <p style="color:var(--muted);font-size:13px;margin:0 0 18px">Chỉnh bố cục bản đồ 2.5D cho từng trường. Override lưu vào DB — Reset để về layout mặc định.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
-        ${CAMPUS_DOMAINS.map(c => `
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px">
-            <div style="font-size:28px">${c.emoji}</div>
-            <div>
-              <div style="font-weight:700;font-size:15px">${c.label}</div>
-              <div style="font-size:12px;color:var(--muted);margin-top:2px">${
-                overrides.has(c.domain)
-                  ? `<span style="color:var(--ok)">● Override DB</span> · ${fmt(updatedMap[c.domain])}`
-                  : '<span style="color:var(--dim)">● Mặc định</span>'
-              }</div>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:auto">
-              <button class="btn primary" style="flex:1" data-campus-edit="${c.domain}" data-campus-label="${c.label} ${c.emoji}">✏️ Chỉnh sửa</button>
-              ${overrides.has(c.domain) ? `<button class="btn" style="color:var(--bad);border-color:var(--bad);background:rgba(239,68,68,.08)" data-campus-del="${c.domain}">↺</button>` : ''}
-            </div>
-          </div>
-        `).join('')}
+  // Nhóm theo cấp: Phổ thông trước, ĐH/CĐ sau. Trường locked dồn cuối nhóm.
+  const order = { ready: 0, preview: 1, locked: 2 };
+  const sortFn = (a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3);
+  const grpSchool = CAMPUS_DOMAINS.filter(c => c.level === 'school').sort(sortFn);
+  const grpHE     = CAMPUS_DOMAINS.filter(c => c.level === 'he').sort(sortFn);
+
+  const renderCard = (c) => {
+    const statusBadge = c.status === 'locked'
+      ? '<span style="background:rgba(148,163,184,.15);color:#94a3b8;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700">🔒 SẮP MỞ</span>'
+      : c.status === 'preview'
+        ? '<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700">PREVIEW</span>'
+        : '<span style="background:rgba(34,197,94,.15);color:#22c55e;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700">READY</span>';
+    const editorState = overrides.has(c.domain)
+      ? `<span style="color:var(--ok)">● Override DB</span> · ${fmt(updatedMap[c.domain])}`
+      : '<span style="color:var(--dim)">● Mặc định</span>';
+    return `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;${c.status==='locked'?'opacity:.75':''}">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:24px">${c.emoji}</span>${statusBadge}</div>
+        <div>
+          <div style="font-weight:700;font-size:14px">${c.label}</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${editorState}</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:auto">
+          <button class="btn primary" style="flex:1;font-size:12px" data-campus-edit="${c.domain}" data-campus-label="${c.label} ${c.emoji}">✏️ Sửa</button>
+          ${overrides.has(c.domain) ? `<button class="btn" style="color:var(--bad);border-color:var(--bad);background:rgba(239,68,68,.08);font-size:12px" data-campus-del="${c.domain}" title="Xoá override">↺</button>` : ''}
+        </div>
       </div>
-    </section>
+    `;
+  };
+
+  host.innerHTML = `
+    <h2 class="section-title">🗺️ Campus 2.5D theo trường <span class="line"></span></h2>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 14px">
+      Quản lý bố cục bản đồ cho <b>${CAMPUS_DOMAINS.length} trường</b> trong hệ thống Tizia
+      — đồng bộ với trang chủ. Override lưu vào DB; Reset để về layout mặc định.
+    </p>
+
+    <h3 style="font-size:13px;margin:12px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
+      🎒 Phổ thông (${grpSchool.length})
+    </h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+      ${grpSchool.map(renderCard).join('')}
+    </div>
+
+    <h3 style="font-size:13px;margin:24px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">
+      🎓 Đại học & Cao đẳng (${grpHE.length})
+    </h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+      ${grpHE.map(renderCard).join('')}
+    </div>
   `;
 
-  $('#tabbody').querySelectorAll('[data-campus-edit]').forEach(btn => {
+  host.querySelectorAll('[data-campus-edit]').forEach(btn => {
     btn.addEventListener('click', () => openCampusEditor(btn.dataset.campusEdit, btn.dataset.campusLabel));
   });
-  $('#tabbody').querySelectorAll('[data-campus-del]').forEach(btn => {
+  host.querySelectorAll('[data-campus-del]').forEach(btn => {
     btn.addEventListener('click', () => resetCampusLayout(btn.dataset.campusDel));
   });
 }
 
-function openCampusEditor(domain, label) {
-  _campusEditorDomain = domain;
-  _campusLayoutCache  = null;
-  const overlay = $('#campus-overlay');
-  overlay.style.display = 'flex';
-  $('#campus-overlay-title').textContent = `✏️ Campus Editor — ${label}`;
-  $('#campus-dirty-badge').style.display = 'none';
-  const iframe = $('#campus-iframe');
-  iframe.src = `/campus-proto/b-iso-canvas.html?domain=${domain}&edit=1`;
+async function loadSchoolsCampus() {
+  $('#tabbody').innerHTML = `
+    <div id="sc-schools"></div>
+    <div style="height:32px"></div>
+    <div id="sc-campus"></div>
+  `;
+  await Promise.all([
+    loadSchools($('#sc-schools')),
+    loadCampus($('#sc-campus')),
+  ]);
+}
+
+function openCampusEditor(domain, _label) {
+  // Trang editor đầy đủ panel Inspector/Palette/JSON nằm ở /admin/campus-editor.html.
+  // Truyền domain qua query string — editor tự đọc ở bootstrap.
+  window.location.href = `/admin/campus-editor.html?domain=${encodeURIComponent(domain)}`;
 }
 
 function closeCampusEditor() {
@@ -916,7 +989,7 @@ async function resetCampusLayout(domain) {
   if (!r.ok) return toast('Lỗi: ' + (r.data?.error || r.status), 'err');
   toast(`✓ Đã reset campus ${domain}`);
   if (_campusEditorDomain === domain) closeCampusEditor();
-  await loadCampus();
+  await showTab(currentTab);
 }
 
 window.addEventListener('message', e => {
@@ -929,48 +1002,220 @@ window.addEventListener('message', e => {
   }
 });
 
+// Curriculum gap dashboard mở trang riêng — không cần phải nhúng heatmap nặng
+// vào tab khi nó cần load 6 domain modules song song. Click tab Curriculum sẽ
+// hiện shortcut + preview stats; full view ở /admin/curriculum-gap.html.
+async function loadCurriculumTab() {
+  $('#tabbody').innerHTML = `
+    <h2 class="section-title">📊 Curriculum Gap Dashboard <span class="line"></span></h2>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px">Heatmap độ phủ K-12 vs GDPT 2018</div>
+        <div style="color:var(--muted);font-size:13px;line-height:1.55">
+          Đối chiếu môn × tuần × có scenarios giữa Tizia vs chuẩn Chương trình GDPT 2018 (TT 32/2018 + TT 13/2022 cho THPT + TT 51/2020 cho mầm non).
+          Sau khi anh chạy upgrade <code style="background:#020617;color:var(--accent);padding:2px 6px;border-radius:4px;font-size:11.5px">SCOREUP-UPGRADE.md</code> Phase 4, dashboard tự lấy coverage thực từ ScoreUp.
+        </div>
+      </div>
+      <a class="btn primary" href="/admin/curriculum-gap.html" style="font-weight:700">📊 Mở Dashboard →</a>
+    </div>
+    <div style="margin-top:24px;color:var(--muted);font-size:12.5px;line-height:1.6">
+      🧪 <b>Quick refs:</b><br>
+      • Audit chi tiết: <code style="background:#020617;color:var(--accent);padding:1px 5px;border-radius:3px">docs/AUDIT-2026-06-05.md</code><br>
+      • Seed JSON Lịch sử L11/L12: <code style="background:#020617;color:var(--accent);padding:1px 5px;border-radius:3px">docs/curriculum-seeds/lich-su-{11,12}.json</code><br>
+      • Upgrade prompts: <code style="background:#020617;color:var(--accent);padding:1px 5px;border-radius:3px">docs/upgrade-prompts/{SCOREUP,CODELAB}-UPGRADE.md</code>
+    </div>
+  `;
+}
+
 const TABS = {
-  requests:  { label:'💡 Góp ý', load: loadRequests, badge: () => reqCache.filter(r => r.status === 'pending').length },
-  users:     { label:'👥 Người dùng', load: loadUsers },
-  schools:   { label:'🏫 Trường', load: loadSchools },
-  campus:    { label:'🗺️ Campus', load: loadCampus },
-  decisions: { label:'🤖 Quyết định AI', load: () => loadSimple('/api/admin/ai-decisions?limit=200', 'decisions',
-    ['id','request_id','action','status_applied','decided_by','confidence','created_at'], { created_at: fmt }) },
-  content:   { label:'📚 Học liệu AI', load: () => loadSimpleWithDelete('/api/admin/content?limit=200', 'content',
-    ['id','school_id','subject','kind','flagged','created_at'], { created_at: fmt }, '/api/admin/content', 'content') },
-  billing:   { label:'💳 Gói cước', load: () => loadSimple('/api/admin/billing', 'subscriptions',
-    ['school_id','school','plan','status','current_period_end'], { current_period_end: fmt }) },
-  backup:    { label:'🛟 Sao lưu', load: loadBackups },
+  dashboard:  { label:'📊 Dashboard', load: loadDashboard },
+  schools:    { label:'🏫 Trường', load: loadSchoolsCampus },
+  curriculum: { label:'📊 Curriculum', load: loadCurriculumTab },
+  requests:   { label:'💡 Góp ý', load: loadRequests, badge: () => reqCache.filter(r => r.status === 'pending').length },
+  users:      { label:'👥 Người dùng', load: loadUsers },
+  config:     { label:'⚙️ Cấu hình', load: loadConfig },
 };
 
-// ─────────── Sao lưu / Phục hồi DB (Postgres pg_dump) ───────────
-// Auto-snapshot mỗi 03:00 (BACKUP_HOUR), giữ N file (BACKUP_KEEP). Restore
-// gọi pg_restore --clean --if-exists -1 trên connection pool đang chạy
-// (single-transaction → rollback nếu lỗi). Trước restore server tự snapshot
-// file pre-restore làm safety net.
-async function loadBackups() {
-  const r = await api('/api/admin/backups');
-  if (!r.ok) { $('#tabbody').innerHTML = `<div class="err">Lỗi tải danh sách: ${r.data?.error || r.status}</div>`; return; }
-  const items = r.data.backups || [];
+// ─────────── Dashboard tab (KPI + charts + tops + feed + system) ───────────
+async function loadDashboard() {
+  const [ov, ts, tokenModelsRes, topSchools, topStudents, sys, activity] = await Promise.all([
+    api('/api/admin/overview2'),
+    api('/api/admin/timeseries?days=30'),
+    api('/api/admin/ai-tokens-by-model?days=30'),
+    api('/api/admin/top?metric=schools&limit=8'),
+    api('/api/admin/top?metric=students&limit=8'),
+    api('/api/admin/system'),
+    api('/api/admin/activity?limit=40'),
+  ]);
 
-  const meta = `
-    <div class="panel" style="margin-bottom:14px">
-      <div class="panel-title">⚙️ Cấu hình auto-backup</div>
-      <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;font-size:13px">
-        <div><div style="color:var(--muted)">Khung giờ</div><div style="font-weight:700">${String(r.data.auto_hour).padStart(2,'0')}:00 (server time)</div></div>
-        <div><div style="color:var(--muted)">Giữ tối đa</div><div style="font-weight:700">${r.data.keep} file</div></div>
-        <div><div style="color:var(--muted)">Tổng dung lượng</div><div style="font-weight:700">${fmtBytes(r.data.total_size)}</div></div>
-        <div><div style="color:var(--muted)">Định dạng</div><div style="font-weight:700">${esc(r.data.format || 'pg_dump -Fc')}</div></div>
-        <div style="grid-column:span 2"><div style="color:var(--muted)">Thư mục</div><div style="font-family:monospace;font-size:12px;word-break:break-all">${esc(r.data.dir)}</div></div>
+  if (ov.status === 403) {
+    $('#tabbody').innerHTML = `<div class="err">⛔ Cần quyền <b>admin</b>. Tài khoản hiện tại không đủ quyền.<br>
+      Liên hệ quản trị để được cấp quyền.</div>`;
+    return;
+  }
+
+  const kpiHtml = renderKpi(ov.data || {});
+  const chartsHtml = `
+    <section class="section">
+      <h2 class="section-title">📈 Xu hướng 30 ngày <span class="line"></span></h2>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">🎮 Lượt học theo ngày <span class="legend"><span><i style="background:var(--accent)"></i>Lượt học</span></span></div>
+          <div class="chart" id="chart-attempts"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">👤 User mới theo ngày <span class="legend"><span><i style="background:var(--accent2)"></i>Đăng ký</span></span></div>
+          <div class="chart" id="chart-users"></div>
+        </div>
+      </div>
+      <div style="height:14px"></div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">🤖 AI tokens theo ngày <span class="legend"><span><i style="background:var(--purple)"></i>Tokens</span></span></div>
+          <div class="chart" id="chart-tokens"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">⚡ Tokens theo model</div>
+          <div id="chart-tokens-model" style="padding:6px 0"></div>
+        </div>
+      </div>
+    </section>
+  `;
+  const topsHtml = `
+    <section class="section">
+      <h2 class="section-title">🏆 Bảng xếp hạng <span class="line"></span></h2>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">🏫 Top trường theo lượt học</div>
+          <div id="top-schools"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🏆 Top học sinh năng động</div>
+          <div id="top-students"></div>
+        </div>
+      </div>
+    </section>
+  `;
+  const feedHtml = `
+    <section class="section">
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">📋 Hoạt động gần đây</div>
+          <div id="activity-feed"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">⚙️ Hệ thống (snapshot)</div>
+          <div id="sysblock"></div>
+        </div>
+      </div>
+    </section>
+  `;
+  $('#tabbody').innerHTML = kpiHtml + chartsHtml + topsHtml + feedHtml;
+
+  $$('.kpi[data-nav]').forEach(el => {
+    el.addEventListener('click', () => navigateKpi(el.dataset.nav));
+  });
+
+  const series = (ts.data?.series || []);
+  lineChart($('#chart-attempts'),
+    series.map(s => ({ date: s.date, value: s.attempts })),
+    { color:'var(--accent)', label:'Lượt' });
+  lineChart($('#chart-users'),
+    series.map(s => ({ date: s.date, value: s.users })),
+    { color:'var(--accent2)', label:'User mới' });
+  lineChart($('#chart-tokens'),
+    series.map(s => ({ date: s.date, value: s.ai_tokens })),
+    { color:'var(--purple)', label:'Tokens' });
+
+  const tokenModels = (tokenModelsRes.data?.models || []).map(m => ({
+    model: `${m.model} ${m.provider ? '(' + m.provider + ')' : ''}`,
+    value: (m.pin || 0) + (m.pout || 0),
+  }));
+  barChartH($('#chart-tokens-model'), tokenModels);
+
+  $('#top-schools').innerHTML = renderTopList(topSchools.data?.rows || [], {
+    nameKey:'name', valueKey:'attempts',
+    sub: r => ` · ${r.users || 0} user · ${r.requests || 0} góp ý`,
+  });
+  $('#top-students').innerHTML = renderTopList(topStudents.data?.rows || [], {
+    nameKey:'display_name', valueKey:'attempts',
+    sub: r => ` · @${r.username} · điểm ${fmtNum(r.total_score)}`,
+  });
+  $('#activity-feed').innerHTML = renderFeed(activity.data?.items || []);
+  $('#sysblock').innerHTML = renderSystem(sys.data || {});
+
+  // Đồng bộ badge "Góp ý" sau khi dashboard load xong (nhẹ, không trùng request)
+  if (ov.data?.requests_pending != null) {
+    const tb = document.querySelector('.tab[data-k="requests"] .count');
+    if (tb) tb.textContent = ov.data.requests_pending;
+  }
+}
+
+// ─────────── Cấu hình hệ thống (Runtime info + Auto-backup config + DB backup) ───────────
+// Tab "⚙️ Cấu hình" gom 3 nhóm:
+//   1. Runtime snapshot: uptime, memory, DB size, Node version (readonly)
+//   2. Cấu hình môi trường: env var chính (BACKUP_HOUR/KEEP, AI, …) — readonly
+//      vì sửa cần restart server; chỉ là window để admin biết đang chạy gì.
+//   3. Sao lưu / Phục hồi DB (pg_dump): tạo snapshot, list, restore.
+async function loadConfig() {
+  const [sysR, r] = await Promise.all([
+    api('/api/admin/system'),
+    api('/api/admin/backups'),
+  ]);
+  if (!r.ok) { $('#tabbody').innerHTML = `<div class="err">Lỗi tải cấu hình: ${r.data?.error || r.status}</div>`; return; }
+  const items = r.data.backups || [];
+  const pgReady = r.data.pg_ready !== false; // backwards-compat: undefined = giả định ready
+
+  // ── 1. Runtime snapshot ──
+  const sysHtml = renderSystem(sysR.data || {});
+
+  // ── 2. Env config snapshot (readonly — sửa cần restart) ──
+  const envHtml = `
+    <section class="section">
+      <h2 class="section-title">🔧 Cấu hình môi trường <span class="line"></span></h2>
+      <p style="color:var(--muted);font-size:12.5px;margin:0 0 12px">
+        Các giá trị dưới đây đọc từ biến môi trường lúc khởi động server. Sửa = đổi
+        env var trên prod rồi restart container.
+      </p>
+      <div class="panel">
+        <div style="padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;font-size:13px">
+          <div><div style="color:var(--muted)">Backup khung giờ</div><div style="font-weight:700">${String(r.data.auto_hour).padStart(2,'0')}:00 (server time)</div><small style="color:var(--muted)">env: BACKUP_HOUR</small></div>
+          <div><div style="color:var(--muted)">Backup giữ tối đa</div><div style="font-weight:700">${r.data.keep} file</div><small style="color:var(--muted)">env: BACKUP_KEEP</small></div>
+          <div><div style="color:var(--muted)">Định dạng dump</div><div style="font-weight:700">${esc(r.data.format || 'pg_dump -Fc')}</div></div>
+          <div><div style="color:var(--muted)">Postgres</div><div style="font-weight:700;color:${pgReady ? 'var(--ok)' : 'var(--warn)'}">${pgReady ? '● sẵn sàng' : '● chưa cấu hình'}</div><small style="color:var(--muted)">env: DATABASE_URL</small></div>
+          <div style="grid-column:1 / -1"><div style="color:var(--muted)">Thư mục backup</div><div style="font-family:monospace;font-size:12px;word-break:break-all">${esc(r.data.dir)}</div><small style="color:var(--muted)">env: BACKUP_DIR</small></div>
+        </div>
+      </div>
+    </section>`;
+
+  // ── 3. Sao lưu / Phục hồi DB ──
+  const pgWarn = pgReady ? '' : `
+    <div class="panel" style="margin-bottom:14px;background:rgba(251,146,60,0.08);border-color:rgba(251,146,60,0.4)">
+      <div class="panel-title" style="color:var(--warn)">⚠️ Postgres chưa sẵn sàng</div>
+      <div style="padding:6px 14px 12px;font-size:13px;line-height:1.55;color:var(--txt)">
+        Server không có biến môi trường <code style="background:rgba(0,0,0,.3);padding:1px 5px;border-radius:4px">DATABASE_URL</code>.
+        Tính năng <b>Tạo backup</b> / <b>Phục hồi</b> dùng <code>pg_dump</code>/<code>pg_restore</code> → chỉ hoạt động khi server đã chuyển sang Postgres.
+        Hiện tại đang chạy SQLite (giai đoạn migration đang dở) — vui lòng set <code>DATABASE_URL</code> rồi restart server.
       </div>
     </div>`;
 
+  const meta = `
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-title">📦 Tóm tắt backup</div>
+      <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;font-size:13px">
+        <div><div style="color:var(--muted)">Số file</div><div style="font-weight:700">${items.length}</div></div>
+        <div><div style="color:var(--muted)">Tổng dung lượng</div><div style="font-weight:700">${fmtBytes(r.data.total_size)}</div></div>
+        <div><div style="color:var(--muted)">Mới nhất</div><div style="font-weight:700">${items[0] ? fmt(items[0].created_at) : '—'}</div></div>
+      </div>
+    </div>`;
+
+  const disAttr = pgReady ? '' : 'disabled style="opacity:.4;cursor:not-allowed" title="Cần DATABASE_URL"';
   const actions = `
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-      <button class="btn primary" id="do-snapshot">📸 Tạo backup ngay</button>
-      <label class="btn" style="cursor:pointer">
+      <button class="btn primary" id="do-snapshot" ${disAttr}>📸 Tạo backup ngay</button>
+      <label class="btn" style="cursor:${pgReady ? 'pointer' : 'not-allowed'};${pgReady ? '' : 'opacity:.4'}" title="${pgReady ? '' : 'Cần DATABASE_URL'}">
         ⤴️ Phục hồi từ file…
-        <input type="file" id="restore-file" accept=".dump,application/octet-stream" style="display:none">
+        <input type="file" id="restore-file" accept=".dump,application/octet-stream" style="display:none" ${pgReady ? '' : 'disabled'}>
       </label>
       <button class="btn" id="refresh-bk">↻ Tải lại</button>
     </div>`;
@@ -993,16 +1238,21 @@ async function loadBackups() {
     body = `<table><thead><tr><th>Tên file</th><th>Dung lượng</th><th>Tạo lúc</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
-  $('#tabbody').innerHTML = meta + actions + body;
+  const backupSection = `
+    <section class="section">
+      <h2 class="section-title">💾 Sao lưu / Phục hồi DB <span class="line"></span></h2>
+      ${pgWarn}${meta}${actions}${body}
+    </section>`;
+  $('#tabbody').innerHTML = sysHtml + envHtml + backupSection;
 
   $('#do-snapshot').onclick = async () => {
     $('#do-snapshot').disabled = true; $('#do-snapshot').textContent = '⏳ Đang sao lưu…';
     const rr = await api('/api/admin/backups', { method:'POST', body: JSON.stringify({ label:'manual' }) });
     if (!rr.ok) return toast('Lỗi: ' + (rr.data?.detail || rr.data?.error || rr.status), 'err');
-    toast('✓ Đã tạo ' + rr.data.backup.name); await loadBackups();
+    toast('✓ Đã tạo ' + rr.data.backup.name); await loadConfig();
   };
 
-  $('#refresh-bk').onclick = () => loadBackups();
+  $('#refresh-bk').onclick = () => loadConfig();
 
   $$('button[data-del]').forEach(btn => {
     btn.onclick = () => {
@@ -1014,7 +1264,7 @@ async function loadBackups() {
         onConfirm: async () => {
           const rr = await api(`/api/admin/backups/${encodeURIComponent(name)}`, { method:'DELETE' });
           if (!rr.ok) return toast('Lỗi xoá', 'err');
-          toast('✓ Đã xoá ' + name); closeModal(); await loadBackups();
+          toast('✓ Đã xoá ' + name); closeModal(); await loadConfig();
         },
       });
     };
@@ -1038,7 +1288,7 @@ async function loadBackups() {
           });
           const j = await rr.json().catch(()=>({}));
           if (!rr.ok) return toast('Lỗi: ' + (j.detail || j.error || rr.status), 'err');
-          toast('✓ Đã phục hồi · safety=' + (j.safety_backup || '—')); closeModal(); await loadBackups();
+          toast('✓ Đã phục hồi · safety=' + (j.safety_backup || '—')); closeModal(); await loadConfig();
         },
       });
     };
@@ -1062,7 +1312,7 @@ async function loadBackups() {
           });
           const j = await rr.json().catch(()=>({}));
           if (!rr.ok) return toast('Lỗi: ' + (j.message || j.detail || j.error || rr.status), 'err');
-          toast('✓ Đã phục hồi · safety=' + (j.safety_backup || '—')); closeModal(); fileInput.value=''; await loadBackups();
+          toast('✓ Đã phục hồi · safety=' + (j.safety_backup || '—')); closeModal(); fileInput.value=''; await loadConfig();
         },
       });
     };
@@ -1101,152 +1351,87 @@ async function loadSimpleWithDelete(path, key, cols, fmtMap = {}, deleteBase, en
   });
 }
 
-async function showTab(key) {
-  currentTab = key;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.k === key));
-  $('#tabbody').innerHTML = '<div class="loading">⏳ Đang tải…</div>';
-  try { await TABS[key].load(); } catch(e) { $('#tabbody').innerHTML = `<div class="err">Lỗi: ${e.message}</div>`; }
+function renderTabBar() {
+  const tabsHtml = Object.entries(TABS).map(([k,v]) => {
+    const badge = v.badge ? `<span class="count">${v.badge()}</span>` : '';
+    return `<button class="tab ${k === currentTab ? 'active' : ''}" data-k="${k}">${v.label}${badge}</button>`;
+  }).join('');
+  const bar = $('#tabs');
+  if (bar) bar.innerHTML = tabsHtml;
 }
 
-// ─────────── Main render orchestrator ───────────
-async function refresh() {
-  const btn = $('#refreshBtn');
-  btn?.classList.add('spin');
+// Đọc tab từ location.hash (vd #schools). Trả null nếu hash không match tab nào.
+function tabFromHash() {
+  const h = (location.hash || '').replace(/^#/, '').trim();
+  return TABS[h] ? h : null;
+}
+
+async function showTab(key) {
+  if (!TABS[key]) key = 'dashboard';
+  currentTab = key;
+  // Sync URL hash để F5 / share link giữ nguyên tab. Dùng replaceState để
+  // không spam history; dashboard ẩn hash (URL sạch).
+  const want = key === 'dashboard' ? '' : '#' + key;
+  if (location.hash !== want) {
+    try { history.replaceState(null, '', location.pathname + location.search + want); } catch {}
+  }
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.k === key));
+  $('#tabbody').innerHTML = '<div class="loading">⏳ Đang tải…</div>';
   try {
-    const [ov, ts, tokenModelsRes, topSchools, topStudents, sys, activity] = await Promise.all([
-      api('/api/admin/overview2'),
-      api('/api/admin/timeseries?days=30'),
-      api('/api/admin/ai-tokens-by-model?days=30'),
-      api('/api/admin/top?metric=schools&limit=8'),
-      api('/api/admin/top?metric=students&limit=8'),
-      api('/api/admin/system'),
-      api('/api/admin/activity?limit=40'),
-    ]);
-
-    if (ov.status === 403) {
-      $('#app').innerHTML = `<div class="err">⛔ Cần quyền <b>admin</b>. Tài khoản hiện tại không đủ quyền.<br>
-        Liên hệ quản trị để được cấp quyền.</div>`;
-      return;
-    }
-
-    // Build sections
-    const kpiHtml = renderKpi(ov.data || {});
-    const chartsHtml = `
-      <section class="section">
-        <h2 class="section-title">📈 Xu hướng 30 ngày <span class="line"></span></h2>
-        <div class="two-col">
-          <div class="panel">
-            <div class="panel-title">🎮 Lượt học theo ngày <span class="legend"><span><i style="background:var(--accent)"></i>Lượt học</span></span></div>
-            <div class="chart" id="chart-attempts"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-title">👤 User mới theo ngày <span class="legend"><span><i style="background:var(--accent2)"></i>Đăng ký</span></span></div>
-            <div class="chart" id="chart-users"></div>
-          </div>
-        </div>
-        <div style="height:14px"></div>
-        <div class="two-col">
-          <div class="panel">
-            <div class="panel-title">🤖 AI tokens theo ngày <span class="legend"><span><i style="background:var(--purple)"></i>Tokens</span></span></div>
-            <div class="chart" id="chart-tokens"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-title">⚡ Tokens theo model</div>
-            <div id="chart-tokens-model" style="padding:6px 0"></div>
-          </div>
-        </div>
-      </section>
-    `;
-    const topsHtml = `
-      <section class="section">
-        <h2 class="section-title">🏆 Bảng xếp hạng <span class="line"></span></h2>
-        <div class="two-col">
-          <div class="panel">
-            <div class="panel-title">🏫 Top trường theo lượt học</div>
-            <div id="top-schools"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-title">🏆 Top học sinh năng động</div>
-            <div id="top-students"></div>
-          </div>
-        </div>
-      </section>
-    `;
-    const feedHtml = `
-      <section class="section">
-        <div class="two-col">
-          <div class="panel">
-            <div class="panel-title">📋 Hoạt động gần đây</div>
-            <div id="activity-feed"></div>
-          </div>
-          <div class="panel">
-            <div class="panel-title">⚙️ Hệ thống (snapshot)</div>
-            <div id="sysblock"></div>
-          </div>
-        </div>
-      </section>
-    `;
-    const tabsHtml = `
-      <section class="section">
-        <h2 class="section-title">📂 Quản lý chi tiết <span class="line"></span></h2>
-        <div class="tabs" id="tabs">
-          ${Object.entries(TABS).map(([k,v]) => {
-            const badge = v.badge ? `<span class="count">${v.badge()}</span>` : '';
-            return `<button class="tab" data-k="${k}">${v.label}${badge}</button>`;
-          }).join('')}
-        </div>
-        <div id="tabbody"><div class="loading">⏳ Đang tải…</div></div>
-      </section>
-    `;
-    $('#app').innerHTML = kpiHtml + chartsHtml + topsHtml + feedHtml + tabsHtml;
-
-    // Render charts
-    const series = (ts.data?.series || []);
-    lineChart($('#chart-attempts'),
-      series.map(s => ({ date: s.date, value: s.attempts })),
-      { color:'var(--accent)', label:'Lượt' });
-    lineChart($('#chart-users'),
-      series.map(s => ({ date: s.date, value: s.users })),
-      { color:'var(--accent2)', label:'User mới' });
-    lineChart($('#chart-tokens'),
-      series.map(s => ({ date: s.date, value: s.ai_tokens })),
-      { color:'var(--purple)', label:'Tokens' });
-
-    const tokenModels = (tokenModelsRes.data?.models || []).map(m => ({
-      model: `${m.model} ${m.provider ? '(' + m.provider + ')' : ''}`,
-      value: (m.pin || 0) + (m.pout || 0),
-    }));
-    barChartH($('#chart-tokens-model'), tokenModels);
-
-    $('#top-schools').innerHTML = renderTopList(topSchools.data?.rows || [], {
-      nameKey:'name', valueKey:'attempts',
-      sub: r => ` · ${r.users || 0} user · ${r.requests || 0} góp ý`,
-    });
-    $('#top-students').innerHTML = renderTopList(topStudents.data?.rows || [], {
-      nameKey:'display_name', valueKey:'attempts',
-      sub: r => ` · @${r.username} · điểm ${fmtNum(r.total_score)}`,
-    });
-    $('#activity-feed').innerHTML = renderFeed(activity.data?.items || []);
-    $('#sysblock').innerHTML = renderSystem(sys.data || {});
-
-    // Wire up tabs
-    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.k)));
-    await showTab(currentTab);
-  } catch (e) {
-    if (e.message !== 'login') console.error(e);
-  } finally {
-    setTimeout(() => $('#refreshBtn')?.classList.remove('spin'), 400);
+    await TABS[key].load();
+    // Cập nhật badge "Góp ý" sau khi load xong (vd: requests tab vừa fetch lại reqCache)
+    const reqBadge = document.querySelector('.tab[data-k="requests"] .count');
+    if (reqBadge && TABS.requests.badge) reqBadge.textContent = TABS.requests.badge();
+  } catch(e) {
+    $('#tabbody').innerHTML = `<div class="err">Lỗi: ${e.message}</div>`;
   }
 }
 
+async function refresh() {
+  const btn = $('#refreshBtn');
+  btn?.classList.add('spin');
+  try { await showTab(currentTab); }
+  catch(e) { if (e.message !== 'login') console.error(e); }
+  finally { setTimeout(() => $('#refreshBtn')?.classList.remove('spin'), 400); }
+}
+
 // ─────────── Init ───────────
+// Inject ADMIN badge + live-dot vào breadcrumb của auth-header
+function injectAdminBadge() {
+  const crumbs = document.querySelector('.ev-header .ev-crumbs');
+  if (!crumbs) return;
+  if (crumbs.querySelector('.badge')) return; // đã inject rồi
+  crumbs.insertAdjacentHTML('beforeend',
+    `<span class="badge" style="margin-left:8px">ADMIN</span>` +
+    `<span class="live-dot" title="Live — auto refresh 60s" style="margin-left:8px"></span>`
+  );
+}
+document.addEventListener('ev-header-mounted', injectAdminBadge, { once: true });
+
 async function init() {
   const meR = await api('/api/auth/me');
-  const whoEl = $('#who'); if (whoEl) whoEl.textContent = meR.data?.user ? '@' + meR.data.user.username : '';
 
-  await refresh();
+  // Render shell một lần — tab bar lớn + container nội dung
+  $('#app').innerHTML = `
+    <div class="tabs" id="tabs"></div>
+    <div id="tabbody"><div class="loading">⏳ Đang tải…</div></div>
+  `;
+  renderTabBar();
+  $('#tabs').addEventListener('click', e => {
+    const t = e.target.closest('.tab');
+    if (t && t.dataset.k) showTab(t.dataset.k);
+  });
 
-  // Auto-refresh 60s
+  // Hash routing: F5 / back-forward / paste link → giữ tab. Khởi động lấy
+  // tab từ URL hash, tự sync khi user bấm back/forward.
+  const startTab = tabFromHash() || 'dashboard';
+  window.addEventListener('hashchange', () => {
+    const t = tabFromHash();
+    if (t && t !== currentTab) showTab(t);
+  });
+  await showTab(startTab);
+
+  // Auto-refresh 60s (chỉ reload tab hiện tại)
   setInterval(refresh, 60_000);
 
   // Manual refresh

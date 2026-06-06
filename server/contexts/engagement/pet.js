@@ -11,14 +11,36 @@
 import { db, getUserWallet, upsertUserWallet, getUserState, putUserState } from '../../db.js';
 import { requireAuth } from '../identity/auth.js';
 
-// Catalog 6 pet — khớp với onboarding-60s.js
+// Catalog 13 pet — PERSONALITY-based (không gắn môn để tránh học lệch).
+// Mỗi pet là bạn đồng hành theo tính cách, hợp mọi cấp (mầm non → SV ĐH).
+// Khớp với onboarding-60s.js (PETS array). LEGACY_MAP để migrate id cũ.
 const PET_CATALOG = {
-  'rong-toan':  { name: 'Rồng Toán',  subject: 'math',     stages: ['🐲','🐉','🐲🔥'], color: '#3b82f6' },
-  'phuong-van': { name: 'Phượng Văn', subject: 'literature', stages: ['🦚','🦅','🦅✨'], color: '#ec4899' },
-  'cu-anh':     { name: 'Cú Anh',     subject: 'english',  stages: ['🦉','🦅','🦉👑'], color: '#a78bfa' },
-  'hoa-ly':     { name: 'Hồ Lý',      subject: 'science',  stages: ['🦊','🦁','🦊🔮'], color: '#f97316' },
-  'meo-su':     { name: 'Mèo Sử',     subject: 'history',  stages: ['🐱','🐯','🐱📜'], color: '#fbbf24' },
-  'rua-ngam':   { name: 'Rùa Ngẫm',   subject: 'philosophy', stages: ['🐢','🐢💪','🐢🧠'], color: '#10b981' },
+  // 6 pet cơ bản (khớp onboarding)
+  'cao-lem':       { name: 'Cáo Lém',       personality: 'Nhanh trí · Ứng biến',     stages: ['🦊','🦊✨','🦊👑'], color: '#f97316' },
+  'rua-ben':       { name: 'Rùa Bền',       personality: 'Kiên trì · Học đều',       stages: ['🐢','🐢💪','🐢👑'], color: '#10b981' },
+  'cu-to-mo':      { name: 'Cú Tò Mò',      personality: 'Ham hỏi · Khám phá',       stages: ['🦉','🦉✨','🦉👑'], color: '#a78bfa' },
+  'rong-dung':     { name: 'Rồng Dũng',     personality: 'Dám thử · Thử thách',      stages: ['🐲','🐉','🐉👑'],   color: '#3b82f6' },
+  'meo-sang':      { name: 'Mèo Sáng',      personality: 'Sáng tạo · Tinh tế',       stages: ['🐱','🐱✨','🐱👑'], color: '#ec4899' },
+  'ca-heo':        { name: 'Cá Heo',        personality: 'Đồng đội · Vui vẻ',        stages: ['🐬','🐬✨','🐬👑'], color: '#06b6d4' },
+  // 7 pet mở rộng (đa dạng tính cách + cho SV ĐH)
+  'gau-truc':      { name: 'Gấu Trúc',      personality: 'Bình tĩnh · Tập trung',    stages: ['🐼','🐼✨','🐼👑'], color: '#475569' },
+  'ong-cham':      { name: 'Ong Chăm',      personality: 'Chăm chỉ · Có tổ chức',    stages: ['🐝','🐝✨','🐝👑'], color: '#fbbf24' },
+  'chim-cc':       { name: 'Cánh Cụt Lạc',  personality: 'Lạc quan · Lan toả',       stages: ['🐧','🐧✨','🐧👑'], color: '#0ea5e9' },
+  'ho-con':        { name: 'Hổ Con',        personality: 'Mạnh mẽ · Tự tin',         stages: ['🐯','🐯✨','🐯👑'], color: '#dc2626' },
+  'soc-nho':       { name: 'Sóc Nhỏ',       personality: 'Nhanh nhẹn · Tích luỹ',    stages: ['🐿️','🐿️✨','🐿️👑'], color: '#92400e' },
+  'robot-tri':     { name: 'Robot Trí',     personality: 'Logic · Phân tích (SV)',   stages: ['🤖','🤖✨','🤖👑'], color: '#64748b' },
+  'kylan-tre':     { name: 'Kỳ Lân Trẻ',    personality: 'Mơ mộng · Cảm hứng',       stages: ['🦄','🦄✨','🦄👑'], color: '#d946ef' },
+};
+
+// Map legacy pet_id (đã lưu trong DB user_pet) → pet_id mới.
+// Chạy lazy migration trong ensurePet() để mượt cho user cũ.
+const LEGACY_PET_MAP = {
+  'rong-toan':  'rong-dung',   // dragon → dragon
+  'phuong-van': 'meo-sang',    // creative/elegant
+  'cu-anh':     'cu-to-mo',    // owl → owl
+  'hoa-ly':     'cao-lem',     // sciency-wit fox
+  'meo-su':     'meo-sang',    // cat → cat
+  'rua-ngam':   'rua-ben',     // turtle → turtle
 };
 
 const XP_PER_STAGE = [0, 200, 800];       // baby 0-199, teen 200-799, adult ≥800
@@ -59,15 +81,35 @@ function computeStage(xp) {
   return 0;
 }
 
+function normalizePetId(id) {
+  if (!id) return null;
+  if (PET_CATALOG[id]) return id;
+  if (LEGACY_PET_MAP[id]) return LEGACY_PET_MAP[id];
+  return null;
+}
+
 function ensurePet(userId) {
   let row = _getPetStmt.get(userId);
-  if (row) return row;
+  if (row) {
+    // Lazy migrate: nếu pet_id cũ (rong-toan…), tự đổi sang pet mới.
+    const fixed = normalizePetId(row.pet_id);
+    if (fixed && fixed !== row.pet_id) {
+      _upsertPetStmt.run({ ...row, pet_id: fixed, updated_at: Date.now() });
+      row = _getPetStmt.get(userId);
+    } else if (!fixed) {
+      // pet_id orphan (không tồn tại trong catalog mới lẫn legacy) → reset về default
+      _upsertPetStmt.run({ ...row, pet_id: 'cu-to-mo', updated_at: Date.now() });
+      row = _getPetStmt.get(userId);
+    }
+    return row;
+  }
   // Auto-create từ pet đã chọn trong onboarding (lưu ở user_state)
-  let petId = 'cu-anh';
+  let petId = 'cu-to-mo';
   try {
     const state = getUserState(userId);
     const fromOnb = state?.['engagement.pet']?.value?.id || state?.['engagement.pet']?.id;
-    if (fromOnb && PET_CATALOG[fromOnb]) petId = fromOnb;
+    const normalized = normalizePetId(fromOnb);
+    if (normalized) petId = normalized;
   } catch {}
   const now = Date.now();
   _upsertPetStmt.run({
@@ -94,7 +136,7 @@ export function addPetXp(userId, xp) {
 }
 
 function petPayload(row) {
-  const cat = PET_CATALOG[row.pet_id] || PET_CATALOG['cu-anh'];
+  const cat = PET_CATALOG[row.pet_id] || PET_CATALOG['cu-to-mo'];
   const stage = row.stage;
   const stageXpStart = XP_PER_STAGE[stage];
   const stageXpEnd   = XP_PER_STAGE[stage + 1] || (stageXpStart + 800);
@@ -107,7 +149,7 @@ function petPayload(row) {
     pet_id: row.pet_id,
     name: row.nickname || cat.name,
     base_name: cat.name,
-    subject: cat.subject,
+    personality: cat.personality,
     color: cat.color,
     stage,
     stage_label: ['Em bé', 'Tuổi teen', 'Trưởng thành'][stage] || 'Trưởng thành',
@@ -134,10 +176,11 @@ export function attachPet(router) {
     }
   });
 
-  // Đổi pet (HS có thể đổi pet 1 lần / tuần — simple: cứ cho đổi free)
+  // Đổi pet (chấp nhận legacy id để mượt cho client cũ)
   router.post('/api/pet/switch', requireAuth, (req, res) => {
-    const petId = String(req.body?.pet_id || '');
-    if (!PET_CATALOG[petId]) return res.status(400).json({ ok: false, error: 'unknown_pet' });
+    const raw = String(req.body?.pet_id || '');
+    const petId = normalizePetId(raw);
+    if (!petId) return res.status(400).json({ ok: false, error: 'unknown_pet' });
     const row = ensurePet(req.user.id);
     _upsertPetStmt.run({ ...row, pet_id: petId, updated_at: Date.now() });
     res.json({ ok: true, pet: petPayload(_getPetStmt.get(req.user.id)) });

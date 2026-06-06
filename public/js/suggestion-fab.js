@@ -31,6 +31,11 @@ function inferDomain() {
   if (typeof window !== 'undefined' && window.SUGGESTION_DOMAIN) {
     return String(window.SUGGESTION_DOMAIN);
   }
+  // Ưu tiên ?domain= trên URL (school.html?domain=secondary…) để khớp enrolled_domain
+  try {
+    const q = new URLSearchParams(location.search).get('domain');
+    if (q) return String(q);
+  } catch {}
   const p = (location.pathname || '').toLowerCase();
   if (/(^|\/)(it-|playground|cipher|sql|algo|code-lab|web-playground)/.test(p)) return 'it';
   if (/(pharmacy|pharma|nha-thuoc|compounding|sac-ky|dispense|antibiogram|ps\d|bao-che|herb-garden|titration|pediatric|iv-infusion|gmp|patient-sim|gc\d|calibration-curve|pk-curve|bp-measure|dilution|3d-shelf|2d-arcade|grapher|l[12]-)/.test(p)) return 'pharmacy';
@@ -85,6 +90,19 @@ function autoMount() {
             <textarea id="sgf-detail" class="sgf-in" rows="3" maxlength="10000"
                       placeholder="Càng cụ thể, AI càng dễ hiểu &amp; phản hồi đúng nhu cầu của bạn."></textarea>
           </label>
+
+          <div class="sgf-attach">
+            <label class="sgf-attach-row">
+              <input type="checkbox" id="sgf-shot-check" />
+              <span>📸 Đính kèm ảnh chụp <b>màn hình hiện tại</b> (Ban điều hành xem trực tiếp giao diện anh/chị đang gặp)</span>
+            </label>
+            <label class="sgf-attach-row sgf-file-row">
+              <span class="sgf-attach-lbl">📎 Đính kèm file (ảnh / PDF / Word / Excel / PPT — tối đa 8MB × 5 file):</span>
+              <input type="file" id="sgf-file-in" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" />
+            </label>
+            <div class="sgf-attach-list" id="sgf-attach-list"></div>
+          </div>
+
           <div class="sgf-ctx" id="sgf-ctx"></div>
           <div class="sgf-bar">
             <span class="sgf-msg" id="sgf-msg"></span>
@@ -133,6 +151,95 @@ function bind(root) {
   ctxBox.innerHTML = `📍 <b>Trang đang xem:</b> ${escapeHtml(ctx.title || ctx.url)}
                       <span class="sgf-ctx-url">${escapeHtml(ctx.url)}</span>`;
 
+  // ── Đính kèm: ảnh chụp màn hình + file ──
+  // pendingFiles: file user chọn (File[]); pendingShot: true nếu tick checkbox
+  // ảnh hiện tại. Cả 2 chỉ upload tại thời điểm submit (để tiết kiệm băng thông
+  // nếu user thay đổi ý / bỏ tick). Mỗi attachment tối đa 8MB (BE giới hạn).
+  const fileInput = root.querySelector('#sgf-file-in');
+  const shotCheck = root.querySelector('#sgf-shot-check');
+  const attachList = root.querySelector('#sgf-attach-list');
+  const MAX_FILES = 5;
+  const MAX_BYTES = 8 * 1024 * 1024;
+  let pendingFiles = [];
+  function renderAttachList() {
+    const items = [];
+    if (shotCheck.checked) items.push({ name: 'Ảnh chụp màn hình hiện tại', size: null, kind: 'screenshot' });
+    pendingFiles.forEach((f, i) => items.push({ name: f.name, size: f.size, kind: 'file', idx: i }));
+    if (!items.length) { attachList.innerHTML = ''; return; }
+    attachList.innerHTML = items.map(it => {
+      const sz = it.size != null ? ` <span class="sgf-attach-size">(${(it.size / 1024).toFixed(0)} KB)</span>` : '';
+      const rm = it.kind === 'file'
+        ? `<button type="button" class="sgf-attach-rm" data-rm-file="${it.idx}" title="Bỏ file">✕</button>`
+        : `<button type="button" class="sgf-attach-rm" data-rm-shot="1" title="Bỏ ảnh chụp">✕</button>`;
+      const ic = it.kind === 'screenshot' ? '📸' : '📎';
+      return `<div class="sgf-attach-it">${ic} ${escapeHtml(it.name)}${sz}${rm}</div>`;
+    }).join('');
+  }
+  shotCheck.addEventListener('change', renderAttachList);
+  fileInput.addEventListener('change', () => {
+    const list = [...(fileInput.files || [])];
+    for (const f of list) {
+      if (f.size > MAX_BYTES) { msg.textContent = `⚠️ "${f.name}" lớn hơn 8MB — chọn file nhỏ hơn.`; continue; }
+      if (pendingFiles.length >= MAX_FILES) { msg.textContent = `⚠️ Tối đa ${MAX_FILES} file/đề nghị.`; break; }
+      pendingFiles.push(f);
+    }
+    fileInput.value = '';
+    renderAttachList();
+  });
+  attachList.addEventListener('click', e => {
+    const rmFile = e.target?.dataset?.rmFile;
+    const rmShot = e.target?.dataset?.rmShot;
+    if (rmFile != null) { pendingFiles.splice(Number(rmFile), 1); renderAttachList(); }
+    else if (rmShot) { shotCheck.checked = false; renderAttachList(); }
+  });
+
+  // Chụp màn hình hiện tại (DOM hiện tại, KHÔNG bao gồm modal Đề nghị + FAB).
+  // Dùng html2canvas dynamic import từ CDN — chỉ tải khi user thật sự tick.
+  // Trả về Blob image/png. Modal được ẩn tạm trước khi snapshot rồi hiện lại.
+  async function captureScreenshot() {
+    if (!window.html2canvas) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Không tải được html2canvas'));
+        document.head.appendChild(s);
+      });
+    }
+    const modal = root.querySelector('#sgf-modal');
+    const fab = root.querySelector('#sgf-fab');
+    const prevModal = modal.hidden, prevFabDisp = fab.style.display;
+    modal.hidden = true; fab.style.display = 'none';
+    try {
+      const canvas = await window.html2canvas(document.body, {
+        useCORS: true, allowTaint: true, scale: Math.min(window.devicePixelRatio || 1, 2),
+        backgroundColor: getComputedStyle(document.body).backgroundColor || '#fff',
+        logging: false, ignoreElements: el => el.id === 'sgf-root' || el.classList?.contains('tizia-view-banner'),
+      });
+      return await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.9));
+    } finally {
+      modal.hidden = prevModal; fab.style.display = prevFabDisp;
+    }
+  }
+
+  // Upload 1 file/blob qua /api/requests/attachments. Trả về meta {url,name,mime,size,kind}.
+  async function uploadOne(blob, name, kind) {
+    const r = await fetch('api/requests/attachments', {
+      method: 'POST',
+      headers: {
+        'Content-Type': blob.type || 'application/octet-stream',
+        'X-Filename': encodeURIComponent(name || 'attachment'),
+        'X-Kind': kind,
+      },
+      body: blob,
+    });
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.message || e.error || 'upload_failed');
+    }
+    return await r.json();
+  }
+
   const open = () => {
     modal.hidden = false;
     setTimeout(() => root.querySelector('#sgf-title-in')?.focus(), 50);
@@ -164,22 +271,65 @@ function bind(root) {
     sendBtn.disabled = true;
     msg.textContent = 'Đang gửi…';
     try {
+      // Upload attachments TRƯỚC khi POST request (để nhồi URL vào payload).
+      const attachments = [];
+      if (shotCheck.checked) {
+        msg.textContent = 'Đang chụp màn hình…';
+        try {
+          const blob = await captureScreenshot();
+          if (blob) {
+            msg.textContent = 'Đang tải ảnh chụp…';
+            const meta = await uploadOne(blob, 'screenshot.png', 'screenshot');
+            attachments.push(meta);
+          }
+        } catch (e) {
+          msg.textContent = '⚠️ Không chụp được màn hình: ' + (e.message || e);
+          sendBtn.disabled = false;
+          return;
+        }
+      }
+      for (let i = 0; i < pendingFiles.length; i++) {
+        const f = pendingFiles[i];
+        msg.textContent = `Đang tải file ${i + 1}/${pendingFiles.length}: ${f.name}…`;
+        try {
+          const meta = await uploadOne(f, f.name, 'file');
+          attachments.push(meta);
+        } catch (e) {
+          msg.textContent = `⚠️ Không tải được "${f.name}": ${e.message || e}`;
+          sendBtn.disabled = false;
+          return;
+        }
+      }
+
+      msg.textContent = 'Đang gửi…';
       const r = await fetch('api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          domain: inferDomain(), type, title, detail,
+          domain: inferDomain(), type, title, detail, attachments,
           student: (typeof getPlayerName === 'function' && getPlayerName()) || 'Ẩn danh',
         }),
       });
       if (!r.ok) {
         const e2 = await r.json().catch(() => ({}));
-        msg.textContent = '⚠️ ' + (e2.error || 'Không gửi được');
+        if (e2.viewOnly || e2.error === 'view_only') {
+          msg.innerHTML = `⚠️ Bạn đang ở trường khác. <a href="/school.html?domain=${encodeURIComponent(e2.your_school || '')}" style="color:#fbbf24;text-decoration:underline">Về trường của bạn</a> để gửi đề nghị.`;
+        } else if (e2.needLogin) {
+          msg.textContent = '⚠️ Hãy đăng nhập để gửi đề nghị.';
+        } else if (e2.needEnroll) {
+          msg.textContent = '⚠️ Hãy chọn trường để bắt đầu gửi đề nghị.';
+        } else {
+          msg.textContent = '⚠️ ' + (e2.message || e2.error || 'Không gửi được');
+        }
         return;
       }
       msg.textContent = '✓ Đã gửi! Hiệu trưởng AI đang xem xét…';
       root.querySelector('#sgf-title-in').value = '';
       root.querySelector('#sgf-detail').value = '';
+      // Reset đính kèm để lần gửi sau bắt đầu sạch.
+      shotCheck.checked = false;
+      pendingFiles = [];
+      renderAttachList();
       loadInbox();
       // AI quyết định nền sau ~1-3s → reload để hiện phản hồi
       setTimeout(loadInbox, 2500);
@@ -217,6 +367,20 @@ function bind(root) {
 function renderItem(it) {
   const sm = STATUS[it.status] || STATUS.pending;
   const t = (TYPES.find(t => t.v === it.type) || TYPES[4]);
+  const atts = Array.isArray(it.attachments) ? it.attachments : [];
+  const attHtml = atts.length ? `
+    <div class="sgf-it-att">
+      ${atts.map(a => {
+        const isImg = /^image\//.test(a.mime || '');
+        const ic = a.kind === 'screenshot' ? '📸' : (isImg ? '🖼️' : '📎');
+        if (isImg) {
+          return `<a class="sgf-it-thumb" href="${escapeHtml(a.url)}" target="_blank" rel="noopener" title="${escapeHtml(a.name)}">
+                    <img loading="lazy" src="${escapeHtml(a.url)}" alt="${escapeHtml(a.name)}" />
+                  </a>`;
+        }
+        return `<a class="sgf-it-file" href="${escapeHtml(a.url)}" target="_blank" rel="noopener" download="${escapeHtml(a.name)}">${ic} ${escapeHtml(a.name)}</a>`;
+      }).join('')}
+    </div>` : '';
   return `
     <div class="sgf-it">
       <div class="sgf-it-line">
@@ -224,6 +388,7 @@ function renderItem(it) {
         <span class="sgf-it-title">${escapeHtml(it.title)}</span>
         <span class="sgf-it-st ${sm.cls}">${sm.label}</span>
       </div>
+      ${attHtml}
       ${it.admin_note ? `<div class="sgf-it-note">🏛️ ${escapeHtml(it.admin_note)}</div>` : ''}
     </div>
   `;
@@ -289,6 +454,27 @@ function injectStyles() {
     .sgf-in:focus { outline: 2px solid #c7d2fe; border-color: #6366f1; }
     textarea.sgf-in { resize: vertical; min-height: 60px; }
 
+    /* Attachments: ảnh chụp màn hình + file đính kèm */
+    .sgf-attach { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 9px; font-size: 12.5px; color: #475569; }
+    .sgf-attach-row { display: flex; align-items: center; gap: 8px; cursor: pointer; line-height: 1.4; }
+    .sgf-attach-row input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .sgf-attach-row b { color: #1f1147; }
+    .sgf-file-row { flex-wrap: wrap; cursor: default; }
+    .sgf-attach-lbl { font-weight: 600; }
+    .sgf-file-row input[type="file"] { font-size: 12px; }
+    .sgf-attach-list { display: flex; flex-direction: column; gap: 4px; }
+    .sgf-attach-list:empty { display: none; }
+    .sgf-attach-it { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e5e7eb; border-radius: 7px; padding: 5px 8px; font-size: 12px; color: #1f2937; }
+    .sgf-attach-size { opacity: .6; margin-left: 4px; }
+    .sgf-attach-rm { margin-left: auto; border: 0; background: transparent; cursor: pointer; color: #ef4444; font-weight: 700; font-size: 13px; padding: 0 4px; }
+    .sgf-attach-rm:hover { color: #b91c1c; }
+    /* Hiển thị attachments trong inbox */
+    .sgf-it-att { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .sgf-it-thumb { display: inline-block; border-radius: 6px; overflow: hidden; border: 1px solid #e5e7eb; line-height: 0; }
+    .sgf-it-thumb img { display: block; max-width: 120px; max-height: 90px; object-fit: cover; }
+    .sgf-it-file { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: #4338ca; background: #eef2ff; padding: 3px 8px; border-radius: 6px; text-decoration: none; border: 1px solid #c7d2fe; }
+    .sgf-it-file:hover { background: #e0e7ff; }
+
     .sgf-ctx {
       font-size: 11.5px; color: #475569; background: #f1f5f9; border-radius: 8px;
       padding: 7px 10px; line-height: 1.45;
@@ -339,6 +525,12 @@ function injectStyles() {
       .sgf-it-title { color: #f1f5f9; }
       .sgf-it-note { background: #422006; color: #fde68a; border-left-color: #f59e0b; }
       .sgf-msg { color: #cbd5e1; }
+      .sgf-attach { background: #1a1740; border-color: #4338ca; color: #cbd5e1; }
+      .sgf-attach-row b { color: #fef3c7; }
+      .sgf-attach-it { background: #312e81; border-color: #4338ca; color: #f1f5f9; }
+      .sgf-it-file { background: #312e81; color: #c7d2fe; border-color: #4338ca; }
+      .sgf-it-file:hover { background: #4338ca; }
+      .sgf-it-thumb { border-color: #4338ca; }
     }
   `;
   const st = document.createElement('style');

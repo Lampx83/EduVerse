@@ -57,9 +57,12 @@ const STYLE = `
     outline: none; border-color: #fbbf24;
   }
   .tz-onb .pets {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
     margin: 12px 0 18px;
+    max-height: 50vh; overflow-y: auto; padding: 2px;
   }
+  .tz-onb .pets::-webkit-scrollbar { width: 6px; }
+  .tz-onb .pets::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.3); border-radius: 6px; }
   .tz-onb .pet {
     padding: 14px 8px; border-radius: 14px;
     background: rgba(255,255,255,0.04);
@@ -115,13 +118,24 @@ const STYLE = `
   }
 `;
 
+// Pet = TÍNH CÁCH bạn đồng hành, KHÔNG gắn 1 môn (tránh học lệch).
+// Pet chỉ ảnh hưởng tone trò chuyện của Thầy AI + skin pet trong trường ảo.
+// Hợp cho mọi cấp học, kể cả SV ĐH (có robot-tri, kylan-tre cho SV/người lớn).
+// Khớp 1-1 với server/contexts/engagement/pet.js PET_CATALOG.
 const PETS = [
-  { id: 'rong-toan',  emo: '🐲', name: 'Rồng Toán',  desc: 'Tinh Toán · Logic' },
-  { id: 'phuong-van', emo: '🦚', name: 'Phượng Văn', desc: 'Ngữ Văn · Cảm xúc' },
-  { id: 'cu-anh',     emo: '🦉', name: 'Cú Anh',     desc: 'Tiếng Anh · Ham học' },
-  { id: 'hoa-ly',     emo: '🦊', name: 'Hồ Lý',      desc: 'Khoa học · Tinh nghịch' },
-  { id: 'meo-su',     emo: '🐱', name: 'Mèo Sử',     desc: 'Lịch sử · Trí nhớ' },
-  { id: 'rua-ngam',   emo: '🐢', name: 'Rùa Ngẫm',   desc: 'Triết · Bền bỉ' },
+  { id: 'cao-lem',    emo: '🦊', name: 'Cáo Lém',     desc: 'Nhanh trí · Ứng biến' },
+  { id: 'rua-ben',    emo: '🐢', name: 'Rùa Bền',     desc: 'Kiên trì · Học đều' },
+  { id: 'cu-to-mo',   emo: '🦉', name: 'Cú Tò Mò',    desc: 'Ham hỏi · Khám phá' },
+  { id: 'rong-dung',  emo: '🐲', name: 'Rồng Dũng',   desc: 'Dám thử · Thử thách' },
+  { id: 'meo-sang',   emo: '🐱', name: 'Mèo Sáng',    desc: 'Sáng tạo · Tinh tế' },
+  { id: 'ca-heo',     emo: '🐬', name: 'Cá Heo',      desc: 'Đồng đội · Vui vẻ' },
+  { id: 'gau-truc',   emo: '🐼', name: 'Gấu Trúc',    desc: 'Bình tĩnh · Tập trung' },
+  { id: 'ong-cham',   emo: '🐝', name: 'Ong Chăm',    desc: 'Chăm chỉ · Có tổ chức' },
+  { id: 'chim-cc',    emo: '🐧', name: 'Cánh Cụt',    desc: 'Lạc quan · Lan toả' },
+  { id: 'ho-con',     emo: '🐯', name: 'Hổ Con',      desc: 'Mạnh mẽ · Tự tin' },
+  { id: 'soc-nho',    emo: '🐿️', name: 'Sóc Nhỏ',     desc: 'Nhanh nhẹn · Tích luỹ' },
+  { id: 'robot-tri',  emo: '🤖', name: 'Robot Trí',   desc: 'Logic · Phân tích (SV)' },
+  { id: 'kylan-tre',  emo: '🦄', name: 'Kỳ Lân Trẻ',  desc: 'Mơ mộng · Cảm hứng' },
 ];
 
 class Onboarding {
@@ -191,11 +205,23 @@ class Onboarding {
 
   async finish() {
     localStorage.setItem(STORAGE_KEY, '1');
-    // Lưu pet đã chọn vào user_state (Sprint W3 sẽ render pet trong campus).
+    // Nếu user chọn ngành ĐH/CĐ, pre-set ACTIVE_DOMAIN để home page mở đúng trường.
+    // Format grade: 'dh:<domain-id>' (vd 'dh:pharmacy') hoặc 'self-learner' (giữ default).
+    const g = String(this.data.grade || '');
+    if (g.startsWith('dh:')) {
+      const domainId = g.slice(3);
+      if (domainId && domainId !== 'other') {
+        try { localStorage.setItem('tizia:active-domain', domainId); } catch {}
+      }
+    }
+    // Lưu pet + grade vào user_state (Sprint W3 sẽ render pet trong campus).
     try {
       await fetch('/api/user-state', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 'engagement.pet': { id: this.data.pet, picked_at: Date.now() } }),
+        body: JSON.stringify({
+          'engagement.pet': { id: this.data.pet, picked_at: Date.now() },
+          'profile.grade': this.data.grade || null,
+        }),
         credentials: 'same-origin',
       });
     } catch {}
@@ -240,15 +266,29 @@ class Onboarding {
   }
 
   renderStepGrade() {
+    const g = String(this.data.grade);
     this.body.innerHTML = `
-      <h2>Em đang học lớp mấy?</h2>
-      <p class="sub">Để Tizia gợi ý đúng môn + đúng bài cho em.</p>
+      <h2>Em đang học ở đâu?</h2>
+      <p class="sub">Để Tizia gợi ý đúng môn + đúng trường cho em.</p>
       <select id="tz-onb-grade">
-        <option value="">-- Chọn lớp --</option>
-        <option value="mam-non">Mầm non (Mầm/Chồi/Lá)</option>
-        ${Array.from({length: 12}, (_, i) => i + 1).map(g =>
-          `<option value="${g}" ${String(this.data.grade) === String(g) ? 'selected' : ''}>Lớp ${g}</option>`
-        ).join('')}
+        <option value="">-- Chọn cấp học / ngành --</option>
+        <optgroup label="🎒 Phổ thông">
+          <option value="mam-non" ${g === 'mam-non' ? 'selected' : ''}>Mầm non (Mầm/Chồi/Lá)</option>
+          ${Array.from({length: 12}, (_, i) => i + 1).map(n =>
+            `<option value="${n}" ${g === String(n) ? 'selected' : ''}>Lớp ${n}</option>`
+          ).join('')}
+        </optgroup>
+        <optgroup label="🎓 Đại học / Cao đẳng">
+          <option value="dh:pharmacy"  ${g === 'dh:pharmacy'  ? 'selected' : ''}>💊 Sinh viên Dược</option>
+          <option value="dh:it"        ${g === 'dh:it'        ? 'selected' : ''}>💻 Sinh viên CNTT</option>
+          <option value="dh:economics" ${g === 'dh:economics' ? 'selected' : ''}>📉 Sinh viên Kinh tế (sắp mở)</option>
+          <option value="dh:medicine"  ${g === 'dh:medicine'  ? 'selected' : ''}>⚕️ Sinh viên Y (sắp mở)</option>
+          <option value="dh:law"       ${g === 'dh:law'       ? 'selected' : ''}>⚖️ Sinh viên Luật (sắp mở)</option>
+          <option value="dh:other"     ${g === 'dh:other'     ? 'selected' : ''}>🎓 Sinh viên ngành khác</option>
+        </optgroup>
+        <optgroup label="💼 Khác">
+          <option value="self-learner" ${g === 'self-learner' ? 'selected' : ''}>👨‍💻 Người đi làm · Tự học</option>
+        </optgroup>
       </select>
       <div class="tz-onb-actions">
         <button class="skip" data-back>← Quay lại</button>
@@ -263,8 +303,8 @@ class Onboarding {
 
   renderStepPet() {
     this.body.innerHTML = `
-      <h2>Chọn pet đồng hành 🐲</h2>
-      <p class="sub">Pet sẽ đi cùng em trong trường ảo + tiến hoá khi em học. Chọn 1 bạn:</p>
+      <h2>Chọn bạn đồng hành 🐾</h2>
+      <p class="sub">Pet đi cùng em trong trường ảo + tiến hoá theo em. <b style="color:#fde68a">Pet không khoá môn</b> — chỉ làm Thầy AI trò chuyện hợp tính em hơn. Chọn 1 bạn:</p>
       <div class="pets">
         ${PETS.map(p => `
           <div class="pet ${this.data.pet === p.id ? 'selected' : ''}" data-pet="${p.id}">

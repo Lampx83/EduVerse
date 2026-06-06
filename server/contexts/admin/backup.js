@@ -147,6 +147,7 @@ export function attachBackup(r) {
       keep: KEEP_DEFAULT,
       auto_hour: AUTO_HOUR,
       format: 'pg_dump custom (-Fc)',
+      pg_ready: !!process.env.DATABASE_URL,
     });
   });
 

@@ -329,6 +329,143 @@
   .section-title .actions { margin-left: auto; }
   .section-title .actions a { font-size: 12px; color: var(--accent); text-decoration: none; }
 
+  /* ============ HERO DASHBOARD CARD (game HUD) ============ */
+  .hero-card {
+    --rank-color: #fbbf24;
+    position: relative;
+    border-radius: 22px;
+    padding: 22px 24px;
+    background:
+      radial-gradient(120% 140% at 0% 0%, rgba(139,92,246,0.35), transparent 55%),
+      radial-gradient(120% 140% at 100% 100%, rgba(34,211,238,0.28), transparent 55%),
+      linear-gradient(135deg, rgba(30,27,75,0.85), rgba(15,23,42,0.85));
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow:
+      0 18px 40px rgba(2,6,23,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  .hero-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, var(--rank-color), transparent 30%);
+    opacity: 0.35; mix-blend-mode: screen; pointer-events: none;
+  }
+  .hero-top {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center;
+  }
+  .hero-avatar-wrap {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.18), rgba(255,255,255,0.02) 70%),
+                linear-gradient(135deg, rgba(139,92,246,0.4), rgba(34,211,238,0.3));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 3px var(--rank-color), 0 12px 28px rgba(0,0,0,0.4), inset 0 0 14px rgba(255,255,255,0.08);
+    font-size: 46px;
+    flex: none;
+    position: relative;
+  }
+  .hero-avatar-wrap::after {
+    content: attr(data-rank); position: absolute; bottom: -6px; right: -6px;
+    background: var(--rank-color); color: #1f1147;
+    font-size: 18px; width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    border: 2px solid rgba(15,23,42,0.95);
+  }
+  .hero-identity { min-width: 0; }
+  .hero-rank-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+    color: rgba(255,255,255,0.7); margin-bottom: 4px;
+  }
+  .hero-rank-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.08); border: 1px solid var(--rank-color);
+    color: var(--rank-color); font-weight: 800;
+  }
+  .hero-title { font-size: 20px; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 2px; }
+  .hero-subtitle { font-size: 12.5px; color: rgba(255,255,255,0.6); }
+  .hero-streak-badge {
+    flex: none; display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(249,115,22,0.25), rgba(239,68,68,0.18));
+    border: 1px solid rgba(249,115,22,0.45);
+    font-size: 13px; font-weight: 800; color: #fed7aa; white-space: nowrap;
+  }
+  .hero-streak-badge .hs-num { font-size: 22px; color: #fff; line-height: 1; }
+  .hero-streak-badge.risk {
+    background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.2));
+    border-color: rgba(239,68,68,0.6); color: #fecaca;
+    animation: heroPulse 1.8s infinite;
+  }
+  @keyframes heroPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+    50%     { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+  }
+
+  .hero-xp-block { position: relative; z-index: 1; margin-top: 16px; }
+  .hero-xp-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 12.5px; color: rgba(255,255,255,0.75); margin-bottom: 6px;
+  }
+  .hero-xp-head b { color: #fff; font-size: 14px; }
+  .hero-xp-head .hx-next { color: var(--rank-color); font-weight: 700; }
+  .hero-xp-bar {
+    height: 14px; border-radius: 10px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden; position: relative;
+  }
+  .hero-xp-bar > i {
+    display: block; height: 100%; border-radius: 9px;
+    background: linear-gradient(90deg, #8b5cf6, #22d3ee, #4ade80);
+    background-size: 200% 100%;
+    box-shadow: 0 0 12px rgba(34,211,238,0.5);
+    transition: width 1s cubic-bezier(.2,.8,.2,1);
+    animation: heroShine 4s linear infinite;
+  }
+  @keyframes heroShine { 0% { background-position: 0% 0; } 100% { background-position: 200% 0; } }
+
+  .hero-stats {
+    position: relative; z-index: 1;
+    margin-top: 16px;
+    display: grid; gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+  .hero-stat {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform .15s, background .15s;
+  }
+  .hero-stat:hover { transform: translateY(-2px); background: rgba(255,255,255,0.08); }
+  .hero-stat .hs-icon {
+    width: 38px; height: 38px; border-radius: 10px; flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    background: var(--stat-bg, rgba(255,255,255,0.08));
+  }
+  .hero-stat .hs-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+  .hero-stat .hs-val { font-size: 18px; font-weight: 800; color: #fff; }
+  .hero-stat .hs-label { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .hero-stat.coins { --stat-bg: rgba(251,191,36,0.2); }
+  .hero-stat.coins .hs-icon { color: #fde68a; }
+  .hero-stat.skills { --stat-bg: rgba(34,211,238,0.2); }
+  .hero-stat.skills .hs-icon { color: #a5f3fc; }
+  .hero-stat.badges { --stat-bg: rgba(139,92,246,0.22); }
+  .hero-stat.badges .hs-icon { color: #ddd6fe; }
+  .hero-stat.league { --stat-bg: rgba(167,139,250,0.22); }
+  .hero-stat.league .hs-icon { color: #c4b5fd; }
+
+  @media (max-width: 560px) {
+    .hero-card { padding: 18px 16px; border-radius: 18px; }
+    .hero-top { grid-template-columns: auto 1fr; }
+    .hero-streak-badge { grid-column: 1 / -1; justify-content: center; margin-top: 4px; }
+    .hero-avatar-wrap { width: 68px; height: 68px; font-size: 36px; }
+    .hero-title { font-size: 17px; }
+  }
+
   /* Inline level-select inside the "Sắp xếp thuốc" demo group */
   .level-select-inline {
     background: rgba(255,255,255,0.04);
@@ -452,8 +589,8 @@
 <!-- Engagement HUD (Streak · Hearts · Daily Quest) — Trục A. Versioned path để
      bypass SW stale-while-revalidate cho lần ship đầu. -->
 <script type="module" src="./js/engagement-hud.js?v=2026-06-05-r2"></script>
-<script type="module" src="./js/onboarding-60s.js?v=2026-06-05-r2"></script>
-<script type="module" src="./js/pet-widget.js?v=2026-06-05"></script>
+<script type="module" src="./js/onboarding-60s.js?v=2026-06-05-r3"></script>
+<script type="module" src="./js/pet-widget.js?v=2026-06-05-r3"></script>
 <script type="module" src="./js/daily-login.js?v=2026-06-05"></script>
 
 <script>
@@ -635,7 +772,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     <span class="hint" id="dashboard-hint">Tiếp tục hành trình của bạn</span>
   </div>
   <div id="dash-identity"></div>
-  <div class="dash-grid" style="margin-top:14px">
+  <div class="dash-grid" style="margin-top:16px">
     <div id="dash-continue"></div>
     <div id="dash-quests"></div>
   </div>
@@ -664,38 +801,62 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
     document.getElementById('dashboard').style.display = '';
 
-    // ── Identity card: avatar + rank + level + XP bar ──
+    // ── Hero card: avatar + rank + level + XP bar + stats ──
     const p = data.personal;
     const eng = data.engagement || {};
-    const titleHtml = `${p.rank.icon} ${p.rank.name} · ${p.title}`;
+    const streak = eng.streak || 0;
+    const isRisk = (streak > 0 && streak < 30);
     const nextHtml = p.rank.next
-      ? `Còn ${p.rank.levels_to_next} cấp → ${p.rank.next.icon} ${p.rank.next.name}`
-      : `Đã đạt hạng cao nhất 👑`;
-    const atRiskHtml = (eng.streak > 0 && eng.streak < 30)
-      ? `<span class="streak-risk" title="Học 1 bài hôm nay để giữ chuỗi!">⚠️ giữ chuỗi hôm nay</span>`
-      : '';
+      ? `→ ${p.rank.next.icon} ${p.rank.next.name} <span style="opacity:.7">(còn ${p.rank.levels_to_next} cấp)</span>`
+      : `<span style="color:#fde68a">👑 Đã đạt hạng cao nhất</span>`;
+    const streakBadge = streak > 0 ? `
+      <div class="hero-streak-badge ${isRisk ? 'risk' : ''}" title="${isRisk ? 'Học 1 bài hôm nay để giữ chuỗi!' : 'Chuỗi học liên tục'}">
+        🔥 <span class="hs-num">${streak}</span> ngày
+      </div>` : '';
+    const leagueStat = data.league ? `
+      <div class="hero-stat league" title="Hạng tuần này">
+        <div class="hs-icon">${data.league.tier.icon}</div>
+        <div class="hs-text"><span class="hs-val">#${data.league.my_rank || '-'}</span><span class="hs-label">${data.league.tier.label}</span></div>
+      </div>` : '';
+
     document.getElementById('dash-identity').innerHTML = `
-      <div class="identity-bar" style="--rank-color:${p.rank.color}">
-        <div class="ib-avatar">🐣</div>
-        <div class="ib-main">
-          <div class="ib-top">
-            <span class="ib-rank">${titleHtml}</span>
+      <div class="hero-card" style="--rank-color:${p.rank.color}">
+        <div class="hero-top">
+          <div class="hero-avatar-wrap" data-rank="${p.rank.icon}">🐣</div>
+          <div class="hero-identity">
+            <div class="hero-rank-row">
+              <span class="hero-rank-badge">${p.rank.icon} ${p.rank.name}</span>
+              <span>${p.title}</span>
+            </div>
+            <div class="hero-title">Lv.${p.level} · ${p.xp_into_level}/${p.xp_span} XP</div>
+            <div class="hero-subtitle">${nextHtml}</div>
           </div>
-          <div class="ib-levelrow">
-            <span class="ib-lvl">Lv.${p.level}</span>
-            <div class="ib-xpbar"><i style="width:${p.xp_pct}%"></i></div>
-            <span class="ib-xp">${p.xp_into_level}/${p.xp_span} XP</span>
-          </div>
-          <div class="ib-next">${nextHtml}</div>
+          ${streakBadge}
         </div>
-      </div>
-      <div class="wallet-row" id="wallet-row">
-        <span class="wallet-pill stars"><span class="wp-icon">🎯</span><span class="wp-val">${data.skills.earned}</span> kỹ năng</span>
-        <span class="wallet-pill coins"><span class="wp-icon">🪙</span><span class="wp-val">${data.wallet.coins}</span> coin</span>
-        <span class="wallet-pill streak"><span class="wp-icon">🔥</span><span class="wp-val">${eng.streak || 0}</span> ngày</span>
-        ${atRiskHtml}
-        <span class="wallet-pill achievements"><span class="wp-icon">🏆</span><span class="wp-val">${data.wallet.achievements}</span> huy hiệu</span>
-        ${data.league ? `<span class="wallet-pill" style="background:rgba(167,139,250,.18);color:#c4b5fd;border-color:rgba(167,139,250,.3)"><span class="wp-icon">${data.league.tier.icon}</span><span class="wp-val">${data.league.tier.label}</span> · #${data.league.my_rank || '-'}</span>` : ''}
+
+        <div class="hero-xp-block">
+          <div class="hero-xp-head">
+            <span><b>Cấp ${p.level}</b> → Cấp ${p.level + 1}</span>
+            <span class="hx-next">${p.xp_pct}%</span>
+          </div>
+          <div class="hero-xp-bar"><i style="width:${p.xp_pct}%"></i></div>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat coins" title="Coin tích lũy">
+            <div class="hs-icon">🪙</div>
+            <div class="hs-text"><span class="hs-val">${data.wallet.coins}</span><span class="hs-label">coin</span></div>
+          </div>
+          <div class="hero-stat skills" title="Kỹ năng đã đạt">
+            <div class="hs-icon">🎯</div>
+            <div class="hs-text"><span class="hs-val">${data.skills.earned}</span><span class="hs-label">kỹ năng</span></div>
+          </div>
+          <div class="hero-stat badges" title="Huy hiệu sưu tầm">
+            <div class="hs-icon">🏆</div>
+            <div class="hs-text"><span class="hs-val">${data.wallet.achievements}</span><span class="hs-label">huy hiệu</span></div>
+          </div>
+          ${leagueStat}
+        </div>
       </div>
     `;
 

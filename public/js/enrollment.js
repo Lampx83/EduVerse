@@ -208,7 +208,7 @@ export async function applyViewOnlyGate(domain) {
   if (!document.querySelector('.tizia-view-banner')) {
     const b = document.createElement('div');
     b.className = 'tizia-view-banner';
-    b.innerHTML = `👀 Bạn đang tham quan trường khác — chỉ xem được, không làm bài/chơi game. <a href="/school.html?domain=${encodeURIComponent(me.enrolled_domain)}">Về trường của bạn ↩</a>`;
+    b.innerHTML = `👀 Bạn đang tham quan trường khác. <a href="/school.html?domain=${encodeURIComponent(me.enrolled_domain)}">Về trường của bạn ↩</a>`;
     document.body.appendChild(b);
   }
 

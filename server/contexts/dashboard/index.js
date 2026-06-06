@@ -67,12 +67,58 @@ function titleFromActivity(quizCorrect, skillsEarned, level) {
   return 'Tân binh';
 }
 
+// Subject defaults theo domain — friendly name + emoji
+const DOMAIN_SUBJECT_DEFAULT = {
+  primary:    { name: 'Toán Tiểu học',    emoji: '📐' },
+  secondary:  { name: 'Toán THCS',        emoji: '📐' },
+  highschool: { name: 'Toán THPT',        emoji: '📐' },
+  preschool:  { name: 'Khám phá',         emoji: '🎨' },
+  pharmacy:   { name: 'Hoá lâm sàng',     emoji: '⚗️' },
+  it:         { name: 'Lập trình cơ bản', emoji: '💻' },
+  economic:   { name: 'Vi mô',            emoji: '📊' },
+};
+function defaultSubject(domain) {
+  return DOMAIN_SUBJECT_DEFAULT[domain] || { name: 'Bài học chính', emoji: '📚' };
+}
+
+// In-memory cache: subject_id → friendly name (populated từ scoreup_subjects_cache nếu có)
+let _subjectNameCache = null;
+function loadSubjectNameCache() {
+  if (_subjectNameCache) return _subjectNameCache;
+  _subjectNameCache = new Map();
+  try {
+    const rows = db.prepare(`
+      SELECT name FROM sqlite_master WHERE type='table' AND name='scoreup_subjects_cache'
+    `).all();
+    if (rows.length) {
+      const subs = db.prepare(`SELECT subject_id, subject_name FROM scoreup_subjects_cache`).all();
+      for (const s of subs) {
+        if (s.subject_id && s.subject_name) _subjectNameCache.set(String(s.subject_id), String(s.subject_name));
+      }
+    }
+  } catch {}
+  return _subjectNameCache;
+}
+
+// subject_id ngoài API có thể là ObjectId 24-hex / UUID / hash — không readable.
+// Resolver: cache hit → tên thật. Miss → tên mặc định theo domain (chứ KHÔNG show ID thô).
+function prettySubject(subjectId, domain) {
+  const def = defaultSubject(domain);
+  if (!subjectId) return def;
+  const id = String(subjectId).trim();
+  const cached = loadSubjectNameCache().get(id);
+  if (cached) return { name: cached, emoji: def.emoji };
+  // ID dạng hex dài / UUID / số → coi như không readable
+  const looksLikeId = /^[a-f0-9]{16,}$/i.test(id) || /^[0-9a-f-]{32,}$/i.test(id) || /^\d{5,}$/.test(id);
+  if (looksLikeId) return def;
+  // Fallback: nếu là chuỗi ngắn dễ đọc (vd "toan-tieu-hoc") — vẫn hiển thị
+  return { name: id.length <= 40 ? id : def.name, emoji: def.emoji };
+}
+
 // Recommendation: tìm subject HS đang yếu nhất (low accuracy) trong 30 ngày
-// gần nhất + suggest "ôn lại". Nếu chưa có data → trỏ Toán mặc định cho HS
-// đang enroll primary/secondary, hoặc chuyên ngành cho ĐH.
+// gần nhất + suggest "ôn lại". Nếu chưa có data → trỏ môn mặc định theo domain.
 function getRecommendation(userId, enrolledDomain) {
   const since = Date.now() - 30 * 86400_000;
-  // Subject accuracy trong 30 ngày
   const rows = db.prepare(`
     SELECT subject_id, COUNT(*) AS n,
            SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS c
@@ -82,16 +128,7 @@ function getRecommendation(userId, enrolledDomain) {
   `).all(userId, since);
 
   if (rows.length === 0) {
-    // Chưa có quiz nào trong 30 ngày — đề xuất bắt đầu môn chính
-    const subjMap = {
-      primary:   { id: '', name: 'Toán Tiểu học',  emoji: '📐' },
-      secondary: { id: '', name: 'Toán THCS',      emoji: '📐' },
-      highschool:{ id: '', name: 'Toán THPT',      emoji: '📐' },
-      pharmacy:  { id: '', name: 'Hoá lâm sàng',   emoji: '⚗' },
-      it:        { id: '', name: 'Lập trình cơ bản', emoji: '💻' },
-      economic:  { id: '', name: 'Vi mô',           emoji: '📊' },
-    };
-    const def = subjMap[enrolledDomain] || { id: '', name: 'Bài học đầu tiên', emoji: '📚' };
+    const def = defaultSubject(enrolledDomain);
     return {
       type: 'start',
       action: 'Bắt đầu bài đầu tiên',
@@ -102,30 +139,30 @@ function getRecommendation(userId, enrolledDomain) {
     };
   }
 
-  // Tìm subject yếu nhất (accuracy thấp + có ≥ 5 câu)
   rows.forEach(r => r.acc = r.n > 0 ? r.c / r.n : 0);
   const candidates = rows.filter(r => r.n >= 5);
   if (candidates.length === 0) {
-    // Quá ít data — đề xuất tiếp tục môn mới làm
     const recent = rows.sort((a,b) => b.n - a.n)[0];
+    const subj = prettySubject(recent.subject_id, enrolledDomain);
     return {
       type: 'continue',
       action: 'Tiếp tục bài đang học',
-      subject_name: recent.subject_id || 'Môn chính',
-      emoji: '📚',
+      subject_name: subj.name,
+      emoji: subj.emoji,
       reason: `Đã làm ${recent.n} câu — tiếp tục để giỏi hơn.`,
-      url: '/hoc-thong-minh.html?subject_id=' + encodeURIComponent(recent.subject_id || ''),
+      url: '/hoc-thong-minh.html' + (recent.subject_id ? '?subject_id=' + encodeURIComponent(recent.subject_id) : ''),
     };
   }
   const weakest = candidates.sort((a,b) => a.acc - b.acc)[0];
   const accPct = Math.round(weakest.acc * 100);
+  const subj = prettySubject(weakest.subject_id, enrolledDomain);
   return {
     type: 'review',
     action: accPct < 50 ? 'Ôn lại điểm yếu' : 'Tiếp tục luyện',
-    subject_name: weakest.subject_id || 'Môn chính',
+    subject_name: subj.name,
     emoji: accPct < 50 ? '⚠️' : '📈',
     reason: `Độ chính xác ${accPct}% — ${accPct < 50 ? 'cần ôn thêm' : 'gần thành thạo'}.`,
-    url: '/hoc-thong-minh.html?subject_id=' + encodeURIComponent(weakest.subject_id || ''),
+    url: '/hoc-thong-minh.html' + (weakest.subject_id ? '?subject_id=' + encodeURIComponent(weakest.subject_id) : ''),
   };
 }
 

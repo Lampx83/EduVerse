@@ -86,21 +86,31 @@
   <span class="grow"></span>
 
   <label style="font-size:12px; color:var(--muted);">Trường:</label>
+  <!-- Options được DOMAIN_META populate (xem <script type="module"> bên dưới)
+       Hardcode 6 trường mở làm fallback nếu module fail; đầy đủ 23 trường
+       sẽ được render khi DOMAIN_META load xong. -->
   <select id="domain">
-    <option value="preschool">🌸 Mầm non (Hoa Sen)</option>
-    <option value="primary">📚 Tiểu học</option>
-    <option value="secondary">🏫 THCS</option>
-    <option value="it">💻 Công nghệ thông tin</option>
-    <option value="pharmacy">💊 Dược</option>
+    <optgroup label="🎒 Phổ thông">
+      <option value="preschool">🌸 Mầm non (Hoa Sen)</option>
+      <option value="primary">📚 Tiểu học</option>
+      <option value="secondary">🏫 THCS</option>
+      <option value="highschool">🎓 THPT</option>
+    </optgroup>
+    <optgroup label="🎓 Đại học & Cao đẳng (đã mở)">
+      <option value="it">💻 Công nghệ thông tin</option>
+      <option value="pharmacy">💊 Dược</option>
+    </optgroup>
   </select>
 
+  <button class="btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled style="padding:7px 10px;">↺ Undo</button>
+  <button class="btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled style="padding:7px 10px;">↻ Redo</button>
   <button class="btn" id="reloadIframe" title="Reload map">↻ Reload</button>
   <button class="btn" id="zoomOut" title="Thu nhỏ" style="padding:7px 10px;">−</button>
   <span id="zoomVal" style="font-size:12px; color:var(--muted); min-width:36px; text-align:center;">100%</span>
   <button class="btn" id="zoomIn" title="Phóng to" style="padding:7px 10px;">+</button>
   <button class="btn" id="zoomReset" title="Reset zoom" style="padding:7px 10px; font-size:11px;">⊡</button>
   <button class="btn" id="downloadDefault" title="Export current effective layout">⤓ Export</button>
-  <button class="btn primary" id="save">💾 Save override</button>
+  <button class="btn primary" id="save">💾 Lưu</button>
   <button class="btn warn" id="reset" title="Xoá override, về default">↶ Reset default</button>
 </header>
 
@@ -111,15 +121,15 @@
 
   <aside style="width:380px; background:var(--bg2); border-left:1px solid var(--border); display:flex; flex-direction:column; min-height:0;">
     <div style="padding:8px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; font-size:12px;">
-      <span id="dirtyDot" style="display:none; color:var(--warn); font-size:14px;">●</span>
+      <span id="dirtyDot" style="display:none; color:var(--warn); font-size:14px;" title="Có thay đổi chưa lưu">●</span>
       <span style="color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Bảng điều khiển</span>
-      <button class="btn primary" id="save" style="margin-left:auto; padding:4px 10px; font-size:12px;">💾 Lưu</button>
     </div>
 
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="inspector">🔍 Inspector</button>
       <button class="tab-btn" data-tab="palette">🧱 Thư viện</button>
       <button class="tab-btn" data-tab="walls">🧱 Tường</button>
+      <button class="tab-btn" data-tab="roads">🛣️ Đường</button>
       <button class="tab-btn" data-tab="json">📝 JSON</button>
     </div>
 
@@ -223,6 +233,38 @@
       </div>
     </div>
 
+    <!-- Roads tab -->
+    <div id="tab-roads" class="tab-pane">
+      <div id="roadBanner" style="display:none; background:#0d2a1a; border:1px solid var(--ok); border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:12px; color:var(--ok);">
+        ✏️ Đang vẽ đường <b id="roadModeKindLbl">nội bộ</b> — click 2 điểm để tạo 1 đoạn.
+        <span style="float:right; cursor:pointer; color:var(--muted);" onclick="stopRoadMode()" title="Dừng vẽ (Esc)">✕</span>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div class="pack-label">Loại đường</div>
+        <div class="kind-toggle" style="margin-bottom:0">
+          <button class="kind-btn active" data-rkind="internal" id="rkInternal">🚲 Nội bộ</button>
+          <button class="kind-btn" data-rkind="main" id="rkMain">🚗 Đường lớn</button>
+        </div>
+        <div class="hint" style="margin:6px 0 0; font-size:11px;">
+          <b>Nội bộ</b>: trong trường, lối đi xe đạp · hẹp + nhạt + không vạch.<br>
+          <b>Đường lớn</b>: ngoài trường, ô tô · rộng + xám đậm + vạch trắng.
+        </div>
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <button class="btn primary" id="roadStartBtn" style="flex:1; font-size:13px;">✏️ Bắt đầu vẽ</button>
+        <button class="btn bad" id="roadClearBtn" style="font-size:12px;" title="Xoá hết đường">🗑️ Xoá tất cả</button>
+      </div>
+      <div class="hint">
+        <b>Cách dùng:</b> chọn loại → bấm <code>Bắt đầu vẽ</code> → click 2 điểm trên map (auto axis-align). Chain liên tục. <code>Esc</code> bỏ điểm A; <code>Esc</code> lần 2 dừng vẽ.
+      </div>
+      <div style="margin-top:14px;">
+        <div class="pack-label" style="display:flex; align-items:center; gap:6px;">
+          Danh sách đường <span id="roadCount" style="color:var(--muted);">(0)</span>
+        </div>
+        <div id="roadList" style="font-size:12px; color:var(--muted);">Chưa có đường nào.</div>
+      </div>
+    </div>
+
     <!-- JSON tab -->
     <div id="tab-json" class="tab-pane">
       <div class="hint">Snapshot JSON của map hiện tại. Sửa rồi bấm Lưu.</div>
@@ -238,6 +280,47 @@
 </main>
 
 <div class="toast" id="toast"></div>
+
+<!-- Populate select#domain từ DOMAIN_META để admin thấy đủ 23 trường;
+     trường locked tạm cho admin chọn (để prep layout trước go-live). -->
+<script type="module">
+  try {
+    const { DOMAIN_META } = await import('/js/engine/domain.js');
+    const sel = document.getElementById('domain');
+    if (sel && Array.isArray(DOMAIN_META)) {
+      const cur = sel.value;
+      sel.innerHTML = '';
+      const groups = {
+        school: { label: '🎒 Phổ thông', items: [] },
+        he:     { label: '🎓 Đại học & Cao đẳng', items: [] },
+      };
+      for (const d of DOMAIN_META) {
+        (groups[d.level] || groups.he).items.push(d);
+      }
+      // Sắp xếp: ready > preview > locked trong mỗi group
+      const ord = { ready: 0, preview: 1, locked: 2 };
+      for (const g of Object.values(groups)) {
+        g.items.sort((a, b) => (ord[a.status] ?? 3) - (ord[b.status] ?? 3));
+      }
+      for (const [lvl, g] of Object.entries(groups)) {
+        if (!g.items.length) continue;
+        const og = document.createElement('optgroup');
+        og.label = g.label;
+        for (const d of g.items) {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          const lockTag = d.status === 'locked' ? ' 🔒' : (d.status === 'preview' ? ' (preview)' : '');
+          opt.textContent = `${d.icon || '🏫'} ${d.shortName || d.name}${lockTag}`;
+          og.appendChild(opt);
+        }
+        sel.appendChild(og);
+      }
+      if (cur) sel.value = cur;
+      // Trigger change để map iframe reload đúng layout
+      sel.dispatchEvent(new Event('change'));
+    }
+  } catch (e) { console.warn('[campus-editor] domain meta load failed', e); }
+</script>
 
 <script>
 const $=s=>document.querySelector(s);
@@ -357,7 +440,66 @@ $('#palSearch').addEventListener('input',e=>renderPalette(e.target.value));
 
 function toast(msg, kind='ok'){ toastEl.textContent=msg; toastEl.className='toast show '+kind; clearTimeout(toast._t); toast._t=setTimeout(()=>toastEl.classList.remove('show'),2200); }
 function reloadIframe(){ iframe.src=`/campus-proto/b-iso-canvas.html?domain=${dom.value}&edit=1&_t=${Date.now()}`; setDirty(false); closeInspector(); }
-function setDirty(on){ $('#dirtyDot').style.display = on ? '' : 'none'; }
+function setDirty(on){ $('#dirtyDot').style.display = on ? '' : 'none'; if(on) recordChange(); }
+
+// ── Undo/Redo history ──────────────────────────────────────────────────────
+// Snapshot full CAMPUSES[domain] sau mỗi thay đổi (debounce 250ms để drag
+// liên tục chỉ tính 1 bước). Undo/Redo ghi state vào sessionStorage rồi reload
+// iframe — iframe đọc và áp dụng trước khi fetch server (xem b-iso-canvas.html).
+let _past = [], _future = [], _lastSnap = null, _applyingHistory = false, _snapTimer = null;
+const HISTORY_LIMIT = 80;
+function takeSnap(){
+  try{
+    const w = iframe.contentWindow;
+    if(!w || !w.CAMPUSES || !w.CAMPUSES[dom.value]) return null;
+    return JSON.parse(JSON.stringify(w.CAMPUSES[dom.value]));
+  }catch{ return null; }
+}
+function updateUndoUI(){
+  $('#undoBtn').disabled = _past.length === 0;
+  $('#redoBtn').disabled = _future.length === 0;
+  $('#undoBtn').title = `Undo (Ctrl+Z) — còn ${_past.length} bước`;
+  $('#redoBtn').title = `Redo (Ctrl+Shift+Z) — còn ${_future.length} bước`;
+}
+function recordChange(){
+  if(_applyingHistory) return;
+  clearTimeout(_snapTimer);
+  _snapTimer = setTimeout(()=>{
+    const cur = takeSnap();
+    if(!cur) return;
+    if(!_lastSnap){ _lastSnap = cur; return; }
+    if(JSON.stringify(cur) === JSON.stringify(_lastSnap)) return;
+    _past.push(_lastSnap);
+    if(_past.length > HISTORY_LIMIT) _past.shift();
+    _lastSnap = cur;
+    _future = [];
+    updateUndoUI();
+  }, 250);
+}
+function applyHistory(state){
+  _applyingHistory = true;
+  try{ sessionStorage.setItem('campus-pending-state:'+dom.value, JSON.stringify(state)); }catch(e){ toast('Lỗi lưu state: '+e.message,'bad'); _applyingHistory=false; return; }
+  _lastSnap = state;
+  reloadIframe();
+  // _applyingHistory sẽ tắt khi iframe gửi campus-ready
+}
+function doUndo(){
+  if(!_past.length) return;
+  _future.push(_lastSnap);
+  const target = _past.pop();
+  applyHistory(target);
+  toast(`↺ Hoàn tác — còn ${_past.length} bước`, 'ok');
+  updateUndoUI();
+}
+function doRedo(){
+  if(!_future.length) return;
+  _past.push(_lastSnap);
+  const target = _future.pop();
+  applyHistory(target);
+  toast(`↻ Làm lại — còn ${_future.length} bước`, 'ok');
+  updateUndoUI();
+}
+function resetHistory(){ _past=[]; _future=[]; _lastSnap=null; updateUndoUI(); }
 function closeInspector(){
   $('#inspector').style.display='none';
   $('#inspectorDecor').style.display='none';
@@ -475,9 +617,24 @@ function importFile(file){
   fr.readAsText(file);
 }
 
-dom.addEventListener('change',()=>{ reloadIframe(); loadFromServer(); });
+dom.addEventListener('change',()=>{ resetHistory(); reloadIframe(); loadFromServer(); });
 $('#reloadIframe').addEventListener('click', reloadIframe);
 $('#save').addEventListener('click', saveOverride);
+$('#undoBtn').addEventListener('click', doUndo);
+$('#redoBtn').addEventListener('click', doRedo);
+// Keyboard: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Shift+Z = redo. Bỏ qua khi đang gõ vào input.
+window.addEventListener('keydown', e=>{
+  const tag = (e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||tag==='select') return;
+  const mod = e.metaKey || e.ctrlKey;
+  if(mod && e.key.toLowerCase()==='z'){
+    e.preventDefault();
+    if(e.shiftKey) doRedo(); else doUndo();
+  } else if(mod && e.key.toLowerCase()==='y'){
+    e.preventDefault();
+    doRedo();
+  }
+});
 $('#reset').addEventListener('click', resetOverride);
 $('#downloadDefault').addEventListener('click', exportEffective);
 $('#loadFromServer').addEventListener('click', loadFromServer);
@@ -552,6 +709,16 @@ window.addEventListener('message', e=>{
   if(m.type==='campus-ready'){
     // Iframe đã load xong → trigger render thumbnail cho toàn bộ palette
     if(paletteModels.length) renderThumbs(paletteModels);
+    // Snapshot baseline cho undo/redo. Nếu đang apply history thì không reset stack.
+    setTimeout(()=>{
+      if(_applyingHistory){
+        _applyingHistory = false;
+        _lastSnap = takeSnap() || _lastSnap;
+      } else {
+        _lastSnap = takeSnap();
+      }
+      updateUndoUI();
+    }, 150);
   } else if(m.type==='campus-select'){
     openInspector(m.idx, m.item);
   } else if(m.type==='campus-select-decor'){
@@ -577,6 +744,13 @@ window.addEventListener('message', e=>{
     setDirty(true);
     if(currentDecorIdx===m.idx){ $('#dPos').textContent=`gx:${m.gx} gy:${m.gy}  ·  idx ${m.idx}`; }
     toast(`📍 ${m.k} → (${m.gx}, ${m.gy})`,'ok');
+  } else if(m.type==='campus-facility-move'){
+    setDirty(true);
+    toast(`📍 ${m.emoji||''} ${m.name||m.id||'facility'} → (${m.gx}, ${m.gy})`,'ok');
+  } else if(m.type==='campus-field-move'){
+    setDirty(true);
+    const pos = (m.cx!=null) ? `cx:${m.cx} cy:${m.cy}` : `gx:${m.gx} gy:${m.gy}`;
+    toast(`📍 ${m.ftype} → (${pos})`,'ok');
   } else if(m.type==='campus-placed'){
     setDirty(true);
     if(placingCard){ placingCard.classList.remove('placing'); placingCard=null; }
@@ -666,7 +840,98 @@ window.addEventListener('message', e=>{
 
 // Khi iframe reload xong → refresh list
 window.addEventListener('message', e=>{
-  if (e.data?.type==='campus-ready') setTimeout(refreshWallList, 200);
+  if (e.data?.type==='campus-ready') setTimeout(() => { refreshWallList(); refreshRoadList(); }, 200);
+});
+
+// ── Road mode (đường giao thông) ───────────────────────────────────────
+let roadModeOn = false;
+let roadKind = 'internal';
+function startRoadMode(){
+  roadModeOn = true;
+  $('#roadBanner').style.display = '';
+  $('#roadModeKindLbl').textContent = roadKind === 'main' ? 'lớn' : 'nội bộ';
+  $('#roadStartBtn').textContent = '⏸ Dừng vẽ';
+  $('#roadStartBtn').classList.remove('primary');
+  iframe.contentWindow?.postMessage({type:'campus-cmd-road-start', kind:roadKind},'*');
+  document.querySelector('.tab-btn[data-tab="roads"]').click();
+}
+function stopRoadMode(){
+  roadModeOn = false;
+  $('#roadBanner').style.display = 'none';
+  $('#roadStartBtn').textContent = '✏️ Bắt đầu vẽ';
+  $('#roadStartBtn').classList.add('primary');
+  iframe.contentWindow?.postMessage({type:'campus-cmd-road-stop'},'*');
+}
+function toggleRoadMode(){ roadModeOn ? stopRoadMode() : startRoadMode(); }
+function clearAllRoads(){
+  if(!confirm('Xoá toàn bộ đường trên map?')) return;
+  iframe.contentWindow?.postMessage({type:'campus-cmd-road-clear'},'*');
+}
+function deleteRoadAt(idx){
+  iframe.contentWindow?.postMessage({type:'campus-cmd-road-delete', idx},'*');
+}
+function refreshRoadList(){
+  const w = iframe.contentWindow;
+  const roads = (w && w.__getRoads) ? w.__getRoads() : [];
+  $('#roadCount').textContent = `(${roads.length})`;
+  if(!roads.length){
+    $('#roadList').innerHTML = '<div style="opacity:.6;font-size:11.5px;padding:6px 0;">Chưa có đường nào.</div>';
+    return;
+  }
+  $('#roadList').innerHTML = roads.map((r,i)=>{
+    const kindEmoji = r.kind === 'main' ? '🚗' : '🚲';
+    const kindLabel = r.kind === 'main' ? 'lớn' : 'nội bộ';
+    const orient = r.along === 'x' ? '↔ ngang' : '↕ dọc';
+    const len = (Math.max(0, (r.hi||0)-(r.lo||0))).toFixed(1);
+    return `<div style="display:flex; align-items:center; gap:8px; padding:5px 6px; border:1px solid var(--border); border-radius:6px; margin-bottom:4px; background:var(--bg3);">
+      <span style="flex:1; font-size:11.5px;">
+        ${kindEmoji} #${i} <b>${orient}</b> · <span style="color:var(--muted)">${kindLabel} · dài ${len}</span>
+      </span>
+      <button class="btn bad" onclick="deleteRoadAt(${i})" style="padding:3px 8px; font-size:11px;">🗑</button>
+    </div>`;
+  }).join('');
+}
+// Kind toggle
+$('#rkInternal').addEventListener('click', () => {
+  roadKind = 'internal';
+  $('#rkInternal').classList.add('active'); $('#rkMain').classList.remove('active');
+  if(roadModeOn){ // restart với kind mới
+    iframe.contentWindow?.postMessage({type:'campus-cmd-road-stop'},'*');
+    iframe.contentWindow?.postMessage({type:'campus-cmd-road-start', kind:roadKind},'*');
+    $('#roadModeKindLbl').textContent = 'nội bộ';
+  }
+});
+$('#rkMain').addEventListener('click', () => {
+  roadKind = 'main';
+  $('#rkMain').classList.add('active'); $('#rkInternal').classList.remove('active');
+  if(roadModeOn){
+    iframe.contentWindow?.postMessage({type:'campus-cmd-road-stop'},'*');
+    iframe.contentWindow?.postMessage({type:'campus-cmd-road-start', kind:roadKind},'*');
+    $('#roadModeKindLbl').textContent = 'lớn';
+  }
+});
+$('#roadStartBtn').addEventListener('click', toggleRoadMode);
+$('#roadClearBtn').addEventListener('click', clearAllRoads);
+
+// Bắt sự kiện road từ iframe → refresh list + toast
+window.addEventListener('message', e=>{
+  const m=e.data; if(!m||!m.type) return;
+  if (m.type==='campus-road-added' || m.type==='campus-road-deleted' || m.type==='campus-roads-cleared') {
+    setDirty(true);
+    refreshRoadList();
+    if (m.type==='campus-road-added') toast(`🛣️ Đã thêm đường #${m.idx} (${m.road?.kind||''}) — tổng ${m.total}`, 'ok');
+    else if (m.type==='campus-road-deleted') toast(`🗑 Đã xoá đường #${m.idx}`, 'ok');
+    else toast(`🗑 Đã xoá ${m.cleared} đường`, 'ok');
+  } else if (m.type==='campus-road-mode-stopped') {
+    if (roadModeOn) {
+      roadModeOn = false;
+      $('#roadBanner').style.display = 'none';
+      $('#roadStartBtn').textContent = '✏️ Bắt đầu vẽ';
+      $('#roadStartBtn').classList.add('primary');
+    }
+  } else if (m.type==='campus-road-anchor') {
+    toast(`📌 Điểm A: (${m.gx}, ${m.gy}) — click điểm B để tạo`, 'ok');
+  }
 });
 
 // init

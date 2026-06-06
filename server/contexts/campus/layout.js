@@ -81,9 +81,10 @@ const ALLOWED_DOMAINS = new Set(['preschool', 'primary', 'secondary', 'it', 'pha
 // Whitelist key cấp 1 — body chỉ giữ đúng các field này.
 // Bám theo schema CAMPUSES trong public/campus-proto/b-iso-canvas.html.
 const ALLOWED_KEYS = new Set([
-  'title', 'credit', 'grass', 'vroads', 'hroads', 'autoPaths',
+  'title', 'credit', 'grass', 'vroads', 'hroads', 'autoPaths', 'roads',
   'buildings', 'facilities', 'fields', 'playthings', 'critters',
   'trees', 'cars', 'props', 'walkways', 'tints', 'sportTargets',
+  'walls',
 ]);
 
 function sanitize(input) {

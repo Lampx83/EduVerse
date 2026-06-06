@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📊 Curriculum Gap Dashboard · Tizia Admin</title>
+<style>
+  :root{
+    --bg:#0b1220; --bg2:#111a2e; --bg3:#16213d;
+    --accent:#fbbf24; --accent2:#60a5fa;
+    --ok:#22c55e; --warn:#fb923c; --bad:#ef4444; --dim:#475569;
+    --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.20);
+    --txt:#e2e8f0; --muted:#94a3b8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+       font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       min-height:100vh;}
+  header{padding:16px 24px;background:var(--bg2);border-bottom:1px solid var(--border);
+         display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:10;}
+  header h1{margin:0;font-size:18px;font-weight:800;}
+  header .badge{background:var(--accent);color:#0f172a;font-weight:800;font-size:10px;
+                padding:3px 8px;border-radius:999px;letter-spacing:.5px;}
+  header a.back{color:var(--accent2);text-decoration:none;font-size:14px;}
+  header .grow{flex:1;}
+  header .stats{display:flex;gap:14px;font-size:13px;color:var(--muted);}
+  header .stats b{color:var(--txt);}
+
+  main{padding:24px;max-width:1400px;margin:0 auto;}
+  .intro{background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+         padding:16px 20px;margin-bottom:24px;font-size:13.5px;color:var(--muted);line-height:1.55;}
+  .intro b{color:var(--txt);}
+  .intro code{background:#020617;color:#fbbf24;padding:2px 6px;border-radius:4px;font-size:12px;}
+
+  .lvl-group{margin-bottom:32px;}
+  .lvl-title{font-size:14px;font-weight:800;color:var(--muted);text-transform:uppercase;
+             letter-spacing:.8px;margin:0 0 12px;display:flex;align-items:center;gap:8px;}
+  .lvl-title .pill{background:var(--bg3);padding:3px 10px;border-radius:999px;font-size:11px;}
+
+  .domain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;}
+  .domain-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+               padding:18px 20px;display:flex;flex-direction:column;gap:12px;}
+  .domain-card.locked{opacity:0.55;}
+  .dc-head{display:flex;align-items:center;gap:12px;}
+  .dc-head .icon{font-size:28px;}
+  .dc-head .nm{flex:1;}
+  .dc-head .nm b{font-size:15px;display:block;}
+  .dc-head .nm small{font-size:11.5px;color:var(--muted);}
+  .dc-status{font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;letter-spacing:.4px;}
+  .dc-status.ready{background:rgba(34,197,94,.15);color:var(--ok);}
+  .dc-status.preview{background:rgba(251,191,36,.15);color:var(--accent);}
+  .dc-status.locked{background:rgba(148,163,184,.15);color:var(--muted);}
+
+  .progress-bar{height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;}
+  .progress-bar > i{display:block;height:100%;
+                    background:linear-gradient(90deg,var(--ok),var(--accent));
+                    transition:width .4s;}
+  .progress-line{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);}
+
+  .subj-table{font-size:12px;width:100%;}
+  .subj-row{display:grid;grid-template-columns:1fr 50px 60px;align-items:center;gap:8px;
+            padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.05);}
+  .subj-row:last-child{border-bottom:0;}
+  .subj-row .nm{display:flex;align-items:center;gap:6px;}
+  .subj-row .count{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);}
+  .subj-row .status{text-align:right;font-weight:700;font-size:11px;}
+  .subj-row .status.ok{color:var(--ok);}
+  .subj-row .status.partial{color:var(--accent);}
+  .subj-row .status.empty{color:var(--bad);}
+  .subj-row .opt-tag{background:rgba(96,165,250,.12);color:var(--accent2);font-size:9px;
+                     padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:700;}
+
+  .legend{margin-top:24px;display:flex;gap:18px;flex-wrap:wrap;justify-content:center;
+          font-size:12px;color:var(--muted);}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .legend .dot{width:12px;height:12px;border-radius:3px;}
+  .legend .dot.ok{background:var(--ok);}
+  .legend .dot.partial{background:var(--accent);}
+  .legend .dot.empty{background:var(--bad);}
+
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="/admin.html">← Admin</a>
+  <h1>📊 Curriculum Gap Dashboard</h1>
+  <span class="badge">GDPT 2018</span>
+  <span class="grow"></span>
+  <div class="stats" id="globalStats">Đang tải…</div>
+</header>
+
+<main>
+  <div class="intro">
+    Dashboard hiển thị độ phủ <b>(môn × tuần × có scenarios)</b> theo từng trường, đối chiếu chuẩn
+    <b>Chương trình GDPT 2018</b> (Thông tư 32/2018 + TT 13/2022 cho THPT + TT 51/2020 cho mầm non).
+    Đếm hiện tại lấy từ <code>modules.js</code> mỗi domain — coverage <i>thực</i> sẽ được lấy từ ScoreUp
+    sau khi anh chạy upgrade <code>docs/upgrade-prompts/SCOREUP-UPGRADE.md</code> Phase 4
+    (endpoint <code>/curriculum/:grade/:subject</code>).
+  </div>
+
+  <div id="content">
+    <div class="empty-state">⏳ Đang load module data từ các domains…</div>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot ok"></i> ≥ 35 tuần (đầy đủ)</span>
+    <span><i class="dot partial"></i> 1–34 tuần (chưa đủ)</span>
+    <span><i class="dot empty"></i> 0 tuần (chưa biên soạn)</span>
+  </div>
+</main>
+
+<script type="module">
+import { DOMAIN_META } from '/js/engine/domain.js';
+
+const REGISTRY = {
+  preschool:  () => import('/js/domains/preschool/index.js'),
+  primary:    () => import('/js/domains/primary/index.js'),
+  secondary:  () => import('/js/domains/secondary/index.js'),
+  highschool: () => import('/js/domains/highschool/index.js'),
+  it:         () => import('/js/domains/it/index.js'),
+  pharmacy:   () => import('/js/domains/pharmacy/index.js'),
+};
+
+const TARGET_WEEKS = 35;  // chuẩn GDPT 2018 mọi cấp
+
+function statusBadge(s) {
+  const cls = s === 'ready' ? 'ready' : s === 'preview' ? 'preview' : 'locked';
+  const txt = s === 'ready' ? 'READY' : s === 'preview' ? 'PREVIEW' : 'SẮP MỞ';
+  return `<span class="dc-status ${cls}">${txt}</span>`;
+}
+
+function weekStatus(count) {
+  if (count >= TARGET_WEEKS) return 'ok';
+  if (count > 0) return 'partial';
+  return 'empty';
+}
+
+async function loadDomain(id) {
+  try {
+    if (!REGISTRY[id]) return { id, modules: [], subjects: {}, loaded: false };
+    const mod = await REGISTRY[id]();
+    return { id, modules: mod.MODULES || [], subjects: mod.SUBJECTS || {}, loaded: true };
+  } catch (e) {
+    console.warn('[gap] load fail', id, e);
+    return { id, modules: [], subjects: {}, loaded: false, err: e.message };
+  }
+}
+
+function aggregateBySubject(modules, subjects) {
+  const map = {};
+  for (const m of modules) {
+    const sid = m.subject || '_uncategorized';
+    if (!map[sid]) {
+      const meta = subjects[sid] || { label: sid, icon: '📘' };
+      map[sid] = { id: sid, label: meta.label, icon: meta.icon, weekCount: 0, moduleCount: 0, allOptional: true };
+    }
+    map[sid].moduleCount += 1;
+    if (!m.optional) map[sid].allOptional = false;
+    // Heuristic: scenariosIds non-empty = ≥1 week of content.
+    const isStub = m.status === 'in-progress' || /đang biên soạn/i.test(m.description || '');
+    map[sid].weekCount += isStub ? 0 : (m.scenarioIds?.length ? TARGET_WEEKS : 0);
+  }
+  return Object.values(map).sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function renderDomainCard(meta, agg) {
+  const lockedClass = meta.status === 'locked' ? ' locked' : '';
+  const subjectsTotal = agg.length;
+  const subjectsFull = agg.filter(s => s.weekCount >= TARGET_WEEKS).length;
+  const coverage = subjectsTotal > 0 ? Math.round((subjectsFull / subjectsTotal) * 100) : 0;
+
+  const subjRows = agg.length
+    ? agg.map(s => `
+        <div class="subj-row">
+          <div class="nm">${s.icon || '📘'} ${s.label}${s.allOptional ? '<span class="opt-tag">TỰ CHỌN</span>' : ''}</div>
+          <div class="count">${s.weekCount}/${TARGET_WEEKS}</div>
+          <div class="status ${weekStatus(s.weekCount)}">${weekStatus(s.weekCount) === 'ok' ? '✓ Đủ' : weekStatus(s.weekCount) === 'partial' ? '⚠ Thiếu' : '✗ Trống'}</div>
+        </div>`).join('')
+    : `<div style="color:var(--muted);font-size:12px;text-align:center;padding:18px 0">Chưa có module nào.</div>`;
+
+  return `
+    <div class="domain-card${lockedClass}">
+      <div class="dc-head">
+        <span class="icon">${meta.icon || '🏫'}</span>
+        <div class="nm">
+          <b>${meta.name}</b>
+          <small>${meta.shortName} · ${subjectsTotal} môn</small>
+        </div>
+        ${statusBadge(meta.status)}
+      </div>
+      <div>
+        <div class="progress-line"><span>Độ phủ môn</span><span><b>${subjectsFull}/${subjectsTotal}</b> (${coverage}%)</span></div>
+        <div class="progress-bar"><i style="width:${coverage}%"></i></div>
+      </div>
+      <div class="subj-table">${subjRows}</div>
+    </div>
+  `;
+}
+
+(async () => {
+  const grpSchool = DOMAIN_META.filter(d => d.level === 'school');
+  const grpHE     = DOMAIN_META.filter(d => d.level === 'he');
+
+  const allOpen = [...grpSchool, ...grpHE].filter(d => d.status !== 'locked');
+  const data = await Promise.all(allOpen.map(d => loadDomain(d.id).then(r => ({ meta: d, ...r }))));
+  const dataMap = Object.fromEntries(data.map(d => [d.id, d]));
+
+  // Global stats
+  const totalSubjects = data.reduce((s, d) => s + Object.keys(d.subjects).length, 0);
+  const totalModules  = data.reduce((s, d) => s + d.modules.length, 0);
+  const totalFull     = data.reduce((s, d) => s + aggregateBySubject(d.modules, d.subjects).filter(x => x.weekCount >= TARGET_WEEKS).length, 0);
+  document.getElementById('globalStats').innerHTML = `
+    <span><b>${data.length}</b> trường mở</span>
+    <span><b>${totalModules}</b> modules</span>
+    <span><b>${totalSubjects}</b> môn metadata</span>
+    <span><b style="color:var(--ok)">${totalFull}</b> môn đủ ≥35 tuần</span>
+  `;
+
+  const renderGroup = (lvl, items) => {
+    const cards = items.map(d => {
+      const dom = dataMap[d.id];
+      if (!dom || !dom.loaded) {
+        // Locked / fail load — render placeholder card
+        return `<div class="domain-card locked">
+          <div class="dc-head"><span class="icon">${d.icon}</span>
+            <div class="nm"><b>${d.name}</b><small>${d.shortName}</small></div>${statusBadge(d.status)}
+          </div>
+          <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px 0">
+            ${d.status === 'locked' ? '🔒 Trường đang khoá — sẽ mở theo roadmap.' : '⚠️ Không load được modules.'}
+          </div>
+        </div>`;
+      }
+      return renderDomainCard(d, aggregateBySubject(dom.modules, dom.subjects));
+    }).join('');
+    return `
+      <section class="lvl-group">
+        <h2 class="lvl-title">${lvl.icon} ${lvl.label} <span class="pill">${items.length} trường</span></h2>
+        <div class="domain-grid">${cards}</div>
+      </section>`;
+  };
+
+  document.getElementById('content').innerHTML =
+    renderGroup({ icon: '🎒', label: 'Phổ thông' }, grpSchool) +
+    renderGroup({ icon: '🎓', label: 'Đại học & Cao đẳng' }, grpHE);
+})();
+</script>
+
+</body>
+</html>
