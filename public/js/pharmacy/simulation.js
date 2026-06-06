@@ -1,6 +1,8 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene } from './scene.js';
+import { buildScene } from './scene.js?v=5';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { openPosTerminal } from './pos.js';
 import { openLabelEditor } from './label-editor.js';
 import { STAGE_LABEL } from './rubric.js';
@@ -41,7 +43,9 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     },
     onPosOpen: () => openPos(),
     onLabelOpen: () => openLabel(),
-    onPendingLabelClear: () => { $('pending-label').hidden = true; }
+    onPendingLabelClear: () => { $('pending-label').hidden = true; },
+    onBookOpen: (bookId) => openReferenceBook(bookId),
+    onInspectDrug: (payload) => openInspector(payload)
   });
   window.__sim = sim;
 
@@ -160,76 +164,546 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     });
   }
 
-  // 7. Modal handlers: Prescription / Doctor phone / Senior pharmacist
-  function openPrescription() {
+  // P3: Inspector modal — hộp thuốc zoom giữa màn hình, tự xoay, drag xoay,
+  // info panel + 2 nút (Đưa vào khay / Trả về kệ). Dùng mini-scene Three.js riêng.
+  function openInspector({ drug, meta, confirmToTray, returnToShelf }) {
     const overlay = document.createElement('div');
-    overlay.className = 'pos-overlay';
+    overlay.className = 'inspector-overlay';
     overlay.innerHTML = `
-      <div class="pos-modal" style="width:520px">
-        <div class="pos-head">
-          <div class="pos-title">📋 Đơn thuốc (Thông tư 26/2025/TT-BYT)</div>
-          <button class="pos-close" type="button">✕</button>
-        </div>
-        <div style="padding:14px;font-size:13px;line-height:1.6">
-          <div><b>BV/PK:</b> Phòng khám Đa khoa An Bình</div>
-          <div><b>Mã đơn:</b> ĐT-${Date.now().toString().slice(-6)}</div>
-          <div><b>Họ tên BN:</b> Lê Thị Lan · <b>Tuổi:</b> 28 · <b>Giới:</b> Nữ</div>
-          <div><b>Chẩn đoán:</b> Viêm họng cấp do virus + thai 12 tuần</div>
-          <hr style="border-color:var(--border)">
-          <table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead><tr><th style="text-align:left">Thuốc</th><th>Liều</th><th>Cách dùng</th><th>SL</th></tr></thead>
-            <tbody>
-              <tr><td>Paracetamol 500mg</td><td>1v/lần</td><td>3 lần/ngày × 5 ngày</td><td>15v</td></tr>
-              <tr><td>Vitamin C 500mg</td><td>1v/lần</td><td>1 lần/ngày × 7 ngày</td><td>7v</td></tr>
-              <tr><td colspan="4" style="color:var(--red)">⚠️ KHÔNG kê kháng sinh — virus không cần KS</td></tr>
-            </tbody>
+      <div class="inspector-modal">
+        <div class="inspector-3d"><canvas class="ins-canvas"></canvas></div>
+        <div class="inspector-info">
+          <div class="ins-head">
+            <div class="ins-brand">${drug.brand || drug.name}</div>
+            <div class="ins-generic">${drug.generic || ''} · ${drug.strength || ''}</div>
+            ${drug.isRx ? '<span class="ins-tag ins-rx">Rx · Kê đơn</span>' : '<span class="ins-tag ins-otc">OTC</span>'}
+            ${drug.isAntibiotic ? '<span class="ins-tag ins-abx">Kháng sinh</span>' : ''}
+            ${drug.isHazardPregnancy ? '<span class="ins-tag ins-warn">⚠️ Thai kỳ</span>' : ''}
+          </div>
+          <table class="ins-tbl">
+            <tr><td>SKU</td><td><code>${drug.sku}</code></td></tr>
+            <tr><td>Dạng bào chế</td><td>${drug.form || '—'}</td></tr>
+            <tr><td>Phân nhóm</td><td>${drug.category || '—'}</td></tr>
+            <tr><td>Quy cách</td><td>${drug.pack || '—'}</td></tr>
+            <tr><td>Đơn vị nhỏ nhất</td><td>${drug.retailUnit || '—'}</td></tr>
+            <tr><td>Hạn dùng</td><td>${meta.expiry}</td></tr>
+            <tr><td>Số lô</td><td><code>${meta.lot}</code></td></tr>
+            <tr><td>Tồn kho</td><td><b>${meta.stock} hộp</b></td></tr>
+            <tr><td>Barcode</td><td><code>${drug.barcode || '—'}</code></td></tr>
+            <tr><td>Đơn giá</td><td>${(drug.unitPrice || 0).toLocaleString('vi')} đ</td></tr>
           </table>
-          <hr style="border-color:var(--border)">
-          <div><b>BS kê:</b> BS. Nguyễn Văn A · <b>SĐT BS:</b> 0987.654.321</div>
-          <div style="color:var(--muted);font-size:11px;margin-top:8px">Bấm "Gọi bác sĩ" nếu phát hiện sai sót/cần xác minh.</div>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-    overlay.querySelector('.pos-close').addEventListener('click', () => overlay.remove());
-    postAction('view_prescription', { ts: Date.now() });
-  }
-
-  function openDoctorPhone() {
-    const overlay = document.createElement('div');
-    overlay.className = 'pos-overlay';
-    overlay.innerHTML = `
-      <div class="pos-modal" style="width:440px">
-        <div class="pos-head">
-          <div class="pos-title">📞 Gọi bác sĩ kê đơn</div>
-          <button class="pos-close" type="button">✕</button>
-        </div>
-        <div style="padding:18px;font-size:13px">
-          <div style="text-align:center;font-size:48px;margin:10px">☎️</div>
-          <div style="text-align:center"><b>BS. Nguyễn Văn A</b></div>
-          <div style="text-align:center;color:var(--muted);font-size:12px">SĐT: 0987.654.321 · Đang gọi…</div>
-          <textarea class="dr-msg" placeholder="Nội dung trao đổi với BS (ví dụ: thai phụ 12 tuần, cân nhắc đổi doxycyclin → amoxicillin)" rows="4" style="width:100%;margin-top:12px;padding:8px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:12px"></textarea>
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
-            <button class="dr-cancel btn" type="button">Huỷ</button>
-            <button class="dr-send btn primary" type="button">📨 Gửi & ghi nhận</button>
+          <div class="ins-hint">💡 Kéo chuột để xoay hộp · Lăn để zoom</div>
+          <div class="ins-actions">
+            <button class="ins-return" type="button">↩ Trả về kệ</button>
+            <button class="ins-confirm" type="button">📥 Đưa vào khay (Quét barcode)</button>
           </div>
         </div>
       </div>`;
     document.body.appendChild(overlay);
-    overlay.querySelector('.pos-close').addEventListener('click', () => overlay.remove());
-    overlay.querySelector('.dr-cancel').addEventListener('click', () => overlay.remove());
-    overlay.querySelector('.dr-send').addEventListener('click', () => {
-      const msg = overlay.querySelector('.dr-msg').value.trim();
-      postAction('call_doctor', { message: msg, dialed: true });
-      overlay.remove();
-      alert('Đã ghi nhận cuộc gọi với BS.');
+
+    const canvas = overlay.querySelector('.ins-canvas');
+    // Mini-scene Three.js
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const fit = () => {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+    };
+    const scene2 = new THREE.Scene();
+    scene2.background = new THREE.Color(0x0f172a);
+    const camera2 = new THREE.PerspectiveCamera(35, 1, 0.01, 10);
+    camera2.position.set(0.0, 0.05, 0.45);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    scene2.add(ambient);
+    const dir1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dir1.position.set(0.3, 0.5, 0.4);
+    scene2.add(dir1);
+    const dir2 = new THREE.DirectionalLight(0xbfdbfe, 0.3);
+    dir2.position.set(-0.3, -0.2, -0.4);
+    scene2.add(dir2);
+    // OrbitControls cho drag xoay manual
+    const ctrl = new OrbitControls(camera2, canvas);
+    ctrl.enableDamping = true;
+    ctrl.minDistance = 0.18; ctrl.maxDistance = 1.2;
+    ctrl.enablePan = false;
+    ctrl.autoRotate = true;
+    ctrl.autoRotateSpeed = 1.5;
+    // Khi user kéo → tắt auto-rotate
+    ctrl.addEventListener('start', () => { ctrl.autoRotate = false; });
+
+    // Build hộp thuốc 3D giống trên kệ. Inline replicate buildSingleDrugBox
+    // (đơn giản hóa: 1 box + label canvas + accent stripe).
+    const palette = ['#dc2626','#ea580c','#f59e0b','#ca8a04','#65a30d','#16a34a','#0891b2','#2563eb','#7c3aed','#db2777'];
+    const accent = drug.groupAccent || palette[(drug.sku || '').charCodeAt(0) % palette.length];
+    const body = drug.bodyColor || '#f8fafc';
+    const w = 0.18, h = 0.27, d = 0.08;
+    const boxMat = new THREE.MeshStandardMaterial({ color: body, roughness: 0.75 });
+    const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), boxMat);
+    scene2.add(box);
+    // Canvas label dán mặt +z
+    const lc = document.createElement('canvas'); lc.width = 512; lc.height = 768;
+    const lctx = lc.getContext('2d');
+    lctx.fillStyle = body; lctx.fillRect(0, 0, 512, 768);
+    lctx.fillStyle = accent; lctx.fillRect(0, 0, 512, 130);
+    lctx.fillStyle = '#fef9c3'; lctx.font = 'bold 48px Inter, sans-serif';
+    lctx.textAlign = 'center'; lctx.textBaseline = 'middle';
+    lctx.fillText((drug.groupLabel || drug.category || '').slice(0, 20), 256, 65);
+    lctx.fillStyle = '#0f172a'; lctx.font = 'bold 64px Inter, sans-serif';
+    lctx.fillText((drug.brand || drug.name || '').slice(0, 14), 256, 290);
+    lctx.fillStyle = '#475569'; lctx.font = '40px Inter, sans-serif';
+    lctx.fillText((drug.generic || '').slice(0, 22), 256, 380);
+    lctx.fillStyle = accent; lctx.font = 'bold 56px Inter, sans-serif';
+    lctx.fillText((drug.strength || ''), 256, 470);
+    lctx.fillStyle = '#64748b'; lctx.font = '34px Inter, sans-serif';
+    lctx.fillText((drug.form || ''), 256, 560);
+    lctx.fillStyle = '#7c2d12'; lctx.font = 'bold 30px "Courier New"';
+    lctx.fillText(`HD ${meta.expiry} · ${meta.lot}`, 256, 650);
+    lctx.fillStyle = '#0f172a'; lctx.font = '24px Inter, sans-serif';
+    lctx.fillText(`SKU: ${drug.sku}`, 256, 710);
+    // Barcode strip giả
+    lctx.fillStyle = '#0f172a';
+    const bx = 90, by = 720, bh = 36;
+    const bits = (drug.barcode || '0000').split('').map(c => c.charCodeAt(0) % 4 + 1);
+    let cur = bx;
+    bits.forEach((w, i) => {
+      if (i % 2 === 0) { lctx.fillRect(cur, by, w * 4, bh); }
+      cur += w * 4 + 2;
     });
+    const tex = new THREE.CanvasTexture(lc);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const labelMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 });
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.94, h * 0.96), labelMat);
+    label.position.z = d / 2 + 0.001;
+    scene2.add(label);
+    // Mặt sau cũng có nhãn tóm tắt
+    const lc2 = document.createElement('canvas'); lc2.width = 512; lc2.height = 768;
+    const lc2x = lc2.getContext('2d');
+    lc2x.fillStyle = body; lc2x.fillRect(0, 0, 512, 768);
+    lc2x.fillStyle = accent; lc2x.fillRect(0, 720, 512, 48);
+    lc2x.fillStyle = '#0f172a'; lc2x.font = '28px Inter, sans-serif';
+    lc2x.textAlign = 'left'; lc2x.textBaseline = 'top';
+    lc2x.fillText('Thành phần:', 30, 40);
+    lc2x.font = '24px Inter, sans-serif';
+    lc2x.fillText(`${drug.generic || drug.name}`, 30, 80);
+    lc2x.fillText(`Hàm lượng: ${drug.strength || '—'}`, 30, 130);
+    lc2x.fillText(`Quy cách: ${drug.pack || '—'}`, 30, 180);
+    lc2x.fillText(`Dạng: ${drug.form || '—'}`, 30, 230);
+    lc2x.fillText(`Nhóm: ${drug.category || '—'}`, 30, 280);
+    lc2x.font = 'bold 22px Inter, sans-serif'; lc2x.fillStyle = '#7f1d1d';
+    lc2x.fillText(drug.isRx ? '⚠ THUỐC KÊ ĐƠN (Rx)' : 'OTC – Không kê đơn', 30, 350);
+    if (drug.isAntibiotic) lc2x.fillText('💊 Kháng sinh – chú ý chỉ định', 30, 390);
+    if (drug.isHazardPregnancy) lc2x.fillText('⚠ Cẩn trọng phụ nữ có thai', 30, 430);
+    lc2x.fillStyle = '#fef9c3'; lc2x.font = 'bold 32px Inter, sans-serif';
+    lc2x.textAlign = 'center'; lc2x.textBaseline = 'middle';
+    lc2x.fillText((drug.brand || drug.name || ''), 256, 744);
+    const tex2 = new THREE.CanvasTexture(lc2);
+    tex2.colorSpace = THREE.SRGBColorSpace;
+    const labelMat2 = new THREE.MeshStandardMaterial({ map: tex2, roughness: 0.6 });
+    const label2 = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.94, h * 0.96), labelMat2);
+    label2.position.z = -d / 2 - 0.001;
+    label2.rotation.y = Math.PI;
+    scene2.add(label2);
+
+    let stopped = false;
+    function tick() {
+      if (stopped) return;
+      ctrl.update();
+      renderer.render(scene2, camera2);
+      requestAnimationFrame(tick);
+    }
+    fit(); requestAnimationFrame(tick);
+    const onResize = () => fit();
+    window.addEventListener('resize', onResize);
+
+    function close() {
+      stopped = true;
+      window.removeEventListener('resize', onResize);
+      renderer.dispose();
+      tex.dispose(); tex2.dispose();
+      overlay.remove();
+    }
+    overlay.querySelector('.ins-return').addEventListener('click', () => {
+      returnToShelf?.();
+      close();
+    });
+    overlay.querySelector('.ins-confirm').addEventListener('click', () => {
+      confirmToTray?.();
+      close();
+    });
+    postAction('inspect_drug', { drugId: drug.id });
   }
 
-  function toggleSenior() {
-    const seniorOn = !document.body.classList.contains('senior-mode');
+  // P2: Modal tra cứu Dược thư 2018 / MIMS Pharmacy.
+  function openReferenceBook(bookId) {
+    const isDuocThu = bookId === 'duocthu2018';
+    const meta = isDuocThu
+      ? { title: '📕 Dược thư Quốc gia 2018', accent: '#7f1d1d',
+          subtitle: 'Bộ Y tế – Dược thư Quốc gia Việt Nam (NXB Y học)' }
+      : { title: '📒 MIMS Pharmacy Việt Nam', accent: '#b45309',
+          subtitle: 'Cập nhật thông tin kê đơn & tương tác thuốc thực hành' };
+    const catalog = sim.getCatalog ? sim.getCatalog() : [];
+    const overlay = document.createElement('div');
+    overlay.className = 'pos-overlay book-overlay';
+    overlay.innerHTML = `
+      <div class="book-modal">
+        <div class="book-head" style="background:${meta.accent}">
+          <div>
+            <div class="book-title">${meta.title}</div>
+            <div class="book-sub">${meta.subtitle}</div>
+          </div>
+          <button class="book-close" type="button">✕</button>
+        </div>
+        <div class="book-body">
+          <div class="book-left">
+            <input class="book-search" type="search" placeholder="🔎 Nhập tên thuốc / hoạt chất / SKU…"/>
+            <div class="book-list"></div>
+          </div>
+          <div class="book-right">
+            <div class="book-empty">Chọn 1 thuốc để xem chuyên luận đầy đủ.</div>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const $$ = (s) => overlay.querySelector(s);
+    const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    function renderList(q) {
+      const qn = norm(q.trim());
+      const matches = catalog.filter(({ drug }) =>
+        !qn || norm(drug.brand).includes(qn) || norm(drug.name).includes(qn) ||
+        norm(drug.generic).includes(qn) || norm(drug.sku).includes(qn)
+      ).slice(0, 50);
+      $$('.book-list').innerHTML = matches.length
+        ? matches.map(({ drug }) => `
+          <div class="book-row" data-id="${drug.id}">
+            <div><b>${drug.brand || drug.name}</b> <span class="book-sku">${drug.sku}</span></div>
+            <div style="color:#94a3b8;font-size:11px">${drug.generic || ''} · ${drug.strength || ''}</div>
+          </div>`).join('')
+        : '<div style="padding:14px;color:#94a3b8">Không có kết quả.</div>';
+    }
+    function renderDetail(id) {
+      const entry = catalog.find(c => c.drug.id === id);
+      if (!entry) return;
+      const { drug, meta: m } = entry;
+      $$('.book-right').innerHTML = `
+        <div class="book-detail">
+          <h2>${drug.brand || drug.name}</h2>
+          <div class="book-detail-sub">${drug.generic || ''} · ${drug.strength || ''}</div>
+          <table class="book-detail-tbl">
+            <tr><td>Hoạt chất</td><td>${drug.generic || '—'}</td></tr>
+            <tr><td>Hàm lượng</td><td>${drug.strength || '—'}</td></tr>
+            <tr><td>Dạng bào chế</td><td>${drug.form || '—'}</td></tr>
+            <tr><td>Phân nhóm</td><td>${drug.category || '—'}</td></tr>
+            <tr><td>Quy cách</td><td>${drug.pack || '—'}</td></tr>
+            <tr><td>Đơn vị nhỏ nhất</td><td>${drug.retailUnit || '—'}</td></tr>
+            <tr><td>Barcode</td><td><code>${drug.barcode || '—'}</code></td></tr>
+            <tr><td>Hạn dùng</td><td>${m.expiry}</td></tr>
+            <tr><td>Tồn kho</td><td>${m.stock} hộp</td></tr>
+            <tr><td>Đơn giá</td><td>${(drug.unitPrice || 0).toLocaleString('vi')} đ</td></tr>
+            <tr><td>Kê đơn</td><td>${drug.isRx ? '✅ Có (Rx)' : '❌ Không (OTC)'}</td></tr>
+            <tr><td>Kháng sinh</td><td>${drug.isAntibiotic ? '✅' : '—'}</td></tr>
+            <tr><td>Cẩn trọng thai kỳ</td><td>${drug.isHazardPregnancy ? '⚠️ CÓ' : '—'}</td></tr>
+          </table>
+          ${isDuocThu ? `
+            <h3>Chuyên luận (Dược thư)</h3>
+            <p><b>Chỉ định:</b> Theo hướng dẫn chuyên ngành — xem chi tiết trong Dược thư Quốc gia 2018, chuyên luận ${drug.generic || drug.name}.</p>
+            <p><b>Liều dùng:</b> Cần tham khảo bác sĩ/bộ Y tế cho từng đối tượng.</p>
+            <p><b>Chống chỉ định:</b> Mẫn cảm với thành phần hoạt chất, các trường hợp đặc biệt theo chuyên luận.</p>
+            <p><b>Tác dụng KMM:</b> Tham khảo Dược thư.</p>
+          ` : `
+            <h3>Thông tin MIMS</h3>
+            <p><b>Cảnh báo tương tác:</b> Kiểm tra tương tác với các thuốc khác trên đơn trước khi giao.</p>
+            <p><b>Lưu ý kê đơn:</b> Theo dõi BN sau dùng 24-48h, hỏi tiền sử dị ứng.</p>
+            <p><b>Khuyến cáo:</b> Tham khảo MIMS Pharmacy Việt Nam phiên bản mới nhất.</p>
+          `}
+        </div>`;
+    }
+    $$('.book-close').addEventListener('click', () => overlay.remove());
+    $$('.book-search').addEventListener('input', (e) => renderList(e.target.value));
+    $$('.book-list').addEventListener('click', (e) => {
+      const r = e.target.closest('.book-row');
+      if (r) renderDetail(r.dataset.id);
+    });
+    renderList('');
+    postAction('open_reference_book', { bookId });
+  }
+
+  // 7. Modal handlers: Prescription / Doctor phone / Senior pharmacist
+  // P6a: Đơn thuốc theo Thông tư 26/2025/TT-BYT — mẫu chuẩn pháp lý.
+  function openPrescription() {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const rxCode = 'ĐT-' + Date.now().toString().slice(-8);
+    const overlay = document.createElement('div');
+    overlay.className = 'rx-overlay';
+    overlay.innerHTML = `
+      <div class="rx-modal">
+        <div class="rx-tools">
+          <button class="rx-print" type="button">🖨️ In</button>
+          <button class="rx-close-x" type="button">✕</button>
+        </div>
+        <div class="rx-page">
+          <div class="rx-head">
+            <div class="rx-org">
+              <div class="rx-org-line1">SỞ Y TẾ TP. HỒ CHÍ MINH</div>
+              <div class="rx-org-line2">PHÒNG KHÁM ĐA KHOA AN BÌNH</div>
+              <div class="rx-org-line3">Địa chỉ: 123 Lê Lợi, Q.1, TP.HCM · ĐT: 028.3823.4567</div>
+              <div class="rx-org-line3">Mã CSKCB: 79-002-A8 · MST: 0301234567</div>
+            </div>
+            <div class="rx-logo">⚕</div>
+          </div>
+          <div class="rx-title">
+            <div>ĐƠN THUỐC</div>
+            <div class="rx-subtitle">(Ban hành theo Thông tư số 26/2025/TT-BYT ngày 30/06/2025 của Bộ Y tế)</div>
+          </div>
+          <div class="rx-meta-grid">
+            <div><b>Số đơn:</b> ${rxCode}</div>
+            <div><b>Ngày kê:</b> ${dd}/${mm}/${yyyy}</div>
+          </div>
+          <table class="rx-bn-tbl">
+            <tr><td><b>Họ và tên BN:</b></td><td colspan="3">LÊ THỊ LAN</td></tr>
+            <tr><td><b>Năm sinh:</b></td><td>1997 (28 tuổi)</td><td><b>Giới tính:</b></td><td>Nữ</td></tr>
+            <tr><td><b>Cân nặng:</b></td><td>56 kg</td><td><b>CCCD:</b></td><td>079197012345</td></tr>
+            <tr><td><b>Địa chỉ:</b></td><td colspan="3">456 Trần Hưng Đạo, P.Cầu Ông Lãnh, Q.1, TP.HCM</td></tr>
+            <tr><td><b>Số BHYT:</b></td><td colspan="3">SV4 79 123 4567890</td></tr>
+            <tr><td><b>Chẩn đoán:</b></td><td colspan="3"><b>Viêm họng cấp do virus (J02.9)</b> – Thai 12 tuần (Z34.0)</td></tr>
+          </table>
+          <div class="rx-prescribed">
+            <table class="rx-drug-tbl">
+              <thead>
+                <tr>
+                  <th style="width:5%">STT</th>
+                  <th style="width:42%">Tên thuốc · Hàm lượng · Dạng bào chế</th>
+                  <th style="width:10%">SL</th>
+                  <th style="width:43%">Liều · Cách dùng</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td><b>PARACETAMOL</b> 500mg · Viên nén</td>
+                  <td>15 viên</td>
+                  <td>Uống 1 viên/lần × 3 lần/ngày × 5 ngày, khi sốt > 38.5°C, cách nhau ≥ 4 giờ</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td><b>VITAMIN C</b> 500mg · Viên sủi</td>
+                  <td>7 viên</td>
+                  <td>Hoà 1 viên/cốc nước, uống sáng × 7 ngày sau ăn</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td><b>NƯỚC MUỐI SINH LÝ</b> 0.9% · Dung dịch súc miệng</td>
+                  <td>1 chai</td>
+                  <td>Súc họng 3 lần/ngày sau khi đánh răng và trước ngủ</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="rx-warn">
+              ⚠ <b>KHÔNG kê kháng sinh</b> — Viêm họng do virus không có chỉ định kháng sinh.<br>
+              Tự ý dùng kháng sinh trong giai đoạn thai kỳ có thể gây hại cho thai nhi.
+            </div>
+            <div class="rx-instr">
+              <b>Lời dặn của bác sĩ:</b><br>
+              • Uống đủ nước (≥ 2 lít/ngày), nghỉ ngơi, súc họng nước muối ấm.<br>
+              • Tái khám sau 5–7 ngày nếu chưa đỡ hoặc sốt ≥ 39°C kéo dài.<br>
+              • Báo BS ngay nếu khó thở, đau ngực, phát ban.<br>
+              • Tuyệt đối <u>không tự ý dùng kháng sinh</u> hoặc thuốc khác mà chưa hỏi BS.
+            </div>
+          </div>
+          <div class="rx-footer">
+            <div class="rx-sign-box">
+              <div class="rx-sign-title">Người mua thuốc</div>
+              <div class="rx-sign-line"></div>
+              <div class="rx-sign-name">(Ký, ghi rõ họ tên)</div>
+            </div>
+            <div class="rx-sign-box">
+              <div class="rx-sign-title">Người kê đơn</div>
+              <div class="rx-sign-stamp">
+                <div class="rx-stamp">[Đã ký]</div>
+                <b>BS. NGUYỄN VĂN A</b><br>
+                <span style="font-size:11px">CCHN: 002345/BYT-CCHN</span><br>
+                <span style="font-size:11px">SĐT: 0912 345 678</span>
+              </div>
+            </div>
+          </div>
+          <div class="rx-note-foot">
+            * Đơn thuốc có giá trị trong 5 ngày kể từ ngày kê. Mỗi lần lấy thuốc, dược sĩ phải ghi rõ ngày, số lượng đã giao và ký xác nhận lên đơn.<br>
+            * Thuốc kháng sinh, thuốc kê đơn không được tự ý mua/bán ngoài đơn (Khoản 4 Điều 6 Thông tư 26/2025/TT-BYT).
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('.rx-close-x').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.rx-print').addEventListener('click', () => window.print());
+    postAction('view_prescription', { ts: Date.now(), rxCode });
+  }
+
+  function openDoctorPhone() {
+    const CORRECT = '0912345678';
+    const overlay = document.createElement('div');
+    overlay.className = 'pos-overlay phone-overlay';
+    overlay.innerHTML = `
+      <div class="phone-modal">
+        <div class="phone-head">
+          <div class="phone-title">📞 ĐIỆN THOẠI – LIÊN HỆ BÁC SĨ KÊ ĐƠN</div>
+        </div>
+        <div class="phone-body">
+          <div class="phone-prompt">Nhập số điện thoại của bác sĩ ghi trên đơn:</div>
+          <div class="phone-display" data-placeholder="0xxx xxx xxx"></div>
+          <div class="phone-pad">
+            ${['1','2','3','4','5','6','7','8','9','*','0','⌫']
+              .map(k => `<button class="phone-key" data-key="${k}" type="button">${k}</button>`).join('')}
+          </div>
+          <button class="phone-call" type="button" disabled>📞 Gọi</button>
+          <div class="phone-hint">Mẹo: số đúng là <b>0912 345 678</b> (in trên đơn thuốc).</div>
+        </div>
+        <div class="phone-foot">
+          <button class="phone-hangup" type="button">✕ Cúp máy</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const $disp = overlay.querySelector('.phone-display');
+    const $call = overlay.querySelector('.phone-call');
+    let dialed = '';
+    function format(s) {
+      // 4-3-3 grouping for 10-digit VN mobile
+      const parts = [s.slice(0,4), s.slice(4,7), s.slice(7,10)].filter(Boolean);
+      return parts.join(' ');
+    }
+    function render() {
+      $disp.textContent = format(dialed) || '';
+      $disp.classList.toggle('phone-display-empty', dialed.length === 0);
+      $call.disabled = dialed.length < 10;
+    }
+    overlay.querySelectorAll('.phone-key').forEach(b => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.key;
+        if (k === '⌫') dialed = dialed.slice(0, -1);
+        else if (dialed.length < 11) dialed += k;
+        render();
+      });
+    });
+    function close() { overlay.remove(); }
+    overlay.querySelector('.phone-hangup').addEventListener('click', close);
+    $call.addEventListener('click', () => {
+      const cleaned = dialed.replace(/\D/g, '');
+      const correct = cleaned === CORRECT;
+      postAction('call_doctor', { dialed: cleaned, correct });
+      close();
+      if (correct) openDoctorChat();
+      else alert('❌ Số không đúng. Hãy đối chiếu lại đơn thuốc.');
+    });
+    render();
+  }
+
+  // P6b: Chat box ảo với BS sau khi gọi đúng số. Sinh viên nhắn → BS reply
+  // canned responses theo từ khoá (kháng sinh / thai / dị ứng / liều / tương tác).
+  function openDoctorChat() {
+    const overlay = document.createElement('div');
+    overlay.className = 'pos-overlay doctor-chat-overlay';
+    overlay.innerHTML = `
+      <div class="dc-modal">
+        <div class="dc-head">
+          <div class="dc-avatar">🧑‍⚕️</div>
+          <div>
+            <div class="dc-name">BS. Nguyễn Văn A</div>
+            <div class="dc-status">🟢 Đang trực tuyến · PK Đa khoa An Bình</div>
+          </div>
+          <button class="dc-close" type="button">📴 Cúp máy</button>
+        </div>
+        <div class="dc-body" id="dc-body"></div>
+        <div class="dc-foot">
+          <input class="dc-input" placeholder="Nhập tin nhắn cho BS…" autocomplete="off"/>
+          <button class="dc-send" type="button">Gửi ▶</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const body = overlay.querySelector('#dc-body');
+    const input = overlay.querySelector('.dc-input');
+    const REPLIES = [
+      { kw: ['chào','xin chào','dạ','alo'], reply: 'Alo, dược sĩ cần tư vấn gì về đơn thuốc của BN Lan?' },
+      { kw: ['kháng sinh','amox','antibiotic'], reply: 'BN viêm họng do virus + đang mang thai 12 tuần thì KHÔNG kê kháng sinh. Anh kê paracetamol + vitamin C + súc họng nước muối đủ rồi.' },
+      { kw: ['thai','mang thai','pregnancy'], reply: 'Đúng rồi, BN đang thai 12 tuần. Cẩn thận thuốc thuộc nhóm cấm — đặc biệt tetracyclin, fluoroquinolon, NSAID quá liều.' },
+      { kw: ['dị ứng','allergy'], reply: 'BN chưa khai dị ứng với thuốc nào trong tiền sử. Nếu dược sĩ thấy nghi vấn, hỏi lại BN trước khi giao.' },
+      { kw: ['liều','dose','dosage'], reply: 'Paracetamol max 4g/ngày người lớn — đơn của tôi là 1.5g/ngày (1v × 3 lần × 500mg) an toàn cho thai phụ.' },
+      { kw: ['tương tác','interaction','phối hợp'], reply: 'Paracetamol + Vitamin C + NaCl 0.9% không có tương tác có ý nghĩa lâm sàng. Yên tâm cấp phát.' },
+      { kw: ['thay','đổi','khác'], reply: 'Nếu BN không sẵn paracetamol viên nén, có thể dùng paracetamol gói sủi cùng hàm lượng. Bú nước muối thì có thể dùng NaCl 0.9% chai khác cũng được.' },
+      { kw: ['bệnh','tình trạng','triệu'], reply: 'BN khám tôi 2 ngày trước, sốt nhẹ 38°C, đau họng, không khó thở, không phát ban. Diễn tiến nhẹ, theo dõi tại nhà 5-7 ngày.' },
+      { kw: ['cảm ơn','tks','thanks'], reply: 'Không có gì. Có gì thắc mắc tiếp dược sĩ cứ liên hệ. Chúc dược sĩ làm việc hiệu quả.' }
+    ];
+    function addBubble(role, text) {
+      const el = document.createElement('div');
+      el.className = 'dc-bubble dc-' + role;
+      el.textContent = text;
+      body.appendChild(el);
+      body.scrollTop = body.scrollHeight;
+    }
+    addBubble('doctor', 'Alo dược sĩ?');
+    function send() {
+      const v = input.value.trim();
+      if (!v) return;
+      addBubble('me', v);
+      input.value = '';
+      const lower = v.toLowerCase();
+      const r = REPLIES.find(x => x.kw.some(k => lower.includes(k))) || { reply: 'Dược sĩ cứ tự cân nhắc, đơn của tôi là đúng theo phác đồ rồi.' };
+      setTimeout(() => addBubble('doctor', r.reply), 600 + Math.random() * 400);
+      postAction('chat_doctor', { message: v });
+    }
+    overlay.querySelector('.dc-send').addEventListener('click', send);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+    overlay.querySelector('.dc-close').addEventListener('click', () => overlay.remove());
+    input.focus();
+  }
+
+  function applySenior(seniorOn) {
     document.body.classList.toggle('senior-mode', seniorOn);
-    $('btn-senior').textContent = seniorOn ? '👨‍⚕️ DS đại học · ON' : '👨‍⚕️ DS đại học';
+    if ($('btn-senior')) $('btn-senior').textContent = seniorOn ? '👨‍⚕️ DS đại học · ON' : '👨‍⚕️ DS đại học';
     postAction('senior_pharmacist', { active: seniorOn });
+  }
+  function toggleSenior() {
+    const seniorOn = document.body.classList.contains('senior-mode');
+    if (seniorOn) { applySenior(false); return; }
+    // Mở modal mời DS đại học (avatar + mô tả + button Bật)
+    const overlay = document.createElement('div');
+    overlay.className = 'pos-overlay senior-overlay';
+    overlay.innerHTML = `
+      <div class="senior-modal">
+        <div class="senior-head">
+          <div class="senior-title">👩‍🎓 Mời Dược sĩ Đại học (phụ trách chuyên môn)</div>
+        </div>
+        <div class="senior-body">
+          <p class="senior-intro">
+            Trong tình huống cần thay thế thuốc, tư vấn vượt thẩm quyền của dược sĩ trung học,
+            sinh viên có thể mời <b>DS đại học</b> ra hỗ trợ.
+          </p>
+          <div class="senior-card">
+            <div class="senior-avatar">👩‍⚕️</div>
+            <div>
+              <div class="senior-name">DS. ĐH Phạm Thị Hà</div>
+              <div class="senior-role">Dược sĩ Đại học · Phụ trách chuyên môn</div>
+              <div class="senior-place">Nhà thuốc thực hành - HMC</div>
+            </div>
+          </div>
+          <p class="senior-note">
+            Khi bật chế độ này, sinh viên tiếp tục đóng vai <b>DS đại học</b>; có thể:
+            quyết định thay thế thuốc, tư vấn các nhóm Rx có cảnh báo, hoặc xử lý ca tế nhị ở
+            khu vực tư vấn riêng.
+          </p>
+          <div class="senior-actions">
+            <button class="senior-close" type="button">Đóng</button>
+            <button class="senior-confirm" type="button">✅ Bật chế độ DS đại học</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('.senior-close').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.senior-confirm').addEventListener('click', () => {
+      applySenior(true);
+      overlay.remove();
+    });
   }
 
   // 8. Stats bar: update khi pick/label thay đổi
@@ -257,4 +731,79 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   if ($('btn-rx')) $('btn-rx').addEventListener('click', openPrescription);
   if ($('btn-doctor')) $('btn-doctor').addEventListener('click', openDoctorPhone);
   if ($('btn-senior')) $('btn-senior').addEventListener('click', toggleSenior);
+
+  // ── P1: Tooltip hover hộp thuốc (tên + HD + tồn kho) ─────────────────
+  const tt = $('drug-tooltip');
+  const canvas = $('scene-canvas');
+  if (tt && canvas && sim.getDrugAtPointer) {
+    let rafTooltip = 0;
+    canvas.addEventListener('pointermove', (e) => {
+      if (rafTooltip) return;
+      rafTooltip = requestAnimationFrame(() => {
+        rafTooltip = 0;
+        const r = sim.getDrugAtPointer(e.clientX, e.clientY);
+        if (!r) { tt.hidden = true; return; }
+        const { drug, meta } = r;
+        const lowStock = meta.stock < 20;
+        const soonExpiry = meta.expiryYear === 2026 && meta.expiryMonth <= 6;
+        tt.innerHTML = `
+          <div class="tt-brand">${drug.brand || drug.name}</div>
+          <div class="tt-generic">${drug.generic || ''}${drug.strength ? ' · ' + drug.strength : ''}</div>
+          <div class="tt-row"><span>Dạng</span><span>${drug.form || '—'}</span></div>
+          <div class="tt-row"><span>SKU</span><span>${drug.sku}</span></div>
+          <div class="tt-row"><span>Hạn dùng</span><span class="${soonExpiry ? 'tt-warn' : ''}">${meta.expiry}</span></div>
+          <div class="tt-row"><span>Tồn kho</span><span class="${lowStock ? 'tt-warn' : ''}">${meta.stock} hộp</span></div>
+          <div class="tt-row"><span>Đơn vị</span><span>${drug.retailUnit || '—'}</span></div>
+        `;
+        tt.hidden = false;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left + 14;
+        const y = e.clientY - rect.top + 14;
+        tt.style.left = Math.min(x, rect.width - 280) + 'px';
+        tt.style.top  = Math.min(y, rect.height - 200) + 'px';
+      });
+    });
+    canvas.addEventListener('pointerleave', () => { tt.hidden = true; });
+  }
+
+  // ── P1: Search box tìm theo tên/SKU ─────────────────────────────────
+  const searchInput = $('drug-search-input');
+  const searchResults = $('drug-search-results');
+  if (searchInput && searchResults && sim.getCatalog) {
+    const catalog = sim.getCatalog();
+    function render(q) {
+      const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      const qn = norm(q.trim());
+      if (!qn) { searchResults.innerHTML = ''; return; }
+      const matches = catalog.filter(({ drug }) =>
+        norm(drug.brand).includes(qn) ||
+        norm(drug.name).includes(qn) ||
+        norm(drug.generic).includes(qn) ||
+        norm(drug.sku).includes(qn)
+      ).slice(0, 12);
+      searchResults.innerHTML = matches.length
+        ? matches.map(({ drug, meta }) => `
+            <div class="ds-row" data-id="${drug.id}">
+              <div>
+                <div class="ds-brand">${drug.brand || drug.name}</div>
+                <div class="ds-sku">${drug.sku} · ${drug.strength || ''}</div>
+              </div>
+              <div style="text-align:right;font-size:11px">
+                <div>HD ${meta.expiry}</div>
+                <div>Tồn ${meta.stock}</div>
+              </div>
+            </div>`).join('')
+        : '<div style="color:#94a3b8;font-size:12px;padding:6px">Không tìm thấy.</div>';
+    }
+    let searchTimer;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => render(searchInput.value), 120);
+    });
+    searchResults.addEventListener('click', (e) => {
+      const row = e.target.closest('.ds-row');
+      if (!row) return;
+      sim.focusDrug(row.dataset.id);
+    });
+  }
 }

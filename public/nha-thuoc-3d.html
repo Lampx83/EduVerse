@@ -19,7 +19,7 @@
   html, body { margin: 0; height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
   .app {
     display: grid; grid-template-columns: 1fr 340px; gap: 12px;
-    height: 100vh; padding: 12px;
+    height: calc(100vh - 78px); padding: 12px;
   }
   @media (max-width: 980px) { .app { grid-template-columns: 1fr; grid-template-rows: 60vh 1fr; overflow-y: auto; height: auto; } }
 
@@ -52,6 +52,47 @@
     padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
     box-shadow: 0 6px 18px rgba(0,0,0,0.3);
   }
+  /* Tooltip hover hộp thuốc — float cạnh chuột */
+  .drug-tooltip {
+    position: absolute; z-index: 90; pointer-events: none;
+    min-width: 180px; max-width: 260px;
+    background: rgba(15,23,42,0.95); border: 1px solid rgba(56,189,248,0.45);
+    color: #f1f5f9; border-radius: 10px; padding: 10px 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    font-size: 12px; line-height: 1.45;
+  }
+  .drug-tooltip .tt-brand { font-weight: 700; font-size: 14px; color: #fde68a; }
+  .drug-tooltip .tt-generic { color: #cbd5e1; font-style: italic; }
+  .drug-tooltip .tt-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
+  .drug-tooltip .tt-row span:last-child { color: #a7f3d0; font-weight: 600; }
+  .drug-tooltip .tt-warn { color: #fca5a5; }
+  /* Search box — top-left của scene canvas */
+  .drug-search {
+    position: absolute; top: 14px; left: 14px; z-index: 90;
+    width: 280px;
+    background: rgba(15,23,42,0.92); border: 1px solid rgba(56,189,248,0.4);
+    border-radius: 10px; padding: 8px;
+  }
+  .drug-search input {
+    width: 100%; padding: 8px 10px;
+    background: rgba(255,255,255,0.05); color: #f1f5f9;
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+    font-size: 13px; outline: none;
+  }
+  .drug-search input:focus { border-color: rgba(56,189,248,0.6); }
+  .drug-search-results {
+    max-height: 260px; overflow-y: auto; margin-top: 8px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .drug-search-results:empty { margin-top: 0; }
+  .ds-row {
+    display: flex; justify-content: space-between; gap: 8px;
+    padding: 6px 8px; background: rgba(255,255,255,0.04); border-radius: 6px;
+    font-size: 12px; cursor: pointer;
+  }
+  .ds-row:hover { background: rgba(56,189,248,0.18); }
+  .ds-row .ds-brand { color: #fde68a; font-weight: 600; }
+  .ds-row .ds-sku { color: #cbd5e1; font-family: 'Courier New', monospace; font-size: 11px; }
   .cam-bar {
     position: absolute; left: 12px; right: 12px; bottom: 12px;
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -70,6 +111,16 @@
   }
   .cam-btn:hover:not(.active) { background: rgba(56,189,248,0.2); }
   .cam-btn.active { background: var(--accent); color: #0f172a; border-color: var(--accent); cursor: default; }
+
+  .light-bar {
+    position: absolute; top: 50px; right: 12px;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(15,23,42,0.78); border: 1px solid rgba(56,189,248,0.35);
+    border-radius: 999px; padding: 5px 12px;
+    backdrop-filter: blur(8px); z-index: 3;
+  }
+  .light-bar-label { font-size: 11px; color: #cbd5e1; min-width: 14px; text-align: center; }
+  .light-bar input[type="range"] { width: 110px; accent-color: #38bdf8; cursor: pointer; margin: 0; }
 
   .side {
     display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
@@ -197,21 +248,391 @@
   .le-actions button { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; }
   .le-cancel { background: var(--border-h); color: var(--text); }
   .le-create { background: var(--accent); color: #0f172a; }
+
+  /* ── Label editor v2 (2 cột với preview kích thước thật) ───────────────── */
+  .label-overlay-v2 { z-index: 200; }
+  .label-modal-v2 {
+    width: min(1100px, 96vw); max-height: 92vh; overflow: hidden;
+    background: var(--card); border-radius: 14px; border: 1px solid var(--border);
+    display: flex; flex-direction: column;
+  }
+  .label-head-v2 {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; background: linear-gradient(90deg, #b45309, #f59e0b);
+    color: #fff7ed; font-weight: 700;
+  }
+  .label-title-v2 { flex: 1; font-size: 15px; }
+  .label-close-v2 { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  .label-body-v2 {
+    display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px;
+    padding: 18px 22px; overflow: auto;
+  }
+  .le2-left, .le2-right { display: flex; flex-direction: column; gap: 14px; }
+  .le2-field { display: flex; flex-direction: column; gap: 6px; }
+  .le2-lbl { font-size: 12px; color: var(--muted); }
+  .le2-field select, .le2-field input, .le2-field textarea {
+    padding: 10px 12px; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+    font-family: inherit; font-size: 14px;
+  }
+  .le2-doses-box, .le2-timing-box {
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 14px 14px; background: rgba(255,255,255,0.02);
+  }
+  .le2-doses-box legend, .le2-timing-box legend { padding: 0 6px; color: var(--muted); font-size: 12px; }
+  .le2-doses-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .le2-dose { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .le2-dose-lbl { color: var(--muted); font-size: 12px; }
+  .le2-stepper { display: flex; align-items: center; gap: 6px; }
+  .le2-minus, .le2-plus {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--card-h);
+    color: var(--text); cursor: pointer; font-weight: 700; font-size: 14px;
+  }
+  .le2-val { min-width: 24px; text-align: center; font-weight: 700; font-size: 18px; }
+  .le2-total { text-align: right; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .le2-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .le2-chip {
+    padding: 8px 14px; border: 1px solid var(--border); background: var(--card-h);
+    color: var(--text); border-radius: 999px; font-size: 13px; cursor: pointer;
+  }
+  .le2-chip:hover { background: var(--border-h); }
+  .le2-chip-active { background: #f59e0b; color: #1c1917; border-color: #f59e0b; font-weight: 700; }
+  .le2-quicks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .le2-quick {
+    padding: 6px 12px; border: 1px solid var(--border); background: var(--card-h);
+    color: var(--text); border-radius: 999px; font-size: 12px; cursor: pointer;
+  }
+  .le2-quick:hover { background: var(--border-h); }
+  .le2-retail-row { display: flex; gap: 12px; }
+  .le2-preview-title { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .le2-sticker {
+    background: #fef3c7; color: #422006; border: 1px solid #d97706; border-radius: 10px;
+    padding: 14px 18px; font-family: 'Courier New', 'Inter', monospace; font-size: 13px;
+    box-shadow: 0 4px 14px rgba(180, 83, 9, 0.25);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .le2-sk-head {
+    font-weight: 800; letter-spacing: 1.5px; font-size: 14px;
+    text-align: left; padding-bottom: 4px; border-bottom: 2px dashed #b45309;
+    margin-bottom: 4px;
+  }
+  .le2-sk-bn, .le2-sk-drug, .le2-sk-strength { padding: 2px 0; }
+  .le2-sk-brand { font-size: 16px; }
+  .le2-sk-doses-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 6px 0;
+  }
+  .le2-sk-cell { background: #fde68a; border-radius: 6px; padding: 6px 4px; text-align: center; }
+  .le2-sk-time { font-size: 11px; color: #78350f; }
+  .le2-sk-num { font-weight: 800; font-size: 18px; }
+  .le2-sk-foot { font-size: 12px; color: #78350f; padding-top: 4px; }
+  .le2-sk-notes { font-size: 12px; color: #7c2d12; padding-top: 2px; min-height: 14px; }
+  .le2-hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.5; }
+  .label-foot-v2 {
+    display: flex; gap: 10px; justify-content: flex-end;
+    padding: 14px 22px; border-top: 1px solid var(--border);
+  }
+  .le2-cancel, .le2-create {
+    padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer;
+    font-weight: 600; font-size: 13px;
+  }
+  .le2-cancel { background: var(--border-h); color: var(--text); }
+  .le2-create { background: #f59e0b; color: #1c1917; }
+
+  /* ── Phone dialpad ─────────────────────────────────────────────────────── */
+  .phone-overlay { z-index: 200; }
+  .phone-modal {
+    width: min(420px, 96vw); background: var(--card);
+    border-radius: 18px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 18px 22px;
+  }
+  .phone-head { text-align: center; margin-bottom: 14px; }
+  .phone-title { font-weight: 700; font-size: 14px; letter-spacing: 0.5px; }
+  .phone-body { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .phone-prompt { color: var(--muted); font-size: 13px; }
+  .phone-display {
+    width: 100%; padding: 14px; text-align: center;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 12px; font-size: 28px; font-weight: 700;
+    letter-spacing: 4px; font-family: 'Courier New', monospace;
+    min-height: 22px;
+  }
+  .phone-display-empty::before { content: attr(data-placeholder); color: var(--muted); font-weight: 400; }
+  .phone-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+  .phone-key {
+    aspect-ratio: 1.6 / 1; border-radius: 10px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: var(--text); font-size: 22px; font-weight: 600; cursor: pointer;
+  }
+  .phone-key:hover { background: rgba(255,255,255,0.10); }
+  .phone-call {
+    width: 100%; padding: 12px;
+    background: linear-gradient(180deg, #10b981, #047857); color: #ecfdf5;
+    border: none; border-radius: 999px; font-weight: 700; font-size: 15px;
+    cursor: pointer; margin-top: 4px;
+  }
+  .phone-call:disabled { background: rgba(255,255,255,0.06); color: var(--muted); cursor: not-allowed; }
+  .phone-hint { color: var(--muted); font-size: 12px; text-align: center; }
+  .phone-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+  .phone-hangup {
+    padding: 8px 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--card-h);
+    color: var(--text); cursor: pointer; font-weight: 600;
+  }
+
+  /* ── DS đại học modal ──────────────────────────────────────────────────── */
+  .senior-overlay { z-index: 200; }
+  .senior-modal {
+    width: min(640px, 96vw); background: #ffffff; color: #0f172a;
+    border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    padding: 28px 32px;
+  }
+  .senior-title { font-size: 17px; font-weight: 700; margin: 0 0 10px; }
+  .senior-intro { font-size: 14px; color: #334155; margin: 0 0 16px; line-height: 1.6; }
+  .senior-card {
+    display: flex; align-items: center; gap: 18px;
+    background: #ecfeff; border-radius: 12px; padding: 14px 18px; margin: 0 0 14px;
+  }
+  .senior-avatar {
+    width: 78px; height: 78px; border-radius: 50%;
+    background: #a7f3d0; display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+  }
+  .senior-name { font-weight: 700; font-size: 15px; }
+  .senior-role, .senior-place { color: #475569; font-size: 13px; }
+  .senior-note { font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 16px; }
+  .senior-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .senior-close, .senior-confirm {
+    padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer;
+    font-weight: 600; font-size: 13px;
+  }
+  .senior-close { background: #1e293b; color: #f1f5f9; }
+  .senior-confirm { background: #059669; color: #ecfdf5; }
+
+  /* ── P2: Book reference modal (Dược thư / MIMS) ───────────────────────── */
+  .book-overlay { z-index: 200; }
+  .book-modal {
+    width: min(1100px, 96vw); max-height: 92vh; overflow: hidden;
+    background: var(--card); border-radius: 14px; border: 1px solid var(--border);
+    display: flex; flex-direction: column;
+  }
+  .book-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 22px; color: #fef9c3;
+  }
+  .book-title { font-weight: 800; font-size: 16px; }
+  .book-sub { font-size: 12px; color: rgba(254,249,195,0.85); margin-top: 2px; }
+  .book-close { margin-left: auto; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+  .book-body { display: grid; grid-template-columns: 320px 1fr; gap: 0; flex: 1; min-height: 0; }
+  .book-left { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+  .book-search {
+    margin: 12px; padding: 9px 12px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px;
+  }
+  .book-list { overflow-y: auto; flex: 1; padding: 0 12px 12px; }
+  .book-row {
+    padding: 8px 10px; border-radius: 6px; margin-bottom: 4px;
+    background: rgba(255,255,255,0.03); cursor: pointer;
+    font-size: 13px;
+  }
+  .book-row:hover { background: rgba(56,189,248,0.15); }
+  .book-sku { color: #94a3b8; font-family: 'Courier New', monospace; font-size: 11px; margin-left: 4px; }
+  .book-right { padding: 16px 22px; overflow-y: auto; }
+  .book-empty { color: var(--muted); }
+  .book-detail h2 { font-size: 22px; margin: 0 0 4px; color: #fde68a; }
+  .book-detail h3 { font-size: 14px; margin: 18px 0 6px; color: #a7f3d0; }
+  .book-detail p { font-size: 13px; line-height: 1.55; margin: 4px 0 8px; }
+  .book-detail-sub { color: #94a3b8; font-style: italic; margin-bottom: 12px; }
+  .book-detail-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .book-detail-tbl td { padding: 6px 8px; border-bottom: 1px dashed rgba(255,255,255,0.06); }
+  .book-detail-tbl td:first-child { color: var(--muted); width: 35%; }
+
+  /* ── P3: Inspector modal (zoom hộp 3D + drag xoay + info) ───────────── */
+  .inspector-overlay {
+    position: fixed; inset: 0; z-index: 220;
+    background: rgba(0,0,0,0.78); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .inspector-modal {
+    width: min(1200px, 96vw); height: min(720px, 92vh);
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    display: grid; grid-template-columns: 1.4fr 1fr;
+    overflow: hidden;
+  }
+  .inspector-3d {
+    position: relative; background: radial-gradient(circle at 50% 50%, #1e293b, #0f172a 80%);
+  }
+  .inspector-3d .ins-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+  .inspector-3d .ins-canvas:active { cursor: grabbing; }
+  .inspector-info {
+    padding: 22px 28px; display: flex; flex-direction: column; gap: 14px;
+    overflow-y: auto;
+  }
+  .ins-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ins-brand { width: 100%; font-size: 22px; font-weight: 800; color: #fde68a; }
+  .ins-generic { width: 100%; color: #94a3b8; font-style: italic; font-size: 13px; }
+  .ins-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .ins-tag.ins-rx { background: #b91c1c; color: #fef2f2; }
+  .ins-tag.ins-otc { background: #15803d; color: #ecfdf5; }
+  .ins-tag.ins-abx { background: #d97706; color: #fffbeb; }
+  .ins-tag.ins-warn { background: #7c2d12; color: #fed7aa; }
+  .ins-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ins-tbl td { padding: 7px 6px; border-bottom: 1px dashed rgba(255,255,255,0.08); }
+  .ins-tbl td:first-child { color: var(--muted); width: 40%; }
+  .ins-tbl code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-size: 11px; }
+  .ins-hint {
+    color: var(--muted); font-size: 12px; padding: 6px 10px;
+    background: rgba(56,189,248,0.10); border-radius: 8px;
+    border-left: 3px solid #38bdf8;
+  }
+  .ins-actions { display: flex; gap: 10px; margin-top: auto; }
+  .ins-return, .ins-confirm {
+    flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer;
+    font-weight: 700; font-size: 13px;
+  }
+  .ins-return { background: var(--border-h); color: var(--text); }
+  .ins-confirm { background: linear-gradient(180deg, #10b981, #047857); color: #ecfdf5; }
+
+  /* ── P6a: Đơn thuốc theo Thông tư 26/2025/TT-BYT ─────────────────────── */
+  .rx-overlay {
+    position: fixed; inset: 0; z-index: 220;
+    background: rgba(0,0,0,0.78); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; overflow-y: auto;
+  }
+  .rx-modal {
+    width: min(820px, 96vw); max-height: 95vh; overflow-y: auto;
+    background: transparent;
+    position: relative;
+  }
+  .rx-tools {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; gap: 8px; justify-content: flex-end;
+    padding-bottom: 8px;
+  }
+  .rx-tools button {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(15,23,42,0.92); color: #f1f5f9; cursor: pointer; font-size: 13px;
+  }
+  .rx-page {
+    background: #ffffff; color: #0f172a;
+    padding: 32px 38px; border-radius: 10px;
+    font-family: 'Times New Roman', 'Times', serif;
+    font-size: 13px; line-height: 1.55;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.4);
+  }
+  .rx-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; }
+  .rx-org { text-align: center; flex: 1; }
+  .rx-org-line1 { font-weight: 700; font-size: 13px; text-transform: uppercase; }
+  .rx-org-line2 { font-weight: 700; font-size: 16px; text-transform: uppercase; margin: 2px 0; }
+  .rx-org-line3 { font-size: 11px; color: #475569; }
+  .rx-logo { font-size: 48px; color: #b91c1c; padding: 0 24px; }
+  .rx-title { text-align: center; margin: 16px 0 12px; }
+  .rx-title > div:first-child { font-size: 26px; font-weight: 700; letter-spacing: 4px; }
+  .rx-subtitle { font-size: 11px; font-style: italic; color: #475569; margin-top: 4px; }
+  .rx-meta-grid { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; margin: 8px 0; }
+  .rx-bn-tbl, .rx-drug-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .rx-bn-tbl td { padding: 4px 6px; border: 1px solid #94a3b8; }
+  .rx-bn-tbl td:first-child, .rx-bn-tbl td:nth-child(3) { width: 16%; background: #f8fafc; }
+  .rx-prescribed { margin-top: 14px; }
+  .rx-drug-tbl th, .rx-drug-tbl td { padding: 6px 8px; border: 1px solid #94a3b8; vertical-align: top; }
+  .rx-drug-tbl th { background: #f1f5f9; text-align: left; font-size: 12px; }
+  .rx-drug-tbl td b { color: #0f172a; }
+  .rx-warn {
+    margin-top: 10px; padding: 10px 14px;
+    background: #fef2f2; border-left: 4px solid #b91c1c; color: #7f1d1d;
+    font-size: 12px;
+  }
+  .rx-instr {
+    margin-top: 12px; padding: 10px 14px;
+    background: #f0fdf4; border-left: 4px solid #15803d; color: #14532d;
+    font-size: 12px;
+  }
+  .rx-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 28px; }
+  .rx-sign-box { text-align: center; }
+  .rx-sign-title { font-weight: 700; font-size: 13px; margin-bottom: 30px; }
+  .rx-sign-line { border-bottom: 1px dotted #94a3b8; margin: 0 20px; }
+  .rx-sign-name { color: #475569; font-size: 11px; font-style: italic; margin-top: 4px; }
+  .rx-sign-stamp .rx-stamp {
+    display: inline-block; padding: 3px 10px; margin-bottom: 6px;
+    border: 2px solid #b91c1c; color: #b91c1c; font-weight: 700;
+    transform: rotate(-8deg); border-radius: 6px; font-size: 11px;
+  }
+  .rx-note-foot {
+    margin-top: 22px; padding-top: 10px; border-top: 1px dashed #94a3b8;
+    font-size: 11px; color: #64748b; font-style: italic;
+  }
+
+  /* ── P6b: Chat box BS ─────────────────────────────────────────────────── */
+  .doctor-chat-overlay { z-index: 220; }
+  .dc-modal {
+    width: min(460px, 96vw); height: 600px;
+    background: var(--card); border-radius: 14px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .dc-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; background: linear-gradient(90deg, #0f766e, #14b8a6);
+    color: #f0fdfa;
+  }
+  .dc-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: #ecfdf5; display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+  }
+  .dc-name { font-weight: 700; }
+  .dc-status { font-size: 11px; color: #ccfbf1; }
+  .dc-close {
+    margin-left: auto; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.3);
+    color: #fff; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px;
+  }
+  .dc-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; background: rgba(255,255,255,0.02); }
+  .dc-bubble {
+    max-width: 80%; padding: 8px 12px; border-radius: 14px; font-size: 13px;
+    word-wrap: break-word; line-height: 1.4;
+  }
+  .dc-doctor { background: rgba(255,255,255,0.08); align-self: flex-start; border-top-left-radius: 4px; }
+  .dc-me     { background: #0ea5e9; color: #f0f9ff; align-self: flex-end; border-top-right-radius: 4px; }
+  .dc-foot { display: flex; gap: 6px; padding: 10px; border-top: 1px solid var(--border); }
+  .dc-input {
+    flex: 1; padding: 9px 12px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 13px;
+  }
+  .dc-send {
+    padding: 9px 14px;
+    background: linear-gradient(180deg, #10b981, #047857); color: #ecfdf5;
+    border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+  }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="scene-wrap">
     <canvas id="scene-canvas"></canvas>
-    <div class="scene-overlay">
-      <a href="./index.html" class="back">← Trang chủ</a>
-      <h1 id="scenario-title">Nhà thuốc GPP 3D</h1>
-      <span class="hint">Click hộp thuốc để bỏ vào khay · click POS (màn xanh) · click "RA LẺ" (khay vàng)</span>
+    <!-- scene-overlay đã bỏ theo yêu cầu (button Trang chủ + title) -->
+    <h1 id="scenario-title" hidden>Nhà thuốc GPP 3D</h1>
+    <!-- Tooltip hover hộp thuốc: brand · strength · HD · tồn -->
+    <div id="drug-tooltip" class="drug-tooltip" hidden></div>
+    <!-- Search box -->
+    <div id="drug-search" class="drug-search">
+      <input id="drug-search-input" type="search" placeholder="🔎 Tìm thuốc theo tên hoặc SKU…" autocomplete="off"/>
+      <div id="drug-search-results" class="drug-search-results"></div>
     </div>
     <div id="pending-label" class="pending-label" hidden>🏷️ <span id="pending-label-text"></span></div>
     <div class="cam-bar" id="cam-bar">
       <span class="cam-bar-label">📷 Góc nhìn:</span>
       <div class="cam-bar-buttons" id="cam-buttons"></div>
+    </div>
+    <div class="light-bar" id="light-bar">
+      <span class="light-bar-label">💡</span>
+      <input id="exposure-slider" type="range" min="0.2" max="1.5" step="0.05" />
+      <span id="exposure-value" class="light-bar-label">—</span>
     </div>
   </div>
 
@@ -270,8 +691,25 @@
   import { startSimulation } from './js/pharmacy/simulation.js';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
-  document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Cộng đồng GPP' : moduleId;
+  document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc thực hành - HMC' : moduleId;
   startSimulation({ moduleId });
+
+  // Wire độ sáng slider — chờ sim sẵn sàng (buildScene chạy trong startSimulation)
+  const wireExposure = () => {
+    const sim = window.__sim;
+    if (!sim?.setExposure) { setTimeout(wireExposure, 100); return; }
+    const slider = document.getElementById('exposure-slider');
+    const valueLbl = document.getElementById('exposure-value');
+    const cur = sim.getExposure();
+    slider.value = cur;
+    valueLbl.textContent = cur.toFixed(2);
+    slider.addEventListener('input', () => {
+      const v = parseFloat(slider.value);
+      sim.setExposure(v);
+      valueLbl.textContent = v.toFixed(2);
+    });
+  };
+  wireExposure();
 </script>
 </body>
 </html>

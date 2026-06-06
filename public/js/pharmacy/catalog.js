@@ -2,75 +2,142 @@
 // Layout match screenshot upstream Pharmacy-AI: 4 tủ back chi tiết theo nhóm, banner trắng bo tròn.
 
 export const CABINETS = [
+  // 4 tủ lưng quầy: 2 Rx + 2 OTC, mỗi tủ 7 ngăn. `shelfLabels` đánh dấu nhóm
+  // dược lý từng ngăn (theo sơ đồ thầy Lâm gửi). Ngăn rỗng → string "".
   {
     "id": "rx_1",
-    "label": "KHÁNG SINH (KÊ ĐƠN)",
-    "shortLabel": "Kháng sinh",
+    "label": "THUỐC KÊ ĐƠN Rx",
+    "shortLabel": "Kê đơn 1",
     "accent": "#0d9488",
     "zone": "back",
     "slot": 0,
     "isRx": true,
-    "shelves": 5
+    "shelves": 7,
+    "shelfLabels": [
+      "Thuốc nhỏ mắt, mũi, tai Rx",
+      "Thuốc tiêu hóa Rx",
+      "Thuốc điều trị loét dạ dày Rx",
+      "",
+      "Kháng sinh Rx",
+      "Hormon và nội tiết Rx · Thuốc phụ khoa Rx",
+      "Thuốc điều trị đau nửa đầu Rx"
+    ]
   },
   {
     "id": "rx_2",
-    "label": "TIM MẠCH – TIỂU ĐƯỜNG (KÊ ĐƠN)",
-    "shortLabel": "Tim mạch–Tiểu đường",
+    "label": "THUỐC KÊ ĐƠN Rx",
+    "shortLabel": "Kê đơn 2",
     "accent": "#0d9488",
     "zone": "back",
     "slot": 1,
     "isRx": true,
-    "shelves": 5
+    "shelves": 7,
+    "shelfLabels": [
+      "Thuốc tiêm, dịch truyền Rx",
+      "Thuốc hô hấp Rx",
+      "Thuốc giảm đau chống viêm Rx",
+      "Thuốc điều trị tiểu đường Rx",
+      "",
+      "Thuốc tim mạch Rx",
+      "Thuốc giãn cơ Rx · Thuốc kháng virus Rx"
+    ]
   },
   {
     "id": "otc_1",
-    "label": "GIẢM ĐAU – HẠ SỐT – HO CẢM",
-    "shortLabel": "Giảm đau–Ho cảm",
+    "label": "THUỐC KHÔNG KÊ ĐƠN OTC",
+    "shortLabel": "OTC 1",
     "accent": "#0d9488",
     "zone": "back",
     "slot": 2,
     "isRx": false,
-    "shelves": 5
+    "shelves": 7,
+    "shelfLabels": [
+      "Thuốc nhỏ mắt, mũi, tai OTC",
+      "",
+      "Thuốc hạ sốt giảm đau OTC",
+      "",
+      "Thuốc tiêu hóa OTC",
+      "Thuốc điều trị loét dạ dày OTC",
+      "Vitamin và khoáng chất OTC"
+    ]
   },
   {
     "id": "otc_2",
-    "label": "HÔ HẤP – TIÊU HOÁ",
-    "shortLabel": "Hô hấp–Tiêu hoá",
+    "label": "THUỐC KHÔNG KÊ ĐƠN OTC",
+    "shortLabel": "OTC 2",
     "accent": "#0d9488",
     "zone": "back",
     "slot": 3,
     "isRx": false,
-    "shelves": 5
+    "shelves": 7,
+    "shelfLabels": [
+      "",
+      "",
+      "Thuốc có nguồn gốc dược liệu OTC",
+      "",
+      "Thuốc hô hấp OTC",
+      "Thuốc kháng histamin OTC",
+      "Thuốc phụ khoa OTC · Tránh thai OTC"
+    ]
   },
+  // 3 tủ bên phải quầy: 1 tủ kiểm soát đặc biệt (thấp, cửa kính, 4 ngăn) +
+  // 2 tủ "Sản phẩm này không phải là thuốc". Giữ id cũ để Phase 1 không vỡ
+  // mapping thuốc; Phase 2 sẽ remap drugs sang ngăn đúng.
   {
     "id": "side_herbal",
-    "label": "DƯỢC LIỆU – Y HỌC CỔ TRUYỀN",
-    "shortLabel": "Dược liệu",
-    "accent": "#0d9488",
+    "label": "THUỐC KIỂM SOÁT ĐẶC BIỆT",
+    "shortLabel": "Kiểm soát đặc biệt",
+    "accent": "#b91c1c",
     "zone": "side",
     "slot": 0,
-    "isRx": false,
-    "shelves": 5
+    "isRx": true,
+    "shelves": 4,
+    "lowProfile": true,
+    "glassDoor": true,
+    "shelfLabels": [
+      "",
+      "Thuốc thuộc danh mục chất bị cấm và hạn chế sử dụng trong một số ngành, lĩnh vực",
+      "",
+      "Thuốc dạng phối hợp chứa dược chất gây nghiện, hướng thần, tiền chất"
+    ]
   },
   {
     "id": "side_supp",
-    "label": "TPCN – VITAMIN – KHOÁNG CHẤT",
-    "shortLabel": "TPCN–Vitamin",
-    "accent": "#0d9488",
+    "label": "SẢN PHẨM NÀY KHÔNG PHẢI LÀ THUỐC",
+    "shortLabel": "Không phải thuốc 1",
+    "accent": "#f59e0b",
     "zone": "side",
     "slot": 1,
     "isRx": false,
-    "shelves": 5
+    "shelves": 7,
+    "shelfLabels": [
+      "Mỹ phẩm",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Thực phẩm chức năng"
+    ]
   },
   {
     "id": "side_cosmetic",
-    "label": "MỸ PHẨM – DỤNG CỤ Y TẾ",
-    "shortLabel": "Mỹ phẩm",
-    "accent": "#0d9488",
+    "label": "SẢN PHẨM NÀY KHÔNG PHẢI LÀ THUỐC",
+    "shortLabel": "Không phải thuốc 2",
+    "accent": "#f59e0b",
     "zone": "side",
     "slot": 2,
     "isRx": false,
-    "shelves": 5
+    "shelves": 7,
+    "shelfLabels": [
+      "Mỹ phẩm",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Dụng cụ y tế"
+    ]
   },
   {
     "id": "front_eye",
