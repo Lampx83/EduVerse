@@ -335,13 +335,44 @@
   }
 
   // 3 track học tập. Thực hành đặt TRÊN CÙNG (ưu tiên trải nghiệm).
+  // Tier-aware: đổi label + hint theo cấp học (mầm non đơn giản, ĐH chuyên ngành).
+  const TRACK_PRESETS = {
+    preschool: {
+      practice: { icon: '🎈', label: 'Cùng chơi', hint: 'Vừa chơi vừa học' },
+      theory:   { icon: '📖', label: 'Cô kể bé nghe', hint: 'Câu hỏi vui' },
+      skill:    { icon: '🌟', label: 'Bé giỏi', hint: 'Tự lập việc nhỏ' },
+    },
+    primary: {
+      practice: { icon: '🎮', label: 'Thực hành — chơi & khám phá', hint: 'Học bằng làm' },
+      theory:   { icon: '📚', label: 'Học bài', hint: 'Kiến thức nền tảng' },
+      skill:    { icon: '🏆', label: 'Thi tài', hint: 'Luyện sao mỗi tuần' },
+    },
+    secondary: {
+      practice: { icon: '🧪', label: 'Thực hành', hint: 'Mô phỏng & trải nghiệm' },
+      theory:   { icon: '📖', label: 'Lý thuyết', hint: 'Kiến thức trọng tâm' },
+      skill:    { icon: '🎯', label: 'Luyện thi', hint: 'Cuối kì & cuối cấp' },
+    },
+    highschool: {
+      practice: { icon: '🧪', label: 'Thực hành PTN', hint: 'Thí nghiệm & mô phỏng' },
+      theory:   { icon: '📖', label: 'Lý thuyết', hint: 'Bám sát SGK 10-12' },
+      skill:    { icon: '🎯', label: 'Luyện đề', hint: 'Tốt nghiệp & xét tuyển ĐH' },
+    },
+    // ĐH — giữ thuật ngữ chuyên ngành.
+    _default: {
+      practice: { icon: '🧪', label: 'Thực hành — làm & trải nghiệm', hint: 'Ưu tiên: học bằng làm' },
+      theory:   { icon: '📖', label: 'Lý thuyết', hint: 'Kiến thức nền tảng' },
+      skill:    { icon: '🎯', label: 'Luyện kỹ năng', hint: 'Tư vấn · OSCE · viết SOAP · role-play' },
+    },
+  };
+  const _domId = (typeof getActiveDomainId === 'function') ? getActiveDomainId() : null;
+  const _preset = TRACK_PRESETS[_domId] || TRACK_PRESETS._default;
   const TRACKS = [
-    { key: 'practice', icon: '🧪', label: 'Thực hành — làm & trải nghiệm',
-      hint: 'Ưu tiên: học bằng làm', kinds: ['compound-lab', 'titration', 'arrange', 'identification', 'calculator', 'drag-match'] },
-    { key: 'theory', icon: '📖', label: 'Lý thuyết',
-      hint: 'Kiến thức nền tảng', kinds: ['quiz'] },
-    { key: 'skill', icon: '🎯', label: 'Luyện kỹ năng',
-      hint: 'Tư vấn · OSCE · viết SOAP · role-play', kinds: ['patient-roleplay', 'soap-write', 'osce-station', 'structure-draw'] },
+    { key: 'practice', ..._preset.practice,
+      kinds: ['compound-lab', 'titration', 'arrange', 'identification', 'calculator', 'drag-match'] },
+    { key: 'theory', ..._preset.theory,
+      kinds: ['quiz'] },
+    { key: 'skill', ..._preset.skill,
+      kinds: ['patient-roleplay', 'soap-write', 'osce-station', 'structure-draw'] },
   ];
   const kindToTrack = {};
   for (const t of TRACKS) for (const k of t.kinds) kindToTrack[k] = t.key;
@@ -520,9 +551,23 @@
       if (fam) recordScenarioRun(fam, result?.stars, result?.score);
     } catch {}
 
-    // Trường KHÔNG game hoá (Dược, CNTT…): giữ hành vi cũ — chỉ hiện kết quả,
-    // không thưởng XP/coin, không màn reward.
-    if (!GAMIFIED) { showResult(result); return; }
+    // Trường KHÔNG game hoá (Mầm non, THPT, Dược, CNTT, KT…): giữ hành vi cũ —
+    // chỉ hiện kết quả, không thưởng XP/coin, không màn reward.
+    //
+    // NHƯNG: quiz cho preschool/highschool/pharmacy/it/economics đã có done
+    // screen riêng (Big Bubble, Focused Academic, Exam Style) → KHÔNG append
+    // thêm result-card dry generic nữa, gây double-display khó chịu. Đi thẳng
+    // về picker để chọn bài kế tiếp.
+    if (!GAMIFIED) {
+      const HAS_OWN_DONE = new Set(['preschool', 'highschool', 'pharmacy', 'it', 'economics']);
+      const dom = getActiveDomainId();
+      if (scenario.kind === 'quiz' && HAS_OWN_DONE.has(dom)) {
+        renderPicker();
+        return;
+      }
+      showResult(result);
+      return;
+    }
 
     let award = null;
     try {
