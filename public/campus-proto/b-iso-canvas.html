@@ -1362,9 +1362,10 @@ function draw(){
     if(hl && !sel){ ctx.fillStyle='rgba(255,206,84,.5)'; ctx.beginPath(); ctx.ellipse(it.p.x,it.p.y,TW*0.5*it.b.s,TH*0.5*it.b.s,0,0,7); ctx.fill(); ctx.filter='brightness(1.13)'; }
     blit(ctx, sp.spr, it.p, sc); ctx.filter='none'; blit(hctx, sp.tint, it.p, sc);
     if(it.b.flag) flag(it.p, sc);
-    pins.push({x:it.p.x, y:it.p.y-ANCHOR.y*sc+4, e:it.b.emoji, c:it.b.pin||'#c0392b'}); }
-  for(const f of FACILITIES){ const p=P(f.gx,f.gy); pins.push({x:p.x, y:p.y, e:f.emoji, c:f.pin||'#c0392b'}); }
-  for(const pn of pins) pinMarker(pn.x, pn.y, pn.e, pn.c);
+  }
+  // Pin marker đã bỏ theo yêu cầu UX: các thẻ đỏ-trắng có emoji nổi trên đầu
+  // building/facility gây rối hình + che mái nhà. Click + legend vẫn hoạt động
+  // bình thường (hit-test dựa vào hit-canvas của sprite, không phụ thuộc pin).
 }
 
 // ====== Legend (bấm được) ======
@@ -1595,13 +1596,19 @@ canvas.addEventListener('pointerdown', e=>{
   try { canvas.setPointerCapture(e.pointerId); } catch {}
   canvas.style.cursor = 'grabbing';
 });
+// rAF-coalesce: pointermove bắn 60-120/giây nhưng màn hình chỉ render ~60fps.
+// Trên iMac/iPad cũ, draw() ~10-20ms → gọi mỗi event = backlog → giật.
+// Chỉ schedule 1 redraw per animation frame; nhiều move event trong cùng frame
+// sẽ ghi đè _panOx/_panOy rồi draw 1 lần với giá trị mới nhất.
+let _panRaf = 0;
 canvas.addEventListener('pointermove', e=>{
   if(!_camPan) return;
   const dx = e.clientX - _camPan.sx, dy = e.clientY - _camPan.sy;
   if(!_camPan.moved && Math.hypot(dx,dy) > 3) _camPan.moved = true;
   _panOx = _camPan.ox + dx;
   _panOy = _camPan.oy + dy;
-  applyZoom(); draw();
+  if(_panRaf) return;
+  _panRaf = requestAnimationFrame(()=>{ _panRaf = 0; applyZoom(); draw(); });
 });
 function _endCamPan(){
   if(!_camPan) return;

@@ -235,6 +235,30 @@
     .hero .greet, .hero .greet b, .hero .tagline, .hero .cta-row, .hero .greet .wave { animation: none !important; }
   }
 
+  /* ============ PERF-SAVER MODE (iPad cũ / iMac cũ / low-end) ============
+     Tự kích hoạt qua JS dựới (body.perf-saver). Các nguyên nhân lag chính:
+       1. filter: blur(70px) trên 3 aurora → cực nặng cho GPU yếu
+       2. corePulse với box-shadow lớn (40+30px blur) đổi mỗi 7.5s → trigger paint toàn vùng
+       3. shooting star + shimmer text gradient + 6 quỹ đạo spin chạy đồng thời
+       4. drift skyfield 80s — cộng dồn paint cost với corePulse
+     Strategy: giữ visual cốt lõi (planets vẫn xoay, sao vẫn lấp lánh nhẹ),
+     bỏ blur/shadow nặng + bỏ animation không thiết yếu. */
+  body.perf-saver .aurora { filter: none !important; opacity: 0.28 !important; animation: none !important; }
+  body.perf-saver .shoot { display: none !important; }
+  body.perf-saver #skyfield .tw-b,
+  body.perf-saver #skyfield .tw-c { display: none !important; }
+  body.perf-saver #skyfield .tw-a { animation: twA 4s ease-in-out infinite !important; }
+  body.perf-saver .core { animation: none !important;
+    box-shadow: 0 0 30px 8px rgba(251,191,36,0.55), 0 0 64px 18px rgba(249,115,22,0.28) !important; }
+  body.perf-saver .hero .greet b { animation: none !important;
+    background: linear-gradient(110deg, #ffffff, #fbbf24 50%, #ffffff) !important;
+    -webkit-background-clip: text; background-clip: text; }
+  body.perf-saver .hero .greet,
+  body.perf-saver .hero .tagline { animation: riseIn 0.7s cubic-bezier(.2,.7,.2,1) both !important; }
+  body.perf-saver .hero-streak-badge.risk { animation: none !important; }
+  body.perf-saver .osys .rot { animation-duration: calc(var(--dur) * 1.6) !important; }
+  body.perf-saver .osys .planet { animation-duration: calc(var(--dur) * 1.6) !important; }
+
   /* Entrance trượt lên (stagger) + chuyển động liên tục cho CẢ khối chữ lời chào */
   @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes floatSoft { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
@@ -581,6 +605,24 @@
 </style>
 </head>
 <body>
+<script>
+  // PERF-SAVER detection — đặt SỚM (đầu body) để mọi script + CSS phía dưới
+  // đều thấy body.perf-saver ngay khi render. Heuristic ở phần CSS perf-saver.
+  (function detectPerfSaver(){
+    try {
+      let saver = false;
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) saver = true;
+      const mem = navigator.deviceMemory, cpu = navigator.hardwareConcurrency;
+      if (typeof mem === 'number' && mem > 0 && mem < 4) saver = true;
+      if (typeof cpu === 'number' && cpu > 0 && cpu < 4) saver = true;
+      const ua = navigator.userAgent || '';
+      const isIPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isIPad || /iPhone|iPod/.test(ua)) saver = true;
+      if (saver) document.body.classList.add('perf-saver');
+      window.__PERF_SAVER = saver;
+    } catch {}
+  })();
+</script>
 
 <!-- Bầu trời sao phủ toàn trang (fixed, sau mọi nội dung) -->
 <div id="skyfield" aria-hidden="true"></div>
@@ -683,13 +725,17 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 
   <script>
     // Hero solar system: đảo icon ngẫu nhiên từ pool lớn, không lặp tức thời.
+    // Pause khi tab ẩn (document.hidden) → không tốn CPU lúc user xem tab khác.
+    // Perf-saver: tăng interval từ 2.6s lên 5s (giảm tần suất paint).
     (function rotatePlanetIcons() {
       const POOL = ['📚','📐','💊','💻','🧪','🎨','⚖️','🩺','🔬','🧬','🌱','🎼','🏛️','📜','🧮','🚀','🤖','🧠','🎭','⚗️','📊','🔭','🌐','✏️','🎯','🧩','🗺️','⚙️','🔢','🌟','🎲','📖','🖋️','🎤','🏥','💡','🪄','🧭'];
       const BINODE = ['🪐','🌍','🌕','☄️','🌑','🌎','🌏','✨'];
       const nodes = Array.from(document.querySelectorAll('[data-rot="1"]'));
       if (!nodes.length) return;
       let i = 0;
+      const period = document.body.classList.contains('perf-saver') ? 5000 : 2600;
       setInterval(() => {
+        if (document.hidden) return;
         const el = nodes[i++ % nodes.length];
         if (!el) return;
         const pool = el.classList.contains('bp') ? BINODE : POOL;
@@ -698,7 +744,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
         while (next === el.textContent.trim() && tries < 6);
         el.classList.add('swap');
         setTimeout(() => { el.textContent = next; el.classList.remove('swap'); }, 720);
-      }, 2600);
+      }, period);
     })();
   </script>
 
@@ -738,7 +784,11 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     const track = document.getElementById('feature-track');
     if (track) track.innerHTML = once + once; // x2 cho loop liền mạch
 
+    // PERF_SAVER đã detect ở inline script đầu body (xem __PERF_SAVER).
+    const PERF_SAVER = !!window.__PERF_SAVER;
+
     // --- Bầu trời sao TOÀN TRANG: 3 lớp box-shadow lệch pha → lấp lánh sống động ---
+    // PERF_SAVER: chỉ 1 lớp với mật độ giảm 60%, không drift → tiết kiệm paint cost.
     const sky = document.getElementById('skyfield');
     if (sky) {
       const W = Math.ceil(window.innerWidth) + 280;   // +inset(-40)*2 + dư
@@ -748,18 +798,24 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
         for (let i = 0; i < n; i++) s.push(`${Math.floor(Math.random()*W)}px ${Math.floor(Math.random()*H)}px ${color}`);
         return s.join(',');
       };
-      const base = Math.round((W * H) / 9000); // ~ tỉ lệ diện tích
+      // Diện tích/9000 là baseline; perf-saver chia thêm 2.5 → ~40% số sao.
+      const base = Math.round((W * H) / (PERF_SAVER ? 22000 : 9000));
       const mk = (cls, n, size, color) => {
         const d = document.createElement('div');
         d.className = `star-layer ${cls}`;
         d.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;box-shadow:${gen(n, color)}`;
         return d;
       };
-      sky.append(
-        mk('tw-a', base,                1, '#ffffff'),                  // sao nhỏ, nhấp nháy nhanh
-        mk('tw-b', Math.round(base/2),  2, 'rgba(255,255,255,0.9)'),   // sao vừa, nhịp khác
-        mk('tw-c', Math.round(base/5),  2, 'rgba(191,219,254,0.95)'),  // sao xanh nhạt, lấp lánh chậm
-      );
+      if (PERF_SAVER) {
+        // Chỉ 1 layer + bỏ drift (CSS ẩn tw-b/tw-c) — visual vẫn có sao lấp lánh.
+        sky.append(mk('tw-a', base, 1, '#ffffff'));
+      } else {
+        sky.append(
+          mk('tw-a', base,                1, '#ffffff'),                  // sao nhỏ, nhấp nháy nhanh
+          mk('tw-b', Math.round(base/2),  2, 'rgba(255,255,255,0.9)'),   // sao vừa, nhịp khác
+          mk('tw-c', Math.round(base/5),  2, 'rgba(191,219,254,0.95)'),  // sao xanh nhạt, lấp lánh chậm
+        );
+      }
     }
   </script>
 </div>
