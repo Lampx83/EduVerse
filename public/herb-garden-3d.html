@@ -120,7 +120,7 @@ function makeLabel(emoji, name) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 72; const x = c.getContext('2d');
   x.fillStyle = 'rgba(8,12,24,0.82)'; roundRect(x, 6, 6, 244, 60, 14); x.fill();
   x.strokeStyle = 'rgba(91,189,124,0.9)'; x.lineWidth = 3; roundRect(x, 6, 6, 244, 60, 14); x.stroke();
-  x.font = '34px serif'; x.textBaseline = 'middle'; x.fillText(emoji, 18, 40);
+  x.font = '34px sans-serif'; x.textBaseline = 'middle'; x.fillText(emoji, 18, 40);
   x.fillStyle = '#fff'; x.font = 'bold 26px Inter, sans-serif'; x.fillText(name, 64, 40);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent:true }));

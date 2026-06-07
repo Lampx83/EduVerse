@@ -84,7 +84,7 @@ const CSS = `
   .tz-cb-actions { display: flex; gap: 10px; margin-top: 14px; }
   .tz-cb-actions button {
     flex: 1; padding: 11px 16px; border-radius: 12px; border: none;
-    cursor: pointer; font: 800 14px 'Inter';
+    cursor: pointer; font: 800 14px 'Inter', system-ui, sans-serif;
   }
   .tz-cb-actions .attack {
     background: linear-gradient(135deg, #ef4444, #fbbf24); color: #1e293b;
@@ -111,7 +111,7 @@ const CSS = `
   .tz-cb-result button {
     background: linear-gradient(135deg, #fbbf24, #f97316);
     color: #1e293b; border: none; cursor: pointer;
-    padding: 12px 28px; border-radius: 14px; font: 800 14px 'Inter';
+    padding: 12px 28px; border-radius: 14px; font: 800 14px 'Inter', system-ui, sans-serif;
     margin-top: 8px;
   }
 `;

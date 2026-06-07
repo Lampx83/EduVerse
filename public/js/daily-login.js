@@ -71,14 +71,14 @@ const CSS = `
   .tz-daily .actions .claim {
     background:linear-gradient(135deg, #fbbf24, #f97316); color:#1e293b;
     border:none; padding:11px 28px; border-radius:14px;
-    font:800 14px 'Inter'; cursor:pointer; transition:transform .12s;
+    font:800 14px 'Inter', system-ui, sans-serif; cursor:pointer; transition:transform .12s;
     box-shadow:0 8px 24px rgba(251,146,60,.4);
   }
   .tz-daily .actions .claim:hover:not(:disabled) { transform:scale(1.05); }
   .tz-daily .actions .claim:disabled { opacity:.5; cursor:not-allowed; }
   .tz-daily .actions .close {
     background:rgba(255,255,255,.08); color:#cbd5e1; border:none;
-    padding:11px 20px; border-radius:14px; font:600 13px 'Inter'; cursor:pointer;
+    padding:11px 20px; border-radius:14px; font:600 13px 'Inter', system-ui, sans-serif; cursor:pointer;
   }
   .tz-daily .got {
     text-align:center; padding:14px; margin-top:14px;

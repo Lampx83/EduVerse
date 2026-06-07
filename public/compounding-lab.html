@@ -1003,7 +1003,7 @@ function makeBook(x, y, z, w, h, d, color, title = '') {
     const c = document.createElement('canvas'); c.width = 256; c.height = 32;
     const x_ = c.getContext('2d');
     x_.fillStyle = `#${color.toString(16).padStart(6, '0')}`; x_.fillRect(0, 0, 256, 32);
-    x_.fillStyle = '#fbbf24'; x_.font = 'bold 14px serif'; x_.textAlign = 'center'; x_.textBaseline = 'middle';
+    x_.fillStyle = '#fbbf24'; x_.font = 'bold 14px sans-serif'; x_.textAlign = 'center'; x_.textBaseline = 'middle';
     x_.fillText(title, 128, 16);
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
     const t = new THREE.Mesh(
@@ -1662,7 +1662,7 @@ makeStool(1.0, 1.0, -0.4);
   const bc = document.createElement('canvas'); bc.width = 128; bc.height = 32;
   const bx = bc.getContext('2d');
   bx.fillStyle = '#1f2937'; bx.fillRect(0, 0, 128, 32);
-  bx.fillStyle = '#fbbf24'; bx.font = 'bold 16px serif'; bx.textAlign = 'center'; bx.textBaseline = 'middle';
+  bx.fillStyle = '#fbbf24'; bx.font = 'bold 16px sans-serif'; bx.textAlign = 'center'; bx.textBaseline = 'middle';
   bx.fillText('PharmaScope', 64, 16);
   const bTex = new THREE.CanvasTexture(bc); bTex.colorSpace = THREE.SRGBColorSpace;
   const brand = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.015), new THREE.MeshBasicMaterial({ map: bTex }));
@@ -1888,7 +1888,7 @@ makeStool(1.0, 1.0, -0.4);
   const cc3 = document.createElement('canvas'); cc3.width = 64; cc3.height = 32;
   const x3 = cc3.getContext('2d');
   x3.fillStyle = '#fff'; x3.fillRect(0, 0, 64, 32);
-  x3.fillStyle = '#0f766e'; x3.font = 'bold 16px serif'; x3.textAlign = 'center'; x3.textBaseline = 'middle';
+  x3.fillStyle = '#0f766e'; x3.font = 'bold 16px sans-serif'; x3.textAlign = 'center'; x3.textBaseline = 'middle';
   x3.fillText('Rx ♥', 32, 16);
   const tex3 = new THREE.CanvasTexture(cc3); tex3.colorSpace = THREE.SRGBColorSpace;
   const decal = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 0.02), new THREE.MeshBasicMaterial({ map: tex3 }));

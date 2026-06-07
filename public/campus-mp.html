@@ -312,7 +312,7 @@ function drawPlayer(x, y, name, pet, ringColor) {
   ctx.lineWidth = 2;
   ctx.stroke();
   // Pet emoji
-  ctx.font = `${TILE * 0.5}px serif`;
+  ctx.font = `${TILE * 0.5}px sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = '#fff';
   ctx.fillText(pet || '👤', cx, cy);

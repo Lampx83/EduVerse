@@ -78,7 +78,7 @@ const CSS = `
     background: linear-gradient(135deg, #fbbf24, #f97316);
     color: #1e293b; border: none; cursor: pointer;
     padding: 12px 28px; border-radius: 14px;
-    font: 800 14px 'Inter'; box-shadow: 0 8px 24px rgba(251,191,36,0.4);
+    font: 800 14px 'Inter', system-ui, sans-serif; box-shadow: 0 8px 24px rgba(251,191,36,0.4);
   }
   @keyframes tz-evolve-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
@@ -121,7 +121,7 @@ const CSS = `
   }
   .tz-pet-drawer button {
     flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.06); color: #fff; font: 700 12.5px 'Inter';
+    background: rgba(255,255,255,0.06); color: #fff; font: 700 12.5px 'Inter', system-ui, sans-serif;
     cursor: pointer; transition: background 0.12s;
   }
   .tz-pet-drawer button:hover { background: rgba(255,255,255,0.14); }

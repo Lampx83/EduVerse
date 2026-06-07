@@ -50,7 +50,7 @@
   .gen-btn {
     margin-top:14px; padding:12px 24px; border-radius:12px;
     background:linear-gradient(135deg, var(--purple), #6366f1); color:#fff;
-    border:none; cursor:pointer; font:800 14px 'Inter';
+    border:none; cursor:pointer; font:800 14px 'Inter', system-ui, sans-serif;
     box-shadow:0 6px 18px rgba(99,102,241,.3); width:100%;
   }
   .gen-btn:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; }
@@ -70,13 +70,13 @@
   .publish-btn {
     padding:12px 28px; border-radius:12px;
     background:linear-gradient(135deg, var(--good), #10b981); color:#052e16;
-    border:none; cursor:pointer; font:800 14px 'Inter';
+    border:none; cursor:pointer; font:800 14px 'Inter', system-ui, sans-serif;
     box-shadow:0 6px 18px rgba(52,211,153,.3);
   }
   .live-btn {
     padding:12px 28px; border-radius:12px;
     background:linear-gradient(135deg, var(--accent), #f97316); color:#1e293b;
-    border:none; cursor:pointer; font:800 14px 'Inter';
+    border:none; cursor:pointer; font:800 14px 'Inter', system-ui, sans-serif;
     margin-left:8px;
   }
 
@@ -275,6 +275,6 @@ function esc(s) { return String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<'
 </script>
 
 <script type="module" src="./js/engagement-hud.js?v=2026-06-05-r2"></script>
-<script type="module" src="./js/pet-widget.js?v=2026-06-05"></script>
+<script type="module" src="./js/pet-widget.js?v=2026-06-07"></script>
 </body>
 </html>
