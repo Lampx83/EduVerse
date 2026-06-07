@@ -34,12 +34,19 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 
 function publicUrls(origin) {
   const lm = todayISO();
-  // Chỉ liệt kê URL THẬT SỰ public (không bị auth gate redirect). /apps và /school
-  // hiện cần login → KHÔNG đưa vào sitemap (Google skip do 302). Khi muốn các trang
-  // đó được index, thêm vào PUBLIC_PATH_* trong auth.js và phải có SSR meta riêng.
+  // Trang landing chính + crawlable public (đã được thêm vào PUBLIC_PATH_EXACT
+  // trong auth.js, được phép qua gate, có SEO meta đầy đủ tại file HTML hoặc qua
+  // injectSeoHead). Mỗi entry cần unique URL canonical để tránh duplicate content.
   const urls = [
-    { loc: `${origin}/welcome`,          priority: '1.0', changefreq: 'weekly',  lastmod: lm },
+    { loc: `${origin}/`,                 priority: '1.0', changefreq: 'weekly',  lastmod: lm },
+    { loc: `${origin}/welcome`,          priority: '0.9', changefreq: 'weekly',  lastmod: lm },
+    { loc: `${origin}/school.html`,      priority: '0.9', changefreq: 'weekly',  lastmod: lm },
+    { loc: `${origin}/apps.html`,        priority: '0.9', changefreq: 'monthly', lastmod: lm },
+    { loc: `${origin}/pricing.html`,     priority: '0.9', changefreq: 'monthly', lastmod: lm },
+    { loc: `${origin}/kham-pha.html`,    priority: '0.8', changefreq: 'monthly', lastmod: lm },
+    { loc: `${origin}/tinh-nang.html`,   priority: '0.8', changefreq: 'monthly', lastmod: lm },
     { loc: `${origin}/login.html`,       priority: '0.3', changefreq: 'monthly', lastmod: lm },
+    { loc: `${origin}/register.html`,    priority: '0.3', changefreq: 'monthly', lastmod: lm },
   ];
   // Mỗi trường → 1 landing công khai /welcome?school=<code> (SEO theo trường).
   try {
@@ -89,7 +96,14 @@ export function attachSeo(r, { basePath = '' } = {}) {
       `User-agent: *\n` +
       `Allow: /\n` +
       `Allow: /welcome\n` +
+      `Allow: /index.html\n` +
+      `Allow: /school.html\n` +
+      `Allow: /apps.html\n` +
+      `Allow: /pricing.html\n` +
+      `Allow: /kham-pha.html\n` +
+      `Allow: /tinh-nang.html\n` +
       `Allow: /login.html\n` +
+      `Allow: /register.html\n` +
       `Allow: /favicon.svg\n` +
       `Allow: /og-default.svg\n` +
       `Allow: /manifest.webmanifest\n` +
@@ -104,8 +118,14 @@ export function attachSeo(r, { basePath = '' } = {}) {
       `Disallow: /admin.html\n` +
       `Disallow: /dashboard.html\n` +
       `Disallow: /family.html\n` +
+      `Disallow: /teacher.html\n` +
       `Disallow: /complete-profile.html\n` +
       `Disallow: /lesson-builder.html\n` +
+      `Disallow: /parent/\n` +
+      `Disallow: /gv/\n` +
+      `Disallow: /cast.html\n` +
+      `Disallow: /devices.html\n` +
+      `Disallow: /live-quiz/\n` +
       `# Chặn bot AI scrape nội dung (tuỳ chọn — bỏ comment để bật)\n` +
       `# User-agent: GPTBot\n# Disallow: /\n` +
       `\n` +

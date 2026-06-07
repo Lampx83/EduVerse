@@ -232,6 +232,23 @@ app.use(compression({ threshold: 1024 }));
 app.use(securityHeaders);
 app.use(['/api/auth/login', '/api/auth/register'], sensitiveAuthLimiter);
 
+// SEO: Content-Language vi cho mọi response (Tizia là sản phẩm VN), + X-Robots-Tag
+// noindex,nofollow cho trang nội bộ/quản trị/cast (backup ngoài auth gate + meta robots).
+// Áp sớm để cả file static lẫn route động đều nhận header.
+const NOINDEX_HEADER_EXACT = new Set([
+  '/admin.html', '/dashboard.html', '/family.html', '/teacher.html',
+  '/complete-profile.html', '/lesson-builder.html', '/cast.html', '/devices.html',
+]);
+const NOINDEX_HEADER_PREFIXES = ['/admin/', '/parent/', '/gv/', '/live-quiz/', '/api/', '/sim/', '/uploads/'];
+app.use((req, res, next) => {
+  res.setHeader('Content-Language', 'vi');
+  const p = req.path;
+  const noindex = NOINDEX_HEADER_EXACT.has(p)
+    || NOINDEX_HEADER_PREFIXES.some((pref) => p.startsWith(pref));
+  if (noindex) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
 // Đăng nhập là điều kiện tiên quyết để dùng Tizia.
 // attachUser luôn gắn req.user (nullable). makeAuthGate redirect HTML chưa login về /login.html
 // và trả 401 cho /api/* (trừ /api/auth/*, /api/health). Phải nằm TRƯỚC attachAppProxies để
@@ -1316,9 +1333,11 @@ r.use(express.static(PUBLIC_DIR, {
   },
 }));
 
-// 404 fallback → serve landing (so deep links to non-existent paths still render)
+// 404 fallback → trang 404 chuyên dụng (status 404 + body riêng, không "soft 404").
+// Google phân biệt: 404 + nội dung "không tìm thấy" → drop; 404 + landing page → soft 404
+// và có thể giữ index nhầm. Trang 404.html đã có meta noindex,follow.
 r.use((_req, res) => {
-  res.status(404).sendFile(path.join(PUBLIC_DIR, 'index.html'));
+  res.status(404).sendFile(path.join(PUBLIC_DIR, '404.html'));
 });
 
 // Mount the Router. With BASE_PATH='/ps', all routes serve under /ps.

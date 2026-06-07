@@ -14,6 +14,21 @@
 const DEFAULT_DESC = 'Tizia — Vũ trụ giáo dục ảo do AI điều hành. Trường Dược, CNTT, Kinh tế và phổ thông với 2D · 3D · VR · XR · Metaverse · gamification.';
 const DEFAULT_SITE_NAME = 'Tizia';
 
+// Trang quản trị / nội bộ — KHÔNG cho phép Google index ngay cả khi auth gate
+// fail hoặc bot crawl qua đường vòng. Áp dụng cho exact path hoặc prefix.
+const NOINDEX_EXACT = new Set([
+  '/admin.html', '/dashboard.html', '/family.html', '/teacher.html',
+  '/complete-profile.html', '/lesson-builder.html',
+  '/cast.html', '/devices.html',
+]);
+const NOINDEX_PREFIXES = ['/admin/', '/parent/', '/gv/', '/live-quiz/', '/api/', '/sim/'];
+
+function isProtectedPath(urlPath) {
+  if (NOINDEX_EXACT.has(urlPath)) return true;
+  for (const pref of NOINDEX_PREFIXES) if (urlPath.startsWith(pref)) return true;
+  return false;
+}
+
 function hasTag(html, regex) { return regex.test(html); }
 function htmlEscape(s) {
   return String(s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
@@ -51,7 +66,10 @@ export function buildSeoHeadTags(html, { origin, urlPath, basePath = '' }) {
     tags.push(`<meta name="description" content="${htmlEscape(desc)}" />`);
   }
   if (!hasTag(html, /<meta[^>]+name=["']robots["']/i)) {
-    tags.push(`<meta name="robots" content="index,follow,max-image-preview:large" />`);
+    const robots = isProtectedPath(urlPath)
+      ? 'noindex,nofollow'
+      : 'index,follow,max-image-preview:large';
+    tags.push(`<meta name="robots" content="${robots}" />`);
   }
   if (!hasTag(html, /<link[^>]+rel=["']canonical["']/i)) {
     tags.push(`<link rel="canonical" href="${htmlEscape(canonical)}" />`);
@@ -60,7 +78,8 @@ export function buildSeoHeadTags(html, { origin, urlPath, basePath = '' }) {
     tags.push(`<link rel="icon" type="image/svg+xml" href="${basePath}/favicon.svg" />`);
   }
   if (!hasTag(html, /<link[^>]+rel=["']apple-touch-icon["']/i)) {
-    tags.push(`<link rel="apple-touch-icon" href="${basePath}/apple-touch-icon.png" />`);
+    // PNG chưa tồn tại → fallback SVG (iOS 15+ chấp nhận). Tránh 404 cho touch icon.
+    tags.push(`<link rel="apple-touch-icon" href="${basePath}/favicon.svg" />`);
   }
   if (!hasTag(html, /property=["']og:type["']/i)) {
     tags.push(`<meta property="og:type" content="website" />`);

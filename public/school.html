@@ -3,16 +3,46 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Trường ảo · Tizia</title>
+<title>Trường ảo Tizia — Mầm non, Tiểu học, THCS, THPT, Đại học (GDPT 2018)</title>
 <meta name="description" content="Chọn trường ảo Tizia theo cấp học: Mầm non, Tiểu học, THCS, THPT (theo GDPT 2018) và đại học (Dược, CNTT, Kinh tế). Bản đồ campus 2.5D tương tác, học bằng mô phỏng 3D/VR." />
 <meta name="keywords" content="trường ảo, campus map, mầm non, tiểu học, THCS, THPT, GDPT 2018, đại học Dược, đại học CNTT, đại học Kinh tế, Tizia" />
+<link rel="canonical" href="https://tizia.vn/school.html" />
 <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<link rel="apple-touch-icon" href="./favicon.svg" />
 <meta property="og:title" content="Trường ảo Tizia — chọn cấp học, vào campus tương tác" />
 <meta property="og:description" content="Mầm non, Tiểu học, THCS, THPT (GDPT 2018) và đại học Dược/CNTT/Kinh tế. Mỗi trường 1 bản đồ campus 2.5D riêng, học bằng mô phỏng." />
-<meta property="og:image" content="./og-default.svg" />
 <meta property="og:type" content="website" />
+<meta property="og:site_name" content="Tizia" />
+<meta property="og:locale" content="vi_VN" />
+<meta property="og:url" content="https://tizia.vn/school.html" />
+<meta property="og:image" content="https://tizia.vn/og-default.svg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Trường ảo Tizia — chọn cấp học, vào campus tương tác" />
+<meta name="twitter:image" content="https://tizia.vn/og-default.svg" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Tizia", "item": "https://tizia.vn/" },
+    { "@type": "ListItem", "position": 2, "name": "Trường ảo", "item": "https://tizia.vn/school.html" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  "name": "Tizia · Trường ảo",
+  "url": "https://tizia.vn/school.html",
+  "logo": "https://tizia.vn/favicon.svg",
+  "description": "Hệ thống trường ảo Tizia: Mầm non, Tiểu học, THCS, THPT theo GDPT 2018, đại học Dược/CNTT/Kinh tế. Mỗi trường có campus map 2.5D riêng.",
+  "inLanguage": "vi-VN",
+  "areaServed": "VN"
+}
+</script>
 <style>
   :root {
     --bg-1: #0f172a; --bg-2: #1e293b; --bg-3: #312e81;
@@ -30,7 +60,7 @@
   .section { max-width: 1200px; margin: 0 auto 28px; padding: 0 20px; }
   #campus-hero { margin-top: 20px; }
   .section-title { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
-  .section-title h2 { margin: 0; font-size: 22px; font-weight: 700; }
+  .section-title h1, .section-title h2 { margin: 0; font-size: 22px; font-weight: 700; }
   .section-title .hint { opacity: 0.6; font-size: 13px; }
 </style>
 </head>
@@ -55,7 +85,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 <!-- ============ KHUÔN VIÊN TRƯỜNG — CAMPUS MAP ============ -->
 <div class="section" id="campus-hero">
   <div class="section-title">
-    <h2>🏫 Khuôn viên trường</h2>
+    <h1>🏫 Khuôn viên trường ảo Tizia</h1>
     <span class="hint">Bấm vào từng toà nhà để vào phòng học · thực hành · trải nghiệm bên trong · di chuột xem tên</span>
   </div>
   <div id="campus-frame-wrap" style="position:relative;width:100%;height:82vh;min-height:520px;border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 8px 26px rgba(0,0,0,.28)">
@@ -133,13 +163,13 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     }
   }
 
-  // Banner "Đang học" vs "Tham quan" ở góc trên — giúp HS biết ngay trường
-  // này có phải của mình hay không (đỡ ngạc nhiên khi Phase 4 disable nút).
-  if (me && me.role !== 'admin' && me.enrolled_domain) {
-    const isHome = me.enrolled_domain === activeId;
+  // Banner "Đang học" ở góc trên — chỉ hiện khi đang ở trường của mình.
+  // (Banner "Tham quan" đã bỏ theo yêu cầu — đỡ vướng campus map; nút disable
+  // ở Phase 4 đã tự ám chỉ trạng thái không tương tác được rồi.)
+  if (me && me.role !== 'admin' && me.enrolled_domain && me.enrolled_domain === activeId) {
     const banner = document.createElement('div');
-    banner.style.cssText = `position:fixed; top:12px; right:12px; z-index:9000; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:800; box-shadow:0 6px 18px rgba(0,0,0,.35); ${isHome ? 'background:#16a34a; color:#fff' : 'background:#f59e0b; color:#0f172a'}`;
-    banner.textContent = isHome ? '🎓 Trường bạn đang học' : '👀 Bạn đang tham quan — không tương tác được';
+    banner.style.cssText = `position:fixed; top:12px; right:12px; z-index:9000; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:800; box-shadow:0 6px 18px rgba(0,0,0,.35); background:#16a34a; color:#fff`;
+    banner.textContent = '🎓 Trường bạn đang học';
     document.body.appendChild(banner);
   }
 
@@ -191,7 +221,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 <script src="./js/orchestrate-bridge.js" defer></script>
 <script type="module" src="./js/engagement-hud.js?v=2026-06-05-r2"></script>
 <script type="module" src="./js/onboarding-60s.js?v=2026-06-05-r3"></script>
-<script type="module" src="./js/pet-widget.js?v=2026-06-05-r3"></script>
-<script type="module" src="./js/daily-login.js?v=2026-06-05"></script>
+<script type="module" src="./js/pet-widget.js?v=2026-06-07r3"></script>
+<script type="module" src="./js/daily-login.js?v=2026-06-07b"></script>
 </body>
 </html>
