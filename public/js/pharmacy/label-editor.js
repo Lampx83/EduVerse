@@ -144,8 +144,12 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
   $$('.le2-minus').forEach(b => b.addEventListener('click', () => { setDose(b.dataset.k, getDose(b.dataset.k) - 1); renderPreview(); }));
   $$('.le2-plus' ).forEach(b => b.addEventListener('click', () => { setDose(b.dataset.k, getDose(b.dataset.k) + 1); renderPreview(); }));
 
-  // Timing chips
+  // State khai báo TRƯỚC mọi callback (timing/packageType) — readLabel()
+  // chạm vào cả 2 nên phải khai báo trước bất kỳ setX() nào để tránh TDZ.
   let timing = 'after_meal';
+  let packageType = 'white';
+
+  // Timing chips
   function setTiming(v) {
     timing = v;
     $$('.le2-time').forEach(c => c.classList.toggle('le2-chip-active', c.dataset.v === v));
@@ -155,7 +159,6 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
   setTiming('after_meal');
 
   // P5: Package chips + auto-tính tổng viên ra lẻ = totalPerDay × số ngày
-  let packageType = 'white';
   function setPackage(v) {
     packageType = v;
     $$('.le2-pkg').forEach(c => c.classList.toggle('le2-chip-active', c.dataset.v === v));
@@ -223,8 +226,18 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
     $('.le2-total-val').textContent = `${totalPerDay(l)} viên`;
   }
 
-  $('.label-close-v2').addEventListener('click', close);
-  $('.le2-cancel').addEventListener('click', close);
+  // Close: X button + Huỷ + click overlay backdrop + ESC
+  const closeBtn = $('.label-close-v2');
+  const cancelBtn = $('.le2-cancel');
+  closeBtn?.addEventListener('click', (e) => { e.stopPropagation(); close(); });
+  cancelBtn?.addEventListener('click', (e) => { e.stopPropagation(); close(); });
+  // Click vào backdrop (ngoài modal) cũng đóng
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  // ESC để đóng
+  const escHandler = (e) => { if (e.key === 'Escape') { close(); } };
+  document.addEventListener('keydown', escHandler);
+  // Cleanup listener khi đóng
+  const _origClose = () => { document.removeEventListener('keydown', escHandler); overlay.remove(); onClose?.(); };
   $('.le2-create').addEventListener('click', () => {
     const l = readLabel();
     if (!l.drugId)            { alert('Chọn thuốc.'); return; }
@@ -235,5 +248,5 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
   });
 
   renderPreview();
-  function close() { overlay.remove(); onClose?.(); }
+  function close() { _origClose(); }
 }

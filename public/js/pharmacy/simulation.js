@@ -1,10 +1,10 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene } from './scene.js?v=5';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=24';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { openPosTerminal } from './pos.js';
-import { openLabelEditor } from './label-editor.js';
+import { openLabelEditor } from './label-editor.js?v=4';
 import { STAGE_LABEL } from './rubric.js';
 
 const $ = (id) => document.getElementById(id);
@@ -45,7 +45,9 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     onLabelOpen: () => openLabel(),
     onPendingLabelClear: () => { $('pending-label').hidden = true; },
     onBookOpen: (bookId) => openReferenceBook(bookId),
-    onInspectDrug: (payload) => openInspector(payload)
+    onInspectDrug: (payload) => openInspector(payload),
+    onNotepadOpen: () => openNotepad(),
+    onSalesTrayOpen: () => openSalesTray()
   });
   window.__sim = sim;
 
@@ -150,6 +152,73 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     });
   }
 
+  // Notepad modal — bấm vào tờ giấy/bút trên bàn tư vấn để mở sổ ghi chép.
+  // Nội dung lưu localStorage per-session để giữ giữa các phiên.
+  function openNotepad() {
+    if (document.querySelector('.notepad-overlay')) return;
+    const KEY = 'tizia:pharm:notes';
+    const overlay = document.createElement('div');
+    overlay.className = 'notepad-overlay';
+    overlay.innerHTML = `
+      <div class="notepad-modal">
+        <div class="notepad-head">
+          <span>📝 Sổ ghi chép tư vấn</span>
+          <button class="notepad-close" type="button" aria-label="Đóng">✕</button>
+        </div>
+        <textarea class="notepad-area" placeholder="Ghi chép triệu chứng, dị ứng, thuốc đang dùng, lời khuyên..."></textarea>
+        <div class="notepad-foot">
+          <span class="notepad-saved">Tự lưu khi gõ</span>
+          <button class="notepad-clear" type="button">🗑 Xoá hết</button>
+          <button class="notepad-done" type="button">✅ Xong</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const ta = overlay.querySelector('.notepad-area');
+    const saved = overlay.querySelector('.notepad-saved');
+    ta.value = localStorage.getItem(KEY) || '';
+    ta.focus();
+    const save = () => { localStorage.setItem(KEY, ta.value); saved.textContent = '✓ Đã lưu'; };
+    ta.addEventListener('input', save);
+    const close = () => { overlay.remove(); document.removeEventListener('keydown', esc); };
+    const esc = (e) => { if (e.key === 'Escape') close(); };
+    overlay.querySelector('.notepad-close').addEventListener('click', close);
+    overlay.querySelector('.notepad-done').addEventListener('click', close);
+    overlay.querySelector('.notepad-clear').addEventListener('click', () => { ta.value = ''; save(); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', esc);
+  }
+
+  // Sales tray modal — bấm vào khay bán hàng để xem danh sách hộp thuốc đã
+  // chuẩn bị (= picked drugs hiện tại). Hiện snapshot, không thay đổi pick.
+  function openSalesTray() {
+    if (document.querySelector('.salestray-overlay')) return;
+    const picked = sim.getPickedIds();
+    const overlay = document.createElement('div');
+    overlay.className = 'salestray-overlay';
+    overlay.innerHTML = `
+      <div class="salestray-modal">
+        <div class="salestray-head">
+          <span>🛒 Khay bán hàng — đã chuẩn bị (${picked.length})</span>
+          <button class="salestray-close" type="button" aria-label="Đóng">✕</button>
+        </div>
+        <div class="salestray-body">
+          ${picked.length === 0
+            ? '<div class="salestray-empty">Chưa có thuốc nào trong khay.<br>Click vào hộp thuốc trên kệ để đưa vào khay.</div>'
+            : '<ul class="salestray-list">' + picked.map(id => `<li><b>${id}</b></li>`).join('') + '</ul>'}
+        </div>
+        <div class="salestray-foot">
+          <button class="salestray-done" type="button">Đóng</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = () => { overlay.remove(); document.removeEventListener('keydown', esc); };
+    const esc = (e) => { if (e.key === 'Escape') close(); };
+    overlay.querySelector('.salestray-close').addEventListener('click', close);
+    overlay.querySelector('.salestray-done').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', esc);
+  }
+
   // 6. Camera preset buttons
   const camButtons = $('cam-buttons');
   if (camButtons) {
@@ -213,13 +282,18 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     const scene2 = new THREE.Scene();
     scene2.background = new THREE.Color(0x0f172a);
     const camera2 = new THREE.PerspectiveCamera(35, 1, 0.01, 10);
-    camera2.position.set(0.0, 0.05, 0.45);
-    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    // Distance trước đây fixed 0.62m cho box 0.27m cao. Nay box đổi theo dạng,
+    // distance tỷ lệ với chiều cao + chiều rộng để box luôn lọt khung.
+    // Tính sau khi build box (xem dưới).
+    camera2.position.set(0.0, 0.05, 0.62);
+    // Lighting sáng hơn (ambient 0.9 + 2 dir 1.1 / 0.5) để màu accent đỏ/cam
+    // trên nhãn hộp hiển thị đúng tông, không bị tối thành xám.
+    const ambient = new THREE.AmbientLight(0xffffff, 0.9);
     scene2.add(ambient);
-    const dir1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    const dir1 = new THREE.DirectionalLight(0xffffff, 1.1);
     dir1.position.set(0.3, 0.5, 0.4);
     scene2.add(dir1);
-    const dir2 = new THREE.DirectionalLight(0xbfdbfe, 0.3);
+    const dir2 = new THREE.DirectionalLight(0xffffff, 0.5);
     dir2.position.set(-0.3, -0.2, -0.4);
     scene2.add(dir2);
     // OrbitControls cho drag xoay manual
@@ -232,50 +306,70 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     // Khi user kéo → tắt auto-rotate
     ctrl.addEventListener('start', () => { ctrl.autoRotate = false; });
 
-    // Build hộp thuốc 3D giống trên kệ. Inline replicate buildSingleDrugBox
-    // (đơn giản hóa: 1 box + label canvas + accent stripe).
-    const palette = ['#dc2626','#ea580c','#f59e0b','#ca8a04','#65a30d','#16a34a','#0891b2','#2563eb','#7c3aed','#db2777'];
-    const accent = drug.groupAccent || palette[(drug.sku || '').charCodeAt(0) % palette.length];
+    // Build hộp thuốc 3D — DÙNG CHÍNH makeDrugLabelTex từ scene.js để
+    // tem inspector KHỚP 100% với tem trên kệ (cùng variant + watermark +
+    // badge theo hash SKU). Trước đây inspector vẽ riêng → 2 nơi khác nhau.
     const body = drug.bodyColor || '#f8fafc';
-    const w = 0.18, h = 0.27, d = 0.08;
+    // Lấy ĐÚNG dim hộp như trên kệ (theo dạng bào chế + scale per-SKU).
+    // Nhân lên ~1.7x để hộp inspector to gấp ~2 so với shelf (xem cho rõ),
+    // nhưng GIỮ TỶ LỆ → spray cao thì inspector cũng cao, tablet hộp ngắn thì
+    // inspector ngắn — KHÔNG còn fix cứng 0.18×0.27.
+    const style = getBoxStyle(drug);
+    const SCALE = 1.7;
+    const w = style.w * SCALE;
+    const h = style.h * SCALE;
+    const d = style.d * SCALE;
+    // Camera lùi đủ xa: dist ≈ max(w,h) × 1.9 để hộp cao lẫn rộng đều lọt khung
+    const camDist = Math.max(w, h) * 1.9;
+    camera2.position.set(0, 0, camDist);
+    ctrl.minDistance = camDist * 0.4;
+    ctrl.maxDistance = camDist * 3;
+    ctrl.update();
     const boxMat = new THREE.MeshStandardMaterial({ color: body, roughness: 0.75 });
     const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), boxMat);
     scene2.add(box);
-    // Canvas label dán mặt +z
-    const lc = document.createElement('canvas'); lc.width = 512; lc.height = 768;
-    const lctx = lc.getContext('2d');
-    lctx.fillStyle = body; lctx.fillRect(0, 0, 512, 768);
-    lctx.fillStyle = accent; lctx.fillRect(0, 0, 512, 130);
-    lctx.fillStyle = '#fef9c3'; lctx.font = 'bold 48px Inter, sans-serif';
-    lctx.textAlign = 'center'; lctx.textBaseline = 'middle';
-    lctx.fillText((drug.groupLabel || drug.category || '').slice(0, 20), 256, 65);
-    lctx.fillStyle = '#0f172a'; lctx.font = 'bold 64px Inter, sans-serif';
-    lctx.fillText((drug.brand || drug.name || '').slice(0, 14), 256, 290);
-    lctx.fillStyle = '#475569'; lctx.font = '40px Inter, sans-serif';
-    lctx.fillText((drug.generic || '').slice(0, 22), 256, 380);
-    lctx.fillStyle = accent; lctx.font = 'bold 56px Inter, sans-serif';
-    lctx.fillText((drug.strength || ''), 256, 470);
-    lctx.fillStyle = '#64748b'; lctx.font = '34px Inter, sans-serif';
-    lctx.fillText((drug.form || ''), 256, 560);
-    lctx.fillStyle = '#7c2d12'; lctx.font = 'bold 30px "Courier New"';
-    lctx.fillText(`HD ${meta.expiry} · ${meta.lot}`, 256, 650);
-    lctx.fillStyle = '#0f172a'; lctx.font = '24px Inter, sans-serif';
-    lctx.fillText(`SKU: ${drug.sku}`, 256, 710);
-    // Barcode strip giả
-    lctx.fillStyle = '#0f172a';
-    const bx = 90, by = 720, bh = 36;
-    const bits = (drug.barcode || '0000').split('').map(c => c.charCodeAt(0) % 4 + 1);
-    let cur = bx;
-    bits.forEach((w, i) => {
-      if (i % 2 === 0) { lctx.fillRect(cur, by, w * 4, bh); }
-      cur += w * 4 + 2;
-    });
-    const tex = new THREE.CanvasTexture(lc);
-    tex.colorSpace = THREE.SRGBColorSpace;
+    // Mặt +Z: label chính (giống y hệt trên kệ)
+    const tex = makeDrugLabelTex(drug);
     const labelMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 });
     const label = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.94, h * 0.96), labelMat);
     label.position.z = d / 2 + 0.001;
     scene2.add(label);
+    // Stripe mesh 3D — banner/stripe/flag KHỚP với hộp trên kệ. Trước đây
+    // inspector THIẾU stripe → label band chỉ là texture phẳng trong khi shelf
+    // có thêm dải 3D nổi 3mm → user thấy 2 chỗ "màu khác nhau". Giờ đồng bộ.
+    const variant = style.variant || 'banner';
+    const accentEarly = drug.groupAccent || '#0d9488';
+    const stripeMat = new THREE.MeshStandardMaterial({
+      color: accentEarly, roughness: 0.55,
+      polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4
+    });
+    const FRONT_STRIPE = d / 2 + 0.003;
+    if (variant === 'banner') {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(w * 0.96, h * 0.18, 0.0025), stripeMat);
+      s.position.set(0, -h * 0.32, FRONT_STRIPE);
+      scene2.add(s);
+    } else if (variant === 'stripe') {
+      const s1 = new THREE.Mesh(new THREE.BoxGeometry(w * 0.96, h * 0.06, 0.0025), stripeMat);
+      s1.position.set(0, -h * 0.40, FRONT_STRIPE); scene2.add(s1);
+      const s2 = new THREE.Mesh(new THREE.BoxGeometry(w * 0.96, h * 0.06, 0.0025), stripeMat);
+      s2.position.set(0, -h * 0.45, FRONT_STRIPE); scene2.add(s2);
+    } else if (variant === 'flag') {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(w * 0.18, h * 0.96, 0.0025), stripeMat);
+      s.position.set(-w * 0.39, 0, FRONT_STRIPE); scene2.add(s);
+    }
+    // Mặt ±X: side label (brand dọc) — luôn áp khi inspector vì hộp inspector to.
+    const sideTex = makeDrugSideLabelTex(drug);
+    const sideMatR = new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.7 });
+    const sideR = new THREE.Mesh(new THREE.PlaneGeometry(d * 0.88, h * 0.94), sideMatR);
+    sideR.position.x = w / 2 + 0.001;
+    sideR.rotation.y = Math.PI / 2;
+    scene2.add(sideR);
+    const sideMatL = new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.7 });
+    const sideL = new THREE.Mesh(new THREE.PlaneGeometry(d * 0.88, h * 0.94), sideMatL);
+    sideL.position.x = -w / 2 - 0.001;
+    sideL.rotation.y = -Math.PI / 2;
+    scene2.add(sideL);
+    const accent = drug.groupAccent || '#0d9488';
     // Mặt sau cũng có nhãn tóm tắt
     const lc2 = document.createElement('canvas'); lc2.width = 512; lc2.height = 768;
     const lc2x = lc2.getContext('2d');
@@ -289,11 +383,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     lc2x.fillText(`Hàm lượng: ${drug.strength || '—'}`, 30, 130);
     lc2x.fillText(`Quy cách: ${drug.pack || '—'}`, 30, 180);
     lc2x.fillText(`Dạng: ${drug.form || '—'}`, 30, 230);
-    lc2x.fillText(`Nhóm: ${drug.category || '—'}`, 30, 280);
     lc2x.font = 'bold 22px Inter, sans-serif'; lc2x.fillStyle = '#7f1d1d';
-    lc2x.fillText(drug.isRx ? '⚠ THUỐC KÊ ĐƠN (Rx)' : 'OTC – Không kê đơn', 30, 350);
-    if (drug.isAntibiotic) lc2x.fillText('💊 Kháng sinh – chú ý chỉ định', 30, 390);
-    if (drug.isHazardPregnancy) lc2x.fillText('⚠ Cẩn trọng phụ nữ có thai', 30, 430);
+    lc2x.fillText(drug.isRx ? '⚠ THUỐC KÊ ĐƠN (Rx)' : 'OTC – Không kê đơn', 30, 300);
+    if (drug.isAntibiotic) lc2x.fillText('💊 Kháng sinh – chú ý chỉ định', 30, 340);
+    if (drug.isHazardPregnancy) lc2x.fillText('⚠ Cẩn trọng phụ nữ có thai', 30, 380);
     lc2x.fillStyle = '#fef9c3'; lc2x.font = 'bold 32px Inter, sans-serif';
     lc2x.textAlign = 'center'; lc2x.textBaseline = 'middle';
     lc2x.fillText((drug.brand || drug.name || ''), 256, 744);
@@ -320,7 +413,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       stopped = true;
       window.removeEventListener('resize', onResize);
       renderer.dispose();
-      tex.dispose(); tex2.dispose();
+      tex.dispose(); tex2.dispose(); sideTex.dispose();
       overlay.remove();
     }
     overlay.querySelector('.ins-return').addEventListener('click', () => {
