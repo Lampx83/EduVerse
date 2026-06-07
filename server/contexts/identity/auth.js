@@ -180,6 +180,11 @@ const PUBLIC_PATH_PREFIXES = [
   // Catalog khung GDPT 2018 (5 phẩm chất + 10 năng lực + 164 sub-skill) — public
   // để trang giới thiệu năng lực render cho cả khách. /me, /grant, /space vẫn requireAuth.
   '/api/skills/catalog',
+  // Nhà thuốc 3D GPP — session/chat/action/score chỉ lưu in-memory (Map),
+  // không ghi DB hay xài AI tốn quota nhạy cảm. Cho guest để mô phỏng
+  // trải nghiệm như SV Dược (alert "kiểm tra đăng nhập" nếu chặn 401 →
+  // UX tệ). Login user vẫn dùng được, không có dữ liệu nhạy cảm bị lộ.
+  '/api/pharmacy/',
   '/manifest.webmanifest', '/sw.js', '/favicon',
   '/vendor/', '/models/',
   // Đính kèm yêu cầu (ảnh chụp màn hình / file HS gửi cho "Ban điều hành AI").
@@ -237,6 +242,10 @@ const PUBLIC_PATH_EXACT = new Set([
   '/league.html', '/battle-pass.html', '/cua-hang.html',
   '/tran-dau.html', '/lap-trinh-game.html', '/hoc-thong-minh.html',
   '/campus-mp.html', '/srs.html', '/ai-quiz-gen.html',
+  // Nhà thuốc 3D GPP — mô phỏng GPP cho SV Dược. Guest xem 3D + click hộp
+  // thuốc + xoay camera được; /api/pharmacy/* (session/chat/score) vẫn
+  // yêu cầu login, FE degrade graceful nếu chưa đăng nhập.
+  '/nha-thuoc-3d.html',
 ]);
 
 function isPublicPath(p) {
