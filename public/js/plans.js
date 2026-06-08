@@ -7,8 +7,8 @@
 // ============================================================
 
 export const USER_PLANS = {
-  guest: { id: 'guest', name: 'Khách',    rank: 0, price_month_vnd: 0,       price_year_vnd: 0,         ai_calls_day: 0,   domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it'] },
-  free:  { id: 'free',  name: 'Miễn phí', rank: 1, price_month_vnd: 0,       price_year_vnd: 0,         ai_calls_day: 20,  domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it'] },
+  guest: { id: 'guest', name: 'Khách',    rank: 0, price_month_vnd: 0,       price_year_vnd: 0,         ai_calls_day: 0,   domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it', 'language', 'driving'] },
+  free:  { id: 'free',  name: 'Miễn phí', rank: 1, price_month_vnd: 0,       price_year_vnd: 0,         ai_calls_day: 20,  domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it', 'language', 'driving'] },
   plus:  { id: 'plus',  name: 'Plus',     rank: 2, price_month_vnd: 79_000,  price_year_vnd: 790_000,   ai_calls_day: 50,  domains_allow: '*' },
   pro:   { id: 'pro',   name: 'Pro',      rank: 3, price_month_vnd: 149_000, price_year_vnd: 1_490_000, ai_calls_day: 300, domains_allow: '*' },
 };

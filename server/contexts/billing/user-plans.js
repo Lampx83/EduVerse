@@ -20,14 +20,14 @@ export const USER_PLANS = {
     id: 'guest', name: 'Khách', rank: 0,
     price_month_vnd: 0, price_year_vnd: 0,
     ai_calls_day: 0,
-    domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it'],
+    domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it', 'language', 'driving'],
     features: ['browse_demo'],
   },
   free: {
     id: 'free', name: 'Miễn phí', rank: 1,
     price_month_vnd: 0, price_year_vnd: 0,
     ai_calls_day: 20,
-    domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it'],
+    domains_allow: ['preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it', 'language', 'driving'],
     features: ['save_progress', 'ai_tutor_basic', 'leaderboard'],
   },
   plus: {
