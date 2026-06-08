@@ -119,29 +119,29 @@ const SUBJ_LANDINGS = {
   language: {
     title: '🗣️ Học Ngoại ngữ thông minh',
     intro: 'Trường Ngoại ngữ dùng các app chuyên biệt thay vì quiz tổng quát. Chọn 1 hoạt động bên dưới để học:',
+    back: { label: 'Quay về campus Ngoại ngữ', href: '/school.html?domain=language' },
     apps: [
       { ic:'📚', name:'2000 từ vựng tiếng Anh', rd:'5 chủ đề: cơ bản, du lịch, kinh doanh, học thuật, IELTS — spaced repetition + phát âm.', href:'/tu-vung-tieng-anh.html' },
       { ic:'🎤', name:'Luyện phát âm AI', rd:'Đọc câu mẫu, AI chấm bằng Speech Recognition, score theo từng từ.', href:'/luyen-phat-am.html' },
       { ic:'🃏', name:'Flashcards đa ngôn ngữ', rd:'Tự nhập bộ thẻ EN/JP/KR/CN, lưu localStorage cá nhân.', href:'/portal-apps/u/4/flashcards/' },
-      { ic:'🏫', name:'Quay về campus Ngoại ngữ', rd:'Xem các toà nhà khác: Thư viện, Phòng nghe, Studio phát âm, Sân khấu kịch…', href:'/school.html?domain=language' },
     ],
   },
   driving: {
     title: '🚗 Học Lái xe thông minh',
     intro: 'Trường Lái xe dùng bộ đề + biển báo chuyên biệt. Chọn 1 hoạt động bên dưới:',
+    back: { label: 'Quay về campus Lái xe', href: '/school.html?domain=driving' },
     apps: [
       { ic:'📖', name:'600 câu lý thuyết B1/B2', rd:'Luyện theo chương + thi thử 25 câu/22 phút. Có CÂU LIỆT.', href:'/luat-giao-thong-600.html' },
       { ic:'🚸', name:'Biển báo Giao thông', rd:'Học 4 nhóm QCVN 41:2019 + chế độ đố vui có streak.', href:'/bien-bao-giao-thong.html' },
       { ic:'🧠', name:'AI Quiz tình huống', rd:'AI sinh tình huống lái xe thực tế theo cấp B1/B2/C/D.', href:'/ai-quiz-gen.html?topic=driving' },
-      { ic:'🏫', name:'Quay về campus Lái xe', rd:'Xem Trung tâm Lý thuyết, Phòng Mô phỏng, Sân tập sa hình…', href:'/school.html?domain=driving' },
     ],
   },
   'driving-admin': {
     title: '📋 Thủ tục hành chính · Trường Lái xe',
     intro: 'AI tư vấn quy trình thi sát hạch, cấp đổi GPLX, đăng ký lệ phí. Hiện đang biên soạn — tạm thời tham khảo:',
+    back: { label: 'Quay về Văn phòng cấp GPLX', href: '/space.html?b=admin-drive&domain=driving' },
     apps: [
       { ic:'📖', name:'600 câu lý thuyết', rd:'Phải đạt trước khi nộp hồ sơ thi.', href:'/luat-giao-thong-600.html' },
-      { ic:'🏫', name:'Văn phòng cấp GPLX', rd:'Xem các thông tin liên quan trong campus.', href:'/space.html?b=admin-drive&domain=driving' },
     ],
   },
 };
@@ -162,8 +162,15 @@ const state = {
 function renderLanding(landing) {
   const wrap = document.getElementById('wrap');
   document.title = landing.title.replace(/^[^\s]+\s+/, '') + ' · Tizia';
+  const back = landing.back ? `
+    <a href="${esc(landing.back.href)}" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:inherit;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap">
+      ← ${esc(landing.back.label)}
+    </a>` : '';
   wrap.innerHTML = `
-    <h1 style="margin:0 0 8px;font-size:22px">${esc(landing.title)}</h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px;flex-wrap:wrap">
+      <h1 style="margin:0;font-size:22px">${esc(landing.title)}</h1>
+      ${back}
+    </div>
     <p style="color:var(--mute);margin:0 0 22px;line-height:1.6">${esc(landing.intro)}</p>
     <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
       ${landing.apps.map(a => `
