@@ -94,8 +94,6 @@ const FEATURES = {
                      roles: ['teacher', 'admin'] },
 
   // ───── Role-based: Admin ─────
-  'school-wizard': { tier: 0, name: 'Tạo trường mới 🏫', url: '/admin/school-wizard.html', scope: 'global',
-                     roles: ['admin'] },
   'admin-panel':   { tier: 0, name: 'Quản trị Tizia ⚙', url: '/admin.html', scope: 'global',
                      roles: ['admin'] },
 };

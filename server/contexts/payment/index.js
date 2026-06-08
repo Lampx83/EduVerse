@@ -23,15 +23,15 @@ import { VALID_USER_PLANS, priceFor, expiresAtFor, USER_PLANS } from '../billing
 
 // ── Data access ──
 const insertInvoiceStmt = db.prepare(`
-  INSERT INTO invoices (school_id, user_id, order_ref, amount, currency, description, status, gateway, metadata, created_at, updated_at)
-  VALUES (@school_id, @user_id, @order_ref, @amount, @currency, @description, 'pending', @gateway, @metadata, @t, @t)
+  INSERT INTO invoices (user_id, order_ref, amount, currency, description, status, gateway, metadata, created_at, updated_at)
+  VALUES (@user_id, @order_ref, @amount, @currency, @description, 'pending', @gateway, @metadata, @t, @t)
 `);
 const getInvoiceByRefStmt = db.prepare(`SELECT * FROM invoices WHERE order_ref = ?`);
 const markInvoicePaidStmt = db.prepare(`UPDATE invoices SET status = 'paid', paid_at = @t, updated_at = @t WHERE id = @id`);
 const markInvoiceFailedStmt = db.prepare(`UPDATE invoices SET status = 'failed', updated_at = @t WHERE id = @id`);
 const insertPaymentStmt = db.prepare(`
-  INSERT INTO payments (school_id, invoice_id, gateway, gateway_txn_ref, amount, status, response_code, raw_response, created_at)
-  VALUES (@school_id, @invoice_id, @gateway, @gateway_txn_ref, @amount, @status, @response_code, @raw_response, @t)
+  INSERT INTO payments (invoice_id, gateway, gateway_txn_ref, amount, status, response_code, raw_response, created_at)
+  VALUES (@invoice_id, @gateway, @gateway_txn_ref, @amount, @status, @response_code, @raw_response, @t)
 `);
 const insertInboxStmt = db.prepare(`
   INSERT INTO webhook_inbox (gateway, event_key, order_ref, payload, signature_valid, processed, received_at)
@@ -75,11 +75,10 @@ export function attachPayment(r, { basePath = '' } = {}) {
         return res.status(400).json({ error: 'invalid_amount', detail: 'amount tối thiểu 1000 VND' });
       }
     }
-    const school_id = req.user.school_id || 1;
     const order_ref = genOrderRef();
     const now = Date.now();
     insertInvoiceStmt.run({
-      school_id, user_id: req.user.id, order_ref, amount, currency: 'VND',
+      user_id: req.user.id, order_ref, amount, currency: 'VND',
       description, gateway: 'vnpay', metadata, t: now,
     });
     try {
@@ -127,14 +126,14 @@ export function attachPayment(r, { basePath = '' } = {}) {
     const success = isSuccessCode(v.responseCode);
     const tx = db.transaction(() => {
       insertPaymentStmt.run({
-        school_id: invoice.school_id, invoice_id: invoice.id, gateway: 'vnpay',
+        invoice_id: invoice.id, gateway: 'vnpay',
         gateway_txn_ref: v.gatewayTxnNo || null, amount: v.amount,
         status: success ? 'success' : 'failed', response_code: v.responseCode,
         raw_response: JSON.stringify(q), t: now,
       });
       if (success) {
         markInvoicePaidStmt.run({ id: invoice.id, t: now });
-        recordPaymentSettled({ school_id: invoice.school_id, gateway: 'vnpay', amount: v.amount, invoice_id: invoice.id });
+        recordPaymentSettled({ gateway: 'vnpay', amount: v.amount, invoice_id: invoice.id });
         // Kích hoạt gói cá nhân nếu invoice gắn metadata kind=user_plan.
         try {
           const meta = invoice.metadata ? JSON.parse(invoice.metadata) : null;
@@ -206,8 +205,7 @@ export function attachPayment(r, { basePath = '' } = {}) {
     if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
       return res.status(403).json({ error: 'forbidden' });
     }
-    const sid = req.query.school_id ? Number(req.query.school_id) : (req.user.role === 'admin' ? null : req.schoolId);
-    res.json(reconcile(sid));
+    res.json(reconcile());
   });
 
   console.log('[payment] routes mounted: /api/payment/* (vnpay + refund + reconcile)');

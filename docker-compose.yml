@@ -13,34 +13,9 @@ services:
       HOST: 0.0.0.0
       DATA_DIR: /data
       BASE_PATH: ${BASE_PATH:-}
-      DATABASE_URL: postgres://tizia:${POSTGRES_PASSWORD:-tizia_dev_pw}@tizia-postgres:5432/tizia
     volumes:
       - pharmacysim-data:/data
-    depends_on:
-      tizia-postgres:
-        condition: service_healthy
-    profiles: ["app"]
-
-  tizia-postgres:
-    image: postgres:16-alpine
-    container_name: tizia-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: tizia
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tizia_dev_pw}
-      POSTGRES_DB: tizia
-    ports:
-      - "127.0.0.1:5433:5432"
-    volumes:
-      - tizia-pg-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tizia -d tizia"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
 
 volumes:
   pharmacysim-data:
-    driver: local
-  tizia-pg-data:
     driver: local

@@ -13,7 +13,6 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS team_quests (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     class_code      TEXT NOT NULL,
-    school_id       INTEGER NOT NULL DEFAULT 1,
     creator_id      INTEGER NOT NULL,
     title           TEXT NOT NULL,
     description     TEXT,
@@ -70,9 +69,9 @@ function inClass(userId, classCode) {
 }
 
 export function attachTeacher(router) {
-  // GV xem các lớp họ làm chủ nhiệm (school_id của họ)
-  router.get('/api/teacher/classes', requireAuth, teacherOnly, (req, res) => {
-    const list = listClasses(req.user.school_id || 1);
+  // GV xem các lớp họ làm chủ nhiệm
+  router.get('/api/teacher/classes', requireAuth, teacherOnly, (_req, res) => {
+    const list = listClasses();
     res.json({ classes: list });
   });
 
@@ -90,11 +89,11 @@ export function attachTeacher(router) {
     if (!title) return res.status(400).json({ error: 'title_required' });
     const now = Date.now();
     const info = db.prepare(`
-      INSERT INTO team_quests (class_code, school_id, creator_id, title, description,
+      INSERT INTO team_quests (class_code, creator_id, title, description,
                                target_xp, reward_coin, reward_xp,
                                starts_at, ends_at, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(classCode, req.user.school_id || 1, req.user.id, title, description,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(classCode, req.user.id, title, description,
            targetXp, rewardCoin, rewardXp, now, now + durationDays * 86400_000, now);
     res.json({ ok: true, id: info.lastInsertRowid });
   });

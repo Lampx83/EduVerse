@@ -20,7 +20,6 @@ import { db } from '../../db.js';
 db.exec(`
   CREATE TABLE IF NOT EXISTS invoices (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id   INTEGER NOT NULL DEFAULT 1,
     user_id     INTEGER,
     order_ref   TEXT    NOT NULL UNIQUE,        -- mã đơn nội bộ (idempotency key)
     amount      INTEGER NOT NULL,               -- VND nguyên
@@ -33,7 +32,7 @@ db.exec(`
     paid_at     INTEGER
   );
   CREATE INDEX IF NOT EXISTS idx_invoices_order  ON invoices(order_ref);
-  CREATE INDEX IF NOT EXISTS idx_invoices_school ON invoices(school_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_invoices_user   ON invoices(user_id, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status, created_at DESC);
 `);
 // metadata JSON: gắn payload tuỳ ý vào invoice (vd {plan,cycle} cho upgrade gói B2C).
@@ -43,7 +42,6 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS payments (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id        INTEGER NOT NULL DEFAULT 1,
     invoice_id       INTEGER NOT NULL,
     gateway          TEXT    NOT NULL,
     gateway_txn_ref  TEXT,                       -- mã giao dịch phía cổng (vnp_TransactionNo)
@@ -55,11 +53,9 @@ db.exec(`
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
   );
   CREATE INDEX IF NOT EXISTS idx_payments_invoice ON payments(invoice_id);
-  CREATE INDEX IF NOT EXISTS idx_payments_school  ON payments(school_id, created_at DESC);
 
   CREATE TABLE IF NOT EXISTS refunds (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id          INTEGER NOT NULL DEFAULT 1,
     payment_id         INTEGER NOT NULL,
     amount             INTEGER NOT NULL,
     reason             TEXT,
@@ -73,11 +69,10 @@ db.exec(`
   -- Sổ cái double-entry: mỗi txn_group là 1 bút toán cân bằng (SUM amount_signed = 0).
   -- amount_signed: nợ (debit) = +, có (credit) = -. Tài khoản là chuỗi tự do, vd:
   --   'gateway:vnpay'  (tài sản — tiền đang ở cổng)
-  --   'revenue:school:2'  (doanh thu trường 2)
-  --   'wallet:user:15'   (ví học viên — nếu nạp tiền)
+  --   'revenue'         (doanh thu)
+  --   'wallet:user:15'  (ví học viên — nếu nạp tiền)
   CREATE TABLE IF NOT EXISTS ledger_entries (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id     INTEGER NOT NULL DEFAULT 1,
     txn_group     TEXT    NOT NULL,             -- nhóm bút toán cân bằng
     account       TEXT    NOT NULL,
     amount_signed INTEGER NOT NULL,             -- VND, debit + / credit -
@@ -89,7 +84,6 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_ledger_group   ON ledger_entries(txn_group);
   CREATE INDEX IF NOT EXISTS idx_ledger_account ON ledger_entries(account, created_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_ledger_school  ON ledger_entries(school_id, created_at DESC);
 
   -- Webhook inbox: IPN từ cổng. Dedupe theo (gateway, event_key) → xử lý 1 lần.
   CREATE TABLE IF NOT EXISTS webhook_inbox (

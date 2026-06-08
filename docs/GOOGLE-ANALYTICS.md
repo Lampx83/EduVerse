@@ -73,7 +73,7 @@ Mở bất kỳ trang nào của Tizia → mở **DevTools → Network** → l�
 | `badge_unlock` | **server** `/api/attempts` | Unlock huy hiệu | `badge_id`, `badge_label` |
 | `ai_chat` | **server** `/api/ai/*` | Gọi 1 endpoint AI | `endpoint`, `model`, `prompt_tokens`, `completion_tokens`, `duration_ms`, `status` |
 
-Mọi event đều có user properties: `school_id`, `school_code`, `role`, `plan`, `is_guest` để segment trong GA4.
+Mọi event đều có user properties: `role`, `plan`, `is_guest` để segment trong GA4.
 
 ## 5. Consent Mode v2
 

@@ -22,7 +22,6 @@ import { attachAdaptive } from './adaptive.js';
 import { attachLessons } from './lessons.js';
 import { attachUser, makeAuthGate, makeProfileGate, requireAuth, requireEnrolled, attachAuth } from './contexts/identity/auth.js';
 import { attachOAuth, listEnabledProviders } from './contexts/identity/oauth.js';
-import { attachTenant } from './contexts/identity/tenant.js';
 import { attachSeo } from './contexts/seo/index.js';
 import { injectSeoHead, originOf as seoOriginOf } from './contexts/seo/inject.js';
 import { attachAnalytics } from './contexts/analytics/index.js';
@@ -30,6 +29,7 @@ import { sendGA4Event } from './contexts/analytics/ga4-mp.js';
 import { attachBilling } from './contexts/billing/index.js';
 import { attachIntegration } from './contexts/integration/index.js';
 import { attachAdmin, requireAdmin } from './contexts/admin/index.js';
+import { attachAdminDb } from './contexts/admin/db-admin.js';
 import { attachEngagement, trackEngagementProgress } from './contexts/engagement/index.js';
 import { addLeagueWeekXp } from './contexts/engagement/league.js';
 import { attachLearning, updateIrt } from './contexts/learning/index.js';
@@ -37,7 +37,6 @@ import { attachPresence } from './contexts/multiplayer/presence.js';
 import { attachUgc } from './contexts/ugc/index.js';
 import { attachEconomy, addBpXp } from './contexts/economy/index.js';
 import { attachParentReport } from './contexts/parent-report/index.js';
-import { attachSchoolOnboard } from './contexts/school-onboard/index.js';
 import { attachTeacher } from './contexts/teacher/index.js';
 import { attachExperiments, getVariant, checkFlag } from './contexts/experiments/index.js';
 import { attachLiveQuizHttp, attachLiveQuizWs } from './contexts/live-quiz/index.js';
@@ -260,8 +259,6 @@ app.use(makeAuthGate({ basePath: BASE_PATH }));
 // (để chỉ áp dụng cho user đã login) và TRƯỚC attachAppProxies (để app anh em cũng
 // bị chặn nếu user chưa hoàn tất profile).
 app.use(makeProfileGate({ basePath: BASE_PATH }));
-// Gắn req.schoolId (multi-tenant) — SAU attachUser để đọc được user.school_id.
-app.use(attachTenant);
 // Rate-limit CHỈ /api/* (không tính static asset) + key theo user (R5) — SAU attachUser.
 app.use('/api', apiLimiter);
 
@@ -334,6 +331,7 @@ attachIntegration(r);
 // Security token endpoint (/api/csrf) + Admin xuyên tenant (role=admin).
 attachSecurity(r);
 attachAdmin(r);
+attachAdminDb(r);
 attachCampusLayout(r, requireAdmin);
 // Portal Apps — Developer cài SPA theo chuẩn AI Portal (manifest + zip).
 attachPortalApps(r, { requireAuth, requireAdmin });
@@ -348,8 +346,6 @@ attachUgc(r);
 attachEconomy(r);
 // Parent Weekly Report
 attachParentReport(r);
-// School Onboarding Wizard (admin)
-attachSchoolOnboard(r);
 // Teacher — Team Quest + Class Leaderboard
 attachTeacher(r);
 // Experiments + Feature Flags + Event Registry
@@ -386,7 +382,6 @@ r.post('/api/attempts', requireAuth, requireEnrolled, (req, res) => {
     ? b.classCode.trim().slice(0, 16) : null;
   const levelN = Number.isFinite(b.level) ? Math.floor(b.level) : null;
   const result = insertAttempt({
-    school_id: req.schoolId,
     version, player_name: playerName, score, correct, total,
     duration_ms: durationMs, details, created_at: Date.now(),
     class_code: classCode, level_n: levelN,
@@ -410,24 +405,24 @@ r.get('/api/leaderboard', (req, res) => {
   const version = String(req.query.version || '');
   if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
-  res.json(getLeaderboard(version, limit, req.schoolId));
+  res.json(getLeaderboard(version, limit));
 });
 
 r.get('/api/stats', (req, res) => {
   const version = String(req.query.version || '');
   if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
-  res.json(getStats(version, req.schoolId));
+  res.json(getStats(version));
 });
 
 r.get('/api/recent', (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
-  res.json(getRecent(limit, req.schoolId));
+  res.json(getRecent(limit));
 });
 
 r.get('/api/histogram', (req, res) => {
   const version = String(req.query.version || '');
   if (!isValidVersion(version)) return res.status(400).json({ error: 'invalid version' });
-  res.json(getHistogram(version, req.schoolId));
+  res.json(getHistogram(version));
 });
 
 r.get('/api/confusion', (req, res) => {
@@ -477,7 +472,6 @@ r.post('/api/scenario-runs', requireAuth, requireEnrolled, async (req, res) => {
     try {
       const g = grantSkillsForScenario({
         user_id: req.user.id,
-        school_id: req.schoolId ?? 1,
         family_id: familyId,
         score: row?.best_score ?? score,
         stars: row?.best_stars ?? stars,
@@ -635,7 +629,7 @@ r.post('/api/quiz/attempt', requireAuth, requireEnrolled, async (req, res) => {
     }
 
     const attempt = recordQuestionAttempt({
-      user_id: req.user.id, school_id: req.schoolId,
+      user_id: req.user.id,
       scoreup_question_id: q.id, question_external_id: q.external_id,
       subject_id: q.subject_id, chapter_id: q.chapter_id,
       answers: userArr, correct, score, duration_ms: durationMs,
@@ -967,7 +961,7 @@ r.post('/api/srs/review', requireAuth, requireEnrolled, (req, res) => {
   if (!cardKey) return res.status(400).json({ error: 'card_key_required' });
   try {
     const card = recordSrsReview({
-      user_id: req.user.id, school_id: req.schoolId,
+      user_id: req.user.id,
       card_key: cardKey, correct,
     });
     res.json(card);
@@ -1040,11 +1034,11 @@ r.post('/api/classes', (req, res) => {
     if (!getClassByCode(c)) { code = c; break; }
   }
   if (!code) return res.status(500).json({ error: 'could not generate code' });
-  const result = createClass({ code, name, teacher_name: teacherName, school_id: req.schoolId });
+  const result = createClass({ code, name, teacher_name: teacherName });
   res.json({ id: result.id, code, name, teacherName });
 });
 
-r.get('/api/classes', (req, res) => res.json(listClasses(req.schoolId)));
+r.get('/api/classes', (_req, res) => res.json(listClasses()));
 
 r.get('/api/classes/:code', (req, res) => {
   const cls = getClassByCode(req.params.code);
@@ -1163,7 +1157,6 @@ r.post('/api/requests', requireAuth, requireEnrolled, (req, res) => {
   if (!domain) return res.status(400).json({ error: 'domain required' });
   if (title.length < 4) return res.status(400).json({ error: 'title quá ngắn (≥4 ký tự)' });
   const row = createRequest({
-    school_id: req.schoolId,
     domain, type: b.type, title, detail: b.detail, student: b.student,
     attachments: Array.isArray(b.attachments) ? b.attachments : null,
   });
@@ -1173,7 +1166,7 @@ r.post('/api/requests', requireAuth, requireEnrolled, (req, res) => {
   // reject / defer / priority kèm lý do, ghi audit trail vào ai_decisions, rồi
   // áp dụng vào status request. Client reload để thấy phản hồi.
   reviewAndDecideRequest({
-    requestId: row.id, schoolId: req.schoolId,
+    requestId: row.id,
     domain, type: b.type, title, detail: b.detail,
     votes: 1, student: b.student,
   }).catch(err => console.warn('[requests] AI decision failed:', err?.message || err));
@@ -1183,7 +1176,7 @@ r.get('/api/requests', (req, res) => {
   const domain = String(req.query.domain || '').trim();
   if (!domain) return res.status(400).json({ error: 'domain required' });
   const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
-  res.json({ items: listRequests(domain, limit, req.schoolId), stats: getRequestStats(domain, req.schoolId) });
+  res.json({ items: listRequests(domain, limit), stats: getRequestStats(domain) });
 });
 
 r.post('/api/requests/:id/vote', (req, res) => {
@@ -1205,7 +1198,7 @@ r.get('/api/requests/:id/decisions', (req, res) => {
 // Bảng quyết định AI gần đây của trường (cho dashboard "Ban điều hành AI").
 r.get('/api/ai-decisions', (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
-  res.json({ decisions: getRecentDecisions(req.schoolId, limit) });
+  res.json({ decisions: getRecentDecisions(limit) });
 });
 
 // ── Notifications — hộp thư cá nhân của HS (phản hồi từ Ban điều hành AI) ──
@@ -1216,8 +1209,8 @@ r.get('/api/notifications', (req, res) => {
   const u = req.user.display_name;
   const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
   res.json({
-    items: listNotifications(u, req.schoolId, limit),
-    unread: countUnreadNotifications(u, req.schoolId),
+    items: listNotifications(u, limit),
+    unread: countUnreadNotifications(u),
   });
 });
 r.post('/api/notifications/:id/read', (req, res) => {
@@ -1227,7 +1220,7 @@ r.post('/api/notifications/:id/read', (req, res) => {
 });
 r.post('/api/notifications/read-all', (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'unauthorized' });
-  const n = markAllNotificationsRead(req.user.display_name, req.schoolId);
+  const n = markAllNotificationsRead(req.user.display_name);
   res.json({ ok: true, marked: n });
 });
 

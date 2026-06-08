@@ -10,7 +10,6 @@
 // là public theo thiết kế.
 // ============================================================
 
-import { listSchools } from '../../db.js';
 
 // Origin tuyệt đối cho sitemap/canonical: ưu tiên env, fallback từ header request.
 function originOf(req, basePath = '') {
@@ -48,12 +47,6 @@ function publicUrls(origin) {
     { loc: `${origin}/login.html`,       priority: '0.3', changefreq: 'monthly', lastmod: lm },
     { loc: `${origin}/register.html`,    priority: '0.3', changefreq: 'monthly', lastmod: lm },
   ];
-  // Mỗi trường → 1 landing công khai /welcome?school=<code> (SEO theo trường).
-  try {
-    for (const s of listSchools()) {
-      urls.push({ loc: `${origin}/welcome?school=${encodeURIComponent(s.code)}`, priority: '0.8', changefreq: 'weekly', lastmod: lm });
-    }
-  } catch {}
   return urls;
 }
 
@@ -149,13 +142,10 @@ export function attachSeo(r, { basePath = '' } = {}) {
   // Có meta + Open Graph + JSON-LD. CTA "Vào học" mới dẫn tới app (cần login).
   r.get('/welcome', (req, res) => {
     const origin = originOf(req, basePath);
-    const code = String(req.query.school || '').trim();
-    let school = null;
-    if (code) { try { school = listSchools().find((s) => s.code === code) || null; } catch {} }
-    const title = school ? `Tizia · ${school.name} — Học tương tác 3D/VR do AI điều hành`
-                         : 'Tizia — Vũ trụ giáo dục ảo 3D · VR · AI';
+    const school = null;
+    const title = 'Tizia — Vũ trụ giáo dục ảo 3D · VR · AI';
     const desc = 'Nền tảng giáo dục ảo: trường Dược, CNTT, Kinh tế và phổ thông với mô phỏng 2D/3D/VR/XR, gamification, gia sư AI và Ban điều hành AI tự cải tiến theo góp ý người học.';
-    const canonical = school ? `${origin}/welcome?school=${school.code}` : `${origin}/welcome`;
+    const canonical = `${origin}/welcome`;
     const ogImage = `${origin}/og-default.svg`;
     res.set('Cache-Control', 'public, max-age=600');
     res.type('html').send(`<!DOCTYPE html>

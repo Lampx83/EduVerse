@@ -1,25 +1,24 @@
 // ============================================================
 // Billing context — gói cước + subscription + entitlement (#5 mô hình lợi nhuận)
 // ============================================================
-// Mô hình kinh doanh: mỗi TRƯỜNG (tenant) đăng ký 1 gói. Gói quyết định
-// entitlement (quyền dùng tính năng). Thanh toán đi qua payment context (VNPay);
-// khi invoice settled, kích hoạt subscription. Ở đây tách bạch:
-//   plans (định nghĩa) · subscriptions (school ↔ plan) · entitlement (suy ra từ plan).
+// B2C: mỗi USER đăng ký 1 gói. Gói quyết định entitlement (quyền dùng tính năng).
+// Thanh toán đi qua payment context (VNPay); khi invoice settled, kích hoạt
+// subscription. Ở đây tách bạch:
+//   plans (định nghĩa) · subscriptions (user ↔ plan) · entitlement (suy ra từ plan).
 //
-// requireFeature(feature) gate tính năng premium theo tenant → đây là nơi "khoá
-// giá trị" để bán. activateSubscription() được payment gọi khi thu tiền thành công
-// (xem hook trong payment/index.js — optional, không bắt buộc).
+// requireFeature(feature) gate tính năng premium theo user → đây là nơi "khoá
+// giá trị" để bán. activateSubscription() được payment gọi khi thu tiền thành công.
 // ============================================================
 
-import { db, getSchoolCode, redeemSchoolCode, createSchoolCode,
+import { db,
          linkChildToParent, unlinkChildFromParent, listChildrenOfParent,
-         getUserByUsername, getUserById, setUserPlan, listRedemptionsForUser } from '../../db.js';
+         getUserByUsername, getUserById, setUserPlan } from '../../db.js';
 import { USER_PLANS as USER_PLANS_B2C } from './user-plans.js';
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS subscriptions (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id         INTEGER NOT NULL,
+    user_id           INTEGER NOT NULL,
     plan              TEXT    NOT NULL DEFAULT 'free',  -- free | pro | school
     status            TEXT    NOT NULL DEFAULT 'active', -- active | pending | past_due | canceled
     seats             INTEGER NOT NULL DEFAULT 0,        -- 0 = không giới hạn (theo gói)
@@ -27,9 +26,9 @@ db.exec(`
     order_ref         TEXT,                              -- liên kết invoice payment (nếu trả phí)
     created_at        INTEGER NOT NULL,
     updated_at        INTEGER NOT NULL,
-    UNIQUE(school_id)
+    UNIQUE(user_id)
   );
-  CREATE INDEX IF NOT EXISTS idx_subs_school ON subscriptions(school_id);
+  CREATE INDEX IF NOT EXISTS idx_subs_user ON subscriptions(user_id);
 `);
 
 // ── Catalog gói (code-defined; Phase sau có thể đưa vào DB cho admin sửa) ──
@@ -53,18 +52,18 @@ export const PLANS = {
 };
 const VALID_PLANS = new Set(Object.keys(PLANS));
 
-const getSubStmt = db.prepare(`SELECT * FROM subscriptions WHERE school_id = ?`);
+const getSubStmt = db.prepare(`SELECT * FROM subscriptions WHERE user_id = ?`);
 const upsertSubStmt = db.prepare(`
-  INSERT INTO subscriptions (school_id, plan, status, seats, current_period_end, order_ref, created_at, updated_at)
-  VALUES (@school_id, @plan, @status, @seats, @current_period_end, @order_ref, @t, @t)
-  ON CONFLICT(school_id) DO UPDATE SET
+  INSERT INTO subscriptions (user_id, plan, status, seats, current_period_end, order_ref, created_at, updated_at)
+  VALUES (@user_id, @plan, @status, @seats, @current_period_end, @order_ref, @t, @t)
+  ON CONFLICT(user_id) DO UPDATE SET
     plan = @plan, status = @status, seats = @seats,
     current_period_end = @current_period_end, order_ref = @order_ref, updated_at = @t
 `);
 
-/** Subscription hiện tại của trường (mặc định free nếu chưa có row). */
-export function getSubscription(school_id) {
-  const row = getSubStmt.get(Number(school_id) || 1);
+/** Subscription hiện tại của user (mặc định free nếu chưa có row). */
+export function getSubscription(user_id) {
+  const row = getSubStmt.get(Number(user_id));
   if (row) {
     // Hết hạn → coi như free (downgrade mềm, không xoá lịch sử).
     if (row.current_period_end && row.current_period_end < Date.now() && row.plan !== 'free') {
@@ -72,34 +71,35 @@ export function getSubscription(school_id) {
     }
     return row;
   }
-  return { school_id: Number(school_id) || 1, plan: 'free', status: 'active', current_period_end: null };
+  return { user_id: Number(user_id) || null, plan: 'free', status: 'active', current_period_end: null };
 }
 
 /** Entitlement suy ra từ plan hiện tại. */
-export function getEntitlements(school_id) {
-  const sub = getSubscription(school_id);
+export function getEntitlements(user_id) {
+  const sub = getSubscription(user_id);
   const plan = PLANS[sub.plan] || PLANS.free;
   return { plan: plan.id, plan_name: plan.name, status: sub.status, features: plan.features, limits: plan.limits, current_period_end: sub.current_period_end ?? null };
 }
 
-export function hasFeature(school_id, feature) {
-  return getEntitlements(school_id).features.includes(feature);
+export function hasFeature(user_id, feature) {
+  return getEntitlements(user_id).features.includes(feature);
 }
 
-/** Kích hoạt/đổi gói cho trường. periodDays=null → vĩnh viễn (free). */
-export function activateSubscription({ school_id, plan, status = 'active', periodDays = 30, order_ref = null }) {
+/** Kích hoạt/đổi gói cho user. periodDays=null → vĩnh viễn (free). */
+export function activateSubscription({ user_id, plan, status = 'active', periodDays = 30, order_ref = null }) {
   if (!VALID_PLANS.has(plan)) throw new Error(`plan không hợp lệ: ${plan}`);
   const now = Date.now();
   const current_period_end = (plan === 'free' || periodDays == null) ? null : now + periodDays * 24 * 3600 * 1000;
-  upsertSubStmt.run({ school_id: Number(school_id) || 1, plan, status, seats: 0, current_period_end, order_ref, t: now });
-  return getSubscription(school_id);
+  upsertSubStmt.run({ user_id: Number(user_id), plan, status, seats: 0, current_period_end, order_ref, t: now });
+  return getSubscription(user_id);
 }
 
-// ── Middleware gate tính năng premium theo tenant ──
+// ── Middleware gate tính năng premium theo user ──
 export function requireFeature(feature) {
   return (req, res, next) => {
-    if (hasFeature(req.schoolId, feature)) return next();
-    const ent = getEntitlements(req.schoolId);
+    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+    if (hasFeature(req.user.id, feature)) return next();
+    const ent = getEntitlements(req.user.id);
     return res.status(402).json({  // 402 Payment Required
       error: 'feature_locked', feature, current_plan: ent.plan,
       message: `Tính năng "${feature}" cần nâng cấp gói. Gói hiện tại: ${ent.plan_name}.`,
@@ -113,84 +113,32 @@ export function attachBilling(r) {
   r.get('/api/billing/plans', (_req, res) => res.json({ plans: Object.values(PLANS) }));
 
   r.get('/api/billing/me', (req, res) => {
-    res.json({ school_id: req.schoolId, ...getEntitlements(req.schoolId) });
+    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
+    res.json({ user_id: req.user.id, ...getEntitlements(req.user.id) });
   });
 
   // Đăng ký/đổi gói. Gói trả phí → tạo subscription 'pending' + trả amount để
   // client gọi payment create-order; khi IPN settled, payment gọi activateSubscription.
   // (Bản demo: cho phép kích hoạt trial ngay nếu PLAN free hoặc BILLING_DEMO_ACTIVATE=1.)
   r.post('/api/billing/subscribe', (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
     const plan = String(req.body?.plan || '').trim();
     if (!VALID_PLANS.has(plan)) return res.status(400).json({ error: 'invalid_plan' });
-    // Chỉ teacher/admin của trường được đổi gói.
-    if (req.user?.role !== 'teacher') {
-      return res.status(403).json({ error: 'forbidden', message: 'Chỉ giáo viên/quản trị trường được đổi gói.' });
-    }
     const planDef = PLANS[plan];
     if (planDef.price_vnd === 0) {
-      const sub = activateSubscription({ school_id: req.schoolId, plan, periodDays: null });
+      const sub = activateSubscription({ user_id: req.user.id, plan, periodDays: null });
       return res.json({ ok: true, activated: true, subscription: sub });
     }
     if (process.env.BILLING_DEMO_ACTIVATE === '1') {
-      const sub = activateSubscription({ school_id: req.schoolId, plan, periodDays: 30 });
+      const sub = activateSubscription({ user_id: req.user.id, plan, periodDays: 30 });
       return res.json({ ok: true, activated: true, demo: true, subscription: sub });
     }
     // Trả phí: tạo bản ghi pending, hướng client sang thanh toán.
-    activateSubscription({ school_id: req.schoolId, plan, status: 'pending', periodDays: 30 });
+    activateSubscription({ user_id: req.user.id, plan, status: 'pending', periodDays: 30 });
     res.json({
       ok: true, activated: false, plan, amount_vnd: planDef.price_vnd,
       next: 'POST /api/payment/create-order với amount tương ứng; kích hoạt khi IPN thành công.',
     });
-  });
-
-  // ── Trục 4: redeem mã trường / mã khuyến mãi ──
-  // POST /api/billing/redeem-code { code }
-  // kind=grant_plan → set user.plan + plan_expires_at = now + grant_days
-  // kind=discount   → ghi nhận redemption; FE đọc /api/billing/me/discounts khi checkout
-  r.post('/api/billing/redeem-code', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
-    const code = String(req.body?.code || '').trim();
-    if (!code) return res.status(400).json({ error: 'missing_code' });
-    const sc = getSchoolCode(code);
-    if (!sc) return res.status(404).json({ error: 'invalid_code', message: 'Mã không hợp lệ.' });
-    if (sc.expires_at && sc.expires_at < Date.now()) {
-      return res.status(410).json({ error: 'code_expired', message: 'Mã đã hết hạn.' });
-    }
-    if (sc.max_uses > 0 && sc.used_count >= sc.max_uses) {
-      return res.status(410).json({ error: 'code_used_up', message: 'Mã đã hết lượt dùng.' });
-    }
-
-    if (sc.kind === 'grant_plan') {
-      if (!USER_PLANS_B2C[sc.grant_plan]) {
-        return res.status(500).json({ error: 'bad_code_config', message: 'Mã cấp gói không hợp lệ.' });
-      }
-      const expires_at = Date.now() + sc.grant_days * 24 * 3600 * 1000;
-      const ok = redeemSchoolCode({ code_id: sc.id, user_id: req.user.id, outcome: 'plan_granted' });
-      if (!ok) return res.status(409).json({ error: 'already_redeemed', message: 'Bạn đã dùng mã này.' });
-      setUserPlan(req.user.id, { plan: sc.grant_plan, expires_at, cycle: null });
-      return res.json({
-        ok: true, kind: 'grant_plan',
-        plan: sc.grant_plan,
-        expires_at,
-        message: `Đã kích hoạt gói ${USER_PLANS_B2C[sc.grant_plan].name} đến ${new Date(expires_at).toLocaleDateString('vi-VN')}.`,
-      });
-    }
-    // discount
-    const ok = redeemSchoolCode({ code_id: sc.id, user_id: req.user.id, outcome: 'discount_saved' });
-    if (!ok) return res.status(409).json({ error: 'already_redeemed', message: 'Bạn đã dùng mã này.' });
-    return res.json({
-      ok: true, kind: 'discount',
-      discount_percent: sc.discount_percent,
-      message: `Đã lưu mã giảm ${sc.discount_percent}% cho lần thanh toán tới.`,
-    });
-  });
-
-  // GET /api/billing/me/discounts — list các discount user đã save chưa dùng
-  r.get('/api/billing/me/discounts', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
-    const all = listRedemptionsForUser(req.user.id);
-    const discounts = all.filter(r => r.kind === 'discount');
-    res.json({ discounts });
   });
 
   // ── Trục 4: family plan ──
@@ -244,35 +192,5 @@ export function attachBilling(r) {
     });
   });
 
-  // POST /api/admin/school-codes — tạo mã (chỉ admin/teacher tạo cho trường mình)
-  r.post('/api/admin/school-codes', (req, res) => {
-    if (!req.user) return res.status(401).json({ error: 'unauthorized' });
-    if (!['admin', 'teacher'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'forbidden' });
-    }
-    const b = req.body ?? {};
-    const code = String(b.code || '').trim();
-    if (!code || code.length < 4) return res.status(400).json({ error: 'code_too_short' });
-    // teacher tạo mã thì school_id phải là school của teacher; admin có thể chỉ định
-    const school_id = req.user.role === 'admin' && b.school_id
-      ? Number(b.school_id) : (req.user.school_id || 1);
-    try {
-      createSchoolCode({
-        code, school_id, kind: b.kind || 'grant_plan',
-        grant_plan: b.grantPlan || b.grant_plan || null,
-        grant_days: Number(b.grantDays || b.grant_days) || 365,
-        discount_percent: Number(b.discountPercent || b.discount_percent) || 0,
-        max_uses: Number(b.maxUses || b.max_uses) || 0,
-        expires_at: b.expiresAt ? Number(b.expiresAt) : null,
-        note: b.note || null,
-        created_by: req.user.id,
-      });
-      res.json({ ok: true, code });
-    } catch (e) {
-      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'code_exists' });
-      throw e;
-    }
-  });
-
-  console.log('[billing] routes mounted: /api/billing/{plans,me,subscribe,redeem-code,me/discounts} + /api/family/* + /api/admin/school-codes');
+  console.log('[billing] routes mounted: /api/billing/{plans,me,subscribe} + /api/family/*');
 }

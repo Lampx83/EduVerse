@@ -5,7 +5,7 @@ import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   createUser, getUserByUsername, getUserById, touchLogin, updateDisplayName, updateUserEditable,
   createSession, getSession, deleteSession,
-  resolveSchoolByEmail, getSchoolByCode, getBestParentPlanForChild,
+  getBestParentPlanForChild,
   getEnrolledDomain, setEnrolledDomain,
   listUserDomainGrants, listManagedDomains,
 } from '../../db.js';
@@ -76,7 +76,6 @@ export function getCurrentUser(req) {
     username: sess.username,
     display_name: sess.display_name,
     role: sess.role,
-    school_id: sess.school_id,   // cần cho attachTenant (multi-tenant enforcement)
     plan: sess.plan || 'free',
     plan_expires_at: sess.plan_expires_at || null,
     // Per-school enrollment: NULL = chưa chọn trường → FE bắt mở modal. Admin
@@ -162,6 +161,10 @@ const PUBLIC_PATH_PREFIXES = [
   // Bootstrap GA4 measurement ID — public để banner consent + gtag chạy được ở
   // mọi trang (kể cả login/register/guest mode). Không trả bí mật, chỉ ID + role.
   '/api/analytics/bootstrap',
+  // Pageview tracker — cần public để guest cũng đếm được (chiếm phần lớn
+  // top-of-funnel). Server cứng-set name='page_view' và rate-limit theo IP,
+  // không tin name từ client.
+  '/api/track/pageview',
   // Cổng thanh toán callback (VNPay return + IPN). Xác thực bằng chữ ký HMAC,
   // KHÔNG bằng cookie — VNPay gọi server-to-server không kèm session. create-order
   // KHÔNG nằm ở đây nên vẫn yêu cầu đăng nhập.
@@ -367,17 +370,10 @@ export function attachAuth(r) {
       return res.status(400).json({ error: 'ngành học không hợp lệ' });
     }
 
-    // Phân giải trường (tenant): ưu tiên schoolCode SV nhập → email domain → mặc định 1.
-    const email = String(b.email || '').trim().toLowerCase();
-    const schoolCode = String(b.schoolCode || '').trim();
-    let school_id = 1;
-    if (schoolCode) { school_id = getSchoolByCode(schoolCode)?.id || 1; }
-    else if (email) { school_id = resolveSchoolByEmail(email)?.id || 1; }
-
     const { id } = createUser({
       username, display_name,
       password_hash: hashPassword(password),
-      role, age, school_id,
+      role, age,
       grade, major, cohort, school_name,
     });
     const token = randomBytes(32).toString('hex');
@@ -385,7 +381,7 @@ export function attachAuth(r) {
     touchLogin(id);
     setSessionCookie(res, token, expires_at);
     // Gợi ý FE redirect: nếu profile đủ → vào trường phù hợp; thiếu → /complete-profile.
-    const userObj = { id, username, display_name, role, age, school_id, grade, major, cohort, school_name };
+    const userObj = { id, username, display_name, role, age, grade, major, cohort, school_name };
     const redirectTo = isProfileComplete(userObj) ? defaultRouteForUser(userObj) : '/complete-profile.html';
     res.json({ ok: true, user: userObj, redirectTo });
   });

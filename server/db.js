@@ -27,6 +27,7 @@ try {
   }
 } catch (e) { console.warn('[db] legacy rename failed', e.message); }
 export const db = new Database(dbPath);
+export { dbPath, DATA_DIR };
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
@@ -119,20 +120,6 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
   CREATE INDEX IF NOT EXISTS idx_oauth_user ON oauth_identities(user_id);
-
-  -- Multi-tenancy (Phase 0 foundation): mỗi trường là 1 tenant.
-  -- Mặc định school_id=1 ('tizia-default') chứa legacy data trước khi mở multi-tenant.
-  -- SSO email domain → school auto-map (vd '*@neu.edu.vn' → NEU). Phase 1 sẽ enforce
-  -- Postgres RLS theo school_id; hiện tại SQLite, isolation enforce ở app layer.
-  CREATE TABLE IF NOT EXISTS schools (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    code        TEXT    NOT NULL UNIQUE,
-    name        TEXT    NOT NULL,
-    domain      TEXT,                          -- email domain để map SSO auto, có thể NULL
-    created_at  INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_schools_code   ON schools(code);
-  CREATE INDEX IF NOT EXISTS idx_schools_domain ON schools(domain);
 `);
 
 // Step 4: upgrade `users` cho OAuth — email/avatar có thể đến sau khi đã có DB cũ.
@@ -149,20 +136,8 @@ try { db.exec(`ALTER TABLE attempts ADD COLUMN level_n INTEGER`); } catch {}
 // Step 3: create indexes that depend on the v5 columns (now guaranteed to exist)
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_class ON attempts(class_code, created_at DESC)`); } catch {}
 
-// Step 5: multi-tenancy migration (Phase 0). Thêm school_id vào 4 entity table top-level.
-// Additive với DEFAULT 1 → legacy row tự backfill về school 'tizia-default'.
-// SQLite KHÔNG cho phép ALTER ADD COLUMN với non-constant DEFAULT, nên dùng hằng 1.
-try { db.prepare(`INSERT OR IGNORE INTO schools (id, code, name, created_at) VALUES (1, 'tizia-default', 'Tizia', ?)`).run(Date.now()); } catch {}
-try { db.exec(`ALTER TABLE users    ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
-try { db.exec(`ALTER TABLE classes  ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
-try { db.exec(`ALTER TABLE attempts ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
-try { db.exec(`ALTER TABLE requests ADD COLUMN school_id INTEGER NOT NULL DEFAULT 1`); } catch {}
 // Đính kèm: JSON array [{url, name, mime, size, kind}]. kind = 'screenshot' | 'file'
 try { db.exec(`ALTER TABLE requests ADD COLUMN attachments TEXT`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_school    ON users(school_id)`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_classes_school  ON classes(school_id)`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_attempts_school ON attempts(school_id, created_at DESC)`); } catch {}
-try { db.exec(`CREATE INDEX IF NOT EXISTS idx_requests_school ON requests(school_id, votes DESC, created_at DESC)`); } catch {}
 
 // Hồ sơ học sinh / sinh viên (Trục 1 phân biệt HS vs SV). Các cột này NULL cho
 // user cũ → trigger modal /complete-profile.html ở lần login kế. Không có FK ràng
@@ -181,13 +156,10 @@ try { db.exec(`ALTER TABLE users ADD COLUMN school_name TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN enrolled_domain TEXT`); } catch {}
 try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_enrolled_domain ON users(enrolled_domain)`); } catch {}
 
-// Trục 4: family plan + school code. family_links cho phép 1 PH link n con HS
+// Trục 4: family plan. family_links cho phép 1 PH link n con HS
 // (parent_user_id phải là role='teacher' hoặc 'student' tuổi >=18 — kiểm ở app
 // layer, không hard-enforce DB). Plan của parent được kế thừa xuống con khi
-// con role='pupil'. school_codes là code redeem do trường K-12/ĐH cấp:
-//   - kind='grant_plan': set plan cho user (vd 'plus' 365 ngày)
-//   - kind='discount':   ghi discount_percent áp cho lần thanh toán kế
-// max_uses=0 → vô hạn. expires_at NULL → vĩnh viễn.
+// con role='pupil'.
 db.exec(`
   CREATE TABLE IF NOT EXISTS family_links (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -201,36 +173,6 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_family_parent ON family_links(parent_user_id);
   CREATE INDEX IF NOT EXISTS idx_family_child  ON family_links(child_user_id);
 
-  CREATE TABLE IF NOT EXISTS school_codes (
-    id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    code              TEXT    NOT NULL UNIQUE COLLATE NOCASE,
-    school_id         INTEGER NOT NULL DEFAULT 1,
-    kind              TEXT    NOT NULL DEFAULT 'grant_plan', -- grant_plan | discount
-    grant_plan        TEXT,                                  -- 'plus' | 'pro' khi kind='grant_plan'
-    grant_days        INTEGER NOT NULL DEFAULT 365,
-    discount_percent  INTEGER NOT NULL DEFAULT 0,            -- 0..90 khi kind='discount'
-    max_uses          INTEGER NOT NULL DEFAULT 0,            -- 0 = vô hạn
-    used_count        INTEGER NOT NULL DEFAULT 0,
-    expires_at        INTEGER,
-    note              TEXT,
-    created_by        INTEGER,
-    created_at        INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_school_codes_school ON school_codes(school_id, expires_at);
-
-  -- Log mỗi lần redeem để audit + chống abuse. UNIQUE(user_id, code_id) để 1 user
-  -- không redeem trùng 1 code; nhưng có thể redeem nhiều code khác nhau.
-  CREATE TABLE IF NOT EXISTS school_code_redemptions (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    code_id      INTEGER NOT NULL,
-    user_id      INTEGER NOT NULL,
-    redeemed_at  INTEGER NOT NULL,
-    outcome      TEXT,                       -- 'plan_granted' | 'discount_saved'
-    UNIQUE(code_id, user_id),
-    FOREIGN KEY (code_id) REFERENCES school_codes(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_redemption_user ON school_code_redemptions(user_id);
 `);
 
 // Step 6: gói cước (free/plus/pro). plan_expires_at NULL = vĩnh viễn (cho free) hoặc
@@ -248,7 +190,6 @@ try { db.exec(`CREATE INDEX IF NOT EXISTS idx_users_plan ON users(plan, plan_exp
 db.exec(`
   CREATE TABLE IF NOT EXISTS ai_lesson_content (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id   INTEGER NOT NULL DEFAULT 1,
     week_id     TEXT    NOT NULL,            -- scenario id, vd 'P2-w07-quiz'
     subject     TEXT,                        -- nhãn môn, vd 'Toán'
     topic       TEXT,                        -- chủ đề tuần
@@ -270,7 +211,6 @@ db.exec(`
 db.exec(`
   CREATE TABLE IF NOT EXISTS notifications (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id         INTEGER NOT NULL DEFAULT 1,
     user_display_name TEXT    NOT NULL,         -- người nhận, khớp users.display_name
     request_id        INTEGER,                   -- request gốc (NULL nếu không gắn)
     kind              TEXT    NOT NULL,          -- 'reply' | 'system' | ...
@@ -288,9 +228,8 @@ db.exec(`
 
 // Khung năng lực GDPT 2018: 5 phẩm chất + 10 năng lực (catalog tham chiếu của Bộ
 // GD-ĐT). Mỗi `skill` (kỹ năng cụ thể HS đạt được tại 1 space/lesson/mini-game)
-// thuộc 1 competency cha → cho phép roll-up báo cáo theo khung quốc gia. Catalog
-// dùng chung cho mọi tenant nên KHÔNG có school_id (cùng 1 khung GDPT 2018).
-// `user_skills` là bảng earned (theo user_id, có school_id để báo cáo trường).
+// thuộc 1 competency cha → cho phép roll-up báo cáo theo khung quốc gia.
+// `user_skills` là bảng earned (theo user_id, per-domain bucket cấp học).
 // kind: pham_chat (5) | nang_luc_chung (3) | nang_luc_chuyen_mon (7).
 db.exec(`
   CREATE TABLE IF NOT EXISTS competencies (
@@ -319,13 +258,12 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_skills_domain     ON skills(domain, grade_min, grade_max);
 
   -- HS đạt skill khi: hoàn thành scenario, đạt quiz ≥70%, hoàn thành mini-game.
-  -- UNIQUE(user_id, skill_id, domain) → 1 skill chỉ tính 1 lần TRONG MỖI TRƯỜNG;
-  -- HS đổi trường → bucket domain mới làm lại từ đầu (bucket domain cũ vẫn ở DB).
+  -- UNIQUE(user_id, skill_id, domain) → 1 skill chỉ tính 1 lần TRONG MỖI TRƯỜNG (cấp học);
+  -- HS đổi cấp học → bucket domain mới làm lại từ đầu (bucket domain cũ vẫn ở DB).
   -- source_type/source_id để truy ngược nguồn grant (audit + UI "đạt được khi nào").
   -- domain '' = legacy bucket (skill grant trước khi user chọn trường).
   CREATE TABLE IF NOT EXISTS user_skills (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id    INTEGER NOT NULL DEFAULT 1,
     user_id      INTEGER NOT NULL,
     skill_id     INTEGER NOT NULL,
     domain       TEXT    NOT NULL DEFAULT '',
@@ -339,7 +277,6 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_user_skills_user   ON user_skills(user_id, earned_at DESC);
   CREATE INDEX IF NOT EXISTS idx_user_skills_skill  ON user_skills(skill_id, earned_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_user_skills_school ON user_skills(school_id, earned_at DESC);
 `);
 
 // Migration: tách user_skills theo (user_id, skill_id, domain). Khi user đổi trường,
@@ -354,7 +291,6 @@ db.exec(`
       db.exec(`
         CREATE TABLE user_skills_new (
           id           INTEGER PRIMARY KEY AUTOINCREMENT,
-          school_id    INTEGER NOT NULL DEFAULT 1,
           user_id      INTEGER NOT NULL,
           skill_id     INTEGER NOT NULL,
           domain       TEXT    NOT NULL DEFAULT '',
@@ -367,14 +303,13 @@ db.exec(`
           FOREIGN KEY (skill_id) REFERENCES skills(id) ON DELETE CASCADE
         );
         INSERT INTO user_skills_new
-          (id, school_id, user_id, skill_id, domain, earned_at, source_type, source_id, score)
-        SELECT id, school_id, user_id, skill_id, '', earned_at, source_type, source_id, score
+          (id, user_id, skill_id, domain, earned_at, source_type, source_id, score)
+        SELECT id, user_id, skill_id, '', earned_at, source_type, source_id, score
         FROM user_skills;
         DROP TABLE user_skills;
         ALTER TABLE user_skills_new RENAME TO user_skills;
         CREATE INDEX idx_user_skills_user   ON user_skills(user_id, earned_at DESC);
         CREATE INDEX idx_user_skills_skill  ON user_skills(skill_id, earned_at DESC);
-        CREATE INDEX idx_user_skills_school ON user_skills(school_id, earned_at DESC);
         CREATE INDEX idx_user_skills_domain ON user_skills(user_id, domain, earned_at DESC);
       `);
       db.exec('COMMIT');
@@ -444,18 +379,15 @@ try {
   }
 } catch (e) { console.warn('[db] skills auto-migrate check failed', e.message); }
 
-// Multi-tenancy: mọi write ghi school_id, mọi read cross-user lọc theo school_id.
-// Tham số @school_id bắt buộc ở các statement có ảnh hưởng tenant. Caller lấy từ
-// req.schoolId (attachTenant middleware) — xem server/contexts/identity/tenant.js.
 const insertAttemptStmt = db.prepare(`
-  INSERT INTO attempts (school_id, version, player_name, score, correct, total, duration_ms, details, created_at, class_code, level_n)
-  VALUES (@school_id, @version, @player_name, @score, @correct, @total, @duration_ms, @details, @created_at, @class_code, @level_n)
+  INSERT INTO attempts (version, player_name, score, correct, total, duration_ms, details, created_at, class_code, level_n)
+  VALUES (@version, @player_name, @score, @correct, @total, @duration_ms, @details, @created_at, @class_code, @level_n)
 `);
 
 const leaderboardStmt = db.prepare(`
   SELECT id, player_name, score, correct, total, duration_ms, created_at
   FROM attempts
-  WHERE version = @version AND school_id = @school_id
+  WHERE version = @version
   ORDER BY score DESC, created_at DESC
   LIMIT @limit
 `);
@@ -467,13 +399,12 @@ const statsStmt = db.prepare(`
     MAX(score)            AS best_score,
     SUM(CASE WHEN correct = total AND total > 0 THEN 1 ELSE 0 END) AS perfect_count
   FROM attempts
-  WHERE version = @version AND school_id = @school_id
+  WHERE version = @version
 `);
 
 const recentStmt = db.prepare(`
   SELECT id, version, player_name, score, correct, total, created_at
   FROM attempts
-  WHERE school_id = @school_id
   ORDER BY created_at DESC
   LIMIT @limit
 `);
@@ -489,34 +420,32 @@ const histogramStmt = db.prepare(`
     CAST((score / 10) AS INTEGER) * 10 AS bucket,
     COUNT(*) AS n
   FROM attempts
-  WHERE version = @version AND school_id = @school_id
+  WHERE version = @version
   GROUP BY bucket
   ORDER BY bucket
 `);
 
 export function insertAttempt(row) {
-  // school_id đặt SAU spread để luôn có giá trị (fallback 1) kể cả khi row.school_id
-  // = undefined — an toàn cho legacy / single-tenant caller.
-  const info = insertAttemptStmt.run({ ...row, school_id: row.school_id ?? 1 });
+  const info = insertAttemptStmt.run(row);
   return { id: info.lastInsertRowid, createdAt: row.created_at };
 }
 
-export function getLeaderboard(version, limit = 10, schoolId = 1) {
-  return leaderboardStmt.all({ version, limit, school_id: schoolId });
+export function getLeaderboard(version, limit = 10) {
+  return leaderboardStmt.all({ version, limit });
 }
 
-export function getStats(version, schoolId = 1) {
-  return statsStmt.get({ version, school_id: schoolId }) || { total_attempts: 0, avg_score: 0, best_score: 0, perfect_count: 0 };
+export function getStats(version) {
+  return statsStmt.get({ version }) || { total_attempts: 0, avg_score: 0, best_score: 0, perfect_count: 0 };
 }
 
-export function getRecent(limit = 20, schoolId = 1) {
-  return recentStmt.all({ limit, school_id: schoolId });
+export function getRecent(limit = 20) {
+  return recentStmt.all({ limit });
 }
 
 // --- Class management ---
 const createClassStmt = db.prepare(`
-  INSERT INTO classes (school_id, code, name, teacher_name, created_at)
-  VALUES (@school_id, @code, @name, @teacher_name, @created_at)
+  INSERT INTO classes (code, name, teacher_name, created_at)
+  VALUES (@code, @name, @teacher_name, @created_at)
 `);
 const getClassByCodeStmt = db.prepare(`
   SELECT id, code, name, teacher_name, created_at FROM classes WHERE code = ?
@@ -525,7 +454,7 @@ const listClassesStmt = db.prepare(`
   SELECT id, code, name, teacher_name, created_at,
     (SELECT COUNT(*) FROM attempts WHERE class_code = classes.code) AS attempt_count,
     (SELECT COUNT(DISTINCT player_name) FROM attempts WHERE class_code = classes.code) AS student_count
-  FROM classes WHERE school_id = @school_id ORDER BY created_at DESC
+  FROM classes ORDER BY created_at DESC
 `);
 const classMembersStmt = db.prepare(`
   SELECT player_name,
@@ -546,12 +475,12 @@ const playerAttemptsStmt = db.prepare(`
   FROM attempts WHERE player_name = @player ORDER BY created_at DESC LIMIT @limit
 `);
 
-export function createClass({ code, name, teacher_name, school_id = 1 }) {
-  const info = createClassStmt.run({ school_id, code, name, teacher_name, created_at: Date.now() });
+export function createClass({ code, name, teacher_name }) {
+  const info = createClassStmt.run({ code, name, teacher_name, created_at: Date.now() });
   return { id: info.lastInsertRowid, code };
 }
 export function getClassByCode(code) { return getClassByCodeStmt.get(code) || null; }
-export function listClasses(schoolId = 1) { return listClassesStmt.all({ school_id: schoolId }); }
+export function listClasses() { return listClassesStmt.all(); }
 export function getClassMembers(code) { return classMembersStmt.all(code); }
 export function getClassAttempts(code, limit = 100) { return classAttemptsStmt.all(code, { limit }); }
 export function getPlayerAttempts(player, limit = 50) { return playerAttemptsStmt.all({ player, limit }); }
@@ -560,8 +489,8 @@ export function getAllAttempts() {
   return allAttemptsStmt.all();
 }
 
-export function getHistogram(version, schoolId = 1) {
-  return histogramStmt.all({ version, school_id: schoolId });
+export function getHistogram(version) {
+  return histogramStmt.all({ version });
 }
 
 const achievementsForStmt = db.prepare(`
@@ -594,22 +523,22 @@ const VALID_REQ_TYPES = new Set(['game', 'theory', 'lab', 'skill', 'other']);
 const VALID_REQ_STATUS = new Set(['pending', 'reviewing', 'done', 'rejected']);
 
 const insertRequestStmt = db.prepare(`
-  INSERT INTO requests (school_id, domain, type, title, detail, student, status, votes, created_at, updated_at, attachments)
-  VALUES (@school_id, @domain, @type, @title, @detail, @student, 'pending', 1, @t, @t, @attachments)
+  INSERT INTO requests (domain, type, title, detail, student, status, votes, created_at, updated_at, attachments)
+  VALUES (@domain, @type, @title, @detail, @student, 'pending', 1, @t, @t, @attachments)
 `);
 const listRequestsStmt = db.prepare(`
   SELECT id, domain, type, title, detail, student, status, votes, admin_note, created_at, updated_at, attachments
-  FROM requests WHERE domain = @domain AND school_id = @school_id
+  FROM requests WHERE domain = @domain
   ORDER BY (status='done') ASC, votes DESC, created_at DESC
   LIMIT @limit
 `);
 const voteRequestStmt = db.prepare(`UPDATE requests SET votes = votes + 1, updated_at = @t WHERE id = @id`);
 const setRequestStatusStmt = db.prepare(`UPDATE requests SET status = @status, admin_note = @note, updated_at = @t WHERE id = @id`);
 const requestStatsStmt = db.prepare(`
-  SELECT status, COUNT(*) AS n FROM requests WHERE domain = @domain AND school_id = @school_id GROUP BY status
+  SELECT status, COUNT(*) AS n FROM requests WHERE domain = @domain GROUP BY status
 `);
 
-export function createRequest({ domain, type, title, detail, student, school_id = 1, attachments = null }) {
+export function createRequest({ domain, type, title, detail, student, attachments = null }) {
   const t = Date.now();
   const safeType = VALID_REQ_TYPES.has(type) ? type : 'other';
   // Chuẩn hoá attachments: chấp nhận mảng object {url,name,mime,size,kind}; lưu JSON.
@@ -626,7 +555,6 @@ export function createRequest({ domain, type, title, detail, student, school_id 
     if (safe.length) attachJson = JSON.stringify(safe);
   }
   const info = insertRequestStmt.run({
-    school_id,
     domain: String(domain || '').slice(0, 40),
     type: safeType,
     title: String(title || '').slice(0, 200),
@@ -641,8 +569,8 @@ export function createRequest({ domain, type, title, detail, student, school_id 
   });
   return { id: info.lastInsertRowid, createdAt: t };
 }
-export function listRequests(domain, limit = 50, schoolId = 1) {
-  const rows = listRequestsStmt.all({ domain: String(domain || ''), limit, school_id: schoolId });
+export function listRequests(domain, limit = 50) {
+  const rows = listRequestsStmt.all({ domain: String(domain || ''), limit });
   // Parse JSON attachments cho FE; sai/cũ → trả mảng rỗng (tolerant).
   for (const r of rows) {
     if (r.attachments) {
@@ -663,8 +591,8 @@ export function setRequestStatus(id, status, note) {
   const info = setRequestStatusStmt.run({ id: Number(id), status, note: note ? String(note).slice(0, 500) : null, t: Date.now() });
   return info.changes > 0;
 }
-export function getRequestStats(domain, schoolId = 1) {
-  const rows = requestStatsStmt.all({ domain: String(domain || ''), school_id: schoolId });
+export function getRequestStats(domain) {
+  const rows = requestStatsStmt.all({ domain: String(domain || '') });
   const out = { pending: 0, reviewing: 0, done: 0, rejected: 0 };
   for (const r of rows) out[r.status] = r.n;
   return out;
@@ -674,19 +602,19 @@ export function getRequestStats(domain, schoolId = 1) {
 const VALID_NOTIF_KINDS = new Set(['reply', 'system']);
 
 const insertNotificationStmt = db.prepare(`
-  INSERT INTO notifications (school_id, user_display_name, request_id, kind, title, body, url, created_at)
-  VALUES (@school_id, @user_display_name, @request_id, @kind, @title, @body, @url, @created_at)
+  INSERT INTO notifications (user_display_name, request_id, kind, title, body, url, created_at)
+  VALUES (@user_display_name, @request_id, @kind, @title, @body, @url, @created_at)
 `);
 const listNotificationsStmt = db.prepare(`
   SELECT id, request_id, kind, title, body, url, read_at, created_at
   FROM notifications
-  WHERE user_display_name = @user AND school_id = @school_id
+  WHERE user_display_name = @user
   ORDER BY (read_at IS NOT NULL) ASC, created_at DESC
   LIMIT @limit
 `);
 const countUnreadStmt = db.prepare(`
   SELECT COUNT(*) AS n FROM notifications
-  WHERE user_display_name = @user AND school_id = @school_id AND read_at IS NULL
+  WHERE user_display_name = @user AND read_at IS NULL
 `);
 const markReadStmt = db.prepare(`
   UPDATE notifications SET read_at = @t
@@ -694,16 +622,16 @@ const markReadStmt = db.prepare(`
 `);
 const markAllReadStmt = db.prepare(`
   UPDATE notifications SET read_at = @t
-  WHERE user_display_name = @user AND school_id = @school_id AND read_at IS NULL
+  WHERE user_display_name = @user AND read_at IS NULL
 `);
 
 /** Bỏ qua nếu thiếu display_name hợp lệ (vd 'Ẩn danh' / rỗng) — tránh broadcast. */
-export function createNotification({ user_display_name, request_id = null, kind = 'reply', title, body = null, url = null, school_id = 1 }) {
+export function createNotification({ user_display_name, request_id = null, kind = 'reply', title, body = null, url = null }) {
   const u = String(user_display_name || '').trim();
   if (!u || u === 'Ẩn danh') return null;
   if (!VALID_NOTIF_KINDS.has(kind)) kind = 'reply';
   const info = insertNotificationStmt.run({
-    school_id, user_display_name: u.slice(0, 60),
+    user_display_name: u.slice(0, 60),
     request_id: request_id ? Number(request_id) : null,
     kind,
     title: String(title || '').slice(0, 200),
@@ -713,31 +641,31 @@ export function createNotification({ user_display_name, request_id = null, kind 
   });
   return { id: info.lastInsertRowid };
 }
-export function listNotifications(user_display_name, schoolId = 1, limit = 30) {
+export function listNotifications(user_display_name, limit = 30) {
   const u = String(user_display_name || '').trim();
   if (!u) return [];
-  return listNotificationsStmt.all({ user: u, school_id: schoolId, limit });
+  return listNotificationsStmt.all({ user: u, limit });
 }
-export function countUnreadNotifications(user_display_name, schoolId = 1) {
+export function countUnreadNotifications(user_display_name) {
   const u = String(user_display_name || '').trim();
   if (!u) return 0;
-  return countUnreadStmt.get({ user: u, school_id: schoolId })?.n || 0;
+  return countUnreadStmt.get({ user: u })?.n || 0;
 }
 export function markNotificationRead(id, user_display_name) {
   const u = String(user_display_name || '').trim();
   if (!u) return false;
   return markReadStmt.run({ id: Number(id), user: u, t: Date.now() }).changes > 0;
 }
-export function markAllNotificationsRead(user_display_name, schoolId = 1) {
+export function markAllNotificationsRead(user_display_name) {
   const u = String(user_display_name || '').trim();
   if (!u) return 0;
-  return markAllReadStmt.run({ user: u, school_id: schoolId, t: Date.now() }).changes;
+  return markAllReadStmt.run({ user: u, t: Date.now() }).changes;
 }
 
 // --- Kho học liệu AI sinh thêm ---
 const insertAiContentStmt = db.prepare(`
-  INSERT INTO ai_lesson_content (school_id, week_id, subject, topic, kind, stem, payload, student, created_at)
-  VALUES (@school_id, @week_id, @subject, @topic, @kind, @stem, @payload, @student, @created_at)
+  INSERT INTO ai_lesson_content (week_id, subject, topic, kind, stem, payload, student, created_at)
+  VALUES (@week_id, @subject, @topic, @kind, @stem, @payload, @student, @created_at)
 `);
 const existsAiStemStmt = db.prepare(`
   SELECT 1 FROM ai_lesson_content WHERE week_id = @week_id AND kind = @kind AND stem = @stem LIMIT 1
@@ -758,7 +686,7 @@ const countAiContentStmt = db.prepare(`
 `);
 
 /** Lưu 1 mảng câu hỏi AI vừa sinh. Bỏ qua câu trùng stem trong cùng tuần. */
-export function saveAiQuestions({ week_id, subject, topic, student, questions = [], school_id = 1 }) {
+export function saveAiQuestions({ week_id, subject, topic, student, questions = [] }) {
   if (!week_id || !Array.isArray(questions) || !questions.length) return { saved: 0 };
   const t = Date.now();
   let saved = 0;
@@ -768,7 +696,7 @@ export function saveAiQuestions({ week_id, subject, topic, student, questions = 
       if (!stem) continue;
       if (existsAiStemStmt.get({ week_id, kind: 'question', stem })) continue;  // dedupe
       insertAiContentStmt.run({
-        school_id, week_id,
+        week_id,
         subject: subject ? String(subject).slice(0, 60) : null,
         topic: topic ? String(topic).slice(0, 160) : null,
         kind: 'question', stem: stem.slice(0, 500),
@@ -784,12 +712,12 @@ export function saveAiQuestions({ week_id, subject, topic, student, questions = 
 }
 
 /** Lưu 1 cặp hỏi-đáp với "cô giáo AI". */
-export function saveAiQa({ week_id, subject, topic, student, question, answer, school_id = 1 }) {
+export function saveAiQa({ week_id, subject, topic, student, question, answer }) {
   if (!week_id || !question || !answer) return { saved: 0 };
   const stem = String(question).trim().slice(0, 500);
   if (existsAiStemStmt.get({ week_id, kind: 'qa', stem })) return { saved: 0 };  // dedupe câu hỏi y hệt
   insertAiContentStmt.run({
-    school_id, week_id,
+    week_id,
     subject: subject ? String(subject).slice(0, 60) : null,
     topic: topic ? String(topic).slice(0, 160) : null,
     kind: 'qa', stem,
@@ -844,9 +772,9 @@ export function getConfusion(version) {
 
 // --- Users & sessions ---
 const insertUserStmt = db.prepare(`
-  INSERT INTO users (username, display_name, password_hash, role, age, school_id, created_at,
+  INSERT INTO users (username, display_name, password_hash, role, age, created_at,
                      grade, major, cohort, school_name)
-  VALUES (@username, @display_name, @password_hash, @role, @age, @school_id, @created_at,
+  VALUES (@username, @display_name, @password_hash, @role, @age, @created_at,
           @grade, @major, @cohort, @school_name)
 `);
 const getUserByUsernameStmt = db.prepare(`
@@ -855,7 +783,7 @@ const getUserByUsernameStmt = db.prepare(`
   FROM users WHERE username = ? COLLATE NOCASE
 `);
 const getUserByIdStmt = db.prepare(`
-  SELECT id, username, display_name, role, age, email, avatar_url, school_id, created_at, last_login,
+  SELECT id, username, display_name, role, age, email, avatar_url, created_at, last_login,
          plan, plan_expires_at, billing_cycle,
          grade, major, cohort, school_name, enrolled_domain
   FROM users WHERE id = ?
@@ -872,7 +800,7 @@ const insertSessionStmt = db.prepare(`
 `);
 const getSessionStmt = db.prepare(`
   SELECT s.token, s.user_id, s.expires_at,
-         u.username, u.display_name, u.role, u.school_id,
+         u.username, u.display_name, u.role,
          u.plan, u.plan_expires_at, u.enrolled_domain
   FROM sessions s JOIN users u ON u.id = s.user_id
   WHERE s.token = ? AND s.expires_at > @now
@@ -881,13 +809,12 @@ const deleteSessionStmt = db.prepare(`DELETE FROM sessions WHERE token = ?`);
 const purgeExpiredSessionsStmt = db.prepare(`DELETE FROM sessions WHERE expires_at <= ?`);
 
 const ALLOWED_ROLES = new Set(['pupil', 'student', 'teacher']);
-export function createUser({ username, display_name, password_hash, role, age, school_id = 1,
+export function createUser({ username, display_name, password_hash, role, age,
                              grade = null, major = null, cohort = null, school_name = null }) {
   const info = insertUserStmt.run({
     username, display_name, password_hash,
     role: ALLOWED_ROLES.has(role) ? role : 'student',
     age: Number.isFinite(age) ? Math.floor(age) : null,
-    school_id: Number(school_id) || 1,
     created_at: Date.now(),
     grade: Number.isFinite(grade) ? Math.floor(grade) : null,
     major: major ? String(major).slice(0, 40) : null,
@@ -998,46 +925,6 @@ export function isUsernameTaken(username) {
   return (countUsernameStmt.get(String(username))?.n || 0) > 0;
 }
 
-// --- Schools (multi-tenancy Phase 0) ---
-// Mỗi trường là 1 tenant. Default school id=1 'tizia-default' giữ legacy data.
-// Phase 1 sẽ wire createUser/SSO auto-map theo resolveSchoolByEmail và enforce
-// Postgres RLS theo school_id. Hiện tại helpers ready, callers chưa migrate.
-const getSchoolByIdStmt     = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE id = ?`);
-const getSchoolByCodeStmt   = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE code = ?`);
-const getSchoolByDomainStmt = db.prepare(`SELECT id, code, name, domain, created_at FROM schools WHERE domain = ?`);
-const listSchoolsStmt       = db.prepare(`SELECT id, code, name, domain, created_at FROM schools ORDER BY id ASC`);
-const createSchoolStmt      = db.prepare(`INSERT INTO schools (code, name, domain, created_at) VALUES (@code, @name, @domain, @created_at)`);
-
-export function getSchoolById(id) {
-  return getSchoolByIdStmt.get(Number(id)) || null;
-}
-export function getSchoolByCode(code) {
-  return getSchoolByCodeStmt.get(String(code || '').trim()) || null;
-}
-export function getSchoolByDomain(domain) {
-  if (!domain) return null;
-  return getSchoolByDomainStmt.get(String(domain).trim().toLowerCase()) || null;
-}
-export function listSchools() {
-  return listSchoolsStmt.all();
-}
-export function createSchool({ code, name, domain }) {
-  const info = createSchoolStmt.run({
-    code:   String(code || '').trim().slice(0, 40),
-    name:   String(name || '').trim().slice(0, 120),
-    domain: domain ? String(domain).trim().toLowerCase().slice(0, 80) : null,
-    created_at: Date.now(),
-  });
-  return { id: info.lastInsertRowid };
-}
-// Phân giải tenant từ email SSO: 'lan@neu.edu.vn' → school có domain='neu.edu.vn'.
-// Trả null nếu admin chưa cấu hình domain cho trường — caller fallback school_id=1.
-export function resolveSchoolByEmail(email) {
-  const m = String(email || '').match(/@([^@]+)$/);
-  if (!m) return null;
-  return getSchoolByDomain(m[1].toLowerCase());
-}
-
 // ── Family links (Trục 4) ──
 const insertFamilyStmt = db.prepare(`
   INSERT OR IGNORE INTO family_links (parent_user_id, child_user_id, created_at)
@@ -1077,60 +964,6 @@ export function listChildrenOfParent(parent_user_id) {
 /** Trả về parent có plan cao nhất (để con kế thừa). null nếu không có/không link. */
 export function getBestParentPlanForChild(child_user_id) {
   return getParentPlanStmt.get(Number(child_user_id)) || null;
-}
-
-// ── School codes (Trục 4) ──
-const insertCodeStmt = db.prepare(`
-  INSERT INTO school_codes (code, school_id, kind, grant_plan, grant_days, discount_percent,
-                            max_uses, expires_at, note, created_by, created_at)
-  VALUES (@code, @school_id, @kind, @grant_plan, @grant_days, @discount_percent,
-          @max_uses, @expires_at, @note, @created_by, @created_at)
-`);
-const getCodeStmt = db.prepare(`SELECT * FROM school_codes WHERE code = ? COLLATE NOCASE`);
-const incCodeUsageStmt = db.prepare(`UPDATE school_codes SET used_count = used_count + 1 WHERE id = ?`);
-const insertRedemptionStmt = db.prepare(`
-  INSERT OR IGNORE INTO school_code_redemptions (code_id, user_id, redeemed_at, outcome)
-  VALUES (@code_id, @user_id, @redeemed_at, @outcome)
-`);
-const listRedemptionsForUserStmt = db.prepare(`
-  SELECT r.code_id, r.outcome, r.redeemed_at, c.code, c.kind, c.discount_percent, c.grant_plan
-  FROM school_code_redemptions r JOIN school_codes c ON c.id = r.code_id
-  WHERE r.user_id = ? ORDER BY r.redeemed_at DESC
-`);
-
-export function createSchoolCode({ code, school_id = 1, kind = 'grant_plan',
-                                   grant_plan = null, grant_days = 365,
-                                   discount_percent = 0, max_uses = 0,
-                                   expires_at = null, note = null, created_by = null }) {
-  insertCodeStmt.run({
-    code: String(code).trim().slice(0, 40),
-    school_id: Number(school_id) || 1,
-    kind: kind === 'discount' ? 'discount' : 'grant_plan',
-    grant_plan: grant_plan ? String(grant_plan) : null,
-    grant_days: Math.max(1, Math.floor(Number(grant_days) || 365)),
-    discount_percent: Math.max(0, Math.min(90, Math.floor(Number(discount_percent) || 0))),
-    max_uses: Math.max(0, Math.floor(Number(max_uses) || 0)),
-    expires_at: expires_at ? Number(expires_at) : null,
-    note: note ? String(note).slice(0, 200) : null,
-    created_by: created_by ? Number(created_by) : null,
-    created_at: Date.now(),
-  });
-}
-export function getSchoolCode(code) {
-  return getCodeStmt.get(String(code || '').trim()) || null;
-}
-/** Tăng used_count + insert redemption. Trả false nếu đã redeem rồi (UNIQUE). */
-export function redeemSchoolCode({ code_id, user_id, outcome }) {
-  const info = insertRedemptionStmt.run({
-    code_id: Number(code_id), user_id: Number(user_id),
-    redeemed_at: Date.now(), outcome: String(outcome || ''),
-  });
-  if (info.changes === 0) return false;
-  incCodeUsageStmt.run(Number(code_id));
-  return true;
-}
-export function listRedemptionsForUser(user_id) {
-  return listRedemptionsForUserStmt.all(Number(user_id));
 }
 
 // ── User wallets (per-domain) ──
@@ -1436,7 +1269,6 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS question_attempts (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id                INTEGER NOT NULL,
-    school_id              INTEGER NOT NULL DEFAULT 1,
     scoreup_question_id    TEXT,                       -- id câu hỏi bên ScoreUp
     question_external_id   TEXT,                       -- external_id tizia:* (nếu Tizia tự đẩy)
     subject_id             TEXT,
@@ -1449,7 +1281,6 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
   CREATE INDEX IF NOT EXISTS idx_qa_user    ON question_attempts(user_id, created_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_qa_school  ON question_attempts(school_id, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_qa_subject ON question_attempts(subject_id, chapter_id);
   CREATE INDEX IF NOT EXISTS idx_qa_qid     ON question_attempts(scoreup_question_id);
 
@@ -1487,21 +1318,20 @@ db.exec(`
 
 const insertQAStmt = db.prepare(`
   INSERT INTO question_attempts
-    (user_id, school_id, scoreup_question_id, question_external_id,
+    (user_id, scoreup_question_id, question_external_id,
      subject_id, chapter_id, answers_json, correct, score, duration_ms, created_at)
-  VALUES (@user_id, @school_id, @scoreup_question_id, @question_external_id,
+  VALUES (@user_id, @scoreup_question_id, @question_external_id,
           @subject_id, @chapter_id, @answers_json, @correct, @score, @duration_ms, @t)
 `);
 
 /** Lưu 1 attempt câu hỏi (gọi từ route /api/quiz/attempt). */
 export function recordQuestionAttempt({
-  user_id, school_id = 1, scoreup_question_id = null, question_external_id = null,
+  user_id, scoreup_question_id = null, question_external_id = null,
   subject_id = null, chapter_id = null, answers = null,
   correct = false, score = 0, duration_ms = null,
 }) {
   const info = insertQAStmt.run({
     user_id: Number(user_id),
-    school_id: Number(school_id) || 1,
     scoreup_question_id: scoreup_question_id ? String(scoreup_question_id) : null,
     question_external_id: question_external_id ? String(question_external_id) : null,
     subject_id: subject_id ? String(subject_id) : null,
@@ -1618,7 +1448,6 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS srs_cards (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id       INTEGER NOT NULL,
-    school_id     INTEGER NOT NULL DEFAULT 1,
     card_key      TEXT    NOT NULL,
     ease          REAL    NOT NULL DEFAULT 2.5,
     interval_d    REAL    NOT NULL DEFAULT 0,
@@ -1647,9 +1476,9 @@ const getSrsCardStmt = db.prepare(`
 `);
 const upsertSrsStmt = db.prepare(`
   INSERT INTO srs_cards
-    (user_id, school_id, card_key, ease, interval_d, reps, lapses,
+    (user_id, card_key, ease, interval_d, reps, lapses,
      total_reviews, due_at, last_correct, last_seen)
-  VALUES (@user_id, @school_id, @card_key, @ease, @interval_d, @reps, @lapses,
+  VALUES (@user_id, @card_key, @ease, @interval_d, @reps, @lapses,
           @total_reviews, @due_at, @last_correct, @last_seen)
   ON CONFLICT(user_id, card_key) DO UPDATE SET
     ease=excluded.ease,
@@ -1692,13 +1521,12 @@ export function getSrsStateByPrefix(user_id, prefix) {
 }
 
 /** Ghi 1 lần review. Tự upsert + cập nhật SM-2 từ state cũ. */
-export function recordSrsReview({ user_id, school_id = 1, card_key, correct }) {
+export function recordSrsReview({ user_id, card_key, correct }) {
   const prev = getSrsCardStmt.get(Number(user_id), String(card_key)) || null;
   const next = sm2Step(prev, !!correct);
   const now = Date.now();
   const row = {
     user_id: Number(user_id),
-    school_id: Number(school_id) || 1,
     card_key: String(card_key),
     ease: next.ease,
     interval_d: next.interval_d,

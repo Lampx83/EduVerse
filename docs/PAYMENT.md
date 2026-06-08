@@ -67,7 +67,7 @@ Mỗi giao dịch ghi nhóm bút toán cân bằng (`SUM(amount_signed)=0`). Ví
 | `gateway:vnpay` | +50000 | tài sản (tiền ở cổng) tăng |
 | `revenue:school:2` | −50000 | doanh thu trường 2 tăng |
 
-Hoàn tiền đảo chiều. `getBalance(account)` / `getSchoolBalances(school_id)` để xem số dư. Bút toán không cân bằng → `postTransaction` throw, không ghi gì ([ledger.js](../server/contexts/payment/ledger.js)).
+Hoàn tiền đảo chiều. `getBalance(account)` để xem số dư. Bút toán không cân bằng → `postTransaction` throw, không ghi gì ([ledger.js](../server/contexts/payment/ledger.js)).
 
 ## 6. Đã test (scaffold)
 

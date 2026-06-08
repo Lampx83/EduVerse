@@ -91,7 +91,7 @@ export function attachSrs(router) {
     const quality = Math.max(0, Math.min(3, Number(req.body?.quality) ?? 2));
     if (!cardKey) return res.status(400).json({ error: 'card_key required' });
     const result = recordSrsReview({
-      user_id: req.user.id, school_id: req.schoolId || 1,
+      user_id: req.user.id,
       card_key: cardKey, correct: quality >= 1,
     });
     res.json({ ok: true, ...result, quality });

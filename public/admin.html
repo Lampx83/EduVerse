@@ -252,10 +252,7 @@
       </div>
       <div class="grp"><label>Tuổi (tuỳ chọn)</label><input id="cu-age" type="number" min="3" max="100" placeholder="3-100"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="grp"><label>Email (tuỳ chọn)</label><input id="cu-email" type="email" placeholder="…@…"></div>
-      <div class="grp"><label>Trường</label><select id="cu-school"></select></div>
-    </div>
+    <div class="grp"><label>Email (tuỳ chọn)</label><input id="cu-email" type="email" placeholder="…@…"></div>
     <div class="actions">
       <button class="btn" id="cu-cancel">Huỷ</button>
       <button class="btn primary" id="cu-submit">➕ Tạo</button>
@@ -271,7 +268,6 @@
       <div class="grp"><label>Email</label><input id="eu-email" type="email"></div>
       <div class="grp"><label>Tuổi</label><input id="eu-age" type="number" min="3" max="100"></div>
     </div>
-    <div class="grp"><label>Trường</label><select id="eu-school"></select></div>
     <div class="actions">
       <button class="btn" id="eu-cancel">Huỷ</button>
       <button class="btn primary" id="eu-submit">💾 Lưu</button>
@@ -326,35 +322,33 @@
     </div>
   </div>
 
-  <!-- Create / Edit school -->
-  <div class="modal" id="modal-school" style="display:none">
-    <h3 id="sch-title">🏫 Tạo trường</h3>
-    <div class="grp"><label>Mã trường (code) — vd "neu-cntt"</label><input id="sch-code" placeholder="duy nhất, slug"></div>
-    <div class="grp"><label>Tên trường</label><input id="sch-name"></div>
-    <div class="grp"><label>Domain email (tuỳ chọn — auto-map khi user đăng ký)</label><input id="sch-domain" placeholder="vd: neu.edu.vn"></div>
-    <div class="actions">
-      <button class="btn" id="sch-cancel">Huỷ</button>
-      <button class="btn primary" id="sch-submit">💾 Lưu</button>
-    </div>
-  </div>
 </div>
 
-<!-- Campus Editor Overlay -->
-<div id="campus-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(11,18,32,.97);flex-direction:column">
+<!-- School Admin Overlay — bấm "Sửa" trên 1 trường mở overlay full-screen
+     gồm 5 tab: Campus | Apps | Curriculum | Quản lý trường | Người dùng.
+     Tab Campus nhúng campus-editor.html — giữ nguyên cơ chế postMessage cũ
+     (campus-iframe / campus-save-btn / campus-reset-btn / campus-dirty-badge). -->
+<div id="school-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(11,18,32,.97);flex-direction:column">
   <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0">
-    <span id="campus-overlay-title" style="font-weight:700;font-size:15px;flex:1"></span>
+    <span id="school-overlay-title" style="font-weight:700;font-size:15px;flex:1"></span>
     <span id="campus-dirty-badge" style="display:none;background:var(--warn);color:#000;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px">● Chưa lưu</span>
-    <button class="btn primary" id="campus-save-btn" style="min-width:90px">💾 Lưu</button>
-    <button class="btn" id="campus-reset-btn" style="background:rgba(239,68,68,.15);border-color:var(--bad);color:var(--bad)">↺ Reset mặc định</button>
-    <button class="btn" id="campus-close-btn">✕ Đóng</button>
+    <button class="btn primary" id="campus-save-btn" style="min-width:90px;display:none">💾 Lưu campus</button>
+    <button class="btn" id="campus-reset-btn" style="background:rgba(239,68,68,.15);border-color:var(--bad);color:var(--bad);display:none">↺ Reset mặc định</button>
+    <button class="btn" id="school-close-btn">✕ Đóng</button>
   </div>
-  <iframe id="campus-iframe" style="flex:1;border:none;width:100%;height:100%" allow=""></iframe>
+  <div style="display:flex;flex:1;min-height:0">
+    <nav id="school-tabs" style="width:200px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);padding:12px 8px;display:flex;flex-direction:column;gap:4px;overflow-y:auto"></nav>
+    <main id="school-tabbody" style="flex:1;overflow:auto;position:relative">
+      <iframe id="campus-iframe" style="border:none;width:100%;height:100%;display:none" allow=""></iframe>
+      <div id="school-tab-content" style="padding:18px 22px"></div>
+    </main>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 <div class="chart-tooltip" id="ctt"></div>
 
-<script type="module" src="/js/admin-dashboard.js?v=curriculum1"></script>
+<script type="module" src="/js/admin-dashboard.js?v=pageview1"></script>
 <script type="module" src="./js/engagement-hud.js?v=2026-06-05-r2"></script>
 <script type="module" src="./js/onboarding-60s.js?v=2026-06-08-r8"></script>
 <script type="module" src="./js/pet-widget.js?v=2026-06-07r3"></script>

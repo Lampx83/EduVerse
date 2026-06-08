@@ -2,8 +2,8 @@
 // Payment reconciliation + refund (hardening go-live #2)
 // ============================================================
 // Reconciliation: đối soát SỔ CÁI nội bộ (ledger) với GIAO DỊCH (payments/refunds)
-// theo từng trường → phát hiện lệch (gian lận/bug/IPN trùng/thiếu). Chạy cron hằng
-// ngày + cho admin gọi tay. KHÔNG tin số cổng — luôn so với ledger.
+// → phát hiện lệch (gian lận/bug/IPN trùng/thiếu). Chạy cron hằng ngày + cho admin
+// gọi tay. KHÔNG tin số cổng — luôn so với ledger.
 //
 // Refund: hoàn tiền là first-class — tạo bản ghi refund + bút toán đảo chiều
 // (recordRefund) + cập nhật invoice. (Bản này ghi sổ nội bộ; nối API refund VNPay
@@ -14,38 +14,29 @@ import { db } from '../../db.js';
 import { recordRefund, getBalance } from './ledger.js';
 
 // ── Reconciliation ──
-const schoolsWithPayStmt = db.prepare(`
-  SELECT DISTINCT school_id FROM payments
-  UNION SELECT DISTINCT school_id FROM ledger_entries WHERE account LIKE 'revenue:school:%'
-`);
-const paySuccessStmt = db.prepare(`SELECT COALESCE(SUM(amount),0) AS s FROM payments WHERE school_id=? AND status='success'`);
-const refundDoneStmt = db.prepare(`SELECT COALESCE(SUM(amount),0) AS s FROM refunds WHERE school_id=? AND status='done'`);
+const paySuccessStmt = db.prepare(`SELECT COALESCE(SUM(amount),0) AS s FROM payments WHERE status='success'`);
+const refundDoneStmt = db.prepare(`SELECT COALESCE(SUM(amount),0) AS s FROM refunds WHERE status='done'`);
 
 /**
- * Đối soát 1 trường (hoặc tất cả nếu school_id=null).
+ * Đối soát toàn hệ thống.
  * revenue_ledger (doanh thu ghi sổ) PHẢI = payments_success − refunds_done.
  */
-export function reconcile(school_id = null) {
-  const ids = school_id != null ? [{ school_id }] : schoolsWithPayStmt.all();
-  const rows = [];
-  for (const { school_id: sid } of ids) {
-    const revenueLedger = -getBalance(`revenue:school:${sid}`); // revenue là credit (âm) → đảo dấu
-    const paid = paySuccessStmt.get(sid).s;
-    const refunded = refundDoneStmt.get(sid).s;
-    const expected = paid - refunded;
-    const diff = revenueLedger - expected;
-    rows.push({ school_id: sid, revenue_ledger: revenueLedger, payments_success: paid, refunds_done: refunded, expected, diff, ok: diff === 0 });
-  }
-  const mismatches = rows.filter((r) => !r.ok);
-  return { checked: rows.length, ok: mismatches.length === 0, mismatches, rows };
+export function reconcile() {
+  const revenueLedger = -getBalance(`revenue`); // revenue là credit (âm) → đảo dấu
+  const paid = paySuccessStmt.get().s;
+  const refunded = refundDoneStmt.get().s;
+  const expected = paid - refunded;
+  const diff = revenueLedger - expected;
+  const row = { revenue_ledger: revenueLedger, payments_success: paid, refunds_done: refunded, expected, diff, ok: diff === 0 };
+  return { checked: 1, ok: row.ok, mismatches: row.ok ? [] : [row], rows: [row] };
 }
 
 // ── Refund ──
 const getPaymentStmt = db.prepare(`SELECT * FROM payments WHERE id = ?`);
 const refundedForPaymentStmt = db.prepare(`SELECT COALESCE(SUM(amount),0) AS s FROM refunds WHERE payment_id=? AND status='done'`);
 const insertRefundStmt = db.prepare(`
-  INSERT INTO refunds (school_id, payment_id, amount, reason, status, gateway_refund_ref, created_at)
-  VALUES (@school_id, @payment_id, @amount, @reason, 'done', @ref, @t)
+  INSERT INTO refunds (payment_id, amount, reason, status, gateway_refund_ref, created_at)
+  VALUES (@payment_id, @amount, @reason, 'done', @ref, @t)
 `);
 const markInvoiceRefundedStmt = db.prepare(`UPDATE invoices SET status='refunded', updated_at=@t WHERE id=@id`);
 
@@ -66,9 +57,9 @@ export function refundPayment({ payment_id, amount, reason = null }) {
   let refund_id, txn_group;
   const tx = db.transaction(() => {
     // TODO go-live: gọi API refund VNPay ở đây, chỉ ghi 'done' khi cổng xác nhận.
-    const info = insertRefundStmt.run({ school_id: pay.school_id, payment_id: pay.id, amount: amt, reason: reason ? String(reason).slice(0, 300) : null, ref: `RF${now.toString(36).toUpperCase()}`, t: now });
+    const info = insertRefundStmt.run({ payment_id: pay.id, amount: amt, reason: reason ? String(reason).slice(0, 300) : null, ref: `RF${now.toString(36).toUpperCase()}`, t: now });
     refund_id = info.lastInsertRowid;
-    ({ txn_group } = recordRefund({ school_id: pay.school_id, gateway: pay.gateway, amount: amt, payment_id: pay.id }));
+    ({ txn_group } = recordRefund({ gateway: pay.gateway, amount: amt, payment_id: pay.id }));
     if (already + amt >= pay.amount) markInvoiceRefundedStmt.run({ id: pay.invoice_id, t: now });
   });
   tx();

@@ -14,8 +14,8 @@
 import { db } from '../../db.js';
 
 const insertEntryStmt = db.prepare(`
-  INSERT INTO ledger_entries (school_id, txn_group, account, amount_signed, currency, ref_type, ref_id, memo, created_at)
-  VALUES (@school_id, @txn_group, @account, @amount_signed, @currency, @ref_type, @ref_id, @memo, @created_at)
+  INSERT INTO ledger_entries (txn_group, account, amount_signed, currency, ref_type, ref_id, memo, created_at)
+  VALUES (@txn_group, @account, @amount_signed, @currency, @ref_type, @ref_id, @memo, @created_at)
 `);
 
 let _seq = 0;
@@ -28,7 +28,6 @@ function makeTxnGroup(prefix = 'txn') {
 /**
  * Ghi 1 giao dịch sổ cái cân bằng.
  * @param {Object} p
- * @param {number} p.school_id
  * @param {Array<{account:string, amount:number, direction:'debit'|'credit'}>} p.entries
  * @param {string} [p.ref_type]  'invoice'|'payment'|'refund'
  * @param {number} [p.ref_id]
@@ -37,7 +36,7 @@ function makeTxnGroup(prefix = 'txn') {
  * @param {string} [p.txn_group] override (mặc định tự sinh)
  * @returns {{ txn_group:string, entries:number }}
  */
-export function postTransaction({ school_id = 1, entries, ref_type = null, ref_id = null, memo = null, currency = 'VND', txn_group } = {}) {
+export function postTransaction({ entries, ref_type = null, ref_id = null, memo = null, currency = 'VND', txn_group } = {}) {
   if (!Array.isArray(entries) || entries.length < 2) {
     throw new Error('postTransaction: cần ít nhất 2 bút toán (nợ + có)');
   }
@@ -56,7 +55,7 @@ export function postTransaction({ school_id = 1, entries, ref_type = null, ref_i
   const tx = db.transaction(() => {
     for (const e of signed) {
       insertEntryStmt.run({
-        school_id, txn_group: group, account: e.account, amount_signed: e.amount_signed,
+        txn_group: group, account: e.account, amount_signed: e.amount_signed,
         currency, ref_type, ref_id, memo, created_at: now,
       });
     }
@@ -68,9 +67,9 @@ export function postTransaction({ school_id = 1, entries, ref_type = null, ref_i
 const balanceStmt = db.prepare(`
   SELECT COALESCE(SUM(amount_signed), 0) AS bal FROM ledger_entries WHERE account = ?
 `);
-const balanceSchoolStmt = db.prepare(`
+const balanceAllStmt = db.prepare(`
   SELECT account, COALESCE(SUM(amount_signed), 0) AS bal
-  FROM ledger_entries WHERE school_id = ? GROUP BY account ORDER BY account
+  FROM ledger_entries GROUP BY account ORDER BY account
 `);
 const txnGroupStmt = db.prepare(`
   SELECT account, amount_signed, ref_type, ref_id, memo, created_at
@@ -81,9 +80,9 @@ const txnGroupStmt = db.prepare(`
 export function getBalance(account) {
   return balanceStmt.get(String(account))?.bal ?? 0;
 }
-/** Bảng số dư mọi tài khoản của 1 trường. */
-export function getSchoolBalances(school_id) {
-  return balanceSchoolStmt.all(Number(school_id) || 1);
+/** Bảng số dư mọi tài khoản toàn hệ thống. */
+export function getAllBalances() {
+  return balanceAllStmt.all();
 }
 /** Đọc lại các bút toán của 1 txn_group (audit/trace). */
 export function getTransaction(txn_group) {
@@ -92,26 +91,24 @@ export function getTransaction(txn_group) {
 
 // ── Helpers cao cấp cho luồng thanh toán ──
 
-/** Khi 1 payment thành công: tiền vào cổng (debit asset) + ghi nhận doanh thu trường (credit). */
-export function recordPaymentSettled({ school_id, gateway, amount, invoice_id, memo }) {
+/** Khi 1 payment thành công: tiền vào cổng (debit asset) + ghi nhận doanh thu (credit). */
+export function recordPaymentSettled({ gateway, amount, invoice_id, memo }) {
   return postTransaction({
-    school_id,
     ref_type: 'payment', ref_id: invoice_id, memo: memo || `Thu tiền đơn ${invoice_id}`,
     entries: [
-      { account: `gateway:${gateway}`,       amount, direction: 'debit'  }, // tài sản tăng
-      { account: `revenue:school:${school_id}`, amount, direction: 'credit' }, // doanh thu tăng
+      { account: `gateway:${gateway}`, amount, direction: 'debit'  }, // tài sản tăng
+      { account: `revenue`,            amount, direction: 'credit' }, // doanh thu tăng
     ],
   });
 }
 
 /** Khi hoàn tiền: đảo chiều — giảm doanh thu (debit) + tiền rời cổng (credit). */
-export function recordRefund({ school_id, gateway, amount, payment_id, memo }) {
+export function recordRefund({ gateway, amount, payment_id, memo }) {
   return postTransaction({
-    school_id,
     ref_type: 'refund', ref_id: payment_id, memo: memo || `Hoàn tiền payment ${payment_id}`,
     entries: [
-      { account: `revenue:school:${school_id}`, amount, direction: 'debit'  },
-      { account: `gateway:${gateway}`,       amount, direction: 'credit' },
+      { account: `revenue`,            amount, direction: 'debit'  },
+      { account: `gateway:${gateway}`, amount, direction: 'credit' },
     ],
   });
 }

@@ -66,9 +66,7 @@ export function sendGA4Event(req, name, params = {}) {
   if (!gaConfigured() || !name) return;
   const clientId = readGaClientId(req) || ensureAnonId(req, req.res || null);
   const userId = req.user?.id ? String(req.user.id) : undefined;
-  // school_id luôn gắn (theo memory: mọi event gắn school_id để đo theo trường).
   const enriched = Object.assign({}, params);
-  if (req.schoolId && enriched.school_id == null) enriched.school_id = String(req.schoolId);
   // engagement_time_msec yêu cầu của GA4 — không có sẽ không tính realtime.
   if (enriched.engagement_time_msec == null) enriched.engagement_time_msec = 1;
 

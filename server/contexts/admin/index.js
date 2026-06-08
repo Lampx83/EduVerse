@@ -1,9 +1,8 @@
 // ============================================================
-// Admin context — trang quản trị TOÀN HỆ THỐNG (xuyên tenant)
+// Admin context — trang quản trị TOÀN HỆ THỐNG
 // ============================================================
-// Super-admin (role='admin') quản trị MỌI trường: số liệu tổng, trường, người dùng,
-// góp ý, quyết định AI (audit), học liệu (kiểm duyệt), gói cước. KHÁC với teacher
-// (chỉ trong 1 trường) — admin BỎ QUA tenant isolation, thấy tất cả.
+// Super-admin (role='admin') quản trị toàn hệ thống: số liệu tổng, người dùng,
+// góp ý, quyết định AI (audit), học liệu (kiểm duyệt), gói cước.
 //
 // Bảo mật: requireAdmin gate role='admin'. Admin KHÔNG tự đăng ký được (register chỉ
 // cho pupil/student/teacher) — phải promote qua env ADMIN_PROMOTE_USERNAME hoặc SQL.
@@ -13,8 +12,9 @@
 import { scryptSync, randomBytes } from 'node:crypto';
 import { db, createNotification, setUserPlan, createUser, getUserById, getUserByUsername, updateUserEditable } from '../../db.js';
 import { VALID_USER_PLANS, expiresAtFor } from '../billing/user-plans.js';
-import { listAiPromptsForSchool, listAiPromptsForUser } from '../../ai-quota.js';
+import { listAiPrompts, listAiPromptsForUser } from '../../ai-quota.js';
 import { attachBackup, scheduleAutoBackup } from './backup.js';
+import { getPageviewStats } from '../analytics/index.js';
 
 // Scrypt hash — đồng bộ format với contexts/identity/auth.js (scrypt$salt$hash)
 function hashPassword(password) {
@@ -23,7 +23,6 @@ function hashPassword(password) {
   return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
 }
 const USERNAME_RE = /^[a-z0-9_.-]{3,32}$/i;
-const DEFAULT_SCHOOL_ID = 1; // tizia-default — không cho xoá
 
 // ── Bootstrap admin từ env (an toàn: chỉ promote user đã tồn tại) ──
 export function ensureAdminBootstrap() {
@@ -43,26 +42,19 @@ export function requireAdmin(req, res, next) {
   next();
 }
 
-// ── Cross-tenant queries (KHÔNG lọc school_id) ──
+// ── Queries (toàn hệ thống) ──
 const Q = {
   overview: db.prepare(`SELECT
-    (SELECT COUNT(*) FROM schools) AS schools,
     (SELECT COUNT(*) FROM users) AS users,
     (SELECT COUNT(*) FROM attempts) AS attempts,
     (SELECT COUNT(*) FROM requests) AS requests,
     (SELECT COUNT(*) FROM requests WHERE status='pending') AS requests_pending`),
-  schools: db.prepare(`SELECT s.id, s.code, s.name, s.domain, s.created_at,
-    (SELECT COUNT(*) FROM users u WHERE u.school_id=s.id) AS users,
-    (SELECT COUNT(*) FROM attempts a WHERE a.school_id=s.id) AS attempts,
-    (SELECT COUNT(*) FROM requests r WHERE r.school_id=s.id) AS requests
-    FROM schools s ORDER BY s.id`),
-  createSchool: db.prepare(`INSERT INTO schools (code,name,domain,created_at) VALUES (@code,@name,@domain,@t)`),
   // LEFT JOIN user_wallets BUCKET trường HS đang theo học (enrolled_domain). Vì
   // user_wallets giờ là composite (user_id, domain), nếu không filter domain thì
   // user có nhiều bucket sẽ ra nhiều row → sai số liệu admin. enrolled_domain
   // NULL (admin/chưa enroll) → bucket '' = legacy.
   users: db.prepare(`
-    SELECT u.id, u.username, u.display_name, u.role, u.school_id, u.email,
+    SELECT u.id, u.username, u.display_name, u.role, u.email,
            u.plan, u.plan_expires_at, u.billing_cycle, u.created_at, u.last_login,
            u.enrolled_domain,
            w.xp, w.coins, w.streak, w.longest_streak, w.last_visit_day,
@@ -70,7 +62,6 @@ const Q = {
     FROM users u
     LEFT JOIN user_wallets w
       ON w.user_id = u.id AND w.domain = COALESCE(u.enrolled_domain, '')
-    WHERE (@school_id IS NULL OR u.school_id=@school_id)
     ORDER BY u.created_at DESC LIMIT @limit
   `),
   // Wallet chi tiết — cùng nguyên tắc: chỉ ví trường HS đang học.
@@ -86,7 +77,7 @@ const Q = {
     WHERE u.id = ?
   `),
   setUserRole: db.prepare(`UPDATE users SET role=@role WHERE id=@id`),
-  requests: db.prepare(`SELECT id, school_id, domain, type, title, detail, status, votes, student, admin_note, created_at, updated_at
+  requests: db.prepare(`SELECT id, domain, type, title, detail, status, votes, student, admin_note, created_at, updated_at
     FROM requests ORDER BY created_at DESC LIMIT @limit`),
   setRequestStatus: db.prepare(`UPDATE requests SET status=@status, admin_note=@note, updated_at=@t WHERE id=@id`),
 };
@@ -104,28 +95,15 @@ export function attachAdmin(r) {
     const extra = {};
     if (tableExists('ai_decisions')) extra.ai_decisions = db.prepare(`SELECT COUNT(*) c FROM ai_decisions`).get().c;
     if (tableExists('analytics_events')) extra.events = db.prepare(`SELECT COUNT(*) c FROM analytics_events`).get().c;
-    if (tableExists('subscriptions')) extra.paid_schools = db.prepare(`SELECT COUNT(*) c FROM subscriptions WHERE plan<>'free' AND status='active'`).get().c;
+    if (tableExists('subscriptions')) extra.paid_users = db.prepare(`SELECT COUNT(*) c FROM subscriptions WHERE plan<>'free' AND status='active'`).get().c;
     if (tableExists('ai_lesson_content')) extra.ai_content = db.prepare(`SELECT COUNT(*) c FROM ai_lesson_content`).get().c;
     res.json({ ...base, ...extra });
   });
 
-  // Trường — xem tất cả + tạo mới
-  r.get('/api/admin/schools', requireAdmin, (_req, res) => res.json({ schools: Q.schools.all() }));
-  r.post('/api/admin/schools', requireAdmin, (req, res) => {
-    const code = String(req.body?.code || '').trim().slice(0, 40);
-    const name = String(req.body?.name || '').trim().slice(0, 120);
-    if (!code || !name) return res.status(400).json({ error: 'code + name required' });
-    try {
-      const info = Q.createSchool.run({ code, name, domain: req.body?.domain ? String(req.body.domain).toLowerCase().slice(0, 80) : null, t: Date.now() });
-      res.json({ ok: true, id: info.lastInsertRowid });
-    } catch (e) { res.status(409).json({ error: 'duplicate_or_invalid', detail: String(e.message) }); }
-  });
-
-  // Người dùng — xuyên tenant, lọc tuỳ chọn theo trường; đổi vai trò
+  // Người dùng — toàn hệ thống; đổi vai trò
   r.get('/api/admin/users', requireAdmin, (req, res) => {
-    const school_id = req.query.school_id ? Number(req.query.school_id) : null;
     const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
-    res.json({ users: Q.users.all({ school_id, limit }) });
+    res.json({ users: Q.users.all({ limit }) });
   });
   r.post('/api/admin/users/:id/role', requireAdmin, (req, res) => {
     const role = String(req.body?.role || '');
@@ -310,12 +288,12 @@ export function attachAdmin(r) {
   // Đóng góp ý + GỬI PHẢN HỒI cá nhân cho HS. Khác /status: bắt buộc message,
   // gửi notification vào hộp thư của HS (key theo display_name). Dùng khi đã xử
   // lý xong yêu cầu — UI bell ở HS sẽ kêu báo.
-  const getRequestForReply = db.prepare(`SELECT id, school_id, student, title, domain FROM requests WHERE id = ?`);
+  const getRequestForReply = db.prepare(`SELECT id, student, title, domain FROM requests WHERE id = ?`);
   // Ghi audit trail vào ai_decisions với decided_by='human' để admin override trùng
   // schema với AI auto-decision — bảng audit chỉ có 1 nguồn sự thật.
   const insertHumanDecision = db.prepare(`
-    INSERT INTO ai_decisions (school_id, request_id, decided_by, action, status_applied, reason, public_note, priority_score, confidence, created_at)
-    VALUES (@school_id, @request_id, 'human', @action, @status, @reason, @public_note, 100, 1.0, @t)
+    INSERT INTO ai_decisions (request_id, decided_by, action, status_applied, reason, public_note, priority_score, confidence, created_at)
+    VALUES (@request_id, 'human', @action, @status, @reason, @public_note, 100, 1.0, @t)
   `);
   const ACTION_BY_STATUS = { done: 'approve', rejected: 'reject', reviewing: 'approve' };
 
@@ -332,7 +310,7 @@ export function attachAdmin(r) {
     Q.setRequestStatus.run({ id, status, note: message.slice(0, 500), t: Date.now() });
 
     insertHumanDecision.run({
-      school_id: reqRow.school_id || 1, request_id: id,
+      request_id: id,
       action: ACTION_BY_STATUS[status],
       status, reason: `[admin] ${req.user.username} → ${status}`,
       public_note: message.slice(0, 500), t: Date.now(),
@@ -350,7 +328,6 @@ export function attachAdmin(r) {
       title: titleByStatus[status],
       body: `「${reqRow.title}」 — ${message}`,
       url: `/space.html?domain=${encodeURIComponent(reqRow.domain || '')}#requests`,
-      school_id: reqRow.school_id || 1,
     });
     res.json({ ok: true, status, notified: !!notif, notification_id: notif?.id || null });
   });
@@ -359,14 +336,14 @@ export function attachAdmin(r) {
   r.get('/api/admin/ai-decisions', requireAdmin, (req, res) => {
     if (!tableExists('ai_decisions')) return res.json({ decisions: [] });
     const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
-    res.json({ decisions: db.prepare(`SELECT id, school_id, request_id, decided_by, action, status_applied, confidence, reason, created_at FROM ai_decisions ORDER BY created_at DESC LIMIT ?`).all(limit) });
+    res.json({ decisions: db.prepare(`SELECT id, request_id, decided_by, action, status_applied, confidence, reason, created_at FROM ai_decisions ORDER BY created_at DESC LIMIT ?`).all(limit) });
   });
 
   // Kiểm duyệt học liệu AI sinh — gắn/bỏ cờ nội dung sai
   r.get('/api/admin/content', requireAdmin, (req, res) => {
     if (!tableExists('ai_lesson_content')) return res.json({ content: [] });
     const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
-    res.json({ content: db.prepare(`SELECT id, school_id, week_id, subject, kind, stem, flagged, created_at FROM ai_lesson_content ORDER BY created_at DESC LIMIT ?`).all(limit) });
+    res.json({ content: db.prepare(`SELECT id, week_id, subject, kind, stem, flagged, created_at FROM ai_lesson_content ORDER BY created_at DESC LIMIT ?`).all(limit) });
   });
   r.post('/api/admin/content/:id/flag', requireAdmin, (req, res) => {
     if (!tableExists('ai_lesson_content')) return res.status(404).json({ error: 'no_content_table' });
@@ -375,10 +352,10 @@ export function attachAdmin(r) {
     res.json({ ok: true, flagged: !!flagged });
   });
 
-  // Gói cước — xuyên tenant
+  // Gói cước — toàn hệ thống
   r.get('/api/admin/billing', requireAdmin, (_req, res) => {
     if (!tableExists('subscriptions')) return res.json({ subscriptions: [] });
-    res.json({ subscriptions: db.prepare(`SELECT s.school_id, sc.name AS school, s.plan, s.status, s.current_period_end FROM subscriptions s LEFT JOIN schools sc ON sc.id=s.school_id ORDER BY s.school_id`).all() });
+    res.json({ subscriptions: db.prepare(`SELECT s.* FROM subscriptions s ORDER BY s.id`).all() });
   });
 
   // ─────────────────────────────────────────────────────────────
@@ -436,23 +413,15 @@ export function attachAdmin(r) {
     res.json({ days, models: rows });
   });
 
-  // GET /api/admin/top?metric=schools|students&limit=10
+  // GET /api/admin/top?metric=students&limit=10
   r.get('/api/admin/top', requireAdmin, (req, res) => {
-    const metric = String(req.query.metric || 'schools');
+    const metric = String(req.query.metric || 'students');
     const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
-    if (metric === 'schools') {
-      const rows = db.prepare(`SELECT s.id, s.code, s.name,
-          (SELECT COUNT(*) FROM users u WHERE u.school_id=s.id) AS users,
-          (SELECT COUNT(*) FROM attempts a WHERE a.school_id=s.id) AS attempts,
-          (SELECT COUNT(*) FROM requests r WHERE r.school_id=s.id) AS requests
-        FROM schools s ORDER BY attempts DESC, users DESC LIMIT ?`).all(limit);
-      return res.json({ metric, rows });
-    }
     if (metric === 'students') {
-      // Top theo lượt học (link attempts ↔ users qua player_name = display_name; fallback school_id)
-      const rows = db.prepare(`SELECT u.id, u.username, u.display_name, u.role, u.school_id,
+      // Top theo lượt học (link attempts ↔ users qua player_name = display_name)
+      const rows = db.prepare(`SELECT u.id, u.username, u.display_name, u.role,
           COUNT(a.id) AS attempts, COALESCE(SUM(a.score), 0) AS total_score, MAX(a.created_at) AS last_played
-        FROM users u LEFT JOIN attempts a ON a.player_name = u.display_name AND a.school_id = u.school_id
+        FROM users u LEFT JOIN attempts a ON a.player_name = u.display_name
         WHERE u.role IN ('pupil','student')
         GROUP BY u.id ORDER BY attempts DESC, total_score DESC LIMIT ?`).all(limit);
       return res.json({ metric, rows });
@@ -479,29 +448,40 @@ export function attachAdmin(r) {
     });
   });
 
+  // GET /api/admin/pageviews?days=30 — thống kê page_view cho dashboard
+  // Bảng analytics_events có thể chưa tồn tại trên môi trường mới → fallback rỗng.
+  r.get('/api/admin/pageviews', requireAdmin, (req, res) => {
+    const days = Math.min(Math.max(Number(req.query.days) || 30, 1), 90);
+    if (!tableExists('analytics_events')) {
+      return res.json({ days, totals: { last_24h:0, last_7d:0, last_30d:0, unique_24h:0, unique_7d:0, unique_30d:0 }, by_day: [], top_paths: [], by_role: [] });
+    }
+    try { res.json(getPageviewStats(days)); }
+    catch (e) { res.status(500).json({ error: 'pageview_stats_failed', detail: String(e.message) }); }
+  });
+
   // GET /api/admin/activity?limit=50 — feed gom new users, attempts, requests, analytics events
   r.get('/api/admin/activity', requireAdmin, (req, res) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
     const items = [];
-    db.prepare(`SELECT id, username, display_name, role, school_id, created_at AS t
+    db.prepare(`SELECT id, username, display_name, role, created_at AS t
                 FROM users ORDER BY created_at DESC LIMIT ?`).all(limit).forEach(u => {
-      items.push({ kind: 'user_register', t: u.t, user_id: u.id, school_id: u.school_id,
+      items.push({ kind: 'user_register', t: u.t, user_id: u.id,
                    label: `@${u.username} (${u.display_name}) · ${u.role}` });
     });
-    db.prepare(`SELECT id, player_name, version, score, total, correct, school_id, created_at AS t
+    db.prepare(`SELECT id, player_name, version, score, total, correct, created_at AS t
                 FROM attempts ORDER BY created_at DESC LIMIT ?`).all(limit).forEach(a => {
-      items.push({ kind: 'attempt', t: a.t, school_id: a.school_id,
+      items.push({ kind: 'attempt', t: a.t,
                    label: `${a.player_name} · ${a.version} · ${a.score}đ (${a.correct}/${a.total})` });
     });
-    db.prepare(`SELECT id, student, title, status, domain, school_id, created_at AS t
+    db.prepare(`SELECT id, student, title, status, domain, created_at AS t
                 FROM requests ORDER BY created_at DESC LIMIT ?`).all(limit).forEach(r => {
-      items.push({ kind: 'request', t: r.t, school_id: r.school_id,
+      items.push({ kind: 'request', t: r.t,
                    label: `${r.student} · ${r.domain} · ${r.title}`.slice(0, 120), meta: { status: r.status } });
     });
     if (tableExists('analytics_events')) {
-      db.prepare(`SELECT id, name, user_id, school_id, path, ts AS t
+      db.prepare(`SELECT id, name, user_id, path, ts AS t
                   FROM analytics_events ORDER BY ts DESC LIMIT ?`).all(limit).forEach(e => {
-        items.push({ kind: 'event', t: e.t, user_id: e.user_id, school_id: e.school_id,
+        items.push({ kind: 'event', t: e.t, user_id: e.user_id,
                      label: `${e.name}${e.path ? ' · ' + e.path : ''}` });
       });
     }
@@ -526,8 +506,13 @@ export function attachAdmin(r) {
     };
     const extra = {};
     if (tableExists('ai_decisions')) extra.ai_decisions = count(`SELECT COUNT(*) c FROM ai_decisions`);
-    if (tableExists('analytics_events')) extra.events = count(`SELECT COUNT(*) c FROM analytics_events`);
-    if (tableExists('subscriptions')) extra.paid_schools = count(`SELECT COUNT(*) c FROM subscriptions WHERE plan<>'free' AND status='active'`);
+    if (tableExists('analytics_events')) {
+      extra.events = count(`SELECT COUNT(*) c FROM analytics_events`);
+      extra.pageviews_24h = count(`SELECT COUNT(*) c FROM analytics_events WHERE name='page_view' AND ts >= ?`, t24);
+      extra.pageviews_7d = count(`SELECT COUNT(*) c FROM analytics_events WHERE name='page_view' AND ts >= ?`, now - 7 * 86400_000);
+      extra.pageviews_total = count(`SELECT COUNT(*) c FROM analytics_events WHERE name='page_view'`);
+    }
+    if (tableExists('subscriptions')) extra.paid_users = count(`SELECT COUNT(*) c FROM subscriptions WHERE plan<>'free' AND status='active'`);
     if (tableExists('ai_lesson_content')) extra.ai_content = count(`SELECT COUNT(*) c FROM ai_lesson_content`);
     if (tableExists('ai_token_usage')) {
       extra.ai_tokens_total = count(`SELECT SUM(prompt_tokens + completion_tokens) c FROM ai_token_usage`);
@@ -555,7 +540,6 @@ export function attachAdmin(r) {
     const display_name = String(b.display_name || b.displayName || username).trim().slice(0, 60);
     const role = ['pupil', 'student', 'teacher', 'admin'].includes(b.role) ? b.role : 'student';
     const age = b.age != null && Number.isFinite(Number(b.age)) ? Math.floor(Number(b.age)) : null;
-    const school_id = Number(b.school_id) || DEFAULT_SCHOOL_ID;
     const email = b.email ? String(b.email).trim().toLowerCase() : null;
 
     if (!USERNAME_RE.test(username)) return res.status(400).json({ error: 'invalid_username', message: 'username 3–32 ký tự a-z0-9_.- (case-insensitive)' });
@@ -569,15 +553,15 @@ export function attachAdmin(r) {
       const safeRole = ['pupil','student','teacher'].includes(role) ? role : 'student';
       const { id } = createUser({
         username, display_name, password_hash: hashPassword(password),
-        role: safeRole, age, school_id,
+        role: safeRole, age,
       });
       if (role === 'admin') db.prepare(`UPDATE users SET role='admin' WHERE id=?`).run(id);
       if (email) db.prepare(`UPDATE users SET email=? WHERE id=?`).run(email, id);
-      res.json({ ok: true, id, username, display_name, role, school_id });
+      res.json({ ok: true, id, username, display_name, role });
     } catch (e) { res.status(500).json({ error: 'create_failed', detail: String(e.message) }); }
   });
 
-  // PATCH /api/admin/users/:id — sửa thông tin partial (display_name/email/age/school_id)
+  // PATCH /api/admin/users/:id — sửa thông tin partial (display_name/email/age)
   // Dùng dynamic SQL thay vì updateUserEditable() vì cái kia yêu cầu nguyên trường profile.
   r.patch('/api/admin/users/:id', requireAdmin, (req, res) => {
     const id = Number(req.params.id);
@@ -598,13 +582,6 @@ export function attachAdmin(r) {
       if (req.body.age === '' || a === 0) { sets.push('age = NULL'); }
       else if (!Number.isFinite(a) || a < 3 || a > 100) return res.status(400).json({ error: 'invalid_age', message: 'tuổi 3–100' });
       else { sets.push('age = @age'); vals.age = Math.floor(a); }
-    }
-    if (req.body?.school_id != null) {
-      const sid = Number(req.body.school_id);
-      if (!Number.isFinite(sid) || sid < 1) return res.status(400).json({ error: 'invalid_school_id' });
-      const exists = db.prepare(`SELECT 1 FROM schools WHERE id = ?`).get(sid);
-      if (!exists) return res.status(400).json({ error: 'school_not_exist' });
-      sets.push('school_id = @school_id'); vals.school_id = sid;
     }
     if (!sets.length) return res.status(400).json({ error: 'no_changes' });
     vals.id = id;
@@ -645,47 +622,13 @@ export function attachAdmin(r) {
       if (tableExists('notifications') && displayName) {
         db.prepare(`DELETE FROM notifications WHERE user_display_name = ?`).run(displayName);
       }
-      // subscriptions là school-level (UNIQUE school_id), KHÔNG xoá theo user.
+      // subscriptions là user-level — xoá theo user.
+      if (tableExists('subscriptions')) db.prepare(`DELETE FROM subscriptions WHERE user_id = ?`).run(uid);
       // attempts/achievements link bằng player_name=display_name, để lại làm thống kê lịch sử.
       db.prepare(`DELETE FROM users WHERE id = ?`).run(uid);
     });
     try { tx(id, u.display_name); res.json({ ok: true, deleted: u.username }); }
     catch (e) { res.status(500).json({ error: 'delete_failed', detail: String(e.message) }); }
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // CRUD: Schools (thêm Edit / Delete; Create đã có ở trên)
-  // ─────────────────────────────────────────────────────────────
-
-  // PATCH /api/admin/schools/:id — đổi name/domain/code
-  r.patch('/api/admin/schools/:id', requireAdmin, (req, res) => {
-    const id = Number(req.params.id);
-    const cur = db.prepare(`SELECT * FROM schools WHERE id = ?`).get(id);
-    if (!cur) return res.status(404).json({ error: 'school_not_found' });
-    const sets = [], vals = {};
-    if (req.body?.name != null) { sets.push('name = @name'); vals.name = String(req.body.name).trim().slice(0, 120); }
-    if (req.body?.domain != null) { sets.push('domain = @domain'); vals.domain = req.body.domain ? String(req.body.domain).toLowerCase().slice(0, 80) : null; }
-    if (req.body?.code != null) { sets.push('code = @code'); vals.code = String(req.body.code).trim().slice(0, 40); }
-    if (!sets.length) return res.status(400).json({ error: 'no_changes' });
-    vals.id = id;
-    try {
-      db.prepare(`UPDATE schools SET ${sets.join(', ')} WHERE id = @id`).run(vals);
-      res.json({ ok: true, school: db.prepare(`SELECT * FROM schools WHERE id = ?`).get(id) });
-    } catch (e) { res.status(400).json({ error: 'update_failed', detail: String(e.message) }); }
-  });
-
-  // DELETE /api/admin/schools/:id — xoá trường (cấm xoá tizia-default; cấm khi còn user)
-  r.delete('/api/admin/schools/:id', requireAdmin, (req, res) => {
-    const id = Number(req.params.id);
-    if (id === DEFAULT_SCHOOL_ID) return res.status(400).json({ error: 'protected_default', message: 'không thể xoá trường mặc định Tizia (id=1)' });
-    const cur = db.prepare(`SELECT * FROM schools WHERE id = ?`).get(id);
-    if (!cur) return res.status(404).json({ error: 'school_not_found' });
-    const uCount = db.prepare(`SELECT COUNT(*) c FROM users WHERE school_id = ?`).get(id).c;
-    if (uCount > 0) return res.status(400).json({ error: 'has_users', message: `trường còn ${uCount} user — chuyển họ qua trường khác trước khi xoá` });
-    try {
-      db.prepare(`DELETE FROM schools WHERE id = ?`).run(id);
-      res.json({ ok: true, deleted: cur.code });
-    } catch (e) { res.status(500).json({ error: 'delete_failed', detail: String(e.message) }); }
   });
 
   // ─────────────────────────────────────────────────────────────
@@ -712,39 +655,21 @@ export function attachAdmin(r) {
     res.json({ ok: true, deleted: id });
   });
 
-  // Trục 2: log prompt AI của HS — GV xem trong trường mình, admin xem cross-tenant.
-  // GET /api/teacher/ai-prompts → role=teacher/admin trong cùng school_id thấy được;
-  // ?blocked=1 lọc các prompt đã bị filter chặn (để GV chú ý ngay).
-  // GET /api/admin/ai-prompts → admin xem tất cả school; nhận thêm ?school_id=.
+  // Trục 2: log prompt AI của HS — GV/admin xem được. ?blocked=1 lọc prompt đã bị filter chặn.
   r.get('/api/teacher/ai-prompts', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'unauthorized' });
     if (!['teacher', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ error: 'forbidden', message: 'Chỉ giảng viên hoặc admin xem được' });
     }
-    const schoolId = req.user.role === 'admin' && req.query.school_id
-      ? Number(req.query.school_id) : (req.user.school_id || 1);
     const blockedOnly = req.query.blocked === '1' || req.query.blocked === 'true';
     const limit = Number(req.query.limit) || 50;
-    res.json({ logs: listAiPromptsForSchool(schoolId, { blockedOnly, limit }) });
+    res.json({ logs: listAiPrompts({ blockedOnly, limit }) });
   });
 
   r.get('/api/admin/ai-prompts', requireAdmin, (req, res) => {
-    const schoolId = req.query.school_id ? Number(req.query.school_id) : null;
     const blockedOnly = req.query.blocked === '1';
     const limit = Number(req.query.limit) || 100;
-    if (schoolId) {
-      return res.json({ logs: listAiPromptsForSchool(schoolId, { blockedOnly, limit }) });
-    }
-    // Cross-school: query trực tiếp, không filter school_id
-    const rows = db.prepare(`
-      SELECT l.id, l.school_id, l.user_id, l.role, l.endpoint, l.prompt_text,
-             l.blocked, l.block_reason, l.block_category, l.created_at,
-             u.username, u.display_name, u.grade
-      FROM ai_prompt_log l LEFT JOIN users u ON u.id = l.user_id
-      WHERE (? = 0 OR l.blocked = 1)
-      ORDER BY l.created_at DESC LIMIT ?
-    `).all(blockedOnly ? 1 : 0, Math.min(Math.max(limit, 1), 500));
-    res.json({ logs: rows });
+    res.json({ logs: listAiPrompts({ blockedOnly, limit }) });
   });
 
   // GET /api/me/ai-prompts — chính user xem log của mình (HS xem lại câu mình hỏi
@@ -759,5 +684,5 @@ export function attachAdmin(r) {
   attachBackup(r);
   scheduleAutoBackup();
 
-  console.log('[admin] routes mounted: /api/admin/* (cross-tenant, role=admin) + dashboard + CRUD + ai-prompt logs + backup');
+  console.log('[admin] routes mounted: /api/admin/* (role=admin) + dashboard + CRUD + ai-prompt logs + backup');
 }

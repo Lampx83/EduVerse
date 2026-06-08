@@ -47,7 +47,6 @@ async function ollamaGenerate({ prompt, system, temperature = 0.3, json = false,
 db.exec(`
   CREATE TABLE IF NOT EXISTS ai_decisions (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id      INTEGER NOT NULL DEFAULT 1,
     request_id     INTEGER NOT NULL,
     decided_by     TEXT    NOT NULL,          -- 'ai' | 'rule' | 'human'
     model          TEXT,
@@ -62,15 +61,15 @@ db.exec(`
     created_at     INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_ai_decisions_request ON ai_decisions(request_id, created_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_ai_decisions_school  ON ai_decisions(school_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_ai_decisions_time    ON ai_decisions(created_at DESC);
 `);
 
 const insertDecisionStmt = db.prepare(`
   INSERT INTO ai_decisions (
-    school_id, request_id, decided_by, model, action, status_applied,
+    request_id, decided_by, model, action, status_applied,
     reason, public_note, priority_score, confidence, input_snapshot, raw_output, created_at
   ) VALUES (
-    @school_id, @request_id, @decided_by, @model, @action, @status_applied,
+    @request_id, @decided_by, @model, @action, @status_applied,
     @reason, @public_note, @priority_score, @confidence, @input_snapshot, @raw_output, @created_at
   )
 `);
@@ -82,7 +81,7 @@ const decisionsForRequestStmt = db.prepare(`
 const recentDecisionsStmt = db.prepare(`
   SELECT id, request_id, decided_by, model, action, status_applied, reason,
          public_note, priority_score, confidence, created_at
-  FROM ai_decisions WHERE school_id = ? ORDER BY created_at DESC LIMIT @limit
+  FROM ai_decisions ORDER BY created_at DESC LIMIT @limit
 `);
 
 // ── Config / guardrail ──
@@ -173,7 +172,7 @@ Hướng dẫn: approve=khả thi & hữu ích; priority=rất giá trị/nhiề
  * Ban điều hành AI xem xét + TỰ QUYẾT ĐỊNH 1 góp ý, ghi audit, áp vào status.
  * @returns {Promise<{action,status,reason,public_note,priority_score,confidence,decided_by}>}
  */
-export async function reviewAndDecideRequest({ requestId, schoolId = 1, domain, type, title, detail, votes = 1 }) {
+export async function reviewAndDecideRequest({ requestId, domain, type, title, detail, votes = 1 }) {
   let d;
   try {
     d = await aiDecision({ domain, type, title, detail, votes });
@@ -195,7 +194,7 @@ export async function reviewAndDecideRequest({ requestId, schoolId = 1, domain, 
   }
 
   insertDecisionStmt.run({
-    school_id: schoolId, request_id: requestId,
+    request_id: requestId,
     decided_by: d.decided_by, model: d.decided_by === 'ai' ? MODEL : null,
     action: d.action, status_applied: statusApplied,
     reason: d.reason, public_note: d.public_note,
@@ -211,6 +210,6 @@ export async function reviewAndDecideRequest({ requestId, schoolId = 1, domain, 
 export function getDecisionsForRequest(requestId) {
   return decisionsForRequestStmt.all(Number(requestId));
 }
-export function getRecentDecisions(schoolId = 1, limit = 50) {
-  return recentDecisionsStmt.all(Number(schoolId) || 1, { limit });
+export function getRecentDecisions(limit = 50) {
+  return recentDecisionsStmt.all({ limit });
 }

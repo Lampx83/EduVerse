@@ -4,7 +4,7 @@
 // Để tích hợp NHIỀU API bên ngoài một cách tin cậy: thay vì gọi HTTP trực tiếp
 // trong request (dễ mất event khi vendor lỗi), ta GHI event vào outbox (cùng
 // transaction nghiệp vụ) rồi 1 dispatcher nền gửi đi với retry + backoff + chữ ký.
-//   enqueueForSchool(school_id, type, payload) → fan-out tới webhook_endpoints
+//   enqueueEvent(type, payload) → fan-out tới webhook_endpoints
 //   dispatcher: poll pending → POST (HMAC-SHA256) → delivered | retry | dead
 //
 // Đây là chiều OUT (Tizia → vendor). Chiều IN (vendor → Tizia) đã có
@@ -17,18 +17,16 @@ import { db } from '../../db.js';
 db.exec(`
   CREATE TABLE IF NOT EXISTS webhook_endpoints (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id   INTEGER NOT NULL DEFAULT 1,
     url         TEXT    NOT NULL,
     secret      TEXT    NOT NULL,            -- ký payload để vendor xác minh
     event_types TEXT,                         -- CSV lọc loại event; NULL = nhận tất cả
     active      INTEGER NOT NULL DEFAULT 1,
     created_at  INTEGER NOT NULL
   );
-  CREATE INDEX IF NOT EXISTS idx_wh_school ON webhook_endpoints(school_id, active);
+  CREATE INDEX IF NOT EXISTS idx_wh_active ON webhook_endpoints(active);
 
   CREATE TABLE IF NOT EXISTS outbox_events (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    school_id       INTEGER NOT NULL DEFAULT 1,
     event_type      TEXT    NOT NULL,
     payload         TEXT    NOT NULL,         -- JSON
     endpoint_url    TEXT    NOT NULL,         -- snapshot (tránh join/endpoint bị xoá)
@@ -42,18 +40,18 @@ db.exec(`
     updated_at      INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_outbox_due ON outbox_events(status, next_attempt_at);
-  CREATE INDEX IF NOT EXISTS idx_outbox_school ON outbox_events(school_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_outbox_time ON outbox_events(created_at DESC);
 `);
 
-const listEndpointsStmt = db.prepare(`SELECT * FROM webhook_endpoints WHERE school_id = ? AND active = 1`);
-const listEndpointsAllStmt = db.prepare(`SELECT id, school_id, url, event_types, active, created_at FROM webhook_endpoints WHERE school_id = ? ORDER BY created_at DESC`);
+const listEndpointsStmt = db.prepare(`SELECT * FROM webhook_endpoints WHERE active = 1`);
+const listEndpointsAllStmt = db.prepare(`SELECT id, url, event_types, active, created_at FROM webhook_endpoints ORDER BY created_at DESC`);
 const insertEndpointStmt = db.prepare(`
-  INSERT INTO webhook_endpoints (school_id, url, secret, event_types, active, created_at)
-  VALUES (@school_id, @url, @secret, @event_types, 1, @t)
+  INSERT INTO webhook_endpoints (url, secret, event_types, active, created_at)
+  VALUES (@url, @secret, @event_types, 1, @t)
 `);
 const insertOutboxStmt = db.prepare(`
-  INSERT INTO outbox_events (school_id, event_type, payload, endpoint_url, endpoint_secret, max_attempts, next_attempt_at, created_at, updated_at)
-  VALUES (@school_id, @event_type, @payload, @endpoint_url, @endpoint_secret, @max_attempts, @t, @t, @t)
+  INSERT INTO outbox_events (event_type, payload, endpoint_url, endpoint_secret, max_attempts, next_attempt_at, created_at, updated_at)
+  VALUES (@event_type, @payload, @endpoint_url, @endpoint_secret, @max_attempts, @t, @t, @t)
 `);
 const dueStmt = db.prepare(`
   SELECT * FROM outbox_events WHERE status = 'pending' AND next_attempt_at <= @now
@@ -64,32 +62,32 @@ const markRetryStmt = db.prepare(`UPDATE outbox_events SET attempts=attempts+1, 
 const markDeadStmt = db.prepare(`UPDATE outbox_events SET status='dead', attempts=attempts+1, last_error=@err, updated_at=@t WHERE id=@id`);
 const recentOutboxStmt = db.prepare(`
   SELECT id, event_type, endpoint_url, status, attempts, max_attempts, next_attempt_at, last_error, created_at
-  FROM outbox_events WHERE school_id = ? ORDER BY created_at DESC LIMIT @limit
+  FROM outbox_events ORDER BY created_at DESC LIMIT @limit
 `);
 
 function sign(payload, secret) {
   return createHmac('sha256', secret).update(payload, 'utf8').digest('hex');
 }
 
-/** Đăng ký 1 webhook endpoint cho trường. Trả secret để vendor xác minh chữ ký. */
-export function registerEndpoint({ school_id = 1, url, event_types = null }) {
+/** Đăng ký 1 webhook endpoint. Trả secret để vendor xác minh chữ ký. */
+export function registerEndpoint({ url, event_types = null }) {
   const secret = 'whsec_' + randomBytes(24).toString('hex');
   const info = insertEndpointStmt.run({
-    school_id: Number(school_id) || 1, url: String(url), secret,
+    url: String(url), secret,
     event_types: event_types ? String(event_types) : null, t: Date.now(),
   });
   return { id: info.lastInsertRowid, secret };
 }
 
-/** Phát 1 event tới MỌI endpoint đang active của trường (fan-out vào outbox). */
-export function enqueueForSchool(school_id, event_type, payloadObj) {
-  const endpoints = listEndpointsStmt.all(Number(school_id) || 1);
-  const payload = JSON.stringify({ type: event_type, school_id, data: payloadObj, ts: Date.now() });
+/** Phát 1 event tới MỌI endpoint đang active (fan-out vào outbox). */
+export function enqueueEvent(event_type, payloadObj) {
+  const endpoints = listEndpointsStmt.all();
+  const payload = JSON.stringify({ type: event_type, data: payloadObj, ts: Date.now() });
   let queued = 0;
   for (const ep of endpoints) {
     if (ep.event_types && !ep.event_types.split(',').map((s) => s.trim()).includes(event_type)) continue;
     insertOutboxStmt.run({
-      school_id: Number(school_id) || 1, event_type, payload,
+      event_type, payload,
       endpoint_url: ep.url, endpoint_secret: ep.secret, max_attempts: 6, t: Date.now(),
     });
     queued++;
@@ -150,26 +148,26 @@ export function startDispatcher(intervalMs = Number(process.env.OUTBOX_DISPATCH_
 
 // ── Routes ──
 export function attachIntegration(r) {
-  // Đăng ký webhook endpoint (chỉ teacher/admin trường). Trả secret 1 lần.
+  // Đăng ký webhook endpoint (chỉ admin). Trả secret 1 lần.
   r.post('/api/integrations/endpoints', (req, res) => {
-    if (req.user?.role !== 'teacher') return res.status(403).json({ error: 'forbidden' });
+    if (req.user?.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
     const url = String(req.body?.url || '').trim();
     if (!/^https?:\/\//.test(url)) return res.status(400).json({ error: 'invalid_url' });
-    const { id, secret } = registerEndpoint({ school_id: req.schoolId, url, event_types: req.body?.eventTypes || null });
+    const { id, secret } = registerEndpoint({ url, event_types: req.body?.eventTypes || null });
     res.json({ ok: true, id, secret, note: 'Lưu secret để xác minh X-Tizia-Signature (HMAC-SHA256).' });
   });
-  r.get('/api/integrations/endpoints', (req, res) => {
-    res.json({ endpoints: listEndpointsAllStmt.all(req.schoolId) });
+  r.get('/api/integrations/endpoints', (_req, res) => {
+    res.json({ endpoints: listEndpointsAllStmt.all() });
   });
   r.get('/api/integrations/outbox', (req, res) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
-    res.json({ events: recentOutboxStmt.all(req.schoolId, { limit }) });
+    res.json({ events: recentOutboxStmt.all({ limit }) });
   });
   // Phát thử 1 event (demo/test tích hợp).
   r.post('/api/integrations/emit', (req, res) => {
-    if (req.user?.role !== 'teacher') return res.status(403).json({ error: 'forbidden' });
+    if (req.user?.role !== 'admin') return res.status(403).json({ error: 'forbidden' });
     const type = String(req.body?.type || 'test.ping').trim();
-    const r2 = enqueueForSchool(req.schoolId, type, req.body?.data ?? { hello: 'world' });
+    const r2 = enqueueEvent(type, req.body?.data ?? { hello: 'world' });
     res.json({ ok: true, ...r2 });
   });
 

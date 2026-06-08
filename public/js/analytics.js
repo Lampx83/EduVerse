@@ -51,9 +51,13 @@
   };
 
   // Bootstrap: hỏi server measurementId + user info → init gtag.
+  // Pageview internal (về analytics_events) bắn độc lập với GA4 — không phụ
+  // thuộc measurementId, không cần consent banner (chỉ ghi path + ref + title,
+  // không cookie tracking).
   fetch('api/analytics/bootstrap', { credentials: 'same-origin' })
     .then(r => r.ok ? r.json() : null)
     .then(b => {
+      sendInternalPageview();
       if (!b || !b.measurementId) {
         // GA chưa cấu hình → không load gtag.js, vẫn buffer track() để debug.
         ready = true;
@@ -64,7 +68,69 @@
       loadGtagScript(b.measurementId);
       configureGtag(b);
     })
-    .catch(() => { ready = true; });
+    .catch(() => { ready = true; sendInternalPageview(); });
+
+  // ── Internal pageview (gửi về /api/track/pageview) ──
+  // Persist anon_id ~ 1 năm để đếm unique visitor ổn định. Không lấy localStorage
+  // được (Safari ITP / private mode) → fallback sessionStorage rồi in-memory.
+  function getAnonId() {
+    const KEY = 'tizia_anon_id';
+    try {
+      let v = localStorage.getItem(KEY);
+      if (v) return v;
+      v = (crypto.randomUUID?.() || (Date.now().toString(36) + Math.random().toString(36).slice(2)));
+      localStorage.setItem(KEY, v);
+      return v;
+    } catch {
+      try {
+        let v = sessionStorage.getItem(KEY);
+        if (v) return v;
+        v = (crypto.randomUUID?.() || (Date.now().toString(36) + Math.random().toString(36).slice(2)));
+        sessionStorage.setItem(KEY, v);
+        return v;
+      } catch {
+        return window.__tiziaAnonMem || (window.__tiziaAnonMem = 'mem-' + Math.random().toString(36).slice(2));
+      }
+    }
+  }
+
+  let lastPvPath = null;
+  function sendInternalPageview() {
+    try {
+      const path = location.pathname + location.search;
+      if (path === lastPvPath) return;          // SPA pushState đôi khi bắn 2 lần
+      lastPvPath = path;
+      const payload = {
+        path,
+        referrer: document.referrer || null,
+        title: document.title || null,
+        lang: document.documentElement.lang || null,
+        anonId: getAnonId(),
+      };
+      const body = JSON.stringify(payload);
+      const url = 'api/track/pageview';
+      // sendBeacon = không bị huỷ khi user navigate ngay; fallback fetch keepalive.
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: 'application/json' });
+        navigator.sendBeacon(url, blob);
+      } else {
+        fetch(url, {
+          method: 'POST', credentials: 'same-origin', keepalive: true,
+          headers: { 'Content-Type': 'application/json' }, body,
+        }).catch(() => {});
+      }
+    } catch {}
+  }
+
+  // SPA-like nav (history.pushState) — Tizia chủ yếu MPA nên ít khi cần,
+  // nhưng các widget có thể đổi URL ?subject=… → đếm thành lượt view khác.
+  const _push = history.pushState;
+  history.pushState = function () {
+    const r = _push.apply(this, arguments);
+    setTimeout(sendInternalPageview, 0);
+    return r;
+  };
+  window.addEventListener('popstate', () => setTimeout(sendInternalPageview, 0));
 
   function loadGtagScript(id) {
     const s = document.createElement('script');

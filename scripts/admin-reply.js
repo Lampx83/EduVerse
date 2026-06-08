@@ -28,7 +28,7 @@ if (!id || !['done', 'rejected', 'reviewing'].includes(status) || message.length
   process.exit(1);
 }
 
-const reqRow = db.prepare(`SELECT id, school_id, student, title, domain FROM requests WHERE id = ?`).get(id);
+const reqRow = db.prepare(`SELECT id, student, title, domain FROM requests WHERE id = ?`).get(id);
 if (!reqRow) {
   console.error(`✖ Không tìm thấy request #${id}`);
   process.exit(1);
@@ -49,14 +49,13 @@ const notif = createNotification({
   title: titleByStatus[status],
   body: `「${reqRow.title}」 — ${message}`,
   url: `/space.html?domain=${encodeURIComponent(reqRow.domain || '')}#requests`,
-  school_id: reqRow.school_id || 1,
 });
 
 const actionByStatus = { done: 'approve', rejected: 'reject', reviewing: 'approve' };
 db.prepare(`
-  INSERT INTO ai_decisions (school_id, request_id, decided_by, action, status_applied, reason, public_note, priority_score, confidence, created_at)
-  VALUES (?, ?, 'human', ?, ?, ?, ?, 100, 1.0, ?)
-`).run(reqRow.school_id || 1, id, actionByStatus[status], status, `[admin CLI] ${status}`, message.slice(0, 500), Date.now());
+  INSERT INTO ai_decisions (request_id, decided_by, action, status_applied, reason, public_note, priority_score, confidence, created_at)
+  VALUES (?, 'human', ?, ?, ?, ?, 100, 1.0, ?)
+`).run(id, actionByStatus[status], status, `[admin CLI] ${status}`, message.slice(0, 500), Date.now());
 
 console.log(`✓ #${id} (${reqRow.domain}) → ${status}`);
 console.log(`  HS: ${reqRow.student}`);

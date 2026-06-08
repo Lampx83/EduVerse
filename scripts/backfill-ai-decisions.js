@@ -15,7 +15,7 @@ import { db } from '../server/db.js';
 import { reviewAndDecideRequest } from '../server/contexts/ai-agent/decisions.js';
 
 const rows = db.prepare(`
-  SELECT r.id, r.school_id, r.domain, r.type, r.title, r.detail, r.votes, r.student, r.status
+  SELECT r.id, r.domain, r.type, r.title, r.detail, r.votes, r.student, r.status
   FROM requests r
   WHERE NOT EXISTS (SELECT 1 FROM ai_decisions d WHERE d.request_id = r.id)
   ORDER BY r.created_at ASC
@@ -34,7 +34,6 @@ for (const r of rows) {
   try {
     const d = await reviewAndDecideRequest({
       requestId: r.id,
-      schoolId: r.school_id || 1,
       domain: r.domain,
       type: r.type,
       title: r.title,

@@ -69,8 +69,8 @@ const lookupSkillIdsByCodes = db.prepare(`
 
 const insertUserSkill = db.prepare(`
   INSERT OR IGNORE INTO user_skills
-    (school_id, user_id, skill_id, domain, earned_at, source_type, source_id, score)
-  VALUES (@school_id, @user_id, @skill_id, @domain, @earned_at, @source_type, @source_id, @score)
+    (user_id, skill_id, domain, earned_at, source_type, source_id, score)
+  VALUES (@user_id, @skill_id, @domain, @earned_at, @source_type, @source_id, @score)
 `);
 
 // Cây skill HIỆN TẠI của user — chỉ trong bucket trường đang theo học. Khi đổi
@@ -120,7 +120,7 @@ const countSkillsPerCompetencyStmt = db.prepare(`
  * Grant tất cả skill thuộc 1 space cho user. No-op nếu score < threshold.
  * Trả về { newly_granted: [{code,name,competency}], already_had: [...] }.
  */
-export function grantSkillsForSpace({ user_id, school_id, domain, space_id, score, source_type, source_id }) {
+export function grantSkillsForSpace({ user_id, domain, space_id, score, source_type, source_id }) {
   if (!user_id) return { error: 'user_id required' };
   if (!VALID_DOMAINS.has(domain)) return { error: 'invalid domain' };
   if (!space_id) return { error: 'space_id required' };
@@ -152,7 +152,6 @@ export function grantSkillsForSpace({ user_id, school_id, domain, space_id, scor
   const tx = db.transaction(() => {
     for (const r of rows) {
       const info = insertUserSkill.run({
-        school_id: school_id ?? 1,
         user_id,
         skill_id: r.id,
         domain: skillDomain,
@@ -250,7 +249,7 @@ export function getUserSkillTree(user_id, domain) {
  * Mapping familyId → skill_codes đọc từ skills-scenario-map.json. Idempotent qua
  * UNIQUE(user_id, skill_id). No-op nếu familyId chưa có mapping.
  */
-export function grantSkillsForScenario({ user_id, school_id, family_id, score, stars, domain }) {
+export function grantSkillsForScenario({ user_id, family_id, score, stars, domain }) {
   if (!user_id || !family_id) return { granted_count: 0, skipped_reason: 'missing args' };
   const codes = SCENARIO_SKILLS[family_id] || [];
   if (codes.length === 0) return { granted_count: 0, skipped_reason: `no mapping for ${family_id}` };
@@ -273,7 +272,6 @@ export function grantSkillsForScenario({ user_id, school_id, family_id, score, s
   const tx = db.transaction(() => {
     for (const r of rows) {
       const info = insertUserSkill.run({
-        school_id: school_id ?? 1,
         user_id,
         skill_id: r.id,
         domain: skillDomain,
@@ -347,7 +345,6 @@ export function attachSkills(router, { requireAuth, requireEnrolled }) {
     const b = req.body || {};
     const result = grantSkillsForSpace({
       user_id: req.user.id,
-      school_id: req.schoolId ?? 1,
       domain: String(b.domain || ''),
       space_id: String(b.space_id || ''),
       score: Number(b.score),

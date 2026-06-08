@@ -22,7 +22,6 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS ugc_quests (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     creator_id      INTEGER NOT NULL,
-    school_id       INTEGER NOT NULL DEFAULT 1,
     title           TEXT NOT NULL,
     description     TEXT,
     subject_tag     TEXT,                -- 'toan','van','anh','khoa-hoc','su-dia',...
@@ -112,9 +111,9 @@ const _getStmt = db.prepare(`
 
 const _insertStmt = db.prepare(`
   INSERT INTO ugc_quests
-    (creator_id, school_id, title, description, subject_tag, grade_tag,
+    (creator_id, title, description, subject_tag, grade_tag,
      questions, created_at, updated_at)
-  VALUES (@creator_id, @school_id, @title, @description, @subject_tag, @grade_tag,
+  VALUES (@creator_id, @title, @description, @subject_tag, @grade_tag,
           @questions, @created_at, @updated_at)
 `);
 
@@ -181,7 +180,6 @@ export function attachUgc(router) {
     const now = Date.now();
     const info = _insertStmt.run({
       creator_id: req.user.id,
-      school_id: req.schoolId || 1,
       title, description, subject_tag, grade_tag,
       questions: JSON.stringify(b.questions),
       created_at: now, updated_at: now,
