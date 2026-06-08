@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📝 Markdown Notes · Tizia</title>
+<style>
+  :root { --bg:#0f172a; --card:rgba(255,255,255,.04); --accent:#38bdf8; --text:#e5edf7; --muted:#94a3b8; --border:rgba(255,255,255,.12); }
+  * { box-sizing:border-box; }
+  body { margin:0; height:100vh; display:flex; flex-direction:column;
+    font-family:'Inter',system-ui,sans-serif; color:var(--text);
+    background: linear-gradient(180deg,var(--bg),#1e293b); overflow: hidden; }
+  header { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); background: rgba(0,0,0,.25); }
+  header h1 { margin:0; font-size:15px; font-weight:800; }
+  header .grow { flex:1; }
+  header select, header button { font-family:inherit; background:var(--card); color:var(--text); border:1px solid var(--border);
+    padding:6px 11px; border-radius:7px; font-size:12.5px; cursor:pointer; }
+  header button.primary { background: linear-gradient(135deg, var(--accent), #6366f1); color:white; border:0; font-weight:700; }
+  main { flex:1; display:grid; grid-template-columns: 1fr 1fr; gap:1px; background: var(--border); overflow:hidden; min-height: 0; }
+  textarea { width:100%; height:100%; padding:18px; background: var(--bg); color: var(--text);
+    border:0; outline:0; resize:none; font-family:'JetBrains Mono','Menlo',monospace; font-size:13.5px; line-height:1.6; }
+  .preview { padding:20px 24px; background: var(--bg); overflow:auto; font-size:14.5px; line-height:1.7; }
+  .preview h1 { font-size:24px; margin: 0 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .preview h2 { font-size:19px; margin: 18px 0 8px; }
+  .preview h3 { font-size:16px; margin: 14px 0 6px; }
+  .preview p { margin: 8px 0; }
+  .preview code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+  .preview pre { background: rgba(0,0,0,.4); border: 1px solid var(--border); padding: 12px 14px;
+    border-radius: 8px; overflow: auto; font-size: 13px; }
+  .preview pre code { background: transparent; padding: 0; }
+  .preview blockquote { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--muted); margin: 8px 0; }
+  .preview ul, .preview ol { padding-left: 22px; }
+  .preview a { color: var(--accent); }
+  .preview table { border-collapse: collapse; margin: 10px 0; }
+  .preview th, .preview td { border: 1px solid var(--border); padding: 6px 10px; }
+  .preview th { background: rgba(255,255,255,.05); }
+  .preview hr { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
+  @media (max-width: 720px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>📝 Markdown Notes</h1>
+  <select id="noteSel"></select>
+  <button id="newBtn">+ Note mới</button>
+  <button id="renameBtn">✏️ Đổi tên</button>
+  <button id="deleteBtn">🗑 Xoá</button>
+  <span class="grow"></span>
+  <button id="exportBtn">⬇ Export .md</button>
+  <button class="primary" id="saveBtn">💾 Lưu</button>
+</header>
+<main>
+  <textarea id="editor" placeholder="# Bắt đầu gõ markdown..."></textarea>
+  <div class="preview" id="preview"></div>
+</main>
+
+<script>
+  const STORE_KEY = 'tizia:md-notes';
+  const ACTIVE_KEY = 'tizia:md-notes:active';
+
+  const DEFAULT = {
+    'Hướng dẫn nhanh':
+`# 📝 Markdown Notes
+
+Đây là sổ ghi chú **Markdown** đơn giản. Gõ bên trái, xem render bên phải.
+
+## Cú pháp cơ bản
+
+- **đậm**: \`**đậm**\`
+- *nghiêng*: \`*nghiêng*\`
+- \`inline code\`: dùng dấu backtick
+- [Liên kết](https://tizia.vn)
+
+## Tiêu đề
+
+# H1
+## H2
+### H3
+
+## Danh sách
+
+1. Mục đầu tiên
+2. Mục thứ hai
+   - Sub-bullet
+
+> Câu trích dẫn
+
+## Code block
+
+\`\`\`js
+function hello() {
+  console.log("Tizia");
+}
+\`\`\`
+
+## Bảng
+
+| Cột A | Cột B |
+|-------|-------|
+| 1     | 2     |
+| 3     | 4     |
+
+---
+
+Lưu ý: dữ liệu lưu trong **localStorage** của trình duyệt, không gửi lên server.`
+  };
+
+  let notes = JSON.parse(localStorage.getItem(STORE_KEY) || 'null') || DEFAULT;
+  let active = localStorage.getItem(ACTIVE_KEY) || Object.keys(notes)[0];
+  if (!notes[active]) active = Object.keys(notes)[0];
+
+  const el = id => document.getElementById(id);
+  const editor = el('editor'), preview = el('preview'), sel = el('noteSel');
+
+  function save() {
+    localStorage.setItem(STORE_KEY, JSON.stringify(notes));
+    localStorage.setItem(ACTIVE_KEY, active);
+  }
+  function rebuildSel() {
+    sel.innerHTML = Object.keys(notes).map(n =>
+      `<option ${n === active ? 'selected' : ''}>${n}</option>`).join('');
+  }
+  function load(name) {
+    active = name;
+    editor.value = notes[name] || '';
+    save(); render();
+  }
+  // Tiny markdown renderer — đủ cho nhu cầu ghi chú đơn giản, không pull lib.
+  function md(s) {
+    s = s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    // Code blocks first
+    s = s.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+      `<pre><code class="lang-${lang}">${code.replace(/\n$/, '')}</code></pre>`);
+    // Headers
+    s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    s = s.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    // Bold + italic + inline code + links
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+    s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // Horizontal rule
+    s = s.replace(/^---+$/gm, '<hr>');
+    // Blockquote
+    s = s.replace(/^&gt; (.*)$/gm, '<blockquote>$1</blockquote>');
+    // Tables (very basic)
+    s = s.replace(/((?:^\|.+\|\n)+)/gm, (block) => {
+      const rows = block.trim().split('\n').map(r => r.slice(1, -1).split('|').map(c => c.trim()));
+      if (rows.length < 2) return block;
+      const [head, sep, ...body] = rows;
+      if (!sep.every(c => /^-+$/.test(c))) return block;
+      return '<table><thead><tr>' + head.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>' +
+        body.map(r => '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>').join('') + '</tbody></table>';
+    });
+    // Lists (ul/ol simple)
+    s = s.replace(/(?:^[-*] .+\n?)+/gm, m => '<ul>' + m.trim().split('\n').map(l => '<li>' + l.replace(/^[-*]\s+/, '') + '</li>').join('') + '</ul>');
+    s = s.replace(/(?:^\d+\. .+\n?)+/gm, m => '<ol>' + m.trim().split('\n').map(l => '<li>' + l.replace(/^\d+\.\s+/, '') + '</li>').join('') + '</ol>');
+    // Paragraphs: wrap loose lines
+    return s.split(/\n\n+/).map(blk => {
+      if (/^<(h\d|ul|ol|pre|blockquote|table|hr)/.test(blk)) return blk;
+      return '<p>' + blk.replace(/\n/g, '<br>') + '</p>';
+    }).join('\n');
+  }
+  function render() { preview.innerHTML = md(editor.value); }
+
+  editor.addEventListener('input', () => { notes[active] = editor.value; save(); render(); });
+  sel.onchange = () => load(sel.value);
+  el('newBtn').onclick = () => {
+    const n = prompt('Tên note mới?');
+    if (!n || notes[n]) return;
+    notes[n] = '# ' + n + '\n\n'; save(); rebuildSel(); load(n);
+  };
+  el('renameBtn').onclick = () => {
+    const n = prompt('Tên mới:', active);
+    if (!n || n === active || notes[n]) return;
+    notes[n] = notes[active]; delete notes[active]; active = n;
+    save(); rebuildSel();
+  };
+  el('deleteBtn').onclick = () => {
+    if (Object.keys(notes).length <= 1) { alert('Không xoá note cuối'); return; }
+    if (!confirm('Xoá note "' + active + '"?')) return;
+    delete notes[active];
+    active = Object.keys(notes)[0];
+    save(); rebuildSel(); load(active);
+  };
+  el('saveBtn').onclick = () => { notes[active] = editor.value; save(); alert('✅ Đã lưu vào localStorage'); };
+  el('exportBtn').onclick = () => {
+    const blob = new Blob([editor.value], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = active.replace(/[^a-z0-9-]+/gi, '-').toLowerCase() + '.md';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  rebuildSel();
+  load(active);
+</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🍅 Pomodoro · Tizia</title>
+<style>
+  :root { --tomato:#e11d48; --green:#10b981; --bg:#0f172a; --card:rgba(255,255,255,.06); --text:#e5edf7; --muted:#94a3b8; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:'Inter',system-ui,sans-serif;
+    background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(225,29,72,.18), transparent), linear-gradient(180deg,var(--bg),#1e293b);
+    color: var(--text); display: grid; place-items: center; padding: 24px;
+  }
+  .app { max-width: 420px; width: 100%; text-align: center; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .mode { color: var(--muted); font-size: 13px; margin-bottom: 24px; letter-spacing: .5px; text-transform: uppercase; }
+  .ring { width: 260px; height: 260px; margin: 0 auto 24px; position: relative; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring .track { stroke: rgba(255,255,255,.08); stroke-width: 10; fill: none; }
+  .ring .fill  { stroke: var(--c, var(--tomato)); stroke-width: 10; fill: none;
+    stroke-linecap: round; transition: stroke-dashoffset .9s linear, stroke .3s; }
+  .time { position: absolute; inset: 0; display: grid; place-items: center; font-size: 56px; font-weight: 800;
+    font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  .controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 18px; }
+  button { font-family: inherit; background: var(--card); color: var(--text); border: 1px solid rgba(255,255,255,.14);
+    padding: 11px 22px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; transition: transform .1s, background .15s; }
+  button:hover { background: rgba(255,255,255,.12); }
+  button.primary { background: linear-gradient(135deg, var(--tomato), #f97316); color: white; border: 0; }
+  button.primary:hover { filter: brightness(1.1); }
+  .stats { font-size: 12.5px; color: var(--muted); }
+  .stats b { color: var(--text); }
+  .modes { display: flex; gap: 6px; justify-content: center; margin-bottom: 16px; }
+  .modes button { padding: 6px 12px; font-size: 12px; }
+  .modes button.active { background: var(--c, var(--tomato)); color: white; border-color: transparent; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🍅 Pomodoro</h1>
+  <div class="mode" id="modeLabel">Focus · 25 phút</div>
+  <div class="modes">
+    <button data-mode="focus" class="active">Focus 25′</button>
+    <button data-mode="short">Nghỉ 5′</button>
+    <button data-mode="long">Nghỉ dài 15′</button>
+  </div>
+  <div class="ring">
+    <svg viewBox="0 0 100 100">
+      <circle class="track" cx="50" cy="50" r="46" />
+      <circle class="fill" id="fill" cx="50" cy="50" r="46"
+              stroke-dasharray="289.03" stroke-dashoffset="0" />
+    </svg>
+    <div class="time" id="time">25:00</div>
+  </div>
+  <div class="controls">
+    <button class="primary" id="toggle">▶︎ Bắt đầu</button>
+    <button id="reset">⟲ Reset</button>
+  </div>
+  <div class="stats">
+    Đã hoàn thành hôm nay: <b id="done">0</b> chu kỳ · Tổng: <b id="total">0</b>
+  </div>
+</div>
+
+<script>
+  const MODES = {
+    focus: { secs: 25*60, label: 'Focus · 25 phút', color: '#e11d48' },
+    short: { secs:  5*60, label: 'Nghỉ ngắn · 5 phút', color: '#10b981' },
+    long:  { secs: 15*60, label: 'Nghỉ dài · 15 phút', color: '#0ea5e9' },
+  };
+  const CIRC = 2 * Math.PI * 46;
+  const fillEl = document.getElementById('fill');
+  const timeEl = document.getElementById('time');
+  const toggleBtn = document.getElementById('toggle');
+  const resetBtn = document.getElementById('reset');
+  const modeLabel = document.getElementById('modeLabel');
+  const doneEl = document.getElementById('done');
+  const totalEl = document.getElementById('total');
+  let mode = 'focus', remain = MODES.focus.secs, total = MODES.focus.secs, timer = null;
+
+  const today = new Date().toISOString().slice(0,10);
+  const storeKey = 'tizia:pomodoro:' + today;
+  const totalKey = 'tizia:pomodoro:total';
+  let doneToday = +(localStorage.getItem(storeKey) || 0);
+  let totalAll  = +(localStorage.getItem(totalKey) || 0);
+  doneEl.textContent = doneToday;
+  totalEl.textContent = totalAll;
+
+  function setMode(m) {
+    pause();
+    mode = m;
+    remain = total = MODES[m].secs;
+    document.documentElement.style.setProperty('--c', MODES[m].color);
+    modeLabel.textContent = MODES[m].label;
+    document.querySelectorAll('.modes button').forEach(b =>
+      b.classList.toggle('active', b.dataset.mode === m));
+    render();
+  }
+  function render() {
+    const m = String(Math.floor(remain/60)).padStart(2,'0');
+    const s = String(remain%60).padStart(2,'0');
+    timeEl.textContent = `${m}:${s}`;
+    const pct = remain / total;
+    fillEl.style.strokeDasharray = CIRC;
+    fillEl.style.strokeDashoffset = CIRC * (1 - pct);
+    document.title = `${m}:${s} · 🍅 Pomodoro`;
+  }
+  function tick() {
+    remain--;
+    if (remain <= 0) {
+      pause();
+      remain = 0; render();
+      if (mode === 'focus') {
+        doneToday++; totalAll++;
+        localStorage.setItem(storeKey, doneToday);
+        localStorage.setItem(totalKey, totalAll);
+        doneEl.textContent = doneToday;
+        totalEl.textContent = totalAll;
+      }
+      try { new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=').play(); } catch {}
+      alert(mode === 'focus' ? '✅ Hoàn thành 1 chu kỳ! Nghỉ thôi 🌿' : '⏰ Hết nghỉ — tập trung tiếp 🍅');
+      return;
+    }
+    render();
+  }
+  function play() {
+    if (timer) return;
+    timer = setInterval(tick, 1000);
+    toggleBtn.textContent = '⏸ Tạm dừng';
+  }
+  function pause() {
+    if (timer) { clearInterval(timer); timer = null; }
+    toggleBtn.textContent = '▶︎ Tiếp tục';
+  }
+  toggleBtn.onclick = () => timer ? pause() : play();
+  resetBtn.onclick = () => { pause(); remain = total; render(); toggleBtn.textContent = '▶︎ Bắt đầu'; };
+  document.querySelectorAll('.modes button').forEach(b =>
+    b.addEventListener('click', () => setMode(b.dataset.mode)));
+  setMode('focus');
+</script>
+</body>
+</html>

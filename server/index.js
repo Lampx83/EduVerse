@@ -46,6 +46,7 @@ import { attachSmartNotif, logActivity } from './contexts/smart-notif/index.js';
 import { attachFeatureGate } from './contexts/feature-gate/index.js';
 import { attachDashboard } from './contexts/dashboard/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
+import { attachPortalApps } from './contexts/portal-apps/index.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
 // Payment context — chỉ nạp khi PAYMENT_ENABLED=1 (dynamic import bên dưới) để bảng
@@ -334,6 +335,8 @@ attachIntegration(r);
 attachSecurity(r);
 attachAdmin(r);
 attachCampusLayout(r, requireAdmin);
+// Portal Apps — Developer cài SPA theo chuẩn AI Portal (manifest + zip).
+attachPortalApps(r, { requireAuth, requireAdmin });
 attachSkills(r, { requireAuth, requireEnrolled });
 // Engagement loop — Streak / Hearts / Daily Quests (Trục A — Duolingo/Prodigy)
 attachEngagement(r);

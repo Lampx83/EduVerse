@@ -1,0 +1,11 @@
+{
+  "id": "flashcards",
+  "alias": "flashcards",
+  "name": "Flashcards Lật Thẻ",
+  "description": "Thẻ học từ vựng / công thức / khái niệm. Tự nhập bộ thẻ, lưu localStorage, học theo nhịp lật thẻ + đánh dấu đã thuộc.",
+  "icon": "🃏",
+  "version": "1.0.0",
+  "type": "embedded",
+  "hasFrontendOnly": true,
+  "keywords": ["flashcard", "vocabulary", "study", "spaced-repetition"]
+}

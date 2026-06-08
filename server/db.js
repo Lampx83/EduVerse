@@ -1814,3 +1814,169 @@ export function putUserState(user_id, entries) {
   tx(Object.entries(entries));
   return written;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PORTAL APPS — Developer cài app theo chuẩn AI Portal (manifest.json + zip)
+// vào sandbox cá nhân (per-user alias). Admin có thể promote thành public.
+// ─────────────────────────────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS portal_apps (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_id      INTEGER NOT NULL,
+    alias         TEXT    NOT NULL,
+    name          TEXT    NOT NULL,
+    description   TEXT,
+    icon          TEXT,
+    version       TEXT,
+    manifest_json TEXT    NOT NULL,
+    is_public     INTEGER NOT NULL DEFAULT 0,
+    size_bytes    INTEGER NOT NULL DEFAULT 0,
+    installed_at  INTEGER NOT NULL,
+    updated_at    INTEGER NOT NULL,
+    UNIQUE(owner_id, alias),
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_portal_apps_owner ON portal_apps(owner_id);
+  CREATE INDEX IF NOT EXISTS idx_portal_apps_public ON portal_apps(is_public) WHERE is_public = 1;
+`);
+// Phase 1.5: mở rộng cho "builtin app" (đăng ký URL nội bộ thay vì zip user upload).
+// Cách dùng: kind='builtin' → target_url chứa /xxx.html, không cần thư mục data/portal-apps.
+// Phân nhóm cho campus map: category + domain để filter mặc định theo cấp/trường.
+try { db.exec(`ALTER TABLE portal_apps ADD COLUMN kind TEXT NOT NULL DEFAULT 'embedded'`); } catch {}
+try { db.exec(`ALTER TABLE portal_apps ADD COLUMN target_url TEXT`); } catch {}
+try { db.exec(`ALTER TABLE portal_apps ADD COLUMN category TEXT`); } catch {}
+try { db.exec(`ALTER TABLE portal_apps ADD COLUMN domain TEXT`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_portal_apps_kind_domain ON portal_apps(kind, domain)`); } catch {}
+
+const _insertPortalAppStmt = db.prepare(`
+  INSERT INTO portal_apps (owner_id, alias, name, description, icon, version,
+                           manifest_json, size_bytes, installed_at, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  ON CONFLICT(owner_id, alias) DO UPDATE SET
+    name          = excluded.name,
+    description   = excluded.description,
+    icon          = excluded.icon,
+    version       = excluded.version,
+    manifest_json = excluded.manifest_json,
+    size_bytes    = excluded.size_bytes,
+    updated_at    = excluded.updated_at
+`);
+const _listPortalAppsByOwnerStmt = db.prepare(
+  `SELECT id, owner_id, alias, name, description, icon, version, is_public,
+          size_bytes, installed_at, updated_at, kind, target_url, category, domain
+   FROM portal_apps
+   WHERE owner_id = ? AND (kind IS NULL OR kind = 'embedded')
+   ORDER BY updated_at DESC`
+);
+const _listPortalAppsPublicStmt = db.prepare(
+  `SELECT pa.id, pa.owner_id, pa.alias, pa.name, pa.description, pa.icon, pa.version,
+          pa.is_public, pa.size_bytes, pa.installed_at, pa.updated_at,
+          pa.kind, pa.target_url, pa.category, pa.domain,
+          u.username AS owner_username, u.display_name AS owner_display_name
+   FROM portal_apps pa
+   LEFT JOIN users u ON u.id = pa.owner_id
+   WHERE pa.is_public = 1 AND (pa.kind IS NULL OR pa.kind = 'embedded')
+   ORDER BY pa.updated_at DESC`
+);
+const _getPortalAppByIdStmt = db.prepare(
+  `SELECT * FROM portal_apps WHERE id = ?`
+);
+const _getPortalAppByOwnerAliasStmt = db.prepare(
+  `SELECT * FROM portal_apps WHERE owner_id = ? AND alias = ?`
+);
+const _deletePortalAppStmt = db.prepare(
+  `DELETE FROM portal_apps WHERE id = ?`
+);
+const _setPortalAppPublicStmt = db.prepare(
+  `UPDATE portal_apps SET is_public = ?, updated_at = ? WHERE id = ?`
+);
+
+export function upsertPortalApp({
+  ownerId, alias, name, description, icon, version, manifestJson, sizeBytes,
+}) {
+  const now = Date.now();
+  const info = _insertPortalAppStmt.run(
+    Number(ownerId), String(alias), String(name),
+    description ? String(description) : null,
+    icon ? String(icon) : null,
+    version ? String(version) : null,
+    typeof manifestJson === 'string' ? manifestJson : JSON.stringify(manifestJson),
+    Number(sizeBytes) | 0, now, now
+  );
+  // Trả về row vừa upsert (id ổn định kể cả lúc UPDATE)
+  return _getPortalAppByOwnerAliasStmt.get(Number(ownerId), String(alias));
+}
+export function listPortalAppsByOwner(ownerId) {
+  return _listPortalAppsByOwnerStmt.all(Number(ownerId));
+}
+export function listPortalAppsPublic() {
+  return _listPortalAppsPublicStmt.all();
+}
+export function getPortalAppById(id) {
+  return _getPortalAppByIdStmt.get(Number(id)) || null;
+}
+export function getPortalAppByOwnerAlias(ownerId, alias) {
+  return _getPortalAppByOwnerAliasStmt.get(Number(ownerId), String(alias)) || null;
+}
+export function deletePortalApp(id) {
+  return _deletePortalAppStmt.run(Number(id)).changes;
+}
+export function setPortalAppPublic(id, isPublic) {
+  return _setPortalAppPublicStmt.run(isPublic ? 1 : 0, Date.now(), Number(id)).changes;
+}
+
+// Builtin app seeding — upsert theo alias trong namespace builtin (owner_id = 0 sentinel
+// — không tham chiếu user thật, FK pragma đã DEFERRED check; nếu pragma strict thì cần
+// 1 user system. SQLite cho phép insert ngay cả khi orphan vì FK enforce theo từng row,
+// row owner=0 sẽ fail FK — workaround: insert qua chế độ defer hoặc temporarily disable).
+const _findBuiltinByAliasStmt = db.prepare(
+  `SELECT id FROM portal_apps WHERE kind='builtin' AND alias = ?`
+);
+const _insertBuiltinStmt = db.prepare(`
+  INSERT INTO portal_apps (
+    owner_id, alias, name, description, icon, version, manifest_json,
+    is_public, size_bytes, installed_at, updated_at,
+    kind, target_url, category, domain
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, 'builtin', ?, ?, ?)
+`);
+const _updateBuiltinStmt = db.prepare(`
+  UPDATE portal_apps SET
+    name = ?, description = ?, icon = ?, version = ?, manifest_json = ?,
+    target_url = ?, category = ?, domain = ?, updated_at = ?
+  WHERE id = ?
+`);
+const _listBuiltinStmt = db.prepare(
+  `SELECT id, alias, name, description, icon, version, is_public,
+          target_url, category, domain, installed_at, updated_at
+   FROM portal_apps WHERE kind='builtin' ORDER BY domain, category, name`
+);
+
+export function upsertBuiltinApp(systemOwnerId, app) {
+  const { alias, name, description, icon, version, target_url, category, domain } = app;
+  const manifest = JSON.stringify({ ...app, type: 'embedded', hasFrontendOnly: false, isBuiltin: true });
+  const now = Date.now();
+  const existing = _findBuiltinByAliasStmt.get(String(alias));
+  if (existing) {
+    _updateBuiltinStmt.run(
+      String(name), description || null, icon || null, version || '1.0.0',
+      manifest, String(target_url), category || null, domain || null, now, existing.id
+    );
+    return { id: existing.id, action: 'updated' };
+  }
+  const info = _insertBuiltinStmt.run(
+    Number(systemOwnerId), String(alias), String(name),
+    description || null, icon || null, version || '1.0.0', manifest,
+    now, now, String(target_url), category || null, domain || null
+  );
+  return { id: info.lastInsertRowid, action: 'inserted' };
+}
+export function listBuiltinApps() { return _listBuiltinStmt.all(); }
+
+// Lấy user id cho "system owner" của các builtin app. Ưu tiên admin đầu tiên có sẵn.
+// Nếu chưa có admin nào → trả null (seeder sẽ defer đến khi admin login đầu tiên).
+const _getSystemOwnerStmt = db.prepare(
+  `SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1`
+);
+export function getSystemOwnerId() {
+  return _getSystemOwnerStmt.get()?.id || null;
+}

@@ -1,0 +1,11 @@
+{
+  "id": "pomodoro",
+  "alias": "pomodoro",
+  "name": "Pomodoro Timer",
+  "description": "Đồng hồ Pomodoro 25/5: 25 phút tập trung + 5 phút nghỉ, nhịp 4 chu kỳ. Hiệu quả cho học sinh ôn thi và sinh viên code.",
+  "icon": "🍅",
+  "version": "1.0.0",
+  "type": "embedded",
+  "hasFrontendOnly": true,
+  "keywords": ["pomodoro", "timer", "focus", "study"]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "md-notes",
+  "alias": "md-notes",
+  "name": "Markdown Notes",
+  "description": "Sổ ghi chú Markdown nhanh: gõ bên trái, xem render bên phải. Lưu nhiều note vào localStorage, export .md.",
+  "icon": "📝",
+  "version": "1.0.0",
+  "type": "embedded",
+  "hasFrontendOnly": true,
+  "keywords": ["markdown", "notes", "writing", "tool"]
+}

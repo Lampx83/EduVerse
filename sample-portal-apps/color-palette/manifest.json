@@ -1,0 +1,11 @@
+{
+  "id": "color-palette",
+  "alias": "color-palette",
+  "name": "Color Palette",
+  "description": "Tạo bảng màu nhanh: nhập 1 màu, sinh palette analogous/complementary/triadic. Copy hex/rgb/hsl, lưu bộ sưu tập.",
+  "icon": "🎨",
+  "version": "1.0.0",
+  "type": "embedded",
+  "hasFrontendOnly": true,
+  "keywords": ["color", "palette", "design", "tool"]
+}

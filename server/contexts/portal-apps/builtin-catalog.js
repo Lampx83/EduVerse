@@ -1,0 +1,148 @@
+/* BUILTIN PORTAL APPS — đăng ký các page game/lab/sim/tool sẵn có trong Tizia
+ * làm portal-app (kind='builtin'). KHÔNG cần giải nén, chỉ trỏ target_url.
+ *
+ * Convention alias: builtin:<slug> để phân biệt với app user upload.
+ * Khi click building trên campus map, host sẽ launch app theo alias này;
+ * nếu là builtin → redirect/iframe vào target_url + query param dataset.
+ *
+ * Domain dùng cho filter mặc định trên campus map của trường:
+ *   preschool | primary | secondary | it | pharmacy | general
+ *
+ * Category để gom nhóm trong UI catalog:
+ *   game | lab | sim | tool | curriculum | playground
+ *
+ * Nếu thêm/sửa entry, bump CATALOG_VERSION để force re-seed.
+ */
+
+export const CATALOG_VERSION = '2026-06-08-v1';
+
+export const BUILTIN_APPS = [
+  // ─────── Mầm non / Lớp 2 ───────
+  { alias: 'dem-ngon-tay', name: 'Đếm trên ngón tay', icon: '✋',
+    description: 'Học đếm 1-10 bằng cách giơ ngón tay tương ứng. Tương tác cảm ứng thân thiện cho bé.',
+    target_url: '/dem-ngon-tay.html', category: 'game', domain: 'preschool' },
+  { alias: 'dem-qua', name: 'Đếm số quả', icon: '🍎',
+    description: 'Đếm số lượng quả/hình trên màn hình. Luyện nhận số 1-20 cho bé mầm non.',
+    target_url: '/dem-qua.html', category: 'game', domain: 'preschool' },
+  { alias: 'ghep-chu-cai', name: 'Ghép chữ cái', icon: '🔤',
+    description: 'Ghép chữ cái thành từ đơn giản. Học bảng chữ cái Tiếng Việt vui nhộn.',
+    target_url: '/ghep-chu-cai.html', category: 'game', domain: 'preschool' },
+
+  // ─────── Tiểu học ───────
+  { alias: 'bao-so-hoc', name: 'Bão số học', icon: '⛈️',
+    description: 'Phép tính rơi như mưa — chọn đáp án nhanh trước khi chạm đất. Luyện tính nhẩm.',
+    target_url: '/bao-so-hoc.html', category: 'game', domain: 'primary' },
+  { alias: 'cay-tri-thuc', name: 'Cây Tri Thức', icon: '🌳',
+    description: 'Mỗi tuần hoàn thành = 1 chiếc lá lên Cây Tri Thức. Theo dõi tiến trình học cả năm.',
+    target_url: '/cay-tri-thuc.html', category: 'tool', domain: 'primary' },
+  { alias: 'do-chu-ghep-van', name: 'Đố chữ ghép vần', icon: '📝',
+    description: 'Ghép vần thành từ. Trò chơi luyện đọc viết Tiếng Việt cho học sinh tiểu học.',
+    target_url: '/do-chu-ghep-van.html', category: 'game', domain: 'primary' },
+  { alias: '2d-arcade', name: '2D Arcade', icon: '🕹️',
+    description: 'Bộ sưu tập trò chơi arcade 2D nhẹ. Học sinh chơi giữa giờ giải lao.',
+    target_url: '/2d-arcade.html', category: 'game', domain: 'primary' },
+  { alias: 'lop2-curriculum', name: 'Giáo trình Lớp 2', icon: '🎒',
+    description: '9 môn × 36 tuần theo CT GDPT 2018 (KNTT/CTST/CD). Lý thuyết + quiz hằng tuần.',
+    target_url: '/lop2.html', category: 'curriculum', domain: 'primary' },
+
+  // ─────── Trung học ───────
+  { alias: 'ban-do-vn', name: 'Bản đồ Việt Nam Tri Thức', icon: '🗺️',
+    description: 'Khám phá 63 tỉnh thành — mỗi tỉnh một câu chuyện + mini quiz lịch sử/địa lý.',
+    target_url: '/ban-do-vn.html', category: 'game', domain: 'secondary' },
+  { alias: 'history-vn', name: 'Lịch sử Việt Nam', icon: '📜',
+    description: 'Dòng thời gian lịch sử Việt Nam tương tác. Phù hợp ôn Sử lớp 6-12.',
+    target_url: '/history-vn.html', category: 'tool', domain: 'secondary' },
+  { alias: 'bang-phong-than', name: 'Bảng Phong Thần', icon: '⚔️',
+    description: 'Quiz đối kháng — đấu trí với bạn bè hoặc AI theo bộ câu hỏi liên môn.',
+    target_url: '/bang-phong-than.html', category: 'game', domain: 'secondary' },
+  { alias: 'grapher', name: 'Grapher (Vẽ đồ thị)', icon: '📈',
+    description: 'Công cụ vẽ đồ thị hàm số tương tác cho Toán THCS/THPT.',
+    target_url: '/grapher.html', category: 'tool', domain: 'secondary' },
+
+  // ─────── CNTT (IT) ───────
+  { alias: 'code-quest', name: 'Code Quest', icon: '🤖',
+    description: 'Lập trình kéo thả block — giải puzzle bằng các khối lệnh. Lớp 3-9.',
+    target_url: '/code-quest.html', category: 'game', domain: 'it' },
+  { alias: 'it-algo-viz', name: 'Trực quan giải thuật', icon: '🌳',
+    description: 'Mô phỏng các thuật toán cơ bản: sort, BFS/DFS, cây, đồ thị. Có animation.',
+    target_url: '/it-algo-viz.html', category: 'sim', domain: 'it' },
+  { alias: 'it-cipher-ctf', name: 'Cipher CTF', icon: '🔐',
+    description: 'CTF mật mã — giải các bài crypto cơ bản: Caesar, Vigenère, Base, XOR.',
+    target_url: '/it-cipher-ctf.html', category: 'game', domain: 'it' },
+  { alias: 'it-ctf-web', name: 'CTF Web', icon: '🕸️',
+    description: 'CTF web pentest — XSS, SQLi cơ bản trong môi trường sandbox an toàn.',
+    target_url: '/it-ctf-web.html', category: 'game', domain: 'it' },
+  { alias: 'it-code-lab', name: 'Code Lab', icon: '💻',
+    description: 'Editor + runner JS/Python thử nghiệm. Tích hợp Codelab API để chấm tự động.',
+    target_url: '/it-code-lab.html', category: 'playground', domain: 'it' },
+  { alias: 'it-sql-playground', name: 'SQL Playground', icon: '🗄️',
+    description: 'Chạy thử câu lệnh SQL trên dataset mẫu. Học SQL kiểu thực hành.',
+    target_url: '/it-sql-playground.html', category: 'playground', domain: 'it' },
+  { alias: 'it-web-playground', name: 'Web Playground', icon: '🎨',
+    description: 'HTML/CSS/JS live editor — gõ là thấy ngay. Học front-end nhập môn.',
+    target_url: '/it-web-playground.html', category: 'playground', domain: 'it' },
+
+  // ─────── Dược / Y ───────
+  { alias: 'bao-che-hub', name: 'Hub Bào chế', icon: '⚗️',
+    description: 'Cổng vào các phòng thí nghiệm bào chế dược: pha chế, đóng gói, kiểm nghiệm.',
+    target_url: '/bao-che-hub.html', category: 'lab', domain: 'pharmacy' },
+  { alias: 'L2-titration', name: 'Chuẩn độ Acid–Base (3D)', icon: '🧪',
+    description: 'Thí nghiệm chuẩn độ trong phòng lab 3D — quan sát điểm tương đương.',
+    target_url: '/L2-1-titration.html', category: 'lab', domain: 'pharmacy' },
+  { alias: 'L3-3-tuong-tac', name: 'Tương tác thuốc', icon: '💊',
+    description: 'Mô phỏng tương tác giữa các thuốc — cảnh báo và giải thích cơ chế.',
+    target_url: '/L3-3-tuong-tac.html', category: 'sim', domain: 'pharmacy' },
+  { alias: 'PS01-er', name: 'Cấp cứu (ER)', icon: '🚑',
+    description: 'Tình huống cấp cứu mô phỏng — chọn thuốc, liều, đường dùng theo phác đồ.',
+    target_url: '/PS01-er.html', category: 'sim', domain: 'pharmacy' },
+  { alias: 'PS15-gmp-factory', name: 'Nhà máy GMP', icon: '🏭',
+    description: 'Mô phỏng dây chuyền sản xuất dược phẩm chuẩn GMP. Đi qua từng workstation.',
+    target_url: '/PS15-gmp-factory.html', category: 'sim', domain: 'pharmacy' },
+  { alias: 'antibiogram-2d', name: 'Kháng sinh đồ', icon: '🦠',
+    description: 'Mô phỏng kháng sinh đồ Kirby–Bauer — đo vùng ức chế, phân loại kháng/nhạy.',
+    target_url: '/antibiogram-2d.html', category: 'lab', domain: 'pharmacy' },
+  { alias: 'herb-garden-3d', name: 'Vườn dược liệu 3D', icon: '🌿',
+    description: 'Vườn dược liệu 3D — nhận diện cây thuốc, công dụng, bộ phận dùng.',
+    target_url: '/herb-garden-3d.html', category: 'sim', domain: 'pharmacy' },
+  { alias: 'calibration-curve', name: 'Đường chuẩn', icon: '📏',
+    description: 'Vẽ đường chuẩn từ dữ liệu thí nghiệm. Tính R², LOD, LOQ.',
+    target_url: '/calibration-curve.html', category: 'tool', domain: 'pharmacy' },
+  { alias: 'compounding-lab', name: 'Pha chế bột', icon: '🥣',
+    description: 'Mô phỏng pha chế bột thuốc — chia liều, cân, trộn theo kỹ thuật chuẩn.',
+    target_url: '/compounding-lab.html', category: 'lab', domain: 'pharmacy' },
+  { alias: 'dilution', name: 'Pha loãng', icon: '💧',
+    description: 'Bài tập pha loãng dung dịch theo bậc — kiểm tra nồng độ cuối cùng.',
+    target_url: '/dilution.html', category: 'lab', domain: 'pharmacy' },
+  { alias: 'dispense', name: 'Cấp phát thuốc', icon: '💊',
+    description: 'Mô phỏng quầy cấp phát — đọc đơn, lấy thuốc, hướng dẫn bệnh nhân.',
+    target_url: '/dispense.html', category: 'sim', domain: 'pharmacy' },
+  { alias: 'iv-infusion', name: 'Truyền dịch IV', icon: '💉',
+    description: 'Tính tốc độ truyền giọt/phút, thời gian truyền hết. Có animation IV drip.',
+    target_url: '/iv-infusion.html', category: 'sim', domain: 'pharmacy' },
+  { alias: 'GC07-osce-championship', name: 'OSCE Championship', icon: '🏆',
+    description: 'Thi OSCE chuẩn — chuỗi trạm tình huống lâm sàng có chấm theo rubric.',
+    target_url: '/GC07-osce-championship.html', category: 'sim', domain: 'pharmacy' },
+  { alias: 'bp-measure', name: 'Đo huyết áp', icon: '🩺',
+    description: 'Mô phỏng đo huyết áp đúng kỹ thuật — chọn cỡ băng quấn, đặt ống nghe.',
+    target_url: '/bp-measure.html', category: 'lab', domain: 'pharmacy' },
+  { alias: 'duoc-soap', name: 'Dược SOAP', icon: '📋',
+    description: 'Ghi chú dược lâm sàng theo cấu trúc SOAP (Subjective/Objective/Assessment/Plan).',
+    target_url: '/duoc-soap.html', category: 'tool', domain: 'pharmacy' },
+  { alias: '3d-shelf', name: 'Kệ thuốc 3D', icon: '📦',
+    description: 'Khám phá kệ thuốc 3D — tìm thuốc theo nhóm điều trị, đường dùng.',
+    target_url: '/3d-shelf.html', category: 'sim', domain: 'pharmacy' },
+
+  // ─────── Công cụ chung (general) ───────
+  { alias: 'ai-quiz-gen', name: 'AI sinh Quiz', icon: '🧠',
+    description: 'Dán nội dung, AI tự sinh quiz trắc nghiệm + đáp án + giải thích. Dùng cho mọi môn.',
+    target_url: '/ai-quiz-gen.html', category: 'tool', domain: 'general' },
+  { alias: 'hoc-thong-minh', name: 'Học thông minh (AI tutor)', icon: '🎓',
+    description: 'Gia sư AI giải bài tập, gợi ý lời giải từng bước, không cho đáp án thẳng.',
+    target_url: '/hoc-thong-minh.html', category: 'tool', domain: 'general' },
+  { alias: 'tran-dau', name: 'Trận đấu quiz', icon: '⚔️',
+    description: '1-1 hoặc nhóm đấu quiz realtime qua WebSocket. Tăng động lực thi đua.',
+    target_url: '/tran-dau.html', category: 'game', domain: 'general' },
+  { alias: 'nang-luc', name: 'Bản đồ năng lực', icon: '🧭',
+    description: 'Theo dõi 15 nhóm năng lực × 207 skill theo GDPT 2018. Self / con / lớp view.',
+    target_url: '/nang-luc.html', category: 'tool', domain: 'general' },
+];

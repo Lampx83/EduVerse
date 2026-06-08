@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎨 Color Palette · Tizia</title>
+<style>
+  :root { --bg:#0f172a; --card:rgba(255,255,255,.06); --text:#e5edf7; --muted:#94a3b8; --border:rgba(255,255,255,.12); }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:'Inter',system-ui,sans-serif;
+    background: linear-gradient(180deg,var(--bg),#1e293b); color: var(--text); padding: 24px; }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  h1 { margin: 0 0 18px; font-size: 22px; }
+  .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 22px;
+    background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
+  .controls label { font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  input[type=color] { width: 50px; height: 38px; border: 1px solid var(--border); background: transparent; border-radius: 8px; cursor: pointer; }
+  input[type=text] { font-family: 'JetBrains Mono', monospace; background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); padding: 8px 12px; border-radius: 7px; width: 110px; font-size: 13.5px; }
+  select { font-family: inherit; background: var(--card); color: var(--text); border: 1px solid var(--border);
+    padding: 8px 12px; border-radius: 7px; font-size: 13px; cursor: pointer; }
+
+  .palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 28px; }
+  .swatch { aspect-ratio: 1 / 1.2; border-radius: 12px; display: flex; flex-direction: column;
+    justify-content: flex-end; padding: 12px; cursor: pointer; transition: transform .15s; position: relative;
+    border: 1px solid rgba(255,255,255,.05); }
+  .swatch:hover { transform: translateY(-3px); }
+  .swatch .hex { background: rgba(0,0,0,.5); color: white; padding: 4px 8px; border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; backdrop-filter: blur(4px); align-self: flex-start; }
+  .swatch .copy { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.5); color: white;
+    border: 0; padding: 4px 8px; border-radius: 5px; font-size: 11px; cursor: pointer; opacity: 0; transition: opacity .15s; }
+  .swatch:hover .copy { opacity: 1; }
+
+  .formats { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px; }
+  .formats h3 { margin: 0 0 10px; font-size: 14px; }
+  .formats .row { display: flex; gap: 10px; margin: 6px 0; font-size: 13px; align-items: center; }
+  .formats .row span:first-child { width: 50px; color: var(--muted); font-weight: 700; }
+  .formats code { background: var(--bg); padding: 5px 9px; border-radius: 5px; font-family: 'JetBrains Mono', monospace;
+    border: 1px solid var(--border); flex: 1; cursor: pointer; }
+  .saved { background: var(--card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); }
+  .saved h3 { margin: 0 0 12px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+  .saved h3 button { font-family: inherit; background: rgba(255,255,255,.08); color: var(--text);
+    border: 1px solid var(--border); padding: 5px 11px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-left: auto; }
+  .saved-list { display: grid; gap: 10px; }
+  .saved-row { display: flex; gap: 4px; padding: 8px; background: rgba(0,0,0,.2); border-radius: 8px; align-items: center; }
+  .saved-row .mini { width: 28px; height: 28px; border-radius: 5px; border: 1px solid rgba(255,255,255,.1); }
+  .saved-row .name { flex: 1; padding-left: 10px; font-size: 13px; }
+  .saved-row .del { background: rgba(239,68,68,.15); color: #fca5a5; border: 0; padding: 5px 9px; border-radius: 5px; cursor: pointer; font-size: 11px; }
+  .empty { color: var(--muted); font-size: 13px; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: #10b981; color: white;
+    padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; opacity: 0;
+    transform: translateY(10px); transition: opacity .2s, transform .2s; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎨 Color Palette Generator</h1>
+
+  <div class="controls">
+    <label><input type="color" id="picker" value="#fbbf24" /></label>
+    <label><input type="text" id="hexIn" value="#fbbf24" maxlength="7" /></label>
+    <label>Lược đồ:
+      <select id="scheme">
+        <option value="analogous">Analogous (cùng tông)</option>
+        <option value="complementary">Complementary (đối lập)</option>
+        <option value="triadic">Triadic (3 đỉnh)</option>
+        <option value="tetradic">Tetradic (4 đỉnh)</option>
+        <option value="monochromatic">Monochromatic (cùng hue, khác độ)</option>
+      </select>
+    </label>
+    <button id="randomBtn" style="font-family:inherit; background: linear-gradient(135deg, #fbbf24, #f97316);
+      color:#3e2723; border:0; padding:9px 16px; border-radius:8px; font-weight:700; cursor:pointer;">🎲 Random</button>
+    <button id="saveBtn" style="font-family:inherit; background: rgba(255,255,255,.08); color: var(--text);
+      border: 1px solid var(--border); padding: 9px 14px; border-radius: 8px; cursor: pointer;">⭐ Lưu palette này</button>
+  </div>
+
+  <div class="palette" id="palette"></div>
+
+  <div class="formats">
+    <h3>Định dạng của màu gốc (bấm để copy)</h3>
+    <div class="row"><span>HEX</span><code id="fHex"></code></div>
+    <div class="row"><span>RGB</span><code id="fRgb"></code></div>
+    <div class="row"><span>HSL</span><code id="fHsl"></code></div>
+  </div>
+
+  <div class="saved">
+    <h3>⭐ Palette đã lưu <button id="clearBtn">🗑 Xoá hết</button></h3>
+    <div class="saved-list" id="savedList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Đã copy ✓</div>
+
+<script>
+  const SAVE_KEY = 'tizia:color-palettes';
+  const el = id => document.getElementById(id);
+
+  function hex2rgb(hex) {
+    const m = hex.replace('#', '');
+    return [parseInt(m.slice(0,2), 16), parseInt(m.slice(2,4), 16), parseInt(m.slice(4,6), 16)];
+  }
+  function rgb2hex(r, g, b) {
+    const c = n => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
+    return '#' + c(r) + c(g) + c(b);
+  }
+  function rgb2hsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    let h, s, l = (mx + mn) / 2;
+    if (mx === mn) { h = s = 0; }
+    else {
+      const d = mx - mn;
+      s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+      switch (mx) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h *= 60;
+    }
+    return [h, s * 100, l * 100];
+  }
+  function hsl2rgb(h, s, l) {
+    s /= 100; l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+    return [f(0) * 255, f(8) * 255, f(4) * 255];
+  }
+  function genPalette(hex, scheme) {
+    const [r, g, b] = hex2rgb(hex);
+    const [h, s, l] = rgb2hsl(r, g, b);
+    const out = [];
+    if (scheme === 'analogous') {
+      [-60, -30, 0, 30, 60].forEach(d => { const [r, g, b] = hsl2rgb((h + d + 360) % 360, s, l); out.push(rgb2hex(r, g, b)); });
+    } else if (scheme === 'complementary') {
+      [0, 30, 60, 180, 210].forEach(d => { const [r, g, b] = hsl2rgb((h + d) % 360, s, l); out.push(rgb2hex(r, g, b)); });
+    } else if (scheme === 'triadic') {
+      [0, 60, 120, 180, 240].forEach(d => { const [r, g, b] = hsl2rgb((h + d) % 360, s, l); out.push(rgb2hex(r, g, b)); });
+    } else if (scheme === 'tetradic') {
+      [0, 90, 180, 270, 45].forEach(d => { const [r, g, b] = hsl2rgb((h + d) % 360, s, l); out.push(rgb2hex(r, g, b)); });
+    } else if (scheme === 'monochromatic') {
+      [20, 35, 50, 65, 80].forEach(ll => { const [r, g, b] = hsl2rgb(h, s, ll); out.push(rgb2hex(r, g, b)); });
+    }
+    return out;
+  }
+  function isDark(hex) {
+    const [r, g, b] = hex2rgb(hex);
+    return (r * 0.299 + g * 0.587 + b * 0.114) < 140;
+  }
+  function toast(msg) {
+    const t = el('toast'); t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1400);
+  }
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); toast('Đã copy: ' + text); }
+    catch { toast('Copy lỗi — hãy chọn & Cmd-C'); }
+  }
+  function render() {
+    const hex = el('hexIn').value;
+    const scheme = el('scheme').value;
+    if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
+    el('picker').value = hex;
+    const colors = genPalette(hex, scheme);
+    el('palette').innerHTML = colors.map(c => `
+      <div class="swatch" style="background:${c}; color:${isDark(c) ? 'white' : '#1f2937'}"
+           onclick="window.copyHex('${c}')">
+        <button class="copy" onclick="event.stopPropagation(); window.copyHex('${c}')">copy</button>
+        <span class="hex">${c.toUpperCase()}</span>
+      </div>`).join('');
+    const [r, g, b] = hex2rgb(hex);
+    const [h, s, l] = rgb2hsl(r, g, b);
+    el('fHex').textContent = hex.toUpperCase();
+    el('fRgb').textContent = `rgb(${r}, ${g}, ${b})`;
+    el('fHsl').textContent = `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+    window._currentPalette = colors;
+  }
+  window.copyHex = (c) => copy(c);
+  el('fHex').onclick = () => copy(el('fHex').textContent);
+  el('fRgb').onclick = () => copy(el('fRgb').textContent);
+  el('fHsl').onclick = () => copy(el('fHsl').textContent);
+
+  el('picker').oninput = () => { el('hexIn').value = el('picker').value; render(); };
+  el('hexIn').oninput = render;
+  el('scheme').onchange = render;
+  el('randomBtn').onclick = () => {
+    const r = '#' + Array.from({length: 6}, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
+    el('hexIn').value = r; render();
+  };
+
+  // Saved palettes
+  function loadSaved() {
+    return JSON.parse(localStorage.getItem(SAVE_KEY) || '[]');
+  }
+  function renderSaved() {
+    const saved = loadSaved();
+    el('savedList').innerHTML = saved.length ? saved.map((p, i) => `
+      <div class="saved-row">
+        ${p.colors.map(c => `<div class="mini" style="background:${c}"></div>`).join('')}
+        <span class="name">${p.name}</span>
+        <button class="del" data-i="${i}">Xoá</button>
+      </div>`).join('') : '<div class="empty">Chưa có palette nào.</div>';
+    el('savedList').querySelectorAll('.del').forEach(b => b.onclick = () => {
+      const arr = loadSaved(); arr.splice(+b.dataset.i, 1);
+      localStorage.setItem(SAVE_KEY, JSON.stringify(arr)); renderSaved();
+    });
+  }
+  el('saveBtn').onclick = () => {
+    const arr = loadSaved();
+    arr.unshift({ name: el('hexIn').value + ' · ' + el('scheme').value, colors: window._currentPalette });
+    localStorage.setItem(SAVE_KEY, JSON.stringify(arr.slice(0, 50)));
+    renderSaved(); toast('Đã lưu palette');
+  };
+  el('clearBtn').onclick = () => {
+    if (!confirm('Xoá hết palette đã lưu?')) return;
+    localStorage.removeItem(SAVE_KEY); renderSaved();
+  };
+
+  render(); renderSaved();
+</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🃏 Flashcards · Tizia</title>
+<style>
+  :root { --bg:#0f172a; --card:rgba(255,255,255,.06); --accent:#8b5cf6; --green:#10b981; --red:#ef4444; --text:#e5edf7; --muted:#94a3b8; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:'Inter',system-ui,sans-serif;
+    background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(139,92,246,.18), transparent), linear-gradient(180deg,var(--bg),#1e293b);
+    color: var(--text); padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  h1 { margin: 0; font-size: 22px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .toolbar select, .toolbar button { font-family: inherit; background: var(--card); color: var(--text);
+    border: 1px solid rgba(255,255,255,.14); padding: 8px 14px; border-radius: 9px; font-size: 13px; cursor: pointer; }
+  .toolbar button.primary { background: linear-gradient(135deg, var(--accent), #6366f1); color: white; border: 0; font-weight: 700; }
+  .deck-card { perspective: 1000px; width: 100%; max-width: 480px; height: 280px; }
+  .deck-card .inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
+    transition: transform .6s; cursor: pointer; border-radius: 16px; }
+  .deck-card.flipped .inner { transform: rotateY(180deg); }
+  .deck-card .face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px;
+    background: var(--card); border: 1px solid rgba(255,255,255,.14); padding: 28px; display: grid;
+    place-items: center; text-align: center; font-size: 22px; line-height: 1.4; }
+  .deck-card .back { transform: rotateY(180deg); background: linear-gradient(135deg, rgba(139,92,246,.18), rgba(99,102,241,.12)); }
+  .deck-card .meta { position: absolute; top: 10px; left: 14px; font-size: 11px; color: var(--muted); letter-spacing: .5px; }
+  .progress { width: 100%; max-width: 480px; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
+  .progress > div { height: 100%; background: linear-gradient(90deg, var(--accent), #6366f1); transition: width .3s; }
+  .actions { display: flex; gap: 10px; }
+  .actions button { padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px;
+    border: 0; cursor: pointer; font-family: inherit; }
+  .actions .again { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+  .actions .know  { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+  .empty { color: var(--muted); padding: 40px; text-align: center; }
+  textarea { width: 100%; max-width: 480px; min-height: 120px; padding: 12px; background: var(--card);
+    color: var(--text); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; resize: vertical; }
+  .hint { font-size: 12.5px; color: var(--muted); }
+  .stats { display: flex; gap: 18px; font-size: 13px; color: var(--muted); }
+  .stats b { color: var(--text); }
+</style>
+</head>
+<body>
+<h1>🃏 Flashcards</h1>
+<div class="toolbar">
+  <select id="deckSel"></select>
+  <button id="editBtn">✏️ Soạn bộ thẻ</button>
+  <button id="shuffleBtn">🔀 Trộn</button>
+  <button id="resetBtn">⟲ Học lại từ đầu</button>
+  <button class="primary" id="newDeckBtn">+ Bộ thẻ mới</button>
+</div>
+
+<div id="cardView">
+  <div class="progress"><div id="bar" style="width:0%"></div></div>
+  <div class="deck-card" id="deck"><div class="inner">
+    <div class="face front"><span class="meta" id="metaFront">Mặt trước</span><span id="frontText">—</span></div>
+    <div class="face back"><span class="meta" id="metaBack">Mặt sau</span><span id="backText">—</span></div>
+  </div></div>
+  <div class="actions">
+    <button class="again" id="againBtn">😵 Chưa nhớ</button>
+    <button class="know" id="knowBtn">✅ Đã thuộc</button>
+  </div>
+  <div class="stats">
+    <span>Đã thuộc: <b id="learned">0</b></span>
+    <span>Cần ôn: <b id="todo">0</b></span>
+    <span>Tổng: <b id="all">0</b></span>
+  </div>
+</div>
+
+<div id="editView" style="display:none; width:100%; max-width:480px;">
+  <p class="hint">Mỗi dòng 1 thẻ, dùng <code>|</code> ngăn giữa mặt trước & mặt sau. Ví dụ: <code>hello | xin chào</code></p>
+  <textarea id="editor"></textarea>
+  <div style="display:flex; gap:8px; margin-top:10px;">
+    <button class="primary" id="saveBtn" style="flex:1; padding:10px;">💾 Lưu</button>
+    <button id="cancelBtn">Huỷ</button>
+  </div>
+</div>
+
+<script>
+  const STORE_KEY = 'tizia:flashcards:decks';
+  const STATE_KEY = 'tizia:flashcards:state';
+  const DEFAULT_DECKS = {
+    'Tiếng Anh cơ bản': [
+      'hello | xin chào',
+      'thank you | cảm ơn',
+      'apple | quả táo',
+      'beautiful | đẹp',
+      'study | học',
+    ].join('\n'),
+    'Công thức Toán 9': [
+      'Định lý Pytago | a² + b² = c² (tam giác vuông)',
+      'Diện tích hình tròn | π × r²',
+      'Chu vi hình tròn | 2π × r',
+      'Phương trình bậc 2 | ax² + bx + c = 0',
+      'Δ (delta) | b² - 4ac',
+    ].join('\n'),
+  };
+
+  let decks = JSON.parse(localStorage.getItem(STORE_KEY) || 'null') || DEFAULT_DECKS;
+  let state = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+  let currentDeck = Object.keys(decks)[0];
+  let currentList = [];
+  let currentIdx = 0;
+  let flipped = false;
+
+  const el = id => document.getElementById(id);
+
+  function save() {
+    localStorage.setItem(STORE_KEY, JSON.stringify(decks));
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  }
+
+  function rebuildSel() {
+    el('deckSel').innerHTML = Object.keys(decks)
+      .map(n => `<option ${n === currentDeck ? 'selected' : ''}>${n}</option>`).join('');
+  }
+
+  function parseDeck(text) {
+    return text.split('\n').map(l => l.trim()).filter(Boolean).map((l, i) => {
+      const [front, ...back] = l.split('|');
+      return { id: i, front: (front || '').trim(), back: back.join('|').trim() };
+    });
+  }
+
+  function loadDeck(name) {
+    currentDeck = name;
+    currentList = parseDeck(decks[name] || '');
+    state[name] = state[name] || {};
+    currentIdx = 0; flipped = false;
+    render();
+  }
+
+  function render() {
+    if (!currentList.length) {
+      el('frontText').textContent = '(bộ thẻ rỗng — bấm ✏️ để soạn)';
+      el('backText').textContent = '';
+      updateStats();
+      return;
+    }
+    // Lấy danh sách chưa thuộc
+    const todo = currentList.filter(c => !state[currentDeck][c.id]);
+    if (!todo.length) {
+      el('frontText').textContent = '🎉 Hoàn thành!';
+      el('backText').textContent = 'Bấm "Học lại từ đầu" để ôn lại.';
+      updateStats();
+      return;
+    }
+    currentIdx = currentIdx % todo.length;
+    const card = todo[currentIdx];
+    el('frontText').textContent = card.front;
+    el('backText').textContent = card.back;
+    el('deck').classList.toggle('flipped', flipped);
+    el('bar').style.width = (currentList.filter(c => state[currentDeck][c.id]).length / currentList.length * 100) + '%';
+    updateStats();
+  }
+
+  function updateStats() {
+    const learned = currentList.filter(c => state[currentDeck]?.[c.id]).length;
+    el('learned').textContent = learned;
+    el('todo').textContent = currentList.length - learned;
+    el('all').textContent = currentList.length;
+  }
+
+  el('deck').addEventListener('click', () => { flipped = !flipped; render(); });
+  el('againBtn').onclick = () => {
+    const todo = currentList.filter(c => !state[currentDeck][c.id]);
+    currentIdx = (currentIdx + 1) % Math.max(1, todo.length);
+    flipped = false; render();
+  };
+  el('knowBtn').onclick = () => {
+    const todo = currentList.filter(c => !state[currentDeck][c.id]);
+    if (!todo.length) return;
+    const card = todo[currentIdx];
+    state[currentDeck][card.id] = true; save();
+    flipped = false; render();
+  };
+  el('shuffleBtn').onclick = () => { currentList.sort(() => Math.random() - .5); flipped = false; render(); };
+  el('resetBtn').onclick = () => { if (confirm('Học lại từ đầu (xoá ghi nhớ đã thuộc)?')) { state[currentDeck] = {}; save(); render(); } };
+  el('deckSel').onchange = () => loadDeck(el('deckSel').value);
+  el('newDeckBtn').onclick = () => {
+    const name = prompt('Tên bộ thẻ mới?');
+    if (!name || decks[name]) return;
+    decks[name] = ''; save(); rebuildSel(); loadDeck(name); editMode();
+  };
+  el('editBtn').onclick = editMode;
+  el('cancelBtn').onclick = () => { el('cardView').style.display = ''; el('editView').style.display = 'none'; };
+  el('saveBtn').onclick = () => {
+    decks[currentDeck] = el('editor').value;
+    save();
+    el('cardView').style.display = '';
+    el('editView').style.display = 'none';
+    loadDeck(currentDeck);
+  };
+
+  function editMode() {
+    el('editor').value = decks[currentDeck] || '';
+    el('cardView').style.display = 'none';
+    el('editView').style.display = '';
+  }
+
+  rebuildSel();
+  loadDeck(currentDeck);
+</script>
+</body>
+</html>
