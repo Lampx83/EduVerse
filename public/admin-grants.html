@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🔓 Cấp quyền vào trường · Admin Tizia</title>
+<meta name="description" content="Admin cấp quyền vào trường khoá cho user cụ thể: chọn user → chọn trường → grant. Override status/plan check." />
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+<meta name="theme-color" content="#fbbf24" />
+<style>
+  :root { --bg:#0f172a; --card:rgba(255,255,255,.05); --accent:#fbbf24; --green:#10b981;
+    --red:#ef4444; --text:#e5edf7; --muted:#94a3b8; --border:rgba(255,255,255,.12); }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%; font-family:'Inter',system-ui,sans-serif;
+    color:#e5edf7; background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(251,191,36,.12), transparent),
+    linear-gradient(180deg,var(--bg),#1e293b); }
+  a { color: var(--accent); }
+  .top { display:flex; align-items:center; gap:14px; padding:12px 18px;
+    border-bottom:1px solid var(--border); background:rgba(0,0,0,.25); position:sticky; top:0; z-index:5; }
+  .top .home { color:#fff; text-decoration:none; opacity:.85; font-size:13.5px;
+    background:rgba(255,255,255,.08); padding:7px 12px; border-radius:9px; }
+  .top h1 { margin:0; font-size:17px; font-weight:800; }
+  .top h1 .dim { opacity:.55; font-weight:600; font-size:13.5px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+  .lead { color: var(--muted); line-height: 1.65; font-size: 14px; margin: 0 0 22px; }
+  .lead code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin: 18px 0; }
+  .card h2 { margin: 0 0 14px; font-size: 17px; }
+
+  .form-row { display: grid; gap: 12px; grid-template-columns: 2fr 2fr 1fr 1fr auto; align-items: end; }
+  .form-row label { font-size: 12.5px; color: var(--muted); display: block; margin-bottom: 5px; }
+  .form-row input, .form-row select { width: 100%; padding: 9px 12px; background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13.5px; }
+  .form-row button { padding: 9px 18px; background: linear-gradient(135deg, var(--accent), #f97316);
+    color: #3e2723; border: 0; border-radius: 8px; font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: inherit; }
+  .form-row button:hover { filter: brightness(1.08); }
+  .form-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  tr:hover { background: rgba(255,255,255,.02); }
+  td.user b { display: block; }
+  td.user .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    background: rgba(251,191,36,.18); color: var(--accent); font-weight: 700; }
+  .badge.locked { background: rgba(148,163,184,.18); color: var(--muted); }
+  .badge.preview { background: rgba(34,197,94,.18); color: #6ee7b7; }
+  .badge.ready { background: rgba(16,185,129,.2); color: var(--green); }
+  .domain-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .domain-list .chip { background: rgba(251,191,36,.18); color: var(--accent);
+    padding: 3px 8px; border-radius: 5px; font-size: 11.5px; font-weight: 600; }
+  .actions button { padding: 5px 10px; border: 1px solid var(--border); background: rgba(239,68,68,.12);
+    color: #fca5a5; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .actions button:hover { background: rgba(239,68,68,.22); }
+  .toast { position: fixed; bottom: 22px; right: 22px; background: var(--green); color: white;
+    padding: 11px 17px; border-radius: 9px; font-size: 13.5px; font-weight: 700;
+    opacity: 0; transform: translateY(10px); transition: opacity .2s, transform .2s; z-index: 100; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.err { background: var(--red); }
+  .empty { color: var(--muted); padding: 26px; text-align: center; font-size: 13.5px;
+    border: 1px dashed var(--border); border-radius: 10px; }
+  .filter-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .filter-row input { flex: 1; padding: 8px 12px; background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 7px; font-family: inherit; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="home" href="admin.html">← Admin</a>
+  <h1>🔓 Cấp quyền vào trường <span class="dim">· Tizia</span></h1>
+</div>
+
+<div class="wrap">
+  <p class="lead">
+    Cấp <b>quyền vào trường</b> cho user cụ thể, kể cả khi trường đang <code>locked</code>
+    hoặc yêu cầu plan cao hơn của user. Grant override mọi check status + plan.
+    Có thể đặt <code>expires_at</code> để hết hạn tự động.
+  </p>
+
+  <div class="card">
+    <h2>➕ Cấp quyền mới</h2>
+    <div class="form-row">
+      <div>
+        <label>User (gõ để tìm theo username/display name)</label>
+        <input type="text" id="userSearch" list="userList" placeholder="username hoặc tên..." />
+        <datalist id="userList"></datalist>
+      </div>
+      <div>
+        <label>Trường</label>
+        <select id="domainSel"></select>
+      </div>
+      <div>
+        <label>Hết hạn (tuỳ chọn)</label>
+        <input type="date" id="expiresAt" />
+      </div>
+      <div>
+        <label>Ghi chú (tuỳ chọn)</label>
+        <input type="text" id="note" maxlength="200" placeholder="VD: thử nghiệm" />
+      </div>
+      <button id="grantBtn">🔓 Cấp quyền</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Quyền đã cấp <span style="font-weight:400; color:var(--muted); font-size:13px;" id="grantCount"></span></h2>
+    <div class="filter-row">
+      <input type="text" id="filterInput" placeholder="🔎 lọc theo username, tên, trường, ghi chú…" />
+    </div>
+    <div id="grantsTable"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { DOMAIN_META } from './js/engine/domain.js';
+
+  function toast(msg, isErr = false) {
+    const t = document.getElementById('toast');
+    t.className = 'toast show' + (isErr ? ' err' : '');
+    t.textContent = msg;
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  async function csrf() {
+    try { return (await (await fetch('/api/csrf', { credentials: 'include' })).json()).token; }
+    catch { return null; }
+  }
+  async function api(method, url, body) {
+    const tok = await csrf();
+    const opts = { method, credentials: 'include', headers: { 'Content-Type': 'application/json' } };
+    if (tok) opts.headers['X-CSRF-Token'] = tok;
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.message || j.error || `HTTP ${r.status}`);
+    }
+    return r.json();
+  }
+
+  // Build domain select
+  const sel = document.getElementById('domainSel');
+  sel.innerHTML = DOMAIN_META.map(d => {
+    const tag = d.status === 'ready' ? 'mở' : d.status === 'preview' ? 'preview' : '🔒 khoá';
+    return `<option value="${d.id}">${d.icon} ${d.name} · ${tag}</option>`;
+  }).join('');
+
+  // Search users
+  let cachedUsers = [];
+  const userInput = document.getElementById('userSearch');
+  const userList = document.getElementById('userList');
+  async function loadUsers() {
+    try {
+      const j = await (await fetch('/api/admin/users?limit=500', { credentials: 'include' })).json();
+      cachedUsers = j.users || [];
+      userList.innerHTML = cachedUsers.map(u =>
+        `<option value="${u.username}">${u.display_name || u.username} · ${u.role}</option>`).join('');
+    } catch (e) { toast('Không tải được danh sách user: ' + e.message, true); }
+  }
+
+  // Grant button
+  document.getElementById('grantBtn').onclick = async () => {
+    const username = userInput.value.trim();
+    const u = cachedUsers.find(x => x.username === username);
+    if (!u) { toast('Không tìm thấy user "' + username + '"', true); return; }
+    const domain_id = sel.value;
+    const dateStr = document.getElementById('expiresAt').value;
+    const expires_at = dateStr ? new Date(dateStr).getTime() : null;
+    const note = document.getElementById('note').value.trim() || null;
+    try {
+      await api('POST', `/api/admin/users/${u.id}/grant-domain`,
+        { domain_id, expires_at, note });
+      toast(`✅ Đã cấp quyền "${domain_id}" cho ${u.username}`);
+      userInput.value = ''; document.getElementById('note').value = '';
+      document.getElementById('expiresAt').value = '';
+      refresh();
+    } catch (e) { toast('Lỗi: ' + e.message, true); }
+  };
+
+  // List grants
+  let allGrants = [];
+  async function refresh() {
+    try {
+      const j = await (await fetch('/api/admin/domain-grants', { credentials: 'include' })).json();
+      allGrants = j.grants || [];
+      document.getElementById('grantCount').textContent = `(${allGrants.length})`;
+      render();
+    } catch (e) { toast('Không tải được grants: ' + e.message, true); }
+  }
+  function getDomainMeta(id) {
+    return DOMAIN_META.find(d => d.id === id) || { name: id, icon: '❓', status: 'unknown' };
+  }
+  function fmtDate(ms) {
+    if (!ms) return '—';
+    const d = new Date(Number(ms));
+    return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  }
+  function render() {
+    const q = document.getElementById('filterInput').value.toLowerCase().trim();
+    const filtered = q ? allGrants.filter(g => {
+      const dm = getDomainMeta(g.domain_id);
+      return [g.username, g.display_name, g.domain_id, dm.name, g.note].some(s =>
+        String(s || '').toLowerCase().includes(q));
+    }) : allGrants;
+    if (!filtered.length) {
+      document.getElementById('grantsTable').innerHTML = '<div class="empty">Chưa có grant nào' + (q ? ' khớp filter' : '') + '.</div>';
+      return;
+    }
+    document.getElementById('grantsTable').innerHTML = `
+      <table>
+        <thead><tr><th>User</th><th>Trường</th><th>Cấp lúc</th><th>Hết hạn</th><th>Bởi</th><th>Ghi chú</th><th></th></tr></thead>
+        <tbody>
+          ${filtered.map(g => {
+            const dm = getDomainMeta(g.domain_id);
+            const statusBadge = `<span class="badge ${dm.status}">${dm.status}</span>`;
+            return `<tr data-uid="${g.user_id}" data-did="${g.domain_id}">
+              <td class="user">
+                <b>${escapeHtml(g.display_name || g.username || '?')}</b>
+                <div class="sub">@${escapeHtml(g.username || '')} · ${escapeHtml(g.role || '')}</div>
+              </td>
+              <td>${dm.icon} ${escapeHtml(dm.name)} ${statusBadge}</td>
+              <td>${fmtDate(g.granted_at)}</td>
+              <td>${g.expires_at ? fmtDate(g.expires_at) : '<i style="color:var(--muted)">Vĩnh viễn</i>'}</td>
+              <td>@${escapeHtml(g.granted_by_username || 'system')}</td>
+              <td>${escapeHtml(g.note || '')}</td>
+              <td class="actions"><button data-revoke>🗑 Thu hồi</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+    document.querySelectorAll('[data-revoke]').forEach(b => {
+      b.onclick = async () => {
+        const tr = b.closest('tr');
+        const uid = tr.dataset.uid, did = tr.dataset.did;
+        if (!confirm(`Thu hồi quyền "${did}" của user #${uid}?`)) return;
+        try {
+          await api('DELETE', `/api/admin/users/${uid}/grant-domain/${did}`);
+          toast('✅ Đã thu hồi');
+          refresh();
+        } catch (e) { toast('Lỗi: ' + e.message, true); }
+      };
+    });
+  }
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  document.getElementById('filterInput').oninput = render;
+  loadUsers();
+  refresh();
+</script>
+</body>
+</html>

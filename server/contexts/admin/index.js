@@ -134,6 +134,50 @@ export function attachAdmin(r) {
     res.json({ ok: true });
   });
 
+  // ─── Per-user DOMAIN GRANTS — admin mở quyền vào trường (kể cả locked) ───
+  // Đặc biệt hữu ích cho B2B: admin gán giáo viên/HS vào trường đang phát triển
+  // hoặc cho phép 1 user thử trường khác miễn phí.
+
+  // GET /api/admin/domain-grants — list tất cả grants gần đây (500 mới nhất)
+  r.get('/api/admin/domain-grants', requireAdmin, async (_req, res) => {
+    const { listAllDomainGrants } = await import('../../db.js');
+    res.json({ grants: listAllDomainGrants() });
+  });
+
+  // GET /api/admin/users/:id/grants — list grants của 1 user
+  r.get('/api/admin/users/:id/grants', requireAdmin, async (req, res) => {
+    const { listUserDomainGrantsFull } = await import('../../db.js');
+    res.json({ grants: listUserDomainGrantsFull(Number(req.params.id)) });
+  });
+
+  // POST /api/admin/users/:id/grant-domain — { domain_id, expires_at?, note? }
+  r.post('/api/admin/users/:id/grant-domain', requireAdmin, async (req, res) => {
+    const { grantUserDomain } = await import('../../db.js');
+    const domain_id = String(req.body?.domain_id || '').trim();
+    if (!domain_id || !/^[a-z][a-z0-9-]+$/.test(domain_id)) {
+      return res.status(400).json({ error: 'invalid_domain_id' });
+    }
+    const expires_at = req.body?.expires_at ? Number(req.body.expires_at) : null;
+    if (expires_at != null && (!Number.isFinite(expires_at) || expires_at < Date.now())) {
+      return res.status(400).json({ error: 'invalid_expires_at', message: 'expires_at phải > now (epoch ms)' });
+    }
+    grantUserDomain({
+      userId: Number(req.params.id),
+      domainId: domain_id,
+      grantedBy: req.user.id,
+      expiresAt: expires_at,
+      note: req.body?.note || null,
+    });
+    res.json({ ok: true, user_id: Number(req.params.id), domain_id, expires_at });
+  });
+
+  // DELETE /api/admin/users/:id/grant-domain/:domain_id
+  r.delete('/api/admin/users/:id/grant-domain/:domain_id', requireAdmin, async (req, res) => {
+    const { revokeUserDomain } = await import('../../db.js');
+    const changes = revokeUserDomain(Number(req.params.id), String(req.params.domain_id));
+    res.json({ ok: true, removed: changes });
+  });
+
   // Admin set/đổi enrolled_domain. value=null → bỏ gắn trường (admin/no-school).
   // Bucket ví/skill cũ KHÔNG bị xoá (đúng chính sách giữ ẩn — anh Lâm xác nhận).
   r.post('/api/admin/users/:id/enrollment', requireAdmin, async (req, res) => {

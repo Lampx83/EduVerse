@@ -165,8 +165,18 @@ export function isGuestDomain(id) { return GUEST_DOMAINS.has(id); }
 /** Plan tối thiểu để vào 1 trường (mirror của BE getRequiredPlanForDomain). */
 export function getRequiredPlan(id) { return _getRequiredPlanForDomain(id); }
 
-/** True nếu user (object từ /api/auth/me hoặc null cho khách) được vào trường id. */
+/** True nếu user có per-user grant cho trường id (admin đã mở quyền riêng). */
+export function hasDomainGrant(id, me) {
+  if (!me || !Array.isArray(me.granted_domains)) return false;
+  return me.granted_domains.includes(id);
+}
+
+/** True nếu user (object từ /api/auth/me hoặc null cho khách) được vào trường id.
+ *  Ưu tiên 1: admin grant per-user → bypass mọi check.
+ *  Ưu tiên 2: plan đủ + trường mở.
+ */
 export function canEnterDomain(id, me) {
+  if (hasDomainGrant(id, me)) return true;
   const required = getRequiredPlan(id);
   const userPlan = effectivePlanId(me);
   return _meetsPlan(userPlan, required);

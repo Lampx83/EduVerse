@@ -1925,6 +1925,83 @@ export function setPortalAppPublic(id, isPublic) {
   return _setPortalAppPublicStmt.run(isPublic ? 1 : 0, Date.now(), Number(id)).changes;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// USER DOMAIN GRANTS — Admin mở quyền vào 1 trường (kể cả trường locked) cho
+// 1 user cụ thể. Override status check + plan check. Hết hạn (expires_at < now)
+// → grant tự degrade (FE/BE đều check). expires_at NULL = không hết hạn.
+// ─────────────────────────────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_domain_grants (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL,
+    domain_id    TEXT    NOT NULL,
+    granted_at   INTEGER NOT NULL,
+    granted_by   INTEGER,
+    expires_at   INTEGER,
+    note         TEXT,
+    UNIQUE(user_id, domain_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_user_domain_grants_user ON user_domain_grants(user_id);
+`);
+
+const _grantDomainStmt = db.prepare(`
+  INSERT INTO user_domain_grants (user_id, domain_id, granted_at, granted_by, expires_at, note)
+  VALUES (?, ?, ?, ?, ?, ?)
+  ON CONFLICT(user_id, domain_id) DO UPDATE SET
+    granted_at = excluded.granted_at,
+    granted_by = excluded.granted_by,
+    expires_at = excluded.expires_at,
+    note       = excluded.note
+`);
+const _revokeDomainStmt = db.prepare(
+  `DELETE FROM user_domain_grants WHERE user_id = ? AND domain_id = ?`
+);
+const _listGrantsByUserStmt = db.prepare(
+  `SELECT domain_id, granted_at, granted_by, expires_at, note
+   FROM user_domain_grants
+   WHERE user_id = ? AND (expires_at IS NULL OR expires_at > ?)
+   ORDER BY granted_at DESC`
+);
+const _hasGrantStmt = db.prepare(
+  `SELECT 1 FROM user_domain_grants
+   WHERE user_id = ? AND domain_id = ? AND (expires_at IS NULL OR expires_at > ?) LIMIT 1`
+);
+const _listAllGrantsStmt = db.prepare(
+  `SELECT g.id, g.user_id, g.domain_id, g.granted_at, g.granted_by, g.expires_at, g.note,
+          u.username, u.display_name, u.role,
+          gb.username AS granted_by_username
+   FROM user_domain_grants g
+   LEFT JOIN users u  ON u.id  = g.user_id
+   LEFT JOIN users gb ON gb.id = g.granted_by
+   ORDER BY g.granted_at DESC LIMIT 500`
+);
+
+export function grantUserDomain({ userId, domainId, grantedBy, expiresAt = null, note = null }) {
+  return _grantDomainStmt.run(
+    Number(userId), String(domainId), Date.now(),
+    grantedBy ? Number(grantedBy) : null,
+    expiresAt ? Number(expiresAt) : null,
+    note ? String(note).slice(0, 200) : null
+  ).changes;
+}
+export function revokeUserDomain(userId, domainId) {
+  return _revokeDomainStmt.run(Number(userId), String(domainId)).changes;
+}
+export function hasUserDomainGrant(userId, domainId) {
+  return !!_hasGrantStmt.get(Number(userId), String(domainId), Date.now());
+}
+export function listUserDomainGrants(userId) {
+  return _listGrantsByUserStmt.all(Number(userId), Date.now()).map(r => r.domain_id);
+}
+export function listUserDomainGrantsFull(userId) {
+  return _listGrantsByUserStmt.all(Number(userId), Date.now());
+}
+export function listAllDomainGrants() {
+  return _listAllGrantsStmt.all();
+}
+
 // Builtin app seeding — upsert theo alias trong namespace builtin (owner_id = 0 sentinel
 // — không tham chiếu user thật, FK pragma đã DEFERRED check; nếu pragma strict thì cần
 // 1 user system. SQLite cho phép insert ngay cả khi orphan vì FK enforce theo từng row,

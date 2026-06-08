@@ -7,6 +7,7 @@ import {
   createSession, getSession, deleteSession,
   resolveSchoolByEmail, getSchoolByCode, getBestParentPlanForChild,
   getEnrolledDomain, setEnrolledDomain,
+  listUserDomainGrants,
 } from '../../db.js';
 import { effectivePlan, effectivePlanWithFamily, meetsPlan, USER_PLANS } from '../billing/user-plans.js';
 
@@ -456,6 +457,9 @@ export function attachAuth(r) {
         // modal. Admin (role='admin') để NULL = không bound vào trường, bypass
         // requireEnrollment ở mọi /api/* ghi.
         enrolled_domain: full.enrolled_domain || null,
+        // Per-user grants — admin đã mở thêm trường nào cho user này (kể cả
+        // trường khoá). FE dùng để bỏ qua isDomainOpen/plan check.
+        granted_domains: listUserDomainGrants(full.id),
         profile_complete: isProfileComplete(full),
         default_route: defaultRouteForUser(full),
       } : null,
