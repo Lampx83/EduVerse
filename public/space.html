@@ -1821,8 +1821,197 @@ const SPACES_PRESCHOOL = {
       {id:'canteen-c15',q:'Khi ăn cơm xong, bé nên?',o:['Cảm ơn cô, lau miệng, cất bát','Bỏ chạy ngay','Quăng bát','Ngủ luôn tại bàn'],a:0}]},
 };
 
-const SPACE_SETS = { pharmacy: SPACES_PHARMACY, secondary: SPACES_SECONDARY, it: SPACES_IT, primary: SPACES_PRIMARY, preschool: SPACES_PRESCHOOL };
-const DOMAIN_TITLES = { pharmacy: 'Trường Dược', secondary: 'Trường THCS', it: 'Trường Công nghệ thông tin', primary: 'Trường Tiểu học', preschool: 'Trường Mầm non' };
+// ─────────────────────────────────────────────────────────────────────────────
+// TRƯỜNG NGOẠI NGỮ — 9 toà nhà chuyên ngôn ngữ. Mỗi toà có 2-4 phòng/hoạt
+// động trỏ tới portal-app cụ thể của trường (tu-vung, phat-am, flashcards…).
+// ─────────────────────────────────────────────────────────────────────────────
+const SPACES_LANGUAGE = {
+  'main-hall':{emoji:'🏛️',name:'Sảnh chính · Lễ tân',accent:'#0ea5e9',
+    intro:'Cổng giới thiệu vào Trường Ngoại ngữ: lộ trình học, kỳ thi quốc tế, mẹo học từ vựng theo CEFR.',
+    rooms:[
+      {ic:'📊',name:'Bảng điều khiển học tập',rd:'Theo dõi từ đã thuộc, ngày streak, điểm phát âm.',href:'/dashboard.html'},
+      {ic:'🎓',name:'AI Tutor Ngoại ngữ',rd:'Hỏi gia sư AI mọi thắc mắc về ngữ pháp, dịch câu, từ thay thế.',href:'/hoc-thong-minh.html?subject=language'},
+      {ic:'🌳',name:'Cây Tri Thức ngôn ngữ',rd:'Mỗi tuần học = 1 chiếc lá lên cây — theo dõi tiến trình cả năm.',href:'/cay-tri-thuc.html'},
+    ],
+    skills:['Tự đặt mục tiêu CEFR','Quản lý lộ trình học từ vựng','Theo dõi tiến độ daily streak'],
+    quiz:[
+      {q:'CEFR có bao nhiêu cấp độ?',o:['4 (A1, A2, B1, B2)','6 (A1, A2, B1, B2, C1, C2)','3 (Beginner, Intermediate, Advanced)','Không cố định'],a:1},
+      {q:'IELTS thang điểm tối đa?',o:['9.0','10.0','100','990'],a:0},
+    ]},
+
+  'library-lang':{emoji:'📚',name:'Thư viện đa ngữ',accent:'#3b82f6',
+    intro:'Kho từ vựng theo chủ đề: cơ bản, du lịch, kinh doanh, học thuật, IELTS. Spaced repetition + flashcards.',
+    rooms:[
+      {ic:'📚',name:'Từ vựng Tiếng Anh (2000 từ)',rd:'5 chủ đề: cơ bản, du lịch, kinh doanh, học thuật, IELTS. Phát âm tự động + spaced repetition.',href:'/tu-vung-tieng-anh.html'},
+      {ic:'🃏',name:'Flashcards đa ngôn ngữ',rd:'Tự nhập bộ thẻ riêng (Anh/Nhật/Hàn/Trung). Lưu localStorage, lật thẻ 3D.',href:'/portal-apps/u/4/flashcards/'},
+    ],
+    skills:['Học từ vựng theo chủ đề','Spaced repetition','Quản lý bộ thẻ cá nhân'],
+    quiz:[
+      {q:'Spaced repetition là gì?',o:['Học liên tục 1 từ','Lặp lại với khoảng cách tăng dần','Học theo bảng chữ cái','Học ngẫu nhiên'],a:1},
+    ]},
+
+  'test-center':{emoji:'🏆',name:'Trung tâm Thi quốc tế',accent:'#f59e0b',
+    intro:'Mô phỏng đề thi IELTS / TOEFL / HSK. Bấm giờ, chấm tự động, phân tích kỹ năng yếu.',
+    rooms:[
+      {ic:'🧠',name:'Quiz Ngữ pháp',rd:'10 câu MCQ ngữ pháp tiếng Anh A2-B2, 15s/câu.',href:'/quiz.html?domain=language'},
+      {ic:'🧠',name:'AI sinh đề IELTS Reading',rd:'AI tạo đoạn văn + câu hỏi theo dạng IELTS Reading Part 1-3.',href:'/ai-quiz-gen.html?topic=ielts-reading'},
+    ],
+    skills:['Quản lý thời gian thi','Đọc hiểu IELTS Reading','Phân tích sai lầm'],
+    quiz:[
+      {q:'IELTS Reading có bao nhiêu phần?',o:['2','3','4','5'],a:1},
+      {q:'TOEFL iBT thang điểm tối đa?',o:['100','120','9.0','990'],a:1},
+    ]},
+
+  'listening-lab':{emoji:'🎧',name:'Phòng nghe (headset lab)',accent:'#8b5cf6',
+    intro:'Luyện nghe với phụ đề + tốc độ điều chỉnh. Phát âm tự động giúp tai quen accent chuẩn.',
+    rooms:[
+      {ic:'📚',name:'Từ vựng nghe (audio)',rd:'Mọi thẻ từ vựng đều có nút 🔊 phát âm Mỹ/Anh. Nghe trước, nhớ sau.',href:'/tu-vung-tieng-anh.html'},
+      {ic:'🎓',name:'AI Tutor — luyện hội thoại',rd:'Chat với AI bằng tiếng Anh, đo độ tự nhiên & sửa lỗi.',href:'/hoc-thong-minh.html?subject=language&mode=conversation'},
+    ],
+    skills:['Phân biệt accent UK/US','Nghe chậm/nhanh','Đoán nghĩa qua ngữ cảnh'],
+    quiz:[
+      {q:'Tốc độ chuẩn IELTS Listening?',o:['Khoảng 130 từ/phút','Khoảng 200 từ/phút','Khoảng 50 từ/phút','Không cố định'],a:0},
+    ]},
+
+  'speaking-room':{emoji:'💬',name:'Phòng hội thoại',accent:'#ec4899',
+    intro:'Phòng thực hành giao tiếp 1-1 với AI. Đặt tình huống (du lịch, phỏng vấn, IELTS Speaking) rồi luyện.',
+    rooms:[
+      {ic:'🎓',name:'AI Tutor — Speaking Practice',rd:'Đối thoại với AI theo các tình huống đời thực — AI sửa câu, gợi ý cách nói tự nhiên hơn.',href:'/hoc-thong-minh.html?subject=language&mode=speaking'},
+      {ic:'🎤',name:'Luyện phát âm AI',rd:'Đọc câu mẫu — AI chấm phát âm bằng Speech Recognition, score 0-100% theo từng từ.',href:'/luyen-phat-am.html'},
+    ],
+    skills:['Phát âm chuẩn','Giữ luồng hội thoại','Đáp ứng tình huống bất ngờ'],
+    quiz:[
+      {q:'IELTS Speaking gồm mấy phần?',o:['2','3','4','5'],a:1},
+    ]},
+
+  'pronunciation':{emoji:'🎤',name:'Studio Phát âm',accent:'#a855f7',
+    intro:'Phòng thu hiện đại để luyện từng âm IPA, intonation, stress. AI chấm chi tiết từng từ.',
+    rooms:[
+      {ic:'🎤',name:'Luyện phát âm AI (chi tiết)',rd:'3 cấp độ: dễ (câu ngắn), vừa (thông dụng), khó (câu phức). AI diff theo token.',href:'/luyen-phat-am.html'},
+      {ic:'📚',name:'Từ vựng + phát âm',rd:'Mỗi từ có IPA + nút phát âm — luyện từ trước khi luyện câu.',href:'/tu-vung-tieng-anh.html'},
+    ],
+    skills:['Phát âm IPA','Stress trong từ đa âm tiết','Intonation câu hỏi/khẳng định'],
+    quiz:[
+      {q:'IPA là viết tắt của?',o:['International Pronunciation Alphabet','International Phonetic Alphabet','Intensive Phonetic Audio','Intermediate Pronunciation Assist'],a:1},
+    ]},
+
+  'film-room':{emoji:'📺',name:'Phòng phim phụ đề',accent:'#0891b2',
+    intro:'Xem clip ngắn có phụ đề Anh-Việt song song. Luyện nghe + mở rộng từ vựng đời thực qua phim.',
+    rooms:[
+      {ic:'🃏',name:'Flashcards trích từ phim',rd:'Tự nhập câu thoại từ phim yêu thích, lưu thành bộ thẻ học.',href:'/portal-apps/u/4/flashcards/'},
+      {ic:'🎓',name:'AI dịch & giải thích slang',rd:'Dán câu thoại phim, AI dịch + giải thích slang/idiom Mỹ.',href:'/hoc-thong-minh.html?subject=language&mode=translate'},
+    ],
+    skills:['Nghe slang & idiom','Hiểu ngữ cảnh văn hoá','Bắt chước intonation tự nhiên'],
+    quiz:[]},
+
+  'drama':{emoji:'🎭',name:'Sân khấu kịch',accent:'#ec4899',
+    intro:'Đóng kịch tiếng Anh: học sinh đọc kịch bản, ghi âm vai diễn, cùng nhau diễn 1 cảnh.',
+    rooms:[
+      {ic:'🎤',name:'Luyện đọc kịch bản (phát âm AI)',rd:'Chọn câu kịch bản, đọc theo, AI chấm phát âm + biểu cảm.',href:'/luyen-phat-am.html?level=hard'},
+      {ic:'⚔️',name:'Trận đấu drama (đọc nhanh)',rd:'1-1 đọc câu phức + AI chấm — ai phát âm chuẩn hơn thắng.',href:'/tran-dau.html?subject=language'},
+    ],
+    skills:['Trình diễn ngôn ngữ','Biểu cảm khi nói','Phối hợp nhóm'],
+    quiz:[]},
+
+  'intl-cafe':{emoji:'🌍',name:'Cafe Quốc tế',accent:'#10b981',
+    intro:'Quán cà phê ảo nơi học viên gặp gỡ AI native từ nhiều nước. Thử giọng Anh/Mỹ/Úc/Sing/Ấn.',
+    rooms:[
+      {ic:'🎓',name:'Chat tự do với AI',rd:'Chat bất kỳ chủ đề — AI giả lập người bản xứ. Không sửa câu nếu không yêu cầu.',href:'/hoc-thong-minh.html?subject=language&mode=free'},
+      {ic:'🏆',name:'Bảng Phong Thần Ngoại ngữ',rd:'Xếp hạng theo tổng điểm phát âm + từ vựng tích luỹ.',href:'/bang-phong-than.html?subject=language'},
+    ],
+    skills:['Giao tiếp tự nhiên','Quản lý cảm xúc khi nói sai','Mở rộng vốn từ qua trò chuyện'],
+    quiz:[]},
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TRƯỜNG LÁI XE — 7 toà nhà cho bằng B1/B2. Mỗi toà 2-3 phòng trỏ tới
+// 600 câu lý thuyết, biển báo, mô phỏng cabin, sa hình…
+// ─────────────────────────────────────────────────────────────────────────────
+const SPACES_DRIVING = {
+  'theory-center':{emoji:'📖',name:'Trung tâm Lý thuyết',accent:'#dc2626',
+    intro:'Nơi học 600 câu lý thuyết Luật giao thông đường bộ theo Bộ GTVT. Có chế độ luyện + thi thử.',
+    rooms:[
+      {ic:'📖',name:'600 câu lý thuyết B1/B2',rd:'Luyện theo chương: khái niệm, văn hoá, kỹ thuật, biển báo, sa hình, cấu tạo. Đánh dấu CÂU LIỆT.',href:'/luat-giao-thong-600.html'},
+      {ic:'🧠',name:'AI Quiz tình huống',rd:'AI sinh tình huống thực tế: đi đường mưa, qua đường sắt, gặp xe ưu tiên… Giải thích lý do.',href:'/ai-quiz-gen.html?topic=driving'},
+      {ic:'📊',name:'Tiến độ học của tôi',rd:'Theo dõi số câu đúng/sai, câu LIỆT hay sai, sẵn sàng thi chưa.',href:'/dashboard.html'},
+    ],
+    skills:['Hiểu khái niệm cơ bản','Quy tắc nhường đường','Văn hoá lái xe an toàn'],
+    quiz:[
+      {q:'Bằng B1 cho phép lái loại xe nào?',o:['Ô tô chở người đến 9 chỗ (không kinh doanh)','Ô tô tải','Xe khách trên 30 chỗ','Container'],a:0},
+      {q:'Nồng độ cồn cho phép khi lái ô tô tại VN?',o:['Dưới 50 mg/100ml máu','Dưới 80 mg/100ml máu','Bất kỳ nồng độ nào (cấm tuyệt đối)','Dưới 30 mg/100ml máu'],a:2},
+      {q:'Khi gặp đèn vàng nhấp nháy, người lái phải?',o:['Phanh gấp','Giảm tốc, chú ý quan sát, được phép đi','Bóp còi liên tục','Dừng lại trước vạch'],a:1},
+    ]},
+
+  'signs-room':{emoji:'🚸',name:'Phòng Biển báo',accent:'#f97316',
+    intro:'Học 4 nhóm biển báo QCVN 41:2019: cấm (đỏ), nguy hiểm (vàng tam giác), hiệu lệnh (xanh), chỉ dẫn (chữ nhật).',
+    rooms:[
+      {ic:'🚸',name:'Học biển báo (4 nhóm)',rd:'SVG vẽ tay, bấm vào biển để xem ý nghĩa chi tiết. Filter theo nhóm.',href:'/bien-bao-giao-thong.html'},
+      {ic:'🎯',name:'Đố vui biển báo',rd:'Random biển + 4 đáp án, đếm streak đúng liên tiếp.',href:'/bien-bao-giao-thong.html?mode=quiz'},
+    ],
+    skills:['Phân biệt 4 nhóm biển QCVN','Đọc biển nhanh khi đang lái','Hiểu cấu trúc biển báo'],
+    quiz:[
+      {q:'Biển báo HÌNH TRÒN viền đỏ thuộc nhóm nào?',o:['Cấm','Nguy hiểm','Hiệu lệnh','Chỉ dẫn'],a:0},
+      {q:'Biển báo HÌNH TAM GIÁC vàng thuộc nhóm nào?',o:['Cấm','Nguy hiểm','Hiệu lệnh','Chỉ dẫn'],a:1},
+      {q:'Biển báo HÌNH TRÒN xanh dương thuộc nhóm nào?',o:['Cấm','Nguy hiểm','Hiệu lệnh (bắt buộc)','Chỉ dẫn'],a:2},
+    ]},
+
+  'exam-theory':{emoji:'📝',name:'Phòng Thi Lý thuyết',accent:'#f59e0b',
+    intro:'Mô phỏng kỳ thi sát hạch: 25 câu / 22 phút. Sai 1 câu LIỆT là trượt dù tổng điểm đủ. Đạt ≥ 21/25.',
+    rooms:[
+      {ic:'📝',name:'Thi thử 25 câu',rd:'Đề ngẫu nhiên có câu LIỆT, đồng hồ đếm ngược, không gợi ý trong lúc thi.',href:'/luat-giao-thong-600.html?mode=exam'},
+      {ic:'⚠️',name:'Chỉ luyện câu LIỆT',rd:'Tập trung vào những câu có thể khiến trượt: nồng độ cồn, sương mù, lùi xe, làn buýt.',href:'/luat-giao-thong-600.html?mode=critical'},
+    ],
+    skills:['Quản lý thời gian thi','Tránh câu LIỆT','Đọc câu hỏi cẩn thận'],
+    quiz:[
+      {q:'Đề thi B1 lý thuyết cần đúng tối thiểu bao nhiêu câu?',o:['18/25','21/25','25/25','20/30'],a:1},
+      {q:'Thời gian làm bài B1?',o:['15 phút','22 phút','30 phút','60 phút'],a:1},
+    ]},
+
+  'sim-room':{emoji:'🎮',name:'Phòng Mô phỏng (cabin lái)',accent:'#8b5cf6',
+    intro:'Cabin ảo mô phỏng tình huống lái: đường mưa, đường sắt, ngã tư, dốc xuống nguy hiểm. Phản ứng đúng = điểm.',
+    rooms:[
+      {ic:'🧠',name:'AI Quiz tình huống động',rd:'Tình huống động trên đường — AI tạo case study từ camera hành trình, học cách xử lý.',href:'/ai-quiz-gen.html?topic=driving-situation'},
+      {ic:'⚔️',name:'Trận đấu sa hình',rd:'1-1 trả lời tình huống mô phỏng — ai phản ứng đúng + nhanh hơn thắng.',href:'/tran-dau.html?subject=driving'},
+    ],
+    skills:['Phản xạ trong tình huống nguy hiểm','Phán đoán khoảng cách','Quan sát qua kính chiếu hậu'],
+    quiz:[
+      {q:'Khi đang đi gặp sương mù dày, phải làm gì?',o:['Tắt đèn để khỏi loá','Bật đèn sương mù vàng + giảm tốc + tăng khoảng cách','Tăng tốc thoát khu vực','Dừng giữa làn đường'],a:1},
+    ]},
+
+  'first-aid':{emoji:'🏥',name:'Trạm Sơ cứu',accent:'#ef4444',
+    intro:'Học sơ cứu tai nạn giao thông cơ bản: cầm máu, kê chân, hô hấp nhân tạo. Bắt buộc trong giáo trình B2+.',
+    rooms:[
+      {ic:'🧠',name:'AI Quiz sơ cứu giao thông',rd:'AI sinh tình huống tai nạn — chọn hành động đúng theo thứ tự ưu tiên.',href:'/ai-quiz-gen.html?topic=first-aid'},
+      {ic:'📖',name:'Lý thuyết liên quan',rd:'Chương Văn hoá & đạo đức trong 600 câu — nghĩa vụ khi gặp tai nạn.',href:'/luat-giao-thong-600.html'},
+    ],
+    skills:['Phản ứng đúng tai nạn','Cầm máu','Hô hấp nhân tạo cơ bản'],
+    quiz:[
+      {q:'Khi gặp tai nạn giao thông, TRƯỚC TIÊN phải làm gì?',o:['Bỏ chạy','Báo công an rồi mới sơ cứu','Dừng xe, giữ hiện trường, sơ cứu, báo công an','Chỉ báo bảo hiểm'],a:2},
+    ]},
+
+  'admin-drive':{emoji:'📋',name:'Văn phòng cấp giấy phép',accent:'#94a3b8',
+    intro:'Thông tin hành chính: hồ sơ đăng ký thi, lịch thi, thủ tục cấp đổi GPLX, gia hạn.',
+    rooms:[
+      {ic:'📊',name:'Tiến độ học của tôi',rd:'Đã luyện bao nhiêu chương, đã thi thử bao nhiêu lần, sẵn sàng đăng ký thi chưa.',href:'/dashboard.html'},
+      {ic:'🎓',name:'AI tư vấn thủ tục',rd:'Hỏi AI về quy trình đăng ký thi, đóng lệ phí, cấp đổi GPLX cũ.',href:'/hoc-thong-minh.html?subject=driving-admin'},
+    ],
+    skills:['Hiểu quy trình hành chính','Chuẩn bị hồ sơ thi','Kiểm tra hạn GPLX'],
+    quiz:[
+      {q:'GPLX hạng B1 không có thời hạn?',o:['Đúng — không thời hạn','Có hạn 10 năm','Có hạn 5 năm','Có hạn tới 60 tuổi'],a:0},
+    ]},
+
+  'canteen-drive':{emoji:'☕',name:'Căng tin học viên',accent:'#10b981',
+    intro:'Nghỉ giữa buổi học. Trò chuyện với học viên khác, chia sẻ tip thi, xem ranking.',
+    rooms:[
+      {ic:'🏆',name:'Bảng Phong Thần học lái',rd:'Xếp hạng học viên theo số chương đã thuộc + điểm thi thử cao nhất.',href:'/bang-phong-than.html?subject=driving'},
+      {ic:'⚔️',name:'Trận đấu lý thuyết',rd:'1-1 với học viên khác — ai trả lời 10 câu nhanh + đúng hơn thắng.',href:'/tran-dau.html?subject=driving'},
+    ],
+    skills:['Học cùng cộng đồng','Giải toả căng thẳng','Chia sẻ kinh nghiệm thi'],
+    quiz:[]},
+};
+
+const SPACE_SETS = { pharmacy: SPACES_PHARMACY, secondary: SPACES_SECONDARY, it: SPACES_IT, primary: SPACES_PRIMARY, preschool: SPACES_PRESCHOOL, language: SPACES_LANGUAGE, driving: SPACES_DRIVING };
+const DOMAIN_TITLES = { pharmacy: 'Trường Dược', secondary: 'Trường THCS', it: 'Trường Công nghệ thông tin', primary: 'Trường Tiểu học', preschool: 'Trường Mầm non', language: 'Trường Ngoại ngữ', driving: 'Trường Lái xe' };
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),4200); }
 
