@@ -29,7 +29,75 @@
       .catch(err => console.warn('[pwa] register failed:', err));
   });
 
-  // 2) Offline / online badge
+  // 2) "Cài app" — KHÔNG hiển thị nút nổi nữa. Chỉ:
+  //    - Bắt beforeinstallprompt để dùng sau (khi user bấm link Cài app ở footer).
+  //    - Expose `window.tiziaInstallPWA()` để bất cứ link nào trên site có thể gọi.
+  //    - Nếu đã cài rồi (display-mode: standalone) → tự ẩn link cài đi.
+  let deferredInstall = null;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstall = e;
+    document.documentElement.dispatchEvent(
+      new CustomEvent('tizia:pwa-installable', { detail: { available: true } })
+    );
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstall = null;
+    document.documentElement.dispatchEvent(
+      new CustomEvent('tizia:pwa-installed')
+    );
+    // Ẩn các link cài app khi đã cài xong
+    document.querySelectorAll('[data-pwa-install]').forEach(el => {
+      el.style.display = 'none';
+    });
+  });
+
+  // API public: gọi từ bất cứ link/nút nào (vd. footer "Cài app Tizia").
+  window.tiziaInstallPWA = async function tiziaInstallPWA() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+    if (isStandalone) {
+      alert('✅ Tizia đã được cài trên thiết bị này rồi.');
+      return 'already-installed';
+    }
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    if (deferredInstall) {
+      try {
+        deferredInstall.prompt();
+        const { outcome } = await deferredInstall.userChoice;
+        deferredInstall = null;
+        return outcome; // 'accepted' | 'dismissed'
+      } catch (e) {
+        console.warn('[pwa] install prompt failed', e);
+      }
+    }
+    if (isIOS) {
+      alert('Để cài Tizia trên iPhone/iPad:\n\n1. Bấm nút Chia sẻ (□↑) trên thanh Safari\n2. Chọn "Thêm vào Màn hình chính"');
+      return 'ios-instructions';
+    }
+    alert(
+      'Trình duyệt chưa sẵn sàng cài Tizia ngay.\n\n' +
+      '• Chrome/Edge desktop: bấm icon ⊕ "Cài đặt" ở thanh URL.\n' +
+      '• Android Chrome: menu ⋮ → "Cài đặt ứng dụng".\n' +
+      '• Hoặc tải lại trang sau vài giây rồi thử lại.'
+    );
+    return 'no-prompt';
+  };
+
+  // Tự ẩn link cài app nếu đã ở chế độ standalone (đã cài rồi).
+  if (window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true) {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-pwa-install]').forEach(el => {
+        el.style.display = 'none';
+      });
+    });
+  }
+
+  // 3) Offline / online badge
   const badge = createBadge();
   function refresh() {
     if (navigator.onLine) {
