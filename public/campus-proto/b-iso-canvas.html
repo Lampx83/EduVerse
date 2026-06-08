@@ -1389,7 +1389,10 @@ function ground(){
     poly(pts,'#dcc9a0','rgba(120,98,55,.20)',1.3); const c=(p.a+p.b)/2; ctx.strokeStyle='rgba(255,250,235,.5)'; ctx.lineWidth=1.3; ctx.setLineDash([5,7]);
     const q0=p.along==='y'?P(c,p.lo):P(p.lo,c), q1=p.along==='y'?P(c,p.hi):P(p.hi,c); ctx.beginPath(); ctx.moveTo(q0.x,q0.y); ctx.lineTo(q1.x,q1.y); ctx.stroke(); ctx.setLineDash([]); }
   for(const f of FIELDS) drawField(f);
-  for(const f of FIELDS){ if(f.type==='plaza') flagpole(f.gx+f.w/2, f.gy+f.d-0.4); else if(f.type==='gate') schoolGate(f.gx,f.gy,f.label,f.rot||0); }
+  // Plaza phẳng (flagpole) vẽ ngay trong ground vì rất thấp — không gây
+  // z-overlap với buildings/cổng. CỔNG (3D có chiều cao) NGỌC chuyển sang
+  // items sort theo depth ở draw() để building/tường phía Nam không đè lên cổng.
+  for(const f of FIELDS){ if(f.type==='plaza') flagpole(f.gx+f.w/2, f.gy+f.d-0.4); }
 }
 
 function shadowAt(p,s){ ctx.fillStyle='rgba(0,0,0,.13)'; ctx.beginPath(); ctx.ellipse(p.x,p.y,TW*0.4*s,TH*0.4*s,0,0,7); ctx.fill(); }
@@ -1417,6 +1420,8 @@ function draw(){
   DECOR.forEach(o=>{ if(esprite[o.k]) items.push({d:o.gx+o.gy-0.05, deco:o, p:P(o.gx,o.gy)}); });
   PLAYS.forEach(o=>items.push({d:o.gx+o.gy, play:o, p:P(o.gx,o.gy)}));
   CRITTERS.forEach(o=>items.push({d:o.gx+o.gy-0.02, crit:o, p:P(o.gx,o.gy)}));
+  // Cổng trường (type='gate') có chiều cao 3D — depth-sort cùng buildings.
+  FIELDS.forEach(f=>{ if(f.type==='gate') items.push({d:f.gx+f.gy, gate:f, p:P(f.gx,f.gy)}); });
   // Tường bao: tường dài (W hoặc D > 1) phải CHIA NHỎ để mỗi đoạn có depth
   // riêng — không thì cây/nhà ở phía nam của tường ngắn (gần camera hơn 1 phần
   // tường) sẽ bị tường che mặc dù phần đó depth lớn hơn. Chunk size 1 grid.
@@ -1461,6 +1466,7 @@ function draw(){
     }
     if(it.play){ drawPlay(it.play); continue; }
     if(it.crit){ critter(it.p.x, it.p.y, it.crit.e, it.crit.s); continue; }
+    if(it.gate){ schoolGate(it.gate.gx, it.gate.gy, it.gate.label, it.gate.rot||0); continue; }
     if(it.wallChunk){ const c=it.wallChunk; drawWallPiece(c.gx,c.gy,c.w,c.d);
       // EDIT mode: chỉ vẽ outline highlight 1 LẦN cho cả tường (khi gặp chunk
       // cuối — wholeWall flag set ở chunk không bị chia, hoặc last chunk của
