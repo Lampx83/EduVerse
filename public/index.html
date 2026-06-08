@@ -1339,34 +1339,39 @@ if (urlClass) {
   });
 }
 
+// Class-join widget — DOM bị remove khi refactor (UI vào school.html nay).
+// Giữ JS để khi nào restore widget thì bật lại. Null-guard tránh TypeError
+// "Cannot read addEventListener of null" trên index.
 const classInput = document.getElementById('class-input');
 const classSavedEl = document.getElementById('class-saved');
 const classJoinBtn = document.getElementById('class-join');
-async function refreshClassUI() {
-  const code = getClassCode();
-  classInput.value = code;
-  if (code) {
-    const r = await fetch('api/classes/' + code);
-    if (r.ok) {
-      const cls = await r.json();
-      classSavedEl.innerHTML = `✓ <b>${cls.name}</b>`;
+if (classInput && classSavedEl && classJoinBtn) {
+  async function refreshClassUI() {
+    const code = getClassCode();
+    classInput.value = code;
+    if (code) {
+      const r = await fetch('api/classes/' + code);
+      if (r.ok) {
+        const cls = await r.json();
+        classSavedEl.innerHTML = `✓ <b>${cls.name}</b>`;
+      } else {
+        classSavedEl.textContent = '⚠️ mã không hợp lệ';
+      }
     } else {
-      classSavedEl.textContent = '⚠️ mã không hợp lệ';
+      classSavedEl.textContent = '';
     }
-  } else {
-    classSavedEl.textContent = '';
   }
+  classJoinBtn.addEventListener('click', async () => {
+    const code = classInput.value.trim().toUpperCase();
+    if (!code) { setClassCode(''); refreshClassUI(); return; }
+    classSavedEl.textContent = 'đang kiểm tra...';
+    const cls = await joinClassByCode(code);
+    if (cls) { classSavedEl.innerHTML = `✓ <b>${cls.name}</b>`; }
+    else { classSavedEl.textContent = '⚠️ mã không hợp lệ'; }
+  });
+  classInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') classJoinBtn.click(); });
+  refreshClassUI();
 }
-classJoinBtn.addEventListener('click', async () => {
-  const code = classInput.value.trim().toUpperCase();
-  if (!code) { setClassCode(''); refreshClassUI(); return; }
-  classSavedEl.textContent = 'đang kiểm tra...';
-  const cls = await joinClassByCode(code);
-  if (cls) { classSavedEl.innerHTML = `✓ <b>${cls.name}</b>`; }
-  else { classSavedEl.textContent = '⚠️ mã không hợp lệ'; }
-});
-classInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') classJoinBtn.click(); });
-refreshClassUI();
 
 // --- Badges (Trục 3: lọc theo role để HS chỉ thấy badge HS) ---
 async function loadBadges() {
