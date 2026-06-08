@@ -1829,11 +1829,10 @@ const SPACES_LANGUAGE = {
   'main-hall':{emoji:'🏛️',name:'Sảnh chính · Lễ tân',accent:'#0ea5e9',
     intro:'Cổng giới thiệu vào Trường Ngoại ngữ: lộ trình học, kỳ thi quốc tế, mẹo học từ vựng theo CEFR.',
     rooms:[
-      {ic:'📊',name:'Bảng điều khiển học tập',rd:'Theo dõi từ đã thuộc, ngày streak, điểm phát âm.',href:'/dashboard.html'},
-      {ic:'🎓',name:'AI Tutor Ngoại ngữ',rd:'Hỏi gia sư AI mọi thắc mắc về ngữ pháp, dịch câu, từ thay thế.',href:'/hoc-thong-minh.html?subject=language'},
-      {ic:'🌳',name:'Cây Tri Thức ngôn ngữ',rd:'Mỗi tuần học = 1 chiếc lá lên cây — theo dõi tiến trình cả năm.',href:'/cay-tri-thuc.html'},
+      {ic:'🎓',name:'Học Ngoại ngữ thông minh',rd:'Landing chọn nhanh: từ vựng / phát âm / flashcards. Trỏ tới app phù hợp ngay.',href:'/hoc-thong-minh.html?subject=language'},
+      {ic:'📚',name:'2000 từ vựng tiếng Anh',rd:'5 chủ đề (cơ bản → IELTS) — spaced repetition + phát âm.',href:'/tu-vung-tieng-anh.html'},
     ],
-    skills:['Tự đặt mục tiêu CEFR','Quản lý lộ trình học từ vựng','Theo dõi tiến độ daily streak'],
+    skills:['Tự đặt mục tiêu CEFR','Quản lý lộ trình học từ vựng','Hiểu cấu trúc các kỳ thi quốc tế'],
     quiz:[
       {q:'CEFR có bao nhiêu cấp độ?',o:['4 (A1, A2, B1, B2)','6 (A1, A2, B1, B2, C1, C2)','3 (Beginner, Intermediate, Advanced)','Không cố định'],a:1},
       {q:'IELTS thang điểm tối đa?',o:['9.0','10.0','100','990'],a:0},
@@ -1853,8 +1852,8 @@ const SPACES_LANGUAGE = {
   'test-center':{emoji:'🏆',name:'Trung tâm Thi quốc tế',accent:'#f59e0b',
     intro:'Mô phỏng đề thi IELTS / TOEFL / HSK. Bấm giờ, chấm tự động, phân tích kỹ năng yếu.',
     rooms:[
-      {ic:'🧠',name:'Quiz Ngữ pháp',rd:'10 câu MCQ ngữ pháp tiếng Anh A2-B2, 15s/câu.',href:'/quiz.html?domain=language'},
       {ic:'🧠',name:'AI sinh đề IELTS Reading',rd:'AI tạo đoạn văn + câu hỏi theo dạng IELTS Reading Part 1-3.',href:'/ai-quiz-gen.html?topic=ielts-reading'},
+      {ic:'🧠',name:'AI sinh đề TOEFL Listening',rd:'AI tạo đoạn nghe ngắn + 4 câu hỏi như TOEFL section 2.',href:'/ai-quiz-gen.html?topic=toefl-listening'},
     ],
     skills:['Quản lý thời gian thi','Đọc hiểu IELTS Reading','Phân tích sai lầm'],
     quiz:[
@@ -1866,7 +1865,7 @@ const SPACES_LANGUAGE = {
     intro:'Luyện nghe với phụ đề + tốc độ điều chỉnh. Phát âm tự động giúp tai quen accent chuẩn.',
     rooms:[
       {ic:'📚',name:'Từ vựng nghe (audio)',rd:'Mọi thẻ từ vựng đều có nút 🔊 phát âm Mỹ/Anh. Nghe trước, nhớ sau.',href:'/tu-vung-tieng-anh.html'},
-      {ic:'🎓',name:'AI Tutor — luyện hội thoại',rd:'Chat với AI bằng tiếng Anh, đo độ tự nhiên & sửa lỗi.',href:'/hoc-thong-minh.html?subject=language&mode=conversation'},
+      {ic:'🎓',name:'Học Ngoại ngữ thông minh',rd:'Chọn nhanh hoạt động nghe — từ vựng audio, phát âm chuẩn.',href:'/hoc-thong-minh.html?subject=language'},
     ],
     skills:['Phân biệt accent UK/US','Nghe chậm/nhanh','Đoán nghĩa qua ngữ cảnh'],
     quiz:[
@@ -1876,8 +1875,8 @@ const SPACES_LANGUAGE = {
   'speaking-room':{emoji:'💬',name:'Phòng hội thoại',accent:'#ec4899',
     intro:'Phòng thực hành giao tiếp 1-1 với AI. Đặt tình huống (du lịch, phỏng vấn, IELTS Speaking) rồi luyện.',
     rooms:[
-      {ic:'🎓',name:'AI Tutor — Speaking Practice',rd:'Đối thoại với AI theo các tình huống đời thực — AI sửa câu, gợi ý cách nói tự nhiên hơn.',href:'/hoc-thong-minh.html?subject=language&mode=speaking'},
       {ic:'🎤',name:'Luyện phát âm AI',rd:'Đọc câu mẫu — AI chấm phát âm bằng Speech Recognition, score 0-100% theo từng từ.',href:'/luyen-phat-am.html'},
+      {ic:'📚',name:'Từ vựng giao tiếp',rd:'Chủ đề du lịch + kinh doanh — câu thông dụng có ví dụ tình huống.',href:'/tu-vung-tieng-anh.html'},
     ],
     skills:['Phát âm chuẩn','Giữ luồng hội thoại','Đáp ứng tình huống bất ngờ'],
     quiz:[
@@ -1899,7 +1898,7 @@ const SPACES_LANGUAGE = {
     intro:'Xem clip ngắn có phụ đề Anh-Việt song song. Luyện nghe + mở rộng từ vựng đời thực qua phim.',
     rooms:[
       {ic:'🃏',name:'Flashcards trích từ phim',rd:'Tự nhập câu thoại từ phim yêu thích, lưu thành bộ thẻ học.',href:'/portal-apps/u/4/flashcards/'},
-      {ic:'🎓',name:'AI dịch & giải thích slang',rd:'Dán câu thoại phim, AI dịch + giải thích slang/idiom Mỹ.',href:'/hoc-thong-minh.html?subject=language&mode=translate'},
+      {ic:'🧠',name:'AI sinh quiz từ vựng phim',rd:'Dán đoạn hội thoại, AI sinh quiz từ vựng + slang + giải nghĩa.',href:'/ai-quiz-gen.html?topic=movie-vocab'},
     ],
     skills:['Nghe slang & idiom','Hiểu ngữ cảnh văn hoá','Bắt chước intonation tự nhiên'],
     quiz:[]},
@@ -1908,7 +1907,7 @@ const SPACES_LANGUAGE = {
     intro:'Đóng kịch tiếng Anh: học sinh đọc kịch bản, ghi âm vai diễn, cùng nhau diễn 1 cảnh.',
     rooms:[
       {ic:'🎤',name:'Luyện đọc kịch bản (phát âm AI)',rd:'Chọn câu kịch bản, đọc theo, AI chấm phát âm + biểu cảm.',href:'/luyen-phat-am.html?level=hard'},
-      {ic:'⚔️',name:'Trận đấu drama (đọc nhanh)',rd:'1-1 đọc câu phức + AI chấm — ai phát âm chuẩn hơn thắng.',href:'/tran-dau.html?subject=language'},
+      {ic:'📚',name:'Từ vựng học thuật + IELTS',rd:'Vốn từ phong phú cho monologue và dialogue dài.',href:'/tu-vung-tieng-anh.html'},
     ],
     skills:['Trình diễn ngôn ngữ','Biểu cảm khi nói','Phối hợp nhóm'],
     quiz:[]},
@@ -1916,8 +1915,8 @@ const SPACES_LANGUAGE = {
   'intl-cafe':{emoji:'🌍',name:'Cafe Quốc tế',accent:'#10b981',
     intro:'Quán cà phê ảo nơi học viên gặp gỡ AI native từ nhiều nước. Thử giọng Anh/Mỹ/Úc/Sing/Ấn.',
     rooms:[
-      {ic:'🎓',name:'Chat tự do với AI',rd:'Chat bất kỳ chủ đề — AI giả lập người bản xứ. Không sửa câu nếu không yêu cầu.',href:'/hoc-thong-minh.html?subject=language&mode=free'},
-      {ic:'🏆',name:'Bảng Phong Thần Ngoại ngữ',rd:'Xếp hạng theo tổng điểm phát âm + từ vựng tích luỹ.',href:'/bang-phong-than.html?subject=language'},
+      {ic:'🎓',name:'Học Ngoại ngữ thông minh',rd:'Vào cổng hoạt động — chat AI sẽ về sau (đang biên soạn).',href:'/hoc-thong-minh.html?subject=language'},
+      {ic:'🃏',name:'Flashcards chủ đề "đi du lịch"',rd:'Tự nhập câu thoại du lịch, lưu bộ thẻ cá nhân để học nhanh.',href:'/portal-apps/u/4/flashcards/'},
     ],
     skills:['Giao tiếp tự nhiên','Quản lý cảm xúc khi nói sai','Mở rộng vốn từ qua trò chuyện'],
     quiz:[]},
@@ -1933,7 +1932,7 @@ const SPACES_DRIVING = {
     rooms:[
       {ic:'📖',name:'600 câu lý thuyết B1/B2',rd:'Luyện theo chương: khái niệm, văn hoá, kỹ thuật, biển báo, sa hình, cấu tạo. Đánh dấu CÂU LIỆT.',href:'/luat-giao-thong-600.html'},
       {ic:'🧠',name:'AI Quiz tình huống',rd:'AI sinh tình huống thực tế: đi đường mưa, qua đường sắt, gặp xe ưu tiên… Giải thích lý do.',href:'/ai-quiz-gen.html?topic=driving'},
-      {ic:'📊',name:'Tiến độ học của tôi',rd:'Theo dõi số câu đúng/sai, câu LIỆT hay sai, sẵn sàng thi chưa.',href:'/dashboard.html'},
+      {ic:'🎓',name:'Học Lái xe thông minh',rd:'Cổng vào nhanh các hoạt động học lý thuyết + biển báo + tình huống.',href:'/hoc-thong-minh.html?subject=driving'},
     ],
     skills:['Hiểu khái niệm cơ bản','Quy tắc nhường đường','Văn hoá lái xe an toàn'],
     quiz:[
@@ -1971,7 +1970,7 @@ const SPACES_DRIVING = {
     intro:'Cabin ảo mô phỏng tình huống lái: đường mưa, đường sắt, ngã tư, dốc xuống nguy hiểm. Phản ứng đúng = điểm.',
     rooms:[
       {ic:'🧠',name:'AI Quiz tình huống động',rd:'Tình huống động trên đường — AI tạo case study từ camera hành trình, học cách xử lý.',href:'/ai-quiz-gen.html?topic=driving-situation'},
-      {ic:'⚔️',name:'Trận đấu sa hình',rd:'1-1 trả lời tình huống mô phỏng — ai phản ứng đúng + nhanh hơn thắng.',href:'/tran-dau.html?subject=driving'},
+      {ic:'🚸',name:'Ôn biển báo trước khi mô phỏng',rd:'Nhớ ý nghĩa biển báo giúp phản ứng đúng tình huống.',href:'/bien-bao-giao-thong.html'},
     ],
     skills:['Phản xạ trong tình huống nguy hiểm','Phán đoán khoảng cách','Quan sát qua kính chiếu hậu'],
     quiz:[
@@ -1992,8 +1991,8 @@ const SPACES_DRIVING = {
   'admin-drive':{emoji:'📋',name:'Văn phòng cấp giấy phép',accent:'#94a3b8',
     intro:'Thông tin hành chính: hồ sơ đăng ký thi, lịch thi, thủ tục cấp đổi GPLX, gia hạn.',
     rooms:[
-      {ic:'📊',name:'Tiến độ học của tôi',rd:'Đã luyện bao nhiêu chương, đã thi thử bao nhiêu lần, sẵn sàng đăng ký thi chưa.',href:'/dashboard.html'},
       {ic:'🎓',name:'AI tư vấn thủ tục',rd:'Hỏi AI về quy trình đăng ký thi, đóng lệ phí, cấp đổi GPLX cũ.',href:'/hoc-thong-minh.html?subject=driving-admin'},
+      {ic:'📖',name:'600 câu lý thuyết',rd:'Phải đạt mới được nộp hồ sơ thi. Học luôn trước khi xin lịch.',href:'/luat-giao-thong-600.html'},
     ],
     skills:['Hiểu quy trình hành chính','Chuẩn bị hồ sơ thi','Kiểm tra hạn GPLX'],
     quiz:[
@@ -2001,10 +2000,10 @@ const SPACES_DRIVING = {
     ]},
 
   'canteen-drive':{emoji:'☕',name:'Căng tin học viên',accent:'#10b981',
-    intro:'Nghỉ giữa buổi học. Trò chuyện với học viên khác, chia sẻ tip thi, xem ranking.',
+    intro:'Nghỉ giữa buổi học. Ôn nhẹ + xem lại các chương đã học.',
     rooms:[
-      {ic:'🏆',name:'Bảng Phong Thần học lái',rd:'Xếp hạng học viên theo số chương đã thuộc + điểm thi thử cao nhất.',href:'/bang-phong-than.html?subject=driving'},
-      {ic:'⚔️',name:'Trận đấu lý thuyết',rd:'1-1 với học viên khác — ai trả lời 10 câu nhanh + đúng hơn thắng.',href:'/tran-dau.html?subject=driving'},
+      {ic:'🚸',name:'Ôn nhanh biển báo',rd:'Random 1 biển + 4 đáp án — luyện giữa giờ giải lao.',href:'/bien-bao-giao-thong.html?mode=quiz'},
+      {ic:'🧠',name:'AI Quiz tình huống ngắn',rd:'AI sinh 1 tình huống — chọn đáp án + xem giải thích chi tiết.',href:'/ai-quiz-gen.html?topic=driving'},
     ],
     skills:['Học cùng cộng đồng','Giải toả căng thẳng','Chia sẻ kinh nghiệm thi'],
     quiz:[]},
