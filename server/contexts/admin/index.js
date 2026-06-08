@@ -178,6 +178,42 @@ export function attachAdmin(r) {
     res.json({ ok: true, removed: changes });
   });
 
+  // ─── SCHOOL ADMINS — bổ nhiệm user làm quản lý 1 trường ───
+  // GET /api/admin/school-admins → list tất cả school admin
+  r.get('/api/admin/school-admins', requireAdmin, async (_req, res) => {
+    const { listAllSchoolAdmins } = await import('../../db.js');
+    res.json({ admins: listAllSchoolAdmins() });
+  });
+
+  // GET /api/admin/schools/:domain_id/admins → list admin của 1 trường cụ thể
+  r.get('/api/admin/schools/:domain_id/admins', requireAdmin, async (req, res) => {
+    const { listSchoolAdminsByDomain } = await import('../../db.js');
+    res.json({ admins: listSchoolAdminsByDomain(String(req.params.domain_id)) });
+  });
+
+  // POST /api/admin/users/:id/school-admin → { domain_id, note? }
+  r.post('/api/admin/users/:id/school-admin', requireAdmin, async (req, res) => {
+    const { setSchoolAdmin } = await import('../../db.js');
+    const domain_id = String(req.body?.domain_id || '').trim();
+    if (!domain_id || !/^[a-z][a-z0-9-]+$/.test(domain_id)) {
+      return res.status(400).json({ error: 'invalid_domain_id' });
+    }
+    setSchoolAdmin({
+      userId: Number(req.params.id),
+      domainId: domain_id,
+      grantedBy: req.user.id,
+      note: req.body?.note || null,
+    });
+    res.json({ ok: true, user_id: Number(req.params.id), domain_id });
+  });
+
+  // DELETE /api/admin/users/:id/school-admin/:domain_id
+  r.delete('/api/admin/users/:id/school-admin/:domain_id', requireAdmin, async (req, res) => {
+    const { revokeSchoolAdmin } = await import('../../db.js');
+    const changes = revokeSchoolAdmin(Number(req.params.id), String(req.params.domain_id));
+    res.json({ ok: true, removed: changes });
+  });
+
   // Admin set/đổi enrolled_domain. value=null → bỏ gắn trường (admin/no-school).
   // Bucket ví/skill cũ KHÔNG bị xoá (đúng chính sách giữ ẩn — anh Lâm xác nhận).
   r.post('/api/admin/users/:id/enrollment', requireAdmin, async (req, res) => {

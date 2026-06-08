@@ -7,7 +7,7 @@ import {
   createSession, getSession, deleteSession,
   resolveSchoolByEmail, getSchoolByCode, getBestParentPlanForChild,
   getEnrolledDomain, setEnrolledDomain,
-  listUserDomainGrants,
+  listUserDomainGrants, listManagedDomains,
 } from '../../db.js';
 import { effectivePlan, effectivePlanWithFamily, meetsPlan, USER_PLANS } from '../billing/user-plans.js';
 
@@ -460,6 +460,10 @@ export function attachAuth(r) {
         // Per-user grants — admin đã mở thêm trường nào cho user này (kể cả
         // trường khoá). FE dùng để bỏ qua isDomainOpen/plan check.
         granted_domains: listUserDomainGrants(full.id),
+        // Per-user school-admin role: user có quyền QUẢN LÝ trường nào (xem HS,
+        // cấu hình campus, gán app vào toà nhà…). Khác với granted_domains
+        // (chỉ ACCESS). 1 user có thể quản lý nhiều trường.
+        managed_domains: listManagedDomains(full.id),
         profile_complete: isProfileComplete(full),
         default_route: defaultRouteForUser(full),
       } : null,

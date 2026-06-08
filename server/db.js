@@ -2002,6 +2002,89 @@ export function listAllDomainGrants() {
   return _listAllGrantsStmt.all();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SCHOOL ADMINS — phân quyền QUẢN LÝ (manage) 1 trường cụ thể cho user. Khác
+// với user_domain_grants (chỉ ACCESS). School admin có thể: xem HS trường mình,
+// cấu hình campus map, quản lý apps gắn vào toà nhà (sẽ build trong Phase 2 UI).
+//
+// Quyết định KHÔNG thêm role mới vào users.role (giữ enum cũ: pupil/student/
+// teacher/admin) — thay vào đó bảng riêng để 1 user có thể quản lý NHIỀU trường,
+// và phân quyền không vĩnh viễn (revoke dễ).
+// ─────────────────────────────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS school_admins (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL,
+    domain_id    TEXT    NOT NULL,
+    granted_at   INTEGER NOT NULL,
+    granted_by   INTEGER,
+    note         TEXT,
+    UNIQUE(user_id, domain_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_school_admins_user   ON school_admins(user_id);
+  CREATE INDEX IF NOT EXISTS idx_school_admins_domain ON school_admins(domain_id);
+`);
+
+const _setSchoolAdminStmt = db.prepare(`
+  INSERT INTO school_admins (user_id, domain_id, granted_at, granted_by, note)
+  VALUES (?, ?, ?, ?, ?)
+  ON CONFLICT(user_id, domain_id) DO UPDATE SET
+    granted_at = excluded.granted_at,
+    granted_by = excluded.granted_by,
+    note       = excluded.note
+`);
+const _revokeSchoolAdminStmt = db.prepare(
+  `DELETE FROM school_admins WHERE user_id = ? AND domain_id = ?`
+);
+const _listSchoolAdminDomainsByUserStmt = db.prepare(
+  `SELECT domain_id FROM school_admins WHERE user_id = ? ORDER BY granted_at DESC`
+);
+const _isSchoolAdminStmt = db.prepare(
+  `SELECT 1 FROM school_admins WHERE user_id = ? AND domain_id = ? LIMIT 1`
+);
+const _listAllSchoolAdminsStmt = db.prepare(
+  `SELECT sa.id, sa.user_id, sa.domain_id, sa.granted_at, sa.granted_by, sa.note,
+          u.username, u.display_name, u.role,
+          gb.username AS granted_by_username
+   FROM school_admins sa
+   LEFT JOIN users u  ON u.id  = sa.user_id
+   LEFT JOIN users gb ON gb.id = sa.granted_by
+   ORDER BY sa.granted_at DESC LIMIT 500`
+);
+const _listSchoolAdminsByDomainStmt = db.prepare(
+  `SELECT sa.user_id, sa.granted_at, sa.note,
+          u.username, u.display_name, u.role
+   FROM school_admins sa
+   LEFT JOIN users u ON u.id = sa.user_id
+   WHERE sa.domain_id = ?
+   ORDER BY sa.granted_at DESC`
+);
+
+export function setSchoolAdmin({ userId, domainId, grantedBy, note = null }) {
+  return _setSchoolAdminStmt.run(
+    Number(userId), String(domainId), Date.now(),
+    grantedBy ? Number(grantedBy) : null,
+    note ? String(note).slice(0, 200) : null
+  ).changes;
+}
+export function revokeSchoolAdmin(userId, domainId) {
+  return _revokeSchoolAdminStmt.run(Number(userId), String(domainId)).changes;
+}
+export function listManagedDomains(userId) {
+  return _listSchoolAdminDomainsByUserStmt.all(Number(userId)).map(r => r.domain_id);
+}
+export function isSchoolAdmin(userId, domainId) {
+  return !!_isSchoolAdminStmt.get(Number(userId), String(domainId));
+}
+export function listAllSchoolAdmins() {
+  return _listAllSchoolAdminsStmt.all();
+}
+export function listSchoolAdminsByDomain(domainId) {
+  return _listSchoolAdminsByDomainStmt.all(String(domainId));
+}
+
 // Builtin app seeding — upsert theo alias trong namespace builtin (owner_id = 0 sentinel
 // — không tham chiếu user thật, FK pragma đã DEFERRED check; nếu pragma strict thì cần
 // 1 user system. SQLite cho phép insert ngay cả khi orphan vì FK enforce theo từng row,
