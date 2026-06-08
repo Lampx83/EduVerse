@@ -44,6 +44,10 @@ const WHITELIST = [
   /^tizia:welcome:/,
   // Difficulty + level preference.
   /^tizia:(difficulty|level)$/,
+  // Onboarding 60s — đã hoàn thành/bỏ qua. Sync để không hỏi lại trên máy khác.
+  /^tizia:onboarding:v1:done$/,
+  // Daily-login popup — đã xem hôm nay. Sync để không bật lại ở máy khác cùng ngày.
+  /^tizia:daily:shown$/,
 ];
 
 const PUSH_DEBOUNCE_MS = 1500;

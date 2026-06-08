@@ -140,6 +140,12 @@ const PETS = [
 
 class Onboarding {
   constructor() {
+    // Defense-in-depth: nếu user đã hoàn tất/skip, KHÔNG build DOM dù bị gọi
+    // từ bất cứ code path nào (kể cả script cũ trong bfcache).
+    if (localStorage.getItem(STORAGE_KEY)) {
+      this._skipped = true;
+      return;
+    }
     this.step = 0;
     this.data = { displayName: '', grade: '', pet: '' };
     this.injectStyle();
@@ -182,6 +188,7 @@ class Onboarding {
   }
 
   async open() {
+    if (this._skipped) return; // Đã bị defense-in-depth chặn ở constructor
     // Bước 0 — chào + tên (prefill từ user nếu có)
     try {
       const me = await fetch('/api/auth/me', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null);
@@ -387,21 +394,68 @@ function escapeHtml(s) {
   }[c]));
 }
 
+function cleanLingeringModal() {
+  // BFCache restore hoặc page-state cũ có thể để lại modal trong DOM dù
+  // script mới đã quyết định KHÔNG hiện. Dọn dẹp + style bị inject 2 lần.
+  document.querySelectorAll('.tz-onb-bg').forEach(m => m.remove());
+}
+
 async function maybeShow() {
-  // Đã hoàn thành hoặc đã skip
-  if (localStorage.getItem(STORAGE_KEY)) return;
-  // Phải đăng nhập (HUD đã ẩn cho guest)
+  // 1) Đã hoàn thành/skip ở thiết bị này → bỏ qua ngay.
+  if (localStorage.getItem(STORAGE_KEY)) { cleanLingeringModal(); return; }
+  // 2) Phải đăng nhập (HUD đã ẩn cho guest)
+  let me = null;
   try {
     const r = await fetch('/api/auth/me', { credentials: 'same-origin' });
     if (!r.ok) return;
-    const me = await r.json();
+    me = await r.json();
     if (!me?.user) return;
   } catch { return; }
-  // Đợi HUD mount xong để spotlight đúng vị trí
+  // 3) Safety net: user đã hoàn tất hồ sơ → coi như xong onboarding luôn.
+  //    Áp dụng cho admin/teacher/pupil-có-grade/student-có-major.
+  const u = me.user;
+  if (u.profile_complete === true || u.role === 'admin' || u.role === 'teacher') {
+    localStorage.setItem(STORAGE_KEY, '1'); // state-sync sẽ flush lên server
+    cleanLingeringModal();
+    return;
+  }
+  // 4) Quan trọng — kiểm tra server-side state TRƯỚC khi mở modal: tránh race với
+  //    state-sync hydrate (chạy bất đồng bộ qua dynamic import của pwa-register.js).
+  //    Nếu user đã hoàn thành/skip ở MÁY KHÁC, server sẽ có flag, đồng bộ về local
+  //    rồi return — không phiền user bằng popup lần nữa.
+  try {
+    const r = await fetch('/api/user-state', { credentials: 'same-origin' });
+    if (r.ok) {
+      const state = await r.json();
+      const entry = state[STORAGE_KEY];
+      if (entry?.value) {
+        try { localStorage.setItem(STORAGE_KEY, entry.value); } catch {}
+        cleanLingeringModal();
+        return;
+      }
+    }
+  } catch { /* ignore — fall through to show */ }
+  // 5) Đợi HUD mount xong để spotlight đúng vị trí
   await new Promise(r => setTimeout(r, 800));
   const onb = new Onboarding();
   await onb.open();
 }
+
+// BFCache safety: nếu page khôi phục từ memory, modal cũ có thể còn trong DOM.
+// Re-evaluate (sẽ tự clean nếu flag đã set hoặc safety net hit).
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) maybeShow();
+});
+
+// MutationObserver phòng vệ: nếu bất cứ code path nào (script cũ cache, bfcache,
+// tab khác) chèn `.tz-onb-bg` vào DOM trong khi flag đã set → tự gỡ ngay.
+try {
+  const guard = new MutationObserver(() => {
+    if (!localStorage.getItem(STORAGE_KEY)) return;
+    document.querySelectorAll('.tz-onb-bg').forEach(el => el.remove());
+  });
+  guard.observe(document.documentElement, { childList: true, subtree: true });
+} catch {}
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', maybeShow);
