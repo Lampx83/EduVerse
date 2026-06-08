@@ -64,7 +64,7 @@
   .section-title .hint { opacity: 0.6; font-size: 13px; }
 </style>
 </head>
-<body data-page-title="Trường ảo">
+<body>
 
 <script>
 // Banner nếu không phải secure context (LAN HTTP) — webcam modes won't work
@@ -85,7 +85,7 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 <!-- ============ KHUÔN VIÊN TRƯỜNG — CAMPUS MAP ============ -->
 <div class="section" id="campus-hero">
   <div class="section-title">
-    <h1>🏫 Khuôn viên trường ảo Tizia</h1>
+    <h1 id="campus-title">🏫 Khuôn viên trường</h1>
     <span class="hint">Bấm vào từng toà nhà để vào phòng học · thực hành · trải nghiệm bên trong · di chuột xem tên</span>
   </div>
   <div id="campus-frame-wrap" style="position:relative;width:100%;height:82vh;min-height:520px;border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 8px 26px rgba(0,0,0,.28)">
@@ -95,6 +95,26 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
 <script>
 (function(){
   const dom = new URLSearchParams(location.search).get('domain') || 'pharmacy';
+  // Map domain → tên trường + icon (mirror nhẹ của DOMAIN_META cho 8 trường đang mở,
+  // tránh phải import module riêng ở inline script — chỉ cần text + icon ngắn gọn).
+  const NAMES = {
+    pharmacy:   { name: 'Trường Dược',                 icon: '💊' },
+    it:         { name: 'Trường Công nghệ thông tin',  icon: '💻' },
+    preschool:  { name: 'Trường Mầm non',              icon: '🧸' },
+    primary:    { name: 'Trường Tiểu học',             icon: '🎒' },
+    secondary:  { name: 'Trường Trung học cơ sở',      icon: '📐' },
+    highschool: { name: 'Trường Trung học phổ thông',  icon: '🏫' },
+    language:   { name: 'Trường Ngoại ngữ',            icon: '🗣️' },
+    driving:    { name: 'Trường Lái xe',               icon: '🚗' },
+  };
+  const meta = NAMES[dom] || { name: 'Trường ảo', icon: '🏫' };
+  // Breadcrumb (auth-header.js đọc body.dataset.pageTitle)
+  document.body.dataset.pageTitle = meta.name;
+  // H1 trên trang
+  const h1 = document.getElementById('campus-title');
+  if (h1) h1.textContent = meta.icon + ' Khuôn viên ' + meta.name;
+  // <title>
+  document.title = meta.icon + ' ' + meta.name + ' · Tizia';
   document.getElementById('campus-frame').src = 'campus-proto/b-iso-canvas.html?embed=1&domain=' + encodeURIComponent(dom);
   // GA4: vào trang trường (chọn domain từ trang chủ). school_enter là 1 bước trong
   // funnel mặc định (welcome_view → register → school_enter → module_start → …).
