@@ -27,6 +27,8 @@ const DOMAIN_REGISTRY = {
   primary:    () => import('../domains/primary/index.js'),
   secondary:  () => import('../domains/secondary/index.js'),
   highschool: () => import('../domains/highschool/index.js'),
+  language:   () => import('../domains/language/index.js'),
+  driving:    () => import('../domains/driving/index.js'),
   // economics đã có skeleton nhưng đang KHOÁ — chưa đăng ký:
   // economics: () => import('../domains/economics/index.js'),
 };
@@ -96,9 +98,9 @@ export const DOMAIN_META = [
   { id: 'architecture', name: 'Trường Kiến trúc – Xây dựng', shortName: 'Kiến trúc', icon: '🏛️',
     tagline: 'Thiết kế kiến trúc · kết cấu · BIM · quy hoạch đô thị',
     accent: '#d97706', status: 'locked' },
-  { id: 'languages', name: 'Trường Ngoại ngữ',            shortName: 'Ngoại ngữ', icon: '🗣️',
-    tagline: 'Anh · Trung · Nhật · Hàn · biên phiên dịch · giao tiếp',
-    accent: '#3b82f6', status: 'locked' },
+  { id: 'language', name: 'Trường Ngoại ngữ',              shortName: 'Ngoại ngữ', icon: '🗣️',
+    tagline: 'Anh · Trung · Nhật · Hàn · từ vựng · phát âm AI · IELTS/TOEFL/HSK',
+    accent: '#0ea5e9', status: 'preview', moduleCount: 4 },
   { id: 'agriculture', name: 'Trường Nông nghiệp',         shortName: 'Nông nghiệp', icon: '🌾',
     tagline: 'Trồng trọt · chăn nuôi · thú y · công nghệ thực phẩm',
     accent: '#84cc16', status: 'locked' },
@@ -123,6 +125,9 @@ export const DOMAIN_META = [
   { id: 'public-admin', name: 'Trường Quản trị Nhà nước',  shortName: 'Hành chính', icon: '🏢',
     tagline: 'Hành chính công · chính sách · quản lý đô thị · e-government',
     accent: '#94a3b8', status: 'locked' },
+  { id: 'driving', name: 'Trường Lái xe',                  shortName: 'Lái xe', icon: '🚗',
+    tagline: 'B1/B2/C/D · 600 câu lý thuyết · biển báo · sa hình · mô phỏng cabin',
+    accent: '#dc2626', status: 'preview', moduleCount: 3 },
 ];
 
 // Gán cụm cấp học: Mầm non + K-12 → 'school', còn lại → 'he' (Higher Education)
@@ -153,6 +158,7 @@ export function isGamifiedDomain(id) { return GAMIFIED_DOMAINS.has(id); }
  */
 export const GUEST_DOMAINS = new Set([
   'preschool', 'primary', 'secondary', 'highschool', 'pharmacy', 'it',
+  'language', 'driving',
 ]);
 export function isGuestDomain(id) { return GUEST_DOMAINS.has(id); }
 

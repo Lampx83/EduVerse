@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🚦 Lý thuyết Lái xe — 600 câu · Tizia</title>
+<meta name="description" content="Bộ 600 câu hỏi lý thuyết B1/B2 theo Bộ GTVT — chế độ luyện + thi thử, có câu liệt (điểm liệt phải trả lời đúng để qua)." />
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+<meta name="theme-color" content="#dc2626" />
+<style>
+  :root { --bg:#1a1a2e; --card:rgba(255,255,255,.06); --red:#dc2626; --green:#10b981;
+    --yellow:#fbbf24; --text:#e5edf7; --muted:#94a3b8; --border:rgba(255,255,255,.12); }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:'Inter',system-ui,sans-serif;
+    background: linear-gradient(180deg,var(--bg),#16213e); color:var(--text); padding:18px;
+    display:flex; flex-direction:column; align-items:center; gap:16px; }
+  h1 { margin:0; font-size: 22px; text-align:center; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .toolbar button { font-family:inherit; background:var(--card); color:var(--text);
+    border:1px solid var(--border); padding:8px 16px; border-radius:9px; font-size:13px; cursor:pointer; }
+  .toolbar button.active { background: var(--red); border-color: var(--red); font-weight:700; }
+
+  .qcard { width:100%; max-width:760px; background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:22px; }
+  .qhead { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:13px; color: var(--muted); }
+  .qhead .badge { background: rgba(220,38,38,.18); border:1px solid var(--red); color:#fca5a5;
+    padding:3px 9px; border-radius:5px; font-size:11px; font-weight:700; letter-spacing:.4px; }
+  .qhead .badge.normal { background: rgba(255,255,255,.06); border-color: var(--border); color: var(--muted); }
+  .qtext { font-size:17px; line-height:1.55; margin-bottom:18px; font-weight:600; }
+  .opts { display:grid; gap:10px; }
+  .opt { display:flex; gap:12px; padding:14px 16px; background:rgba(0,0,0,.2); border:1px solid var(--border);
+    border-radius:10px; cursor:pointer; transition:background .15s, border-color .15s; }
+  .opt:hover { background:rgba(255,255,255,.04); border-color: rgba(255,255,255,.2); }
+  .opt input { margin-top:3px; }
+  .opt.correct { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.5); }
+  .opt.wrong { background: rgba(220,38,38,.12); border-color: rgba(220,38,38,.5); }
+  .feedback { margin-top:14px; padding:12px 16px; border-radius:9px; font-size:14px; line-height:1.55; display:none; }
+  .feedback.show { display:block; }
+  .feedback.right { background: rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.3); color:#6ee7b7; }
+  .feedback.wrong { background: rgba(220,38,38,.1); border:1px solid rgba(220,38,38,.3); color:#fca5a5; }
+
+  .nav { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; max-width:760px; width:100%; }
+  .nav button { font-family:inherit; padding:10px 22px; border-radius:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); cursor:pointer; font-size:13.5px; font-weight:600; }
+  .nav button.primary { background: var(--red); border:0; color:white; }
+
+  .stats { display:flex; gap:18px; font-size:13px; color: var(--muted); max-width:760px; width:100%; justify-content:center; }
+  .stats b { color: var(--text); font-size:15px; }
+
+  .summary { background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:24px; max-width:760px; width:100%; text-align:center; display:none; }
+  .summary.show { display:block; }
+  .summary .big { font-size: 56px; font-weight: 800; margin: 8px 0; }
+  .summary .pass { color: var(--green); }
+  .summary .fail { color: var(--red); }
+</style>
+</head>
+<body>
+<h1>🚦 Lý thuyết Lái xe B1/B2 — 600 câu</h1>
+
+<div class="toolbar">
+  <button data-mode="learn" class="active">📖 Luyện tập</button>
+  <button data-mode="exam">📝 Thi thử (25 câu / 22 phút)</button>
+  <button data-mode="critical">⚠️ Chỉ câu liệt</button>
+</div>
+
+<div class="stats" id="stats">
+  <span>Câu <b id="curIdx">1</b>/<b id="totalQ">—</b></span>
+  <span>Đúng: <b id="rightCount">0</b></span>
+  <span>Sai: <b id="wrongCount">0</b></span>
+  <span id="timerBox" style="display:none">⏱ <b id="timer">22:00</b></span>
+</div>
+
+<div class="qcard" id="qcard">
+  <div class="qhead">
+    <span class="badge normal" id="topicBadge">Khái niệm</span>
+    <span id="critBadge"></span>
+  </div>
+  <div class="qtext" id="qtext">…</div>
+  <div class="opts" id="opts"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<div class="nav">
+  <button id="prevBtn">← Câu trước</button>
+  <button class="primary" id="nextBtn">Câu sau →</button>
+  <button id="endBtn" style="display:none">🏁 Nộp bài</button>
+</div>
+
+<div class="summary" id="summary">
+  <h2 style="margin:0 0 4px;" id="sumTitle">Kết quả</h2>
+  <div class="big" id="sumScore">—</div>
+  <div id="sumDetail" style="color:var(--muted); line-height:1.6;"></div>
+  <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+    <button onclick="location.reload()" style="font-family:inherit; padding:10px 22px; border-radius:10px; border:0; background:var(--red); color:white; font-weight:700; cursor:pointer;">Làm lại</button>
+  </div>
+</div>
+
+<script>
+  // Bộ câu hỏi RÚT GỌN từ 600 câu lý thuyết B1/B2 (Bộ GTVT). Đại diện 6 chương,
+  // có câu LIỆT (must-correct) để đúng tinh thần đề thi: thi thử 25 câu, sai 1
+  // câu liệt = trượt dù tổng điểm đủ.
+  const Q = [
+    // ─── 1. Khái niệm & quy tắc ───
+    { t: 'Khái niệm', c: false,
+      q: '"Phương tiện giao thông đường bộ" gồm những loại nào?',
+      o: ['Xe cơ giới và xe thô sơ.', 'Xe cơ giới, xe thô sơ và xe máy chuyên dùng.',
+          'Xe cơ giới và xe máy chuyên dùng.', 'Cả xe cơ giới, xe thô sơ, xe máy chuyên dùng và người đi bộ.'],
+      a: 1, ex: 'Theo Luật GTĐB, gồm 3 loại: xe cơ giới + xe thô sơ + xe máy chuyên dùng.' },
+    { t: 'Khái niệm', c: true,
+      q: 'Người lái xe nồng độ cồn vượt quá bao nhiêu mg/100 ml máu thì bị nghiêm cấm điều khiển ô tô?',
+      o: ['Trên 50 mg/100 ml máu.', 'Có nồng độ cồn vượt quá 80 mg/100 ml máu.',
+          'Có bất kỳ nồng độ cồn trong máu hoặc khí thở.', 'Trên 30 mg/100 ml máu.'],
+      a: 2, ex: '⚠️ CÂU LIỆT — Nghị định 100: cấm tuyệt đối nồng độ cồn (bất kỳ mức nào) khi lái xe.' },
+    { t: 'Quy tắc', c: false,
+      q: 'Khi đến chỗ giao nhau, gặp đèn vàng nhấp nháy, người lái phải xử lý thế nào?',
+      o: ['Phải dừng lại trước vạch dừng.', 'Được đi nhưng phải giảm tốc độ, chú ý quan sát.',
+          'Phải bật xi-nhan và rẽ phải.', 'Phải nhường đường cho mọi xe đi cùng chiều.'],
+      a: 1, ex: 'Đèn vàng nhấp nháy = cảnh báo, được đi nhưng phải giảm tốc, chú ý quan sát.' },
+
+    // ─── 2. Văn hoá & đạo đức ───
+    { t: 'Văn hoá', c: false,
+      q: 'Khi gặp tai nạn giao thông, người lái có liên quan phải làm gì TRƯỚC TIÊN?',
+      o: ['Bỏ chạy khỏi hiện trường.', 'Báo công an rồi mới sơ cứu.',
+          'Dừng xe, giữ nguyên hiện trường, cấp cứu người bị nạn và báo công an.',
+          'Chỉ cần báo bảo hiểm.'],
+      a: 2, ex: 'Luật GTĐB điều 38: dừng xe, sơ cứu, giữ hiện trường, báo công an.' },
+
+    // ─── 3. Kỹ thuật lái xe ───
+    { t: 'Kỹ thuật', c: false,
+      q: 'Khi vào cua, người lái nên xử lý thế nào?',
+      o: ['Tăng ga để xe lướt qua nhanh.', 'Giảm tốc độ trước khi vào cua, vào cua mới tăng ga nhẹ.',
+          'Phanh gấp giữa cua.', 'Giữ ga đều.'],
+      a: 1, ex: 'Quy tắc "phanh trước, ga sau": giảm tốc trước cua, ra cua mới tăng ga.' },
+    { t: 'Kỹ thuật', c: true,
+      q: 'Khi đang lái xe trên đường cao tốc gặp sương mù dày, phải làm thế nào?',
+      o: ['Tăng tốc để vượt qua khu vực sương mù.', 'Tắt đèn pha, bật đèn cốt và đi sát lề phải.',
+          'Bật đèn sương mù (đèn vàng), giảm tốc độ, giữ khoảng cách an toàn lớn hơn bình thường.',
+          'Dừng xe ngay trên làn đường đang đi.'],
+      a: 2, ex: '⚠️ CÂU LIỆT — sương mù: đèn sương mù vàng + giảm tốc + tăng khoảng cách. KHÔNG dừng trên làn đường.' },
+
+    // ─── 4. Biển báo & vạch kẻ ───
+    { t: 'Biển báo', c: false,
+      q: 'Biển báo "STOP" (Dừng lại) thuộc nhóm biển báo nào?',
+      o: ['Biển báo nguy hiểm.', 'Biển báo cấm.',
+          'Biển báo hiệu lệnh.', 'Biển chỉ dẫn.'],
+      a: 1, ex: 'Biển STOP hình bát giác đỏ thuộc nhóm Biển báo CẤM (cấm đi tiếp khi chưa dừng).' },
+    { t: 'Biển báo', c: false,
+      q: 'Vạch kẻ đường liền màu vàng (đôi) có ý nghĩa gì?',
+      o: ['Được phép vượt nếu thấy an toàn.', 'Cấm vượt ở cả hai chiều, cấm lấn làn.',
+          'Báo nguy hiểm.', 'Vạch ranh giới khu dân cư.'],
+      a: 1, ex: 'Vạch liền đôi vàng = cấm tuyệt đối vượt + lấn làn ở cả hai chiều.' },
+
+    // ─── 5. Sa hình ───
+    { t: 'Sa hình', c: false,
+      q: 'Tại ngã tư không có đèn tín hiệu và không có biển báo, thứ tự ưu tiên là gì?',
+      o: ['Xe đi từ phải đến trước.', 'Xe đi thẳng được ưu tiên hơn xe rẽ.',
+          'Xe ưu tiên (cứu thương, cứu hoả, công an) → xe đi thẳng → xe rẽ phải → xe rẽ trái.',
+          'Tất cả phải dừng cho xe lớn đi trước.'],
+      a: 2, ex: 'Thứ tự: ưu tiên đặc biệt → đi thẳng → rẽ phải → rẽ trái (tránh kẹt giao nhau).' },
+
+    // ─── 6. Cấu tạo & bảo dưỡng ───
+    { t: 'Cấu tạo', c: false,
+      q: 'Khi nào cần thay dầu phanh của ô tô?',
+      o: ['Mỗi lần thay dầu máy.', 'Định kỳ 2 năm hoặc 40,000 km.',
+          'Khi xe đi quá 100,000 km.', 'Chỉ khi phanh có dấu hiệu hỏng.'],
+      a: 1, ex: 'Dầu phanh hút ẩm theo thời gian → định kỳ 2 năm hoặc 40k km (theo nhà sản xuất).' },
+
+    // ─── Thêm câu liệt phổ biến ───
+    { t: 'Quy tắc', c: true,
+      q: 'Trên đường có làn dành riêng cho xe buýt, các xe khác có được đi vào không?',
+      o: ['Được nếu đường vắng.', 'Không, trừ xe ưu tiên đang làm nhiệm vụ.',
+          'Được nếu xi-nhan trước.', 'Được vào những giờ thấp điểm.'],
+      a: 1, ex: '⚠️ CÂU LIỆT — Làn buýt chỉ cho xe buýt + xe ưu tiên đang làm nhiệm vụ.' },
+    { t: 'Quy tắc', c: true,
+      q: 'Khi lùi xe, người lái phải tuân thủ điều gì?',
+      o: ['Lùi nhanh để không cản trở giao thông.', 'Quan sát phía sau, có tín hiệu báo lùi, lùi chậm.',
+          'Bóp còi liên tục.', 'Mở cửa nhìn ra ngoài.'],
+      a: 1, ex: '⚠️ CÂU LIỆT — lùi xe: quan sát + tín hiệu + lùi chậm. Bóp còi không đủ.' },
+  ];
+
+  const el = id => document.getElementById(id);
+  const STATE_KEY = 'tizia:driving-600:state';
+  let mode = 'learn', list = [...Q], idx = 0;
+  let answered = {}, exam = null;
+
+  function pickQuestions(m) {
+    if (m === 'critical') return Q.filter(q => q.c);
+    if (m === 'exam') {
+      const crit = Q.filter(q => q.c);
+      const norm = Q.filter(q => !q.c);
+      const pickN = (arr, n) => arr.sort(() => Math.random() - .5).slice(0, n);
+      const exam = [...pickN(crit, Math.min(3, crit.length)), ...pickN(norm, Math.max(0, 25 - Math.min(3, crit.length)))];
+      return exam.sort(() => Math.random() - .5);
+    }
+    return [...Q]; // learn
+  }
+
+  function setMode(m) {
+    mode = m;
+    list = pickQuestions(m);
+    idx = 0; answered = {};
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    el('summary').classList.remove('show');
+    el('endBtn').style.display = m === 'exam' ? '' : 'none';
+    if (m === 'exam') {
+      exam = { start: Date.now(), duration: 22 * 60 * 1000 };
+      el('timerBox').style.display = '';
+      tickTimer();
+    } else {
+      exam = null;
+      el('timerBox').style.display = 'none';
+    }
+    render();
+  }
+  function tickTimer() {
+    if (!exam) return;
+    const remain = exam.duration - (Date.now() - exam.start);
+    if (remain <= 0) { submitExam(); return; }
+    const m = String(Math.floor(remain / 60000)).padStart(2, '0');
+    const s = String(Math.floor((remain % 60000) / 1000)).padStart(2, '0');
+    el('timer').textContent = `${m}:${s}`;
+    setTimeout(tickTimer, 1000);
+  }
+  function submitExam() {
+    let right = 0, critWrong = 0;
+    for (const [i, ans] of Object.entries(answered)) {
+      const q = list[i];
+      if (ans === q.a) right++;
+      else if (q.c) critWrong++;
+    }
+    const total = list.length;
+    const pct = Math.round(right / total * 100);
+    const passByScore = right >= 21;  // B1: 21/25
+    const pass = passByScore && critWrong === 0;
+    el('summary').classList.add('show');
+    el('qcard').style.display = 'none';
+    document.querySelector('.nav').style.display = 'none';
+    el('stats').style.display = 'none';
+    el('sumTitle').textContent = pass ? '🎉 ĐẠT' : '❌ TRƯỢT';
+    el('sumScore').textContent = `${right}/${total}`;
+    el('sumScore').className = 'big ' + (pass ? 'pass' : 'fail');
+    el('sumDetail').innerHTML = `
+      Đúng: <b>${right}</b> · Sai: <b>${total - right}</b><br>
+      Câu liệt sai: <b style="color:${critWrong ? 'var(--red)' : 'var(--green)'}">${critWrong}</b><br>
+      ${!passByScore ? '<span style="color:var(--red)">→ Chưa đủ 21/25 câu</span><br>' : ''}
+      ${critWrong > 0 ? '<span style="color:var(--red)">→ Sai câu LIỆT — tự động trượt</span>' : ''}
+    `;
+    exam = null;
+  }
+
+  function render() {
+    if (!list[idx]) return;
+    const q = list[idx];
+    el('curIdx').textContent = idx + 1;
+    el('totalQ').textContent = list.length;
+    el('topicBadge').textContent = q.t;
+    el('topicBadge').className = 'badge normal';
+    el('critBadge').innerHTML = q.c ? '<span class="badge">⚠️ CÂU LIỆT</span>' : '';
+    el('qtext').textContent = q.q;
+    el('opts').innerHTML = q.o.map((opt, i) => `
+      <label class="opt" data-idx="${i}">
+        <input type="radio" name="ans" value="${i}" ${answered[idx] === i ? 'checked' : ''} />
+        <span>${opt}</span>
+      </label>`).join('');
+    if (answered[idx] !== undefined && mode !== 'exam') showFeedback();
+    else el('feedback').classList.remove('show');
+    updateStats();
+
+    document.querySelectorAll('.opt input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        answered[idx] = +inp.value;
+        if (mode !== 'exam') showFeedback();
+        updateStats();
+      });
+    });
+  }
+  function showFeedback() {
+    const q = list[idx];
+    const ans = answered[idx];
+    const isRight = ans === q.a;
+    document.querySelectorAll('.opt').forEach((opt, i) => {
+      opt.classList.remove('correct', 'wrong');
+      if (i === q.a) opt.classList.add('correct');
+      else if (i === ans) opt.classList.add('wrong');
+    });
+    const fb = el('feedback');
+    fb.classList.add('show');
+    fb.className = 'feedback show ' + (isRight ? 'right' : 'wrong');
+    fb.textContent = (isRight ? '✅ Đúng. ' : '❌ Sai. ') + q.ex;
+  }
+  function updateStats() {
+    let r = 0, w = 0;
+    for (const [i, ans] of Object.entries(answered)) {
+      if (ans === list[i].a) r++; else w++;
+    }
+    el('rightCount').textContent = r;
+    el('wrongCount').textContent = w;
+  }
+
+  document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  el('nextBtn').onclick = () => { if (idx < list.length - 1) { idx++; render(); } };
+  el('prevBtn').onclick = () => { if (idx > 0) { idx--; render(); } };
+  el('endBtn').onclick = submitExam;
+
+  setMode('learn');
+</script>
+</body>
+</html>

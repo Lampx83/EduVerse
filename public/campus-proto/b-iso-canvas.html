@@ -567,6 +567,121 @@ const CAMPUSES = {
       {along:'y',a:17.3,b:17.9,lo:8.0,hi:9.6},      // stub Nhà ăn
     ],
   },
+
+  // ─────────────────────── TRƯỜNG NGOẠI NGỮ (language) ───────────────────────
+  // Phong cách: quốc tế, mở, có plaza giữa với cột cờ 5 ngôn ngữ. Khác trường ĐH
+  // (không nhiều giảng đường), khác trường mầm non (không pastel). 1 cổng chính
+  // nam, 1 cổng phụ tây. Buildings dùng pack Kenney City Commercial — phù hợp
+  // không khí trung tâm ngoại ngữ thành thị.
+  language: {
+    title:'Trường Ngoại ngữ', credit:'3D: Kenney City Kit Commercial (CC0)',
+    grass:['#bae6fd','#7dd3fc'],   // xanh dương nhạt — không khí "thoáng đãng quốc tế"
+    roads:[
+      {along:'y', a:13.35, b:14.65, lo:14.5, hi:N+24, kind:'main'},   // cổng chính nam
+      {along:'x', a:8.35,  b:9.65,  lo:-24,  hi:0.7,  kind:'main'},   // cổng phụ tây
+      {along:'y', a:8.35,  b:9.65,  lo:0.9,  hi:14.4, kind:'internal'},
+      {along:'y', a:18.35, b:19.65, lo:0.9,  hi:14.4, kind:'internal'},
+      {along:'x', a:4.4,   b:5.6,   lo:0.5,  hi:22.3, kind:'internal'},
+      {along:'x', a:9.4,   b:10.6,  lo:0.5,  hi:22.3, kind:'internal'},
+    ],
+    walls:[
+      {gx:0.5,  gy:0.7,  w:22.0, d:0.16},                       // tường trên
+      {gx:0.42, gy:0.78, w:0.16, d:8.0},                        // tường trái trên (chừa khe cổng tây gx 9)
+      {gx:0.42, gy:10.0, w:0.16, d:4.5},                        // tường trái dưới
+      {gx:22.42,gy:0.78, w:0.16, d:13.85},                      // tường phải
+      {gx:0.5,  gy:14.6, w:12.5, d:0.16},                       // tường dưới trái (chừa khe gx 13-15 cho cổng nam)
+      {gx:15.0, gy:14.6, w:7.5,  d:0.16},                       // tường dưới phải
+    ],
+    vroads:[9,19], hroads:[{a:5,b:6.2},{a:10,b:11.2}],
+    buildings:[
+      // Dãy giảng dạy (gy 2.5) — chính diện
+      B('main-hall','Sảnh chính · Lễ tân','🏛️',5.0,2.5,'com:building-d',1.05,90,{flag:true}),
+      B('library-lang','Thư viện đa ngữ','📚',11.0,2.5,'com:building-skyscraper-b',0.85,0,{pin:'#3b82f6'}),
+      B('test-center','Trung tâm thi (IELTS/TOEFL/HSK)','🏆',17.5,2.5,'com:low-detail-building-wide-a',1.0,0,{pin:'#f59e0b'}),
+      // Dãy phòng lab ngôn ngữ (gy 7) — phía sau plaza
+      B('listening-lab','Phòng nghe (headset lab)','🎧',5.0,7.0,'com:building-a',1.0,90,{pin:'#8b5cf6'}),
+      B('speaking-room','Phòng hội thoại','💬',11.0,7.0,'com:building-b',1.0,0),
+      B('pronunciation','Studio Phát âm','🎤',17.5,7.0,'com:building-c',1.0,0,{pin:'#a855f7'}),
+      // Dãy mở rộng (gy 11.5)
+      B('film-room','Phòng phim phụ đề','📺',5.0,11.5,'com:building-f',1.0,90),
+      B('drama','Sân khấu kịch','🎭',11.0,11.5,'com:building-g',1.0,0,{pin:'#ec4899'}),
+      B('intl-cafe','Cafe Quốc tế (chat practice)','🌍',17.5,11.5,'com:building-i',1.0,0,{pin:'#10b981'}),
+    ],
+    facilities:[
+      {id:'gate',      name:'Cổng Chính (Nam)', emoji:'🚪',gx:14,gy:14.6},
+      {id:'gate_west', name:'Cổng Phụ (Tây)',   emoji:'🚪',gx:0.7,gy:9},
+      {id:'plaza',     name:'Quảng trường Quốc tế',emoji:'🌐',gx:11,gy:9.3},
+      {id:'flagpoles', name:'Cột cờ 5 ngôn ngữ',emoji:'🚩',gx:11,gy:5},
+    ],
+    fields:[
+      {type:'plaza', cx:11, cy:9.3, rx:3.2, ry:1.4, color:'#dbeafe'},   // plaza giữa lát đá
+      {type:'gate', gx:14, gy:14.0, label:'NGOẠI NGỮ'},
+      {type:'gate', gx:1.3, gy:9, label:'TÂY', rot:90},
+    ],
+    trees:[[3.5,3.0],[19.5,3.0],[3.5,8],[19.5,8],[3.5,12.5],[19.5,12.5],[8,5.5],[14,5.5],[8,9.5],[14,9.5]],
+    cars:[[10,16],[12,16],[14,16],[10,17.5],[12,17.5]],
+    tints:{
+      'library-lang':0x93c5fd, 'test-center':0xfde68a, 'listening-lab':0xc4b5fd,
+      'pronunciation':0xddd6fe, 'drama':0xfbcfe8, 'intl-cafe':0x6ee7b7,
+    },
+  },
+
+  // ─────────────────────── TRƯỜNG LÁI XE (driving) ───────────────────────
+  // Phong cách: thực tế, có sân tập sa hình LỚN giữa khuôn viên (đặc trưng).
+  // 4 bài tập trong sa hình: ghép xe, dừng xe ngang dốc, qua đường giao nhau,
+  // qua vạch đường sắt. Buildings nhỏ gọn vì hoạt động chính là TẬP LÁI.
+  driving: {
+    title:'Trường Lái xe', credit:'3D: Kenney City Kit Commercial (CC0)',
+    grass:['#a3a3a3','#b5b5b5'],   // nền xám — phong cách bãi tập, không phải sân cỏ
+    roads:[
+      {along:'y', a:11.35, b:12.65, lo:14.5, hi:N+24, kind:'main'},   // cổng chính nam
+      // Sa hình giữa: đường nội bộ mô phỏng tuyến lái xe
+      {along:'x', a:5.4,   b:6.6,   lo:6,    hi:18,   kind:'internal'},
+      {along:'x', a:10.4,  b:11.6,  lo:6,    hi:18,   kind:'internal'},
+      {along:'y', a:7.35,  b:8.65,  lo:6,    hi:11.4, kind:'internal'},
+      {along:'y', a:15.35, b:16.65, lo:6,    hi:11.4, kind:'internal'},
+    ],
+    walls:[
+      {gx:0.5,  gy:0.7,  w:22.0, d:0.16},
+      {gx:0.42, gy:0.78, w:0.16, d:13.85},
+      {gx:22.42,gy:0.78, w:0.16, d:13.85},
+      {gx:0.5,  gy:14.6, w:10.5, d:0.16},
+      {gx:13.0, gy:14.6, w:9.5,  d:0.16},
+    ],
+    vroads:[8,16], hroads:[{a:5.4,b:6.6},{a:10.4,b:11.6}],
+    buildings:[
+      // Dãy lý thuyết (gy 2.5) — phía bắc, gần cổng phụ
+      B('theory-center','Trung tâm Lý thuyết','📖',5.0,2.5,'com:building-d',1.05,90,{flag:true}),
+      B('signs-room','Phòng Biển báo','🚸',11.0,2.5,'com:building-a',1.0,0,{pin:'#dc2626'}),
+      B('exam-theory','Phòng Thi Lý thuyết','📝',17.5,2.5,'com:building-b',1.0,0,{pin:'#f59e0b'}),
+      // Dãy hỗ trợ (gy 13) — phía nam gần cổng
+      B('sim-room','Phòng Mô phỏng (cabin lái)','🎮',3.5,13.0,'com:building-f',1.0,90,{pin:'#8b5cf6'}),
+      B('first-aid','Trạm Sơ cứu','🏥',7.0,13.0,'com:building-c',0.9,0,{pin:'#ef4444'}),
+      B('admin-drive','Văn phòng cấp giấy phép','📋',16.0,13.0,'com:building-g',1.0,0),
+      B('canteen-drive','Căng tin học viên','☕',19.5,13.0,'com:low-detail-building-wide-b',1.0,0),
+    ],
+    facilities:[
+      {id:'gate',        name:'Cổng Chính (Nam)',emoji:'🚪',gx:12,gy:14.6},
+      // Sân tập trong sa hình
+      {id:'sahinh-ghep', name:'Bài 1: Ghép xe vào nơi đỗ',emoji:'🅿️',gx:5.5,gy:8.5},
+      {id:'sahinh-doc',  name:'Bài 2: Dừng xe ngang dốc',emoji:'⛰️',gx:11,gy:8.5},
+      {id:'sahinh-junc', name:'Bài 3: Qua giao nhau',emoji:'🚦',gx:16.5,gy:8.5},
+      {id:'sahinh-rail', name:'Bài 4: Qua đường sắt',emoji:'🛤️',gx:11,gy:11},
+      {id:'parking-lot', name:'Bãi đỗ xe học viên',emoji:'🚗',gx:11,gy:6.5},
+    ],
+    fields:[
+      // Sa hình trung tâm — vùng asphalt lớn
+      {type:'parking', gx:3.5,gy:5.5, w:16,d:7, label:'SÂN TẬP SA HÌNH'},
+      {type:'gate', gx:12, gy:14.0, label:'TRƯỜNG LÁI'},
+    ],
+    cars:[[5,8],[11,8],[16,8],[8,11],[14,11],[11,11],
+          [5.5,7],[10.5,7],[16,7],[3,6],[19.5,6],[3,12],[19.5,12]],   // nhiều xe ở sa hình
+    trees:[[2,3.5],[2,8],[2,13],[21,3.5],[21,8],[21,13],[12,1.5]],
+    tints:{
+      'theory-center':0xfde68a, 'signs-room':0xfca5a5, 'exam-theory':0xfde68a,
+      'sim-room':0xc4b5fd, 'first-aid':0xfca5a5,
+    },
+  },
 };
 
 const params=new URLSearchParams(location.search);
@@ -1386,6 +1501,8 @@ const toast=document.getElementById('toast'); let toastT;
 // Khi mở thêm trang space cho 1 toà mới, chỉ cần thêm id vào danh sách dưới.
 const SPACE_KEYS_BY_DOMAIN = {
   pharmacy:   ['admin','lecture','library','hall','lab_org','lab_qc','lab_micro','gmp','clinpharm','garden','clinic','gpp','sim','canteen','dorm','museum'],
+  language:   ['main-hall','library-lang','test-center','listening-lab','speaking-room','pronunciation','film-room','drama','intl-cafe'],
+  driving:    ['theory-center','signs-room','exam-theory','sim-room','first-aid','admin-drive','canteen-drive'],
   secondary:  ['grade6','grade7','grade8','grade9','lab','computer','english','artmusic','admin','library','tradition','youthunion','gym','tech','medical','canteen'],
   it:         ['admin','lecture','library','hall','codelab','algolab','dblab','netlab','seclab','ailab','webstudio','startuphub'],
   primary:    ['g1','g2','g3','g4','g5','library','english','computer','admin','doi','health','art','music','science','canteen','gym'],

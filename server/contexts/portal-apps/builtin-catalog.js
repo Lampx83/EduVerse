@@ -14,7 +14,7 @@
  * Nếu thêm/sửa entry, bump CATALOG_VERSION để force re-seed.
  */
 
-export const CATALOG_VERSION = '2026-06-08-v1';
+export const CATALOG_VERSION = '2026-06-08-v2-language-driving';
 
 export const BUILTIN_APPS = [
   // ─────── Mầm non / Lớp 2 ───────
@@ -131,6 +131,31 @@ export const BUILTIN_APPS = [
   { alias: '3d-shelf', name: 'Kệ thuốc 3D', icon: '📦',
     description: 'Khám phá kệ thuốc 3D — tìm thuốc theo nhóm điều trị, đường dùng.',
     target_url: '/3d-shelf.html', category: 'sim', domain: 'pharmacy' },
+
+  // ─────── Trường NGOẠI NGỮ (language) ───────
+  { alias: 'tu-vung-tieng-anh', name: 'Từ vựng Tiếng Anh', icon: '📚',
+    description: 'Luyện 2000 từ vựng tiếng Anh theo chủ đề: cơ bản, du lịch, kinh doanh, học thuật, IELTS. Spaced repetition + phát âm tự động.',
+    target_url: '/tu-vung-tieng-anh.html', category: 'tool', domain: 'language' },
+  { alias: 'luyen-phat-am', name: 'Luyện phát âm AI', icon: '🎤',
+    description: 'Đọc câu mẫu, AI chấm độ chính xác bằng Web Speech Recognition. So sánh với giọng chuẩn, đo điểm phát âm theo từng từ.',
+    target_url: '/luyen-phat-am.html', category: 'lab', domain: 'language' },
+  { alias: 'flashcards-lang', name: 'Flashcards đa ngôn ngữ', icon: '🃏',
+    description: 'Bộ thẻ học từ vựng cho nhiều ngôn ngữ (Anh/Nhật/Hàn/Trung). Tự nhập bộ thẻ riêng, lưu localStorage.',
+    target_url: '/portal-apps/u/4/flashcards/', category: 'game', domain: 'language' },
+  { alias: 'hoc-thong-minh-lang', name: 'AI Tutor Ngoại ngữ', icon: '🎓',
+    description: 'Gia sư AI luyện ngữ pháp, dịch câu, gợi ý câu thay thế. Hỗ trợ tiếng Anh/Trung/Nhật/Hàn/Pháp.',
+    target_url: '/hoc-thong-minh.html?subject=language', category: 'tool', domain: 'language' },
+
+  // ─────── Trường LÁI XE (driving) ───────
+  { alias: 'luat-giao-thong-600', name: 'Lý thuyết Lái xe 600 câu', icon: '🚦',
+    description: 'Bộ 600 câu lý thuyết B1/B2 theo Bộ GTVT. Chế độ luyện + thi thử 25 câu/22 phút. Tự đánh dấu câu LIỆT.',
+    target_url: '/luat-giao-thong-600.html', category: 'tool', domain: 'driving' },
+  { alias: 'bien-bao-giao-thong', name: 'Biển báo Giao thông', icon: '🚸',
+    description: 'Học 4 nhóm biển báo QCVN 41:2019: cấm, nguy hiểm, hiệu lệnh, chỉ dẫn. SVG vẽ tay, có chế độ đố vui.',
+    target_url: '/bien-bao-giao-thong.html', category: 'game', domain: 'driving' },
+  { alias: 'ai-quiz-driving', name: 'AI Quiz luật giao thông', icon: '🧠',
+    description: 'AI sinh quiz tình huống lái xe theo cấp B1/B2/C/D. Đa dạng tình huống, có giải thích lý do.',
+    target_url: '/ai-quiz-gen.html?topic=driving', category: 'tool', domain: 'driving' },
 
   // ─────── Công cụ chung (general) ───────
   { alias: 'ai-quiz-gen', name: 'AI sinh Quiz', icon: '🧠',

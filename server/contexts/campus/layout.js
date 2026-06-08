@@ -76,7 +76,7 @@ const stmtUpsert = db.prepare(`
 const stmtDelete = db.prepare(`DELETE FROM campus_layouts WHERE domain = ?`);
 
 // Whitelist domain để tránh injection qua :domain
-const ALLOWED_DOMAINS = new Set(['preschool', 'primary', 'secondary', 'it', 'pharmacy']);
+const ALLOWED_DOMAINS = new Set(['preschool', 'primary', 'secondary', 'it', 'pharmacy', 'language', 'driving']);
 
 // Whitelist key cấp 1 — body chỉ giữ đúng các field này.
 // Bám theo schema CAMPUSES trong public/campus-proto/b-iso-canvas.html.
