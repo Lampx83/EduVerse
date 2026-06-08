@@ -1347,21 +1347,32 @@ function flagpole(cx,cy){ const p=P(cx,cy); ctx.strokeStyle='#8a8f96'; ctx.lineW
 // kiến trúc khối: 2 cột vuông + 1 xà ngang slab mỏng nằm trên đỉnh. Tên
 // trường đã có ở pin marker facility nên không cần in lên cổng.
 // `label` arg giữ để không vỡ call-site nhưng không dùng.
-function schoolGate(gx, gy /*, label */) {
+function schoolGate(gx, gy, _label, rot = 0) {
   const SPAN=1.7, POST_W=0.30, POST_D=0.30, POST_H=58, LINTEL_H=14, LINTEL_D=0.18;
-  // Bóng nền
+  // rot: 0   = cổng mở Nam-Bắc (cột Đông-Tây) — mặc định cho cổng ở cạnh ngang
+  // rot: 90  = cổng mở Đông-Tây (cột Nam-Bắc) — dùng cho cổng ở cạnh dọc (trái/phải)
+  const swap = (rot % 180) !== 0;   // 90 / 270 thì hoán vị trục
+  // Bóng nền (ellipse theo trục dài của xà ngang)
   const gp = P(gx, gy);
   ctx.fillStyle = 'rgba(0,0,0,.16)';
-  ctx.beginPath(); ctx.ellipse(gp.x, gp.y + 6, SPAN*TW*0.5 + 12, TH*0.5, 0, 0, 7); ctx.fill();
-  // 2 cột
+  const shW = (swap ? POST_D : SPAN*0.5 + POST_W) * TW;
+  const shH = (swap ? SPAN*0.5 + POST_W : POST_D) * TH;
+  ctx.beginPath(); ctx.ellipse(gp.x, gp.y + 6, Math.max(shW, shH) + 12, TH*0.5, 0, 0, 7); ctx.fill();
+  // 2 cột — đặt theo trục đã hoán vị
   for (const dir of [-1, +1]) {
-    const cx = gx + dir*SPAN/2;
-    isoBox(cx-POST_W, gy-POST_D, cx+POST_W, gy+POST_D, 0, POST_H,
+    const cx = swap ? gx          : gx + dir*SPAN/2;
+    const cy = swap ? gy + dir*SPAN/2 : gy;
+    isoBox(cx-POST_W, cy-POST_D, cx+POST_W, cy+POST_D, 0, POST_H,
       '#e8d5a4', '#cdb98a', '#a8946b');
   }
-  // Xà ngang
-  isoBox(gx-SPAN/2-POST_W, gy-LINTEL_D, gx+SPAN/2+POST_W, gy+LINTEL_D,
-    POST_H, POST_H+LINTEL_H, '#b23b3b', '#962f2f', '#7e2525');
+  // Xà ngang — span chạy giữa 2 cột
+  if (swap) {
+    isoBox(gx-LINTEL_D, gy-SPAN/2-POST_W, gx+LINTEL_D, gy+SPAN/2+POST_W,
+      POST_H, POST_H+LINTEL_H, '#b23b3b', '#962f2f', '#7e2525');
+  } else {
+    isoBox(gx-SPAN/2-POST_W, gy-LINTEL_D, gx+SPAN/2+POST_W, gy+LINTEL_D,
+      POST_H, POST_H+LINTEL_H, '#b23b3b', '#962f2f', '#7e2525');
+  }
 }
 function ground(){
   const w=innerWidth, h=innerHeight;
@@ -1378,7 +1389,7 @@ function ground(){
     poly(pts,'#dcc9a0','rgba(120,98,55,.20)',1.3); const c=(p.a+p.b)/2; ctx.strokeStyle='rgba(255,250,235,.5)'; ctx.lineWidth=1.3; ctx.setLineDash([5,7]);
     const q0=p.along==='y'?P(c,p.lo):P(p.lo,c), q1=p.along==='y'?P(c,p.hi):P(p.hi,c); ctx.beginPath(); ctx.moveTo(q0.x,q0.y); ctx.lineTo(q1.x,q1.y); ctx.stroke(); ctx.setLineDash([]); }
   for(const f of FIELDS) drawField(f);
-  for(const f of FIELDS){ if(f.type==='plaza') flagpole(f.gx+f.w/2, f.gy+f.d-0.4); else if(f.type==='gate') schoolGate(f.gx,f.gy,f.label); }
+  for(const f of FIELDS){ if(f.type==='plaza') flagpole(f.gx+f.w/2, f.gy+f.d-0.4); else if(f.type==='gate') schoolGate(f.gx,f.gy,f.label,f.rot||0); }
 }
 
 function shadowAt(p,s){ ctx.fillStyle='rgba(0,0,0,.13)'; ctx.beginPath(); ctx.ellipse(p.x,p.y,TW*0.4*s,TH*0.4*s,0,0,7); ctx.fill(); }
