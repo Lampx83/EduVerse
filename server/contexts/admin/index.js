@@ -14,6 +14,7 @@ import { db, createNotification, setUserPlan, createUser, getUserById, getUserBy
 import { VALID_USER_PLANS, expiresAtFor } from '../billing/user-plans.js';
 import { listAiPrompts, listAiPromptsForUser } from '../../ai-quota.js';
 import { attachBackup, scheduleAutoBackup } from './backup.js';
+import { attachAdminDb } from './db-admin.js';
 import { getPageviewStats } from '../analytics/index.js';
 
 // Scrypt hash — đồng bộ format với contexts/identity/auth.js (scrypt$salt$hash)
@@ -684,5 +685,8 @@ export function attachAdmin(r) {
   attachBackup(r);
   scheduleAutoBackup();
 
-  console.log('[admin] routes mounted: /api/admin/* (role=admin) + dashboard + CRUD + ai-prompt logs + backup');
+  // Admin DB CRUD (browse/edit table + SQL console + audit) — tab CSDL ở FE
+  attachAdminDb(r);
+
+  console.log('[admin] routes mounted: /api/admin/* (role=admin) + dashboard + CRUD + ai-prompt logs + backup + db-admin');
 }
