@@ -14,7 +14,7 @@
 
 import { WebSocketServer } from 'ws';
 import { db } from '../../db.js';
-import { requireAuth } from '../identity/auth.js';
+import { requireAuth, getCurrentUser } from '../identity/auth.js';
 
 const TIME_PER_Q_MS = 20_000;     // 20s/câu
 const TIME_BONUS_MAX = 500;       // điểm tối đa thưởng tốc độ
@@ -223,7 +223,13 @@ export function attachLiveQuizWs(server, basePath = '') {
       return ws.close();
     }
     if (role === 'host') {
-      // Auth host qua cookie (TODO: parse session). MVP: chấp nhận signal join
+      // Host phải là người tạo phòng (hoặc admin) — verify session cookie trên
+      // upgrade request, không tin query param. WS same-origin tự gửi cookie.
+      const u = getCurrentUser(req);
+      if (!u || (u.id !== room.hostId && u.role !== 'admin')) {
+        ws.send(JSON.stringify({ type: 'error', error: 'host_unauthorized' }));
+        return ws.close();
+      }
       room.hostWs = ws;
       ws.send(JSON.stringify({ type: 'host_ack', snapshot: snapshot(room) }));
     } else {
