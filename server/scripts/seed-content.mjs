@@ -21,6 +21,10 @@ const dataUrl = (p) => pathToFileURL(resolve(__dirname, '../../public/js/scenari
 // collection → { file, export } : tên file trong _data/ + tên export mảng data.
 const REGISTRY = [
   { collection: 'history-characters', file: 'history-characters.js', export: 'HISTORY_CHARACTERS' },
+  { collection: 'patient-cases',      file: 'patient-cases.js',      export: 'PATIENT_CASES' },
+  { collection: 'math2-topics',       file: 'math2-fun.js',          export: 'MATH2_TOPICS' },
+  { collection: 'math6-topics',       file: 'math6-quest.js',        export: 'MATH6_TOPICS' },
+  { collection: 'negotiation',        file: 'negotiation.js',        export: 'NEGOTIATION_SCENARIOS' },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');

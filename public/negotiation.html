@@ -201,7 +201,8 @@
 </div>
 
 <script type="module">
-import { NEGOTIATION_SCENARIOS, NEGOTIATION_INDEX, getScenarioById } from './js/scenarios/negotiation-vn.js';
+import { loadNegotiation } from './js/scenarios/negotiation-vn.js';
+const { index: NEGOTIATION_INDEX, getById: getScenarioById } = await loadNegotiation();
 
 const $ = (id) => document.getElementById(id);
 let current = null;

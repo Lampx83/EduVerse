@@ -229,7 +229,8 @@
 </div>
 
 <script type="module">
-import { PATIENT_CASES, CASE_INDEX, getCaseById } from './js/scenarios/patient-cases-vn.js';
+import { loadPatientCases } from './js/scenarios/patient-cases-vn.js';
+const { index: CASE_INDEX, getById: getCaseById } = await loadPatientCases();
 
 const $ = (id) => document.getElementById(id);
 let currentCase = null;
