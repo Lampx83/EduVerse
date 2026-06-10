@@ -2631,11 +2631,24 @@ function shuffleArray(arr){
 // S.quiz chỉ có ~3 câu seed mỗi grade — không đủ random. Trang module.html dùng
 // ngân hàng /js/scenarios/lopN/_index.js (~1700 câu/grade). Ở đây ta lazy-load
 // cùng nguồn đó, flatten về shape {q,o,a,id} để feed picker SRS.
+// Content lưu trong DB (curriculum_content) — load qua /api/curriculum/grade.
+// Trả bank { scenarioId: scenario } để flattenScenarioBank dùng như cũ.
+function loadGradeBank(domain, grade) {
+  return fetch(`/api/curriculum/grade/${domain}/${grade}`, { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => {
+      if (!j || !Array.isArray(j.items) || !j.items.length) return null;
+      const bank = {};
+      for (const sc of j.items) if (sc && sc.id) bank[sc.id] = sc;
+      return bank;
+    })
+    .catch(() => null);
+}
 const EXTENDED_POOL_LOADERS = {
-  'primary:g2': () => import('/js/scenarios/lop2/_index.js').then(m => m.PRIMARY_LOP2_SCENARIOS),
-  'primary:g3': () => import('/js/scenarios/lop3/_index.js').then(m => m.PRIMARY_LOP3_SCENARIOS),
-  'primary:g4': () => import('/js/scenarios/lop4/_index.js').then(m => m.PRIMARY_LOP4_SCENARIOS).catch(()=>null),
-  'primary:g5': () => import('/js/scenarios/lop5/_index.js').then(m => m.PRIMARY_LOP5_SCENARIOS).catch(()=>null),
+  'primary:g2': () => loadGradeBank('primary', 2),
+  'primary:g3': () => loadGradeBank('primary', 3),
+  'primary:g4': () => loadGradeBank('primary', 4),
+  'primary:g5': () => loadGradeBank('primary', 5),
 };
 
 function flattenScenarioBank(bank){
