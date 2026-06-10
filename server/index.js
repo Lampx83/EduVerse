@@ -33,6 +33,7 @@ import { attachAdminDb } from './contexts/admin/db-admin.js';
 import { attachEngagement, trackEngagementProgress } from './contexts/engagement/index.js';
 import { addLeagueWeekXp } from './contexts/engagement/league.js';
 import { attachLearning, updateIrt } from './contexts/learning/index.js';
+import { attachCurriculum } from './contexts/curriculum/index.js';
 import { attachPresence } from './contexts/multiplayer/presence.js';
 import { attachUgc } from './contexts/ugc/index.js';
 import { attachEconomy, addBpXp } from './contexts/economy/index.js';
@@ -340,6 +341,8 @@ attachSkills(r, { requireAuth, requireEnrolled });
 attachEngagement(r);
 // Learning depth — Knowledge graph + Adaptive next-question (Trục B — Khanmigo/Squirrel)
 attachLearning(r);
+// Curriculum — content học (quiz + lý thuyết) lưu DB, sửa nóng + admin CRUD
+attachCurriculum(r);
 // UGC marketplace — Quest Builder + Play + Like/Flag (Trục C — Roblox Edu)
 attachUgc(r);
 // Economy — Battle Pass + Skin Shop + Daily Login Bonus

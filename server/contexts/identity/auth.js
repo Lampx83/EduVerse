@@ -184,6 +184,10 @@ const PUBLIC_PATH_PREFIXES = [
   // Catalog khung GDPT 2018 (5 phẩm chất + 10 năng lực + 164 sub-skill) — public
   // để trang giới thiệu năng lực render cho cả khách. /me, /grant, /space vẫn requireAuth.
   '/api/skills/catalog',
+  // Content học (quiz + lý thuyết) — public vì FE vốn import JS scenario không
+  // cần login (guest xem được trường Mầm non). GET đọc thoải mái; PUT/POST/DELETE
+  // sửa content đã có requireAdmin riêng trong contexts/curriculum nên vẫn an toàn.
+  '/api/curriculum/',
   // Nhà thuốc 3D GPP — session/chat/action/score chỉ lưu in-memory (Map),
   // không ghi DB hay xài AI tốn quota nhạy cảm. Cho guest để mô phỏng
   // trải nghiệm như SV Dược (alert "kiểm tra đăng nhập" nếu chặn 401 →
