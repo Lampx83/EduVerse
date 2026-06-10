@@ -73,6 +73,39 @@ export const ALL_SCENARIOS = {
 /**
  * Lấy danh sách scenarios của 1 module qua prefix ID.
  * Nếu module không có scenario thật → fallback 1 quiz stub.
+/**
+ * Prime content của 1 module TỪ DB (/api/curriculum) vào ALL_SCENARIOS.
+ *
+ * Mục đích: cho phép GV/admin sửa nóng content trong DB mà không cần deploy lại
+ * JS. Sau khi prime, getScenariosForModule/getScenarioById (vẫn sync) tự trả
+ * bản DB vì ALL_SCENARIOS[id] đã bị ghi đè.
+ *
+ * AN TOÀN: best-effort. API lỗi / chưa seed / rỗng → giữ nguyên bản JS bundled,
+ * app chạy y như cũ. Mỗi module chỉ prime 1 lần / phiên (cache _primed).
+ *
+ * @param {string} moduleId
+ * @returns {Promise<boolean>} true nếu đã prime ít nhất 1 scenario từ DB
+ */
+const _primed = new Set();
+export async function primeModuleFromDB(moduleId) {
+  if (!moduleId || _primed.has(moduleId)) return false;
+  _primed.add(moduleId);
+  try {
+    const r = await fetch(`/api/curriculum/module/${encodeURIComponent(moduleId)}`, { credentials: 'same-origin' });
+    if (!r.ok) return false;
+    const data = await r.json();
+    const items = Array.isArray(data?.items) ? data.items : [];
+    if (!items.length) return false;
+    for (const sc of items) {
+      if (sc?.id) ALL_SCENARIOS[sc.id] = sc;
+    }
+    return true;
+  } catch {
+    return false;   // offline / API down → fallback JS bundled
+  }
+}
+
+/**
  * @param {string} moduleId — e.g. "L1.1", "L3.3", "L2.1"
  * @returns {Array} scenarios trong module
  */
