@@ -230,8 +230,8 @@ export const S9LSDL_WEEKS = [
   M(25, 'Ngành công nghiệp Việt Nam', [
     Q('Ngành công nghiệp trọng điểm của VN?', ['Chỉ khai khoáng', 'Chỉ chế biến gỗ', 'Chỉ thủ công', 'Chế biến lương thực-thực phẩm, dệt may, điện tử, năng lượng, hoá chất, vật liệu xây dựng'], 3, 'Nhiều ngành CN trọng điểm tạo việc làm + xuất khẩu lớn.'),
     Q('Vùng công nghiệp trọng điểm phía Bắc?', ['Tây Bắc', 'Sông Hồng đơn lẻ', 'Bắc Trung Bộ', 'ĐBSH + Đông Bắc (Hà Nội, Hải Phòng, Quảng Ninh…)'], 3, 'Tam giác Hà Nội - Hải Phòng - Quảng Ninh là trung tâm CN phía Bắc.'),
-    Q('Vùng công nghiệp trọng điểm phía Nam?', ['Đông Nam Bộ (TP.HCM, Bình Dương, Đồng Nai, BR-VT)', 'Đồng bằng sông Cửu Long (chuyên lúa gạo)', 'Trung Trung Bộ', 'Tây Nguyên'], 0, 'ĐNB là vùng CN phát triển nhất nước, dẫn đầu cả nước về giá trị sản xuất CN.'),
-    Q('Vùng công nghiệp trọng điểm miền Trung?', ['Đà Nẵng, Quảng Nam, Quảng Ngãi, Khánh Hoà', 'Tây Nguyên', 'Tây Bắc', 'ĐBSCL (Cần Thơ, Long An, An Giang)'], 0, 'Tam giác Đà Nẵng - Dung Quất - Chu Lai là trung tâm CN miền Trung.'),
+    Q('Vùng công nghiệp trọng điểm phía Nam?', ['Đông Nam Bộ (TP.HCM, Đồng Nai, Tây Ninh)', 'Đồng bằng sông Cửu Long (chuyên lúa gạo)', 'Trung Trung Bộ', 'Tây Nguyên'], 0, 'ĐNB là vùng CN phát triển nhất nước. Sau sáp nhập 2025, Bình Dương và Bà Rịa-Vũng Tàu đã nhập vào TP.HCM.'),
+    Q('Vùng công nghiệp trọng điểm miền Trung?', ['Đà Nẵng, Quảng Ngãi, Khánh Hoà', 'Tây Nguyên', 'Tây Bắc', 'ĐBSCL (Cần Thơ, An Giang)'], 0, 'Tam giác Đà Nẵng - Dung Quất - Chu Lai là trung tâm CN miền Trung (Quảng Nam nay thuộc Đà Nẵng).'),
     Q('Ngành điện ở VN gồm các nguồn?', ['Chỉ hạt nhân', 'Chỉ nhiệt điện', 'Chỉ thuỷ điện', 'Thuỷ điện, nhiệt điện, năng lượng tái tạo, điện hạt nhân (dự kiến)'], 3, 'VN đa dạng nguồn: thuỷ điện ~30%, nhiệt điện than/khí ~50%, năng lượng tái tạo tăng nhanh.'),
     Q('Khu kinh tế ven biển có vai trò?', ['Chỉ phục vụ đánh bắt quy mô nhỏ ven bờ', 'Thu hút đầu tư FDI, phát triển công nghiệp - dịch vụ, kết nối logistics', 'Chỉ du lịch', 'Chỉ thuỷ sản'], 1, 'Khu kinh tế ven biển: Vũng Áng, Dung Quất, Nhơn Hội, Vân Phong, Phú Quốc…'),
   ]),
@@ -255,25 +255,25 @@ export const S9LSDL_WEEKS = [
   ]),
 
   M(28, 'Vùng kinh tế Đồng bằng sông Hồng', [
-    Q('Vùng ĐBSH gồm các tỉnh thành?', ['5 tỉnh', '15 tỉnh', '10 tỉnh (Hà Nội, Hải Phòng, Vĩnh Phúc, Bắc Ninh, Hải Dương, Hưng Yên, Thái Bình, Nam Định, Hà Nam, Ninh Bình)', '20 tỉnh'], 2, 'ĐBSH có 10 tỉnh thành, là vùng có lịch sử văn hoá lâu đời nhất.'),
+    Q('Vùng ĐBSH gồm các tỉnh, thành nào (sau sáp nhập 2025)?', ['5 tỉnh', '15 tỉnh', '6 tỉnh, thành (Hà Nội, Hải Phòng, Quảng Ninh, Bắc Ninh, Hưng Yên, Ninh Bình)', '20 tỉnh'], 2, 'Sau sắp xếp 2025, ĐBSH còn 6 tỉnh, thành: Hà Nội, Hải Phòng, Quảng Ninh, Bắc Ninh, Hưng Yên, Ninh Bình (gộp nhiều tỉnh cũ như Hải Dương, Thái Bình, Nam Định, Hà Nam…).'),
     Q('ĐBSH có vai trò?', ['Chỉ khai khoáng', 'Chỉ là vùng nông nghiệp', 'Trung tâm kinh tế - chính trị - văn hoá - khoa học của cả nước', 'Chủ yếu là vùng đệm bảo tồn, ít hoạt động kinh tế'], 2, 'ĐBSH là vùng kinh tế trọng điểm phía Bắc, có Hà Nội — thủ đô.'),
     Q('Đặc điểm dân cư ĐBSH?', ['Trung bình', 'Thưa thớt, mật độ dưới 200 người/km²', 'Già hoá nhanh nhất', 'Mật độ dân số rất cao (~1 100 người/km²) — cao nhất cả nước'], 3, 'ĐBSH có mật độ DS cao nhất nhưng diện tích chỉ ~4,5% cả nước.'),
     Q('Sản phẩm nông nghiệp chủ lực của ĐBSH?', ['Cà phê', 'Hồ tiêu', 'Cao su', 'Lúa gạo, thực phẩm (rau, thịt, trứng…)'], 3, 'ĐBSH thâm canh lúa nước + chăn nuôi gia súc, gia cầm phục vụ đô thị.'),
     Q('Khó khăn lớn nhất của ĐBSH?', ['Giao thông khó', 'Khí hậu xấu', 'Khoáng sản nghèo', 'Đất canh tác ít, dân số quá đông, ngập úng, ô nhiễm'], 3, 'Áp lực dân số + thiên tai (lụt) + môi trường là thách thức chính.'),
-    Q('Vùng kinh tế trọng điểm Bắc Bộ gồm?', ['3 tỉnh', '10 tỉnh', '5 tỉnh', 'Hà Nội, Hải Phòng, Quảng Ninh, Hải Dương, Hưng Yên, Bắc Ninh, Vĩnh Phúc'], 3, '7 tỉnh thành tạo thành vùng kinh tế trọng điểm Bắc Bộ.'),
+    Q('Các địa phương động lực kinh tế phía Bắc nay gồm?', ['3 tỉnh', '10 tỉnh', '5 tỉnh', 'Hà Nội, Hải Phòng, Quảng Ninh, Bắc Ninh, Hưng Yên'], 3, 'Sau sáp nhập 2025: Hải Dương nhập vào Hải Phòng, Vĩnh Phúc nhập vào Phú Thọ. Vùng động lực phía Bắc tập trung ở Hà Nội, Hải Phòng, Quảng Ninh, Bắc Ninh, Hưng Yên.'),
   ]),
 
-  M(29, 'Vùng Bắc Trung Bộ và Duyên hải Nam Trung Bộ', [
-    Q('Bắc Trung Bộ gồm các tỉnh?', ['10 tỉnh', 'Thanh Hoá, Nghệ An, Hà Tĩnh, Quảng Bình, Quảng Trị, Thừa Thiên Huế', '5 tỉnh', '3 tỉnh'], 1, '6 tỉnh từ Thanh Hoá đến Thừa Thiên Huế.'),
+  M(29, 'Vùng Bắc Trung Bộ và Duyên hải miền Trung', [
+    Q('Khu vực Bắc Trung Bộ sau sáp nhập 2025 gồm các tỉnh, thành?', ['10 tỉnh', 'Thanh Hoá, Nghệ An, Hà Tĩnh, Quảng Trị, Huế', '5 tỉnh giữ nguyên tên cũ', '3 tỉnh'], 1, 'Sau sắp xếp: Quảng Bình nhập vào Quảng Trị, Thừa Thiên Huế thành TP Huế trực thuộc TW. Bắc Trung Bộ còn Thanh Hoá, Nghệ An, Hà Tĩnh, Quảng Trị, Huế.'),
     Q('Đặc điểm địa hình BTB?', ['Chỉ núi', 'Hẹp ngang, núi - đồi - đồng bằng hẹp - biển', 'Chỉ biển', 'Đồng bằng rộng'], 1, 'Lát cắt từ tây sang đông: núi - đồi - đồng bằng - biển - hải đảo.'),
-    Q('Duyên hải Nam Trung Bộ gồm?', ['3 tỉnh', '8 tỉnh từ Đà Nẵng đến Bình Thuận', '10 tỉnh', '5 tỉnh'], 1, 'Từ Đà Nẵng, Quảng Nam, Quảng Ngãi, Bình Định, Phú Yên, Khánh Hoà, Ninh Thuận, Bình Thuận.'),
+    Q('Khu vực Duyên hải Nam Trung Bộ sau sáp nhập 2025 còn các tỉnh, thành nào?', ['3 tỉnh', 'Đà Nẵng, Quảng Ngãi, Gia Lai, Khánh Hoà', '10 tỉnh', '8 tỉnh như cũ'], 1, 'Sau sắp xếp: Quảng Nam→Đà Nẵng, Kon Tum→Quảng Ngãi, Bình Định→Gia Lai (lỵ Quy Nhơn), Ninh Thuận→Khánh Hoà. Phú Yên→Đắk Lắk, Bình Thuận→Lâm Đồng (về Tây Nguyên).'),
     Q('Thế mạnh kinh tế biển của 2 vùng?', ['Chỉ trồng cây công nghiệp dài ngày', 'Chỉ trồng trọt', 'Chỉ chăn nuôi', 'Đánh bắt thuỷ sản, du lịch biển, giao thông vận tải biển, năng lượng'], 3, 'Bờ biển dài + nhiều vịnh sâu ⇒ kinh tế biển đa dạng.'),
     Q('Khó khăn lớn nhất của BTB?', ['Đất cằn', 'Cả 3 đáp án', 'Thiên tai (bão lụt, hạn hán, gió Lào)', 'Khoáng sản nghèo'], 1, 'Cả 3 yếu tố đều khó khăn: thiên tai + tài nguyên hạn chế + đất canh tác ít.'),
-    Q('Du lịch nổi tiếng vùng DHNTB?', ['Chỉ Hà Nội', 'Đà Nẵng, Hội An (di sản), Nha Trang, Mỹ Sơn…', 'Chỉ Sapa', 'Chủ yếu du lịch tâm linh, ít bãi biển'], 1, 'DHNTB có nhiều bãi biển đẹp + 2 di sản UNESCO (Hội An, Mỹ Sơn).'),
+    Q('Du lịch nổi tiếng vùng Duyên hải miền Trung?', ['Chỉ Hà Nội', 'Đà Nẵng, Hội An (di sản), Nha Trang, Mỹ Sơn…', 'Chỉ Sapa', 'Chủ yếu du lịch tâm linh, ít bãi biển'], 1, 'Có nhiều bãi biển đẹp + 2 di sản UNESCO Hội An, Mỹ Sơn (nay thuộc TP Đà Nẵng).'),
   ]),
 
   M(30, 'Vùng Tây Nguyên', [
-    Q('Tây Nguyên gồm các tỉnh?', ['4 tỉnh', 'Kon Tum, Gia Lai, Đắk Lắk, Đắk Nông, Lâm Đồng', '3 tỉnh', '6 tỉnh'], 1, '5 tỉnh Tây Nguyên trên cao nguyên rộng lớn.'),
+    Q('Vùng Tây Nguyên sau sáp nhập 2025 gồm mấy tỉnh?', ['4 tỉnh', '2 tỉnh: Đắk Lắk và Lâm Đồng', '3 tỉnh', '5 tỉnh như cũ'], 1, 'Sau sắp xếp: Kon Tum→Quảng Ngãi, Bình Định nhập Gia Lai (về DHMT), Đắk Nông→Lâm Đồng, Phú Yên→Đắk Lắk. Tây Nguyên còn 2 tỉnh: Đắk Lắk và Lâm Đồng.'),
     Q('Đặc điểm địa hình Tây Nguyên?', ['Đồi thấp', 'Núi đá vôi', 'Đồng bằng', 'Các cao nguyên xếp tầng (cao nguyên bazan)'], 3, 'Hệ thống cao nguyên bazan với đất đỏ phong phú.'),
     Q('Cây công nghiệp số 1 Tây Nguyên?', ['Cà phê', 'Cao su', 'Hồ tiêu', 'Chè (chủ yếu ở trung du Bắc Bộ, không phải Tây Nguyên)'], 0, 'Tây Nguyên chiếm ~95% diện tích và sản lượng cà phê cả nước.'),
     Q('Việt Nam đứng thứ mấy thế giới về xuất khẩu cà phê?', ['2', '3', '5', '1'], 0, 'VN đứng thứ 2 thế giới (sau Brazil) về xuất khẩu cà phê, đặc biệt cà phê robusta.'),
@@ -282,21 +282,21 @@ export const S9LSDL_WEEKS = [
   ]),
 
   M(31, 'Vùng Đông Nam Bộ', [
-    Q('Đông Nam Bộ gồm các tỉnh thành?', ['TP.HCM, Đồng Nai, Bình Dương, BR-VT, Bình Phước, Tây Ninh', '4 tỉnh', '8 tỉnh', '3 tỉnh'], 0, '6 tỉnh thành — vùng kinh tế phát triển nhất nước.'),
+    Q('Vùng Đông Nam Bộ sau sáp nhập 2025 gồm các tỉnh, thành nào?', ['TP. Hồ Chí Minh, Đồng Nai, Tây Ninh', 'TP.HCM, Bình Dương, BR-VT, Bình Phước', '8 tỉnh', '6 tỉnh như cũ'], 0, 'Sau sắp xếp: Bình Dương & BR-VT nhập vào TP.HCM, Bình Phước→Đồng Nai, Long An→Tây Ninh. ĐNB còn 3: TP.HCM, Đồng Nai, Tây Ninh.'),
     Q('Đông Nam Bộ là vùng?', ['Vùng miền núi', 'Phát triển kinh tế hàng đầu cả nước, đóng góp ~30-40% GDP', 'Vùng nghèo nhất', 'Vùng nông thôn'], 1, 'ĐNB đóng góp ~40% GDP, ~50% giá trị sản xuất công nghiệp, ~50% kim ngạch XK.'),
     Q('Trung tâm kinh tế lớn nhất ĐNB và cả nước?', ['TP.HCM', 'Vũng Tàu', 'Bình Dương', 'Biên Hoà'], 0, 'TP.HCM là siêu đô thị, đầu tàu kinh tế cả nước với ~9 triệu dân.'),
-    Q('Tài nguyên đặc biệt của BR-VT?', ['Dầu khí (biển)', 'Sắt (mỏ chính ở Thái Nguyên - Hà Tĩnh)', 'Than đá', 'Apatit'], 0, 'Mỏ Bạch Hổ, Rồng… ở thềm lục địa BR-VT là nguồn dầu khí chính của VN.'),
-    Q('Cây công nghiệp dài ngày chính của ĐNB?', ['Cao su', 'Cà phê', 'Chè (phù hợp khí hậu mát trung du Bắc Bộ)', 'Hồ tiêu'], 0, 'ĐNB là vùng cao su lớn nhất nước (Bình Dương, Bình Phước, Đồng Nai…).'),
-    Q('Vùng kinh tế trọng điểm phía Nam có vai trò?', ['Chỉ NN', 'Đầu tàu kinh tế của cả nước, dẫn đầu về CN, dịch vụ, FDI', 'Chỉ đóng góp dưới 10% GDP cả nước', 'Chỉ DL'], 1, 'Vùng kinh tế trọng điểm phía Nam = TP.HCM + Đồng Nai + Bình Dương + BR-VT + Long An + Tiền Giang + Tây Ninh + Bình Phước.'),
+    Q('Tài nguyên đặc biệt ở vùng biển Vũng Tàu (Đông Nam Bộ)?', ['Dầu khí (biển)', 'Sắt (mỏ chính ở Thái Nguyên - Hà Tĩnh)', 'Than đá', 'Apatit'], 0, 'Mỏ Bạch Hổ, Rồng… ở thềm lục địa Vũng Tàu (nay thuộc TP.HCM) là nguồn dầu khí chính của VN.'),
+    Q('Cây công nghiệp dài ngày chính của ĐNB?', ['Cao su', 'Cà phê', 'Chè (phù hợp khí hậu mát trung du Bắc Bộ)', 'Hồ tiêu'], 0, 'ĐNB là vùng cao su lớn nhất nước (Đồng Nai, Tây Ninh, vùng Bình Phước/Bình Dương cũ).'),
+    Q('Vùng động lực kinh tế phía Nam có vai trò?', ['Chỉ NN', 'Đầu tàu kinh tế của cả nước, dẫn đầu về CN, dịch vụ, FDI', 'Chỉ đóng góp dưới 10% GDP cả nước', 'Chỉ DL'], 1, 'Sau sáp nhập 2025, vùng động lực phía Nam gồm TP.HCM (đã gộp Bình Dương, BR-VT), Đồng Nai và Tây Ninh — đầu tàu kinh tế cả nước.'),
   ]),
 
   M(32, 'Vùng Đồng bằng sông Cửu Long', [
-    Q('ĐBSCL gồm bao nhiêu tỉnh thành?', ['11', '10', '12', '13'], 3, '13 tỉnh thành (Long An, Tiền Giang, Bến Tre, Trà Vinh, Vĩnh Long, Đồng Tháp, An Giang, Kiên Giang, Cần Thơ, Hậu Giang, Sóc Trăng, Bạc Liêu, Cà Mau).'),
+    Q('ĐBSCL sau sáp nhập 2025 gồm bao nhiêu tỉnh, thành?', ['5', '10', '12', '13'], 0, '5 tỉnh, thành: Cần Thơ, Vĩnh Long, Đồng Tháp, An Giang, Cà Mau (gộp từ 13 tỉnh cũ; Long An nay nhập về Tây Ninh ở Đông Nam Bộ).'),
     Q('ĐBSCL được mệnh danh?', ['Vựa than', 'Vựa lúa lớn nhất cả nước', 'Vựa khoáng sản', 'Vựa rừng'], 1, 'ĐBSCL chiếm ~50% sản lượng lúa và ~95% gạo xuất khẩu cả nước.'),
     Q('ĐBSCL còn nổi tiếng về?', ['Khoáng sản', 'Thuỷ sản (tôm, cá tra), cây ăn quả nhiệt đới', 'Rừng nguyên sinh', 'Khí hậu lạnh'], 1, 'ĐBSCL là vựa thuỷ sản (>50% sản lượng nước) + vùng cây ăn quả phong phú.'),
     Q('Thách thức lớn nhất của ĐBSCL hiện nay?', ['Đất đai cằn cỗi', 'Dân số ít', 'Biến đổi khí hậu, nước biển dâng, xâm nhập mặn, sụt lún', 'Khoáng sản cạn'], 2, 'BĐKH + nước biển dâng + xâm nhập mặn đang đe doạ nghiêm trọng vùng.'),
     Q('Sông chính của ĐBSCL?', ['Sông Đồng Nai', 'Sông Đà', 'Sông Hồng', 'Sông Cửu Long (hạ lưu Mekong), gồm 9 cửa sông đổ ra biển'], 3, 'Sông Mekong vào VN gọi là Cửu Long (9 cửa: Tiền Giang 6, Hậu Giang 3).'),
-    Q('Cần Thơ là?', ['Không có vai trò', 'Tỉnh nhỏ', 'Huyện thuộc tỉnh Hậu Giang', 'Thành phố trung tâm của ĐBSCL'], 3, 'Cần Thơ là 1 trong 5 thành phố trực thuộc TW, đầu tàu kinh tế của ĐBSCL.'),
+    Q('Cần Thơ là?', ['Không có vai trò', 'Tỉnh nhỏ', 'Huyện thuộc tỉnh Hậu Giang', 'Thành phố trung tâm của ĐBSCL'], 3, 'Cần Thơ là 1 trong 6 thành phố trực thuộc TW (Hà Nội, TP.HCM, Hải Phòng, Đà Nẵng, Cần Thơ, Huế), đầu tàu kinh tế của ĐBSCL.'),
   ]),
 
   M(33, 'Biển đảo Việt Nam', [
@@ -323,7 +323,7 @@ export const S9LSDL_WEEKS = [
     Q('Vùng kinh tế trọng điểm phía Nam đứng đầu về?', ['Nông nghiệp', 'Khoáng sản', 'Thuỷ sản', 'GDP, FDI, công nghiệp, dịch vụ'], 3, 'ĐNB là vùng kinh tế phát triển nhất nước.'),
     Q('Bờ biển VN dài?', ['4 260 km', '1 260 km', '3 260 km', '2 260 km'], 2, '3 260 km từ Móng Cái đến Hà Tiên.'),
     Q('Hai quần đảo lớn của VN?', ['Lý Sơn và Côn Đảo', 'Hoàng Sa và Trường Sa', 'Bạch Long Vĩ và Vân Đồn', 'Cát Bà và Phú Quốc'], 1, 'Hoàng Sa và Trường Sa — chủ quyền của VN trên Biển Đông.'),
-    Q('Đặc điểm chung của 7 vùng kinh tế VN?', ['Đều khai khoáng', 'Giống hệt nhau', 'Không có khác biệt', 'Phân hoá theo điều kiện tự nhiên, tài nguyên, lịch sử ⇒ thế mạnh khác nhau'], 3, '7 vùng kinh tế (TDMNBB, ĐBSH, BTB, DHNTB, TN, ĐNB, ĐBSCL) đa dạng thế mạnh.'),
+    Q('Đặc điểm chung của các vùng kinh tế VN?', ['Đều khai khoáng', 'Giống hệt nhau', 'Không có khác biệt', 'Phân hoá theo điều kiện tự nhiên, tài nguyên, lịch sử ⇒ thế mạnh khác nhau'], 3, 'Cả nước chia 6 vùng kinh tế – xã hội (Trung du và miền núi phía Bắc, ĐBSH, Bắc Trung Bộ và Duyên hải miền Trung, Tây Nguyên, ĐNB, ĐBSCL) — đa dạng thế mạnh.'),
   ]),
 ];
 

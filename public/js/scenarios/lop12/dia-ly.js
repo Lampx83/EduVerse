@@ -138,7 +138,7 @@ export const H12DIA_WEEKS = [
   M(15, 'Công nghiệp - Phân bố lãnh thổ', [
     Q('Công nghiệp VN phân bố tập trung ở?', ['Đồng bằng và ven biển, đặc biệt các đô thị lớn và vùng KTTĐ', 'Cao nguyên', 'Tây Bắc', 'Núi cao'], 0, 'Đồng bằng và ven biển.'),
     Q('Trung tâm công nghiệp lớn nhất phía Bắc?', ['Hải Phòng', 'Hà Nội (cùng vùng kinh tế trọng điểm Bắc Bộ)', 'Hạ Long', 'Lào Cai'], 1, 'Hà Nội + vùng.'),
-    Q('Trung tâm công nghiệp lớn nhất phía Nam?', ['Cần Thơ', 'Mỹ Tho', 'TP. Hồ Chí Minh và các tỉnh xung quanh (Bình Dương, Đồng Nai, BR-VT)', 'Sóc Trăng'], 2, 'TP.HCM + Đông Nam Bộ.'),
+    Q('Trung tâm công nghiệp lớn nhất phía Nam?', ['Cần Thơ', 'Mỹ Tho', 'TP. Hồ Chí Minh và Đông Nam Bộ (Đồng Nai, Tây Ninh)', 'Sóc Trăng'], 2, 'TP.HCM + Đông Nam Bộ (sau 2025, Bình Dương và BR-VT đã thuộc TP.HCM).'),
     Q('Khu công nghiệp, khu chế xuất tập trung nhiều ở?', ['Cao nguyên đá', 'Trường Sơn', 'Tây Bắc', 'Vùng kinh tế trọng điểm phía Nam và Bắc'], 3, 'KCN tập trung ở các vùng KTTĐ.'),
     Q('Trung tâm công nghiệp miền Trung lớn nhất?', ['Đà Nẵng', 'Quy Nhơn', 'Quảng Ngãi', 'Huế'], 0, 'Đà Nẵng - trung tâm CN miền Trung.'),
     Q('Yếu tố quan trọng nhất quyết định sự phân bố công nghiệp?', ['Chỉ tài nguyên', 'Tổng hợp nhiều yếu tố: tài nguyên, lao động, thị trường, cơ sở hạ tầng, chính sách', 'Chỉ thị trường', 'Chỉ lao động'], 1, 'Đa yếu tố.'),
@@ -168,7 +168,7 @@ export const H12DIA_WEEKS = [
     Q('Cây cà phê VN xuất khẩu đứng thứ?', ['Hàng đầu thế giới (thường nằm trong nhóm dẫn đầu)', '1 thế giới', 'Cuối', 'Không xuất khẩu'], 0, 'VN cà phê hàng đầu thế giới.'),
     Q('Khu vực kinh tế chiếm tỉ trọng lớn nhất trong GDP VN hiện nay?', ['Nông-lâm-thuỷ sản', 'Dịch vụ', 'Công nghiệp', 'Khai khoáng'], 1, 'Dịch vụ dẫn đầu.'),
     Q('Đồng bằng sông Hồng có mật độ dân số?', ['Thấp', 'Trung bình', 'Cao nhất cả nước', 'Bằng 0'], 2, 'ĐBSH mật độ cao nhất.'),
-    Q('Vùng kinh tế trọng điểm phía Nam gồm các tỉnh chính?', ['Toàn miền Nam', 'Chỉ Cần Thơ', 'Chỉ TP.HCM', 'TP.HCM, Bình Dương, Đồng Nai, BR-VT, Long An, Tiền Giang, Tây Ninh, Bình Phước'], 3, 'Vùng KTTĐ phía Nam.'),
+    Q('Vùng động lực kinh tế phía Nam (Đông Nam Bộ) sau sáp nhập 2025 gồm?', ['Toàn miền Nam', 'Chỉ Cần Thơ', 'Chỉ TP.HCM', 'TP. Hồ Chí Minh, Đồng Nai, Tây Ninh'], 3, 'Sau sắp xếp: Bình Dương & BR-VT→TP.HCM, Bình Phước→Đồng Nai, Long An→Tây Ninh.'),
   ]),
 
   // ──────────────── HK2 — Dịch vụ + Vùng ────────────────
@@ -227,16 +227,16 @@ export const H12DIA_WEEKS = [
   ]),
 
   M(25, 'Vùng Bắc Trung Bộ', [
-    Q('Bắc Trung Bộ kéo dài từ?', ['Thanh Hoá đến Thừa Thiên Huế', 'Quảng Ninh đến Quảng Bình', 'Quảng Trị đến Quảng Ngãi', 'Đà Nẵng đến Phan Thiết'], 0, '6 tỉnh BTB.'),
+    Q('Bắc Trung Bộ kéo dài từ?', ['Thanh Hoá đến Huế', 'Quảng Ninh đến Quảng Bình', 'Quảng Trị đến Quảng Ngãi', 'Đà Nẵng đến Phan Thiết'], 0, 'Sau sáp nhập 2025: Thanh Hoá, Nghệ An, Hà Tĩnh, Quảng Trị (gộp Quảng Bình), Huế.'),
     Q('Địa hình BTB có đặc điểm?', ['Đồng bằng rộng', 'Hẹp ngang, có cả núi - đồi - đồng bằng - biển (4 dạng địa hình từ Tây sang Đông)', 'Sa mạc', 'Cao nguyên'], 1, 'Hẹp ngang đa dạng.'),
     Q('Khí hậu BTB có hiện tượng?', ['Tuyết rơi', 'Quanh năm ôn hoà', 'Gió phơn Tây Nam khô nóng (gió Lào), bão lụt nhiều', 'Sa mạc'], 2, 'Gió phơn + bão lũ.'),
     Q('BTB có thế mạnh nông nghiệp?', ['Cà phê', 'Chè', 'Cao su', 'Cây công nghiệp ngắn ngày, cây ăn quả, chăn nuôi, thuỷ sản ven biển'], 3, 'Đa dạng nông nghiệp.'),
-    Q('BTB có khu kinh tế biển quan trọng?', ['Vũng Áng (Hà Tĩnh), Nghi Sơn (Thanh Hoá), Hòn La (Quảng Bình)…', 'Phú Mỹ', 'Dung Quất', 'Long Sơn'], 0, 'KCB ven biển BTB.'),
+    Q('BTB có khu kinh tế biển quan trọng?', ['Vũng Áng (Hà Tĩnh), Nghi Sơn (Thanh Hoá), Hòn La (Quảng Trị)…', 'Phú Mỹ', 'Dung Quất', 'Long Sơn'], 0, 'KCB ven biển BTB (Hòn La nay thuộc Quảng Trị, gộp từ Quảng Bình cũ).'),
     Q('Di sản UNESCO ở Bắc Trung Bộ?', ['Hội An', 'Quần thể di tích cố đô Huế, Phong Nha-Kẻ Bàng, Thành nhà Hồ', 'Hoàng thành Thăng Long', 'Vịnh Hạ Long'], 1, 'Huế + Phong Nha + Thành nhà Hồ.'),
   ]),
 
   M(26, 'Vùng Duyên hải Nam Trung Bộ', [
-    Q('Duyên hải Nam Trung Bộ gồm?', ['Quảng Ninh - Hà Tĩnh', 'TP.HCM - Cà Mau', 'Đà Nẵng đến Bình Thuận', 'Cao Bằng - Lạng Sơn'], 2, '8 tỉnh DHNTB.'),
+    Q('Duyên hải Nam Trung Bộ sau sáp nhập 2025 gồm?', ['Quảng Ninh - Hà Tĩnh', 'TP.HCM - Cà Mau', 'Đà Nẵng, Quảng Ngãi, Gia Lai, Khánh Hoà', 'Cao Bằng - Lạng Sơn'], 2, 'Quảng Nam→Đà Nẵng, Kon Tum→Quảng Ngãi, Bình Định→Gia Lai, Ninh Thuận→Khánh Hoà.'),
     Q('Khí hậu DHNTB có đặc điểm?', ['Mưa nhiều quanh năm', 'Sương mù', 'Quá lạnh', 'Khí hậu khô hạn nhất cả nước, mùa khô kéo dài (đặc biệt Ninh Thuận, Bình Thuận)'], 3, 'Khô hạn nhất.'),
     Q('DHNTB có tiềm năng?', ['Đánh bắt thuỷ sản, sản xuất muối, du lịch biển, điện gió, điện mặt trời', 'Lúa nước', 'Cà phê', 'Cao su'], 0, 'Tiềm năng đa dạng ven biển.'),
     Q('Các bãi biển du lịch nổi tiếng DHNTB?', ['Vịnh Hạ Long', 'Mỹ Khê (Đà Nẵng), Nha Trang, Mũi Né', 'Phú Quốc', 'Đảo Phú Quý'], 1, 'Bãi biển nổi tiếng.'),
@@ -254,7 +254,7 @@ export const H12DIA_WEEKS = [
   ]),
 
   M(28, 'Vùng Tây Nguyên', [
-    Q('Tây Nguyên gồm các tỉnh?', ['Lai Châu, Sơn La, Điện Biên', 'Quảng Trị, Quảng Bình, Quảng Ngãi', 'Kon Tum, Gia Lai, Đắk Lắk, Đắk Nông, Lâm Đồng', 'Khánh Hoà, Bình Thuận'], 2, '5 tỉnh Tây Nguyên.'),
+    Q('Tây Nguyên sau sáp nhập 2025 gồm các tỉnh?', ['Lai Châu, Sơn La, Điện Biên', 'Quảng Trị, Quảng Ngãi', 'Đắk Lắk, Lâm Đồng', 'Khánh Hoà, Gia Lai'], 2, 'Tây Nguyên còn 2 tỉnh: Đắk Lắk (gộp Phú Yên), Lâm Đồng (gộp Đắk Nông, Bình Thuận). Kon Tum→Quảng Ngãi, Gia Lai về vùng DHMT.'),
     Q('Địa hình Tây Nguyên là?', ['Đồng bằng', 'Sa mạc', 'Núi cao trên 3000m', 'Các cao nguyên xếp tầng (Kon Tum, Pleiku, Đắk Lắk, Lâm Viên, Di Linh)'], 3, 'Cao nguyên xếp tầng.'),
     Q('Khí hậu Tây Nguyên có?', ['Hai mùa rõ rệt: mùa mưa và mùa khô', '4 mùa', 'Sa mạc', 'Băng tuyết'], 0, '2 mùa mưa-khô.'),
     Q('Tây Nguyên có thế mạnh trồng?', ['Lúa nước', 'Cây công nghiệp lâu năm: cà phê (lớn nhất cả nước), cao su, hồ tiêu, chè, ca cao', 'Cây ăn quả nhiệt đới', 'Lúa mì'], 1, 'Cây CN lâu năm.'),
@@ -292,9 +292,9 @@ export const H12DIA_WEEKS = [
   M(32, 'Các vùng kinh tế trọng điểm', [
     Q('Vùng kinh tế trọng điểm (KTTĐ) là?', ['Vùng nông nghiệp', 'Vùng khó khăn', 'Vùng hội tụ đầy đủ các thế mạnh, tập trung tiềm lực kinh tế và hấp dẫn các nhà đầu tư', 'Vùng cô lập'], 2, 'Vùng KTTĐ - đầu tàu.'),
     Q('VN có mấy vùng kinh tế trọng điểm?', ['1', '0', '10', '4 vùng (Bắc Bộ, miền Trung, phía Nam, ĐBSCL)'], 3, '4 vùng KTTĐ.'),
-    Q('Vùng KTTĐ Bắc Bộ gồm các tỉnh chính?', ['Hà Nội, Hải Phòng, Quảng Ninh, Hải Dương, Hưng Yên, Bắc Ninh, Vĩnh Phúc', 'Cao Bằng - Lạng Sơn', 'Lai Châu - Điện Biên', 'Hà Giang - Cao Bằng'], 0, 'Vùng KTTĐ Bắc Bộ.'),
+    Q('Vùng động lực kinh tế Bắc Bộ (sau sáp nhập 2025) gồm các tỉnh, thành chính?', ['Hà Nội, Hải Phòng, Quảng Ninh, Bắc Ninh, Hưng Yên', 'Cao Bằng - Lạng Sơn', 'Lai Châu - Điện Biên', 'Hà Giang - Cao Bằng'], 0, 'Hải Dương nay thuộc Hải Phòng, Vĩnh Phúc thuộc Phú Thọ; vùng động lực phía Bắc còn Hà Nội, Hải Phòng, Quảng Ninh, Bắc Ninh, Hưng Yên.'),
     Q('Vùng KTTĐ phía Nam dẫn đầu cả nước về?', ['Khai khoáng', 'Tổng GDP, xuất khẩu, thu hút FDI', 'Lâm nghiệp', 'Cao su'], 1, 'Vùng KTTĐ Nam - đầu tàu.'),
-    Q('Vùng KTTĐ miền Trung gồm?', ['Tất cả miền Trung', 'Chỉ Đà Nẵng', 'Thừa Thiên Huế, Đà Nẵng, Quảng Nam, Quảng Ngãi, Bình Định', 'Chỉ Huế'], 2, 'KTTĐ MT.'),
+    Q('Vùng động lực kinh tế miền Trung (sau sáp nhập 2025) gồm?', ['Tất cả miền Trung', 'Chỉ Đà Nẵng', 'Huế, Đà Nẵng, Quảng Ngãi, Gia Lai', 'Chỉ Huế'], 2, 'Sau sắp xếp: Quảng Nam→Đà Nẵng, Bình Định→Gia Lai; vùng động lực miền Trung gồm Huế, Đà Nẵng, Quảng Ngãi, Gia Lai.'),
     Q('Vai trò của các vùng KTTĐ?', ['Cô lập', 'Bị hỗ trợ', 'Phụ thuộc', 'Đầu tàu kinh tế, dẫn dắt và lan toả phát triển cho các vùng khác'], 3, 'Lan toả phát triển.'),
   ]),
 

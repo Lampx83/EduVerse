@@ -157,24 +157,8 @@
 // =============================================================
 // Bảng Phong Thần — leaderboard tổng hợp top học sinh.
 // Pull data từ /api/leaderboard (qua nhiều version) rồi merge điểm theo player.
-// Fallback MOCK nếu API fail.
+// Không có data thật → hiển thị trạng thái trống (KHÔNG dùng mock).
 // =============================================================
-
-// ── MOCK fallback data ──
-const MOCK_ENTRIES = [
-  { player:'NguyenAn',   score:9870, badge:'Vua Toán 👑',     subject:'toan' },
-  { player:'TranBinh',   score:9210, badge:'Đại sư Văn 📜',   subject:'van' },
-  { player:'LeChi',      score:8945, badge:'Bậc thầy Anh 🌍', subject:'anh' },
-  { player:'PhamDung',   score:8722, badge:'Vua Toán 👑',     subject:'toan' },
-  { player:'HoangE',     score:8550, badge:'Học giả 🎓',      subject:'all' },
-  { player:'VuFong',     score:8330, badge:'Bậc thầy Anh 🌍', subject:'anh' },
-  { player:'DangGiang',  score:8100, badge:'Đại sư Văn 📜',   subject:'van' },
-  { player:'BuiHa',      score:7890, badge:'Học giả 🎓',      subject:'all' },
-  { player:'NgoIcon',    score:7650, badge:'Vua Toán 👑',     subject:'toan' },
-  { player:'DinhJune',   score:7420, badge:'Khám phá 🔬',     subject:'khoa' },
-  { player:'TrinhKy',    score:7200, badge:'Học giả 🎓',      subject:'all' },
-  { player:'LamLong',    score:6980, badge:'Đại sư Văn 📜',   subject:'van' },
-];
 
 // ── Versions để gộp (chỉ chọn vài version chính có data thực) ──
 const VERSIONS = ['quiz', '2d-arcade', '3d-shelf', 'time-attack', 'race'];
@@ -225,15 +209,8 @@ async function fetchLeaderboard(range) {
   }));
 
   if (!gotAny || merged.size === 0) {
-    // Fallback mock — scale theo range để 3 tab khác nhau
-    const scale = range === 'week' ? 0.3 : range === 'month' ? 0.7 : 1;
-    return MOCK_ENTRIES.map(e => ({
-      player: e.player,
-      score: Math.round(e.score * scale),
-      runs: 5 + Math.floor(Math.random()*20),
-      badge: e.badge,
-      mock: true,
-    })).sort((a,b) => b.score - a.score);
+    // Không có data thật → trả mảng rỗng, UI hiển thị trạng thái trống.
+    return [];
   }
 
   // Sort theo điểm + gắn badge dựa subject (đơn giản hoá)

@@ -227,9 +227,9 @@ export const P5LSDL_WEEKS = [
   ]),
 
   M(25, 'Các vùng kinh tế', [
-    Q('Việt Nam được chia thành mấy vùng kinh tế lớn?', ['100 vùng', '2 vùng', '10 vùng', '6 hoặc 7 vùng'], 3, 'Thường chia 6-7 vùng.'),
+    Q('Việt Nam hiện được chia thành mấy vùng kinh tế – xã hội?', ['100 vùng', '2 vùng', '10 vùng', '6 vùng'], 3, '6 vùng: Trung du và miền núi phía Bắc, ĐBSH, Bắc Trung Bộ và Duyên hải miền Trung, Tây Nguyên, ĐNB, ĐBSCL.'),
     Q('Vùng kinh tế trọng điểm Bắc Bộ trung tâm là?', ['Cần Thơ', 'TP HCM', 'Hà Nội — Hải Phòng', 'Đà Nẵng'], 2, 'Tam giác Hà Nội — Hải Phòng — Quảng Ninh.'),
-    Q('Vùng kinh tế trọng điểm phía Nam trung tâm là?', ['Cần Thơ', 'TP HCM', 'Đà Nẵng', 'Hà Nội'], 1, 'TP HCM — Bình Dương — Đồng Nai — Vũng Tàu.'),
+    Q('Vùng động lực kinh tế phía Nam trung tâm là?', ['Cần Thơ', 'TP HCM', 'Đà Nẵng', 'Hà Nội'], 1, 'TP.HCM (sau 2025 đã gồm Bình Dương, Bà Rịa – Vũng Tàu) là trung tâm vùng động lực phía Nam.'),
     Q('ĐB sông Cửu Long là vựa?', ['Cao su', 'Cà phê', 'Lúa gạo, trái cây, thuỷ sản', 'Chè và cây ăn quả ôn đới'], 2, 'Trọng điểm lúa, thuỷ sản, trái cây.'),
     Q('Tây Nguyên thế mạnh trồng?', ['Lúa nước', 'Cà phê, cao su, hồ tiêu', 'Dâu tằm', 'Lê, táo'], 1, 'Cây công nghiệp lâu năm.'),
     Q('Trung du và miền núi Bắc Bộ thế mạnh?', ['Trồng cao su', 'Cây chè, cây ăn quả, khoáng sản', 'Lúa nước hai vụ', 'Trồng cà phê'], 1, 'Cây công nghiệp, khoáng sản.'),

@@ -204,7 +204,7 @@ export const P4LSDL_WEEKS = [
     Q('Tuyên ngôn Độc lập đọc ngày?', ['30/4/1975', '7/5/1954', '2/9/1945', '19/8/1945'], 2, 'Bác Hồ đọc Tuyên ngôn Độc lập 2/9/1945 tại Ba Đình.'),
   ]),
   M(33, 'Vùng đất nơi em sống', [
-    Q('Đơn vị hành chính cấp tỉnh ở Việt Nam có?', ['63 tỉnh, thành phố', '54', '30', '100'], 0, 'Việt Nam có 63 tỉnh và thành phố trực thuộc TƯ.'),
+    Q('Từ ngày 1/7/2025, Việt Nam có bao nhiêu tỉnh, thành phố?', ['34 tỉnh, thành phố', '63', '54', '30'], 0, 'Sau khi sắp xếp, sáp nhập (Nghị quyết 202/2025/QH15), Việt Nam có 34 đơn vị hành chính cấp tỉnh (28 tỉnh + 6 thành phố trực thuộc TƯ); trước đó là 63.'),
     Q('Em hãy chọn việc nên làm để giữ gìn nơi em sống?', ['Phá cây', 'Vứt rác bừa', 'Vẽ bậy lên di tích', 'Giữ vệ sinh, bảo vệ di tích'], 3, 'Học sinh cần bảo vệ môi trường và di sản.'),
     Q('“Quê hương” trong bài học là?', ['Tên một con sông', 'Nơi sinh ra, lớn lên, gắn bó', 'Một loại bánh', 'Một loài hoa'], 1, 'Quê hương là nơi em sinh sống và gắn bó.'),
     Q('Khi du khách hỏi đường, em nên?', ['Cười nhạo', 'Giả vờ không nghe thấy rồi đi mất', 'Đòi tiền', 'Lịch sự chỉ đường, giới thiệu quê'], 3, 'Thể hiện lòng mến khách, văn hóa địa phương.'),

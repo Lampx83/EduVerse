@@ -83,11 +83,11 @@ export const P4LSDL_LESSONS = {
     ],
     theory: [
       { h: 'Vị trí' },
-      { p: 'Nằm ở phía BẮC Việt Nam, giáp Trung Quốc và Lào. Gồm các tỉnh như: Hà Giang, Cao Bằng, Lào Cai, Yên Bái, Sơn La, Điện Biên, Lai Châu, Lạng Sơn…' },
+      { p: 'Nằm ở phía BẮC Việt Nam, giáp Trung Quốc và Lào. Sau sáp nhập 2025, vùng gồm 9 tỉnh: Tuyên Quang, Lào Cai, Thái Nguyên, Phú Thọ, Cao Bằng, Lạng Sơn, Sơn La, Lai Châu, Điện Biên.' },
       { h: 'Địa hình' },
       { ul: [
         'Nhiều núi cao: dãy Hoàng Liên Sơn — đỉnh PHAN-XI-PĂNG cao 3.143 m (cao nhất Việt Nam, "nóc nhà Đông Dương").',
-        'Cao nguyên đá Đồng Văn (Hà Giang).',
+        'Cao nguyên đá Đồng Văn (Hà Giang cũ, nay thuộc Tuyên Quang).',
         'Ruộng bậc thang nổi tiếng: Mù Cang Chải, Sa Pa, Hoàng Su Phì.',
       ] },
       { h: 'Dân tộc & văn hoá' },
@@ -96,13 +96,13 @@ export const P4LSDL_LESSONS = {
       { ul: [
         'Cây công nghiệp: chè (Thái Nguyên), cà phê (Sơn La).',
         'Khoáng sản: than (Quảng Ninh), thiếc, sắt.',
-        'Du lịch: Sa Pa (Lào Cai), Hồ Ba Bể (Bắc Kạn).',
+        'Du lịch: Sa Pa (Lào Cai), Hồ Ba Bể (Bắc Kạn cũ, nay thuộc Thái Nguyên).',
       ] },
       { note: 'Phan-xi-păng cao 3.143 m, được mệnh danh là "nóc nhà Đông Dương" — cao nhất bán đảo Đông Dương.' },
     ],
     examples: [
       { q: 'Đỉnh núi cao nhất Việt Nam tên gì? Cao bao nhiêu mét?', a: 'Đỉnh PHAN-XI-PĂNG (Fansipan), cao 3.143 m, thuộc dãy Hoàng Liên Sơn (Lào Cai).' },
-      { q: 'Ruộng bậc thang ở vùng nào của Việt Nam?', a: 'Vùng TRUNG DU MIỀN NÚI BẮC BỘ — nổi tiếng có Mù Cang Chải (Yên Bái), Sa Pa (Lào Cai).' },
+      { q: 'Ruộng bậc thang ở vùng nào của Việt Nam?', a: 'Vùng TRUNG DU MIỀN NÚI BẮC BỘ — nổi tiếng có Mù Cang Chải (Yên Bái cũ, nay thuộc Lào Cai), Sa Pa (Lào Cai).' },
     ],
   },
 
@@ -241,7 +241,7 @@ export const P4LSDL_LESSONS = {
     ],
     theory: [
       { h: 'Vị trí' },
-      { p: 'Trải dài từ Thanh Hoá đến Bình Thuận, gồm 14 tỉnh thành. Phía Tây là dãy Trường Sơn, phía Đông là Biển Đông.' },
+      { p: 'Dải đất ven biển miền Trung, phía Tây là dãy Trường Sơn, phía Đông là Biển Đông. Sau sáp nhập 2025, vùng Bắc Trung Bộ và Duyên hải miền Trung gồm 9 tỉnh, thành: Thanh Hoá, Nghệ An, Hà Tĩnh, Quảng Trị, Huế, Đà Nẵng, Quảng Ngãi, Gia Lai, Khánh Hoà.' },
       { h: 'Địa hình & khí hậu' },
       { ul: [
         'Dải đất hẹp, kéo dài.',
@@ -252,13 +252,13 @@ export const P4LSDL_LESSONS = {
       { ul: [
         'Đánh bắt và nuôi trồng thuỷ sản.',
         'Trồng cây công nghiệp: dừa, mía.',
-        'Du lịch biển: Sầm Sơn (Thanh Hoá), Cửa Lò (Nghệ An), Đà Nẵng, Nha Trang (Khánh Hoà), Mũi Né (Bình Thuận).',
+        'Du lịch biển: Sầm Sơn (Thanh Hoá), Cửa Lò (Nghệ An), Đà Nẵng, Nha Trang (Khánh Hoà), Mũi Né (Bình Thuận cũ, nay thuộc Lâm Đồng).',
         'Di sản: Cố đô Huế, Phố cổ Hội An, Thánh địa Mỹ Sơn.',
       ] },
       { note: 'Đèo Hải Vân là ranh giới tự nhiên khí hậu Bắc – Nam, được mệnh danh "Thiên hạ đệ nhất hùng quan".' },
     ],
     examples: [
-      { q: 'Vùng Duyên hải miền Trung trải dài từ tỉnh nào đến tỉnh nào?', a: 'Từ THANH HOÁ đến BÌNH THUẬN, gồm 14 tỉnh thành.' },
+      { q: 'Vùng Bắc Trung Bộ và Duyên hải miền Trung gồm mấy tỉnh, thành (sau sáp nhập 2025)?', a: '9 tỉnh, thành: Thanh Hoá, Nghệ An, Hà Tĩnh, Quảng Trị, Huế, Đà Nẵng, Quảng Ngãi, Gia Lai, Khánh Hoà.' },
       { q: 'Vì sao miền Trung hay có bão?', a: 'Vì giáp BIỂN ĐÔNG, vào mùa thu (tháng 9–11) các cơn bão từ biển đổ bộ vào — gây mưa to, lũ lụt.' },
     ],
   },
@@ -297,7 +297,7 @@ export const P4LSDL_LESSONS = {
 
   'P4LSDL-w10-quiz': {
     topic: 'Phố cổ Hội An',
-    intro: 'Tuần này cô đưa các em đi thăm Hội An — phố cổ rất xinh đẹp ở Quảng Nam nhé!',
+    intro: 'Tuần này cô đưa các em đi thăm Hội An — phố cổ rất xinh đẹp ở TP Đà Nẵng (Quảng Nam cũ) nhé!',
     objectives: [
       'Biết vị trí Hội An.',
       'Lịch sử và đặc điểm phố cổ.',
@@ -305,7 +305,7 @@ export const P4LSDL_LESSONS = {
     ],
     theory: [
       { h: 'Vị trí' },
-      { p: 'Hội An thuộc tỉnh QUẢNG NAM, nằm bên sông Thu Bồn, cách Đà Nẵng khoảng 30 km về phía Nam.' },
+      { p: 'Hội An nằm bên sông Thu Bồn. Trước đây thuộc tỉnh QUẢNG NAM; sau sáp nhập 2025, Quảng Nam hợp nhất với Đà Nẵng nên Hội An nay thuộc TP ĐÀ NẴNG.' },
       { h: 'Lịch sử' },
       { ul: [
         'Từ thế kỉ 16–17, Hội An là CẢNG THỊ sầm uất bậc nhất Đông Nam Á.',
@@ -320,12 +320,12 @@ export const P4LSDL_LESSONS = {
         'Đèn lồng rực rỡ — đặc biệt đẹp vào ngày rằm.',
       ] },
       { h: 'Di sản' },
-      { p: 'Phố cổ Hội An được UNESCO công nhận là Di sản Văn hoá Thế giới năm 1999, cùng với Thánh địa Mỹ Sơn (cũng ở Quảng Nam).' },
+      { p: 'Phố cổ Hội An được UNESCO công nhận là Di sản Văn hoá Thế giới năm 1999, cùng với Thánh địa Mỹ Sơn (cùng thuộc Quảng Nam cũ, nay là TP Đà Nẵng).' },
       { note: 'Đêm rằm hằng tháng, Hội An tắt đèn điện, chỉ thắp đèn lồng — gọi là "đêm phố cổ".' },
     ],
     examples: [
-      { q: 'Phố cổ Hội An ở tỉnh nào?', a: 'Tỉnh QUẢNG NAM, miền Trung Việt Nam.' },
-      { q: 'Hội An được UNESCO công nhận Di sản Thế giới năm nào?', a: 'Năm 1999 — cùng năm với Thánh địa Mỹ Sơn (cũng thuộc Quảng Nam).' },
+      { q: 'Phố cổ Hội An nay thuộc tỉnh, thành nào?', a: 'TP ĐÀ NẴNG (trước đây thuộc tỉnh Quảng Nam, hợp nhất vào Đà Nẵng từ 2025).' },
+      { q: 'Hội An được UNESCO công nhận Di sản Thế giới năm nào?', a: 'Năm 1999 — cùng năm với Thánh địa Mỹ Sơn (cùng thuộc Quảng Nam cũ, nay là TP Đà Nẵng).' },
     ],
   },
 
@@ -339,7 +339,7 @@ export const P4LSDL_LESSONS = {
     ],
     theory: [
       { h: 'Vị trí' },
-      { p: 'Tây Nguyên gồm 5 tỉnh: KON TUM, GIA LAI, ĐẮK LẮK, ĐẮK NÔNG, LÂM ĐỒNG. Nằm ở phía Tây dãy Trường Sơn.' },
+      { p: 'Sau sáp nhập 2025, Tây Nguyên gồm 2 tỉnh: ĐẮK LẮK (gộp Phú Yên) và LÂM ĐỒNG (gộp Đắk Nông, Bình Thuận). Nằm ở phía Tây dãy Trường Sơn. (Kon Tum nay thuộc Quảng Ngãi, Gia Lai gộp Bình Định về vùng Duyên hải miền Trung.)' },
       { h: 'Địa hình & đất đai' },
       { ul: [
         'Vùng cao nguyên xếp tầng, độ cao 500–1.500 m.',
@@ -357,7 +357,7 @@ export const P4LSDL_LESSONS = {
       { note: 'Đà Lạt (Lâm Đồng) được mệnh danh "thành phố ngàn hoa", "thành phố sương mù".' },
     ],
     examples: [
-      { q: 'Tây Nguyên gồm mấy tỉnh? Kể tên.', a: '5 tỉnh: KON TUM, GIA LAI, ĐẮK LẮK, ĐẮK NÔNG, LÂM ĐỒNG.' },
+      { q: 'Tây Nguyên gồm mấy tỉnh (sau sáp nhập 2025)? Kể tên.', a: '2 tỉnh: ĐẮK LẮK và LÂM ĐỒNG (trước đây là 5 tỉnh Kon Tum, Gia Lai, Đắk Lắk, Đắk Nông, Lâm Đồng).' },
       { q: 'Vì sao Tây Nguyên trồng nhiều cà phê?', a: 'Vì có ĐẤT BA-ZAN màu đỏ giàu dinh dưỡng + KHÍ HẬU mát mẻ, lượng mưa đủ — rất thích hợp cho cà phê.' },
     ],
   },
@@ -399,7 +399,7 @@ export const P4LSDL_LESSONS = {
     ],
     theory: [
       { h: 'Vị trí và các tỉnh' },
-      { p: 'Đông Nam Bộ gồm 6 tỉnh thành: TP. HỒ CHÍ MINH, BÌNH DƯƠNG, ĐỒNG NAI, BÀ RỊA – VŨNG TÀU, BÌNH PHƯỚC, TÂY NINH. Nằm ở phía Nam Việt Nam, giáp Cam-pu-chia và Biển Đông.' },
+      { p: 'Sau sáp nhập 2025, Đông Nam Bộ gồm 3 đơn vị: TP. HỒ CHÍ MINH (đã gộp Bình Dương, Bà Rịa – Vũng Tàu), ĐỒNG NAI (gộp Bình Phước) và TÂY NINH (gộp Long An). Nằm ở phía Nam Việt Nam, giáp Cam-pu-chia và Biển Đông.' },
       { h: 'Đặc điểm địa hình' },
       { ul: [
         'Địa hình tương đối bằng phẳng, hơi gò đồi.',
@@ -417,7 +417,7 @@ export const P4LSDL_LESSONS = {
       { note: 'Đông Nam Bộ tuy diện tích nhỏ nhưng đóng góp kinh tế lớn nhất cả nước.' },
     ],
     examples: [
-      { q: 'Đông Nam Bộ gồm mấy tỉnh thành?', a: '6 tỉnh thành: TP.HCM, BÌNH DƯƠNG, ĐỒNG NAI, BÀ RỊA – VŨNG TÀU, BÌNH PHƯỚC, TÂY NINH.' },
+      { q: 'Đông Nam Bộ gồm mấy đơn vị (sau sáp nhập 2025)?', a: '3 đơn vị: TP.HCM (đã gộp Bình Dương, Bà Rịa – Vũng Tàu), ĐỒNG NAI (gộp Bình Phước), TÂY NINH (gộp Long An).' },
       { q: 'Dầu khí của Việt Nam được khai thác chủ yếu ở đâu?', a: 'NGOÀI KHƠI BÀ RỊA – VŨNG TÀU (mỏ Bạch Hổ, Rồng…).' },
     ],
   },
@@ -468,7 +468,7 @@ export const P4LSDL_LESSONS = {
     theory: [
       { h: 'Vị trí và địa hình' },
       { ul: [
-        'Đồng bằng Nam Bộ (Đồng bằng sông Cửu Long) gồm 13 tỉnh thành ở miền Tây Nam Bộ.',
+        'Đồng bằng Nam Bộ (Đồng bằng sông Cửu Long), sau sáp nhập 2025 gồm 5 tỉnh, thành: Cần Thơ, Vĩnh Long, Đồng Tháp, An Giang, Cà Mau.',
         'Diện tích ~40.000 km² — đồng bằng LỚN NHẤT cả nước.',
         'Địa hình thấp, bằng phẳng, nhiều kênh rạch chằng chịt.',
       ] },
@@ -481,7 +481,7 @@ export const P4LSDL_LESSONS = {
         'Thuỷ sản: tôm, cá tra, cá ba sa.',
       ] },
       { h: 'Văn hoá đặc trưng' },
-      { p: 'Chợ nổi (Cái Răng – Cần Thơ, Ngã Bảy – Hậu Giang). Đờn ca tài tử Nam Bộ (Di sản UNESCO 2013). Người dân thân thiện, phóng khoáng.' },
+      { p: 'Chợ nổi (Cái Răng – Cần Thơ, Ngã Bảy – Hậu Giang cũ, nay thuộc Cần Thơ). Đờn ca tài tử Nam Bộ (Di sản UNESCO 2013). Người dân thân thiện, phóng khoáng.' },
       { note: 'Đồng bằng sông Cửu Long là khu vực đông dân, đóng vai trò an ninh lương thực của Việt Nam.' },
     ],
     examples: [
@@ -501,7 +501,7 @@ export const P4LSDL_LESSONS = {
     theory: [
       { h: 'Phú Quốc' },
       { ul: [
-        'Thuộc tỉnh KIÊN GIANG, là ĐẢO LỚN NHẤT Việt Nam (~574 km²).',
+        'Thuộc tỉnh AN GIANG (Kiên Giang cũ, sáp nhập 2025), là ĐẢO LỚN NHẤT Việt Nam (~574 km²).',
         'Nằm trong Vịnh Thái Lan, cách đất liền 45 km.',
         'Là thành phố đảo đầu tiên của Việt Nam (từ 2020).',
         'Nổi tiếng: nước mắm, hồ tiêu, ngọc trai, du lịch biển.',
@@ -511,7 +511,7 @@ export const P4LSDL_LESSONS = {
         'Bờ biển dài hơn 3.260 km.',
         'Hơn 4.000 đảo lớn nhỏ.',
         'Hai quần đảo lớn: HOÀNG SA và TRƯỜNG SA — thuộc chủ quyền Việt Nam.',
-        'Côn Đảo (Bà Rịa – Vũng Tàu), Cát Bà (Hải Phòng), Lý Sơn (Quảng Ngãi)…',
+        'Côn Đảo (Bà Rịa – Vũng Tàu cũ, nay thuộc TP.HCM), Cát Bà (Hải Phòng), Lý Sơn (Quảng Ngãi)…',
       ] },
       { h: 'Ý thức chủ quyền' },
       { p: 'Hoàng Sa và Trường Sa là một phần lãnh thổ Việt Nam từ lâu đời. Người dân Việt Nam yêu nước có trách nhiệm bảo vệ chủ quyền biển đảo. Không vứt rác xuống biển. Tôn trọng các chú bộ đội hải quân.' },

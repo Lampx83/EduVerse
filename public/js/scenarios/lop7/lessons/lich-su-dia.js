@@ -920,7 +920,7 @@ export const S7LSDL_LESSONS = {
       { note: 'Triều Nguyễn để lại di sản văn hoá lớn (Huế, Truyện Kiều) nhưng cũng phải chịu trách nhiệm lịch sử về việc mất nước. Đây là bài học về tầm quan trọng của ĐỔI MỚI và MỞ CỬA.' },
     ],
     examples: [
-      { q: 'Vua nào của triều Nguyễn cải cách hành chính chia nước thành 30 tỉnh?', a: 'Vua Minh Mạng (1820–1841). Cải cách này có ảnh hưởng lâu dài — đến nay Việt Nam vẫn dùng cấu trúc TỈNH (hiện có 63 tỉnh thành) làm đơn vị hành chính cấp 1.' },
+      { q: 'Vua nào của triều Nguyễn cải cách hành chính chia nước thành 30 tỉnh?', a: 'Vua Minh Mạng (1820–1841). Cải cách này có ảnh hưởng lâu dài — đến nay Việt Nam vẫn dùng cấu trúc TỈNH làm đơn vị hành chính cấp 1 (từ 1/7/2025 có 34 tỉnh, thành phố sau khi sắp xếp, sáp nhập).' },
       { q: 'Vì sao triều Nguyễn không chống được cuộc xâm lược của Pháp năm 1858?', a: 'Vì: (1) Chính sách "bế quan toả cảng" làm tụt hậu khoa học — kĩ thuật. (2) Quân đội không hiện đại, vũ khí thua xa Pháp. (3) Nội bộ triều đình bảo thủ, không chịu đổi mới. (4) Lòng dân không thống nhất do bị bóc lột, nhiều khởi nghĩa.' },
     ],
   },
@@ -972,7 +972,7 @@ export const S7LSDL_LESSONS = {
       { h: 'Đặc điểm vị trí' },
       { ul: ['Nằm trong vùng nhiệt đới gió mùa.', 'Cầu nối Đông Nam Á lục địa với Đông Nam Á hải đảo.', 'Cửa ngõ ra Biển Đông cho Lào, Campuchia, đông bắc Thái Lan, tây nam Trung Quốc.', 'Vị trí chiến lược về an ninh và kinh tế.'] },
       { h: 'Hành chính' },
-      { ul: ['Việt Nam có 63 tỉnh thành (gồm 5 thành phố trực thuộc trung ương: Hà Nội, TP HCM, Hải Phòng, Đà Nẵng, Cần Thơ).', '7 vùng kinh tế: Đông Bắc, Tây Bắc, Đồng bằng Sông Hồng, Bắc Trung Bộ, Duyên hải Nam Trung Bộ, Tây Nguyên, Đông Nam Bộ, Đồng bằng Sông Cửu Long.', 'Thủ đô: Hà Nội (từ 1010, do Lý Công Uẩn dời đô đến).'] },
+      { ul: ['Từ 1/7/2025, Việt Nam có 34 tỉnh, thành phố (28 tỉnh + 6 thành phố trực thuộc trung ương: Hà Nội, TP HCM, Hải Phòng, Đà Nẵng, Cần Thơ, Huế) sau khi sắp xếp, sáp nhập từ 63 đơn vị cũ.', '6 vùng kinh tế – xã hội: Trung du và miền núi phía Bắc, Đồng bằng sông Hồng, Bắc Trung Bộ và Duyên hải miền Trung, Tây Nguyên, Đông Nam Bộ, Đồng bằng sông Cửu Long.', 'Thủ đô: Hà Nội (từ 1010, do Lý Công Uẩn dời đô đến).'] },
       { h: 'Múi giờ' },
       { p: 'Việt Nam thuộc múi giờ +7 (UTC+7). Cùng múi giờ với Thái Lan, Lào, Campuchia, một số tỉnh Indonesia.' },
       { h: 'Ý nghĩa vị trí' },

@@ -495,10 +495,10 @@ export const S9LSDL_LESSONS = {
     ['Phân biệt hai vùng.', 'Hiểu thế mạnh kinh tế biển.'],
     [
       { h: 'Bắc Trung Bộ' },
-      { ul: ['Từ Thanh Hoá đến Thừa Thiên Huế.', 'Hẹp ngang, dãy Trường Sơn án ngữ.', 'Chịu nhiều thiên tai (bão, lũ).', 'Du lịch: Huế (cố đô), Phong Nha - Kẻ Bàng.'] },
-      { h: 'Duyên hải Nam Trung Bộ' },
-      { ul: ['Từ Đà Nẵng đến Bình Thuận.', 'Bờ biển dài, nhiều vũng, vịnh.', 'Thuỷ sản phát triển.', 'Du lịch biển: Đà Nẵng, Nha Trang, Phan Thiết.'] },
-      { note: 'Hai vùng giáp Lào - giáp Biển Đông, có vị trí chiến lược.' },
+      { ul: ['Từ Thanh Hoá đến Huế (sau sáp nhập 2025: Thanh Hoá, Nghệ An, Hà Tĩnh, Quảng Trị, Huế).', 'Hẹp ngang, dãy Trường Sơn án ngữ.', 'Chịu nhiều thiên tai (bão, lũ).', 'Du lịch: Huế (cố đô), Phong Nha - Kẻ Bàng (nay thuộc Quảng Trị).'] },
+      { h: 'Duyên hải miền Trung (phía Nam)' },
+      { ul: ['Sau sáp nhập 2025: Đà Nẵng, Quảng Ngãi, Gia Lai, Khánh Hoà.', 'Bờ biển dài, nhiều vũng, vịnh.', 'Thuỷ sản phát triển.', 'Du lịch biển: Đà Nẵng, Nha Trang, Quy Nhơn.'] },
+      { note: 'Từ 2025, Bắc Trung Bộ và Duyên hải miền Trung là MỘT vùng kinh tế – xã hội. Vùng giáp Lào - giáp Biển Đông, có vị trí chiến lược.' },
     ],
     [
       { q: 'Cố đô của VN ở đâu?', a: 'Huế (Thừa Thiên Huế).' },
@@ -512,9 +512,9 @@ export const S9LSDL_LESSONS = {
     ['Hiểu đặc điểm hai vùng.', 'Biết kinh tế chủ lực.'],
     [
       { h: 'Tây Nguyên' },
-      { ul: ['Gồm 5 tỉnh: Kon Tum, Gia Lai, Đắk Lắk, Đắk Nông, Lâm Đồng.', 'Cao nguyên rộng, đất bazan phì nhiêu.', 'Sản xuất cà phê hàng đầu.', 'Đa dạng dân tộc thiểu số.'] },
+      { ul: ['Sau sáp nhập 2025 gồm 2 tỉnh: Đắk Lắk và Lâm Đồng (Kon Tum→Quảng Ngãi, Đắk Nông→Lâm Đồng, Gia Lai về vùng DHMT).', 'Cao nguyên rộng, đất bazan phì nhiêu.', 'Sản xuất cà phê hàng đầu.', 'Đa dạng dân tộc thiểu số.'] },
       { h: 'Đông Nam Bộ' },
-      { ul: ['Gồm TP.HCM + 5 tỉnh.', 'Vùng kinh tế lớn nhất nước.', 'Công nghiệp + dịch vụ phát triển.', 'TP.HCM là trung tâm kinh tế lớn nhất.'] },
+      { ul: ['Sau sáp nhập 2025 gồm 3 đơn vị: TP.HCM, Đồng Nai, Tây Ninh.', 'Vùng kinh tế lớn nhất nước.', 'Công nghiệp + dịch vụ phát triển.', 'TP.HCM là trung tâm kinh tế lớn nhất.'] },
       { note: 'Đông Nam Bộ là đầu tàu kinh tế VN.' },
     ],
     [

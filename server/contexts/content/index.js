@@ -3,7 +3,7 @@
 // ============================================================
 // curriculum_content lo bộ scenario tuần (quiz + lý thuyết). Còn nhiều data
 // khác vẫn hardcode trong code: ca lâm sàng, nhân vật lịch sử, danh mục thuốc,
-// 63 tỉnh, đề OSCE… Mỗi loại cấu trúc khác nhau → KHÔNG nhét chung 1 schema.
+// 34 tỉnh/thành, đề OSCE… Mỗi loại cấu trúc khác nhau → KHÔNG nhét chung 1 schema.
 //
 // Bảng này lưu MỌI loại theo (collection, item_key) → body JSON tự do. FE đọc
 // qua /api/content/:collection. Seed từ các file JS gốc (seed-content.mjs).
@@ -49,14 +49,25 @@ export function upsertItem(collection, item_key, body, { source = 'seed', ord = 
   return { ok: true };
 }
 
+// Deactivate các item source='seed' không còn trong danh sách keep (giữ nguyên bản 'admin').
+const pruneSeedStmt = db.prepare(`
+  UPDATE content_datasets SET active = 0, updated_at = ?
+   WHERE collection = ? AND source = 'seed' AND active = 1
+     AND item_key NOT IN (SELECT value FROM json_each(?))
+`);
+
 // Seed cả 1 collection từ mảng items. keyFn(item, i) → item_key (mặc định item.id || i).
+// Sau khi upsert, deactivate các bản seed cũ không còn trong items (vd: tỉnh đã sáp nhập).
 export const seedCollection = db.transaction((collection, items, keyFn) => {
   let n = 0;
+  const keys = [];
   items.forEach((item, i) => {
     const key = keyFn ? keyFn(item, i) : (item?.id ?? String(i));
     upsertItem(collection, key, item, { source: 'seed', ord: i });
+    keys.push(String(key));
     n++;
   });
+  pruneSeedStmt.run(Date.now(), collection, JSON.stringify(keys));
   return n;
 });
 

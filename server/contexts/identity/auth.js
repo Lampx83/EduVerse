@@ -228,7 +228,7 @@ const PUBLIC_PATH_EXACT = new Set([
   '/cay-tri-thuc.html',
   // Bão Số Học — arcade luyện tính nhẩm. Standalone game, guest chơi được không cần login.
   '/bao-so-hoc.html',
-  // Bản đồ Việt Nam Tri thức — game khám phá 63 tỉnh. Standalone, guest chơi được.
+  // Bản đồ Việt Nam Tri thức — game khám phá 34 tỉnh/thành. Standalone, guest chơi được.
   '/ban-do-vn.html',
   // Lab Hoá Học Ảo — kéo thả 2 hoá chất xem phản ứng. Standalone, guest chơi được.
   '/lab-hoa-ao.html',

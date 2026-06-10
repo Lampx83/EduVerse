@@ -437,7 +437,7 @@ export const H12DIA_LESSONS = {
       { ul: [
         'Phía Bắc: Hà Nội và phụ cận (vùng kinh tế trọng điểm Bắc Bộ), Hải Phòng.',
         'Miền Trung: Đà Nẵng là trung tâm lớn nhất.',
-        'Phía Nam: TP. Hồ Chí Minh và các tỉnh Bình Dương, Đồng Nai, Bà Rịa – Vũng Tàu.',
+        'Phía Nam: TP. Hồ Chí Minh (sau 2025 đã gồm Bình Dương, Bà Rịa – Vũng Tàu) cùng Đồng Nai, Tây Ninh.',
       ]},
       { h: 'Hình thức tổ chức lãnh thổ' },
       { ul: [
@@ -722,7 +722,7 @@ export const H12DIA_LESSONS = {
     ],
     theory: [
       { h: 'Phạm vi và tự nhiên' },
-      { p: 'Bắc Trung Bộ gồm các tỉnh từ Thanh Hoá đến Thừa Thiên Huế. Lãnh thổ hẹp ngang, kéo dài, có đầy đủ các dạng địa hình từ tây sang đông: núi – đồi – đồng bằng – biển. Đây là vùng có lát cắt tự nhiên rõ nét nhất.' },
+      { p: 'Bắc Trung Bộ gồm các tỉnh từ Thanh Hoá đến Huế (sau sáp nhập 2025: Thanh Hoá, Nghệ An, Hà Tĩnh, Quảng Trị, Huế). Lãnh thổ hẹp ngang, kéo dài, có đầy đủ các dạng địa hình từ tây sang đông: núi – đồi – đồng bằng – biển. Đây là vùng có lát cắt tự nhiên rõ nét nhất.' },
       { h: 'Thế mạnh theo lát cắt Đông – Tây' },
       { ul: [
         'Phía tây (núi, đồi): lâm nghiệp, chăn nuôi gia súc lớn, cây công nghiệp.',
@@ -749,7 +749,7 @@ export const H12DIA_LESSONS = {
     ],
     theory: [
       { h: 'Phạm vi và khí hậu' },
-      { p: 'Vùng kéo dài từ Đà Nẵng đến Bình Thuận, gồm nhiều tỉnh ven biển. Khí hậu khô hạn nhất cả nước, đặc biệt Ninh Thuận – Bình Thuận có mùa khô kéo dài, số giờ nắng cao và gió ven biển mạnh.' },
+      { p: 'Vùng duyên hải miền Trung kéo dài ven biển; sau sáp nhập 2025 gồm Đà Nẵng, Quảng Ngãi, Gia Lai, Khánh Hoà. Khí hậu khô hạn nhất cả nước, đặc biệt vùng Ninh Thuận – Bình Thuận cũ (nay thuộc Khánh Hoà, Lâm Đồng) có mùa khô kéo dài, số giờ nắng cao và gió ven biển mạnh.' },
       { h: 'Thế mạnh kinh tế biển' },
       { ul: [
         'Đánh bắt và nuôi trồng thuỷ sản: nhiều bãi tôm, bãi cá, ngư trường lớn.',
@@ -808,7 +808,7 @@ export const H12DIA_LESSONS = {
     ],
     theory: [
       { h: 'Phạm vi và tự nhiên' },
-      { p: 'Tây Nguyên gồm 5 tỉnh: Kon Tum, Gia Lai, Đắk Lắk, Đắk Nông, Lâm Đồng. Địa hình là các cao nguyên xếp tầng (Kon Tum, Pleiku, Đắk Lắk, Lâm Viên, Di Linh) phủ đất badan màu mỡ. Khí hậu cận xích đạo, phân hoá hai mùa mưa – khô rõ rệt. Đây là vùng duy nhất không giáp biển.' },
+      { p: 'Sau sáp nhập 2025, Tây Nguyên gồm 2 tỉnh: Đắk Lắk (gộp Phú Yên) và Lâm Đồng (gộp Đắk Nông, Bình Thuận). Phần cao nguyên là các cao nguyên xếp tầng (Kon Tum, Pleiku, Đắk Lắk, Lâm Viên, Di Linh) phủ đất badan màu mỡ; khí hậu cận xích đạo, phân hoá hai mùa mưa – khô rõ rệt. Trước đây Tây Nguyên là vùng duy nhất không giáp biển, nhưng sau khi gộp các tỉnh ven biển, cả hai tỉnh nay đều có đường bờ biển.' },
       { h: 'Thế mạnh' },
       { ul: [
         'Cây công nghiệp lâu năm: cà phê (lớn nhất nước), cao su, hồ tiêu, chè, ca cao.',
@@ -924,12 +924,13 @@ export const H12DIA_LESSONS = {
     theory: [
       { h: 'Khái niệm' },
       { p: 'Vùng kinh tế trọng điểm là vùng hội tụ đầy đủ các thế mạnh, tập trung tiềm lực kinh tế và có sức hấp dẫn lớn với nhà đầu tư; có tỉ trọng cao trong GDP, tạo tốc độ phát triển nhanh và hỗ trợ các vùng khác.' },
-      { h: 'Bốn vùng kinh tế trọng điểm' },
+      { h: 'Các vùng động lực kinh tế (sau sáp nhập 1/7/2025)' },
+      { note: 'Sau khi sắp xếp đơn vị hành chính, danh sách tỉnh, thành thuộc các vùng động lực được cập nhật theo 34 tỉnh, thành mới:' },
       { ul: [
-        'Bắc Bộ: Hà Nội, Hải Phòng, Quảng Ninh, Hải Dương, Hưng Yên, Bắc Ninh, Vĩnh Phúc.',
-        'Miền Trung: Thừa Thiên Huế, Đà Nẵng, Quảng Nam, Quảng Ngãi, Bình Định.',
-        'Phía Nam: TP. Hồ Chí Minh, Bình Dương, Đồng Nai, Bà Rịa – Vũng Tàu, Long An, Tiền Giang, Tây Ninh, Bình Phước.',
-        'Đồng bằng sông Cửu Long: Cần Thơ, An Giang, Kiên Giang, Cà Mau.',
+        'Bắc Bộ: Hà Nội, Hải Phòng (đã gồm Hải Dương), Quảng Ninh, Bắc Ninh, Hưng Yên.',
+        'Miền Trung: Huế, Đà Nẵng (đã gồm Quảng Nam), Quảng Ngãi, Gia Lai (đã gồm Bình Định).',
+        'Phía Nam: TP. Hồ Chí Minh (đã gồm Bình Dương, Bà Rịa – Vũng Tàu), Đồng Nai (đã gồm Bình Phước), Tây Ninh (đã gồm Long An).',
+        'Đồng bằng sông Cửu Long: Cần Thơ, An Giang (đã gồm Kiên Giang), Cà Mau, Vĩnh Long, Đồng Tháp.',
       ]},
       { h: 'Vai trò' },
       { p: 'Các vùng kinh tế trọng điểm là đầu tàu, dẫn dắt và lan toả phát triển cho các vùng khác; trong đó vùng phía Nam dẫn đầu cả nước về tổng GDP, xuất khẩu và thu hút FDI.' },

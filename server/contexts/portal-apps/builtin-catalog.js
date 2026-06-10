@@ -47,7 +47,7 @@ export const BUILTIN_APPS = [
 
   // ─────── Trung học ───────
   { alias: 'ban-do-vn', name: 'Bản đồ Việt Nam Tri Thức', icon: '🗺️',
-    description: 'Khám phá 63 tỉnh thành — mỗi tỉnh một câu chuyện + mini quiz lịch sử/địa lý.',
+    description: 'Khám phá 34 tỉnh thành (sau sáp nhập 2025) — mỗi tỉnh một câu chuyện + mini quiz lịch sử/địa lý.',
     target_url: '/ban-do-vn.html', category: 'game', domain: 'secondary' },
   { alias: 'history-vn', name: 'Lịch sử Việt Nam', icon: '📜',
     description: 'Dòng thời gian lịch sử Việt Nam tương tác. Phù hợp ôn Sử lớp 6-12.',

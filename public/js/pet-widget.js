@@ -4,7 +4,7 @@
 
 const CSS = `
   .tz-pet-bubble {
-    position: fixed; bottom: 18px; left: 18px; z-index: 92;
+    position: fixed; top: 72px; left: 18px; z-index: 92;
     width: 64px; height: 64px; border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(251,191,36,0.4), rgba(99,102,241,0.4));
     border: 2px solid rgba(255,255,255,0.15);
@@ -20,7 +20,7 @@ const CSS = `
   /* Inline trong header (auth-header có #ev-pet-slot) — bubble nhỏ gọn,
      bỏ floating + animation idle để không nhảy trong header. */
   #ev-pet-slot .tz-pet-bubble {
-    position: static; left: auto; bottom: auto;
+    position: static; left: auto; top: auto; bottom: auto;
     width: 34px; height: 34px;
     font-size: 19px;
     box-shadow: none;
@@ -86,8 +86,8 @@ const CSS = `
   .tz-pet-drawer-bg {
     position: fixed; inset: 0; z-index: 200;
     background: rgba(2,6,23,0.7); backdrop-filter: blur(8px);
-    display: flex; align-items: flex-end; justify-content: flex-start;
-    padding: 90px 16px 16px;
+    display: flex; align-items: flex-start; justify-content: flex-start;
+    padding: 140px 16px 16px;
     opacity: 0; pointer-events: none; transition: opacity 0.2s;
   }
   .tz-pet-drawer-bg.open { opacity: 1; pointer-events: auto; }
