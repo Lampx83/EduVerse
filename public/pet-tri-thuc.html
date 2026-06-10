@@ -208,7 +208,7 @@
 
 <div id="toast"></div>
 
-<script>
+<script type="module">
 'use strict';
 // =============================================================
 // Pet Tri Thức — virtual pet "Tiziamon" tiến hoá theo XP.
@@ -227,127 +227,8 @@ const DEFAULT_STATE = {
 // tieu-hoc: lớp 1–5 · cộng trừ <100, nhân chia đơn giản, từ loại cơ bản
 // thcs: lớp 6–9 · toán phân số/số nguyên, văn THCS, kiến thức chung
 // thpt: lớp 10–12 · toán nâng cao, văn học VN, kiến thức XH
-const QUIZ_BANKS = {
-  'mam-non': {
-    feed: [ // Đếm số 1–5 + so sánh đơn giản
-      { q:'🐤🐤 — Có mấy chú gà?', a:'2', o:['1','2','3','4'] },
-      { q:'🍎🍎🍎 — Có mấy quả táo?', a:'3', o:['2','3','4','5'] },
-      { q:'⭐ — Có mấy ngôi sao?', a:'1', o:['1','2','3','4'] },
-      { q:'🐠🐠🐠🐠 — Có mấy con cá?', a:'4', o:['2','3','4','5'] },
-      { q:'🌸🌸🌸🌸🌸 — Có mấy bông hoa?', a:'5', o:['3','4','5','6'] },
-      { q:'Một bàn tay ✋ có mấy ngón?', a:'5', o:['3','4','5','6'] },
-      { q:'1 + 1 = ?', a:'2', o:['1','2','3','4'] },
-      { q:'2 + 1 = ?', a:'3', o:['2','3','4','5'] },
-      { q:'3 + 1 = ?', a:'4', o:['3','4','5','6'] },
-      { q:'Bé có 2 viên kẹo, mẹ cho thêm 1. Bé có mấy viên?', a:'3', o:['2','3','4','5'] },
-      { q:'Con voi 🐘 to hay con kiến 🐜 to?', a:'Con voi', o:['Con voi','Con kiến','Bằng nhau','Không biết'] },
-      { q:'Cây nào cao hơn? 🌳 hay 🌱', a:'🌳', o:['🌳','🌱','Bằng nhau','Không biết'] },
-    ],
-    study: [ // Màu sắc · hình · con vật · kỹ năng sống
-      { q:'Quả chuối 🍌 màu gì?', a:'Vàng', o:['Đỏ','Vàng','Xanh dương','Đen'] },
-      { q:'Lá cây 🍃 thường màu gì?', a:'Xanh lá', o:['Đỏ','Xanh lá','Tím','Hồng'] },
-      { q:'Quả cà chua 🍅 màu gì?', a:'Đỏ', o:['Đỏ','Vàng','Xanh','Trắng'] },
-      { q:'Bầu trời 🌤️ ban ngày màu gì?', a:'Xanh dương', o:['Đen','Xanh dương','Đỏ','Tím'] },
-      { q:'Con gì kêu "meo meo"?', a:'Mèo', o:['Chó','Mèo','Vịt','Bò'] },
-      { q:'Con gì kêu "gâu gâu"?', a:'Chó', o:['Chó','Mèo','Gà','Lợn'] },
-      { q:'Con gì kêu "ò ó o" vào buổi sáng?', a:'Gà trống', o:['Gà trống','Chim','Vịt','Mèo'] },
-      { q:'Khi đến lớp bé làm gì đầu tiên?', a:'Chào cô', o:['Chào cô','Ngủ ngay','Khóc','Chạy ra ngoài'] },
-      { q:'Trước khi ăn bé phải làm gì?', a:'Rửa tay', o:['Xem TV','Rửa tay','Ngủ','Chạy'] },
-      { q:'Bóng tròn ⚽ có hình gì?', a:'Tròn', o:['Tròn','Vuông','Tam giác','Sao'] },
-      { q:'Mặt trời 🌞 có hình gì?', a:'Tròn', o:['Tròn','Vuông','Tam giác','Chữ nhật'] },
-      { q:'Bé yêu ai nhất ở nhà?', a:'Bố mẹ', o:['Bố mẹ','Người lạ','Không ai','TV'] },
-    ],
-  },
-
-  'tieu-hoc': {
-    feed: [ // Cộng trừ <100, nhân chia bảng 2–5
-      { q:'5 + 3 = ?', a:'8', o:['7','8','9','10'] },
-      { q:'7 + 8 = ?', a:'15', o:['13','15','17','16'] },
-      { q:'10 - 4 = ?', a:'6', o:['5','6','7','8'] },
-      { q:'15 + 12 = ?', a:'27', o:['25','27','29','24'] },
-      { q:'20 - 7 = ?', a:'13', o:['12','13','14','15'] },
-      { q:'2 × 3 = ?', a:'6', o:['5','6','7','8'] },
-      { q:'5 × 4 = ?', a:'20', o:['15','18','20','25'] },
-      { q:'3 × 6 = ?', a:'18', o:['15','16','18','21'] },
-      { q:'10 ÷ 2 = ?', a:'5', o:['3','4','5','6'] },
-      { q:'12 ÷ 3 = ?', a:'4', o:['3','4','5','6'] },
-      { q:'Hình vuông có mấy cạnh?', a:'4', o:['2','3','4','5'] },
-      { q:'Hình tam giác có mấy cạnh?', a:'3', o:['2','3','4','5'] },
-      { q:'1 tuần có mấy ngày?', a:'7', o:['5','6','7','8'] },
-      { q:'Số liền sau của 9 là?', a:'10', o:['8','9','10','11'] },
-    ],
-    study: [ // Tiếng Việt lớp 1–5
-      { q:'Chữ cái đầu tiên trong bảng chữ cái là?', a:'A', o:['A','B','O','Z'] },
-      { q:'Từ "mèo" có mấy tiếng?', a:'1', o:['1','2','3','4'] },
-      { q:'"Bàn ghế" có mấy tiếng?', a:'2', o:['1','2','3','4'] },
-      { q:'Câu "Em yêu mẹ" có mấy từ?', a:'3', o:['2','3','4','5'] },
-      { q:'Câu kể kết thúc bằng dấu gì?', a:'Dấu chấm', o:['Dấu chấm','Dấu hỏi','Dấu than','Dấu phẩy'] },
-      { q:'Câu hỏi kết thúc bằng dấu gì?', a:'Dấu chấm hỏi', o:['Dấu chấm','Dấu chấm hỏi','Dấu chấm than','Dấu phẩy'] },
-      { q:'"Cái bàn" là loại từ gì?', a:'Danh từ', o:['Danh từ','Động từ','Tính từ','Số từ'] },
-      { q:'"Chạy" là loại từ gì?', a:'Động từ', o:['Danh từ','Động từ','Tính từ','Số từ'] },
-      { q:'Đồng nghĩa với "vui vẻ"?', a:'Phấn khởi', o:['Buồn bã','Phấn khởi','Tức giận','Sợ hãi'] },
-      { q:'Trái nghĩa với "cao"?', a:'Thấp', o:['Lớn','Thấp','Nhỏ','Đẹp'] },
-      { q:'Thủ đô Việt Nam là?', a:'Hà Nội', o:['TP.HCM','Hà Nội','Huế','Đà Nẵng'] },
-      { q:'Mặt trời mọc ở hướng nào?', a:'Đông', o:['Đông','Tây','Nam','Bắc'] },
-    ],
-  },
-
-  'thcs': {
-    feed: [ // Toán lớp 6–9
-      { q:'12 × 3 = ?', a:'36', o:['33','36','39','42'] },
-      { q:'45 - 19 = ?', a:'26', o:['24','25','26','27'] },
-      { q:'72 ÷ 8 = ?', a:'9', o:['7','8','9','10'] },
-      { q:'Số nào lẻ? 24, 36, 47, 50', a:'47', o:['24','36','47','50'] },
-      { q:'Nửa của 86 là?', a:'43', o:['41','42','43','44'] },
-      { q:'9 × 9 = ?', a:'81', o:['72','81','99','90'] },
-      { q:'100 - 67 = ?', a:'33', o:['33','37','27','43'] },
-      { q:'1 giờ = ? phút', a:'60', o:['30','45','60','90'] },
-      { q:'Số nguyên tố nhỏ nhất?', a:'2', o:['1','2','3','5'] },
-      { q:'(-3) + 5 = ?', a:'2', o:['-2','2','-8','8'] },
-      { q:'2² + 3² = ?', a:'13', o:['10','12','13','25'] },
-      { q:'√49 = ?', a:'7', o:['6','7','8','9'] },
-    ],
-    study: [ // Văn THCS
-      { q:'Từ trái nghĩa với "chăm chỉ" là?', a:'Lười biếng', o:['Siêng năng','Lười biếng','Cần cù','Vui vẻ'] },
-      { q:'Từ nào KHÔNG phải danh từ?', a:'Chạy', o:['Mèo','Bàn','Chạy','Hoa'] },
-      { q:'Truyện "Tấm Cám" thuộc thể loại?', a:'Cổ tích', o:['Ngụ ngôn','Cổ tích','Truyện cười','Thơ'] },
-      { q:'Từ láy nào sau đây?', a:'Long lanh', o:['Long lanh','Sách vở','Học tập','Ăn cơm'] },
-      { q:'Bài thơ "Lượm" của ai?', a:'Tố Hữu', o:['Tố Hữu','Nguyễn Du','Hồ Xuân Hương','Trần Đăng Khoa'] },
-      { q:'Câu "Mưa rơi tí tách" sử dụng biện pháp tu từ gì?', a:'Từ tượng thanh', o:['So sánh','Nhân hoá','Từ tượng thanh','Ẩn dụ'] },
-      { q:'"Học, học nữa, học mãi" là của?', a:'Lê-nin', o:['Bác Hồ','Lê-nin','Khổng Tử','Newton'] },
-      { q:'"Dế Mèn phiêu lưu ký" tác giả?', a:'Tô Hoài', o:['Tô Hoài','Nam Cao','Nguyễn Du','Xuân Quỳnh'] },
-      { q:'Việt Nam có bao nhiêu tỉnh/thành?', a:'63', o:['54','58','63','64'] },
-      { q:'Năm Bác Hồ ra đi tìm đường cứu nước?', a:'1911', o:['1908','1911','1920','1945'] },
-    ],
-  },
-
-  'thpt': {
-    feed: [ // Toán THPT
-      { q:'sin 30° = ?', a:'1/2', o:['1/2','√2/2','√3/2','1'] },
-      { q:'cos 60° = ?', a:'1/2', o:['1/2','√2/2','√3/2','0'] },
-      { q:'log₁₀ 100 = ?', a:'2', o:['1','2','10','100'] },
-      { q:'2⁵ = ?', a:'32', o:['16','25','32','64'] },
-      { q:'Đạo hàm của x² là?', a:'2x', o:['x','2x','x²','2x²'] },
-      { q:'Số phần tử của tập {1,2,3,4,5}?', a:'5', o:['4','5','6','10'] },
-      { q:'Giải: 2x + 4 = 10. x = ?', a:'3', o:['2','3','4','5'] },
-      { q:'Số nghiệm thực của x² + 1 = 0?', a:'0', o:['0','1','2','vô số'] },
-      { q:'lim(x→0) sin(x)/x = ?', a:'1', o:['0','1','∞','không xác định'] },
-      { q:'Tổ hợp C(5,2) = ?', a:'10', o:['5','10','15','20'] },
-    ],
-    study: [ // Văn học VN + kiến thức XH
-      { q:'Ai là tác giả "Truyện Kiều"?', a:'Nguyễn Du', o:['Nguyễn Du','Hồ Xuân Hương','Tố Hữu','Nam Cao'] },
-      { q:'Ai là tác giả "Lão Hạc"?', a:'Nam Cao', o:['Tô Hoài','Nam Cao','Nguyễn Du','Xuân Quỳnh'] },
-      { q:'"Vợ chồng A Phủ" của tác giả nào?', a:'Tô Hoài', o:['Tô Hoài','Kim Lân','Nguyễn Tuân','Nam Cao'] },
-      { q:'"Người lái đò sông Đà" của?', a:'Nguyễn Tuân', o:['Nguyễn Tuân','Tô Hoài','Hoàng Phủ Ngọc Tường','Nam Cao'] },
-      { q:'Tuyên ngôn Độc lập 2/9/1945 do ai đọc?', a:'Hồ Chí Minh', o:['Hồ Chí Minh','Trường Chinh','Phạm Văn Đồng','Võ Nguyên Giáp'] },
-      { q:'Chiến thắng Điện Biên Phủ năm?', a:'1954', o:['1945','1954','1968','1975'] },
-      { q:'Năm thống nhất đất nước?', a:'1975', o:['1954','1968','1975','1986'] },
-      { q:'Diện tích Việt Nam khoảng?', a:'331.000 km²', o:['200.000 km²','331.000 km²','500.000 km²','1 triệu km²'] },
-      { q:'Sông dài nhất Việt Nam?', a:'Sông Đồng Nai', o:['Sông Hồng','Sông Mê Kông','Sông Đồng Nai','Sông Đà'] },
-      { q:'"Sóng" là bài thơ nổi tiếng của?', a:'Xuân Quỳnh', o:['Xuân Quỳnh','Hồ Xuân Hương','Tố Hữu','Chế Lan Viên'] },
-    ],
-  },
-};
+const QUIZ_BANKS = await fetch('/api/content/pet-quiz-banks', { credentials: 'same-origin' })
+  .then(r => r.ok ? r.json() : { items: [] }).then(j => (j.items || [])[0] || {}).catch(() => ({}));
 
 // Range đếm cho mini-game "play" theo cấp
 const COUNT_RANGE = {

@@ -75,16 +75,9 @@
   </div>
 </div>
 
-<script>
-const POOL = [
-  {en:'Cat',vi:'Con mèo',emo:'🐱'},   {en:'Dog',vi:'Con chó',emo:'🐶'},
-  {en:'Apple',vi:'Quả táo',emo:'🍎'}, {en:'Book',vi:'Quyển sách',emo:'📖'},
-  {en:'Sun',vi:'Mặt trời',emo:'☀️'}, {en:'Moon',vi:'Mặt trăng',emo:'🌙'},
-  {en:'Red',vi:'Màu đỏ',emo:'🔴'},    {en:'Blue',vi:'Màu xanh',emo:'🔵'},
-  {en:'Father',vi:'Bố',emo:'👨'},     {en:'Mother',vi:'Mẹ',emo:'👩'},
-  {en:'Hand',vi:'Bàn tay',emo:'✋'},   {en:'Eye',vi:'Đôi mắt',emo:'👀'},
-  {en:'Rice',vi:'Cơm',emo:'🍚'},      {en:'Fish',vi:'Con cá',emo:'🐟'},
-];
+<script type="module">
+const POOL = await fetch('/api/content/lop2-anh-memory', { credentials: 'same-origin' })
+  .then(r => r.ok ? r.json() : { items: [] }).then(j => j.items || []).catch(() => []);
 const $ = s => document.querySelector(s);
 const grid = $('#grid');
 let cards=[], flipped=[], moves=0, pairs=0, t0=0, timer=null, locked=false;

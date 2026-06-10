@@ -1,7 +1,7 @@
 // ============================================================
 // Seed content_datasets từ các file data gốc → DB.
 // ============================================================
-// Data heterogeneous (nhân vật LS, ca lâm sàng, thuốc, 63 tỉnh…) hardcode trong
+// Data heterogeneous (nhân vật LS, ca lâm sàng, thuốc, 34 tỉnh/thành…) hardcode trong
 // các file _data/*.js (hoặc trích từ HTML). Script này nạp vào content_datasets.
 //
 // Idempotent — không đè bản source='admin'.
@@ -37,6 +37,9 @@ const REGISTRY = [
   { collection: 'lab-reagents',       file: '../../lab-recipes.js',     export: 'REAGENTS', wrap: true },
   { collection: 'provinces',          file: 'provinces.js',          export: 'PROVINCES' },
   { collection: 'pronunciation',      file: 'pronunciation.js',      export: 'SENTENCES', wrap: true },
+  { collection: 'pet-quiz-banks',    file: 'pet-quiz-banks.js',    export: 'QUIZ_BANKS', wrap: true },
+  { collection: 'lop2-anh-memory',   file: 'lop2-anh-memory.js',   export: 'POOL' },
+  { collection: 'lop2-ghep-van',     file: 'lop2-ghep-van.js',     export: 'ROUNDS' },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');
