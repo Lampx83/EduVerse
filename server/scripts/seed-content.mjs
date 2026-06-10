@@ -30,6 +30,11 @@ const REGISTRY = [
   { collection: 'osce-exam',          file: 'year5.js',              export: 'L57_OSCE_EXAM', wrap: true },
   // math6-chapters: đọc file gốc (vẫn là seed cho _all-content qua side-effect).
   { collection: 'math6-chapters',     file: '../secondary-math6-lessons.js', export: 'MATH6_CHAPTERS' },
+  { collection: 'drug-catalog',       file: 'pharmacy-drugs.js',     export: 'ALL_DRUGS' },
+  // lab-recipes: file gốc (vẫn seed cho bao-che-labs → _all-content). REAGENTS
+  // là object map → wrap 1 doc.
+  { collection: 'lab-recipes',        file: '../../lab-recipes.js',     export: 'RECIPES' },
+  { collection: 'lab-reagents',       file: '../../lab-recipes.js',     export: 'REAGENTS', wrap: true },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');

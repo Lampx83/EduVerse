@@ -544,7 +544,19 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { submitAttempt, getPlayerName, ensurePlayerName } from './js/api.js';
 import { sfx } from './js/sfx.js';
 import { showWelcomeCard } from './js/welcome-card.js';
-import { RECIPES, REAGENTS, getRecipeById, getRecipeFromUrl } from './js/lab-recipes.js';
+// Công thức pha chế + hoá chất từ DB (/api/content/lab-recipes, lab-reagents)
+// — không bundle nữa. REAGENTS lưu dạng 1 doc (object map).
+const [RECIPES, REAGENTS] = await Promise.all([
+  fetch('/api/content/lab-recipes', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : { items: [] }).then(j => j.items || []).catch(() => []),
+  fetch('/api/content/lab-reagents', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : { items: [] }).then(j => (j.items || [])[0] || {}).catch(() => ({})),
+]);
+const getRecipeById = (id) => RECIPES.find(r => r.id === id) || RECIPES[0];
+const getRecipeFromUrl = () => {
+  const id = new URLSearchParams(location.search).get('recipe');
+  return id ? getRecipeById(id) : null;
+};
 
 const sessionStartedAt = Date.now();
 
