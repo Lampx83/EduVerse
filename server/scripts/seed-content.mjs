@@ -40,6 +40,7 @@ const REGISTRY = [
   { collection: 'pet-quiz-banks',    file: 'pet-quiz-banks.js',    export: 'QUIZ_BANKS', wrap: true },
   { collection: 'lop2-anh-memory',   file: 'lop2-anh-memory.js',   export: 'POOL' },
   { collection: 'lop2-ghep-van',     file: 'lop2-ghep-van.js',     export: 'ROUNDS' },
+  { collection: 'space-sets',        file: 'space-sets.js',        export: 'SPACE_SETS_ITEMS' },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');
