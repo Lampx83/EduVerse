@@ -236,6 +236,21 @@ function injectSecondaryStyles() {
   .sqz-fb .xp { display:inline-block; background:rgba(253,224,71,.18); color:#fde047;
     padding: 1px 8px; border-radius:999px; font-weight:800; margin-right: 6px; }
 
+  /* Khối "Lý thuyết kèm" — hiện sau giải thích ngắn, giúp học sinh hiểu sâu */
+  .sqz-theory { margin-top: 10px; padding: 12px 14px 10px; border-radius: 10px;
+    background: rgba(56,189,248,.10); border-left: 3px solid #38bdf8;
+    color: #dbeafe; font-size: 13.5px; line-height: 1.6;
+    animation: sqzFade .35s ease .08s both; }
+  .sqz-theory .sqz-th-head { font-weight: 800; color: #7dd3fc; margin-bottom: 6px;
+    font-size: 12.5px; letter-spacing: .02em; text-transform: uppercase; }
+  .sqz-theory p { margin: 4px 0; }
+  .sqz-theory ul { margin: 4px 0 4px 18px; padding: 0; }
+  .sqz-theory li { margin: 2px 0; }
+  .sqz-theory code { background: rgba(255,255,255,.08); padding: 1px 6px;
+    border-radius: 4px; font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12.5px; color: #fde68a; }
+  .sqz-theory b, .sqz-theory strong { color: #fef3c7; }
+
   .sqz-footer { position:sticky; bottom:0; display:flex; gap:12px; align-items:center;
     background: rgba(15,23,42,.92); backdrop-filter: blur(8px);
     border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:12px 16px; }
@@ -931,6 +946,7 @@ export function renderQuizSecondary(engine, host) {
             </button>`).join('')}
         </div>
         <div class="sqz-fb" data-fb style="display:none;"></div>
+        <div class="sqz-theory" data-theory style="display:none;"></div>
       </div>
       <div class="sqz-footer">
         <div class="sqz-stats">Streak cao nhất: <b>${maxStreak}</b></div>
@@ -942,7 +958,19 @@ export function renderQuizSecondary(engine, host) {
 
     const opts = wrap.querySelectorAll('.sqz-opt');
     const fb = wrap.querySelector('[data-fb]');
+    const theoryEl = wrap.querySelector('[data-theory]');
     const nextBtn = wrap.querySelector('[data-next]');
+
+    // Render khối lý thuyết kèm (nếu câu hỏi có q.theory).
+    // Chấp nhận chuỗi HTML hoặc mảng đoạn — cho phép tác giả viết dài, có code/list.
+    const renderTheory = () => {
+      if (!q.theory) { theoryEl.style.display = 'none'; return; }
+      const body = Array.isArray(q.theory)
+        ? q.theory.map(p => `<p>${p}</p>`).join('')
+        : String(q.theory);
+      theoryEl.innerHTML = `<div class="sqz-th-head">📚 Lý thuyết</div>${body}`;
+      theoryEl.style.display = 'block';
+    };
 
     if (locked) {
       opts.forEach(o => {
@@ -956,6 +984,7 @@ export function renderQuizSecondary(engine, host) {
       fb.innerHTML = ok
         ? `<span class="xp">+10 XP</span><b>Chính xác!</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`
         : `<b>Chưa đúng.</b> Đáp án: <b>${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
+      renderTheory();
     }
 
     opts.forEach(btn => {
@@ -979,6 +1008,7 @@ export function renderQuizSecondary(engine, host) {
         fb.innerHTML = ok
           ? `<span class="xp">+10 XP${bonus}</span><b>Chính xác!</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`
           : `<b>Chưa đúng.</b> Đáp án: <b>${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
+        renderTheory();
         // Refresh streak + progressbar
         render._softUpdate = true;
         const headHTML = wrap.querySelector('.sqz-head').outerHTML;

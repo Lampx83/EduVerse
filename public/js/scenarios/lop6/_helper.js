@@ -5,9 +5,14 @@
 // HK1: tuần 1–18 · HK2: tuần 19–36.
 // ============================================================
 
-/** Tạo 1 câu hỏi trắc nghiệm 4 lựa chọn */
-export const Q = (stem, choices, answer, explanation) =>
-  ({ stem, choices, answer, explanation });
+/**
+ * Tạo 1 câu hỏi trắc nghiệm 4 lựa chọn.
+ * - explanation: chuỗi NGẮN 1 dòng (in cùng dòng "Chính xác!").
+ * - theory:      tuỳ chọn — chuỗi HTML hoặc mảng đoạn — render thành khối
+ *                "📚 Lý thuyết" riêng dưới phần explanation cho học sinh đào sâu.
+ */
+export const Q = (stem, choices, answer, explanation, theory) =>
+  ({ stem, choices, answer, explanation, theory });
 
 /**
  * Tạo 1 scenario tuần cho Lớp 6.

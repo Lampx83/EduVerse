@@ -20,9 +20,6 @@
       linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
   }
   .container { max-width: 920px; margin: 0 auto; }
-  .top-nav { display: flex; gap: 12px; margin-bottom: 24px; opacity: 0.85; font-size: 14px; }
-  .top-nav a { color: rgba(255,255,255,0.7); text-decoration: none; }
-  .top-nav a:hover { color: white; }
   h1 { margin: 0 0 6px; font-size: 26px; }
   .subtitle { opacity: 0.75; margin-bottom: 24px; font-size: 14px; }
   .info-card {
@@ -182,12 +179,6 @@
 </head>
 <body>
 <div class="container">
-  <div class="top-nav">
-    <a href="index.html">← Trang chủ</a>
-    <span style="opacity:0.4">·</span>
-    <span id="breadcrumb">Module</span>
-  </div>
-
   <h1 id="page-title">Module</h1>
   <div class="subtitle" id="page-subtitle">Đang tải nội dung…</div>
 
@@ -217,43 +208,17 @@
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'L1.1';
 
-  // backParam = lộ trình môn (subject.html) nếu mở từ đó. Breadcrumb dựng sau khi
-  // biết domain (xem buildBreadcrumb bên dưới) để luôn có link cấp cha "Trường".
-  const backParam = params.get('back');
-
   // Load the ACTIVE domain so module metadata + achievement catalog match
   // the school the student came from (falls back to pharmacy modules).
-  let DOMAIN_MODULES = PHARMACY_MODULES, ACHIEVEMENTS = [], GET_SUBJECT = null, SCHOOL_NAME = 'Trường';
+  let DOMAIN_MODULES = PHARMACY_MODULES, ACHIEVEMENTS = [], GET_SUBJECT = null;
   try {
     const dom = await loadActiveDomain();
     DOMAIN_MODULES = dom.MODULES || PHARMACY_MODULES;
     ACHIEVEMENTS = dom.ACHIEVEMENTS || [];
     GET_SUBJECT = dom.getSubject || null;
-    SCHOOL_NAME = dom.DOMAIN?.shortName || dom.DOMAIN?.name || dom.name || 'Trường';
   } catch {}
   const MODULES = DOMAIN_MODULES;
 
-  // Breadcrumb phân cấp: Trang chủ › Trường › [Lộ trình môn] › Module.
-  // Trước đây chỉ có "Trang chủ" nên không quay lại được trang trường → bổ sung
-  // link cấp cha "Trường" (school.html?domain=X) LUÔN hiển thị.
-  (function buildBreadcrumb() {
-    try {
-      const nav = document.querySelector('.top-nav');
-      const crumb = document.getElementById('breadcrumb');
-      const domainId = params.get('domain') || getActiveDomainId();
-      const mkLink = (href, text) => { const a = document.createElement('a'); a.href = href; a.textContent = text; return a; };
-      const mkSep = () => { const s = document.createElement('span'); s.style.opacity = '0.4'; s.textContent = '·'; return s; };
-      // Chèn TRƯỚC breadcrumb (sau "Trang chủ"): Trường, rồi Lộ trình môn (nếu có).
-      if (domainId) {
-        nav.insertBefore(mkLink(`school.html?domain=${encodeURIComponent(domainId)}`, `🏫 ${SCHOOL_NAME}`), crumb);
-        nav.insertBefore(mkSep(), crumb);
-      }
-      if (backParam) {
-        nav.insertBefore(mkLink(decodeURIComponent(backParam), '📚 Lộ trình môn'), crumb);
-        nav.insertBefore(mkSep(), crumb);
-      }
-    } catch (e) { console.warn('[breadcrumb]', e); }
-  })();
   const moduleMeta = MODULES.find(m => m.id === moduleId)
     || PHARMACY_MODULES.find(m => m.id === moduleId);
   // Nhãn môn (cho AI "Học thêm" / "Hỏi cô giáo") — fallback về key nếu thiếu.
@@ -271,12 +236,10 @@
   const info = document.getElementById('info');
   const infoText = document.getElementById('info-text');
   const infoChips = document.getElementById('info-chips');
-  const breadcrumb = document.getElementById('breadcrumb');
 
   if (moduleMeta) {
     title.textContent = `${moduleId} · ${moduleMeta.title}`;
     subtitle.textContent = `Năm ${moduleMeta.yearLevel} · Môn: ${moduleMeta.subject}`;
-    breadcrumb.textContent = `Năm ${moduleMeta.yearLevel} · ${moduleMeta.title}`;
     document.title = `${moduleId} · ${moduleMeta.title} — Tizia`;
     info.style.display = 'block';
     infoText.innerHTML = `<b>Yêu cầu mở khoá:</b> ${moduleMeta.minStarsToUnlock} sao tích luỹ${moduleMeta.prerequisites?.length ? ` · <b>Tiền đề:</b> ${moduleMeta.prerequisites.join(', ')}` : ''}`;
@@ -326,7 +289,6 @@
       title.textContent = s0.title;
       const bits = [s0.chapter && `📂 ${s0.chapter}`, s0.boss && '👑 Boss', s0.difficulty && `⭐ Độ khó ${s0.difficulty}/5`].filter(Boolean);
       subtitle.textContent = bits.join(' · ');
-      breadcrumb.textContent = s0.chapter || s0.title;
       document.title = `${s0.title} — Tizia`;
     } else {
       title.textContent = moduleId;

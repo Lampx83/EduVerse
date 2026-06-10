@@ -18,6 +18,24 @@ const KIND_ICO = {
   code:     '💻',
 };
 
+// Đích điều hướng khi học sinh bấm "Đi học" trên 1 nhiệm vụ chưa xong.
+// Trả về URL phù hợp theo kind — fallback về Không gian học (/space.html).
+function questGoHref(kind) {
+  switch (kind) {
+    case 'lesson':   return '/space.html';
+    case 'quiz':     return '/space.html';
+    case 'minigame': return '/space.html#mini-games';
+    case 'code':     return '/lap-trinh-game.html';
+    default:         return '/space.html';
+  }
+}
+const KIND_GO_LABEL = {
+  lesson:   '📖 Học bài',
+  quiz:     '✏️ Làm bài',
+  minigame: '🎮 Chơi ngay',
+  code:     '💻 Code',
+};
+
 const CSS = `
   .tz-eng-hud {
     position: fixed; top: 64px; right: 16px; z-index: 95;
@@ -159,17 +177,24 @@ const CSS = `
   .tz-eng-q .reward {
     font-size: 11px; color: #fde68a; font-weight: 700; white-space: nowrap;
   }
-  .tz-eng-q button {
+  .tz-eng-q-btn {
+    display: inline-block;
     padding: 6px 12px; border-radius: 8px;
     background: linear-gradient(135deg, #f59e0b, #f97316);
     color: #1e293b; border: none; cursor: pointer;
     font: 700 12px 'Inter', system-ui, sans-serif;
+    text-decoration: none; text-align: center;
     transition: transform 0.1s;
   }
-  .tz-eng-q button:hover { transform: scale(1.05); }
-  .tz-eng-q button:disabled {
+  .tz-eng-q-btn:hover { transform: scale(1.05); }
+  .tz-eng-q-btn:disabled {
     background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4);
     cursor: not-allowed; transform: none;
+  }
+  /* "Đi học/Chơi ngay" — link xanh dương để phân biệt với nút "Nhận" cam */
+  .tz-eng-q-go {
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: #0c1726;
   }
   .tz-eng-close {
     position: absolute; top: 12px; right: 14px;
@@ -348,12 +373,16 @@ class EngagementHUD {
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <div class="reward">+${q.rewardCoin}🪙 +${q.rewardXp}✨</div>
-          <button data-slot="${q.slot}" ${(!done || q.claimed) ? 'disabled' : ''}>
-            ${q.claimed ? '✓ Đã nhận' : (done ? 'Nhận' : 'Chưa xong')}
-          </button>
+          ${q.claimed
+            ? `<button class="tz-eng-q-btn" disabled>✓ Đã nhận</button>`
+            : done
+              ? `<button class="tz-eng-q-btn" data-slot="${q.slot}">Nhận</button>`
+              : `<a class="tz-eng-q-btn tz-eng-q-go" href="${questGoHref(q.kind)}">${KIND_GO_LABEL[q.kind] || '▶ Đi ngay'}</a>`
+          }
         </div>
       `;
-      div.querySelector('button').addEventListener('click', (e) => {
+      const claimBtn = div.querySelector('button[data-slot]');
+      if (claimBtn) claimBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.claim(q.slot);
       });
