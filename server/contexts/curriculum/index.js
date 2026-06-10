@@ -39,27 +39,48 @@ db.exec(`
     ON curriculum_content(subject, year_level, semester, week);
   CREATE INDEX IF NOT EXISTS idx_curriculum_active ON curriculum_content(active);
 `);
+// domain + grade TUYỆT ĐỐI (derive từ prefix id) — year_level trong scenario là
+// TƯƠNG ĐỐI theo cấp (lop10/11/12 đều yearLevel 1/2/3) nên không phân biệt được
+// lớp. Hai cột này cho phép FE load đúng theo (domain, grade) — vd primary/2.
+try { db.exec(`ALTER TABLE curriculum_content ADD COLUMN domain TEXT`); } catch {}
+try { db.exec(`ALTER TABLE curriculum_content ADD COLUMN grade INTEGER`); } catch {}
+try { db.exec(`CREATE INDEX IF NOT EXISTS idx_curriculum_grade ON curriculum_content(domain, grade, active)`); } catch {}
+
+// Suy ra (domain, grade) TUYỆT ĐỐI từ prefix id scenario.
+//   H10/H11/H12 → highschool 10/11/12 · P1..P5 → primary 1..5
+//   S6..S9 → secondary 6..9 · N1/N2/N3 → preschool (grade 0)
+//   còn lại (L, PS, SC, LR, CP, GC, year…) → pharmacy/other, grade null.
+export function deriveGradeDomain(id) {
+  const s = String(id || '');
+  let m;
+  if ((m = s.match(/^H(10|11|12)/)))   return { domain: 'highschool', grade: +m[1] };
+  if ((m = s.match(/^P([1-5])(?![0-9])/))) return { domain: 'primary', grade: +m[1] };
+  if ((m = s.match(/^S([6-9])(?![0-9])/))) return { domain: 'secondary', grade: +m[1] };
+  if (/^N[1-3](?![0-9])/.test(s))      return { domain: 'preschool', grade: 0 };
+  return { domain: 'pharmacy', grade: null };   // Dược + practice/skill/library/career/game
+}
 
 // ── Upsert 1 scenario ──
 // Re-seed (source='seed') KHÔNG đè bản đã sửa tay (source='admin'): ON CONFLICT
 // chỉ update khi bản hiện tại không phải 'admin'. Bản 'admin'/'ai' upsert thẳng.
 const upsertSeedStmt = db.prepare(`
-  INSERT INTO curriculum_content (id, subject, year_level, semester, week, kind, title, body, source, active, updated_at)
-  VALUES (@id, @subject, @year_level, @semester, @week, @kind, @title, @body, 'seed', 1, @updated_at)
+  INSERT INTO curriculum_content (id, subject, year_level, semester, week, kind, title, body, domain, grade, source, active, updated_at)
+  VALUES (@id, @subject, @year_level, @semester, @week, @kind, @title, @body, @domain, @grade, 'seed', 1, @updated_at)
   ON CONFLICT(id) DO UPDATE SET
     subject=@subject, year_level=@year_level, semester=@semester, week=@week,
-    kind=@kind, title=@title, body=@body, updated_at=@updated_at
+    kind=@kind, title=@title, body=@body, domain=@domain, grade=@grade, updated_at=@updated_at
   WHERE curriculum_content.source <> 'admin'
 `);
 const upsertEditStmt = db.prepare(`
-  INSERT INTO curriculum_content (id, subject, year_level, semester, week, kind, title, body, source, active, updated_at)
-  VALUES (@id, @subject, @year_level, @semester, @week, @kind, @title, @body, @source, @active, @updated_at)
+  INSERT INTO curriculum_content (id, subject, year_level, semester, week, kind, title, body, domain, grade, source, active, updated_at)
+  VALUES (@id, @subject, @year_level, @semester, @week, @kind, @title, @body, @domain, @grade, @source, @active, @updated_at)
   ON CONFLICT(id) DO UPDATE SET
     subject=@subject, year_level=@year_level, semester=@semester, week=@week,
-    kind=@kind, title=@title, body=@body, source=@source, active=@active, updated_at=@updated_at
+    kind=@kind, title=@title, body=@body, domain=@domain, grade=@grade, source=@source, active=@active, updated_at=@updated_at
 `);
 
 function rowFromScenario(sc, source = 'seed', active = 1) {
+  const { domain, grade } = deriveGradeDomain(sc.id);
   return {
     id:         sc.id,
     subject:    sc.subject ?? null,
@@ -69,6 +90,8 @@ function rowFromScenario(sc, source = 'seed', active = 1) {
     kind:       sc.kind ?? 'quiz',
     title:      sc.title ?? null,
     body:       JSON.stringify(sc),
+    domain,
+    grade,
     source,
     active,
     updated_at: Date.now(),
@@ -117,6 +140,15 @@ export function getContentForModule(moduleId) {
   return getByModuleStmt.all(likePrefix(moduleId)).map(r => JSON.parse(r.body));
 }
 
+const getByGradeStmt = db.prepare(`
+  SELECT body FROM curriculum_content
+   WHERE active = 1 AND domain = ? AND grade = ?
+   ORDER BY id ASC
+`);
+export function getContentForGrade(domain, grade) {
+  return getByGradeStmt.all(domain, grade).map(r => JSON.parse(r.body));
+}
+
 export function curriculumCount() {
   return countStmt.get().c;
 }
@@ -126,6 +158,14 @@ export function attachCurriculum(router) {
   // FE đọc danh sách scenario của 1 module (thay getScenariosForModule).
   router.get('/api/curriculum/module/:moduleId', (req, res) => {
     const items = getContentForModule(req.params.moduleId);
+    res.json({ ok: true, items, source: 'db' });
+  });
+
+  // FE đọc toàn bộ content của 1 (domain, grade) — thay import('/js/scenarios/lopN').
+  router.get('/api/curriculum/grade/:domain/:grade', (req, res) => {
+    const grade = Number(req.params.grade);
+    if (!Number.isFinite(grade)) return res.status(400).json({ error: 'bad_grade' });
+    const items = getContentForGrade(req.params.domain, grade);
     res.json({ ok: true, items, source: 'db' });
   });
 
