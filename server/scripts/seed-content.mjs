@@ -35,6 +35,7 @@ const REGISTRY = [
   // là object map → wrap 1 doc.
   { collection: 'lab-recipes',        file: '../../lab-recipes.js',     export: 'RECIPES' },
   { collection: 'lab-reagents',       file: '../../lab-recipes.js',     export: 'REAGENTS', wrap: true },
+  { collection: 'provinces',          file: 'provinces.js',          export: 'PROVINCES' },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');

@@ -1,0 +1,392 @@
+// DATA seed source — 63 tỉnh. Chỉ seed-content.mjs import.
+export const PROVINCES = [
+  // ============== BẮC BỘ (25) ==============
+  { id:'ha-noi', name:'Hà Nội', region:'Bắc Bộ', emoji:'🏯', capital:'Hà Nội', area_km2:3359,
+    highlight:'Thủ đô nghìn năm văn hiến — Hồ Gươm, Văn Miếu, phố cổ 36 phố phường.',
+    quiz:[
+      { q:'Hà Nội là thủ đô của nước nào?', choices:['Việt Nam','Lào','Campuchia','Thái Lan'], answer:0 },
+      { q:'Hồ nào ở trung tâm Hà Nội có Tháp Rùa?', choices:['Hồ Tây','Hồ Gươm','Hồ Trúc Bạch','Hồ Bảy Mẫu'], answer:1 },
+    ]},
+  { id:'hai-phong', name:'Hải Phòng', region:'Bắc Bộ', emoji:'⚓', capital:'Hải Phòng', area_km2:1527,
+    highlight:'Thành phố Hoa phượng đỏ — cảng biển lớn nhất miền Bắc, đảo Cát Bà.',
+    quiz:[
+      { q:'Hải Phòng được mệnh danh là thành phố hoa gì?', choices:['Hoa sen','Hoa phượng đỏ','Hoa đào','Hoa cúc'], answer:1 },
+      { q:'Đảo nào nổi tiếng thuộc Hải Phòng?', choices:['Phú Quốc','Côn Đảo','Cát Bà','Lý Sơn'], answer:2 },
+    ]},
+  { id:'quang-ninh', name:'Quảng Ninh', region:'Bắc Bộ', emoji:'🐉', capital:'Hạ Long', area_km2:6207,
+    highlight:'Vịnh Hạ Long — di sản thiên nhiên thế giới với hàng nghìn đảo đá vôi.',
+    quiz:[
+      { q:'Vịnh Hạ Long thuộc tỉnh nào?', choices:['Hải Phòng','Quảng Ninh','Nam Định','Thanh Hóa'], answer:1 },
+      { q:'Tỉnh lỵ của Quảng Ninh là thành phố nào?', choices:['Móng Cái','Cẩm Phả','Hạ Long','Uông Bí'], answer:2 },
+    ]},
+  { id:'bac-giang', name:'Bắc Giang', region:'Bắc Bộ', emoji:'🍑', capital:'Bắc Giang', area_km2:3895,
+    highlight:'Quê hương vải thiều Lục Ngạn nổi tiếng cả nước.',
+    quiz:[
+      { q:'Bắc Giang nổi tiếng với loại trái cây nào?', choices:['Xoài','Vải thiều','Sầu riêng','Nhãn'], answer:1 },
+      { q:'Vùng trồng vải nổi tiếng nhất Bắc Giang?', choices:['Lục Ngạn','Việt Yên','Hiệp Hòa','Sơn Động'], answer:0 },
+    ]},
+  { id:'bac-kan', name:'Bắc Kạn', region:'Bắc Bộ', emoji:'🏞️', capital:'Bắc Kạn', area_km2:4860,
+    highlight:'Hồ Ba Bể — một trong những hồ nước ngọt tự nhiên đẹp nhất Việt Nam.',
+    quiz:[
+      { q:'Hồ nào nổi tiếng ở Bắc Kạn?', choices:['Hồ Tây','Hồ Ba Bể','Hồ Núi Cốc','Hồ Thác Bà'], answer:1 },
+      { q:'Bắc Kạn nằm ở vùng nào của Việt Nam?', choices:['Tây Bắc','Đông Bắc','Tây Nguyên','ĐBSCL'], answer:1 },
+    ]},
+  { id:'bac-ninh', name:'Bắc Ninh', region:'Bắc Bộ', emoji:'🎶', capital:'Bắc Ninh', area_km2:823,
+    highlight:'Quê hương quan họ — di sản văn hóa phi vật thể của UNESCO.',
+    quiz:[
+      { q:'Bắc Ninh nổi tiếng với loại hình dân ca nào?', choices:['Ca trù','Quan họ','Chèo','Cải lương'], answer:1 },
+      { q:'Bắc Ninh là tỉnh có diện tích thế nào so với cả nước?', choices:['Nhỏ nhất','Lớn nhất','Trung bình','Thứ 30'], answer:0 },
+    ]},
+  { id:'cao-bang', name:'Cao Bằng', region:'Bắc Bộ', emoji:'💧', capital:'Cao Bằng', area_km2:6700,
+    highlight:'Thác Bản Giốc hùng vĩ — biên giới Việt – Trung, hang Pác Bó lịch sử.',
+    quiz:[
+      { q:'Thác nước nổi tiếng nhất Cao Bằng?', choices:['Thác Dray Nur','Thác Bản Giốc','Thác Pongour','Thác Bạc'], answer:1 },
+      { q:'Hang Pác Bó gắn với nhân vật lịch sử nào?', choices:['Lý Thường Kiệt','Trần Hưng Đạo','Hồ Chí Minh','Quang Trung'], answer:2 },
+    ]},
+  { id:'dien-bien', name:'Điện Biên', region:'Bắc Bộ', emoji:'🏔️', capital:'Điện Biên Phủ', area_km2:9541,
+    highlight:'Chiến thắng Điện Biên Phủ 1954 — "lừng lẫy năm châu, chấn động địa cầu".',
+    quiz:[
+      { q:'Chiến thắng Điện Biên Phủ diễn ra năm nào?', choices:['1945','1954','1968','1975'], answer:1 },
+      { q:'Tỉnh lỵ của Điện Biên là?', choices:['Mường Lay','Tuần Giáo','Điện Biên Phủ','Mường Nhé'], answer:2 },
+    ]},
+  { id:'ha-giang', name:'Hà Giang', region:'Bắc Bộ', emoji:'🌸', capital:'Hà Giang', area_km2:7929,
+    highlight:'Cao nguyên đá Đồng Văn — mùa hoa tam giác mạch tím rực rỡ.',
+    quiz:[
+      { q:'Hà Giang nổi tiếng với loài hoa nào vào mùa thu?', choices:['Hoa đào','Hoa mai','Tam giác mạch','Hoa sen'], answer:2 },
+      { q:'Cao nguyên đá ở Hà Giang tên là?', choices:['Mộc Châu','Đồng Văn','Sapa','Bắc Hà'], answer:1 },
+    ]},
+  { id:'ha-nam', name:'Hà Nam', region:'Bắc Bộ', emoji:'⛩️', capital:'Phủ Lý', area_km2:861,
+    highlight:'Chùa Tam Chúc — quần thể tâm linh lớn nhất Đông Nam Á.',
+    quiz:[
+      { q:'Tỉnh lỵ của Hà Nam là?', choices:['Phủ Lý','Hà Nam','Duy Tiên','Lý Nhân'], answer:0 },
+      { q:'Ngôi chùa nổi tiếng nhất Hà Nam?', choices:['Chùa Hương','Chùa Bái Đính','Chùa Tam Chúc','Chùa Yên Tử'], answer:2 },
+    ]},
+  { id:'hai-duong', name:'Hải Dương', region:'Bắc Bộ', emoji:'🍪', capital:'Hải Dương', area_km2:1668,
+    highlight:'Quê hương bánh đậu xanh — món quà nức tiếng xứ Đông.',
+    quiz:[
+      { q:'Đặc sản nổi tiếng nhất Hải Dương?', choices:['Bánh cốm','Bánh đậu xanh','Bánh phu thê','Bánh gai'], answer:1 },
+      { q:'Hải Dương thuộc vùng nào?', choices:['Tây Bắc','Đồng bằng sông Hồng','Bắc Trung Bộ','Tây Nguyên'], answer:1 },
+    ]},
+  { id:'hung-yen', name:'Hưng Yên', region:'Bắc Bộ', emoji:'🍯', capital:'Hưng Yên', area_km2:930,
+    highlight:'Nhãn lồng Hưng Yên — đặc sản tiến vua thơm ngọt.',
+    quiz:[
+      { q:'Hưng Yên nổi tiếng với loại quả nào?', choices:['Nhãn lồng','Vải thiều','Cam sành','Bưởi'], answer:0 },
+      { q:'Phố Hiến xưa thuộc tỉnh nào ngày nay?', choices:['Hà Nội','Hưng Yên','Hải Dương','Nam Định'], answer:1 },
+    ]},
+  { id:'lai-chau', name:'Lai Châu', region:'Bắc Bộ', emoji:'⛰️', capital:'Lai Châu', area_km2:9069,
+    highlight:'Núi non hùng vĩ Tây Bắc — đỉnh Pu Ta Leng, ruộng bậc thang Tả Lèng.',
+    quiz:[
+      { q:'Lai Châu nằm ở vùng nào?', choices:['Đông Bắc','Tây Bắc','Bắc Trung Bộ','ĐBSH'], answer:1 },
+      { q:'Tỉnh lỵ của Lai Châu là?', choices:['Tam Đường','Lai Châu','Phong Thổ','Mường Tè'], answer:1 },
+    ]},
+  { id:'lang-son', name:'Lạng Sơn', region:'Bắc Bộ', emoji:'🛕', capital:'Lạng Sơn', area_km2:8310,
+    highlight:'Cửa khẩu Hữu Nghị, ải Chi Lăng lịch sử, động Tam Thanh huyền bí.',
+    quiz:[
+      { q:'Cửa khẩu lớn ở Lạng Sơn tên là?', choices:['Móng Cái','Hữu Nghị','Lao Bảo','Cha Lo'], answer:1 },
+      { q:'Lạng Sơn giáp với quốc gia nào?', choices:['Lào','Trung Quốc','Campuchia','Thái Lan'], answer:1 },
+    ]},
+  { id:'lao-cai', name:'Lào Cai', region:'Bắc Bộ', emoji:'🏔️', capital:'Lào Cai', area_km2:6364,
+    highlight:'Sa Pa mờ sương, đỉnh Fansipan — nóc nhà Đông Dương cao 3.143m.',
+    quiz:[
+      { q:'Đỉnh núi cao nhất Việt Nam tên là?', choices:['Pu Ta Leng','Bạch Mã','Fansipan','Lang Biang'], answer:2 },
+      { q:'Sa Pa thuộc tỉnh nào?', choices:['Yên Bái','Lào Cai','Hà Giang','Sơn La'], answer:1 },
+    ]},
+  { id:'nam-dinh', name:'Nam Định', region:'Bắc Bộ', emoji:'🍜', capital:'Nam Định', area_km2:1668,
+    highlight:'Quê hương phở bò gia truyền và đền Trần — nơi phát tích triều Trần.',
+    quiz:[
+      { q:'Món ăn nào gắn liền với Nam Định?', choices:['Bún bò','Phở bò','Bánh canh','Hủ tiếu'], answer:1 },
+      { q:'Đền Trần ở Nam Định thờ triều đại nào?', choices:['Lý','Trần','Lê','Nguyễn'], answer:1 },
+    ]},
+  { id:'ninh-binh', name:'Ninh Bình', region:'Bắc Bộ', emoji:'🛶', capital:'Ninh Bình', area_km2:1387,
+    highlight:'Tràng An – Tam Cốc – Bích Động — "Hạ Long trên cạn" của Việt Nam.',
+    quiz:[
+      { q:'Khu du lịch nào ở Ninh Bình là di sản UNESCO?', choices:['Tràng An','Sapa','Phong Nha','Mỹ Sơn'], answer:0 },
+      { q:'Ninh Bình từng là kinh đô của triều đại nào?', choices:['Lý','Trần','Đinh – Tiền Lê','Nguyễn'], answer:2 },
+    ]},
+  { id:'phu-tho', name:'Phú Thọ', region:'Bắc Bộ', emoji:'🏛️', capital:'Việt Trì', area_km2:3535,
+    highlight:'Đất Tổ Hùng Vương — đền Hùng, giỗ Tổ mùng 10 tháng 3 âm lịch.',
+    quiz:[
+      { q:'Đền Hùng thuộc tỉnh nào?', choices:['Vĩnh Phúc','Phú Thọ','Hà Nội','Yên Bái'], answer:1 },
+      { q:'Tỉnh lỵ của Phú Thọ là?', choices:['Việt Trì','Phú Thọ','Đoan Hùng','Thanh Sơn'], answer:0 },
+    ]},
+  { id:'son-la', name:'Sơn La', region:'Bắc Bộ', emoji:'🥛', capital:'Sơn La', area_km2:14123,
+    highlight:'Cao nguyên Mộc Châu — đồi chè, hoa mận, sữa bò thơm ngon.',
+    quiz:[
+      { q:'Cao nguyên nổi tiếng nhất Sơn La?', choices:['Mộc Châu','Đồng Văn','Di Linh','Lâm Viên'], answer:0 },
+      { q:'Mộc Châu nổi tiếng với loại hoa nào?', choices:['Hoa đào','Hoa mận','Hoa hồng','Hoa cải vàng'], answer:1 },
+    ]},
+  { id:'thai-binh', name:'Thái Bình', region:'Bắc Bộ', emoji:'🌾', capital:'Thái Bình', area_km2:1586,
+    highlight:'Vựa lúa đồng bằng — chùa Keo cổ kính, biển Đồng Châu thanh bình.',
+    quiz:[
+      { q:'Thái Bình nổi tiếng với cây trồng nào?', choices:['Lúa','Cà phê','Cao su','Hồ tiêu'], answer:0 },
+      { q:'Chùa Keo ở Thái Bình thuộc loại di sản nào?', choices:['Tự nhiên','Kiến trúc cổ','Phi vật thể','Hỗn hợp'], answer:1 },
+    ]},
+  { id:'thai-nguyen', name:'Thái Nguyên', region:'Bắc Bộ', emoji:'🍵', capital:'Thái Nguyên', area_km2:3526,
+    highlight:'"Đệ nhất danh trà" — chè Tân Cương thơm hương đất Việt.',
+    quiz:[
+      { q:'Thái Nguyên nổi tiếng với đặc sản nào?', choices:['Cà phê','Chè (trà)','Cacao','Hồ tiêu'], answer:1 },
+      { q:'Vùng chè nổi tiếng nhất Thái Nguyên?', choices:['Tân Cương','La Bằng','Trại Cài','Phú Lương'], answer:0 },
+    ]},
+  { id:'tuyen-quang', name:'Tuyên Quang', region:'Bắc Bộ', emoji:'🌲', capital:'Tuyên Quang', area_km2:5868,
+    highlight:'Tân Trào — "Thủ đô kháng chiến" thời chống Pháp.',
+    quiz:[
+      { q:'Tân Trào ở Tuyên Quang gắn với sự kiện gì?', choices:['Khởi nghĩa Lam Sơn','Cách mạng tháng 8','Chiến dịch HCM','Đông Khê'], answer:1 },
+      { q:'Tuyên Quang thuộc vùng nào?', choices:['Tây Bắc','Đông Bắc','ĐBSH','Bắc Trung Bộ'], answer:1 },
+    ]},
+  { id:'vinh-phuc', name:'Vĩnh Phúc', region:'Bắc Bộ', emoji:'🌼', capital:'Vĩnh Yên', area_km2:1235,
+    highlight:'Tam Đảo mờ sương, Đại Lải mộng mơ — điểm nghỉ dưỡng gần Hà Nội.',
+    quiz:[
+      { q:'Khu nghỉ mát nổi tiếng nhất Vĩnh Phúc?', choices:['Tam Đảo','Ba Vì','Bà Nà','Mẫu Sơn'], answer:0 },
+      { q:'Tỉnh lỵ của Vĩnh Phúc là?', choices:['Phúc Yên','Vĩnh Yên','Tam Đảo','Lập Thạch'], answer:1 },
+    ]},
+  { id:'yen-bai', name:'Yên Bái', region:'Bắc Bộ', emoji:'🌾', capital:'Yên Bái', area_km2:6892,
+    highlight:'Ruộng bậc thang Mù Cang Chải — kỳ quan nhân tạo của người Mông.',
+    quiz:[
+      { q:'Ruộng bậc thang Mù Cang Chải thuộc tỉnh nào?', choices:['Lào Cai','Yên Bái','Sơn La','Hà Giang'], answer:1 },
+      { q:'Hồ Thác Bà ở Yên Bái nổi tiếng với điều gì?', choices:['Nước nóng','Thủy điện','Cát trắng','San hô'], answer:1 },
+    ]},
+  { id:'hoa-binh', name:'Hòa Bình', region:'Bắc Bộ', emoji:'⚡', capital:'Hòa Bình', area_km2:4591,
+    highlight:'Nhà máy thủy điện Hòa Bình lớn vào loại nhất Đông Nam Á.',
+    quiz:[
+      { q:'Hòa Bình nổi tiếng với công trình nào?', choices:['Cảng biển','Nhà máy thủy điện','Sân bay','Đường sắt'], answer:1 },
+      { q:'Dân tộc thiểu số đông nhất ở Hòa Bình?', choices:['Tày','Mường','Thái','H\'Mông'], answer:1 },
+    ]},
+
+  // ============== BẮC TRUNG BỘ (6) ==============
+  { id:'thanh-hoa', name:'Thanh Hóa', region:'Bắc Trung Bộ', emoji:'🏖️', capital:'Thanh Hóa', area_km2:11116,
+    highlight:'Bãi biển Sầm Sơn, Thành nhà Hồ — di sản văn hóa thế giới.',
+    quiz:[
+      { q:'Bãi biển nổi tiếng nhất Thanh Hóa?', choices:['Mỹ Khê','Sầm Sơn','Nha Trang','Lăng Cô'], answer:1 },
+      { q:'Thành nhà Hồ được công nhận bởi tổ chức nào?', choices:['ASEAN','UNESCO','WHO','WTO'], answer:1 },
+    ]},
+  { id:'nghe-an', name:'Nghệ An', region:'Bắc Trung Bộ', emoji:'🌟', capital:'Vinh', area_km2:16487,
+    highlight:'Quê hương Chủ tịch Hồ Chí Minh — làng Sen, Kim Liên, Nam Đàn.',
+    quiz:[
+      { q:'Quê hương Chủ tịch Hồ Chí Minh thuộc tỉnh nào?', choices:['Hà Tĩnh','Nghệ An','Quảng Bình','Thanh Hóa'], answer:1 },
+      { q:'Tỉnh lỵ của Nghệ An là thành phố nào?', choices:['Cửa Lò','Vinh','Hoàng Mai','Diễn Châu'], answer:1 },
+    ]},
+  { id:'ha-tinh', name:'Hà Tĩnh', region:'Bắc Trung Bộ', emoji:'📜', capital:'Hà Tĩnh', area_km2:5994,
+    highlight:'Quê hương đại thi hào Nguyễn Du — tác giả Truyện Kiều.',
+    quiz:[
+      { q:'Đại thi hào Nguyễn Du quê ở tỉnh nào?', choices:['Nghệ An','Hà Tĩnh','Thanh Hóa','Quảng Bình'], answer:1 },
+      { q:'Tác phẩm bất hủ của Nguyễn Du tên là?', choices:['Chinh phụ ngâm','Truyện Kiều','Cung oán ngâm','Lục Vân Tiên'], answer:1 },
+    ]},
+  { id:'quang-binh', name:'Quảng Bình', region:'Bắc Trung Bộ', emoji:'🕳️', capital:'Đồng Hới', area_km2:8000,
+    highlight:'Hang Sơn Đoòng — hang động lớn nhất thế giới, di sản Phong Nha-Kẻ Bàng.',
+    quiz:[
+      { q:'Hang động lớn nhất thế giới tên là?', choices:['Phong Nha','Tiên Sơn','Sơn Đoòng','Thiên Đường'], answer:2 },
+      { q:'Sơn Đoòng thuộc vườn quốc gia nào?', choices:['Cát Tiên','Phong Nha-Kẻ Bàng','Cúc Phương','Ba Bể'], answer:1 },
+    ]},
+  { id:'quang-tri', name:'Quảng Trị', region:'Bắc Trung Bộ', emoji:'🕊️', capital:'Đông Hà', area_km2:4621,
+    highlight:'Thành cổ Quảng Trị, cầu Hiền Lương sông Bến Hải — chứng tích chia cắt 2 miền.',
+    quiz:[
+      { q:'Cầu Hiền Lương bắc qua sông nào?', choices:['Sông Hương','Sông Bến Hải','Sông Mã','Sông Lam'], answer:1 },
+      { q:'Tỉnh lỵ của Quảng Trị là?', choices:['Đông Hà','Quảng Trị','Vĩnh Linh','Lao Bảo'], answer:0 },
+    ]},
+  { id:'thua-thien-hue', name:'Thừa Thiên Huế', region:'Bắc Trung Bộ', emoji:'👘', capital:'Huế', area_km2:5026,
+    highlight:'Cố đô Huế — kinh thành nhà Nguyễn, áo dài, ca Huế trên sông Hương.',
+    quiz:[
+      { q:'Huế từng là kinh đô của triều đại nào?', choices:['Lý','Trần','Nguyễn','Lê'], answer:2 },
+      { q:'Sông nào chảy qua thành phố Huế?', choices:['Sông Hương','Sông Hàn','Sông Thu Bồn','Sông Cái'], answer:0 },
+    ]},
+
+  // ============== NAM TRUNG BỘ (8) ==============
+  { id:'da-nang', name:'Đà Nẵng', region:'Nam Trung Bộ', emoji:'🌉', capital:'Đà Nẵng', area_km2:1285,
+    highlight:'Thành phố đáng sống — cầu Rồng, Bà Nà Hills, biển Mỹ Khê.',
+    quiz:[
+      { q:'Cây cầu nào ở Đà Nẵng phun lửa cuối tuần?', choices:['Cầu Vàng','Cầu Rồng','Cầu Sông Hàn','Cầu Trần Thị Lý'], answer:1 },
+      { q:'Bà Nà Hills nổi tiếng nhất với?', choices:['Cầu Vàng','Cáp treo','Lễ hội bia','Cả 3'], answer:3 },
+    ]},
+  { id:'quang-nam', name:'Quảng Nam', region:'Nam Trung Bộ', emoji:'🏮', capital:'Tam Kỳ', area_km2:10438,
+    highlight:'Phố cổ Hội An lung linh đèn lồng, thánh địa Mỹ Sơn — di sản UNESCO.',
+    quiz:[
+      { q:'Phố cổ nào thuộc Quảng Nam, nổi tiếng đèn lồng?', choices:['Phố cổ Hà Nội','Hội An','Đồng Văn','Bao Vinh'], answer:1 },
+      { q:'Thánh địa Mỹ Sơn là di tích của vương quốc nào?', choices:['Phù Nam','Chăm Pa','Khmer','Đại Việt'], answer:1 },
+    ]},
+  { id:'quang-ngai', name:'Quảng Ngãi', region:'Nam Trung Bộ', emoji:'🌊', capital:'Quảng Ngãi', area_km2:5155,
+    highlight:'Đảo Lý Sơn — vương quốc tỏi, biển trời xanh ngắt.',
+    quiz:[
+      { q:'Đảo nổi tiếng của Quảng Ngãi tên là?', choices:['Lý Sơn','Phú Quý','Cù Lao Chàm','Cồn Cỏ'], answer:0 },
+      { q:'Lý Sơn được mệnh danh là vương quốc của loại nông sản nào?', choices:['Hành','Tỏi','Ớt','Gừng'], answer:1 },
+    ]},
+  { id:'binh-dinh', name:'Bình Định', region:'Nam Trung Bộ', emoji:'🥋', capital:'Quy Nhơn', area_km2:6066,
+    highlight:'Đất võ Tây Sơn — quê hương vua Quang Trung, biển Quy Nhơn thơ mộng.',
+    quiz:[
+      { q:'Vua Quang Trung quê ở tỉnh nào?', choices:['Phú Yên','Bình Định','Quảng Nam','Khánh Hòa'], answer:1 },
+      { q:'Tỉnh lỵ của Bình Định là?', choices:['An Nhơn','Quy Nhơn','Tây Sơn','Bồng Sơn'], answer:1 },
+    ]},
+  { id:'phu-yen', name:'Phú Yên', region:'Nam Trung Bộ', emoji:'🌅', capital:'Tuy Hòa', area_km2:5026,
+    highlight:'"Xứ hoa vàng cỏ xanh" — Gành Đá Đĩa, Mũi Đại Lãnh đón bình minh đầu tiên.',
+    quiz:[
+      { q:'Phú Yên được mệnh danh là gì?', choices:['Xứ Quảng','Xứ hoa vàng cỏ xanh','Xứ trầm','Xứ Nẫu'], answer:1 },
+      { q:'Tỉnh lỵ của Phú Yên là?', choices:['Tuy Hòa','Sông Cầu','Đông Hòa','Tuy An'], answer:0 },
+    ]},
+  { id:'khanh-hoa', name:'Khánh Hòa', region:'Nam Trung Bộ', emoji:'🏝️', capital:'Nha Trang', area_km2:5217,
+    highlight:'Vịnh Nha Trang — một trong những vịnh biển đẹp nhất thế giới.',
+    quiz:[
+      { q:'Vịnh nào ở Khánh Hòa nổi tiếng thế giới?', choices:['Hạ Long','Lăng Cô','Nha Trang','Vân Phong'], answer:2 },
+      { q:'Tháp Bà Ponagar thờ thần của vương quốc nào?', choices:['Chăm Pa','Khmer','Lan Xang','Phù Nam'], answer:0 },
+    ]},
+  { id:'ninh-thuan', name:'Ninh Thuận', region:'Nam Trung Bộ', emoji:'🍇', capital:'Phan Rang–Tháp Chàm', area_km2:3358,
+    highlight:'Vùng đất nắng gió — nho, táo, vịnh Vĩnh Hy hoang sơ.',
+    quiz:[
+      { q:'Loại quả nào Ninh Thuận trồng nổi tiếng?', choices:['Sầu riêng','Nho','Cam','Bưởi'], answer:1 },
+      { q:'Tỉnh lỵ Ninh Thuận là?', choices:['Phan Rang–Tháp Chàm','Phan Thiết','Phan Rí','Ninh Hải'], answer:0 },
+    ]},
+  { id:'binh-thuan', name:'Bình Thuận', region:'Nam Trung Bộ', emoji:'🐲', capital:'Phan Thiết', area_km2:7813,
+    highlight:'Mũi Né — đồi cát bay vàng rực, đảo Phú Quý xanh trong.',
+    quiz:[
+      { q:'Bãi biển nào nổi tiếng nhất Bình Thuận?', choices:['Mỹ Khê','Mũi Né','Lăng Cô','Sầm Sơn'], answer:1 },
+      { q:'Tỉnh lỵ Bình Thuận là?', choices:['Phan Thiết','La Gi','Phan Rí','Mũi Né'], answer:0 },
+    ]},
+
+  // ============== TÂY NGUYÊN (5) ==============
+  { id:'kon-tum', name:'Kon Tum', region:'Tây Nguyên', emoji:'🪵', capital:'Kon Tum', area_km2:9690,
+    highlight:'Nhà rông Bana, ngã ba Đông Dương — nơi tiếng gà gáy 3 nước cùng nghe.',
+    quiz:[
+      { q:'Ngã ba Đông Dương ở Kon Tum giáp 3 nước nào?', choices:['VN-Lào-TQ','VN-Lào-Campuchia','VN-CPC-Thái','VN-Lào-Thái'], answer:1 },
+      { q:'Kiến trúc đặc trưng của người Bana là?', choices:['Nhà sàn','Nhà rông','Nhà tứ giác','Nhà ngói'], answer:1 },
+    ]},
+  { id:'gia-lai', name:'Gia Lai', region:'Tây Nguyên', emoji:'🌋', capital:'Pleiku', area_km2:15511,
+    highlight:'Biển Hồ T\'Nưng — "đôi mắt Pleiku", thác Phú Cường hùng vĩ.',
+    quiz:[
+      { q:'Biển Hồ ở Gia Lai còn được gọi là gì?', choices:['Đôi mắt Pleiku','Hồ Núi Cốc','Hồ Ba Bể','Hồ Tà Đùng'], answer:0 },
+      { q:'Tỉnh lỵ của Gia Lai là?', choices:['Pleiku','An Khê','Ayun Pa','Chư Sê'], answer:0 },
+    ]},
+  { id:'dak-lak', name:'Đắk Lắk', region:'Tây Nguyên', emoji:'☕', capital:'Buôn Ma Thuột', area_km2:13030,
+    highlight:'Thủ phủ cà phê Việt Nam — Buôn Ma Thuột, voi Bản Đôn, hồ Lắk.',
+    quiz:[
+      { q:'Đắk Lắk nổi tiếng với loại nông sản nào?', choices:['Chè','Cà phê','Hồ tiêu','Cao su'], answer:1 },
+      { q:'Tỉnh lỵ của Đắk Lắk là?', choices:['Buôn Ma Thuột','Buôn Hồ','Ea Kar','Krông Pắc'], answer:0 },
+    ]},
+  { id:'dak-nong', name:'Đắk Nông', region:'Tây Nguyên', emoji:'🌋', capital:'Gia Nghĩa', area_km2:6515,
+    highlight:'Công viên địa chất toàn cầu UNESCO — hang động núi lửa độc đáo.',
+    quiz:[
+      { q:'Đắk Nông được UNESCO công nhận là gì?', choices:['Di sản văn hóa','Công viên địa chất toàn cầu','Khu dự trữ sinh quyển','Cả 3'], answer:1 },
+      { q:'Tỉnh lỵ Đắk Nông là?', choices:['Gia Nghĩa','Đắk Mil','Đắk R\'lấp','Cư Jút'], answer:0 },
+    ]},
+  { id:'lam-dong', name:'Lâm Đồng', region:'Tây Nguyên', emoji:'🌲', capital:'Đà Lạt', area_km2:9783,
+    highlight:'Đà Lạt — thành phố ngàn hoa, sương mù, thông reo lãng mạn.',
+    quiz:[
+      { q:'Đà Lạt được mệnh danh là thành phố gì?', choices:['Thành phố biển','Thành phố ngàn hoa','Thành phố cảng','Thành phố vàng'], answer:1 },
+      { q:'Tỉnh lỵ của Lâm Đồng là?', choices:['Bảo Lộc','Đà Lạt','Đức Trọng','Di Linh'], answer:1 },
+    ]},
+
+  // ============== ĐÔNG NAM BỘ (6) ==============
+  { id:'tp-hcm', name:'TP. Hồ Chí Minh', region:'Đông Nam Bộ', emoji:'🌆', capital:'TP. Hồ Chí Minh', area_km2:2095,
+    highlight:'Thành phố lớn nhất Việt Nam — chợ Bến Thành, dinh Độc Lập, nhà thờ Đức Bà.',
+    quiz:[
+      { q:'TP.HCM trước năm 1975 còn được gọi là?', choices:['Hà Nội','Sài Gòn','Huế','Đà Nẵng'], answer:1 },
+      { q:'Chợ nào là biểu tượng của TP.HCM?', choices:['Chợ Đồng Xuân','Chợ Bến Thành','Chợ Đông Ba','Chợ Hàn'], answer:1 },
+    ]},
+  { id:'binh-duong', name:'Bình Dương', region:'Đông Nam Bộ', emoji:'🏭', capital:'Thủ Dầu Một', area_km2:2695,
+    highlight:'Thủ phủ công nghiệp — gốm sứ Lái Thiêu, sơn mài truyền thống.',
+    quiz:[
+      { q:'Tỉnh lỵ của Bình Dương là?', choices:['Dĩ An','Thuận An','Thủ Dầu Một','Bến Cát'], answer:2 },
+      { q:'Bình Dương nổi tiếng với nghề thủ công nào?', choices:['Gốm sứ','Đúc đồng','Dệt vải','Làm giấy'], answer:0 },
+    ]},
+  { id:'dong-nai', name:'Đồng Nai', region:'Đông Nam Bộ', emoji:'🦏', capital:'Biên Hòa', area_km2:5862,
+    highlight:'Vườn quốc gia Cát Tiên — rừng nguyên sinh, tê giác Java cuối cùng.',
+    quiz:[
+      { q:'Vườn quốc gia nổi tiếng nhất Đồng Nai?', choices:['Cát Tiên','Cúc Phương','Tràm Chim','U Minh'], answer:0 },
+      { q:'Tỉnh lỵ của Đồng Nai là?', choices:['Long Thành','Biên Hòa','Long Khánh','Trảng Bom'], answer:1 },
+    ]},
+  { id:'ba-ria-vung-tau', name:'Bà Rịa – Vũng Tàu', region:'Đông Nam Bộ', emoji:'🛢️', capital:'Bà Rịa', area_km2:1981,
+    highlight:'Bãi biển Vũng Tàu, Côn Đảo lịch sử, dầu khí Bạch Hổ.',
+    quiz:[
+      { q:'Quần đảo nào thuộc Bà Rịa – Vũng Tàu?', choices:['Phú Quốc','Côn Đảo','Trường Sa','Lý Sơn'], answer:1 },
+      { q:'Vũng Tàu nổi tiếng về tài nguyên gì?', choices:['Vàng','Than','Dầu khí','Sắt'], answer:2 },
+    ]},
+  { id:'binh-phuoc', name:'Bình Phước', region:'Đông Nam Bộ', emoji:'🌰', capital:'Đồng Xoài', area_km2:6877,
+    highlight:'"Thủ phủ điều" — quê hương hạt điều Việt Nam, di tích Tà Thiết.',
+    quiz:[
+      { q:'Bình Phước nổi tiếng với loại nông sản nào?', choices:['Hạt điều','Hồ tiêu','Cà phê','Cao su'], answer:0 },
+      { q:'Tỉnh lỵ của Bình Phước là?', choices:['Bình Long','Đồng Xoài','Phước Long','Chơn Thành'], answer:1 },
+    ]},
+  { id:'tay-ninh', name:'Tây Ninh', region:'Đông Nam Bộ', emoji:'⛰️', capital:'Tây Ninh', area_km2:4041,
+    highlight:'Núi Bà Đen — nóc nhà Nam Bộ, Tòa Thánh Cao Đài độc đáo.',
+    quiz:[
+      { q:'Ngọn núi cao nhất Nam Bộ tên là?', choices:['Núi Cấm','Núi Bà Đen','Núi Sam','Núi Tô'], answer:1 },
+      { q:'Tòa Thánh Cao Đài chính ở tỉnh nào?', choices:['Bến Tre','Tây Ninh','Long An','An Giang'], answer:1 },
+    ]},
+
+  // ============== ĐBSCL (13) ==============
+  { id:'can-tho', name:'Cần Thơ', region:'ĐBSCL', emoji:'🛥️', capital:'Cần Thơ', area_km2:1409,
+    highlight:'"Tây Đô" — chợ nổi Cái Răng, bến Ninh Kiều, vườn trái cây.',
+    quiz:[
+      { q:'Chợ nổi nổi tiếng nhất Cần Thơ tên là?', choices:['Cái Bè','Cái Răng','Phụng Hiệp','Long Xuyên'], answer:1 },
+      { q:'Cần Thơ được mệnh danh là gì?', choices:['Tây Đô','Đông Đô','Nam Đô','Bắc Đô'], answer:0 },
+    ]},
+  { id:'long-an', name:'Long An', region:'ĐBSCL', emoji:'🍚', capital:'Tân An', area_km2:4493,
+    highlight:'Cửa ngõ miền Tây — gạo Nàng Thơm, thanh long Châu Thành.',
+    quiz:[
+      { q:'Tỉnh lỵ của Long An là?', choices:['Cần Giuộc','Tân An','Bến Lức','Đức Hòa'], answer:1 },
+      { q:'Long An nổi tiếng với loại trái cây nào?', choices:['Sầu riêng','Thanh long','Vải','Nhãn'], answer:1 },
+    ]},
+  { id:'tien-giang', name:'Tiền Giang', region:'ĐBSCL', emoji:'🍐', capital:'Mỹ Tho', area_km2:2511,
+    highlight:'Chợ nổi Cái Bè, vườn trái cây Cái Mơn, hủ tiếu Mỹ Tho.',
+    quiz:[
+      { q:'Tỉnh lỵ Tiền Giang là?', choices:['Mỹ Tho','Gò Công','Cai Lậy','Châu Thành'], answer:0 },
+      { q:'Món ăn nào nổi tiếng Tiền Giang?', choices:['Phở','Hủ tiếu Mỹ Tho','Bún bò','Bánh canh'], answer:1 },
+    ]},
+  { id:'ben-tre', name:'Bến Tre', region:'ĐBSCL', emoji:'🥥', capital:'Bến Tre', area_km2:2360,
+    highlight:'Xứ dừa Việt Nam — kẹo dừa, bánh tráng, đảo dừa xanh mướt.',
+    quiz:[
+      { q:'Bến Tre được mệnh danh là xứ sở của cây gì?', choices:['Lúa','Dừa','Cau','Tre'], answer:1 },
+      { q:'Đặc sản nổi tiếng nhất Bến Tre?', choices:['Kẹo dừa','Bánh pía','Mứt sen','Bánh đa'], answer:0 },
+    ]},
+  { id:'tra-vinh', name:'Trà Vinh', region:'ĐBSCL', emoji:'🛕', capital:'Trà Vinh', area_km2:2358,
+    highlight:'Quê hương đồng bào Khmer — chùa Âng cổ kính, lễ hội Ok Om Bok.',
+    quiz:[
+      { q:'Trà Vinh có đông dân tộc nào sinh sống?', choices:['Tày','Khmer','Chăm','H\'Mông'], answer:1 },
+      { q:'Lễ hội Ok Om Bok thờ thần nào?', choices:['Mặt trời','Mặt trăng','Lúa','Biển'], answer:1 },
+    ]},
+  { id:'vinh-long', name:'Vĩnh Long', region:'ĐBSCL', emoji:'🍊', capital:'Vĩnh Long', area_km2:1525,
+    highlight:'Vương quốc gốm đỏ Mang Thít, vườn cam, chôm chôm trĩu quả.',
+    quiz:[
+      { q:'Vĩnh Long nổi tiếng với nghề thủ công gì?', choices:['Gốm đỏ','Dệt lụa','Đúc đồng','Khắc gỗ'], answer:0 },
+      { q:'Tỉnh lỵ Vĩnh Long là?', choices:['Vĩnh Long','Bình Minh','Long Hồ','Trà Ôn'], answer:0 },
+    ]},
+  { id:'dong-thap', name:'Đồng Tháp', region:'ĐBSCL', emoji:'🌸', capital:'Cao Lãnh', area_km2:3384,
+    highlight:'Đất Sen Hồng — Tràm Chim, làng hoa Sa Đéc, sếu đầu đỏ.',
+    quiz:[
+      { q:'Đồng Tháp được gọi là vùng đất gì?', choices:['Đất Phật','Đất Sen Hồng','Đất Mũi','Đất Đỏ'], answer:1 },
+      { q:'Khu bảo tồn nào nổi tiếng ở Đồng Tháp?', choices:['Cát Tiên','Tràm Chim','U Minh','Cúc Phương'], answer:1 },
+    ]},
+  { id:'an-giang', name:'An Giang', region:'ĐBSCL', emoji:'⛰️', capital:'Long Xuyên', area_km2:3537,
+    highlight:'Núi Cấm "thiên cẩm sơn", rừng tràm Trà Sư, lễ Bà Chúa Xứ.',
+    quiz:[
+      { q:'Tỉnh lỵ An Giang là?', choices:['Châu Đốc','Long Xuyên','Tân Châu','Tịnh Biên'], answer:1 },
+      { q:'Rừng tràm nào nổi tiếng ở An Giang?', choices:['U Minh','Trà Sư','Tràm Chim','Cát Tiên'], answer:1 },
+    ]},
+  { id:'kien-giang', name:'Kiên Giang', region:'ĐBSCL', emoji:'🏝️', capital:'Rạch Giá', area_km2:6347,
+    highlight:'Đảo ngọc Phú Quốc — bãi Sao, làng chài, nước mắm trứ danh.',
+    quiz:[
+      { q:'Đảo nào lớn nhất Việt Nam thuộc Kiên Giang?', choices:['Côn Đảo','Phú Quốc','Lý Sơn','Cát Bà'], answer:1 },
+      { q:'Tỉnh lỵ Kiên Giang là?', choices:['Phú Quốc','Hà Tiên','Rạch Giá','Kiên Lương'], answer:2 },
+    ]},
+  { id:'hau-giang', name:'Hậu Giang', region:'ĐBSCL', emoji:'🌾', capital:'Vị Thanh', area_km2:1622,
+    highlight:'Vựa lúa, vườn khóm Cầu Đúc, chợ nổi Ngã Bảy.',
+    quiz:[
+      { q:'Tỉnh lỵ Hậu Giang là?', choices:['Ngã Bảy','Vị Thanh','Long Mỹ','Châu Thành'], answer:1 },
+      { q:'Chợ nổi nào ở Hậu Giang?', choices:['Cái Răng','Ngã Bảy','Cái Bè','Long Xuyên'], answer:1 },
+    ]},
+  { id:'soc-trang', name:'Sóc Trăng', region:'ĐBSCL', emoji:'🥮', capital:'Sóc Trăng', area_km2:3311,
+    highlight:'Bánh pía, lạp xưởng, chùa Dơi và lễ hội đua ghe Ngo.',
+    quiz:[
+      { q:'Đặc sản bánh nổi tiếng nhất Sóc Trăng?', choices:['Bánh pía','Bánh chưng','Bánh xèo','Bánh đa'], answer:0 },
+      { q:'Lễ hội đua ghe Ngo của dân tộc nào?', choices:['Kinh','Khmer','Chăm','Hoa'], answer:1 },
+    ]},
+  { id:'bac-lieu', name:'Bạc Liêu', region:'ĐBSCL', emoji:'🎤', capital:'Bạc Liêu', area_km2:2669,
+    highlight:'Quê hương đờn ca tài tử, nhà công tử Bạc Liêu, điện gió ven biển.',
+    quiz:[
+      { q:'Loại hình nghệ thuật nào gắn với Bạc Liêu?', choices:['Chèo','Quan họ','Đờn ca tài tử','Hát xẩm'], answer:2 },
+      { q:'Bạc Liêu nổi tiếng với năng lượng tái tạo nào?', choices:['Mặt trời','Gió','Thủy điện','Sinh khối'], answer:1 },
+    ]},
+  { id:'ca-mau', name:'Cà Mau', region:'ĐBSCL', emoji:'🦀', capital:'Cà Mau', area_km2:5295,
+    highlight:'Mũi Cà Mau — cực Nam Tổ quốc, rừng đước U Minh, cua biển trứ danh.',
+    quiz:[
+      { q:'Cà Mau là điểm cực nào của Việt Nam?', choices:['Cực Bắc','Cực Nam','Cực Đông','Cực Tây'], answer:1 },
+      { q:'Rừng nào nổi tiếng ở Cà Mau?', choices:['U Minh','Cát Tiên','Tràm Chim','Bạch Mã'], answer:0 },
+    ]},
+];
