@@ -252,7 +252,7 @@
 </div>
 
 <script type="module">
-  import { L57_OSCE_EXAM } from './js/scenarios/year5.js';
+  import { loadOsceExam } from './js/scenarios/year5.js';
   import { getPlayerName, getClassCode, setPlayerName, setClassCode } from './js/api.js';
 
   const VERSION = 'GC07-osce-championship';
@@ -261,7 +261,8 @@
   // --------------------------------------------------------------
   // Global state
   // --------------------------------------------------------------
-  const exam = L57_OSCE_EXAM;
+  // Đề OSCE từ DB (/api/content/osce-exam) — không bundle nữa.
+  const exam = await loadOsceExam();
   const totalWeight = exam.stations.reduce((s, st) => s + (st.weight || 0), 0) || 100;
 
   let state = {

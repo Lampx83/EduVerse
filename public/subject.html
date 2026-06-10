@@ -98,8 +98,10 @@
 <script type="module">
   import { migrateAllKnown } from './js/engine/storage.js';
   migrateAllKnown();
-  import { MATH6_CHAPTERS } from './js/scenarios/secondary-math6-lessons.js';
   import { onLogin, getProgress, getDailyQuests, streakAtRisk } from './js/engine/wallet.js';
+  // Chương Toán 6 từ DB (/api/content/math6-chapters) — không bundle nữa.
+  const MATH6_CHAPTERS = await fetch('/api/content/math6-chapters', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : { items: [] }).then(j => j.items || []).catch(() => []);
   import { renderWalletPills, renderDailyQuests, showAchievementToast } from './js/engine/path-renderer.js';
 
   const params = new URLSearchParams(location.search);
