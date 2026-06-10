@@ -2,7 +2,13 @@
  *
  * Chiến lược:
  *   - HTML/navigations  → Network-first, fallback cache → fallback /index.html.
- *   - JS/CSS/JSON same-origin → Stale-While-Revalidate (nhanh + tự cập nhật ngầm).
+ *   - JS/MJS same-origin → Network-first (cache:'no-cache' để revalidate qua 304),
+ *       fallback cache khi offline. LÝ DO: HTML là network-first nên luôn mới; nếu
+ *       JS bị phục vụ stale (SWR) thì ES-module import lệch version → "does not
+ *       provide an export named X" → trang kẹt "Đang tải nội dung…" (chỉ Ctrl+Shift+R
+ *       mới thoát). Network-first cho JS bảo đảm HTML mới luôn ghép JS mới.
+ *   - CSS/JSON same-origin → Stale-While-Revalidate, revalidate cache:'no-cache'
+ *       (bypass HTTP max-age=86400 nên tự lành sau 1 lần tải, không kẹt 24h).
  *   - Hình ảnh / glTF / GLB / fonts → Cache-first (immutable assets).
  *   - API (/api/*)      → Network-only (KHÔNG cache để không hỏng leaderboard/AI).
  *   - WebSocket (/ws*)  → bypass (browser tự xử lý).
@@ -11,7 +17,7 @@
  * offline. Versioning theo SW_VERSION — bump khi đổi shell danh sách.
  */
 
-const SW_VERSION = 'tizia-2026-06-10-web-push-v16';
+const SW_VERSION = 'tizia-2026-06-10-js-netfirst-v17';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const IMAGE_CACHE = `${SW_VERSION}-img`;
@@ -122,21 +128,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS / CSS / JSON → Stale-While-Revalidate. EXCEPT các shell-script lõi
-  // (auth-header, engagement-hud, auth, api) → Network-first để bug-fix lan
-  // tới user trong cùng phiên, không cần đợi cache hết hạn 24h.
   if (isAsset(req)) {
-    const path = url.pathname;
-    const isCoreShell = /\/js\/(auth-header|engagement-hud|auth|api|enrollment|plans|sso|consent-banner|notifications-bell)\.js$/.test(path);
-    if (isCoreShell) {
+    const path = url.pathname.toLowerCase();
+    // JS / MJS (kể cả ES module) → NETWORK-FIRST. Phải khớp version với HTML
+    // (network-first) — nếu phục vụ stale thì import lệch export → SyntaxError →
+    // trang trắng. cache:'no-cache' = gửi conditional request, server trả 304 khi
+    // không đổi (nhẹ) nhưng KHÔNG bị HTTP disk cache (max-age=86400) giữ bản cũ.
+    // Offline → fallback bản trong SW cache.
+    const isScript = req.destination === 'script' || /\.(?:js|mjs)$/.test(path);
+    if (isScript) {
       event.respondWith((async () => {
         const cache = await caches.open(RUNTIME_CACHE);
         try {
-          // cache: 'reload' bypasses HTTP disk cache — đảm bảo bug-fix lan tới
-          // user trong cùng phiên, không bị max-age=86400 của static handler giữ lại
-          const fresh = await fetch(req, { cache: 'reload' });
-          if (fresh && fresh.ok) cache.put(req, fresh.clone());
-          return fresh;
+          const fresh = await fetch(req, { cache: 'no-cache' });
+          if (fresh && fresh.ok) { cache.put(req, fresh.clone()); return fresh; }
+          const cached = await cache.match(req);
+          return cached || fresh;   // 5xx mà có cache → dùng cache; không thì trả lỗi gốc
         } catch {
           const cached = await cache.match(req);
           return cached || Response.error();
@@ -144,10 +151,12 @@ self.addEventListener('fetch', (event) => {
       })());
       return;
     }
+    // CSS / JSON → Stale-While-Revalidate (nhanh), nhưng revalidate cache:'no-cache'
+    // để KHÔNG kẹt bản cũ trong HTTP cache 24h → tự lành sau lần tải kế.
     event.respondWith((async () => {
       const cache = await caches.open(RUNTIME_CACHE);
       const cached = await cache.match(req);
-      const network = fetch(req).then(res => {
+      const network = fetch(req, { cache: 'no-cache' }).then(res => {
         if (res && res.ok) cache.put(req, res.clone());
         return res;
       }).catch(() => null);
