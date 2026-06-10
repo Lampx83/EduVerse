@@ -70,6 +70,10 @@ async function autoMount() {
         <button class="nbell-readall" id="nbell-readall" type="button">Đánh dấu đã đọc</button>
       </div>
       <div class="nbell-list" id="nbell-list">Đang tải…</div>
+      <div class="nbell-foot" id="nbell-push-row" hidden>
+        <span class="nbell-foot-label">📲 Nhắc học trên thiết bị</span>
+        <button class="nbell-push-toggle" id="nbell-push-toggle" type="button">Bật</button>
+      </div>
     </div>
   `;
   (slot || document.body).appendChild(root);
@@ -146,6 +150,59 @@ async function autoMount() {
 
   // Polling nhẹ — refresh count mỗi 60s khi tab hiển thị.
   setInterval(() => { if (!document.hidden) refresh(); }, POLL_MS);
+
+  setupPushToggle(root).catch(() => {});
+}
+
+// ── Web Push toggle — đăng ký nhận "nhắc học" qua smart-notif ──
+function urlB64ToUint8(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function setupPushToggle(root) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const row = root.querySelector('#nbell-push-row');
+  const btn = root.querySelector('#nbell-push-toggle');
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  row.hidden = false;
+
+  const paint = () => {
+    btn.textContent = sub ? 'Đang bật ✓' : 'Bật';
+    btn.classList.toggle('on', !!sub);
+  };
+  paint();
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      if (sub) {
+        await sub.unsubscribe().catch(() => {});
+        sub = null;
+        await api('/api/notif/unsubscribe', { method: 'POST' });
+      } else {
+        if ((await Notification.requestPermission()) !== 'granted') return;
+        const k = await api('/api/notif/vapid-key');
+        if (!k.ok || !k.data?.key) return;
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlB64ToUint8(k.data.key),
+        });
+        const j = sub.toJSON();
+        await api('/api/notif/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: j.endpoint, p256dh: j.keys?.p256dh, auth: j.keys?.auth }),
+        });
+        api('/api/notif/test', { method: 'POST' }).catch(() => {});
+      }
+    } finally {
+      btn.disabled = false;
+      paint();
+    }
+  });
 }
 
 let stylesInjected = false;
@@ -211,6 +268,17 @@ function injectStylesOnce() {
     }
     .nbell-readall:hover { background: rgba(251,191,36,0.2); }
     .nbell-list { overflow-y: auto; padding: 6px; flex: 1; }
+    .nbell-foot {
+      display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+      border-top: 1px solid rgba(255,255,255,0.1); font-size: 12.5px;
+    }
+    .nbell-foot-label { flex: 1; opacity: 0.85; }
+    .nbell-push-toggle {
+      background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.15);
+      padding: 4px 10px; border-radius: 7px; cursor: pointer; font-size: 11.5px;
+    }
+    .nbell-push-toggle.on { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.5); }
+    .nbell-push-toggle:disabled { opacity: 0.5; cursor: wait; }
     .nbell-empty {
       padding: 22px 12px; opacity: 0.6; font-style: italic;
       font-size: 12.5px; text-align: center; line-height: 1.5;

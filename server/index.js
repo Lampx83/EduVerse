@@ -41,7 +41,7 @@ import { attachTeacher } from './contexts/teacher/index.js';
 import { attachExperiments, getVariant, checkFlag } from './contexts/experiments/index.js';
 import { attachLiveQuizHttp, attachLiveQuizWs } from './contexts/live-quiz/index.js';
 import { attachSrs } from './contexts/srs/index.js';
-import { attachSmartNotif, logActivity } from './contexts/smart-notif/index.js';
+import { attachSmartNotif, scheduleSmartNudges, logActivity } from './contexts/smart-notif/index.js';
 import { attachFeatureGate } from './contexts/feature-gate/index.js';
 import { attachDashboard } from './contexts/dashboard/index.js';
 import { attachCampusLayout } from './contexts/campus/layout.js';
@@ -354,8 +354,9 @@ attachExperiments(r);
 attachLiveQuizHttp(r);
 // SRS Flashcards — review queue + decks
 attachSrs(r);
-// Smart Notifications — activity log + best-time-to-nudge analytics
+// Smart Notifications — activity log + best-time-to-nudge analytics + web push
 attachSmartNotif(r);
+scheduleSmartNudges();
 // Feature Gate — Progressive Disclosure (Duolingo-style)
 attachFeatureGate(r);
 // Dashboard — single source of truth (personal + engagement + league + recs)

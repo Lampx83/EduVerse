@@ -11,7 +11,7 @@
  * offline. Versioning theo SW_VERSION — bump khi đổi shell danh sách.
  */
 
-const SW_VERSION = 'tizia-2026-06-08-pwa-install-v15';
+const SW_VERSION = 'tizia-2026-06-10-web-push-v16';
 const SHELL_CACHE = `${SW_VERSION}-shell`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const IMAGE_CACHE = `${SW_VERSION}-img`;
@@ -154,4 +154,28 @@ self.addEventListener('fetch', (event) => {
       return cached || (await network) || Response.error();
     })());
   }
+});
+
+// ── Web Push — nhắc học từ smart-notif (server gửi qua VAPID) ──
+self.addEventListener('push', (event) => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch {}
+  event.waitUntil(self.registration.showNotification(d.title || 'Tizia', {
+    body: d.body || '',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    data: { url: d.url || './' },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || './', self.location.origin).href;
+  event.waitUntil((async () => {
+    const wins = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const w of wins) {
+      if (w.url === url && 'focus' in w) return w.focus();
+    }
+    return clients.openWindow(url);
+  })());
 });
