@@ -4,6 +4,20 @@ Trước đây toàn bộ content học (đề quiz + lý thuyết tuần) **har
 `public/js/scenarios/lop*/*.js`** và FE import trực tiếp. Đã migrate sang DB để
 sửa nóng + admin CRUD mà không cần deploy lại.
 
+## 2 kho content trong DB
+- **`curriculum_content`** — scenario tuần học (quiz + lý thuyết). Seed:
+  `seed-curriculum.mjs`. API `/api/curriculum/*`.
+- **`content_datasets`** (collection, item_key, body) — MỌI data heterogeneous
+  khác. Seed: `seed-content.mjs`. API `/api/content/:collection`. Collections:
+  history-characters, patient-cases, math2-topics, math6-topics, negotiation,
+  osce-exam, math6-chapters, drug-catalog (180 thuốc), lab-recipes, lab-reagents,
+  provinces (63 tỉnh), pronunciation. Nguồn seed ở `public/js/scenarios/_data/`
+  (+ vài file gốc còn vai khác như lab-recipes, secondary-math6-lessons).
+  → File `*-vn.js`/loader giờ logic-only fetch DB; trang `await loadXxx()`.
+
+⚠️ **Deploy phải seed CẢ HAI** trên prod: `seed-curriculum.mjs` + `seed-content.mjs`
+(không còn fallback JS cho data đã migrate).
+
 ## Kiến trúc mới
 
 ```
