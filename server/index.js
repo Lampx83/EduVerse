@@ -34,6 +34,7 @@ import { attachEngagement, trackEngagementProgress } from './contexts/engagement
 import { addLeagueWeekXp } from './contexts/engagement/league.js';
 import { attachLearning, updateIrt } from './contexts/learning/index.js';
 import { attachCurriculum } from './contexts/curriculum/index.js';
+import { attachContent } from './contexts/content/index.js';
 import { attachPresence } from './contexts/multiplayer/presence.js';
 import { attachUgc } from './contexts/ugc/index.js';
 import { attachEconomy, addBpXp } from './contexts/economy/index.js';
@@ -343,6 +344,8 @@ attachEngagement(r);
 attachLearning(r);
 // Curriculum — content học (quiz + lý thuyết) lưu DB, sửa nóng + admin CRUD
 attachCurriculum(r);
+// Content store tổng quát — data heterogeneous (ca lâm sàng, nhân vật LS, thuốc…)
+attachContent(r);
 // UGC marketplace — Quest Builder + Play + Like/Flag (Trục C — Roblox Edu)
 attachUgc(r);
 // Economy — Battle Pass + Skin Shop + Daily Login Bonus

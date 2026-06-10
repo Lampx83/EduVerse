@@ -171,12 +171,15 @@
 </div>
 
 <script type="module">
-import { HISTORY_CHARACTERS, CHARACTER_INDEX, getCharacterById } from './js/scenarios/history-characters-vn.js';
+import { loadHistoryCharacters } from './js/scenarios/history-characters-vn.js';
 
 const $ = (id) => document.getElementById(id);
 let current = null;
 let history = [];
 let thinking = false;
+
+// Data nhân vật từ DB (/api/content/history-characters) — không bundle nữa.
+const { index: CHARACTER_INDEX, getById: getCharacterById } = await loadHistoryCharacters();
 
 // Picker
 $('gallery').innerHTML = CHARACTER_INDEX.map(c => `
