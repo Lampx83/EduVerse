@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>📝 Sửa nội dung học · Tizia</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<style>
+  :root {
+    --bg:#0f172a; --bg2:#1e293b; --border:rgba(255,255,255,.12); --txt:#e2e8f0;
+    --muted:#94a3b8; --accent:#fbbf24; --ok:#22c55e; --danger:#ef4444; --purple:#a78bfa;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg); color:var(--txt); line-height:1.5; }
+  header { padding:14px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; }
+  header .sub { color:var(--muted); font-size:13px; }
+  header a.back { margin-left:auto; color:var(--muted); text-decoration:none; font-size:13px; }
+  .wrap { max-width:1100px; margin:0 auto; padding:20px 22px 60px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  input, select, textarea { background:var(--bg2); border:1px solid var(--border); color:var(--txt);
+    border-radius:9px; padding:9px 12px; font-size:14px; font-family:inherit; }
+  input:focus, textarea:focus { outline:none; border-color:var(--accent); }
+  button { background:rgba(255,255,255,.08); color:var(--txt); border:1px solid var(--border);
+    border-radius:9px; padding:9px 16px; font-size:13.5px; font-weight:600; cursor:pointer; transition:.12s; }
+  button:hover { background:rgba(255,255,255,.14); }
+  button.primary { background:var(--accent); color:#1a1205; border-color:var(--accent); }
+  button.danger { background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.4); color:#fca5a5; }
+  .hint { color:var(--muted); font-size:12.5px; }
+  .list { display:grid; gap:6px; margin:10px 0; }
+  .item { display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--bg2);
+    border:1px solid var(--border); border-radius:9px; cursor:pointer; font-size:13.5px; }
+  .item:hover { border-color:var(--accent); }
+  .item .id { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+  .item .src { margin-left:auto; font-size:11px; padding:1px 8px; border-radius:8px; }
+  .src-seed { background:rgba(148,163,184,.18); color:var(--muted); }
+  .src-admin { background:rgba(251,191,36,.2); color:var(--accent); }
+  .editor { display:none; margin-top:18px; }
+  .editor.on { display:block; }
+  textarea#json { width:100%; min-height:420px; font-family:ui-monospace,Menlo,monospace; font-size:12.5px; line-height:1.55; white-space:pre; }
+  .msg { padding:9px 13px; border-radius:9px; font-size:13px; margin:10px 0; display:none; }
+  .msg.show { display:block; }
+  .msg.ok { background:rgba(34,197,94,.15); color:#86efac; border:1px solid rgba(34,197,94,.35); }
+  .msg.err { background:rgba(239,68,68,.15); color:#fca5a5; border:1px solid rgba(239,68,68,.35); }
+  .pill { font-size:11px; padding:2px 9px; border-radius:9px; background:rgba(167,139,250,.18); color:var(--purple); }
+</style>
+</head>
+<body>
+<header>
+  <h1>📝 Sửa nội dung học</h1>
+  <span class="sub">Sửa nóng quiz + lý thuyết trong DB — không cần deploy lại</span>
+  <a class="back" href="/admin.html">← Ban điều hành</a>
+</header>
+
+<div class="wrap">
+  <div id="gate-msg" class="msg err"></div>
+
+  <div class="row">
+    <input id="module-q" placeholder="Mã module, vd H10TOAN, S6NV, P2TOAN…" style="flex:1;min-width:220px" />
+    <button class="primary" id="load-module">Nạp module</button>
+    <span class="hint">hoặc nhập 1 id cụ thể bên dưới</span>
+  </div>
+  <div class="row">
+    <input id="id-q" placeholder="ID scenario, vd H10TOAN-w01-quiz" style="flex:1;min-width:220px" />
+    <button id="load-id">Mở 1 bài</button>
+  </div>
+
+  <div id="list" class="list"></div>
+
+  <div id="editor" class="editor">
+    <div class="row">
+      <strong id="ed-id"></strong>
+      <span id="ed-src" class="pill"></span>
+      <span class="hint" style="margin-left:auto">Sửa JSON rồi Lưu. Phải hợp lệ + giữ đúng <code>id</code>.</span>
+    </div>
+    <div id="ed-msg" class="msg"></div>
+    <textarea id="json" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" id="save">💾 Lưu (sửa nóng)</button>
+      <button id="reseed" title="Khôi phục về bản gốc từ file JS — chỉ có tác dụng sau khi chạy seed lại">↩︎ Xoá bản sửa tay</button>
+      <button class="danger" id="del" style="margin-left:auto">🗑 Ẩn bài này</button>
+    </div>
+    <p class="hint">💡 "Xoá bản sửa tay" gỡ bản admin → lần seed kế tiếp sẽ phủ lại bản gốc từ file JS. "Ẩn bài" = soft-delete (active=0), HS không thấy nhưng dữ liệu còn.</p>
+  </div>
+</div>
+
+<script type="module">
+const $ = s => document.querySelector(s);
+const gateMsg = $('#gate-msg'), edMsg = $('#ed-msg');
+
+function showMsg(el, text, kind) { el.textContent = text; el.className = 'msg show ' + kind; }
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+// Kiểm tra quyền admin: gọi 1 route requireAdmin nhẹ. 401/403 → chặn.
+(async () => {
+  const r = await fetch('/api/auth/me', { credentials:'same-origin' });
+  if (r.status === 401) { gateMsg.classList.add('show'); gateMsg.textContent = 'Cần đăng nhập admin. → /login.html'; return; }
+  const me = (await r.json())?.user;
+  if (!me || me.role !== 'admin') {
+    gateMsg.classList.add('show');
+    gateMsg.textContent = 'Trang này chỉ dành cho admin. Tài khoản hiện tại: ' + (me?.role || 'khách') + '.';
+    document.querySelectorAll('button,input').forEach(b => b.disabled = true);
+  }
+})();
+
+let current = null;   // scenario đang mở
+
+async function loadModule() {
+  const mod = $('#module-q').value.trim();
+  if (!mod) return;
+  $('#list').innerHTML = '<div class="hint">Đang nạp…</div>';
+  try {
+    const r = await fetch('/api/curriculum/module/' + encodeURIComponent(mod), { credentials:'same-origin' });
+    const j = await r.json();
+    const items = j.items || [];
+    if (!items.length) { $('#list').innerHTML = '<div class="hint">Không có bài nào khớp mã "' + esc(mod) + '".</div>'; return; }
+    $('#list').innerHTML = items.map(s =>
+      `<div class="item" data-id="${esc(s.id)}">
+        <span>${esc(s.title || s.id)}</span>
+        <span class="id">${esc(s.id)}</span>
+        <span>${s.questions?.length || 0} câu${s.lesson ? ' · 📖' : ''}</span>
+      </div>`).join('');
+    $('#list').querySelectorAll('.item').forEach(el =>
+      el.addEventListener('click', () => openId(el.dataset.id)));
+  } catch (e) { $('#list').innerHTML = '<div class="hint">Lỗi: ' + esc(e.message) + '</div>'; }
+}
+
+async function openId(id) {
+  try {
+    const r = await fetch('/api/curriculum/' + encodeURIComponent(id), { credentials:'same-origin' });
+    if (!r.ok) { showMsg(edMsg, 'Không tìm thấy ' + id, 'err'); return; }
+    const j = await r.json();
+    current = j.item;
+    $('#ed-id').textContent = current.id;
+    const src = current.__source;
+    $('#ed-src').textContent = 'trong DB';
+    $('#json').value = JSON.stringify(current, null, 2);
+    $('#editor').classList.add('on');
+    edMsg.className = 'msg';
+    $('#editor').scrollIntoView({ behavior:'smooth' });
+  } catch (e) { showMsg(edMsg, 'Lỗi: ' + e.message, 'err'); }
+}
+
+async function save() {
+  let sc;
+  try { sc = JSON.parse($('#json').value); }
+  catch (e) { showMsg(edMsg, 'JSON không hợp lệ: ' + e.message, 'err'); return; }
+  if (!sc.id || sc.id !== current.id) { showMsg(edMsg, 'Không được đổi id (' + current.id + ').', 'err'); return; }
+  try {
+    const r = await fetch('/api/curriculum/' + encodeURIComponent(sc.id), {
+      method:'PUT', credentials:'same-origin',
+      headers:{'Content-Type':'application/json'}, body: JSON.stringify(sc),
+    });
+    const j = await r.json();
+    if (!r.ok) { showMsg(edMsg, 'Lỗi lưu: ' + (j.message || j.error || r.status), 'err'); return; }
+    showMsg(edMsg, '✓ Đã lưu. HS sẽ thấy bản mới ngay lần vào kế tiếp (source=admin).', 'ok');
+  } catch (e) { showMsg(edMsg, 'Lỗi mạng: ' + e.message, 'err'); }
+}
+
+async function del() {
+  if (!current || !confirm('Ẩn bài "' + current.id + '" khỏi HS? (soft-delete, khôi phục được)')) return;
+  const r = await fetch('/api/curriculum/' + encodeURIComponent(current.id), { method:'DELETE', credentials:'same-origin' });
+  const j = await r.json();
+  if (r.ok) showMsg(edMsg, '✓ Đã ẩn ' + current.id + '. Chạy seed lại để khôi phục (hoặc set active=1).', 'ok');
+  else showMsg(edMsg, 'Lỗi: ' + (j.error || r.status), 'err');
+}
+
+$('#load-module').addEventListener('click', loadModule);
+$('#module-q').addEventListener('keydown', e => { if (e.key === 'Enter') loadModule(); });
+$('#load-id').addEventListener('click', () => { const id = $('#id-q').value.trim(); if (id) openId(id); });
+$('#id-q').addEventListener('keydown', e => { if (e.key === 'Enter') { const id = e.target.value.trim(); if (id) openId(id); } });
+$('#save').addEventListener('click', save);
+$('#del').addEventListener('click', del);
+$('#reseed').addEventListener('click', () =>
+  showMsg(edMsg, 'Để khôi phục bản gốc: gỡ row admin trong DB rồi chạy seed-curriculum.mjs. (Nút này chỉ nhắc — chưa tự động hoá để tránh mất bản sửa nhầm.)', 'ok'));
+</script>
+</body>
+</html>

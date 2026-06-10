@@ -2074,7 +2074,9 @@ function renderTabBar() {
   const tabsHtml = Object.entries(TABS).map(([k,v]) => {
     const badge = v.badge ? `<span class="count">${v.badge()}</span>` : '';
     return `<button class="tab ${k === currentTab ? 'active' : ''}" data-k="${k}">${v.label}${badge}</button>`;
-  }).join('');
+  }).join('')
+    // Link ra trang sửa nội dung học (curriculum_content) — không phải tab SPA.
+    + `<a class="tab" href="/admin-curriculum.html" title="Sửa nóng quiz + lý thuyết trong DB">✏️ Sửa nội dung</a>`;
   const bar = $('#tabs');
   if (bar) bar.innerHTML = tabsHtml;
 }
