@@ -21,7 +21,9 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DRY = process.argv.includes('--dry');
 
-const scenariosUrl = pathToFileURL(resolve(__dirname, '../../public/js/scenarios/index.js')).href;
+// Nguồn content gốc: _all-content.js (aggregator data) — KHÔNG phải index.js
+// (index.js giờ logic-only, ALL_SCENARIOS rỗng).
+const scenariosUrl = pathToFileURL(resolve(__dirname, '../../public/js/scenarios/_all-content.js')).href;
 const { ALL_SCENARIOS } = await import(scenariosUrl);
 
 const all = Object.values(ALL_SCENARIOS).filter(s => s && s.id);
