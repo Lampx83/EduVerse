@@ -7,12 +7,15 @@
 
 /**
  * Tạo 1 câu hỏi trắc nghiệm 4 lựa chọn.
- * - explanation: chuỗi NGẮN 1 dòng (in cùng dòng "Chính xác!").
- * - theory:      tuỳ chọn — chuỗi HTML hoặc mảng đoạn — render thành khối
- *                "📚 Lý thuyết" riêng dưới phần explanation cho học sinh đào sâu.
+ * - explanation:    chuỗi NGẮN 1 dòng (in cùng dòng "Chính xác!").
+ * - theory:         tuỳ chọn — chuỗi HTML hoặc mảng đoạn — render thành khối
+ *                   "📚 Lý thuyết" riêng dưới phần explanation cho học sinh đào sâu.
+ * - choiceFeedback: tuỳ chọn — mảng N string (1 / lựa chọn) — render dưới TỪNG đáp án
+ *                   sau khi học sinh chọn: "✓ Đúng vì..." cho đáp án đúng, "❌ Sai vì..."
+ *                   cho các đáp án sai. Cho phép tag <b><i><code>.
  */
-export const Q = (stem, choices, answer, explanation, theory) =>
-  ({ stem, choices, answer, explanation, theory });
+export const Q = (stem, choices, answer, explanation, theory, choiceFeedback) =>
+  ({ stem, choices, answer, explanation, theory, choiceFeedback });
 
 /**
  * Tạo 1 scenario tuần cho Lớp 6.

@@ -51,7 +51,7 @@ Yêu cầu cụ thể:
 2. Bổ sung field `subjects.grade_level`, `subjects.grade`, `subjects.curriculum_version` (mặc định `'gdpt-2018'`).
 3. Bổ sung field `chapters.week_no` (1..36 nullable), `chapters.sequence` (1..N), `chapters.required` (bool — môn bắt buộc/tự chọn).
 4. Bổ sung field `questions.difficulty` (1..5), `questions.bloom_level` (1..6), `questions.question_type` (enum: single_choice, multi_choice, true_false, fill_blank, ordering, matching, short_answer).
-5. **Bổ sung field giải thích dài + lý thuyết kèm** (yêu cầu từ Tizia, người dùng đã feedback "giải thích đáp án ngắn, đọc xong không hiểu — cần lý thuyết đi kèm"):
+5. **Bổ sung field giải thích dài + lý thuyết kèm + giải thích từng đáp án** (yêu cầu từ Tizia, người dùng feedback "giải thích đáp án ngắn, đọc xong không hiểu — cần lý thuyết đi kèm" + "cần giải thích chi tiết hơn cho TỪNG đáp án A/B/C/D"):
    - `questions.explanation` (string) — tăng giới hạn lên **2000 ký tự** (hiện có thể đang TEXT 500). Đây là dòng giải thích NGẮN hiện ngay khi học sinh chọn xong (vd: "Tính từ ngắn (1 âm tiết) → adj + -er + than. Ví dụ: tall → taller than.").
    - `questions.theory` (JSON / longtext, nullable) — **mảng các đoạn HTML**, mỗi đoạn 1–3 câu, render thành block "📚 Lý thuyết" riêng bên dưới explanation cho học sinh đào sâu. Giới hạn:
      - tối đa **10 đoạn**, mỗi đoạn ≤ **2000 ký tự**, tổng cộng ≤ **15000 ký tự**.
@@ -68,7 +68,22 @@ Yêu cầu cụ thể:
          ]
        }
        ```
-   - Migration: cả 2 field nullable, default NULL — back-compat với câu cũ.
+   - `questions.choice_feedback` (JSON / longtext, nullable) — **mảng N string** (N = số phần tử choices, thường = 4), 1 entry giải thích vì sao mỗi đáp án A/B/C/D đúng/sai. Tizia render dưới TỪNG nút đáp án sau khi học sinh chọn. Giới hạn:
+     - mỗi entry 1..400 ký tự (ngắn hơn theory — đây là 1 câu giải thích/đáp án).
+     - tổng tất cả entry ≤ 2000 ký tự.
+     - Allowlist HTML tag (chặt hơn theory): chỉ `<b> <i> <code> <em> <strong>`. KHÔNG cho `<ul><li><br><p>` (giữ gọn 1 dòng / đáp án).
+     - Format mẫu (cùng câu Comparative adjectives):
+       ```json
+       {
+         "choice_feedback": [
+           "Đúng — tính từ <code>tall</code> ngắn (1 âm tiết) → thêm <code>-er + than</code>: <i>taller than</i>.",
+           "Sai — <code>-est</code> là so sánh NHẤT (3+ đối tượng), không phải so sánh hơn.",
+           "Sai — <code>more</code> dùng cho tính từ DÀI (≥3 âm tiết), không dùng với <code>tall</code>.",
+           "Sai — <code>most</code> cũng dành cho tính từ DÀI + ở dạng so sánh NHẤT."
+         ]
+       }
+       ```
+   - Migration: cả 3 field nullable, default NULL — back-compat với câu cũ.
 6. Migration phải **back-compatible** với data hiện tại — không break Tizia Public API đang chạy.
 
 ## C. Phase 2 — Public Write API cho content publishing
@@ -101,6 +116,9 @@ Validation:
 - `explanation` (nếu có): 1..2000 ký tự, plain text (cho phép `<b><i><code>`).
 - `theory` (nếu có): array 1..10 đoạn HTML, mỗi đoạn ≤ 2000 ký tự, tổng ≤ 15000.
   - Sanitize bằng allowlist tag `<b> <i> <code> <ul> <ol> <li> <br> <p> <em> <strong>` — strip tag khác + mọi attribute. Reject toàn bộ payload nếu có `<script>` / `<style>` / `<iframe>` / `<img>` / `on*=` / `javascript:`.
+- `choice_feedback` (nếu có): array N entries (N = `options.length`), mỗi entry 1..400 ký tự, tổng ≤ 2000.
+  - Sanitize chặt hơn: allowlist `<b> <i> <code> <em> <strong>` (KHÔNG `<ul><li><br><p>`).
+  - Số phần tử PHẢI bằng số phần tử `options`. Reject nếu lệch.
 - Bulk insert: trả về `created[]`, `skipped[]` (duplicate fingerprint), `errors[]` từng dòng.
 - Idempotency: header `Idempotency-Key` cho POST bulk.
 - Idempotent qua `external_id` (vd `"S6TA-w13-q1"`): khi POST có cùng external_id → UPDATE thay vì INSERT mới (giúp Tizia sync lại lop6/*.js nhiều lần).
@@ -153,6 +171,12 @@ Mỗi response gắn `X-Curriculum-Version: gdpt-2018-2022` để Tizia biết v
         "Với tính từ <b>NGẮN (1 âm tiết)</b>: <ul><li><code>tall → taller than</code></li><li><code>short → shorter than</code></li></ul>",
         "⚠️ Phân biệt với so sánh NHẤT (<code>-est</code>)."
       ],
+      "choice_feedback": [
+        "Đúng — tính từ <code>tall</code> ngắn (1 âm tiết) → thêm <code>-er + than</code>: <i>taller than</i>.",
+        "Sai — <code>-est</code> là so sánh NHẤT (3+ đối tượng), không phải so sánh hơn.",
+        "Sai — <code>more</code> dùng cho tính từ DÀI (≥3 âm tiết), không dùng với <code>tall</code>.",
+        "Sai — <code>most</code> cũng dành cho tính từ DÀI + ở dạng so sánh NHẤT."
+      ],
       "difficulty": 2,
       "bloom_level": 2,
       "question_type": "single_choice"
@@ -164,8 +188,9 @@ Mỗi response gắn `X-Curriculum-Version: gdpt-2018-2022` để Tizia biết v
 }
 ```
 
-⚠️ **2 field MỚI ở response** (so với Public API hiện tại):
+⚠️ **3 field MỚI ở response** (so với Public API hiện tại):
 - `theory` — array of HTML strings (có thể null nếu chưa biên soạn). Tizia engine render thành block "📚 Lý thuyết" dưới explanation.
+- `choice_feedback` — array N strings tương ứng với `options` (có thể null). Tizia render dưới TỪNG nút đáp án sau khi học sinh chọn — "✓ Đúng vì..." hoặc "✗ Sai vì...".
 - `external_id` — text id ngoại (Tizia gán khi import từ `scenarios/lop6/*.js`).
 
 Field `explanation` đã có sẵn nhưng cần đảm bảo trả về full 2000 ký tự (không truncate).

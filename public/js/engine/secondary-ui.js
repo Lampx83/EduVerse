@@ -251,6 +251,27 @@ function injectSecondaryStyles() {
     font-size: 12.5px; color: #fde68a; }
   .sqz-theory b, .sqz-theory strong { color: #fef3c7; }
 
+  /* Per-choice feedback — hiện dưới text của TỪNG đáp án sau khi lock */
+  .sqz-opt-body { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+  .sqz-opt-text { display: block; font-weight: 700; }
+  .sqz-opt-fb { display: block; font-size: 13px; line-height: 1.55;
+    font-weight: 500; margin-top: 4px;
+    padding: 8px 10px; border-radius: 8px;
+    animation: sqzFade .35s ease .08s both; }
+  .sqz-opt-fb .ico { display: inline-block; margin-right: 6px; font-weight: 900;
+    font-size: 14px; }
+  .sqz-opt-fb.ok  { background: rgba(15,23,42,0.55); color: #d1fae5;
+    border-left: 3px solid #22c55e; }
+  .sqz-opt-fb.ok  .ico { color: #4ade80; }
+  .sqz-opt-fb.bad { background: rgba(15,23,42,0.55); color: #fee2e2;
+    border-left: 3px solid #ef4444; }
+  .sqz-opt-fb.bad .ico { color: #f87171; }
+  .sqz-opt-fb code { background: rgba(253,224,71,0.15); padding: 1px 6px;
+    border-radius: 4px; font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px; color: #fde68a; font-weight: 600; }
+  .sqz-opt-fb b, .sqz-opt-fb strong { color: #fef3c7; font-weight: 800; }
+  .sqz-opt-fb i, .sqz-opt-fb em { color: #e0e7ff; }
+
   .sqz-footer { position:sticky; bottom:0; display:flex; gap:12px; align-items:center;
     background: rgba(15,23,42,.92); backdrop-filter: blur(8px);
     border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:12px 16px; }
@@ -942,7 +963,10 @@ export function renderQuizSecondary(engine, host) {
           ${q.choices.map((c, ci) => `
             <button type="button" class="sqz-opt${locked ? ' is-disabled' : ''}" data-ci="${ci}">
               <span class="key">${String.fromCharCode(65 + ci)}</span>
-              <span>${String(c).replace(/</g,'&lt;')}</span>
+              <span class="sqz-opt-body">
+                <span class="sqz-opt-text">${String(c).replace(/</g,'&lt;')}</span>
+                <span class="sqz-opt-fb" data-fb-ci="${ci}" style="display:none;"></span>
+              </span>
             </button>`).join('')}
         </div>
         <div class="sqz-fb" data-fb style="display:none;"></div>
@@ -972,6 +996,24 @@ export function renderQuizSecondary(engine, host) {
       theoryEl.style.display = 'block';
     };
 
+    // Render per-choice feedback: giải thích vì sao mỗi lựa chọn đúng/sai.
+    // Chỉ render khi học sinh đã chọn (locked) — tránh spoiler.
+    const renderChoiceFeedback = () => {
+      const cfArr = Array.isArray(q.choiceFeedback) ? q.choiceFeedback : null;
+      if (!cfArr) return;
+      opts.forEach(btn => {
+        const ci = Number(btn.dataset.ci);
+        const txt = cfArr[ci];
+        if (!txt) return;
+        const slot = btn.querySelector(`[data-fb-ci="${ci}"]`);
+        if (!slot) return;
+        const isCorrect = ci === q.answer;
+        slot.innerHTML = `<span class="ico">${isCorrect ? '✓' : '✗'}</span> ${String(txt)}`;
+        slot.className = `sqz-opt-fb ${isCorrect ? 'ok' : 'bad'}`;
+        slot.style.display = 'block';
+      });
+    };
+
     if (locked) {
       opts.forEach(o => {
         const ci = Number(o.dataset.ci);
@@ -985,6 +1027,7 @@ export function renderQuizSecondary(engine, host) {
         ? `<span class="xp">+10 XP</span><b>Chính xác!</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`
         : `<b>Chưa đúng.</b> Đáp án: <b>${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
       renderTheory();
+      renderChoiceFeedback();
     }
 
     opts.forEach(btn => {
@@ -1009,6 +1052,7 @@ export function renderQuizSecondary(engine, host) {
           ? `<span class="xp">+10 XP${bonus}</span><b>Chính xác!</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`
           : `<b>Chưa đúng.</b> Đáp án: <b>${String(q.choices[q.answer] || '').replace(/</g,'&lt;')}</b>${q.explanation ? ' — ' + String(q.explanation).replace(/</g,'&lt;') : ''}`;
         renderTheory();
+        renderChoiceFeedback();
         // Refresh streak + progressbar
         render._softUpdate = true;
         const headHTML = wrap.querySelector('.sqz-head').outerHTML;

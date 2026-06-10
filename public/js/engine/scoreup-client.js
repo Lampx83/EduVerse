@@ -84,7 +84,15 @@ export async function hydrateScenarioFromScoreUp(scenario) {
     // Không đủ metadata → giữ nguyên hardcode (vd skill-quizzes, library-career…)
     return scenario;
   }
-  const desiredLimit = Math.max(Array.isArray(scenario.questions) ? scenario.questions.length : 10, 1);
+  // Nếu hardcode đã có theory (lý thuyết kèm — tác giả soạn riêng cho từng câu)
+  // → SKIP ScoreUp. ScoreUp hiện chưa lưu trường theory + choiceFeedback (xem
+  // docs/upgrade-prompts/SCOREUP-UPGRADE.md Phase 1 mục 5). Sau khi ScoreUp upgrade
+  // schema + Tizia bulk-sync câu lên, có thể bỏ guard này để hydration trở lại.
+  const hardQs = Array.isArray(scenario.questions) ? scenario.questions : [];
+  const hasRichLocal = hardQs.some(q => q && (q.theory || q.choiceFeedback));
+  if (hasRichLocal) return { ...scenario, _hydrated: 'hardcode-rich' };
+
+  const desiredLimit = Math.max(hardQs.length, 1);
   try {
     const fresh = await fetchQuizForWeek({ grade, subjectKey, week, limit: desiredLimit });
     if (!fresh.length) return scenario; // ScoreUp rỗng → giữ hardcode
