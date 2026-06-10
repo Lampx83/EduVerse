@@ -102,11 +102,6 @@
 <header id="auth-header"></header>
 <script type="module" src="./js/auth-header.js"></script>
 
-<div class="top">
-  <a class="back" href="/index.html">← Trang chủ</a>
-  <h1>🧠 Học thông minh</h1>
-</div>
-
 <div class="wrap" id="wrap">
   <div class="loading">Đang tải…</div>
 </div>
@@ -115,7 +110,54 @@
 // Page này gốc thiết kế cho quiz Dược (ScoreUp). Khi vào từ trường Ngoại ngữ
 // hoặc Lái xe (?subject=language|driving|driving-admin) → show landing trỏ tới
 // app thực sự thay vì ScoreUp quiz (vì ScoreUp chưa có môn cho 2 trường này).
+//
+// K-12 (preschool/primary/secondary/highschool) cũng landing — ScoreUp chỉ có
+// câu hỏi Dược/SV nên adaptive quiz sẽ trống cho HS phổ thông. Thay vào đó
+// đưa vào /space.html?domain=<id> (Không gian học) là hub thật cho cấp đó.
 const SUBJ_LANDINGS = {
+  preschool: {
+    title: '🧸 Học thông minh · Mầm non',
+    intro: 'Mầm non học bằng trò chơi tương tác — chọn 1 hoạt động bên dưới:',
+    back: { label: 'Quay về campus Mầm non', href: '/school.html?domain=preschool' },
+    apps: [
+      { ic:'🗺️', name:'Không gian học Mầm non', rd:'Chọn lớp lá/chồi/mầm, học theo 5 lĩnh vực phát triển GDPT 2018.', href:'/space.html?domain=preschool' },
+      { ic:'🔢', name:'Đếm quả & đếm ngón tay', rd:'Trò chơi đếm số trực quan, phù hợp 3–5 tuổi.', href:'/dem-qua.html' },
+      { ic:'🔤', name:'Ghép chữ cái', rd:'Nhận mặt chữ, ghép vần qua trò chơi kéo thả.', href:'/ghep-chu-cai.html' },
+    ],
+  },
+  primary: {
+    title: '🎒 Học thông minh · Tiểu học',
+    intro: 'Tiểu học (lớp 1–5) học theo tuần — chọn 1 cổng vào:',
+    back: { label: 'Quay về campus Tiểu học', href: '/school.html?domain=primary' },
+    apps: [
+      { ic:'🗺️', name:'Không gian học Tiểu học', rd:'9 môn × 36 tuần (KNTT/CTST/CD), có lý thuyết + quiz tuần.', href:'/space.html?domain=primary' },
+      { ic:'🎯', name:'Năng lực của em', rd:'15 nhóm năng lực GDPT 2018 — xem em đã đạt skill nào.', href:'/nang-luc.html' },
+      { ic:'⛈️', name:'Bão Số Học', rd:'Mini-game luyện tính nhanh — thêm Cây Tri Thức, Bản đồ VN trong Không gian học.', href:'/bao-so-hoc.html' },
+      { ic:'🤖', name:'AI sinh đề luyện tập', rd:'AI tự sinh quiz theo chủ đề + lớp em chọn, kèm giải thích.', href:'/ai-quiz-gen.html?grade=3' },
+    ],
+  },
+  secondary: {
+    title: '📐 Học thông minh · THCS',
+    intro: 'THCS (lớp 6–9) — Lớp 6 có 12 môn × 36 tuần, Lớp 7–9 hiện có Toán & Ngữ văn. Chọn 1 cổng vào:',
+    back: { label: 'Quay về campus THCS', href: '/school.html?domain=secondary' },
+    apps: [
+      { ic:'🗺️', name:'Không gian học THCS', rd:'12 môn lớp 6 + Toán/Ngữ văn 7–9 theo CT GDPT 2018.', href:'/space.html?domain=secondary' },
+      { ic:'🎯', name:'Năng lực của em', rd:'Skill THCS đã đạt + còn thiếu, lộ trình mở khóa kế tiếp.', href:'/nang-luc.html' },
+      { ic:'🗺️', name:'Bản đồ Tri thức VN', rd:'63 tỉnh thành — đặc sản, danh lam, quiz địa lý + lịch sử.', href:'/ban-do-vn.html' },
+      { ic:'🤖', name:'AI sinh đề luyện tập', rd:'AI tự sinh quiz theo chủ đề + lớp em chọn, kèm giải thích.', href:'/ai-quiz-gen.html?grade=6' },
+    ],
+  },
+  highschool: {
+    title: '🎓 Học thông minh · THPT',
+    intro: 'THPT (lớp 10–12) — chọn 1 cổng vào để ôn tập + luyện thi:',
+    back: { label: 'Quay về campus THPT', href: '/school.html?domain=highschool' },
+    apps: [
+      { ic:'🗺️', name:'Không gian học THPT', rd:'Toán, Văn, Anh, Lý, Hoá, Sinh, Sử, Địa theo CT GDPT 2018.', href:'/space.html?domain=highschool' },
+      { ic:'🎯', name:'Năng lực của em', rd:'Skill THPT + lộ trình ôn thi tốt nghiệp.', href:'/nang-luc.html' },
+      { ic:'📚', name:'2000 từ vựng tiếng Anh', rd:'5 chủ đề: cơ bản, du lịch, kinh doanh, học thuật, IELTS.', href:'/tu-vung-tieng-anh.html' },
+      { ic:'🤖', name:'AI sinh đề luyện thi', rd:'AI tự sinh đề theo chuyên đề lớp 10–12, kèm lời giải.', href:'/ai-quiz-gen.html?grade=12' },
+    ],
+  },
   language: {
     title: '🗣️ Học Ngoại ngữ thông minh',
     intro: 'Trường Ngoại ngữ dùng các app chuyên biệt thay vì quiz tổng quát. Chọn 1 hoạt động bên dưới để học:',
@@ -184,6 +226,8 @@ function renderLanding(landing) {
   `;
 }
 
+const K12_DOMAINS = new Set(['preschool', 'primary', 'secondary', 'highschool']);
+
 async function loadAll() {
   // Domain-specific landing — short-circuit ScoreUp quiz
   if (_subjectParam && SUBJ_LANDINGS[_subjectParam]) {
@@ -198,6 +242,16 @@ async function loadAll() {
       wrap.innerHTML = `<div class="empty"><p>Hãy đăng nhập để học thông minh.</p><a class="back" href="/login.html">Đăng nhập →</a></div>`;
       return;
     }
+    // Auto-landing cho K-12: ScoreUp chưa có câu hỏi cấp phổ thông → adaptive
+    // quiz sẽ trống. Đẩy thẳng sang landing /space.html?domain=<id>.
+    try {
+      const me = (await meRes.clone().json())?.user;
+      const dom = me?.enrolled_domain;
+      if (dom && K12_DOMAINS.has(dom) && SUBJ_LANDINGS[dom]) {
+        renderLanding(SUBJ_LANDINGS[dom]);
+        return;
+      }
+    } catch {}
     const [subjRes] = await Promise.all([
       fetch('/api/quiz/subjects', { credentials: 'same-origin' }),
     ]);

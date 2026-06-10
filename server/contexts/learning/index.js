@@ -142,8 +142,16 @@ export function updateIrt({ user_id, question_id, subject_id = '', correct }) {
 /**
  * Đề xuất top-K skill HS NÊN HỌC kế tiếp: skill chưa earned mà prereq đã
  * earned ≥ 50% (soft prereq) + ưu tiên grade_min thấp.
+ *
+ * Filter theo profile user (grade + enrolled_domain) — quan trọng để không
+ * lộ skill Dược (domain='pharmacy') sang HS K-12, hoặc skill THPT cho HS lớp 6.
+ * Nếu user chưa set grade/enrolled_domain → bỏ filter tương ứng (admin/new
+ * user thấy đầy đủ).
  */
 function getNextRecommendedSkills(userId, limit = 5) {
+  const u = db.prepare(`SELECT grade, enrolled_domain FROM users WHERE id = ?`).get(userId) || {};
+  const grade  = u.grade ?? null;
+  const domain = u.enrolled_domain ?? null;
   const rows = db.prepare(`
     SELECT s.id, s.code, s.name, s.domain, s.grade_min, s.grade_max,
            c.code AS competency_code, c.name AS competency_name,
@@ -154,8 +162,13 @@ function getNextRecommendedSkills(userId, limit = 5) {
       FROM skills s
       JOIN competencies c ON c.id = s.competency_id
      WHERE NOT EXISTS (SELECT 1 FROM user_skills us WHERE us.skill_id = s.id AND us.user_id = ?)
-     ORDER BY s.grade_min ASC, s.id ASC
-  `).all(userId, userId);
+       AND (? IS NULL OR s.domain IS NULL OR s.domain = ?)
+       AND (? IS NULL OR s.grade_min IS NULL OR s.grade_min <= ?)
+       AND (? IS NULL OR s.grade_max IS NULL OR s.grade_max >= ?)
+     ORDER BY
+       CASE WHEN s.domain = ? THEN 0 ELSE 1 END,
+       s.grade_min ASC, s.id ASC
+  `).all(userId, userId, domain, domain, grade, grade, grade, grade, domain);
   const ready = rows.filter(r => r.prereq_count === 0 || r.prereq_done / r.prereq_count >= 0.5);
   return ready.slice(0, limit).map(r => ({
     code: r.code, name: r.name, domain: r.domain,

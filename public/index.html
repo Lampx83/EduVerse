@@ -938,7 +938,14 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     }
 
     // ── Daily Quests: SERVER source (engagement_daily_quests) ──
-    const KIND_ICO = { lesson:'📘', quiz:'❓', minigame:'🎮', code:'💻' };
+    const KIND_ICO  = { lesson:'📘', quiz:'❓', minigame:'🎮', code:'💻' };
+    const KIND_HREF = {
+      lesson:   '/space.html',
+      quiz:     '/space.html',
+      minigame: '/space.html#mini-games',
+      code:     '/lap-trinh-game.html',
+    };
+    const KIND_CTA = { lesson:'Học bài →', quiz:'Làm bài →', minigame:'Chơi →', code:'Code →' };
     const questsHost = document.getElementById('dash-quests');
     if (eng.quests && eng.quests.length > 0) {
       questsHost.innerHTML = `
@@ -950,15 +957,20 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
           ${eng.quests.map(q => {
             const pct = Math.min(100, Math.round((q.progress/q.target)*100));
             const done = q.progress >= q.target;
+            const href = KIND_HREF[q.kind] || '/space.html';
+            const cta  = KIND_CTA[q.kind]  || 'Đi học →';
             return `
-              <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.05)">
-                <span style="font-size:18px">${KIND_ICO[q.kind] || '⭐'}</span>
+              <a href="${href}" style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-top:1px solid rgba(255,255,255,.05);text-decoration:none;color:inherit;border-radius:10px;transition:background .12s" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background='transparent'">
+                <span style="font-size:18px">${done ? '✅' : (KIND_ICO[q.kind] || '⭐')}</span>
                 <div style="flex:1;min-width:0">
                   <div style="font-size:13px;font-weight:600">${q.label}</div>
                   <div style="height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-top:4px"><div style="height:100%;background:linear-gradient(90deg,#22c55e,#4ade80);width:${pct}%"></div></div>
                 </div>
-                <div style="font-size:12px;color:${done?'#86efac':'#cbd5e1'};font-weight:700;white-space:nowrap">${q.progress}/${q.target}</div>
-              </div>
+                <div style="font-size:12px;color:${done?'#86efac':'#cbd5e1'};font-weight:700;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+                  <span>${q.progress}/${q.target}</span>
+                  ${done ? '' : `<span style="font-size:11px;color:#fbbf24">${cta}</span>`}
+                </div>
+              </a>
             `;
           }).join('')}
         </div>
