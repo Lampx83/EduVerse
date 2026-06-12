@@ -287,11 +287,13 @@ export function makeAuthGate({ basePath = '' } = {}) {
 // ── Helpers cho phân biệt HS/SV ──
 // Valid major IDs cho SV — phải khớp DOMAIN_META trong public/js/engine/domain.js
 // (chỉ cho phép trường ĐH/CĐ, không cho 'preschool'/'primary'/… vốn dành HS).
+// 'driving' (Trường Lái xe) là trường dạy nghề/người lớn — không phải ngành ĐH
+// nhưng vẫn cho SV/người lớn chọn để enroll & học, nên xếp chung ở đây.
 const VALID_STUDENT_MAJORS = new Set([
   'pharmacy', 'it', 'economics', 'business', 'finance', 'medicine', 'nursing',
   'law', 'education', 'engineering', 'architecture', 'languages', 'agriculture',
   'tourism', 'arts', 'media', 'social-sciences', 'natural-sciences',
-  'logistics', 'public-admin',
+  'logistics', 'public-admin', 'driving',
 ]);
 
 // Mỗi tài khoản 1 trường tại 1 thời điểm. Union HS-K12 + ĐH (= VALID_STUDENT_MAJORS).
