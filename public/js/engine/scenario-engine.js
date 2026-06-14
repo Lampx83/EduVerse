@@ -261,9 +261,22 @@ function renderQuizInstant(engine, host) {
       const ex = card.querySelector('.qzx-explain');
       ex.hidden = false;
       ex.className = 'qzx-explain ' + (ok ? 'ok' : 'bad');
+      // Per-choice feedback (choiceFeedback[i]) — giải thích đúng/sai theo CHÍNH
+      // lựa chọn của HS; fallback về explanation chung nếu câu chưa có per-choice.
+      const cf = Array.isArray(q.choiceFeedback) ? q.choiceFeedback : null;
+      const perChoice = cf && cf[ci] != null ? String(cf[ci]) : '';
+      const note = perChoice || (q.explanation ? String(q.explanation) : '');
       ex.innerHTML = ok
-        ? `<b>✓ Chính xác!</b> <span class="qzx-xp">+10 XP</span>${q.explanation ? ' · ' + q.explanation : ''}`
-        : `<b>✗ Chưa đúng.</b> Đáp án đúng: <b>${q.choices[q.answer]}</b>${q.explanation ? ' — ' + q.explanation : ''}`;
+        ? `<b>✓ Chính xác!</b> <span class="qzx-xp">+10 XP</span>${note ? ' · ' + note : ''}`
+        : `<b>✗ Chưa đúng.</b> Đáp án đúng: <b>${q.choices[q.answer]}</b>${note ? ' — ' + note : ''}`;
+      // "Học thêm" — mini-bài giảng (theory[]) nếu câu hỏi có (vd ngân hàng lớp 6).
+      if (Array.isArray(q.theory) && q.theory.length) {
+        const det = document.createElement('details');
+        det.className = 'qzx-theory';
+        det.innerHTML = `<summary>💡 Học thêm</summary>` +
+          q.theory.map(t => `<div class="qzx-theory-b">${String(t)}</div>`).join('');
+        ex.appendChild(det);
+      }
 
       if (ok) { correctCount++; card.classList.add('qzx-flash'); }
       answered++;
@@ -318,6 +331,13 @@ function injectQuizFxStyles() {
   @keyframes qzxSlide { from{opacity:0; transform:translateY(-4px)} to{opacity:1; transform:none} }
   .qzx-explain.ok  { background: rgba(34,197,94,0.12); border-left: 3px solid #22c55e; }
   .qzx-explain.bad { background: rgba(239,68,68,0.12); border-left: 3px solid #ef4444; }
+  .qzx-theory { margin-top: 8px; }
+  .qzx-theory > summary { cursor: pointer; font-weight: 700; color: #a78bfa; font-size: 13px; list-style: none; }
+  .qzx-theory > summary::-webkit-details-marker { display: none; }
+  .qzx-theory[open] > summary { margin-bottom: 6px; }
+  .qzx-theory-b { background: rgba(167,139,250,0.08); border-radius: 8px; padding: 7px 10px; margin: 5px 0; font-size: 13px; line-height: 1.55; }
+  .qzx-theory-b code { background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 4px; }
+  .qzx-theory-b ul { margin: 4px 0; padding-left: 20px; }
   .qzx-xp { display: inline-block; font-weight: 800; color: #fde047;
     background: rgba(253,224,71,0.15); padding: 1px 8px; border-radius: 999px;
     animation: qzxPop .4s cubic-bezier(.2,.9,.3,1.6); }
