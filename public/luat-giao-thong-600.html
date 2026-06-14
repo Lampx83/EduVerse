@@ -96,88 +96,12 @@
   </div>
 </div>
 
-<script>
+<script type="module">
   // Bộ câu hỏi RÚT GỌN từ 600 câu lý thuyết B1/B2 (Bộ GTVT). Đại diện 6 chương,
   // có câu LIỆT (must-correct) để đúng tinh thần đề thi: thi thử 25 câu, sai 1
   // câu liệt = trượt dù tổng điểm đủ.
-  const Q = [
-    // ─── 1. Khái niệm & quy tắc ───
-    { t: 'Khái niệm', c: false,
-      q: '"Phương tiện giao thông đường bộ" gồm những loại nào?',
-      o: ['Xe cơ giới và xe thô sơ.', 'Xe cơ giới, xe thô sơ và xe máy chuyên dùng.',
-          'Xe cơ giới và xe máy chuyên dùng.', 'Cả xe cơ giới, xe thô sơ, xe máy chuyên dùng và người đi bộ.'],
-      a: 1, ex: 'Theo Luật GTĐB, gồm 3 loại: xe cơ giới + xe thô sơ + xe máy chuyên dùng.' },
-    { t: 'Khái niệm', c: true,
-      q: 'Người lái xe nồng độ cồn vượt quá bao nhiêu mg/100 ml máu thì bị nghiêm cấm điều khiển ô tô?',
-      o: ['Trên 50 mg/100 ml máu.', 'Có nồng độ cồn vượt quá 80 mg/100 ml máu.',
-          'Có bất kỳ nồng độ cồn trong máu hoặc khí thở.', 'Trên 30 mg/100 ml máu.'],
-      a: 2, ex: '⚠️ CÂU LIỆT — Nghị định 100: cấm tuyệt đối nồng độ cồn (bất kỳ mức nào) khi lái xe.' },
-    { t: 'Quy tắc', c: false,
-      q: 'Khi đến chỗ giao nhau, gặp đèn vàng nhấp nháy, người lái phải xử lý thế nào?',
-      o: ['Phải dừng lại trước vạch dừng.', 'Được đi nhưng phải giảm tốc độ, chú ý quan sát.',
-          'Phải bật xi-nhan và rẽ phải.', 'Phải nhường đường cho mọi xe đi cùng chiều.'],
-      a: 1, ex: 'Đèn vàng nhấp nháy = cảnh báo, được đi nhưng phải giảm tốc, chú ý quan sát.' },
-
-    // ─── 2. Văn hoá & đạo đức ───
-    { t: 'Văn hoá', c: false,
-      q: 'Khi gặp tai nạn giao thông, người lái có liên quan phải làm gì TRƯỚC TIÊN?',
-      o: ['Bỏ chạy khỏi hiện trường.', 'Báo công an rồi mới sơ cứu.',
-          'Dừng xe, giữ nguyên hiện trường, cấp cứu người bị nạn và báo công an.',
-          'Chỉ cần báo bảo hiểm.'],
-      a: 2, ex: 'Luật GTĐB điều 38: dừng xe, sơ cứu, giữ hiện trường, báo công an.' },
-
-    // ─── 3. Kỹ thuật lái xe ───
-    { t: 'Kỹ thuật', c: false,
-      q: 'Khi vào cua, người lái nên xử lý thế nào?',
-      o: ['Tăng ga để xe lướt qua nhanh.', 'Giảm tốc độ trước khi vào cua, vào cua mới tăng ga nhẹ.',
-          'Phanh gấp giữa cua.', 'Giữ ga đều.'],
-      a: 1, ex: 'Quy tắc "phanh trước, ga sau": giảm tốc trước cua, ra cua mới tăng ga.' },
-    { t: 'Kỹ thuật', c: true,
-      q: 'Khi đang lái xe trên đường cao tốc gặp sương mù dày, phải làm thế nào?',
-      o: ['Tăng tốc để vượt qua khu vực sương mù.', 'Tắt đèn pha, bật đèn cốt và đi sát lề phải.',
-          'Bật đèn sương mù (đèn vàng), giảm tốc độ, giữ khoảng cách an toàn lớn hơn bình thường.',
-          'Dừng xe ngay trên làn đường đang đi.'],
-      a: 2, ex: '⚠️ CÂU LIỆT — sương mù: đèn sương mù vàng + giảm tốc + tăng khoảng cách. KHÔNG dừng trên làn đường.' },
-
-    // ─── 4. Biển báo & vạch kẻ ───
-    { t: 'Biển báo', c: false,
-      q: 'Biển báo "STOP" (Dừng lại) thuộc nhóm biển báo nào?',
-      o: ['Biển báo nguy hiểm.', 'Biển báo cấm.',
-          'Biển báo hiệu lệnh.', 'Biển chỉ dẫn.'],
-      a: 1, ex: 'Biển STOP hình bát giác đỏ thuộc nhóm Biển báo CẤM (cấm đi tiếp khi chưa dừng).' },
-    { t: 'Biển báo', c: false,
-      q: 'Vạch kẻ đường liền màu vàng (đôi) có ý nghĩa gì?',
-      o: ['Được phép vượt nếu thấy an toàn.', 'Cấm vượt ở cả hai chiều, cấm lấn làn.',
-          'Báo nguy hiểm.', 'Vạch ranh giới khu dân cư.'],
-      a: 1, ex: 'Vạch liền đôi vàng = cấm tuyệt đối vượt + lấn làn ở cả hai chiều.' },
-
-    // ─── 5. Sa hình ───
-    { t: 'Sa hình', c: false,
-      q: 'Tại ngã tư không có đèn tín hiệu và không có biển báo, thứ tự ưu tiên là gì?',
-      o: ['Xe đi từ phải đến trước.', 'Xe đi thẳng được ưu tiên hơn xe rẽ.',
-          'Xe ưu tiên (cứu thương, cứu hoả, công an) → xe đi thẳng → xe rẽ phải → xe rẽ trái.',
-          'Tất cả phải dừng cho xe lớn đi trước.'],
-      a: 2, ex: 'Thứ tự: ưu tiên đặc biệt → đi thẳng → rẽ phải → rẽ trái (tránh kẹt giao nhau).' },
-
-    // ─── 6. Cấu tạo & bảo dưỡng ───
-    { t: 'Cấu tạo', c: false,
-      q: 'Khi nào cần thay dầu phanh của ô tô?',
-      o: ['Mỗi lần thay dầu máy.', 'Định kỳ 2 năm hoặc 40,000 km.',
-          'Khi xe đi quá 100,000 km.', 'Chỉ khi phanh có dấu hiệu hỏng.'],
-      a: 1, ex: 'Dầu phanh hút ẩm theo thời gian → định kỳ 2 năm hoặc 40k km (theo nhà sản xuất).' },
-
-    // ─── Thêm câu liệt phổ biến ───
-    { t: 'Quy tắc', c: true,
-      q: 'Trên đường có làn dành riêng cho xe buýt, các xe khác có được đi vào không?',
-      o: ['Được nếu đường vắng.', 'Không, trừ xe ưu tiên đang làm nhiệm vụ.',
-          'Được nếu xi-nhan trước.', 'Được vào những giờ thấp điểm.'],
-      a: 1, ex: '⚠️ CÂU LIỆT — Làn buýt chỉ cho xe buýt + xe ưu tiên đang làm nhiệm vụ.' },
-    { t: 'Quy tắc', c: true,
-      q: 'Khi lùi xe, người lái phải tuân thủ điều gì?',
-      o: ['Lùi nhanh để không cản trở giao thông.', 'Quan sát phía sau, có tín hiệu báo lùi, lùi chậm.',
-          'Bóp còi liên tục.', 'Mở cửa nhìn ra ngoài.'],
-      a: 1, ex: '⚠️ CÂU LIỆT — lùi xe: quan sát + tín hiệu + lùi chậm. Bóp còi không đủ.' },
-  ];
+  const Q = await fetch('/api/content/driving-600', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : { items: [] }).then(j => j.items || []).catch(() => []);
 
   const el = id => document.getElementById(id);
   const STATE_KEY = 'tizia:driving-600:state';
