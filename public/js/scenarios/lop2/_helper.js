@@ -3,8 +3,8 @@
 // ============================================================
 
 /** Tạo 1 câu hỏi trắc nghiệm 4 lựa chọn */
-export const Q = (stem, choices, answer, explanation) =>
-  ({ stem, choices, answer, explanation });
+export const Q = (stem, choices, answer, explanation, choiceFeedback) =>
+  ({ stem, choices, answer, explanation, choiceFeedback });
 
 /**
  * Tạo 1 scenario tuần.
