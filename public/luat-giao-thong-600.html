@@ -19,6 +19,12 @@
   .toolbar button { font-family:inherit; background:var(--card); color:var(--text);
     border:1px solid var(--border); padding:8px 16px; border-radius:9px; font-size:13px; cursor:pointer; }
   .toolbar button.active { background: var(--red); border-color: var(--red); font-weight:700; }
+  .toolbar select { font-family:inherit; background:var(--card); color:var(--text); border:1px solid var(--border);
+    padding:8px 12px; border-radius:9px; font-size:13px; cursor:pointer; max-width:min(92vw,420px); }
+  .toolbar select option { background:#1a1a2e; color:var(--text); }
+  .toolbar label { align-self:center; color:var(--muted); font-size:13px; }
+  .empty { width:100%; max-width:760px; background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:34px 22px; text-align:center; color:var(--muted); font-size:14px; line-height:1.7; }
 
   .qcard { width:100%; max-width:760px; background:var(--card); border:1px solid var(--border);
     border-radius:14px; padding:22px; }
@@ -56,12 +62,26 @@
 </style>
 </head>
 <body>
-<h1>🚦 Lý thuyết Lái xe B1/B2 — 600 câu</h1>
+<h1>🚦 Lý thuyết Lái xe B1/B2 — Luật giao thông đường bộ</h1>
 
 <div class="toolbar">
   <button data-mode="learn" class="active">📖 Luyện tập</button>
   <button data-mode="exam">📝 Thi thử (25 câu / 22 phút)</button>
   <button data-mode="critical">⚠️ Chỉ câu liệt</button>
+</div>
+
+<div class="toolbar" id="catBar">
+  <label for="catSelect">📂 Chủ đề:</label>
+  <select id="catSelect">
+    <option value="all">📚 Tất cả các câu</option>
+    <option value="kn">📖 1. Khái niệm &amp; quy tắc lý thuyết</option>
+    <option value="vh">🤝 2. Văn hoá &amp; đạo đức</option>
+    <option value="kt">🛠️ 3. Kỹ thuật lái xe</option>
+    <option value="ct">⚙️ 4. Cấu tạo &amp; sửa chữa</option>
+    <option value="th">⚠️ 5. Tình huống giao thông</option>
+    <option value="nv">🚚 6. Nghiệp vụ vận tải</option>
+    <option value="critical">🔥 Câu điểm liệt</option>
+  </select>
 </div>
 
 <div class="stats" id="stats">
@@ -80,6 +100,8 @@
   <div class="opts" id="opts"></div>
   <div class="feedback" id="feedback"></div>
 </div>
+
+<div class="empty" id="emptyMsg" style="display:none"></div>
 
 <div class="nav">
   <button id="prevBtn">← Câu trước</button>
@@ -105,7 +127,17 @@
 
   const el = id => document.getElementById(id);
   const STATE_KEY = 'tizia:driving-600:state';
-  let mode = 'learn', list = [...Q], idx = 0;
+  // Gộp 17 sub-category của bộ 244 câu → 6 nhóm chủ đề cho dropdown (yêu cầu SV #16).
+  const GROUP = {
+    'Khái niệm':'kn', 'Quy tắc giao thông':'kn', 'Tốc độ - khoảng cách':'kn',
+    'Nồng độ cồn - chất cấm':'vh', 'Trách nhiệm khi tai nạn':'vh', 'Đạo đức nghề nghiệp':'vh', 'Văn hoá giao thông':'vh',
+    'Khởi hành - dừng xe':'kt', 'Số - côn - phanh':'kt', 'Lái xe đường đặc biệt':'kt',
+    'Động cơ - hệ thống':'ct', 'Hệ thống an toàn':'ct', 'Bảo dưỡng - kiểm tra':'ct',
+    'Xử lý tình huống':'th',
+    'Kinh doanh vận tải':'nv', 'Hàng hoá - hành khách':'nv', 'Quyền - nghĩa vụ':'nv',
+  };
+  const groupOf = t => GROUP[t] || 'kn';
+  let mode = 'learn', list = [...Q], idx = 0, category = 'all';
   let answered = {}, exam = null;
 
   function pickQuestions(m) {
@@ -117,7 +149,10 @@
       const exam = [...pickN(crit, Math.min(3, crit.length)), ...pickN(norm, Math.max(0, 25 - Math.min(3, crit.length)))];
       return exam.sort(() => Math.random() - .5);
     }
-    return [...Q]; // learn
+    // learn: lọc theo nhóm chủ đề đang chọn ở dropdown
+    if (category === 'all') return [...Q];
+    if (category === 'critical') return Q.filter(q => q.c);
+    return Q.filter(q => groupOf(q.t) === category);
   }
 
   function setMode(m) {
@@ -125,8 +160,21 @@
     list = pickQuestions(m);
     idx = 0; answered = {};
     document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    el('catBar').style.display = m === 'exam' ? 'none' : '';
     el('summary').classList.remove('show');
     el('endBtn').style.display = m === 'exam' ? '' : 'none';
+    if (!list.length) {
+      el('emptyMsg').style.display = '';
+      el('emptyMsg').innerHTML = '📭 Mục «' + (el('catSelect').selectedOptions[0]?.textContent.trim() || category) + '» hiện chưa có câu hỏi.';
+      el('qcard').style.display = 'none';
+      document.querySelector('.nav').style.display = 'none';
+      el('stats').style.display = 'none';
+      return;
+    }
+    el('emptyMsg').style.display = 'none';
+    el('qcard').style.display = '';
+    document.querySelector('.nav').style.display = '';
+    el('stats').style.display = '';
     if (m === 'exam') {
       exam = { start: Date.now(), duration: 22 * 60 * 1000 };
       el('timerBox').style.display = '';
@@ -222,12 +270,19 @@
     el('wrongCount').textContent = w;
   }
 
-  document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (b.dataset.mode !== 'learn') { el('catSelect').value = 'all'; category = 'all'; } setMode(b.dataset.mode); });
+  el('catSelect').onchange = () => {
+    category = el('catSelect').value;
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === 'learn'));
+    setMode('learn');
+  };
   el('nextBtn').onclick = () => { if (idx < list.length - 1) { idx++; render(); } };
   el('prevBtn').onclick = () => { if (idx > 0) { idx--; render(); } };
   el('endBtn').onclick = submitExam;
 
-  setMode('learn');
+  // Mở thẳng chế độ qua URL: ?mode=exam | ?mode=critical
+  const _m = new URLSearchParams(location.search).get('mode');
+  setMode(['exam', 'critical'].includes(_m) ? _m : 'learn');
 </script>
 </body>
 </html>
