@@ -3,254 +3,621 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>📚 Từ vựng Tiếng Anh · Tizia</title>
-<meta name="description" content="Luyện 2000 từ vựng tiếng Anh thông dụng theo chủ đề + spaced repetition. Phát âm tự động, lưu progress theo user." />
+<title>📚 Từ vựng Tiếng Anh chuyên ngành · Tizia</title>
+<meta name="description" content="Học từ vựng tiếng Anh chuyên ngành (CNTT, Y tế, Giáo dục, Kinh doanh…) bằng flashcard có IPA + spaced repetition, chế độ kiểm tra trắc nghiệm, streak và phát âm tự động." />
 <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
 <link rel="manifest" href="./manifest.webmanifest" />
 <meta name="theme-color" content="#0ea5e9" />
 <style>
   :root { --bg:#0f172a; --card:rgba(255,255,255,.06); --accent:#0ea5e9; --green:#10b981;
-    --red:#ef4444; --text:#e5edf7; --muted:#94a3b8; --border:rgba(255,255,255,.12); }
+    --red:#ef4444; --amber:#fbbf24; --text:#e5edf7; --muted:#94a3b8; --border:rgba(255,255,255,.12); }
   * { box-sizing:border-box; }
   body { margin:0; min-height:100vh; font-family:'Inter',system-ui,sans-serif;
     background: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(14,165,233,.18), transparent),
-      linear-gradient(180deg,var(--bg),#1e3a5f); color: var(--text); padding: 24px;
-    display: flex; flex-direction: column; align-items: center; gap: 20px; }
-  h1 { margin: 0; font-size: 22px; }
+      linear-gradient(180deg,var(--bg),#1e3a5f); color: var(--text); padding: 22px 18px 40px;
+    display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  a.back { position:fixed; left:16px; top:14px; z-index:5; background:rgba(15,23,42,.7); color:#cfe9ff;
+    text-decoration:none; padding:6px 12px; border-radius:20px; font-size:12.5px; backdrop-filter:blur(8px); }
+  h1 { margin: 0; font-size: 21px; text-align:center; }
+  .sub { color: var(--muted); font-size: 12.5px; margin: -8px 0 2px; text-align:center; }
+
+  .tabs { display:flex; gap:8px; }
+  .tabs button { font-family:inherit; background:var(--card); color:var(--text);
+    border:1px solid var(--border); padding:9px 20px; border-radius:11px; font-size:14px; cursor:pointer; font-weight:600; }
+  .tabs button.active { background:linear-gradient(135deg, var(--accent), #6366f1); color:#fff; border-color:transparent; }
+
   .toolbar { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
   .toolbar select, .toolbar button { font-family:inherit; background:var(--card);
     color:var(--text); border:1px solid var(--border); padding:8px 14px; border-radius:9px;
     font-size:13px; cursor:pointer; }
+  .toolbar select option { background:#0f172a; }
   .toolbar button.primary { background:linear-gradient(135deg, var(--accent), #6366f1);
     color:white; border:0; font-weight:700; }
+  .streak { display:flex; align-items:center; gap:6px; background:rgba(251,191,36,.12);
+    border:1px solid rgba(251,191,36,.35); color:var(--amber); padding:7px 13px; border-radius:20px;
+    font-size:13px; font-weight:700; }
 
-  .card { perspective: 1200px; width: 100%; max-width: 520px; height: 320px; }
+  /* ── Flashcard ── */
+  .card { perspective: 1200px; width: 100%; max-width: 520px; height: 318px; }
   .card .inner { position:relative; width:100%; height:100%; transform-style:preserve-3d;
     transition: transform .6s; cursor:pointer; border-radius:18px; }
   .card.flipped .inner { transform: rotateY(180deg); }
   .face { position:absolute; inset:0; backface-visibility:hidden; border-radius:18px;
-    background:var(--card); border:1px solid var(--border); padding:32px;
-    display:flex; flex-direction:column; justify-content:center; align-items:center;
-    text-align:center; }
+    background:var(--card); border:1px solid var(--border); padding:30px;
+    display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
   .face.back { transform: rotateY(180deg);
     background: linear-gradient(135deg, rgba(14,165,233,.15), rgba(99,102,241,.1)); }
-  .word { font-size: 38px; font-weight: 800; margin: 0 0 6px; }
+  .word { font-size: 36px; font-weight: 800; margin: 0 0 6px; }
   .pos { color: var(--muted); font-size: 13px; letter-spacing: .5px; text-transform: uppercase; }
   .phonetic { color: var(--accent); font-size: 17px; margin: 8px 0; font-family: 'Times New Roman', serif; }
   .meaning { font-size: 22px; line-height: 1.4; }
-  .example { font-size: 14px; color: var(--muted); margin-top: 14px; font-style: italic;
-    padding: 0 16px; line-height: 1.5; }
-  .speak-btn { position: absolute; top: 14px; right: 14px; background: rgba(14,165,233,.2);
-    border: 1px solid var(--accent); color: var(--accent); width: 40px; height: 40px;
-    border-radius: 50%; cursor: pointer; font-size: 16px; }
+  .example { font-size: 14px; color: var(--muted); margin-top: 14px; font-style: italic; padding: 0 12px; line-height: 1.5; }
+  .boxbadge { position:absolute; top:14px; left:14px; font-size:11px; color:var(--muted);
+    background:rgba(255,255,255,.06); border:1px solid var(--border); padding:3px 8px; border-radius:10px; }
+  .speak-btn { position: absolute; top: 12px; right: 12px; background: rgba(14,165,233,.2);
+    border: 1px solid var(--accent); color: var(--accent); width: 38px; height: 38px;
+    border-radius: 50%; cursor: pointer; font-size: 15px; }
   .speak-btn:hover { background: var(--accent); color: white; }
 
-  .progress { width: 100%; max-width: 520px; height: 6px;
-    background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
-  .progress > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green));
-    transition: width .3s; }
-
+  .progress { width: 100%; max-width: 520px; height: 6px; background: rgba(255,255,255,.08);
+    border-radius: 3px; overflow: hidden; }
+  .progress > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width .3s; }
   .actions { display: flex; gap: 12px; }
-  .actions button { padding: 12px 24px; border-radius: 11px; font-weight: 700;
-    font-size: 15px; border: 0; cursor: pointer; font-family: inherit; }
-  .actions .again { background: rgba(239,68,68,.15); color: #fca5a5;
-    border: 1px solid rgba(239,68,68,.3); }
-  .actions .know { background: rgba(16,185,129,.15); color: #6ee7b7;
-    border: 1px solid rgba(16,185,129,.3); }
-  .stats { display: flex; gap: 22px; font-size: 13px; color: var(--muted); }
+  .actions button { padding: 12px 24px; border-radius: 11px; font-weight: 700; font-size: 15px;
+    border: 0; cursor: pointer; font-family: inherit; }
+  .actions .again { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+  .actions .know { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+  .stats { display: flex; gap: 20px; font-size: 13px; color: var(--muted); flex-wrap:wrap; justify-content:center; }
   .stats b { color: var(--text); font-size: 16px; }
-  .hint { color: var(--muted); font-size: 12.5px; margin-top: -8px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+
+  /* ── Quiz ── */
+  #quiz { width:100%; max-width: 560px; display:none; flex-direction:column; gap:14px; align-items:stretch; }
+  .qbar { display:flex; justify-content:space-between; font-size:13px; color:var(--muted); }
+  .qcard { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; }
+  .qprompt { font-size:13px; color:var(--muted); margin-bottom:6px; }
+  .qword { font-size:28px; font-weight:800; margin-bottom:4px; }
+  .qphon { color:var(--accent); font-size:15px; font-family:'Times New Roman',serif; margin-bottom:18px; }
+  .opts { display:grid; gap:10px; }
+  .opt { text-align:left; font-family:inherit; font-size:15px; padding:14px 16px; border-radius:11px;
+    background:rgba(0,0,0,.2); border:1px solid var(--border); color:var(--text); cursor:pointer; transition:.15s; }
+  .opt:hover:not(:disabled) { border-color:rgba(255,255,255,.3); background:rgba(255,255,255,.04); }
+  .opt.correct { background:rgba(16,185,129,.16); border-color:rgba(16,185,129,.6); color:#a7f3d0; }
+  .opt.wrong { background:rgba(239,68,68,.16); border-color:rgba(239,68,68,.6); color:#fca5a5; }
+  .opt:disabled { cursor:default; }
+
+  /* ── Results review ── */
+  #review { width:100%; max-width: 560px; display:none; flex-direction:column; gap:10px; }
+  .rrow { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 14px; font-size:14px; }
+  .rrow .rw { font-weight:700; }
+  .rrow .ra { font-size:13px; color:var(--muted); margin-top:3px; }
+  .rrow.ok { border-left:3px solid var(--green); }
+  .rrow.no { border-left:3px solid var(--red); }
+  .tag { font-size:11px; padding:2px 7px; border-radius:8px; margin-left:6px; }
+  .tag.ok { background:rgba(16,185,129,.16); color:#6ee7b7; }
+  .tag.no { background:rgba(239,68,68,.16); color:#fca5a5; }
+
+  /* ── Congrats modal ── */
+  .overlay { position:fixed; inset:0; background:rgba(8,12,24,.72); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:30; padding:20px; }
+  .overlay.show { display:flex; }
+  .modal { background:linear-gradient(180deg,#15233f,#0f1b30); border:1px solid var(--border);
+    border-radius:20px; padding:30px 26px; max-width:380px; width:100%; text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .modal .emoji { font-size:54px; }
+  .modal h2 { margin:6px 0 2px; font-size:24px; }
+  .modal .score { font-size:46px; font-weight:800; margin:10px 0;
+    background:linear-gradient(135deg,var(--accent),var(--green)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .modal p { color:var(--muted); font-size:14px; line-height:1.55; margin:6px 0 18px; }
+  .modal .mbtns { display:flex; gap:10px; }
+  .modal .mbtns button { flex:1; padding:11px; border-radius:11px; font-family:inherit; font-weight:700;
+    font-size:14px; cursor:pointer; border:1px solid var(--border); background:var(--card); color:var(--text); }
+  .modal .mbtns button.primary { background:linear-gradient(135deg,var(--accent),#6366f1); border:0; color:#fff; }
+  @media (prefers-reduced-motion: no-preference) {
+    .pop { animation: pop .4s cubic-bezier(.2,1.3,.4,1); }
+    @keyframes pop { from { transform:scale(.7); opacity:0 } to { transform:scale(1); opacity:1 } }
+  }
 </style>
 </head>
 <body>
-<h1>📚 Từ vựng Tiếng Anh</h1>
+<a class="back" id="back" href="/school.html?domain=language">← Khuôn viên trường</a>
+<h1>📚 Từ vựng Tiếng Anh chuyên ngành</h1>
+<div class="sub">Flashcard có IPA · ôn theo Spaced Repetition · kiểm tra trắc nghiệm · giữ streak mỗi ngày</div>
+
+<div class="tabs">
+  <button id="tabCard" class="active">🃏 Học thẻ</button>
+  <button id="tabQuiz">✍️ Kiểm tra</button>
+</div>
+
 <div class="toolbar">
   <select id="topicSel">
-    <option value="basic">📖 Cơ bản 500 từ</option>
-    <option value="travel">✈️ Du lịch</option>
-    <option value="business">💼 Kinh doanh</option>
-    <option value="academic">🎓 Học thuật</option>
-    <option value="ielts">📝 IELTS 6.5+</option>
+    <optgroup label="Chuyên ngành">
+      <option value="cntt">💻 Công nghệ thông tin</option>
+      <option value="yte">🩺 Y tế</option>
+      <option value="giaoduc">🎓 Giáo dục</option>
+      <option value="business">💼 Kinh doanh</option>
+    </optgroup>
+    <optgroup label="Thông dụng">
+      <option value="basic">📖 Cơ bản</option>
+      <option value="travel">✈️ Du lịch</option>
+      <option value="academic">🔬 Học thuật</option>
+      <option value="ielts">📝 IELTS 6.5+</option>
+    </optgroup>
   </select>
   <select id="modeSel">
     <option value="en-vi">EN → VI (đoán nghĩa)</option>
     <option value="vi-en">VI → EN (đoán từ)</option>
   </select>
-  <button id="shuffleBtn">🔀 Trộn</button>
-  <button class="primary" id="resetBtn">⟲ Học lại</button>
+  <div class="streak" id="streakBox" title="Số ngày học liên tiếp">🔥 <span id="streak">0</span> ngày</div>
 </div>
 
-<div class="progress"><div id="bar" style="width:0%"></div></div>
-
-<div class="card" id="card">
-  <div class="inner">
-    <div class="face">
-      <button class="speak-btn" id="speakFront" title="Phát âm">🔊</button>
-      <div class="pos" id="posFront">noun</div>
-      <h2 class="word" id="wordFront">apple</h2>
-      <div class="phonetic" id="phoneticFront">/ˈæp.əl/</div>
-      <div class="hint">Bấm để lật thẻ</div>
+<!-- ───── Flashcard ───── -->
+<div id="flash" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;">
+  <div class="progress"><div id="bar" style="width:0%"></div></div>
+  <div class="card" id="card">
+    <div class="inner">
+      <div class="face">
+        <span class="boxbadge" id="boxFront">Mới</span>
+        <button class="speak-btn" id="speakFront" title="Phát âm">🔊</button>
+        <div class="pos" id="posFront">noun</div>
+        <h2 class="word" id="wordFront">algorithm</h2>
+        <div class="phonetic" id="phoneticFront">/ˈæl.ɡə.rɪð.əm/</div>
+        <div class="hint">Bấm thẻ để xem nghĩa</div>
+      </div>
+      <div class="face back">
+        <button class="speak-btn" id="speakBack" title="Phát âm">🔊</button>
+        <div class="meaning" id="meaningBack">thuật toán</div>
+        <div class="example" id="exampleBack"></div>
+      </div>
     </div>
-    <div class="face back">
-      <button class="speak-btn" id="speakBack" title="Phát âm">🔊</button>
-      <div class="meaning" id="meaningBack">quả táo</div>
-      <div class="example" id="exampleBack">An apple a day keeps the doctor away.</div>
+  </div>
+  <div class="actions">
+    <button class="again" id="againBtn">😵 Chưa nhớ</button>
+    <button class="know" id="knowBtn">✅ Thuộc rồi</button>
+  </div>
+  <div class="stats">
+    <span>Cần ôn hôm nay: <b id="due">0</b></span>
+    <span>Đã thuộc: <b id="mastered">0</b></span>
+    <span>Tổng: <b id="all">0</b></span>
+  </div>
+  <button class="opt" id="reviewAll" style="max-width:300px;display:none">Hôm nay ôn xong — ôn lại tất cả ↻</button>
+</div>
+
+<!-- ───── Quiz ───── -->
+<div id="quiz">
+  <div class="qbar"><span>Câu <b id="qIdx">1</b>/<b id="qTotal">10</b></span><span>Đúng: <b id="qRight">0</b></span></div>
+  <div class="qcard">
+    <div class="qprompt" id="qPrompt">Chọn nghĩa đúng của từ:</div>
+    <div class="qword" id="qWord">—</div>
+    <div class="qphon" id="qPhon"></div>
+    <div class="opts" id="qOpts"></div>
+  </div>
+  <div style="text-align:center"><button class="opt" id="qNext" style="display:none;max-width:200px;margin:0 auto">Câu sau →</button></div>
+</div>
+
+<!-- ───── Review (xem lại) ───── -->
+<div id="review">
+  <h2 style="font-size:18px;margin:4px 0">📋 Xem lại bài kiểm tra</h2>
+  <div id="reviewList"></div>
+  <div style="display:flex;gap:10px;margin-top:6px">
+    <button class="opt" id="reviewRetry" style="flex:1">🔁 Làm lại</button>
+    <button class="opt" id="reviewBack" style="flex:1">🃏 Về học thẻ</button>
+  </div>
+</div>
+
+<!-- ───── Congrats modal ───── -->
+<div class="overlay" id="overlay">
+  <div class="modal pop">
+    <div class="emoji" id="mEmoji">🎉</div>
+    <h2 id="mTitle">Chúc mừng!</h2>
+    <div class="score" id="mScore">8/10</div>
+    <p id="mMsg"></p>
+    <div class="mbtns">
+      <button id="mReview">📋 Xem lại</button>
+      <button class="primary" id="mAgain">🔁 Làm lại</button>
     </div>
   </div>
 </div>
 
-<div class="actions">
-  <button class="again" id="againBtn">😵 Chưa nhớ</button>
-  <button class="know" id="knowBtn">✅ Thuộc rồi</button>
-</div>
-
-<div class="stats">
-  <span>Đã thuộc: <b id="learned">0</b></span>
-  <span>Cần ôn: <b id="todo">0</b></span>
-  <span>Tổng: <b id="all">0</b></span>
-</div>
-
 <script>
-  // Bộ từ vựng theo chủ đề. Mỗi entry: { w, pos, ph (phonetic), v (vietnamese), ex (example) }
+  // ─────────────────────────────────────────────────────────────────────
+  //  Từ vựng theo chủ đề. entry: { w, pos, ph (IPA), v (nghĩa), ex (ví dụ) }
+  //  4 chủ đề chuyên ngành (CNTT/Y tế/Giáo dục/Kinh doanh) + 4 thông dụng.
+  // ─────────────────────────────────────────────────────────────────────
   const VOCAB = {
-    basic: [
-      {w:'apple',pos:'noun',ph:'/ˈæp.əl/',v:'quả táo',ex:'An apple a day keeps the doctor away.'},
-      {w:'beautiful',pos:'adj',ph:'/ˈbjuː.tɪ.fəl/',v:'đẹp',ex:'She has a beautiful smile.'},
-      {w:'remember',pos:'verb',ph:'/rɪˈmem.bər/',v:'nhớ',ex:'I always remember my first teacher.'},
-      {w:'family',pos:'noun',ph:'/ˈfæm.əl.i/',v:'gia đình',ex:'My family is going to the beach.'},
-      {w:'happy',pos:'adj',ph:'/ˈhæp.i/',v:'hạnh phúc, vui',ex:'I am happy to see you again.'},
-      {w:'school',pos:'noun',ph:'/skuːl/',v:'trường học',ex:'My school is near my house.'},
-      {w:'water',pos:'noun',ph:'/ˈwɔː.tər/',v:'nước',ex:'Please give me a glass of water.'},
-      {w:'travel',pos:'verb',ph:'/ˈtræv.əl/',v:'du lịch, đi',ex:'I love to travel around the world.'},
-      {w:'study',pos:'verb',ph:'/ˈstʌd.i/',v:'học',ex:'I study English every day.'},
-      {w:'friend',pos:'noun',ph:'/frend/',v:'bạn',ex:'She is my best friend since high school.'},
-      {w:'important',pos:'adj',ph:'/ɪmˈpɔː.tənt/',v:'quan trọng',ex:'Health is more important than money.'},
-      {w:'understand',pos:'verb',ph:'/ˌʌn.dəˈstænd/',v:'hiểu',ex:'I do not understand this question.'},
+    cntt: [
+      {w:'algorithm',pos:'noun',ph:'/ˈæl.ɡə.rɪð.əm/',v:'thuật toán',ex:'A sorting algorithm arranges data in order.'},
+      {w:'database',pos:'noun',ph:'/ˈdeɪ.tə.beɪs/',v:'cơ sở dữ liệu',ex:'User accounts are stored in the database.'},
+      {w:'encryption',pos:'noun',ph:'/ɪnˈkrɪp.ʃən/',v:'sự mã hoá',ex:'Encryption protects data from hackers.'},
+      {w:'framework',pos:'noun',ph:'/ˈfreɪm.wɜːk/',v:'nền tảng/bộ khung',ex:'React is a popular front-end framework.'},
+      {w:'compiler',pos:'noun',ph:'/kəmˈpaɪ.lər/',v:'trình biên dịch',ex:'The compiler turns source code into machine code.'},
+      {w:'debug',pos:'verb',ph:'/ˌdiːˈbʌɡ/',v:'gỡ lỗi',ex:'It took hours to debug the login error.'},
+      {w:'deploy',pos:'verb',ph:'/dɪˈplɔɪ/',v:'triển khai (lên máy chủ)',ex:'We deploy the app every Friday.'},
+      {w:'repository',pos:'noun',ph:'/rɪˈpɒz.ɪ.tər.i/',v:'kho lưu trữ mã',ex:'Push your code to the Git repository.'},
+      {w:'bandwidth',pos:'noun',ph:'/ˈbænd.wɪdθ/',v:'băng thông',ex:'Video streaming needs high bandwidth.'},
+      {w:'latency',pos:'noun',ph:'/ˈleɪ.tən.si/',v:'độ trễ',ex:'Low latency is vital for online games.'},
+      {w:'firewall',pos:'noun',ph:'/ˈfaɪə.wɔːl/',v:'tường lửa',ex:'A firewall blocks unauthorized access.'},
+      {w:'backend',pos:'noun',ph:'/ˈbæk.end/',v:'phần máy chủ (hậu trường)',ex:'The backend handles the business logic.'},
+      {w:'frontend',pos:'noun',ph:'/ˈfrʌnt.end/',v:'phần giao diện người dùng',ex:'The frontend is built with HTML and CSS.'},
+      {w:'query',pos:'noun',ph:'/ˈkwɪə.ri/',v:'truy vấn',ex:'This query returns all active users.'},
+      {w:'variable',pos:'noun',ph:'/ˈveə.ri.ə.bəl/',v:'biến',ex:'Store the result in a variable.'},
+      {w:'function',pos:'noun',ph:'/ˈfʌŋk.ʃən/',v:'hàm',ex:'Write a function to calculate the sum.'},
+      {w:'array',pos:'noun',ph:'/əˈreɪ/',v:'mảng',ex:'An array can hold many values.'},
+      {w:'cache',pos:'noun',ph:'/kæʃ/',v:'bộ nhớ đệm',ex:'The cache makes the page load faster.'},
+      {w:'server',pos:'noun',ph:'/ˈsɜː.vər/',v:'máy chủ',ex:'The server is down for maintenance.'},
+      {w:'protocol',pos:'noun',ph:'/ˈprəʊ.tə.kɒl/',v:'giao thức',ex:'HTTP is a web protocol.'},
+      {w:'authentication',pos:'noun',ph:'/ɔːˌθen.tɪˈkeɪ.ʃən/',v:'sự xác thực',ex:'Two-factor authentication adds security.'},
+      {w:'scalable',pos:'adj',ph:'/ˈskeɪ.lə.bəl/',v:'có khả năng mở rộng',ex:'A scalable system handles more users easily.'},
+      {w:'iteration',pos:'noun',ph:'/ˌɪt.əˈreɪ.ʃən/',v:'vòng lặp / lần lặp',ex:'Each iteration improves the model.'},
+      {w:'recursion',pos:'noun',ph:'/rɪˈkɜː.ʒən/',v:'đệ quy',ex:'Recursion solves a problem by calling itself.'},
+      {w:'bug',pos:'noun',ph:'/bʌɡ/',v:'lỗi phần mềm',ex:'The team fixed a critical bug.'},
+      {w:'software',pos:'noun',ph:'/ˈsɒft.weər/',v:'phần mềm',ex:'Update your software regularly.'},
+      {w:'hardware',pos:'noun',ph:'/ˈhɑːd.weər/',v:'phần cứng',ex:'The new hardware is much faster.'},
+      {w:'network',pos:'noun',ph:'/ˈnet.wɜːk/',v:'mạng',ex:'The whole office shares one network.'},
+      {w:'syntax',pos:'noun',ph:'/ˈsɪn.tæks/',v:'cú pháp',ex:'A missing comma is a syntax error.'},
+      {w:'runtime',pos:'noun',ph:'/ˈrʌn.taɪm/',v:'thời gian chạy',ex:'The error appears at runtime.'},
+      {w:'interface',pos:'noun',ph:'/ˈɪn.tə.feɪs/',v:'giao diện / interface',ex:'The API defines a clear interface.'},
+      {w:'parameter',pos:'noun',ph:'/pəˈræm.ɪ.tər/',v:'tham số',ex:'Pass the file name as a parameter.'},
+      {w:'loop',pos:'noun',ph:'/luːp/',v:'vòng lặp',ex:'A loop repeats the same block of code.'},
+      {w:'binary',pos:'adj',ph:'/ˈbaɪ.nər.i/',v:'nhị phân',ex:'Computers store data in binary.'},
+      {w:'virtual',pos:'adj',ph:'/ˈvɜː.tʃu.əl/',v:'ảo',ex:'We met in a virtual classroom.'},
+      {w:'cloud',pos:'noun',ph:'/klaʊd/',v:'điện toán đám mây',ex:'The files are stored in the cloud.'},
+      {w:'backup',pos:'noun',ph:'/ˈbæk.ʌp/',v:'bản sao lưu',ex:'Make a backup before the update.'},
+      {w:'malware',pos:'noun',ph:'/ˈmæl.weər/',v:'phần mềm độc hại',ex:'Antivirus software detects malware.'},
+      {w:'patch',pos:'noun',ph:'/pætʃ/',v:'bản vá lỗi',ex:'Install the security patch today.'},
+      {w:'token',pos:'noun',ph:'/ˈtəʊ.kən/',v:'mã thông báo (token)',ex:'The login token expires in one hour.'},
+      {w:'render',pos:'verb',ph:'/ˈren.dər/',v:'kết xuất / hiển thị',ex:'The browser renders the page.'},
     ],
-    travel: [
-      {w:'airport',pos:'noun',ph:'/ˈeə.pɔːt/',v:'sân bay',ex:'The flight leaves from Terminal 2 of the airport.'},
-      {w:'luggage',pos:'noun',ph:'/ˈlʌɡ.ɪdʒ/',v:'hành lý',ex:'Please put your luggage on the conveyor belt.'},
-      {w:'reservation',pos:'noun',ph:'/ˌrez.əˈveɪ.ʃən/',v:'việc đặt chỗ',ex:'I have a reservation under the name Smith.'},
-      {w:'passport',pos:'noun',ph:'/ˈpɑːs.pɔːt/',v:'hộ chiếu',ex:'Please show me your passport.'},
-      {w:'currency',pos:'noun',ph:'/ˈkʌr.ən.si/',v:'tiền tệ',ex:'The local currency is the euro.'},
-      {w:'destination',pos:'noun',ph:'/ˌdes.tɪˈneɪ.ʃən/',v:'điểm đến',ex:'Paris is a popular travel destination.'},
-      {w:'itinerary',pos:'noun',ph:'/aɪˈtɪn.ər.ər.i/',v:'lịch trình',ex:'Our itinerary includes three cities in five days.'},
-      {w:'tourist',pos:'noun',ph:'/ˈtʊə.rɪst/',v:'khách du lịch',ex:'Tourists love this beach in summer.'},
+    yte: [
+      {w:'diagnosis',pos:'noun',ph:'/ˌdaɪ.əɡˈnəʊ.sɪs/',v:'sự chẩn đoán',ex:'Early diagnosis saves lives.'},
+      {w:'symptom',pos:'noun',ph:'/ˈsɪmp.təm/',v:'triệu chứng',ex:'Fever is a common symptom of the flu.'},
+      {w:'treatment',pos:'noun',ph:'/ˈtriːt.mənt/',v:'sự điều trị',ex:'The treatment lasted two weeks.'},
+      {w:'vaccine',pos:'noun',ph:'/ˈvæk.siːn/',v:'vắc-xin',ex:'The vaccine prevents serious illness.'},
+      {w:'surgery',pos:'noun',ph:'/ˈsɜː.dʒər.i/',v:'phẫu thuật',ex:'She recovered well after surgery.'},
+      {w:'prescription',pos:'noun',ph:'/prɪˈskrɪp.ʃən/',v:'đơn thuốc',ex:'You need a prescription for this medicine.'},
+      {w:'infection',pos:'noun',ph:'/ɪnˈfek.ʃən/',v:'sự nhiễm trùng',ex:'Wash the wound to avoid infection.'},
+      {w:'antibiotic',pos:'noun',ph:'/ˌæn.ti.baɪˈɒt.ɪk/',v:'thuốc kháng sinh',ex:'Antibiotics fight bacterial infections.'},
+      {w:'immune',pos:'adj',ph:'/ɪˈmjuːn/',v:'(thuộc) miễn dịch',ex:'A strong immune system fights disease.'},
+      {w:'chronic',pos:'adj',ph:'/ˈkrɒn.ɪk/',v:'mãn tính',ex:'Diabetes is a chronic disease.'},
+      {w:'dosage',pos:'noun',ph:'/ˈdəʊ.sɪdʒ/',v:'liều lượng',ex:'Follow the dosage on the label.'},
+      {w:'therapy',pos:'noun',ph:'/ˈθer.ə.pi/',v:'liệu pháp',ex:'Physical therapy helped him walk again.'},
+      {w:'nutrition',pos:'noun',ph:'/njuːˈtrɪʃ.ən/',v:'dinh dưỡng',ex:'Good nutrition supports growth.'},
+      {w:'recovery',pos:'noun',ph:'/rɪˈkʌv.ər.i/',v:'sự hồi phục',ex:'Rest speeds up recovery.'},
+      {w:'patient',pos:'noun',ph:'/ˈpeɪ.ʃənt/',v:'bệnh nhân',ex:'The doctor examined the patient.'},
+      {w:'physician',pos:'noun',ph:'/fɪˈzɪʃ.ən/',v:'bác sĩ (nội khoa)',ex:'Consult a physician before taking it.'},
+      {w:'allergy',pos:'noun',ph:'/ˈæl.ə.dʒi/',v:'dị ứng',ex:'He has an allergy to peanuts.'},
+      {w:'inflammation',pos:'noun',ph:'/ˌɪn.fləˈmeɪ.ʃən/',v:'sự viêm',ex:'Ice reduces inflammation.'},
+      {w:'anesthesia',pos:'noun',ph:'/ˌæn.əsˈθiː.zi.ə/',v:'sự gây mê',ex:'The surgery is done under anesthesia.'},
+      {w:'pulse',pos:'noun',ph:'/pʌls/',v:'mạch (đập)',ex:'The nurse checked his pulse.'},
+      {w:'wound',pos:'noun',ph:'/wuːnd/',v:'vết thương',ex:'Clean the wound carefully.'},
+      {w:'hygiene',pos:'noun',ph:'/ˈhaɪ.dʒiːn/',v:'vệ sinh',ex:'Hand hygiene prevents disease.'},
+      {w:'epidemic',pos:'noun',ph:'/ˌep.ɪˈdem.ɪk/',v:'dịch bệnh',ex:'The epidemic spread to nearby cities.'},
+      {w:'dehydration',pos:'noun',ph:'/ˌdiː.haɪˈdreɪ.ʃən/',v:'sự mất nước',ex:'Drink water to avoid dehydration.'},
+      {w:'fracture',pos:'noun',ph:'/ˈfræk.tʃər/',v:'sự gãy xương',ex:'The X-ray showed a fracture.'},
+      {w:'transfusion',pos:'noun',ph:'/trænsˈfjuː.ʒən/',v:'sự truyền máu',ex:'The patient needed a blood transfusion.'},
+      {w:'contagious',pos:'adj',ph:'/kənˈteɪ.dʒəs/',v:'dễ lây',ex:'Measles is highly contagious.'},
+      {w:'rehabilitation',pos:'noun',ph:'/ˌriː.əˌbɪl.ɪˈteɪ.ʃən/',v:'sự phục hồi chức năng',ex:'Rehabilitation takes several months.'},
+      {w:'cardiac',pos:'adj',ph:'/ˈkɑː.di.æk/',v:'(thuộc) tim',ex:'He has a cardiac condition.'},
+      {w:'tumor',pos:'noun',ph:'/ˈtjuː.mər/',v:'khối u',ex:'The tumor was benign.'},
+      {w:'sterile',pos:'adj',ph:'/ˈster.aɪl/',v:'vô trùng',ex:'Use sterile instruments in surgery.'},
+      {w:'clinic',pos:'noun',ph:'/ˈklɪn.ɪk/',v:'phòng khám',ex:'The clinic opens at eight.'},
+      {w:'genetic',pos:'adj',ph:'/dʒəˈnet.ɪk/',v:'(thuộc) di truyền',ex:'Some diseases are genetic.'},
+      {w:'pharmacy',pos:'noun',ph:'/ˈfɑː.mə.si/',v:'nhà thuốc',ex:'Buy the medicine at the pharmacy.'},
+    ],
+    giaoduc: [
+      {w:'curriculum',pos:'noun',ph:'/kəˈrɪk.jə.ləm/',v:'chương trình học',ex:'The new curriculum focuses on skills.'},
+      {w:'assessment',pos:'noun',ph:'/əˈses.mənt/',v:'sự đánh giá',ex:'The assessment includes a final project.'},
+      {w:'tuition',pos:'noun',ph:'/tjuːˈɪʃ.ən/',v:'học phí',ex:'University tuition is rising every year.'},
+      {w:'scholarship',pos:'noun',ph:'/ˈskɒl.ə.ʃɪp/',v:'học bổng',ex:'She won a full scholarship.'},
+      {w:'lecture',pos:'noun',ph:'/ˈlek.tʃər/',v:'bài giảng',ex:'The lecture starts at nine.'},
+      {w:'semester',pos:'noun',ph:'/sɪˈmes.tər/',v:'học kỳ',ex:'Exams are at the end of the semester.'},
+      {w:'enrollment',pos:'noun',ph:'/ɪnˈrəʊl.mənt/',v:'sự ghi danh',ex:'Enrollment opens next week.'},
+      {w:'literacy',pos:'noun',ph:'/ˈlɪt.ər.ə.si/',v:'khả năng đọc viết',ex:'Digital literacy is now essential.'},
+      {w:'pedagogy',pos:'noun',ph:'/ˈped.ə.ɡɒdʒ.i/',v:'phương pháp sư phạm',ex:'Modern pedagogy values active learning.'},
+      {w:'syllabus',pos:'noun',ph:'/ˈsɪl.ə.bəs/',v:'đề cương môn học',ex:'Read the syllabus on the first day.'},
+      {w:'diploma',pos:'noun',ph:'/dɪˈpləʊ.mə/',v:'bằng tốt nghiệp',ex:'He earned a diploma in design.'},
+      {w:'undergraduate',pos:'noun',ph:'/ˌʌn.dəˈɡrædʒ.u.ət/',v:'sinh viên đại học',ex:'She is an undergraduate in physics.'},
+      {w:'thesis',pos:'noun',ph:'/ˈθiː.sɪs/',v:'luận văn',ex:'He is writing his thesis on AI.'},
+      {w:'faculty',pos:'noun',ph:'/ˈfæk.əl.ti/',v:'khoa / đội ngũ giảng viên',ex:'The faculty of engineering is large.'},
+      {w:'mentor',pos:'noun',ph:'/ˈmen.tɔːr/',v:'người cố vấn',ex:'A good mentor guides your career.'},
+      {w:'competency',pos:'noun',ph:'/ˈkɒm.pɪ.tən.si/',v:'năng lực',ex:'The course builds digital competency.'},
+      {w:'plagiarism',pos:'noun',ph:'/ˈpleɪ.dʒə.rɪ.zəm/',v:'sự đạo văn',ex:'Plagiarism can lead to failure.'},
+      {w:'transcript',pos:'noun',ph:'/ˈtræn.skrɪpt/',v:'bảng điểm',ex:'Send your transcript with the application.'},
+      {w:'vocational',pos:'adj',ph:'/vəʊˈkeɪ.ʃən.əl/',v:'hướng nghiệp / dạy nghề',ex:'Vocational training prepares job skills.'},
+      {w:'tutor',pos:'noun',ph:'/ˈtjuː.tər/',v:'gia sư',ex:'A tutor helped her with math.'},
+      {w:'graduate',pos:'verb',ph:'/ˈɡrædʒ.u.eɪt/',v:'tốt nghiệp',ex:'They graduate next June.'},
+      {w:'discipline',pos:'noun',ph:'/ˈdɪs.ə.plɪn/',v:'kỷ luật / ngành học',ex:'Self discipline helps you study well.'},
+      {w:'accreditation',pos:'noun',ph:'/əˌkred.ɪˈteɪ.ʃən/',v:'sự kiểm định chất lượng',ex:'The program received accreditation.'},
+      {w:'coursework',pos:'noun',ph:'/ˈkɔːs.wɜːk/',v:'bài tập trong khoá học',ex:'Coursework counts for forty percent.'},
+      {w:'seminar',pos:'noun',ph:'/ˈsem.ɪ.nɑːr/',v:'hội thảo chuyên đề',ex:'The seminar is on Friday afternoon.'},
+      {w:'internship',pos:'noun',ph:'/ˈɪn.tɜːn.ʃɪp/',v:'kỳ thực tập',ex:'He did an internship at a tech firm.'},
+      {w:'campus',pos:'noun',ph:'/ˈkæm.pəs/',v:'khuôn viên trường',ex:'The campus has a large library.'},
+      {w:'major',pos:'noun',ph:'/ˈmeɪ.dʒər/',v:'chuyên ngành chính',ex:'Her major is computer science.'},
+      {w:'credential',pos:'noun',ph:'/krəˈden.ʃəl/',v:'chứng chỉ / bằng cấp',ex:'The job requires a teaching credential.'},
+      {w:'remote',pos:'adj',ph:'/rɪˈməʊt/',v:'từ xa (học từ xa)',ex:'Remote learning grew during the pandemic.'},
+      {w:'workshop',pos:'noun',ph:'/ˈwɜːk.ʃɒp/',v:'buổi tập huấn / hội thảo thực hành',ex:'The coding workshop lasts two days.'},
     ],
     business: [
       {w:'invoice',pos:'noun',ph:'/ˈɪn.vɔɪs/',v:'hoá đơn',ex:'Please send me the invoice by email.'},
       {w:'negotiate',pos:'verb',ph:'/nɪˈɡəʊ.ʃi.eɪt/',v:'thương lượng',ex:'We need to negotiate the price.'},
-      {w:'revenue',pos:'noun',ph:'/ˈrev.ə.njuː/',v:'doanh thu',ex:'The company\'s revenue grew 20% last year.'},
-      {w:'stakeholder',pos:'noun',ph:'/ˈsteɪkˌhəʊl.dər/',v:'bên liên quan',ex:'All stakeholders agreed with the new plan.'},
-      {w:'deadline',pos:'noun',ph:'/ˈded.laɪn/',v:'hạn chót',ex:'The deadline is next Friday at 5 PM.'},
-      {w:'budget',pos:'noun',ph:'/ˈbʌdʒ.ɪt/',v:'ngân sách',ex:'We need to stay within budget for this project.'},
+      {w:'revenue',pos:'noun',ph:'/ˈrev.ə.njuː/',v:'doanh thu',ex:'Revenue grew twenty percent last year.'},
+      {w:'stakeholder',pos:'noun',ph:'/ˈsteɪkˌhəʊl.dər/',v:'bên liên quan',ex:'All stakeholders agreed with the plan.'},
+      {w:'deadline',pos:'noun',ph:'/ˈded.laɪn/',v:'hạn chót',ex:'The deadline is next Friday.'},
+      {w:'budget',pos:'noun',ph:'/ˈbʌdʒ.ɪt/',v:'ngân sách',ex:'We must stay within budget.'},
+      {w:'investment',pos:'noun',ph:'/ɪnˈvest.mənt/',v:'sự đầu tư',ex:'The investment paid off well.'},
+      {w:'profit',pos:'noun',ph:'/ˈprɒf.ɪt/',v:'lợi nhuận',ex:'The shop made a small profit.'},
+      {w:'strategy',pos:'noun',ph:'/ˈstræt.ə.dʒi/',v:'chiến lược',ex:'Our marketing strategy worked.'},
+      {w:'entrepreneur',pos:'noun',ph:'/ˌɒn.trə.prəˈnɜːr/',v:'doanh nhân (khởi nghiệp)',ex:'The entrepreneur founded three startups.'},
+      {w:'supply',pos:'noun',ph:'/səˈplaɪ/',v:'nguồn cung',ex:'Supply could not meet demand.'},
+      {w:'demand',pos:'noun',ph:'/dɪˈmɑːnd/',v:'nhu cầu / cầu',ex:'Demand for the product is high.'},
+      {w:'merger',pos:'noun',ph:'/ˈmɜː.dʒər/',v:'sự sáp nhập',ex:'The merger created a huge company.'},
+      {w:'asset',pos:'noun',ph:'/ˈæs.et/',v:'tài sản',ex:'The building is a valuable asset.'},
+      {w:'liability',pos:'noun',ph:'/ˌlaɪ.əˈbɪl.ə.ti/',v:'khoản nợ / trách nhiệm pháp lý',ex:'The loan is a long-term liability.'},
+      {w:'forecast',pos:'noun',ph:'/ˈfɔː.kɑːst/',v:'dự báo',ex:'The sales forecast looks positive.'},
+      {w:'startup',pos:'noun',ph:'/ˈstɑːt.ʌp/',v:'công ty khởi nghiệp',ex:'The startup raised new funding.'},
+      {w:'turnover',pos:'noun',ph:'/ˈtɜːn.əʊ.vər/',v:'doanh số / tỉ lệ nghỉ việc',ex:'Annual turnover doubled this year.'},
+      {w:'outsource',pos:'verb',ph:'/ˈaʊt.sɔːs/',v:'thuê ngoài',ex:'They outsource customer support.'},
+      {w:'dividend',pos:'noun',ph:'/ˈdɪv.ɪ.dend/',v:'cổ tức',ex:'Shareholders receive a yearly dividend.'},
+      {w:'recession',pos:'noun',ph:'/rɪˈseʃ.ən/',v:'suy thoái kinh tế',ex:'Sales dropped during the recession.'},
+      {w:'compliance',pos:'noun',ph:'/kəmˈplaɪ.əns/',v:'sự tuân thủ',ex:'The firm ensures legal compliance.'},
+      {w:'incentive',pos:'noun',ph:'/ɪnˈsen.tɪv/',v:'sự khích lệ / ưu đãi',ex:'Bonuses are a strong incentive.'},
+      {w:'logistics',pos:'noun',ph:'/ləˈdʒɪs.tɪks/',v:'hậu cần',ex:'Good logistics cut delivery time.'},
+    ],
+    basic: [
+      {w:'beautiful',pos:'adj',ph:'/ˈbjuː.tɪ.fəl/',v:'đẹp',ex:'She has a beautiful smile.'},
+      {w:'remember',pos:'verb',ph:'/rɪˈmem.bər/',v:'nhớ',ex:'I always remember my first teacher.'},
+      {w:'family',pos:'noun',ph:'/ˈfæm.əl.i/',v:'gia đình',ex:'My family is going to the beach.'},
+      {w:'happy',pos:'adj',ph:'/ˈhæp.i/',v:'hạnh phúc, vui',ex:'I am happy to see you again.'},
+      {w:'water',pos:'noun',ph:'/ˈwɔː.tər/',v:'nước',ex:'Please give me a glass of water.'},
+      {w:'travel',pos:'verb',ph:'/ˈtræv.əl/',v:'du lịch, đi',ex:'I love to travel around the world.'},
+      {w:'study',pos:'verb',ph:'/ˈstʌd.i/',v:'học',ex:'I study English every day.'},
+      {w:'friend',pos:'noun',ph:'/frend/',v:'bạn',ex:'She is my best friend.'},
+      {w:'important',pos:'adj',ph:'/ɪmˈpɔː.tənt/',v:'quan trọng',ex:'Health is more important than money.'},
+      {w:'understand',pos:'verb',ph:'/ˌʌn.dəˈstænd/',v:'hiểu',ex:'I do not understand this question.'},
+    ],
+    travel: [
+      {w:'airport',pos:'noun',ph:'/ˈeə.pɔːt/',v:'sân bay',ex:'The flight leaves from the airport at noon.'},
+      {w:'luggage',pos:'noun',ph:'/ˈlʌɡ.ɪdʒ/',v:'hành lý',ex:'Put your luggage on the belt.'},
+      {w:'reservation',pos:'noun',ph:'/ˌrez.əˈveɪ.ʃən/',v:'việc đặt chỗ',ex:'I have a reservation for two.'},
+      {w:'passport',pos:'noun',ph:'/ˈpɑːs.pɔːt/',v:'hộ chiếu',ex:'Please show me your passport.'},
+      {w:'currency',pos:'noun',ph:'/ˈkʌr.ən.si/',v:'tiền tệ',ex:'The local currency is the euro.'},
+      {w:'destination',pos:'noun',ph:'/ˌdes.tɪˈneɪ.ʃən/',v:'điểm đến',ex:'Paris is a popular destination.'},
+      {w:'itinerary',pos:'noun',ph:'/aɪˈtɪn.ər.ər.i/',v:'lịch trình',ex:'Our itinerary covers three cities.'},
+      {w:'tourist',pos:'noun',ph:'/ˈtʊə.rɪst/',v:'khách du lịch',ex:'Tourists love this beach.'},
     ],
     academic: [
       {w:'analyze',pos:'verb',ph:'/ˈæn.əl.aɪz/',v:'phân tích',ex:'Researchers analyze the data carefully.'},
-      {w:'hypothesis',pos:'noun',ph:'/haɪˈpɒθ.ə.sɪs/',v:'giả thuyết',ex:'The hypothesis was confirmed by the experiment.'},
-      {w:'methodology',pos:'noun',ph:'/ˌmeθ.əˈdɒl.ə.dʒi/',v:'phương pháp luận',ex:'The paper describes the research methodology in detail.'},
-      {w:'paradigm',pos:'noun',ph:'/ˈpær.ə.daɪm/',v:'mô hình, hệ hình',ex:'AI is causing a paradigm shift in education.'},
-      {w:'empirical',pos:'adj',ph:'/ɪmˈpɪr.ɪ.kəl/',v:'thực nghiệm',ex:'Empirical evidence supports the new theory.'},
+      {w:'hypothesis',pos:'noun',ph:'/haɪˈpɒθ.ə.sɪs/',v:'giả thuyết',ex:'The hypothesis was confirmed.'},
+      {w:'methodology',pos:'noun',ph:'/ˌmeθ.əˈdɒl.ə.dʒi/',v:'phương pháp luận',ex:'The paper explains its methodology.'},
+      {w:'paradigm',pos:'noun',ph:'/ˈpær.ə.daɪm/',v:'mô hình / hệ hình',ex:'AI is a new paradigm in education.'},
+      {w:'empirical',pos:'adj',ph:'/ɪmˈpɪr.ɪ.kəl/',v:'thực nghiệm',ex:'Empirical evidence supports the theory.'},
+      {w:'cite',pos:'verb',ph:'/saɪt/',v:'trích dẫn',ex:'Always cite your sources.'},
     ],
     ielts: [
-      {w:'exacerbate',pos:'verb',ph:'/ɪɡˈzæs.ə.beɪt/',v:'làm trầm trọng',ex:'Smoking can exacerbate respiratory problems.'},
-      {w:'mitigate',pos:'verb',ph:'/ˈmɪt.ɪ.ɡeɪt/',v:'giảm nhẹ',ex:'We must mitigate the effects of climate change.'},
-      {w:'ubiquitous',pos:'adj',ph:'/juːˈbɪk.wɪ.təs/',v:'có mặt khắp nơi',ex:'Smartphones are ubiquitous in modern society.'},
-      {w:'plethora',pos:'noun',ph:'/ˈpleθ.ər.ə/',v:'số lượng lớn',ex:'There is a plethora of options to choose from.'},
-      {w:'paradoxical',pos:'adj',ph:'/ˌpær.əˈdɒk.sɪ.kəl/',v:'nghịch lý',ex:'It is paradoxical that more choice can lead to less happiness.'},
-      {w:'meticulous',pos:'adj',ph:'/məˈtɪk.jə.ləs/',v:'tỉ mỉ, cẩn thận',ex:'She is meticulous about details in her work.'},
+      {w:'exacerbate',pos:'verb',ph:'/ɪɡˈzæs.ə.beɪt/',v:'làm trầm trọng thêm',ex:'Smoking can exacerbate the illness.'},
+      {w:'mitigate',pos:'verb',ph:'/ˈmɪt.ɪ.ɡeɪt/',v:'giảm nhẹ',ex:'We must mitigate climate change.'},
+      {w:'ubiquitous',pos:'adj',ph:'/juːˈbɪk.wɪ.təs/',v:'có mặt khắp nơi',ex:'Smartphones are ubiquitous today.'},
+      {w:'plethora',pos:'noun',ph:'/ˈpleθ.ər.ə/',v:'số lượng lớn',ex:'There is a plethora of choices.'},
+      {w:'meticulous',pos:'adj',ph:'/məˈtɪk.jə.ləs/',v:'tỉ mỉ, cẩn thận',ex:'She is meticulous about details.'},
+      {w:'inevitable',pos:'adj',ph:'/ɪnˈev.ɪ.tə.bəl/',v:'không thể tránh khỏi',ex:'Change is inevitable.'},
     ],
   };
 
-  const STATE_KEY = 'tizia:vocab-en:state';
-  let state = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
-  let mode = 'en-vi', topic = 'basic', flipped = false, currentIdx = 0;
-
+  // ── SRS Leitner: mỗi từ có { box 0..5, due (timestamp) }. Khoảng ôn theo box. ──
+  const INTERVALS = [0, 10*60e3, 24*3600e3, 3*24*3600e3, 7*24*3600e3, 16*24*3600e3];
+  const MASTER_BOX = 4;            // box >= 4 coi như đã thuộc
+  const QUIZ_LEN = 10;
+  const STATE_KEY = 'tizia:vocab-en:v2';
   const el = id => document.getElementById(id);
-  function save() { localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+  const todayStr = () => new Date().toISOString().slice(0, 10);
 
-  function getList() {
-    state[topic] = state[topic] || {};
-    return VOCAB[topic] || [];
+  let store = load();
+  let topic = 'cntt', mode = 'en-vi', tab = 'card';
+  let flipped = false, cur = null;        // cur = từ đang hiện ở flashcard
+
+  function load() {
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem(STATE_KEY) || '{}'); } catch (e) {}
+    s.cards = s.cards || {};              // cards[topic][word] = {box,due}
+    s.streak = s.streak || { count: 0, last: null };
+    return s;
   }
-  function getTodo() {
-    return getList().filter((_, i) => !state[topic][i]);
+  function save() { localStorage.setItem(STATE_KEY, JSON.stringify(store)); }
+  function cardState(t, w) {
+    store.cards[t] = store.cards[t] || {};
+    return store.cards[t][w] || { box: 0, due: 0 };
   }
-  function render() {
-    const list = getList();
-    if (!list.length) return;
-    const todo = getTodo();
-    if (!todo.length) {
-      el('wordFront').textContent = '🎉';
-      el('phoneticFront').textContent = '';
-      el('posFront').textContent = '';
-      el('meaningBack').textContent = 'Hoàn thành chủ đề này!';
-      el('exampleBack').textContent = 'Chọn chủ đề khác hoặc bấm "Học lại" để ôn.';
-      updateStats();
-      return;
+  function setCard(t, w, st) { store.cards[t] = store.cards[t] || {}; store.cards[t][w] = st; save(); }
+
+  // Cập nhật SRS sau khi trả lời đúng/sai
+  function grade(t, w, correct) {
+    const st = cardState(t, w);
+    st.box = correct ? Math.min(MASTER_BOX + 1, st.box + 1) : 0;
+    st.due = Date.now() + INTERVALS[Math.min(st.box, INTERVALS.length - 1)];
+    setCard(t, w, st);
+  }
+  // Danh sách từ "đến hạn ôn" (mới hoặc due<=now), ưu tiên box thấp + due sớm
+  function dueList(t) {
+    const now = Date.now();
+    return VOCAB[t].filter(it => { const s = cardState(t, it.w); return s.due <= now; })
+      .sort((a, b) => cardState(t, a.w).box - cardState(t, b.w).box);
+  }
+  function masteredCount(t) {
+    return VOCAB[t].filter(it => cardState(t, it.w).box >= MASTER_BOX).length;
+  }
+
+  // ── Streak ──
+  function bumpStreak() {
+    const t = todayStr();
+    const s = store.streak;
+    if (s.last === t) return;                       // đã tính hôm nay
+    const yest = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+    s.count = (s.last === yest) ? s.count + 1 : 1;
+    s.last = t; save();
+  }
+  function streakValid() {
+    const s = store.streak; if (!s.last) return 0;
+    const t = todayStr(), yest = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+    return (s.last === t || s.last === yest) ? s.count : 0;  // đứt chuỗi nếu nghỉ >1 ngày
+  }
+  function renderStreak() { el('streak').textContent = streakValid(); }
+
+  // ── Phát âm ──
+  function speak(word) {
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(word); u.lang = 'en-US'; u.rate = .85;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }
+
+  // ─────────────── FLASHCARD ───────────────
+  let reviewAhead = false;
+  function pickCard() {
+    const due = dueList(topic);
+    if (due.length) { reviewAhead = false; return due[0]; }
+    if (reviewAhead) { const all = VOCAB[topic]; return all[Math.floor(Math.random() * all.length)]; }
+    return null;                                    // hết hạn ôn hôm nay
+  }
+  function renderCard() {
+    cur = pickCard();
+    const due = dueList(topic).length, total = VOCAB[topic].length, mastered = masteredCount(topic);
+    el('due').textContent = due; el('mastered').textContent = mastered; el('all').textContent = total;
+    el('bar').style.width = (mastered / total * 100) + '%';
+    el('reviewAll').style.display = (!cur && !reviewAhead) ? '' : 'none';
+    if (!cur) {
+      el('boxFront').textContent = ''; el('posFront').textContent = '';
+      el('wordFront').textContent = '🎉'; el('phoneticFront').textContent = '';
+      el('meaningBack').textContent = 'Hết từ cần ôn hôm nay!';
+      el('exampleBack').textContent = 'Quay lại sau hoặc bấm "ôn lại tất cả" để học thêm.';
+      el('card').classList.remove('flipped'); return;
     }
-    currentIdx = currentIdx % todo.length;
-    const item = todo[currentIdx];
+    const st = cardState(topic, cur.w);
+    el('boxFront').textContent = st.box === 0 ? 'Mới' : 'Cấp ' + st.box + '/5';
     if (mode === 'en-vi') {
-      el('wordFront').textContent = item.w;
-      el('phoneticFront').textContent = item.ph;
-      el('posFront').textContent = item.pos;
-      el('meaningBack').textContent = item.v;
+      el('wordFront').textContent = cur.w; el('phoneticFront').textContent = cur.ph;
+      el('posFront').textContent = cur.pos; el('meaningBack').textContent = cur.v;
     } else {
-      el('wordFront').textContent = item.v;
-      el('phoneticFront').textContent = '';
-      el('posFront').textContent = 'tiếng Việt';
-      el('meaningBack').textContent = `${item.w} ${item.ph}`;
+      el('wordFront').textContent = cur.v; el('phoneticFront').textContent = '';
+      el('posFront').textContent = 'tiếng Việt'; el('meaningBack').textContent = cur.w + '  ' + cur.ph;
     }
-    el('exampleBack').textContent = item.ex;
+    el('exampleBack').textContent = cur.ex;
     el('card').classList.toggle('flipped', flipped);
-    const learned = list.filter((_, i) => state[topic][i]).length;
-    el('bar').style.width = (learned / list.length * 100) + '%';
-    updateStats();
-  }
-  function updateStats() {
-    const list = getList();
-    const learned = list.filter((_, i) => state[topic][i]).length;
-    el('learned').textContent = learned;
-    el('todo').textContent = list.length - learned;
-    el('all').textContent = list.length;
-  }
-  function speakCurrent() {
-    const todo = getTodo();
-    if (!todo.length) return;
-    const item = todo[currentIdx];
-    if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-    const u = new SpeechSynthesisUtterance(item.w);
-    u.lang = 'en-US'; u.rate = 0.85;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
   }
 
-  el('card').addEventListener('click', () => { flipped = !flipped; render(); });
-  el('speakFront').addEventListener('click', (e) => { e.stopPropagation(); speakCurrent(); });
-  el('speakBack').addEventListener('click', (e) => { e.stopPropagation(); speakCurrent(); });
-  el('againBtn').onclick = () => {
-    currentIdx = (currentIdx + 1) % Math.max(1, getTodo().length);
-    flipped = false; render();
-  };
-  el('knowBtn').onclick = () => {
-    const todo = getTodo();
-    if (!todo.length) return;
-    const item = todo[currentIdx];
-    const list = getList();
-    const realIdx = list.findIndex(x => x.w === item.w);
-    state[topic][realIdx] = true; save();
-    flipped = false; render();
-  };
-  el('topicSel').onchange = (e) => { topic = e.target.value; currentIdx = 0; flipped = false; render(); };
-  el('modeSel').onchange = (e) => { mode = e.target.value; flipped = false; render(); };
-  el('shuffleBtn').onclick = () => { VOCAB[topic].sort(() => Math.random() - .5); render(); };
-  el('resetBtn').onclick = () => {
-    if (!confirm('Học lại từ đầu (xoá ghi nhớ đã thuộc cho chủ đề này)?')) return;
-    state[topic] = {}; save(); render();
-  };
+  el('card').addEventListener('click', () => { flipped = !flipped; el('card').classList.toggle('flipped', flipped); });
+  el('speakFront').addEventListener('click', e => { e.stopPropagation(); if (cur) speak(cur.w); });
+  el('speakBack').addEventListener('click', e => { e.stopPropagation(); if (cur) speak(cur.w); });
+  el('knowBtn').onclick = () => { if (!cur) return; grade(topic, cur.w, true); bumpStreak(); flipped = false; renderStreak(); renderCard(); };
+  el('againBtn').onclick = () => { if (!cur) return; grade(topic, cur.w, false); flipped = false; renderCard(); };
+  el('reviewAll').onclick = () => { reviewAhead = true; flipped = false; renderCard(); };
 
-  render();
+  // ─────────────── QUIZ ───────────────
+  let quiz = null;   // { items:[{it, opts:[], answer, picked}], idx, right }
+  function buildQuiz() {
+    const pool = VOCAB[topic];
+    // ưu tiên từ yếu (box thấp / đến hạn) → học cái cần ôn
+    const ranked = [...pool].sort((a, b) => cardState(topic, a.w).box - cardState(topic, b.w).box);
+    const chosen = ranked.slice(0, Math.min(QUIZ_LEN, pool.length)).sort(() => Math.random() - .5);
+    const items = chosen.map(it => {
+      const others = pool.filter(x => x.w !== it.w).sort(() => Math.random() - .5).slice(0, 3);
+      const optSrc = [it, ...others].sort(() => Math.random() - .5);
+      const opts = optSrc.map(o => mode === 'en-vi' ? o.v : o.w);
+      return { it, opts, answer: opts.indexOf(mode === 'en-vi' ? it.v : it.w), picked: null };
+    });
+    quiz = { items, idx: 0, right: 0 };
+  }
+  function renderQuiz() {
+    const q = quiz.items[quiz.idx];
+    el('qIdx').textContent = quiz.idx + 1; el('qTotal').textContent = quiz.items.length;
+    el('qRight').textContent = quiz.right;
+    el('qPrompt').textContent = mode === 'en-vi' ? 'Chọn NGHĨA đúng của từ:' : 'Chọn TỪ tiếng Anh đúng cho nghĩa:';
+    el('qWord').textContent = mode === 'en-vi' ? q.it.w : q.it.v;
+    el('qPhon').textContent = mode === 'en-vi' ? q.it.ph : '';
+    el('qNext').style.display = 'none';
+    el('qOpts').innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const b = document.createElement('button');
+      b.className = 'opt'; b.textContent = opt;
+      b.onclick = () => answerQuiz(i, b);
+      el('qOpts').appendChild(b);
+    });
+  }
+  function answerQuiz(i, btn) {
+    const q = quiz.items[quiz.idx];
+    if (q.picked !== null) return;
+    q.picked = i;
+    const correct = i === q.answer;
+    if (correct) quiz.right++;
+    grade(topic, q.it.w, correct);
+    [...el('qOpts').children].forEach((b, j) => {
+      b.disabled = true;
+      if (j === q.answer) b.classList.add('correct');
+      else if (j === i) b.classList.add('wrong');
+    });
+    if (mode === 'en-vi') speak(q.it.w);
+    el('qRight').textContent = quiz.right;
+    el('qNext').style.display = '';
+    el('qNext').textContent = quiz.idx < quiz.items.length - 1 ? 'Câu sau →' : '🏁 Xem kết quả';
+  }
+  el('qNext').onclick = () => {
+    if (quiz.idx < quiz.items.length - 1) { quiz.idx++; renderQuiz(); }
+    else finishQuiz();
+  };
+  function finishQuiz() {
+    bumpStreak(); renderStreak();
+    const n = quiz.items.length, r = quiz.right, pct = Math.round(r / n * 100);
+    el('mScore').textContent = r + '/' + n;
+    const pass = pct >= 70;
+    el('mEmoji').textContent = pct === 100 ? '🏆' : pass ? '🎉' : '💪';
+    el('mTitle').textContent = pct === 100 ? 'Tuyệt đối!' : pass ? 'Chúc mừng!' : 'Cố lên!';
+    el('mMsg').innerHTML = pass
+      ? 'Bạn trả lời đúng <b>' + pct + '%</b>. Chuỗi học: 🔥 <b>' + streakValid() + ' ngày</b>. Các từ trả lời đúng đã được dời lịch ôn xa hơn.'
+      : 'Đúng <b>' + pct + '%</b> — ôn lại các từ sai rồi thử lại nhé. Những từ sai sẽ xuất hiện sớm trong phần Học thẻ.';
+    el('overlay').classList.add('show');
+  }
+
+  // ── Review (xem lại) ──
+  function showReview() {
+    el('overlay').classList.remove('show');
+    setView('review');
+    el('reviewList').innerHTML = quiz.items.map(q => {
+      const ok = q.picked === q.answer;
+      const yourAns = q.picked === null ? '(bỏ qua)' : q.opts[q.picked];
+      return '<div class="rrow ' + (ok ? 'ok' : 'no') + '">' +
+        '<div class="rw">' + q.it.w + ' <span style="color:var(--accent);font-size:13px">' + q.it.ph + '</span>' +
+        '<span class="tag ' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Đúng' : 'Sai') + '</span></div>' +
+        '<div class="ra">Nghĩa: <b>' + q.it.v + '</b></div>' +
+        (ok ? '' : '<div class="ra">Bạn chọn: ' + yourAns + '</div>') +
+        '</div>';
+    }).join('');
+  }
+
+  // ─────────────── Điều hướng view/tab ───────────────
+  function setView(v) {
+    el('flash').style.display = v === 'card' ? 'flex' : 'none';
+    el('quiz').style.display = v === 'quiz' ? 'flex' : 'none';
+    el('review').style.display = v === 'review' ? 'flex' : 'none';
+    el('tabCard').classList.toggle('active', v === 'card');
+    el('tabQuiz').classList.toggle('active', v !== 'card');
+  }
+  function startQuiz() { buildQuiz(); setView('quiz'); renderQuiz(); }
+  el('tabCard').onclick = () => { tab = 'card'; setView('card'); flipped = false; renderCard(); };
+  el('tabQuiz').onclick = () => { tab = 'quiz'; startQuiz(); };
+  el('topicSel').onchange = e => { topic = e.target.value; flipped = false; reviewAhead = false; (tab === 'card' ? renderCard() : startQuiz()); };
+  el('modeSel').onchange = e => { mode = e.target.value; flipped = false; (tab === 'card' ? renderCard() : startQuiz()); };
+  el('mAgain').onclick = () => { el('overlay').classList.remove('show'); startQuiz(); };
+  el('mReview').onclick = showReview;
+  el('reviewRetry').onclick = () => startQuiz();
+  el('reviewBack').onclick = () => { tab = 'card'; setView('card'); renderCard(); };
+
+  // Link "về khuôn viên" theo domain (nếu mở từ trường CNTT / Ngoại ngữ)
+  const _dom = new URLSearchParams(location.search).get('domain');
+  if (_dom) el('back').href = '/school.html?domain=' + encodeURIComponent(_dom);
+  // Mở thẳng 1 chủ đề qua ?topic=cntt
+  const _t = new URLSearchParams(location.search).get('topic');
+  if (_t && VOCAB[_t]) { topic = _t; el('topicSel').value = _t; }
+
+  renderStreak();
+  renderCard();
 </script>
 </body>
 </html>
