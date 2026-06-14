@@ -9,10 +9,13 @@
 // L53/L57/L54_WORKFLOWS → giữ raw data, sẽ cần renderer riêng (TBD)
 // ============================================================
 
+// year5.js đã thành logic-only (loadOsceExam fetch DB); data raw L5x giờ ở
+// _data/year5.js (nguồn seed). year5-adapted dựng scenario từ data raw nên đọc
+// thẳng từ _data.
 import {
   L51_CASES, L52_PERSONAS, L53_GPP_WORKFLOWS, L54_QUIZ,
   L54_WORKFLOWS, L55_OTC_SCENARIOS, L56_QUIZ_STATS, L57_OSCE_EXAM,
-} from './year5.js';
+} from './_data/year5.js';
 
 // ── L5.1: mỗi ca lâm sàng → 1 soap-write scenario ──
 const L51_AS_SOAP = L51_CASES.map((c, i) => ({
