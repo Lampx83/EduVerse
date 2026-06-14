@@ -215,8 +215,8 @@ const CAMPUSES = {
       {id:'football',name:'Sân bóng đá',emoji:'⚽',gx:3.2,gy:3.6},
       {id:'court',name:'Sân bóng rổ',emoji:'🏀',gx:3,gy:11.4},
       {id:'schoolgarden',name:'Vườn trường',emoji:'🌱',gx:5.4,gy:17.6},
-      // Bãi xe đạp NẰM TRONG khuôn viên — góc dưới-phải, gần cổng nhưng phía sau tường bao
-      {id:'bikepark',name:'Bãi xe đạp',emoji:'🚲',gx:21,gy:17},
+      // Bãi xe đạp NẰM TRONG khuôn viên — góc dưới-phải, lùi hẳn khỏi tường nam (gy18.6)
+      {id:'bikepark',name:'Bãi xe đạp',emoji:'🚲',gx:21,gy:16.3},
       {id:'gate',name:'Cổng trường',emoji:'🚪',gx:15,gy:19},
     ],
     fields:[
@@ -224,8 +224,8 @@ const CAMPUSES = {
       {type:'football', gx:1,gy:1.8, w:4.8,d:3.1},
       {type:'court', gx:1.4,gy:9.6, w:3.4,d:4.4},
       {type:'garden', gx:4.2,gy:16.4, w:2.6,d:2.2},
-      // Parking field cũng vào TRONG: dải xe đạp dài dọc tường nam phía phải
-      {type:'parking', gx:18.4,gy:16.2, w:6,d:2.2},
+      // Parking field LÙI vào trong: mép dưới gy17.4, chừa 1.2 tới tường nam (gy18.6)
+      {type:'parking', gx:18.4,gy:15.2, w:6,d:2.2},
       {type:'gate', gx:15,gy:18.4, label:'THCS'},
     ],
     sportTargets:{ football:'/lop2-the-thao.html', court:'/lop2-the-thao.html' },
@@ -243,7 +243,7 @@ const CAMPUSES = {
     // Cây và xe phải LÙI khỏi vành đai tường bao (top gy0.7, side gx0.42/26.42,
      // south gy18.6) — trước đây gx0.6 / gy1.3 / gy19 nằm đè lên tường gây glitch.
      trees:[[1.6,7.2],[1.6,14],[5.5,3.4],[5.5,7],[5.5,16.5],[15,2.2],
-       [24.6,4],[24.6,8],[24.6,12],[24.6,16],[25.4,9],[25.4,17],[19,22],[7,22]],
+       [24.6,4],[24.6,8],[24.6,12],[24.6,16],[25.0,9],[25.0,17],[12,17.4],[7.5,17.4]],
      // Xe đỗ TRÊN đường south road (ngoài cổng), giữ cách xa tường nam (gy18.6)
      cars:[[9.5,16],[20.5,16],[11,21],[18.5,21]],
     // đèn đường viền sân cờ + dọc TRỤC CHÍNH ra cổng; ghế đá trong sân cho HS ngồi
