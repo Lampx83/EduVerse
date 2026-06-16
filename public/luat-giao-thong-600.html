@@ -59,6 +59,20 @@
   .summary .big { font-size: 56px; font-weight: 800; margin: 8px 0; }
   .summary .pass { color: var(--green); }
   .summary .fail { color: var(--red); }
+  /* Bộ chọn hạng bằng (req #21 Thì Dũng) */
+  #classPicker { display:none; width:100%; max-width:900px; }
+  #classPicker h2 { text-align:center; font-size:18px; margin:4px 0 14px; }
+  .clsGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }
+  .cls { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 14px; cursor:pointer; transition:.15s; position:relative; text-align:center; }
+  .cls:hover { border-color:var(--red); transform:translateY(-2px); background:rgba(220,38,38,.06); }
+  .cls .ic { font-size:30px; line-height:1; }
+  .cls .nm { font-weight:800; font-size:17px; margin:5px 0 3px; }
+  .cls .meta { color:var(--muted); font-size:12.5px; display:flex; gap:12px; justify-content:center; }
+  .cls .desc { font-size:12px; color:var(--muted); background:rgba(255,255,255,.04); border-radius:8px; padding:6px 8px; margin:9px 0; min-height:46px; display:flex; align-items:center; justify-content:center; line-height:1.4; }
+  .cls .badges { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; }
+  .cls .pass { font-size:11px; color:#6ee7b7; background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.3); border-radius:7px; padding:3px 7px; }
+  .cls .crit { font-size:11px; color:#fca5a5; background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.3); border-radius:7px; padding:3px 7px; }
+  .cls .up { position:absolute; top:8px; right:8px; font-size:9px; letter-spacing:.5px; color:var(--muted); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
 </style>
 </head>
 <body>
@@ -66,7 +80,7 @@
 
 <div class="toolbar">
   <button data-mode="learn" class="active">📖 Luyện tập</button>
-  <button data-mode="exam">📝 Thi thử (25 câu / 22 phút)</button>
+  <button data-mode="exam">📝 Thi sát hạch theo hạng</button>
   <button data-mode="critical">⚠️ Chỉ câu liệt</button>
 </div>
 
@@ -82,6 +96,11 @@
     <option value="nv">🚚 6. Nghiệp vụ vận tải</option>
     <option value="critical">🔥 Câu điểm liệt</option>
   </select>
+</div>
+
+<div id="classPicker">
+  <h2>🚗 Chọn hạng bằng để bắt đầu thi sát hạch</h2>
+  <div class="clsGrid" id="clsGrid"></div>
 </div>
 
 <div class="stats" id="stats">
@@ -137,17 +156,33 @@
     'Kinh doanh vận tải':'nv', 'Hàng hoá - hành khách':'nv', 'Quyền - nghĩa vụ':'nv',
   };
   const groupOf = t => GROUP[t] || 'kn';
+  // Cấu hình thi theo hạng GPLX (req #21): n câu · min phút · pass đạt · crit câu liệt.
+  const EXAM_CLASSES = [
+    {id:'B',  ic:'🚗', n:30, min:20, pass:27, crit:1, desc:'Ô tô đến 8 chỗ (không kể chỗ lái)'},
+    {id:'C1', ic:'🚙', n:35, min:22, pass:32, crit:1, desc:'Ô tô tải 3,5 – 7,5 tấn'},
+    {id:'C',  ic:'🚚', n:40, min:24, pass:36, crit:1, desc:'Ô tô tải trên 7,5 tấn'},
+    {id:'D1', ic:'🚐', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở 8 – 16 chỗ'},
+    {id:'D2', ic:'🚌', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở 16 – 29 chỗ'},
+    {id:'D',  ic:'🚍', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở trên 29 chỗ'},
+    {id:'BE', ic:'🚗', n:45, min:26, pass:41, crit:1, desc:'Hạng B + kéo rơ moóc trên 750kg', up:1},
+    {id:'C1E',ic:'🚙', n:45, min:26, pass:41, crit:1, desc:'Hạng C1 + rơ moóc trên 750kg', up:1},
+    {id:'CE', ic:'🚚', n:45, min:26, pass:41, crit:1, desc:'Hạng C + rơ moóc trên 750kg', up:1},
+    {id:'D1E',ic:'🚐', n:45, min:26, pass:41, crit:1, desc:'Hạng D1 + rơ moóc trên 750kg', up:1},
+    {id:'DE', ic:'🚍', n:45, min:26, pass:41, crit:1, desc:'Hạng D + rơ moóc trên 750kg', up:1},
+  ];
+  let examClass = null;
   let mode = 'learn', list = [...Q], idx = 0, category = 'all';
   let answered = {}, exam = null;
 
   function pickQuestions(m) {
     if (m === 'critical') return Q.filter(q => q.c);
     if (m === 'exam') {
-      const crit = Q.filter(q => q.c);
-      const norm = Q.filter(q => !q.c);
+      const cls = examClass || { n: 25, crit: 1 };
+      const crit = Q.filter(q => q.c), norm = Q.filter(q => !q.c);
       const pickN = (arr, n) => arr.sort(() => Math.random() - .5).slice(0, n);
-      const exam = [...pickN(crit, Math.min(3, crit.length)), ...pickN(norm, Math.max(0, 25 - Math.min(3, crit.length)))];
-      return exam.sort(() => Math.random() - .5);
+      const nc = Math.min(cls.crit, crit.length);
+      const ex = [...pickN(crit, nc), ...pickN(norm, Math.max(0, cls.n - nc))];
+      return ex.sort(() => Math.random() - .5);
     }
     // learn: lọc theo nhóm chủ đề đang chọn ở dropdown
     if (category === 'all') return [...Q];
@@ -157,6 +192,7 @@
 
   function setMode(m) {
     mode = m;
+    el('classPicker').style.display = 'none';
     list = pickQuestions(m);
     idx = 0; answered = {};
     document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
@@ -176,7 +212,7 @@
     document.querySelector('.nav').style.display = '';
     el('stats').style.display = '';
     if (m === 'exam') {
-      exam = { start: Date.now(), duration: 22 * 60 * 1000 };
+      exam = { start: Date.now(), duration: (examClass ? examClass.min : 22) * 60 * 1000 };
       el('timerBox').style.display = '';
       tickTimer();
     } else {
@@ -203,7 +239,8 @@
     }
     const total = list.length;
     const pct = Math.round(right / total * 100);
-    const passByScore = right >= 21;  // B1: 21/25
+    const need = examClass ? examClass.pass : 21;
+    const passByScore = right >= need;
     const pass = passByScore && critWrong === 0;
     el('summary').classList.add('show');
     el('qcard').style.display = 'none';
@@ -213,9 +250,10 @@
     el('sumScore').textContent = `${right}/${total}`;
     el('sumScore').className = 'big ' + (pass ? 'pass' : 'fail');
     el('sumDetail').innerHTML = `
+      ${examClass ? 'Hạng <b>' + examClass.id + '</b> · cần đạt <b>' + need + '/' + total + '</b><br>' : ''}
       Đúng: <b>${right}</b> · Sai: <b>${total - right}</b><br>
       Câu liệt sai: <b style="color:${critWrong ? 'var(--red)' : 'var(--green)'}">${critWrong}</b><br>
-      ${!passByScore ? '<span style="color:var(--red)">→ Chưa đủ 21/25 câu</span><br>' : ''}
+      ${!passByScore ? '<span style="color:var(--red)">→ Chưa đủ ' + need + '/' + total + ' câu</span><br>' : ''}
       ${critWrong > 0 ? '<span style="color:var(--red)">→ Sai câu LIỆT — tự động trượt</span>' : ''}
     `;
     exam = null;
@@ -270,7 +308,31 @@
     el('wrongCount').textContent = w;
   }
 
-  document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (b.dataset.mode !== 'learn') { el('catSelect').value = 'all'; category = 'all'; } setMode(b.dataset.mode); });
+  // Thi sát hạch → hiện màn chọn hạng bằng trước (req #21)
+  function enterExamPicker() {
+    mode = 'exam'; examClass = null;
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === 'exam'));
+    el('catBar').style.display = 'none'; el('qcard').style.display = 'none'; el('stats').style.display = 'none';
+    el('emptyMsg').style.display = 'none'; el('summary').classList.remove('show');
+    document.querySelector('.nav').style.display = 'none';
+    el('classPicker').style.display = '';
+    el('clsGrid').innerHTML = EXAM_CLASSES.map((c, i) => `
+      <button class="cls" data-cls="${i}">
+        ${c.up ? '<span class="up">NÂNG HẠNG</span>' : ''}
+        <div class="ic">${c.ic}</div>
+        <div class="nm">Hạng ${c.id}</div>
+        <div class="meta"><span>❓ ${c.n} câu</span><span>⏱ ${c.min} phút</span></div>
+        <div class="desc">${c.desc}</div>
+        <div class="badges"><span class="pass">🏆 Đậu: ${c.pass}/${c.n}</span><span class="crit">⚠️ ${c.crit} câu điểm liệt</span></div>
+      </button>`).join('');
+    el('clsGrid').querySelectorAll('.cls').forEach(b => b.onclick = () => { examClass = EXAM_CLASSES[+b.dataset.cls]; setMode('exam'); });
+  }
+
+  document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => {
+    if (b.dataset.mode === 'exam') { el('catSelect').value = 'all'; category = 'all'; enterExamPicker(); return; }
+    if (b.dataset.mode !== 'learn') { el('catSelect').value = 'all'; category = 'all'; }
+    setMode(b.dataset.mode);
+  });
   el('catSelect').onchange = () => {
     category = el('catSelect').value;
     document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === 'learn'));
@@ -280,9 +342,10 @@
   el('prevBtn').onclick = () => { if (idx > 0) { idx--; render(); } };
   el('endBtn').onclick = submitExam;
 
-  // Mở thẳng chế độ qua URL: ?mode=exam | ?mode=critical
+  // Mở thẳng chế độ qua URL: ?mode=exam (chọn hạng) | ?mode=critical
   const _m = new URLSearchParams(location.search).get('mode');
-  setMode(['exam', 'critical'].includes(_m) ? _m : 'learn');
+  if (_m === 'exam') enterExamPicker();
+  else setMode(_m === 'critical' ? 'critical' : 'learn');
 </script>
 </body>
 </html>

@@ -113,6 +113,11 @@
   .modal .mbtns button { flex:1; padding:11px; border-radius:11px; font-family:inherit; font-weight:700;
     font-size:14px; cursor:pointer; border:1px solid var(--border); background:var(--card); color:var(--text); }
   .modal .mbtns button.primary { background:linear-gradient(135deg,var(--accent),#6366f1); border:0; color:#fff; }
+  .toolbar input { font-family:inherit; background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:9px; font-size:13px; min-width:170px; }
+  .searchMsg { font-size:13px; color:var(--muted); min-height:18px; }
+  .modal-form { text-align:left; }
+  .modal-form label { display:block; font-size:12px; color:var(--muted); margin:9px 0 3px; }
+  .modal-form input, .modal-form select { width:100%; font-family:inherit; background:rgba(0,0,0,.25); color:var(--text); border:1px solid var(--border); padding:9px 11px; border-radius:9px; font-size:14px; }
   @media (prefers-reduced-motion: no-preference) {
     .pop { animation: pop .4s cubic-bezier(.2,1.3,.4,1); }
     @keyframes pop { from { transform:scale(.7); opacity:0 } to { transform:scale(1); opacity:1 } }
@@ -150,6 +155,12 @@
   </select>
   <div class="streak" id="streakBox" title="Số ngày học liên tiếp">🔥 <span id="streak">0</span> ngày</div>
 </div>
+<div class="toolbar">
+  <input id="searchInput" placeholder="🔍 Tìm từ (Anh hoặc Việt)…" autocomplete="off" />
+  <button id="searchBtn">Tìm</button>
+  <button class="primary" id="addWordBtn">➕ Thêm từ mới</button>
+</div>
+<div class="searchMsg" id="searchMsg"></div>
 
 <!-- ───── Flashcard ───── -->
 <div id="flash" style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;">
@@ -202,6 +213,29 @@
   <div style="display:flex;gap:10px;margin-top:6px">
     <button class="opt" id="reviewRetry" style="flex:1">🔁 Làm lại</button>
     <button class="opt" id="reviewBack" style="flex:1">🃏 Về học thẻ</button>
+  </div>
+</div>
+
+<!-- ───── Modal thêm từ (req #25) ───── -->
+<div class="overlay" id="addOverlay">
+  <div class="modal" style="max-width:430px">
+    <h2 style="margin:0 0 2px">➕ Thêm từ mới</h2>
+    <p style="margin:2px 0 6px">Hệ thống tự gợi ý chủ đề phù hợp với từ bạn nhập.</p>
+    <div class="modal-form">
+      <label>Từ tiếng Anh *</label><input id="awEn" placeholder="vd: compiler" autocomplete="off" />
+      <label>Nghĩa tiếng Việt *</label><input id="awVi" placeholder="vd: trình biên dịch" autocomplete="off" />
+      <label>Phiên âm IPA (tuỳ chọn)</label><input id="awIpa" placeholder="/kəmˈpaɪ.lər/" autocomplete="off" />
+      <label>Loại từ</label>
+      <select id="awPos"><option>noun</option><option>verb</option><option>adj</option><option>adv</option></select>
+      <label>Ví dụ (tuỳ chọn)</label><input id="awEx" placeholder="A compiler turns code into machine code." autocomplete="off" />
+      <label>Chủ đề (tự gợi ý)</label>
+      <select id="awTopic"></select>
+      <input id="awNewTopic" placeholder="Tên chủ đề mới…" style="display:none;margin-top:6px" autocomplete="off" />
+    </div>
+    <div class="mbtns" style="margin-top:16px">
+      <button id="awCancel">Huỷ</button>
+      <button class="primary" id="awSave">Lưu từ</button>
+    </div>
   </div>
 </div>
 
@@ -413,7 +447,7 @@
 
   let store = load();
   let topic = 'cntt', mode = 'en-vi', tab = 'card';
-  let flipped = false, cur = null;        // cur = từ đang hiện ở flashcard
+  let flipped = false, cur = null, forced = null;        // cur = từ đang hiện ở flashcard
 
   function load() {
     let s = {};
@@ -478,7 +512,7 @@
     return null;                                    // hết hạn ôn hôm nay
   }
   function renderCard() {
-    cur = pickCard();
+    cur = forced || pickCard(); forced = null;
     const due = dueList(topic).length, total = VOCAB[topic].length, mastered = masteredCount(topic);
     el('due').textContent = due; el('mastered').textContent = mastered; el('all').textContent = total;
     el('bar').style.width = (mastered / total * 100) + '%';
@@ -616,6 +650,82 @@
   const _t = new URLSearchParams(location.search).get('topic');
   if (_t && VOCAB[_t]) { topic = _t; el('topicSel').value = _t; }
 
+  // ── #25: tìm kiếm + thêm từ + tự gợi ý chủ đề ──
+  const CUSTOM_KEY = 'tizia:vocab-en:custom';
+  const TOPIC_LABELS = { cntt:'💻 Công nghệ thông tin', yte:'🩺 Y tế', giaoduc:'🎓 Giáo dục', business:'💼 Kinh doanh', basic:'📖 Cơ bản', travel:'✈️ Du lịch', academic:'🔬 Học thuật', ielts:'📝 IELTS 6.5+' };
+  const TOPIC_KW = {
+    cntt:['máy tính','dữ liệu','mã hoá','mã hóa','code','lập trình','mạng','phần mềm','phần cứng','web','máy chủ','thuật toán','bảo mật','ứng dụng','biến','hàm','tệp','đám mây','lỗi'],
+    yte:['bệnh','thuốc','sức khỏe','sức khoẻ','điều trị','bác sĩ','virus','vi-rút','tế bào','phẫu','triệu chứng','dịch','tiêm','chẩn đoán','y tế','vết thương'],
+    giaoduc:['học','trường','sinh viên','giáo dục','bài giảng','thi','khoá học','khóa học','lớp','đào tạo','bằng','học bổng','giảng','luận'],
+    business:['kinh doanh','doanh thu','thị trường','công ty','lợi nhuận','đầu tư','tài chính','khách hàng','ngân sách','hợp đồng','cổ','vận tải'],
+  };
+  let customStore = {};
+  try { customStore = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '{}'); } catch(e){}
+  customStore.words = customStore.words || {};
+  customStore.labels = customStore.labels || {};
+  const saveCustom = () => localStorage.setItem(CUSTOM_KEY, JSON.stringify(customStore));
+  function mergeCustom(){
+    for (const [t, arr] of Object.entries(customStore.words)) {
+      if (!VOCAB[t]) VOCAB[t] = [];
+      for (const it of arr) if (!VOCAB[t].some(x => x.w.toLowerCase() === it.w.toLowerCase())) VOCAB[t].push(it);
+    }
+  }
+  function suggestTopic(en, vi){
+    const t = (en + ' ' + vi).toLowerCase();
+    for (const [k, kws] of Object.entries(TOPIC_KW)) if (kws.some(w => t.includes(w))) return k;
+    return null;
+  }
+  function rebuildTopicSelect(){
+    const labels = { ...TOPIC_LABELS, ...customStore.labels };
+    const order = ['cntt','yte','giaoduc','business','basic','travel','academic','ielts', ...Object.keys(customStore.labels)];
+    const seen = new Set();
+    el('topicSel').innerHTML = order.filter(k => { if (seen.has(k) || !VOCAB[k]) return false; seen.add(k); return true; })
+      .map(k => '<option value="'+k+'">'+(labels[k]||k)+' ('+VOCAB[k].length+')</option>').join('');
+    el('topicSel').value = topic;
+    el('awTopic').innerHTML = Object.keys(labels).filter(k => VOCAB[k]).map(k => '<option value="'+k+'">'+labels[k]+'</option>').join('') + '<option value="__new__">➕ Chủ đề mới…</option>';
+  }
+  function doSearch(){
+    const q = el('searchInput').value.trim().toLowerCase();
+    if (!q) { el('searchMsg').textContent = ''; return; }
+    for (const [t, arr] of Object.entries(VOCAB)) {
+      const hit = arr.find(it => it.w.toLowerCase() === q) || arr.find(it => it.w.toLowerCase().includes(q) || it.v.toLowerCase().includes(q));
+      if (hit) {
+        topic = t; el('topicSel').value = t; tab = 'card'; setView('card');
+        el('searchMsg').innerHTML = '✓ Thấy <b>' + hit.w + '</b> trong «' + (TOPIC_LABELS[t]||customStore.labels[t]||t) + '»';
+        forced = hit; flipped = false; renderCard(); return;
+      }
+    }
+    el('searchMsg').innerHTML = 'Không thấy «' + q + '». <a href="#" id="addFromSearch" style="color:var(--accent)">➕ Thêm từ này</a>';
+    const a = document.getElementById('addFromSearch'); if (a) a.onclick = e => { e.preventDefault(); openAdd(el('searchInput').value.trim()); };
+  }
+  function openAdd(prefill){
+    el('awEn').value = prefill || ''; el('awVi').value=''; el('awIpa').value=''; el('awEx').value='';
+    el('awPos').value='noun'; el('awNewTopic').style.display='none'; el('awNewTopic').value='';
+    rebuildTopicSelect(); el('addOverlay').classList.add('show');
+  }
+  function maybeSuggest(){ const sug = suggestTopic(el('awEn').value, el('awVi').value); if (sug && el('awTopic').value !== '__new__') el('awTopic').value = sug; }
+  el('awEn').addEventListener('input', maybeSuggest);
+  el('awVi').addEventListener('input', maybeSuggest);
+  el('awTopic').onchange = () => { el('awNewTopic').style.display = el('awTopic').value === '__new__' ? '' : 'none'; };
+  el('awCancel').onclick = () => el('addOverlay').classList.remove('show');
+  el('addWordBtn').onclick = () => openAdd(el('searchInput').value.trim());
+  el('searchBtn').onclick = doSearch;
+  el('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  el('awSave').onclick = () => {
+    const en = el('awEn').value.trim(), vi = el('awVi').value.trim();
+    if (en.length < 1 || vi.length < 1) { alert('Nhập tối thiểu Từ tiếng Anh + Nghĩa tiếng Việt.'); return; }
+    let tk = el('awTopic').value;
+    if (tk === '__new__') { const nm = el('awNewTopic').value.trim(); if (!nm) { alert('Nhập tên chủ đề mới.'); return; } tk = 'custom_' + (Object.keys(customStore.labels).length + 1); customStore.labels[tk] = '✏️ ' + nm; }
+    const item = { w:en, pos:el('awPos').value, ph:el('awIpa').value.trim() || ('/' + en + '/'), v:vi, ex:el('awEx').value.trim() || (en + ' — ' + vi), custom:true };
+    customStore.words[tk] = customStore.words[tk] || []; customStore.words[tk].push(item); saveCustom();
+    mergeCustom(); rebuildTopicSelect();
+    el('addOverlay').classList.remove('show');
+    topic = tk; el('topicSel').value = tk; tab = 'card'; setView('card'); forced = item; flipped = false; renderCard();
+    el('searchMsg').innerHTML = '✓ Đã thêm <b>' + en + '</b> vào «' + (customStore.labels[tk]||TOPIC_LABELS[tk]||tk) + '»';
+  };
+
+  mergeCustom();
+  rebuildTopicSelect();
   renderStreak();
   renderCard();
 </script>
