@@ -459,6 +459,10 @@ const CAMPUSES = {
     buildings:[
       // Dãy mặt tiền (gy 3.0): điều hành + cao ốc thư viện
       B('admin','Hành chính – Hiệu bộ','⚙️',6.5,3.0,'com:building-d',1.05,90,{flag:true}),
+      // Trung tâm Hướng nghiệp & Giả lập nghề nghiệp — TÁCH thành toà riêng đứng
+      // cạnh Hành chính (req #26, SV Chu Thi Hue). Trỏ thẳng trang chuyên biệt
+      // /tech-career-center.html (không phải /space.html) qua CUSTOM_TARGETS.
+      B('career','Trung tâm Hướng nghiệp & Giả lập','🧭',2.9,3.0,'com:building-l',1.0,90,{pin:'#f59e0b'}),
       B('library','Thư viện số','📚',11.5,3.0,'com:building-skyscraper-b',0.85,0),
       B('hall','Hội trường','🎤',18.5,3.0,'com:low-detail-building-wide-a',1.0,0),
       B('lecture','Giảng đường','🏛️',23.5,3.0,'com:building-h',1.0,270),
@@ -498,9 +502,9 @@ const CAMPUSES = {
     ],
     sportTargets:{ football:'/lop2-the-thao.html', court:'/lop2-the-thao.html' },
     trees:[[14.6,3.6],[16.6,3.6],[14.2,7.6],[16.8,7.6],[15,10.2],[15.4,16.4],
-      [26,3.5],[26,9],[26,13],[26,17],[26,20.5],[2,3.6],[3,17.6],[4.4,20],[7.9,3.4],[15,18.6]],
+      [26,3.5],[26,9],[26,13],[26,17],[26,20.5],[1.3,4.6],[3,17.6],[4.4,20],[7.9,3.4],[15,18.6]],
     cars:[[9,11],[21,11],[9,15],[21,15],[12,6.0],[18,6.0],[11,20.6],[13,20.6],[11,22],[13,22]],
-    tints:{ library:0x93c5fd, ailab:0xc4b5fd, cloudcenter:0x7dd3fc, seclab:0xfca5a5, startuphub:0xa7f3d0 },
+    tints:{ library:0x93c5fd, ailab:0xc4b5fd, cloudcenter:0x7dd3fc, seclab:0xfca5a5, startuphub:0xa7f3d0, career:0xfcd34d },
   },
 
   // ─────────────────────── TRƯỜNG MẦM NON (3–5 tuổi) ───────────────────────
@@ -1605,6 +1609,13 @@ const VALID_BUILDING_IDS = new Set(SPACE_KEYS_BY_DOMAIN[_dom] || []);
 const TARGETS={};
 BUILDINGS.forEach(b=>{ if (VALID_BUILDING_IDS.has(b.id)) TARGETS[b.id]='/space.html?b='+b.id+'&domain='+_dom; });
 Object.entries(SPORT_TARGETS).forEach(([id,url])=>{ TARGETS[id]=url; });
+// Toà có TRANG RIÊNG (không phải /space.html). VD Trung tâm Hướng nghiệp IT mở
+// /tech-career-center.html (req #26). Khai báo theo domain để enter()/legend/
+// hasInteractive tự nhận biết — không cần thêm vào SPACE_KEYS_BY_DOMAIN.
+const CUSTOM_TARGETS = {
+  it: { career: '/tech-career-center.html?domain=it' },
+};
+Object.entries(CUSTOM_TARGETS[_dom] || {}).forEach(([id,url])=>{ TARGETS[id]=url; });
 
 /** Item có thể bấm vào để có trải nghiệm thực? Building → trong whitelist domain.
  *  Facility → có entry trong SPORT_TARGETS. Khác → false (ẩn khỏi legend, vô hiệu hoá click). */
