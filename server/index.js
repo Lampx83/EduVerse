@@ -50,6 +50,7 @@ import { attachCampusLayout } from './contexts/campus/layout.js';
 import { attachPortalApps } from './contexts/portal-apps/index.js';
 import { attachSkills, grantSkillsForSpace, grantSkillsForScenario } from './skills.js';
 import { attachSecurity, securityHeaders, csrf, apiLimiter, sensitiveAuthLimiter } from './contexts/security/index.js';
+import { log, initErrorTracking, installProcessGuards, requestContext, requestLogger, expressErrorHandler } from './observability.js';
 // Payment context — chỉ nạp khi PAYMENT_ENABLED=1 (dynamic import bên dưới) để bảng
 // payment + route KHÔNG xuất hiện ở deployment chưa bật thanh toán.
 const PAYMENT_ENABLED = process.env.PAYMENT_ENABLED === '1';
@@ -220,11 +221,21 @@ function checkAndUnlockBadges(playerName, attempt, role = 'student') {
   return newly;
 }
 
+// Lưới an toàn process-level: bắt unhandledRejection/uncaughtException → log +
+// report (trước đây không có → lỗi async làm crash âm thầm, không dấu vết).
+installProcessGuards();
+
 const app = express();
 app.disable('x-powered-by');
 // Tin tưởng reverse proxy (NPM) phía trước — để req.protocol/x-forwarded-* trả đúng
 // https://, dùng cho canonical SEO + cookie secure flag chuẩn.
 app.set('trust proxy', 1);
+
+// req.id ngắn cho mỗi request (nối các dòng log + trả về header X-Request-Id).
+// Đặt sớm nhất để mọi middleware/route phía sau đều có. Log request là opt-in
+// (LOG_REQUESTS=1) để tránh ồn ở prod khi chưa cần.
+app.use(requestContext);
+if (process.env.LOG_REQUESTS === '1') app.use(requestLogger());
 
 // gzip/deflate cho mọi response text-based. SEO bonus: trang nhẹ → Lighthouse cao
 // → Core Web Vitals tốt. Skip nếu client gửi x-no-compression hoặc đã có CE.
@@ -316,7 +327,17 @@ app.use(csrf);
 const r = express.Router();
 
 r.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'tizia', port: PORT, basePath: BASE_PATH, time: Date.now() });
+  // ok:true giữ nguyên để Docker HEALTHCHECK (wget /api/health) vẫn pass; bổ sung
+  // uptime + memory để phát hiện sớm memory leak / process vừa restart.
+  const mem = process.memoryUsage();
+  res.json({
+    ok: true, service: 'tizia', port: PORT, basePath: BASE_PATH, time: Date.now(),
+    uptime_s: Math.round(process.uptime()),
+    rss_mb: Math.round(mem.rss / 1048576),
+    heap_used_mb: Math.round(mem.heapUsed / 1048576),
+    node: process.version,
+    env: process.env.NODE_ENV || 'development',
+  });
 });
 
 // SEO public (robots.txt, sitemap.xml, /welcome) — crawlable, ngoài auth gate.
@@ -1353,6 +1374,11 @@ if (BASE_PATH) {
   app.use(r);
 }
 
+// Error handler TẬP TRUNG — phải đặt SAU khi mount router. Mọi lỗi rơi ra route
+// (throw đồng bộ hoặc next(err)) tới đây: report + trả JSON gọn kèm rid, không
+// lộ stack ở prod. Route nào tự try/catch trả 500 thì không chạm tới đây.
+app.use(expressErrorHandler);
+
 const httpServer = http.createServer(app);
 attachRoom(httpServer, BASE_PATH);
 attachPresence(httpServer);  // /ws-presence — multiplayer campus avatars
@@ -1369,12 +1395,15 @@ setInterval(() => {
   }
 }, 6 * 3600 * 1000).unref?.();
 
+// Bật error tracking (Sentry nếu có SENTRY_DSN) trước khi nhận traffic.
+await initErrorTracking();
+
 httpServer.listen(PORT, HOST, () => {
-  console.log(`[tizia] listening on http://${HOST}:${PORT}${BASE_PATH ? ' (BASE_PATH=' + BASE_PATH + ')' : ''}`);
+  log.info(`[tizia] listening on http://${HOST}:${PORT}`, { basePath: BASE_PATH || undefined });
   const oauthList = listEnabledProviders();
   if (oauthList.length) {
-    console.log(`[oauth] enabled providers: ${oauthList.map(p => p.label).join(', ')}`);
+    log.info('[oauth] enabled providers', { providers: oauthList.map(p => p.label) });
   } else {
-    console.log('[oauth] no providers configured (set GOOGLE_/MICROSOFT_/GITHUB_CLIENT_ID+SECRET to enable)');
+    log.info('[oauth] no providers configured (set GOOGLE_/MICROSOFT_/GITHUB_CLIENT_ID+SECRET to enable)');
   }
 });
