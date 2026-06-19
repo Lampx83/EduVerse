@@ -98,8 +98,9 @@ function autoMount() {
             </label>
             <label class="sgf-attach-row sgf-file-row">
               <span class="sgf-attach-lbl">📎 Đính kèm file (ảnh / PDF / Word / Excel / PPT — tối đa 8MB × 5 file):</span>
-              <input type="file" id="sgf-file-in" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" />
+              <input type="file" id="sgf-file-in" multiple accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" />
             </label>
+            <div class="sgf-attach-hint">💡 Có thể <b>kéo-thả</b> file vào khung này hoặc <b>dán ảnh</b> trực tiếp (Ctrl/⌘+V).</div>
             <div class="sgf-attach-list" id="sgf-attach-list"></div>
           </div>
 
@@ -158,39 +159,121 @@ function bind(root) {
   const fileInput = root.querySelector('#sgf-file-in');
   const shotCheck = root.querySelector('#sgf-shot-check');
   const attachList = root.querySelector('#sgf-attach-list');
+  const attachBox = root.querySelector('.sgf-attach');
   const MAX_FILES = 5;
-  const MAX_BYTES = 8 * 1024 * 1024;
+  const MAX_BYTES = 8 * 1024 * 1024;          // 8MB/file (khớp giới hạn BE)
+  const MAX_TOTAL = 20 * 1024 * 1024;         // 20MB tổng/đề nghị
+  // Khớp whitelist BE (server/index.js) — lọc sớm phía client cho UX tốt hơn.
+  const ALLOWED_MIME = new Set([
+    'image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf',
+    'text/plain', 'text/csv', 'application/zip',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/msword', 'application/vnd.ms-excel', 'application/vnd.ms-powerpoint',
+  ]);
+  const ALLOWED_EXT = /\.(png|jpe?g|webp|gif|pdf|txt|csv|docx?|xlsx?|pptx?|zip)$/i;
+  const isAllowed = f => ALLOWED_MIME.has(f.type) || ALLOWED_EXT.test(f.name || '');
+  // pendingFiles[i] ↔ previewUrls[i] (object URL cho ảnh, null cho file khác).
   let pendingFiles = [];
+  let previewUrls = [];
+
+  function fileIcon(name) {
+    const n = String(name || '').toLowerCase();
+    if (/\.pdf$/.test(n)) return '📄';
+    if (/\.(docx?|odt)$/.test(n)) return '📝';
+    if (/\.(xlsx?|csv)$/.test(n)) return '📊';
+    if (/\.pptx?$/.test(n)) return '📑';
+    if (/\.zip$/.test(n)) return '🗜️';
+    if (/\.txt$/.test(n)) return '📃';
+    return '📎';
+  }
+  function clearAttachments() {
+    previewUrls.forEach(u => { if (u) URL.revokeObjectURL(u); });
+    pendingFiles.length = 0;
+    previewUrls.length = 0;
+    shotCheck.checked = false;
+    renderAttachList();
+  }
   function renderAttachList() {
     const items = [];
-    if (shotCheck.checked) items.push({ name: 'Ảnh chụp màn hình hiện tại', size: null, kind: 'screenshot' });
-    pendingFiles.forEach((f, i) => items.push({ name: f.name, size: f.size, kind: 'file', idx: i }));
+    if (shotCheck.checked) items.push({ kind: 'screenshot', name: 'Ảnh chụp màn hình hiện tại' });
+    pendingFiles.forEach((f, i) => items.push({
+      kind: 'file', name: f.name, size: f.size, idx: i,
+      isImg: /^image\//.test(f.type), url: previewUrls[i],
+    }));
     if (!items.length) { attachList.innerHTML = ''; return; }
     attachList.innerHTML = items.map(it => {
       const sz = it.size != null ? ` <span class="sgf-attach-size">(${(it.size / 1024).toFixed(0)} KB)</span>` : '';
       const rm = it.kind === 'file'
         ? `<button type="button" class="sgf-attach-rm" data-rm-file="${it.idx}" title="Bỏ file">✕</button>`
         : `<button type="button" class="sgf-attach-rm" data-rm-shot="1" title="Bỏ ảnh chụp">✕</button>`;
-      const ic = it.kind === 'screenshot' ? '📸' : '📎';
-      return `<div class="sgf-attach-it">${ic} ${escapeHtml(it.name)}${sz}${rm}</div>`;
+      const thumb = it.kind === 'screenshot'
+        ? `<span class="sgf-attach-ic">📸</span>`
+        : (it.isImg && it.url
+            ? `<img class="sgf-attach-thumb" src="${it.url}" alt="" />`
+            : `<span class="sgf-attach-ic">${fileIcon(it.name)}</span>`);
+      return `<div class="sgf-attach-it">${thumb}<span class="sgf-attach-nm">${escapeHtml(it.name)}${sz}</span>${rm}</div>`;
     }).join('');
   }
-  shotCheck.addEventListener('change', renderAttachList);
-  fileInput.addEventListener('change', () => {
-    const list = [...(fileInput.files || [])];
-    for (const f of list) {
-      if (f.size > MAX_BYTES) { msg.textContent = `⚠️ "${f.name}" lớn hơn 8MB — chọn file nhỏ hơn.`; continue; }
-      if (pendingFiles.length >= MAX_FILES) { msg.textContent = `⚠️ Tối đa ${MAX_FILES} file/đề nghị.`; break; }
+  // Thêm danh sách file (từ input / kéo-thả / dán). Gom mọi lỗi vào 1 thông báo.
+  function addFiles(list) {
+    const errs = [];
+    for (const f of [...(list || [])]) {
+      if (pendingFiles.length >= MAX_FILES) { errs.push(`tối đa ${MAX_FILES} file`); break; }
+      if (!isAllowed(f)) { errs.push(`"${f.name}" sai định dạng`); continue; }
+      if (f.size > MAX_BYTES) { errs.push(`"${f.name}" > 8MB`); continue; }
+      if (pendingFiles.some(p => p.name === f.name && p.size === f.size)) { errs.push(`"${f.name}" đã thêm`); continue; }
+      const total = pendingFiles.reduce((s, p) => s + p.size, 0) + f.size;
+      if (total > MAX_TOTAL) { errs.push(`vượt tổng ${Math.round(MAX_TOTAL / 1048576)}MB`); continue; }
       pendingFiles.push(f);
+      previewUrls.push(/^image\//.test(f.type) ? URL.createObjectURL(f) : null);
     }
-    fileInput.value = '';
+    msg.textContent = errs.length ? '⚠️ Bỏ qua: ' + errs.join('; ') : '';
     renderAttachList();
-  });
+  }
+
+  shotCheck.addEventListener('change', renderAttachList);
+  fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value = ''; });
   attachList.addEventListener('click', e => {
-    const rmFile = e.target?.dataset?.rmFile;
-    const rmShot = e.target?.dataset?.rmShot;
-    if (rmFile != null) { pendingFiles.splice(Number(rmFile), 1); renderAttachList(); }
-    else if (rmShot) { shotCheck.checked = false; renderAttachList(); }
+    const btn = e.target?.closest?.('[data-rm-file],[data-rm-shot]');
+    if (!btn) return;
+    if (btn.dataset.rmFile != null) {
+      const i = Number(btn.dataset.rmFile);
+      if (previewUrls[i]) URL.revokeObjectURL(previewUrls[i]);
+      pendingFiles.splice(i, 1); previewUrls.splice(i, 1); renderAttachList();
+    } else if (btn.dataset.rmShot) { shotCheck.checked = false; renderAttachList(); }
+  });
+
+  // ── Kéo-thả file vào khung đính kèm ──
+  ['dragenter', 'dragover'].forEach(ev => attachBox.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation(); attachBox.classList.add('sgf-drag');
+  }));
+  ['dragleave', 'drop'].forEach(ev => attachBox.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    if (ev === 'dragleave' && attachBox.contains(e.relatedTarget)) return;
+    attachBox.classList.remove('sgf-drag');
+  }));
+  attachBox.addEventListener('drop', e => {
+    const files = e.dataTransfer?.files;
+    if (files && files.length) addFiles(files);
+  });
+
+  // ── Dán ảnh từ clipboard (Ctrl/Cmd+V) khi modal mở ──
+  // Chỉ bắt item dạng ảnh; dán text vào ô tiêu đề/mô tả vẫn hoạt động bình thường.
+  modal.addEventListener('paste', e => {
+    if (modal.hidden) return;
+    const imgs = [];
+    for (const it of (e.clipboardData?.items || [])) {
+      if (it.kind === 'file' && /^image\//.test(it.type)) {
+        const f = it.getAsFile();
+        if (f) {
+          const ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+          imgs.push(new File([f], `paste-${imgs.length + 1}-${f.size}.${ext}`, { type: f.type }));
+        }
+      }
+    }
+    if (imgs.length) { e.preventDefault(); addFiles(imgs); }
   });
 
   // Chụp màn hình hiện tại (DOM hiện tại, KHÔNG bao gồm modal Đề nghị + FAB).
@@ -326,10 +409,9 @@ function bind(root) {
       msg.textContent = '✓ Đã gửi! Hiệu trưởng AI đang xem xét…';
       root.querySelector('#sgf-title-in').value = '';
       root.querySelector('#sgf-detail').value = '';
-      // Reset đính kèm để lần gửi sau bắt đầu sạch.
-      shotCheck.checked = false;
-      pendingFiles = [];
-      renderAttachList();
+      if (detailCount) detailCount.textContent = '0 / 10.000';
+      // Reset đính kèm để lần gửi sau bắt đầu sạch (revoke object URL tránh rò rỉ).
+      clearAttachments();
       loadInbox();
       // AI quyết định nền sau ~1-3s → reload để hiện phản hồi
       setTimeout(loadInbox, 2500);
@@ -462,11 +544,18 @@ function injectStyles() {
     .sgf-file-row { flex-wrap: wrap; cursor: default; }
     .sgf-attach-lbl { font-weight: 600; }
     .sgf-file-row input[type="file"] { font-size: 12px; }
+    .sgf-attach-hint { font-size: 11px; color: #64748b; padding: 0 2px; }
+    .sgf-attach-hint b { color: #4338ca; font-weight: 700; }
+    .sgf-attach.sgf-drag { border-color: #6366f1; border-style: solid; background: #eef2ff; box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+    .sgf-attach.sgf-drag * { pointer-events: none; }
     .sgf-attach-list { display: flex; flex-direction: column; gap: 4px; }
     .sgf-attach-list:empty { display: none; }
-    .sgf-attach-it { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e5e7eb; border-radius: 7px; padding: 5px 8px; font-size: 12px; color: #1f2937; }
+    .sgf-attach-it { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e5e7eb; border-radius: 7px; padding: 5px 8px; font-size: 12px; color: #1f2937; }
+    .sgf-attach-thumb { width: 34px; height: 34px; object-fit: cover; border-radius: 5px; flex-shrink: 0; border: 1px solid #e5e7eb; }
+    .sgf-attach-ic { font-size: 18px; width: 26px; text-align: center; flex-shrink: 0; }
+    .sgf-attach-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .sgf-attach-size { opacity: .6; margin-left: 4px; }
-    .sgf-attach-rm { margin-left: auto; border: 0; background: transparent; cursor: pointer; color: #ef4444; font-weight: 700; font-size: 13px; padding: 0 4px; }
+    .sgf-attach-rm { margin-left: auto; border: 0; background: transparent; cursor: pointer; color: #ef4444; font-weight: 700; font-size: 13px; padding: 0 4px; flex-shrink: 0; }
     .sgf-attach-rm:hover { color: #b91c1c; }
     /* Hiển thị attachments trong inbox */
     .sgf-it-att { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
@@ -527,7 +616,11 @@ function injectStyles() {
       .sgf-msg { color: #cbd5e1; }
       .sgf-attach { background: #1a1740; border-color: #4338ca; color: #cbd5e1; }
       .sgf-attach-row b { color: #fef3c7; }
+      .sgf-attach-hint { color: #94a3b8; }
+      .sgf-attach-hint b { color: #c7d2fe; }
+      .sgf-attach.sgf-drag { background: #312e81; border-color: #818cf8; }
       .sgf-attach-it { background: #312e81; border-color: #4338ca; color: #f1f5f9; }
+      .sgf-attach-thumb { border-color: #4338ca; }
       .sgf-it-file { background: #312e81; color: #c7d2fe; border-color: #4338ca; }
       .sgf-it-file:hover { background: #4338ca; }
       .sgf-it-thumb { border-color: #4338ca; }

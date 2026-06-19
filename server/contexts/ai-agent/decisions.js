@@ -14,7 +14,14 @@
 // toàn một hệ "AI điều hành trường" (audit, compliance, debug, cải tiến prompt).
 // ============================================================
 
-import { db, setRequestStatus } from '../../db.js';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { db, setRequestStatus, createNotification } from '../../db.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Khớp REQUEST_UPLOADS_DIR ở server/index.js: <repo>/data/uploads/requests.
+const UPLOADS_DIR = path.resolve(__dirname, '../../../data/uploads/requests');
 
 // Ollama client riêng cho ai-agent context (không phụ thuộc ai.js của tutor —
 // đúng tách bounded-context, và tránh đụng file ai.js đang sửa song song).
@@ -99,8 +106,64 @@ const ACTION_TO_STATUS = {
   defer:    'pending',    // để sau / cần thêm thông tin / chờ người
   reject:   'rejected',   // từ chối
 };
+// Tiêu đề chuông thông báo cho HS theo status đã áp (khép vòng phản hồi).
+const NOTIF_TITLE_BY_STATUS = {
+  reviewing: 'Góp ý của bạn đã được duyệt 🎉',
+  done:      'Yêu cầu của bạn đã hoàn thành ✓',
+  rejected:  'Phản hồi về góp ý của bạn',
+  pending:   'Ban điều hành đã ghi nhận góp ý của bạn',
+};
 
 const REQ_TYPE_VN = { game: 'trò chơi', theory: 'lý thuyết', lab: 'thực hành', skill: 'kỹ năng', other: 'đề xuất' };
+
+// ── Đọc & tóm tắt file đính kèm cho ngữ cảnh quyết định ──
+// AI model hiện tại (qwen2.5) chỉ xử lý TEXT — không "nhìn" được ảnh. Nhưng việc
+// BIẾT có ảnh chụp/tệp minh hoạ giúp AI không từ chối/defer chỉ vì "thiếu minh
+// hoạ", và với tệp văn bản (txt/csv) ta đọc trực tiếp nội dung đưa vào prompt.
+const TEXT_MIMES = new Set(['text/plain', 'text/csv']);
+const MIME_VN = {
+  'application/pdf': 'PDF',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word',
+  'application/msword': 'Word',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel',
+  'application/vnd.ms-excel': 'Excel',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PowerPoint',
+  'application/vnd.ms-powerpoint': 'PowerPoint',
+  'application/zip': 'tệp nén ZIP', 'text/plain': 'văn bản', 'text/csv': 'bảng CSV',
+};
+function describeAttachment(a) {
+  if (a?.kind === 'screenshot') return 'ảnh chụp màn hình';
+  if (/^image\//.test(a?.mime || '')) return 'ảnh';
+  return MIME_VN[a?.mime] || 'tệp';
+}
+// Đọc snippet tệp văn bản an toàn: chỉ chấp nhận URL đúng khuôn
+// /uploads/requests/<ngày>/<tên>, chống path traversal, cap số ký tự.
+async function readTextSnippet(url, maxChars = 1500) {
+  try {
+    const m = /^\/uploads\/requests\/(\d{4}-\d{2}-\d{2})\/([A-Za-z0-9._-]+)$/.exec(String(url || ''));
+    if (!m) return null;
+    const fpath = path.join(UPLOADS_DIR, m[1], m[2]);
+    if (!fpath.startsWith(UPLOADS_DIR + path.sep)) return null;
+    const data = await fs.readFile(fpath, 'utf8');
+    return data.length > maxChars ? data.slice(0, maxChars) + '…[đã cắt bớt]' : data;
+  } catch { return null; }
+}
+async function summarizeAttachments(attachments) {
+  if (!Array.isArray(attachments) || !attachments.length) return '';
+  const list = attachments.slice(0, 10);
+  const lines = [], snippets = [];
+  for (const a of list) {
+    const sizeKb = a?.size ? ` (${Math.round(Number(a.size) / 1024)} KB)` : '';
+    lines.push(`  • ${String(a?.name || 'tệp').slice(0, 120)} — ${describeAttachment(a)}${sizeKb}`);
+    if (TEXT_MIMES.has(a?.mime)) {
+      const snip = await readTextSnippet(a.url);
+      if (snip) snippets.push(`--- Nội dung "${String(a?.name || 'tệp').slice(0, 80)}" ---\n${snip}`);
+    }
+  }
+  let out = `Người gửi ĐÍNH KÈM ${list.length} tệp minh hoạ:\n${lines.join('\n')}`;
+  if (snippets.length) out += `\n\nTrích nội dung tệp văn bản đính kèm:\n${snippets.join('\n\n')}`;
+  return out;
+}
 
 function extractJson(s) {
   const m = String(s || '').match(/\{[\s\S]*\}/);
@@ -125,7 +188,7 @@ function ruleDecision({ votes }) {
   };
 }
 
-async function aiDecision({ domain, type, title, detail, votes }) {
+async function aiDecision({ domain, type, title, detail, votes, attachSummary = '' }) {
   const system = `Bạn là HIỆU TRƯỞNG AI điều hành một trường trong vũ trụ giáo dục Tizia. `
     + `Nhiệm vụ: ra QUYẾT ĐỊNH cho góp ý của sinh viên một cách có trách nhiệm. `
     + `Cân nhắc: tính khả thi, lợi ích giáo dục, mức độ phù hợp, số lượt ủng hộ. `
@@ -135,7 +198,7 @@ async function aiDecision({ domain, type, title, detail, votes }) {
 - Tiêu đề: ${title}
 - Chi tiết: ${detail || '(không có)'}
 - Lượt ủng hộ: ${votes}
-
+${attachSummary ? '\n' + attachSummary + '\n' : ''}
 Ra quyết định. Trả JSON đúng schema:
 {
   "action": "approve" | "reject" | "defer" | "priority",
@@ -144,7 +207,7 @@ Ra quyết định. Trả JSON đúng schema:
   "priority_score": <0-100, mức độ ưu tiên>,
   "confidence": <0.0-1.0, độ tự tin của quyết định>
 }
-Hướng dẫn: approve=khả thi & hữu ích; priority=rất giá trị/nhiều ủng hộ; defer=cần thêm thông tin hoặc chưa rõ; reject=trùng lặp/không phù hợp/bất khả thi. Chỉ reject khi THỰC SỰ chắc chắn.`;
+Hướng dẫn: approve=khả thi & hữu ích; priority=rất giá trị/nhiều ủng hộ; defer=cần thêm thông tin hoặc chưa rõ; reject=trùng lặp/không phù hợp/bất khả thi. Chỉ reject khi THỰC SỰ chắc chắn.${attachSummary ? ' Người gửi đã đính kèm ảnh/tệp minh hoạ — KHÔNG defer hay reject chỉ vì lý do "thiếu hình ảnh/thiếu minh hoạ"; nếu cần, hãy tham chiếu nội dung đính kèm trong phản hồi.' : ''}`;
 
   const raw = await Promise.race([
     ollamaGenerate({ prompt, system, temperature: 0.3, json: true, maxTokens: 320 }),
@@ -172,10 +235,12 @@ Hướng dẫn: approve=khả thi & hữu ích; priority=rất giá trị/nhiề
  * Ban điều hành AI xem xét + TỰ QUYẾT ĐỊNH 1 góp ý, ghi audit, áp vào status.
  * @returns {Promise<{action,status,reason,public_note,priority_score,confidence,decided_by}>}
  */
-export async function reviewAndDecideRequest({ requestId, domain, type, title, detail, votes = 1 }) {
+export async function reviewAndDecideRequest({ requestId, domain, type, title, detail, votes = 1, attachments = [], student = null }) {
+  // Tóm tắt + đọc snippet đính kèm TRƯỚC khi gọi LLM (không tính vào timeout LLM).
+  const attachSummary = await summarizeAttachments(attachments);
   let d;
   try {
-    d = await aiDecision({ domain, type, title, detail, votes });
+    d = await aiDecision({ domain, type, title, detail, votes, attachSummary });
   } catch (e) {
     console.warn('[ai-agent] decision fallback:', e?.message || e);
     d = { ...ruleDecision({ votes }), raw_output: e?.raw ? String(e.raw).slice(0, 2000) : null };
@@ -191,6 +256,19 @@ export async function reviewAndDecideRequest({ requestId, domain, type, title, d
   const statusApplied = AUTO_APPLY ? status : 'pending';
   if (AUTO_APPLY) {
     setRequestStatus(requestId, status, d.public_note);
+    // Khép vòng phản hồi: báo cho HS qua chuông notification (chỉ khi AI THỰC SỰ
+    // áp quyết định — chế độ "AI điều hành"). createNotification tự bỏ qua guest/
+    // 'Ẩn danh'. Bao try/catch để lỗi notify không làm hỏng audit bên dưới.
+    try {
+      createNotification({
+        user_display_name: student,
+        request_id: requestId,
+        kind: 'reply',
+        title: NOTIF_TITLE_BY_STATUS[status] || 'Ban điều hành đã phản hồi góp ý của bạn',
+        body: `「${String(title || '').slice(0, 80)}」 — ${d.public_note}`,
+        url: `/space.html?domain=${encodeURIComponent(domain || '')}#requests`,
+      });
+    } catch (e) { console.warn('[ai-agent] notify failed:', e?.message || e); }
   }
 
   insertDecisionStmt.run({
@@ -199,7 +277,11 @@ export async function reviewAndDecideRequest({ requestId, domain, type, title, d
     action: d.action, status_applied: statusApplied,
     reason: d.reason, public_note: d.public_note,
     priority_score: d.priority_score, confidence: d.confidence,
-    input_snapshot: JSON.stringify({ domain, type, title, detail, votes }),
+    input_snapshot: JSON.stringify({
+      domain, type, title, detail, votes,
+      attachments: (Array.isArray(attachments) ? attachments : []).slice(0, 10)
+        .map(a => ({ name: a?.name, mime: a?.mime, kind: a?.kind })),
+    }),
     raw_output: d.raw_output || null,
     created_at: Date.now(),
   });

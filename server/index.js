@@ -1123,8 +1123,12 @@ r.get('/api/achievements', (req, res) => {
 //   X-Kind:       'screenshot' | 'file'  (optional, default 'file')
 // Lý do tách route + raw thay vì multipart: tránh thêm dep (multer) + payload
 // đơn giản (1 file/req). Trả URL public + meta để FE nhồi vào array attachments.
+// LƯU Ý BẢO MẬT: cố tình KHÔNG cho image/svg+xml. SVG là XML có thể nhúng
+// <script>; nếu serve inline từ chính origin → stored-XSS khi mở link/ảnh. Ảnh
+// minh hoạ feedback dùng PNG/JPEG là đủ. Mọi file vẫn được serve với nosniff +
+// CSP sandbox + ép tải về (xem mount /uploads/requests) như lớp phòng thủ.
 const REQUEST_UPLOAD_MIME_WHITELIST = new Set([
-  'image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml',
+  'image/png', 'image/jpeg', 'image/webp', 'image/gif',
   'application/pdf', 'text/plain', 'text/csv',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -1134,7 +1138,7 @@ const REQUEST_UPLOAD_MIME_WHITELIST = new Set([
 ]);
 const MIME_TO_EXT = {
   'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp',
-  'image/gif': '.gif', 'image/svg+xml': '.svg', 'application/pdf': '.pdf',
+  'image/gif': '.gif', 'application/pdf': '.pdf',
   'text/plain': '.txt', 'text/csv': '.csv',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
@@ -1142,6 +1146,39 @@ const MIME_TO_EXT = {
   'application/msword': '.doc', 'application/vnd.ms-excel': '.xls',
   'application/vnd.ms-powerpoint': '.ppt', 'application/zip': '.zip',
 };
+// Ảnh raster an toàn để render inline (img src + mở thẳng). Mọi định dạng khác
+// (pdf/office/zip/txt/csv) bị ép tải về để không bao giờ thực thi trong origin.
+const REQUEST_INLINE_SAFE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+// Magic-byte sniffing chống Content-Type spoofing: client tự đặt header Content-Type
+// nên với định dạng có chữ ký rõ ràng ta kiểm bytes đầu. text/plain & text/csv không
+// có chữ ký tin cậy → chấp nhận. Trả false nếu không khớp (handler sẽ từ chối 415).
+function requestUploadSniffOk(mime, buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 4) return false;
+  const at = (...sig) => sig.every((v, i) => buf[i] === v);
+  const ascii = (off, str) => buf.slice(off, off + str.length).toString('latin1') === str;
+  switch (mime) {
+    case 'image/png':  return at(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+    case 'image/jpeg': return at(0xff, 0xd8, 0xff);
+    case 'image/gif':  return ascii(0, 'GIF87a') || ascii(0, 'GIF89a');
+    case 'image/webp': return ascii(0, 'RIFF') && ascii(8, 'WEBP');
+    case 'application/pdf': return ascii(0, '%PDF-');
+    // OOXML (docx/xlsx/pptx) + zip đều là container ZIP: PK\x03\x04 (hoặc empty/spanned).
+    case 'application/zip':
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+      return ascii(0, 'PK\x03\x04') || ascii(0, 'PK\x05\x06') || ascii(0, 'PK\x07\x08');
+    // Office cũ (.doc/.xls/.ppt) = OLE compound file.
+    case 'application/msword':
+    case 'application/vnd.ms-excel':
+    case 'application/vnd.ms-powerpoint':
+      return at(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1);
+    case 'text/plain':
+    case 'text/csv':
+      return true;
+    default: return false;
+  }
+}
 r.post('/api/requests/attachments',
   requireAuth, requireEnrolled,
   express.raw({ type: () => true, limit: '8mb' }),
@@ -1154,6 +1191,10 @@ r.post('/api/requests/attachments',
       const buf = req.body;
       if (!Buffer.isBuffer(buf) || buf.length === 0) {
         return res.status(400).json({ error: 'empty_body', message: 'File rỗng.' });
+      }
+      // Chống Content-Type spoofing: nội dung phải khớp định dạng khai báo.
+      if (!requestUploadSniffOk(mime, buf)) {
+        return res.status(415).json({ error: 'content_mismatch', mime, message: 'Nội dung file không khớp định dạng khai báo.' });
       }
       const rawName = String(req.headers['x-filename'] || '').slice(0, 200);
       const kind = String(req.headers['x-kind'] || 'file').toLowerCase() === 'screenshot' ? 'screenshot' : 'file';
@@ -1196,7 +1237,9 @@ r.post('/api/requests', requireAuth, requireEnrolled, (req, res) => {
   reviewAndDecideRequest({
     requestId: row.id,
     domain, type: b.type, title, detail: b.detail,
-    votes: 1, student: b.student,
+    votes: 1,
+    student: String(b.student || '').trim() || null,
+    attachments: Array.isArray(b.attachments) ? b.attachments : [],
   }).catch(err => console.warn('[requests] AI decision failed:', err?.message || err));
 });
 
@@ -1279,9 +1322,9 @@ r.get('/api/export.csv', (_req, res) => {
 //   data-no-auth-header, data-no-notifications-bell, data-no-suggestion-fab.
 // Tránh phải sửa thủ công 59+ file.
 const HEADER_TAG = `<script type="module" src="js/auth-header.js"></script>`;
-// ?v=attach1 — cache-bust khi rollout tính năng đính kèm ảnh chụp/file vào FAB
-// Đề nghị (max-age=86400). Bump version mỗi khi thay đổi UX bài bản của FAB.
-const SGF_TAG = `<script type="module" src="js/suggestion-fab.js?v=attach1"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
+// ?v=attach2 — cache-bust khi nâng UX đính kèm (preview thumbnail, kéo-thả, dán
+// ảnh, lọc loại, chống trùng + siết whitelist bỏ SVG). Bump mỗi lần đổi UX FAB.
+const SGF_TAG = `<script type="module" src="js/suggestion-fab.js?v=attach2"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
 // Analytics: chỉ gtag loader (analytics.js). Consent banner đã được bỏ theo
 // yêu cầu user (jun 2026) — gây phiền và che nội dung. Analytics vẫn hoạt
 // động theo mặc định "denied" (xem analytics.js) cho đến khi có cơ chế consent
@@ -1331,7 +1374,19 @@ r.get(/.*/, async (req, res, next) => {
 r.use('/uploads/requests', express.static(REQUEST_UPLOADS_DIR, {
   fallthrough: false,
   index: false,
-  setHeaders: (res) => { res.setHeader('Cache-Control', 'public, max-age=3600'); },
+  setHeaders: (res, filePath) => {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    // Phòng thủ nhiều lớp cho nội dung do người dùng tải lên:
+    //  • nosniff: trình duyệt không tự đoán lại Content-Type.
+    //  • CSP sandbox + default-src 'none': kể cả file HTML/SVG lọt vào cũng KHÔNG
+    //    chạy được script khi mở thẳng.
+    //  • Content-Disposition: ép tải về với mọi định dạng trừ ảnh raster an toàn —
+    //    SVG/PDF/Office… không bao giờ render inline trong origin.
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    const ext = path.extname(filePath).toLowerCase();
+    if (!REQUEST_INLINE_SAFE_EXT.has(ext)) res.setHeader('Content-Disposition', 'attachment');
+  },
 }));
 r.use('/vendor/mediapipe', express.static(MEDIAPIPE_DIR, {
   maxAge: '7d',
