@@ -49,7 +49,7 @@ export async function renderRequestBoard({ host, domain, domainName }) {
           <input id="rb-title" class="rb-input rb-titlein" maxlength="200"
                  placeholder="Tiêu đề yêu cầu (vd: Thêm game ghép cặp tương tác thuốc)" />
         </div>
-        <textarea id="rb-detail" class="rb-input rb-detail" maxlength="2000" rows="2"
+        <textarea id="rb-detail" class="rb-input rb-detail" maxlength="10000" rows="2"
                   placeholder="Mô tả chi tiết (tuỳ chọn) — càng rõ, Ban điều hành AI càng dễ làm"></textarea>
         <div class="rb-actions">
           <span class="rb-msg" id="rb-msg"></span>
@@ -132,6 +132,7 @@ function renderList(host, items, reload) {
         <div class="rb-item-body">
           <div class="rb-item-title">${tm.icon} ${escapeHtml(it.title)}</div>
           ${it.detail ? `<div class="rb-item-detail">${escapeHtml(it.detail)}</div>` : ''}
+          ${renderAtts(it.attachments)}
           ${it.admin_note ? `<div class="rb-item-note">🏛️ Ban điều hành: ${escapeHtml(it.admin_note)}</div>` : ''}
           <div class="rb-item-meta">
             <span class="rb-status ${sm.cls}">${sm.label}</span>
@@ -149,6 +150,24 @@ function renderList(host, items, reload) {
       catch { el.style.pointerEvents = ''; }
     });
   });
+}
+
+// Render đính kèm (ảnh thumbnail + link file) — chỉ hiển thị, board không tự
+// upload. URL do BE cấp; mở tab mới với rel=noopener. Khớp giao diện FAB Đề nghị.
+function renderAtts(atts) {
+  const list = Array.isArray(atts) ? atts : [];
+  if (!list.length) return '';
+  const inner = list.map(a => {
+    const isImg = /^image\//.test(a.mime || '');
+    if (isImg) {
+      return `<a class="rb-att-thumb" href="${escapeHtml(a.url)}" target="_blank" rel="noopener" title="${escapeHtml(a.name)}">
+                <img loading="lazy" src="${escapeHtml(a.url)}" alt="${escapeHtml(a.name)}" />
+              </a>`;
+    }
+    const ic = a.kind === 'screenshot' ? '📸' : '📎';
+    return `<a class="rb-att-file" href="${escapeHtml(a.url)}" target="_blank" rel="noopener" download="${escapeHtml(a.name)}">${ic} ${escapeHtml(a.name)}</a>`;
+  }).join('');
+  return `<div class="rb-att">${inner}</div>`;
 }
 
 function escapeHtml(s) {
@@ -208,6 +227,12 @@ function injectStylesOnce() {
     .rb-item-detail { font-size: 12.5px; opacity: 0.8; margin-top: 3px; line-height: 1.45; }
     .rb-item-note { font-size: 12.5px; margin-top: 5px; padding: 6px 10px; border-radius: 8px;
       background: rgba(251,191,36,0.12); border-left: 3px solid #fbbf24; }
+    .rb-att { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .rb-att-thumb { display: inline-block; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.18); line-height: 0; }
+    .rb-att-thumb img { display: block; max-width: 120px; max-height: 90px; object-fit: cover; }
+    .rb-att-file { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: #fde68a;
+      background: rgba(251,191,36,0.12); padding: 3px 8px; border-radius: 6px; text-decoration: none; border: 1px solid rgba(251,191,36,0.25); }
+    .rb-att-file:hover { background: rgba(251,191,36,0.22); }
     .rb-item-meta { display: flex; gap: 10px; align-items: center; margin-top: 6px; font-size: 11.5px; }
     .rb-status { padding: 2px 8px; border-radius: 7px; font-weight: 700; }
     .rb-status.pending   { background: rgba(148,163,184,0.25); }

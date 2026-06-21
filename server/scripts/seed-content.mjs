@@ -42,6 +42,7 @@ const REGISTRY = [
   { collection: 'lop2-ghep-van',     file: 'lop2-ghep-van.js',     export: 'ROUNDS' },
   { collection: 'space-sets',        file: 'space-sets.js',        export: 'SPACE_SETS_ITEMS' },
   { collection: 'driving-600',        file: 'driving-bank.js',        export: 'ITEMS' },
+  { collection: 'exam-sets',          file: 'exam-sets.js',          export: 'EXAM_SETS' },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');

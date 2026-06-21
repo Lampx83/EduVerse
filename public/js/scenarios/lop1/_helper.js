@@ -2,8 +2,8 @@
 // Helper soạn quiz tuần cho Lớp 1 — tránh lặp boilerplate.
 // ============================================================
 
-export const Q = (stem, choices, answer, explanation) =>
-  ({ stem, choices, answer, explanation });
+export const Q = (stem, choices, answer, explanation, choiceFeedback) =>
+  ({ stem, choices, answer, explanation, choiceFeedback });
 
 /**
  * Tạo 1 scenario tuần cho Lớp 1.

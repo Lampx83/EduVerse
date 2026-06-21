@@ -1,5 +1,5 @@
 // Helper Lớp 12 (THPT năm 3, thi tốt nghiệp). yearLevel=3, difficulty 4-5.
-export const Q = (stem, choices, answer, explanation) => ({ stem, choices, answer, explanation });
+export const Q = (stem, choices, answer, explanation, choiceFeedback) => ({ stem, choices, answer, explanation, choiceFeedback });
 export const W = (prefix, subj, n, title, qs, opts = {}) => {
   const w = String(n).padStart(2, '0');
   return {

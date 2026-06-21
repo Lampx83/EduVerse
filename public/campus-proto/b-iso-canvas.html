@@ -215,8 +215,8 @@ const CAMPUSES = {
       {id:'football',name:'Sân bóng đá',emoji:'⚽',gx:3.2,gy:3.6},
       {id:'court',name:'Sân bóng rổ',emoji:'🏀',gx:3,gy:11.4},
       {id:'schoolgarden',name:'Vườn trường',emoji:'🌱',gx:5.4,gy:17.6},
-      // Bãi xe đạp NẰM TRONG khuôn viên — góc dưới-phải, gần cổng nhưng phía sau tường bao
-      {id:'bikepark',name:'Bãi xe đạp',emoji:'🚲',gx:21,gy:17},
+      // Bãi xe đạp NẰM TRONG khuôn viên — góc dưới-phải, lùi hẳn khỏi tường nam (gy18.6)
+      {id:'bikepark',name:'Bãi xe đạp',emoji:'🚲',gx:21,gy:16.3},
       {id:'gate',name:'Cổng trường',emoji:'🚪',gx:15,gy:19},
     ],
     fields:[
@@ -224,8 +224,8 @@ const CAMPUSES = {
       {type:'football', gx:1,gy:1.8, w:4.8,d:3.1},
       {type:'court', gx:1.4,gy:9.6, w:3.4,d:4.4},
       {type:'garden', gx:4.2,gy:16.4, w:2.6,d:2.2},
-      // Parking field cũng vào TRONG: dải xe đạp dài dọc tường nam phía phải
-      {type:'parking', gx:18.4,gy:16.2, w:6,d:2.2},
+      // Parking field LÙI vào trong: mép dưới gy17.4, chừa 1.2 tới tường nam (gy18.6)
+      {type:'parking', gx:18.4,gy:15.2, w:6,d:2.2},
       {type:'gate', gx:15,gy:18.4, label:'THCS'},
     ],
     sportTargets:{ football:'/lop2-the-thao.html', court:'/lop2-the-thao.html' },
@@ -243,7 +243,7 @@ const CAMPUSES = {
     // Cây và xe phải LÙI khỏi vành đai tường bao (top gy0.7, side gx0.42/26.42,
      // south gy18.6) — trước đây gx0.6 / gy1.3 / gy19 nằm đè lên tường gây glitch.
      trees:[[1.6,7.2],[1.6,14],[5.5,3.4],[5.5,7],[5.5,16.5],[15,2.2],
-       [24.6,4],[24.6,8],[24.6,12],[24.6,16],[25.4,9],[25.4,17],[19,22],[7,22]],
+       [24.6,4],[24.6,8],[24.6,12],[24.6,16],[25.0,9],[25.0,17],[12,17.4],[7.5,17.4]],
      // Xe đỗ TRÊN đường south road (ngoài cổng), giữ cách xa tường nam (gy18.6)
      cars:[[9.5,16],[20.5,16],[11,21],[18.5,21]],
     // đèn đường viền sân cờ + dọc TRỤC CHÍNH ra cổng; ghế đá trong sân cho HS ngồi
@@ -429,6 +429,10 @@ const CAMPUSES = {
   // cổng trên đỉnh — đúng dáng campus công nghệ hiện đại (cao ốc thay nhà phố).
   it: {
     title:'Trường Công nghệ thông tin', credit:'3D: Kenney City Kit Commercial (CC0)', grass:['#86c9a6','#94d2b0'],
+    // Cyber-Green (req #20, SV Chu Thi Hue): cổng "firewall" cột slate + xà neon
+    // cyan, lối đi nội bộ kẻ mạch điện phát sáng, hồ trung tâm thành "data lake".
+    gateColors:{ post:['#3b4b5e','#2b3744','#1c2530'], lintel:['#22d3ee','#0e9cb8','#0b7c91'] },
+    techPaths:true,
     // Đại học → 3 CỔNG: CHÍNH bắc (gx 15, giữ nguyên), NAM (gx 13), ĐÔNG-NAM (gx 25).
     roads:[
       // Đường lớn ngoài trường (kind:main) — chỉ trước cổng
@@ -459,6 +463,10 @@ const CAMPUSES = {
     buildings:[
       // Dãy mặt tiền (gy 3.0): điều hành + cao ốc thư viện
       B('admin','Hành chính – Hiệu bộ','⚙️',6.5,3.0,'com:building-d',1.05,90,{flag:true}),
+      // Trung tâm Hướng nghiệp & Giả lập nghề nghiệp — TÁCH thành toà riêng đứng
+      // cạnh Hành chính (req #26, SV Chu Thi Hue). Trỏ thẳng trang chuyên biệt
+      // /tech-career-center.html (không phải /space.html) qua CUSTOM_TARGETS.
+      B('career','Trung tâm Hướng nghiệp & Giả lập','🧭',2.9,3.0,'com:building-l',1.0,90,{pin:'#f59e0b'}),
       B('library','Thư viện số','📚',11.5,3.0,'com:building-skyscraper-b',0.85,0),
       B('hall','Hội trường','🎤',18.5,3.0,'com:low-detail-building-wide-a',1.0,0),
       B('lecture','Giảng đường','🏛️',23.5,3.0,'com:building-h',1.0,270),
@@ -488,7 +496,7 @@ const CAMPUSES = {
       {id:'parking',name:'Bãi đỗ xe',emoji:'🅿️',gx:12.5,gy:21.3},
     ],
     fields:[
-      {type:'pond', cx:15.4,cy:13.2, rx:2.7,ry:2.0},
+      {type:'pond', cx:15.4,cy:13.2, rx:2.7,ry:2.0, tech:true},
       {type:'football', gx:1,gy:8, w:4.5,d:3},
       {type:'court', gx:1.2,gy:12.6, w:3.2,d:3.4},
       {type:'parking', gx:10.2,gy:20, w:5,d:3.2},
@@ -498,9 +506,9 @@ const CAMPUSES = {
     ],
     sportTargets:{ football:'/lop2-the-thao.html', court:'/lop2-the-thao.html' },
     trees:[[14.6,3.6],[16.6,3.6],[14.2,7.6],[16.8,7.6],[15,10.2],[15.4,16.4],
-      [26,3.5],[26,9],[26,13],[26,17],[26,20.5],[2,3.6],[3,17.6],[4.4,20],[7.9,3.4],[15,18.6]],
+      [26,3.5],[26,9],[26,13],[26,17],[26,20.5],[1.3,4.6],[3,17.6],[4.4,20],[7.9,3.4],[15,18.6]],
     cars:[[9,11],[21,11],[9,15],[21,15],[12,6.0],[18,6.0],[11,20.6],[13,20.6],[11,22],[13,22]],
-    tints:{ library:0x93c5fd, ailab:0xc4b5fd, cloudcenter:0x7dd3fc, seclab:0xfca5a5, startuphub:0xa7f3d0 },
+    tints:{ library:0x93c5fd, ailab:0xc4b5fd, cloudcenter:0x7dd3fc, seclab:0xfca5a5, startuphub:0xa7f3d0, career:0xfcd34d },
   },
 
   // ─────────────────────── TRƯỜNG MẦM NON (3–5 tuổi) ───────────────────────
@@ -745,6 +753,10 @@ const CRITTERS=C.critters||[];    // con vật / hoa / đồ chơi nhỏ (emoji)
 const SPORT_TARGETS=C.sportTargets||{};
 const TINTS=C.tints||{};   // tô màu toà nhà (vd lớp 1–5 màu cầu vồng ở Tiểu học)
 const WALLS = Array.isArray(C.walls) ? C.walls : (C.walls = []);   // tường bao do admin vẽ
+// Theme phụ theo campus (req #20 — Cyber-Green CNTT): màu cổng + lối đi "mạch điện".
+// Mặc định = cổng cột kem + xà đỏ truyền thống; chỉ campus khai báo mới đổi.
+const GATE_C = C.gateColors || { post:['#e8d5a4','#cdb98a','#a8946b'], lintel:['#b23b3b','#962f2f','#7e2525'] };
+const TECH_PATHS = !!C.techPaths;   // true → vạch giữa lối đi phát sáng cyan (circuit trace)
 
 // lối đi: tự sinh (nối mỗi toà ra trục dọc gần nhất) HOẶC campus tự khai báo mạng
 // lối đi thiết kế tay qua `walkways` (+ tắt auto bằng `autoPaths:false`).
@@ -1314,7 +1326,25 @@ function garden(gx,gy,w,d){ poly(tileRect(gx,gy,w,d),'#8a6a44','rgba(0,0,0,.12)'
   for(let j=0.35;j<d-0.3;j+=0.75){ poly(tileRect(gx+0.25,gy+j,w-0.5,0.42),'#4f9e46',null);
     poly(tileRect(gx+0.25,gy+j,w-0.5,0.42),null,'rgba(255,255,255,.18)',1); } }
 // hồ nước — mặt nước xanh dương, lõi sáng + đốm phản chiếu
-function pond(cx,cy,rx,ry){ poly(ellipsePts(cx,cy,rx,ry),'#4aa6d8','rgba(0,0,0,.12)',1.5);
+function pond(cx,cy,rx,ry,tech){
+  if(tech){
+    // DATA LAKE (req #20 — Cyber-Green CNTT): nước teal sâu + 2 vòng "mạch" cyan
+    // + các nút dữ liệu phát sáng nối tia mảnh về tâm (gợi hồ dữ liệu / mạng).
+    poly(ellipsePts(cx,cy,rx,ry),'#0e6b86','rgba(8,40,55,.35)',1.5);
+    poly(ellipsePts(cx,cy,rx*0.82,ry*0.82),'#1391b0',null);
+    poly(ellipsePts(cx,cy,rx*0.5,ry*0.5),'#27b7d6',null);
+    poly(ellipsePts(cx-rx*0.26,cy-ry*0.22,rx*0.28,ry*0.16),'rgba(190,250,255,.42)',null);
+    ctx.save(); ctx.strokeStyle='rgba(125,233,255,.5)'; ctx.lineWidth=1;
+    for(const k of [0.66,0.4]){ const r=ellipsePts(cx,cy,rx*k,ry*k); ctx.beginPath(); ctx.moveTo(r[0].x,r[0].y); for(let i=1;i<r.length;i++)ctx.lineTo(r[i].x,r[i].y); ctx.closePath(); ctx.stroke(); }
+    const ctr=P(cx,cy), nodes=[[cx-rx*0.55,cy-ry*0.35],[cx+rx*0.6,cy-ry*0.2],[cx+rx*0.35,cy+ry*0.55],[cx-rx*0.5,cy+ry*0.45],[cx,cy-ry*0.6]];
+    ctx.strokeStyle='rgba(125,233,255,.3)'; ctx.lineWidth=1;
+    for(const [nx,ny] of nodes){ const p=P(nx,ny); ctx.beginPath(); ctx.moveTo(ctr.x,ctr.y); ctx.lineTo(p.x,p.y); ctx.stroke(); }
+    ctx.shadowColor='#67e8f9'; ctx.shadowBlur=7; ctx.fillStyle='#d6fbff';
+    for(const [nx,ny] of nodes){ const p=P(nx,ny); ctx.beginPath(); ctx.arc(p.x,p.y,2.1,0,7); ctx.fill(); }
+    ctx.beginPath(); ctx.arc(ctr.x,ctr.y,2.6,0,7); ctx.fill(); ctx.restore();
+    return;
+  }
+  poly(ellipsePts(cx,cy,rx,ry),'#4aa6d8','rgba(0,0,0,.12)',1.5);
   poly(ellipsePts(cx,cy,rx*0.72,ry*0.72),'#6fc6ec',null);
   poly(ellipsePts(cx-rx*0.26,cy-ry*0.22,rx*0.3,ry*0.18),'rgba(255,255,255,.45)',null); }
 // ══════ MẦM NON · khu vui chơi (vẽ phẳng, dễ thương) ══════
@@ -1340,7 +1370,7 @@ function drawField(f){ switch(f.type){
   case 'court': return court(f.gx,f.gy,f.w,f.d);
   case 'plaza': return plaza(f.gx,f.gy,f.w,f.d);
   case 'garden': return garden(f.gx,f.gy,f.w,f.d);
-  case 'pond': return pond(f.cx,f.cy,f.rx,f.ry);
+  case 'pond': return pond(f.cx,f.cy,f.rx,f.ry,f.tech);
   case 'playmat': return playmat(f.gx,f.gy,f.w,f.d);
   case 'sandbox': return sandbox(f.gx,f.gy,f.w,f.d);
   case 'pool': return pool(f.cx,f.cy,f.rx,f.ry);
@@ -1429,16 +1459,19 @@ function schoolGate(gx, gy, _label, rot = 0) {
     const cx = swap ? gx          : gx + dir*SPAN/2;
     const cy = swap ? gy + dir*SPAN/2 : gy;
     isoBox(cx-POST_W, cy-POST_D, cx+POST_W, cy+POST_D, 0, POST_H,
-      '#e8d5a4', '#cdb98a', '#a8946b');
+      GATE_C.post[0], GATE_C.post[1], GATE_C.post[2]);
   }
   // Xà ngang — span chạy giữa 2 cột
   if (swap) {
     isoBox(gx-LINTEL_D, gy-SPAN/2-POST_W, gx+LINTEL_D, gy+SPAN/2+POST_W,
-      POST_H, POST_H+LINTEL_H, '#b23b3b', '#962f2f', '#7e2525');
+      POST_H, POST_H+LINTEL_H, GATE_C.lintel[0], GATE_C.lintel[1], GATE_C.lintel[2]);
   } else {
     isoBox(gx-SPAN/2-POST_W, gy-LINTEL_D, gx+SPAN/2+POST_W, gy+LINTEL_D,
-      POST_H, POST_H+LINTEL_H, '#b23b3b', '#962f2f', '#7e2525');
+      POST_H, POST_H+LINTEL_H, GATE_C.lintel[0], GATE_C.lintel[1], GATE_C.lintel[2]);
   }
+  // Cổng "firewall" CNTT (req #20): đèn cảm biến neon nhấp nháy trên đỉnh xà.
+  if (TECH_PATHS) { ctx.save(); ctx.shadowColor='#67e8f9'; ctx.shadowBlur=8;
+    ctx.fillStyle='#d6fbff'; ctx.beginPath(); ctx.arc(gp.x, gp.y - POST_H - LINTEL_H - 3, 2.6, 0, 7); ctx.fill(); ctx.restore(); }
 }
 function ground(){
   const w=innerWidth, h=innerHeight;
@@ -1452,8 +1485,14 @@ function ground(){
   for(const r of ROADS) strip(r);
   for(const b of BUILDINGS){ const r=0.82; poly([P(b.gx-r,b.gy-r),P(b.gx+r,b.gy-r),P(b.gx+r,b.gy+r),P(b.gx-r,b.gy+r)],'#dcc9a0','rgba(120,98,55,.16)',1); }
   for(const p of WALKS){ const pts=p.along==='y'?[P(p.a,p.lo),P(p.b,p.lo),P(p.b,p.hi),P(p.a,p.hi)]:[P(p.lo,p.a),P(p.hi,p.a),P(p.hi,p.b),P(p.lo,p.b)];
-    poly(pts,'#dcc9a0','rgba(120,98,55,.20)',1.3); const c=(p.a+p.b)/2; ctx.strokeStyle='rgba(255,250,235,.5)'; ctx.lineWidth=1.3; ctx.setLineDash([5,7]);
-    const q0=p.along==='y'?P(c,p.lo):P(p.lo,c), q1=p.along==='y'?P(c,p.hi):P(p.hi,c); ctx.beginPath(); ctx.moveTo(q0.x,q0.y); ctx.lineTo(q1.x,q1.y); ctx.stroke(); ctx.setLineDash([]); }
+    poly(pts,'#dcc9a0','rgba(120,98,55,.20)',1.3); const c=(p.a+p.b)/2;
+    const q0=p.along==='y'?P(c,p.lo):P(p.lo,c), q1=p.along==='y'?P(c,p.hi):P(p.hi,c);
+    if(TECH_PATHS){ // vạch giữa = mạch điện cyan phát sáng + nút ở 2 đầu (req #20)
+      ctx.save(); ctx.shadowColor='#22d3ee'; ctx.shadowBlur=6; ctx.strokeStyle='rgba(125,233,255,.85)'; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(q0.x,q0.y); ctx.lineTo(q1.x,q1.y); ctx.stroke();
+      ctx.fillStyle='#d6fbff'; for(const q of [q0,q1]){ ctx.beginPath(); ctx.arc(q.x,q.y,1.7,0,7); ctx.fill(); } ctx.restore(); }
+    else { ctx.strokeStyle='rgba(255,250,235,.5)'; ctx.lineWidth=1.3; ctx.setLineDash([5,7]);
+      ctx.beginPath(); ctx.moveTo(q0.x,q0.y); ctx.lineTo(q1.x,q1.y); ctx.stroke(); ctx.setLineDash([]); } }
   for(const f of FIELDS) drawField(f);
   // Plaza phẳng (flagpole) vẽ ngay trong ground vì rất thấp — không gây
   // z-overlap với buildings/cổng. CỔNG (3D có chiều cao) NGỌC chuyển sang
@@ -1605,6 +1644,13 @@ const VALID_BUILDING_IDS = new Set(SPACE_KEYS_BY_DOMAIN[_dom] || []);
 const TARGETS={};
 BUILDINGS.forEach(b=>{ if (VALID_BUILDING_IDS.has(b.id)) TARGETS[b.id]='/space.html?b='+b.id+'&domain='+_dom; });
 Object.entries(SPORT_TARGETS).forEach(([id,url])=>{ TARGETS[id]=url; });
+// Toà có TRANG RIÊNG (không phải /space.html). VD Trung tâm Hướng nghiệp IT mở
+// /tech-career-center.html (req #26). Khai báo theo domain để enter()/legend/
+// hasInteractive tự nhận biết — không cần thêm vào SPACE_KEYS_BY_DOMAIN.
+const CUSTOM_TARGETS = {
+  it: { career: '/tech-career-center.html?domain=it' },
+};
+Object.entries(CUSTOM_TARGETS[_dom] || {}).forEach(([id,url])=>{ TARGETS[id]=url; });
 
 /** Item có thể bấm vào để có trải nghiệm thực? Building → trong whitelist domain.
  *  Facility → có entry trong SPORT_TARGETS. Khác → false (ẩn khỏi legend, vô hiệu hoá click). */

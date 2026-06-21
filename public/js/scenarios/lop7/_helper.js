@@ -1,8 +1,14 @@
 // ============================================================
 // Helper soạn quiz tuần cho Lớp 7 (THCS) — yearLevel = 2.
 // ============================================================
-export const Q = (stem, choices, answer, explanation) =>
-  ({ stem, choices, answer, explanation });
+/**
+ * Tạo 1 câu hỏi trắc nghiệm (chuẩn ngang Lớp 6).
+ * - theory:         tuỳ chọn — mảng đoạn HTML — khối "📚 Lý thuyết" đào sâu (bám SGK GDPT 2018).
+ * - choiceFeedback: tuỳ chọn — mảng N string (1 / lựa chọn) — hiện dưới TỪNG đáp án sau khi chọn.
+ * THỨ TỰ THAM SỐ KHỚP LỚP 6: theory ở slot 5, choiceFeedback ở slot 6. Đừng đảo lại slot 5=choiceFeedback.
+ */
+export const Q = (stem, choices, answer, explanation, theory, choiceFeedback) =>
+  ({ stem, choices, answer, explanation, theory, choiceFeedback });
 
 export const W = (modulePrefix, subjectKey, n, title, questions, opts = {}) => {
   const week = String(n).padStart(2, '0');

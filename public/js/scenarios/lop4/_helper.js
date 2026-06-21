@@ -2,8 +2,8 @@
 // Helper soạn quiz tuần cho Lớp 4 — tránh lặp boilerplate.
 // ============================================================
 
-export const Q = (stem, choices, answer, explanation) =>
-  ({ stem, choices, answer, explanation });
+export const Q = (stem, choices, answer, explanation, choiceFeedback) =>
+  ({ stem, choices, answer, explanation, choiceFeedback });
 
 export const W = (modulePrefix, subjectKey, n, title, questions, opts = {}) => {
   const week = String(n).padStart(2, '0');

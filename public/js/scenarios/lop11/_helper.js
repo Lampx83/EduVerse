@@ -1,5 +1,5 @@
 // Helper Lớp 11 (THPT năm 2). yearLevel=2.
-export const Q = (stem, choices, answer, explanation) => ({ stem, choices, answer, explanation });
+export const Q = (stem, choices, answer, explanation, choiceFeedback) => ({ stem, choices, answer, explanation, choiceFeedback });
 export const W = (prefix, subj, n, title, qs, opts = {}) => {
   const w = String(n).padStart(2, '0');
   return {
