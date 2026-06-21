@@ -10,6 +10,7 @@ export const SUBJECTS = {
   'lich-su-dia': { label: 'Lịch sử & Địa lí',     icon: '🗺️', color: '#f59e0b' },
   'tieng-anh':   { label: 'Tiếng Anh',            icon: '🇬🇧', color: '#60a5fa' },
   'tin-hoc':     { label: 'Tin học',              icon: '💻', color: '#8b5cf6' },
+  'cong-nghe':   { label: 'Công nghệ',            icon: '🔧', color: '#0d9488' },
   'dao-duc':     { label: 'Đạo đức',              icon: '🤝', color: '#ec4899' },
   'my-thuat':    { label: 'Mĩ thuật',             icon: '🎨', color: '#f472b6' },
   'am-nhac':     { label: 'Âm nhạc',              icon: '🎵', color: '#a855f7' },
