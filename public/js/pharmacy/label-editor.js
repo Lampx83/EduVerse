@@ -1,7 +1,7 @@
 // LabelEditor — redesign theo sơ đồ Thầy Lâm: 2 cột (form trái + preview phải),
 // stepper Sáng/Trưa/Chiều/Tối, chips Thời điểm, quick chips Ghi chú.
 // Giữ semantic field cũ để backend chấm điểm + render in/dán nhãn vẫn work.
-import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0636';
+import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0637';
 import { TIMING_LABEL, labelShortLine, totalPerDay } from './labels.js';
 
 const QUICK_NOTES = [

@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0636';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0636';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0637';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0637';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -2749,7 +2749,21 @@ export function buildScene(canvas, opts = {}) {
     if (!CAMERA_PRESETS[key]) return;
     currentPreset = key;
     presetStartedAt = performance.now();
+    vpanToTY = null;            // huỷ pan dọc đang chờ khi nhảy preset mới
     opts.onPresetChange?.(key);
+  }
+
+  // ── Pan dọc theo ngăn tủ (nút ▲▼) ─────────────────────────────────────────
+  // Dời ĐỒNG THỜI target.y và camera.position.y một lượng BẰNG NHAU → giữ
+  // nguyên góc nghiêng + khoảng cách (offset không đổi nên OrbitControls không
+  // tranh chấp), camera trượt thẳng lên/xuống dọc mặt kệ. vpanToTY là target.y
+  // mong muốn (cộng dồn khi bấm liên tiếp), render loop ease tới nó.
+  let vpanToTY = null;
+  const VPAN_STEP = 0.34, VPAN_MIN_Y = 0.45, VPAN_MAX_Y = 1.95;
+  function nudgeVertical(dir) {
+    presetStartedAt = null;    // dừng lerp preset để pan không bị kéo ngược
+    const base = (vpanToTY != null) ? vpanToTY : controls.target.y;
+    vpanToTY = Math.max(VPAN_MIN_Y, Math.min(VPAN_MAX_Y, base + dir * VPAN_STEP));
   }
 
   // ── Render loop ──────────────────────────────────────────────────────────
@@ -2841,6 +2855,18 @@ export function buildScene(canvas, opts = {}) {
         camera.position.lerp(new THREE.Vector3(...p.pos), 0.12);
         controls.minDistance = p.minDist;
         controls.maxDistance = p.maxDist;
+      }
+    }
+
+    // Pan dọc theo ngăn — ease target.y + camera.y cùng một lượng (giữ offset)
+    if (vpanToTY != null) {
+      const diff = vpanToTY - controls.target.y;
+      if (Math.abs(diff) < 0.002) {
+        camera.position.y += diff; controls.target.y = vpanToTY; vpanToTY = null;
+      } else {
+        const stepY = diff * 0.18;
+        controls.target.y += stepY;
+        camera.position.y += stepY;
       }
     }
 
@@ -3123,6 +3149,7 @@ export function buildScene(canvas, opts = {}) {
     scene, camera, renderer, controls,
     cameraPresets: CAMERA_PRESETS,
     setCameraPreset,
+    nudgeVertical,
     setExposure: (v) => applyBrightness(v, true),
     getExposure: () => currentBrightness,
     getCurrentPreset: () => currentPreset,

@@ -1,13 +1,13 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0636';
-import { loadDrugs } from './catalog.js?v=ph0636';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0637';
+import { loadDrugs } from './catalog.js?v=ph0637';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { openPosTerminal } from './pos.js?v=ph0636';
-import { openLabelEditor } from './label-editor.js?v=ph0636';
+import { openPosTerminal } from './pos.js?v=ph0637';
+import { openLabelEditor } from './label-editor.js?v=ph0637';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0636';
+import { labelSectionHTML } from './drug-label.js?v=ph0637';
 
 const $ = (id) => document.getElementById(id);
 
@@ -238,6 +238,20 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       });
     });
   }
+
+  // 6b. Pan dọc theo ngăn tủ (▲ lên / ▼ xuống). Giữ chuột để lặp liên tục.
+  const bindVpan = (id, dir) => {
+    const el = $(id);
+    if (!el || !sim.nudgeVertical) return;
+    let timer = null;
+    const fire = () => sim.nudgeVertical(dir);
+    const start = (e) => { e.preventDefault(); fire(); timer = setInterval(fire, 260); };
+    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+    el.addEventListener('pointerdown', start);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => el.addEventListener(ev, stop));
+  };
+  bindVpan('vpan-up', +1);
+  bindVpan('vpan-down', -1);
 
   // P3: Inspector modal — hộp thuốc zoom giữa màn hình, tự xoay, drag xoay,
   // info panel + 2 nút (Đưa vào khay / Trả về kệ). Dùng mini-scene Three.js riêng.
