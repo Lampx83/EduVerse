@@ -1,13 +1,13 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0623';
-import { loadDrugs } from './catalog.js?v=ph0623';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0635';
+import { loadDrugs } from './catalog.js?v=ph0635';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { openPosTerminal } from './pos.js?v=ph0623';
-import { openLabelEditor } from './label-editor.js?v=ph0623';
+import { openPosTerminal } from './pos.js?v=ph0635';
+import { openLabelEditor } from './label-editor.js?v=ph0635';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0623';
+import { labelSectionHTML } from './drug-label.js?v=ph0635';
 
 const $ = (id) => document.getElementById(id);
 
@@ -246,6 +246,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     overlay.className = 'inspector-overlay';
     overlay.innerHTML = `
       <div class="inspector-modal">
+        <button class="ins-close" type="button" aria-label="Đóng">✕</button>
         <div class="inspector-3d"><canvas class="ins-canvas"></canvas></div>
         <div class="inspector-info">
           <div class="ins-head">
@@ -271,6 +272,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
           <div class="ins-hint">💡 Kéo chuột để xoay hộp · Lăn để zoom</div>
           <div class="ins-actions">
             <button class="ins-return" type="button">↩ Trả về kệ</button>
+            <button class="ins-retail" type="button">🔓 Tách lẻ (${drug.unit || 'đơn vị'})</button>
             <button class="ins-confirm" type="button">📥 Đưa vào khay (Quét barcode)</button>
           </div>
         </div>
@@ -405,9 +407,64 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     label2.rotation.y = Math.PI;
     scene2.add(label2);
 
+    // ── "Mở hộp lấy vỉ/gói/lọ/ống" — đơn vị nhỏ nhất bên trong hộp, trượt ra khi tách lẻ ──
+    const formStr = (drug.form || '').toLowerCase();
+    let unitKind = 'vi';
+    if (/gói|bột|cốm/.test(formStr)) unitKind = 'goi';
+    else if (/ống|tiêm/.test(formStr)) unitKind = 'ong';
+    else if (/lọ|dung dịch|siro|nhỏ|xịt|gel|kem|cao|mỡ|dầu/.test(formStr)) unitKind = 'lo';
+    const unitWordVN = { vi: 'vỉ', goi: 'gói', lo: 'lọ', ong: 'ống' }[unitKind];
+    const unit = (() => {
+      const g = new THREE.Group();
+      const foil = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.6, roughness: 0.35 });
+      const acc = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.5 });
+      if (unitKind === 'vi') {
+        // Vỉ ép: tấm nhôm nền + 2×5 viên nằm trong bầu nhựa TRONG (blister) cho giống thật.
+        const sheetW = w * 0.84, sheetD = d * 0.88;
+        g.add(new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.006, sheetD),
+          new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.5, roughness: 0.32 })));
+        const clearMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, roughness: 0.08, metalness: 0 });
+        const cols = 5, rows = 2;
+        const px = sheetW / (cols + 0.4), pz = sheetD / (rows + 0.3);
+        const rad = Math.min(px, pz) * 0.40;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const cx = (c - (cols - 1) / 2) * px, cz = (r - (rows - 1) / 2) * pz;
+          const pill = new THREE.Mesh(new THREE.SphereGeometry(rad, 14, 10), acc);
+          pill.scale.set(1, 0.55, 1); pill.position.set(cx, 0.009, cz); g.add(pill);
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(rad * 1.18, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), clearMat);
+          dome.position.set(cx, 0.008, cz); g.add(dome);
+        }
+      } else if (unitKind === 'goi') {
+        g.add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.018, d * 0.78), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.55, roughness: 0.4 })));
+        g.add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.02, d * 0.16), acc));
+      } else if (unitKind === 'lo') {
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.22, w * 0.22, h * 0.55, 20), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 })); b.position.y = h * 0.275; g.add(b);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.16, w * 0.16, h * 0.12, 20), acc); cap.position.y = h * 0.6; g.add(cap);
+      } else {
+        const cl = new THREE.MeshStandardMaterial({ color: 0xdbeafe, transparent: true, opacity: 0.6, roughness: 0.2 });
+        const b = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.08, w * 0.08, h * 0.58, 16), cl); b.position.y = h * 0.29; g.add(b);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(w * 0.08, h * 0.12, 16), cl); tip.position.y = h * 0.64; g.add(tip);
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.085, w * 0.085, h * 0.05, 16), acc); band.position.y = h * 0.42; g.add(band);
+      }
+      g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+      return g;
+    })();
+    unit.visible = false;
+    scene2.add(unit);
+    let extracting = false, extractT = 0;
+    const extractFrom = new THREE.Vector3(0, 0, 0);
+    const extractTo = new THREE.Vector3(w * 0.1, h * 0.18, d / 2 + Math.max(w, d) * 0.6);
+
     let stopped = false;
     function tick() {
       if (stopped) return;
+      if (extracting && extractT < 1) {
+        extractT = Math.min(1, extractT + 0.022);
+        const e = 1 - Math.pow(1 - extractT, 3); // easeOutCubic
+        unit.position.lerpVectors(extractFrom, extractTo, e);
+        unit.rotation.y = e * 0.6;
+        if (unitKind === 'vi' || unitKind === 'goi') unit.rotation.z = -e * 0.5; // nghiêng cho thấy mặt vỉ
+      }
       ctrl.update();
       renderer.render(scene2, camera2);
       requestAnimationFrame(tick);
@@ -419,6 +476,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     function close() {
       stopped = true;
       window.removeEventListener('resize', onResize);
+      document.removeEventListener('keydown', insEsc);
       renderer.dispose();
       tex.dispose(); tex2.dispose(); sideTex.dispose();
       overlay.remove();
@@ -427,9 +485,36 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       returnToShelf?.();
       close();
     });
+    // Nút X góc phải trên — đóng inspector (trả thuốc về kệ).
+    overlay.querySelector('.ins-close').addEventListener('click', () => {
+      returnToShelf?.();
+      close();
+    });
+    // Click nền tối ngoài modal cũng đóng.
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) { returnToShelf?.(); close(); } });
+    // Phím ESC đóng.
+    const insEsc = (e) => { if (e.key === 'Escape') { returnToShelf?.(); close(); } };
+    document.addEventListener('keydown', insEsc);
     overlay.querySelector('.ins-confirm').addEventListener('click', () => {
       confirmToTray?.();
       close();
+    });
+    const retailBtn = overlay.querySelector('.ins-retail');
+    retailBtn.textContent = `🔓 Mở hộp lấy ${unitWordVN}`;
+    retailBtn.addEventListener('click', () => {
+      if (!extracting) {
+        // Lần 1: MỞ HỘP — đơn vị nhỏ nhất (vỉ/gói/lọ/ống) trượt ra khỏi hộp.
+        extracting = true; extractT = 0; unit.visible = true;
+        retailBtn.textContent = `📥 Cho ${unitWordVN} vào giỏ`;
+        postAction('open_box_unit', { drugId: drug.id, unit: unitWordVN });
+      } else {
+        // Lần 2: cho vào khay/giỏ + nhắc bán lẻ theo đơn vị nhỏ nhất ở POS.
+        confirmToTray?.();
+        postAction('retail_split', { drugId: drug.id, unit: drug.unit || unitWordVN });
+        close();
+        const per = drug.retailUnitPrice || (drug.unitsPerBox ? Math.round((drug.unitPrice || 0) / drug.unitsPerBox) : drug.unitPrice) || 0;
+        alert(`Đã cho 1 ${unitWordVN} "${drug.brand}" vào giỏ.\n→ Mở POS, bật "Bán lẻ" để tính theo ${drug.unit || 'đơn vị'} (${per.toLocaleString('vi')} đ/${drug.unit || 'đv'}).\nĐựng vào bao bì ra lẻ + dán nhãn HDSD trước khi giao.`);
+      }
     });
     postAction('inspect_drug', { drugId: drug.id });
   }
