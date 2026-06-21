@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js';
-import { DRUG_PLACEMENT } from './drug-placement.js';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0621';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0621';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -42,13 +42,18 @@ function hashSku(s) {
 // catalog.js. Cùng SKU luôn ra cùng giá trị, ổn định giữa các lần render.
 export function getDrugMeta(drug) {
   const h = hashSku(drug.sku || drug.id);
-  const stock = 5 + (h % 196);              // 5..200 hộp
-  const monthsAhead = h % 37;                // 0..36 tháng kể từ 2026-01
-  const baseM = 1 + monthsAhead;             // 1..37
-  const expiryYear = 2026 + Math.floor((baseM - 1) / 12);
-  const expiryMonth = ((baseM - 1) % 12) + 1;
+  // Ưu tiên dữ liệu thật (tồn kho/HSD/số lô) từ danh mục; fallback hash khi thiếu.
+  const stock = Number.isFinite(+drug.stock) ? +drug.stock : 5 + (h % 196);
+  let expiryMonth, expiryYear;
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(drug.expDate || ''));
+  if (m) { expiryMonth = +m[2]; expiryYear = +m[3]; }
+  else {
+    const baseM = 1 + (h % 37);
+    expiryYear = 2026 + Math.floor((baseM - 1) / 12);
+    expiryMonth = ((baseM - 1) % 12) + 1;
+  }
   const mm = String(expiryMonth).padStart(2, '0');
-  const lot = ('LOT' + h.toString(36).toUpperCase()).slice(0, 9);
+  const lot = drug.lot || ('LOT' + h.toString(36).toUpperCase()).slice(0, 9);
   return { stock, expiry: `${mm}/${expiryYear}`, expiryMonth, expiryYear, lot };
 }
 function lightenHex(hex, amount = 0.18) {
@@ -1207,7 +1212,9 @@ export function buildScene(canvas, opts = {}) {
     // Tìm ngăn TRỐNG GẦN NHẤT theo khoảng cách Manhattan; mỗi lần split chỉ
     // chuyển ½ items sang ngăn mới. Cho phép split nhiều lần (1 group có thể
     // chiếm 3+ ngăn nếu cần). Ngăn phụ không in nhãn — đã có ngăn chính.
-    const MAX_PER_SHELF = 7;
+    // Nới cao để auto-split KHÔNG dời thuốc khỏi ngăn đã gán theo sơ đồ tủ.
+    // Ngăn đông (>~10 thuốc) được xử lý bằng co bề ngang hộp ở vòng đặt bên dưới.
+    const MAX_PER_SHELF = 99;
     const usableWForCalc = W - 0.20;
     const shelfLabelOverride = new Map();
     const findEmptyShelf = (origin) => {
@@ -1237,42 +1244,68 @@ export function buildScene(canvas, opts = {}) {
       byShelf.set(target, items.slice(mid));
       shelfLabelOverride.set(target, '__EMPTY__');
     }
-    const COPIES = 3;
     for (const [shelfIdx, items] of byShelf) {
-      const perShelf = items.length;
       const usableW = W - 0.20;
-      const slotW = usableW / Math.max(perShelf, 1);
-      items.forEach(({ drug, placement }, slotIdx) => {
-        // Inject brand color + groupLabel để buildSingleDrugBox dùng (Phase H).
-        const drugWithBrand = {
-          ...drug,
-          groupAccent: placement.brandColor || drug.groupAccent,
-          groupLabel: placement.groupLabel || drug.groupLabel,
-          bodyColor: lightenHex(placement.brandColor || drug.groupAccent || '#e2e8f0', 0.85)
-        };
-        const style = getBoxStyle(drugWithBrand);
-        style.copies = COPIES;
-        const x = -usableW / 2 + slotW / 2 + slotIdx * slotW;
-        // Đáy hộp chạm mặt shelf: shelf dày 0.04m → mặt trên ở +0.02.
-        const y = shelfYs[shelfIdx] + 0.02 + style.h / 2;
-        const pitchZ = style.d * 1.05;
-        const frontEdgeZ = D / 2 - 0.025 - style.d / 2;
-        for (let i = 0; i < COPIES; i++) {
-          const box = buildSingleDrugBox(drugWithBrand, style);
-          const z = frontEdgeZ - i * pitchZ;
-          box.position.set(x, y, z);
-          box.userData = {
-            drugId: drug.id,
-            drug: drugWithBrand,
-            style,
-            boxIndex: i,
-            homePosition: box.position.clone(),
-            cabinet: cab
+      // Số ô con trên ngăn (nhiều nhóm dược lý chung 1 ngăn → vách " · ").
+      const cells = Math.max(1, ...items.map(it => it.placement.cells || 1));
+      const cellW = usableW / cells;
+      const byCell = new Map();
+      for (const it of items) {
+        const c = Math.min(Math.max(it.placement.cell || 0, 0), cells - 1);
+        if (!byCell.has(c)) byCell.set(c, []);
+        byCell.get(c).push(it);
+      }
+      for (const [c, cellItems] of byCell) {
+        const perCell = cellItems.length;
+        const slotW = cellW / Math.max(perCell, 1);
+        const cellLeft = -usableW / 2 + c * cellW;
+        cellItems.forEach(({ drug, placement }, slotIdx) => {
+          // Inject brand color + groupLabel để buildSingleDrugBox dùng (Phase H).
+          const drugWithBrand = {
+            ...drug,
+            groupAccent: placement.brandColor || drug.groupAccent,
+            groupLabel: placement.groupLabel || drug.groupLabel,
+            bodyColor: lightenHex(placement.brandColor || drug.groupAccent || '#e2e8f0', 0.85)
           };
-          cabGroup.add(box);
-          drugMeshes.push(box);
-        }
-      });
+          const style = getBoxStyle(drugWithBrand);
+          // Co bề ngang hộp cho vừa slot (ngăn đông theo sơ đồ) — giữ chiều cao,
+          // co ngang + sâu để không chồng lên hộp kế bên.
+          const maxW = slotW * 0.9;
+          if (style.w > maxW) { const k = maxW / style.w; style.w *= k; style.d *= Math.max(k, 0.72); }
+          // Số hộp trên ngăn = đúng cột "Tồn kho". Xếp dọc Z (hàng dọc) tối đa
+          // zCap hộp/cột theo độ sâu khay; nếu tồn nhiều thì tràn sang cột X kế
+          // bên (hàng ngang) — đúng nguyên tắc bày kệ thầy yêu cầu.
+          const stock = Math.max(1, Math.min(Math.round(Number(drug.stock) || 3), 12));
+          style.copies = stock;
+          const x = cellLeft + slotW / 2 + slotIdx * slotW;
+          const y = shelfYs[shelfIdx] + 0.02 + style.h / 2;
+          const pitchZ = style.d * 1.05;
+          const frontEdgeZ = D / 2 - 0.025 - style.d / 2;
+          const zCap = Math.max(1, Math.floor((D - 0.08) / pitchZ));
+          const nCols = Math.ceil(stock / zCap);
+          const colPitchX = Math.min(style.w * 1.04, slotW / Math.max(nCols, 1));
+          let placed = 0;
+          for (let cx = 0; cx < nCols && placed < stock; cx++) {
+            const colX = x - (nCols - 1) * colPitchX / 2 + cx * colPitchX;
+            for (let i = 0; i < zCap && placed < stock; i++) {
+              const box = buildSingleDrugBox(drugWithBrand, style);
+              const z = frontEdgeZ - i * pitchZ;
+              box.position.set(colX, y, z);
+              box.userData = {
+                drugId: drug.id,
+                drug: drugWithBrand,
+                style,
+                boxIndex: placed,
+                homePosition: box.position.clone(),
+                cabinet: cab
+              };
+              cabGroup.add(box);
+              drugMeshes.push(box);
+              placed++;
+            }
+          }
+        });
+      }
     }
 
     // Nhãn nhóm dược lý dán mép TRƯỚC mỗi ngăn (sau auto-split để dùng được
@@ -1285,7 +1318,7 @@ export function buildScene(canvas, opts = {}) {
       // Cao bằng độ dày khay (4cm), dài bằng mép trước khay (W-0.06),
       // đặt tại tâm Y của shelf, Z = mặt trước khay; polygonOffset đẩy ra trước
       // tránh z-fight với mặt gỗ shelf bên dưới.
-      const labelTagH = 0.04;
+      const labelTagH = 0.052;        // cao hơn để chữ TO, dễ đọc khi lấy thuốc
       const labelTagW = W - 0.06;
       const labelTagZ = D / 2 - 0.018;
       const labelThk = 0.004;
@@ -1295,53 +1328,44 @@ export function buildScene(canvas, opts = {}) {
         if (ovr === '__EMPTY__') continue;
         const text = (ovr || (cab.shelfLabels && cab.shelfLabels[s]) || '').trim();
         if (!text) continue;
-        const labelMat = (str, halfW) => {
-          const tex = makeTextTexture(str, {
-            w: Math.max(640, halfW * 2200), h: 96,
-            bg: '#fffbeb', color: '#7c2d12', fontSize: 40
+        const labelMat = (str, widthM) => {
+          const tex = makeTextTexture(str.toUpperCase(), {   // IN HOA + đậm cho dễ nhận biết
+            w: Math.max(768, widthM * 2400), h: 132,
+            bg: '#fffbeb', color: '#7c2d12', fontSize: 58
           });
           return new THREE.MeshStandardMaterial({
             map: tex, roughness: 0.55,
             polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6
           });
         };
-        if (text.includes(' · ')) {
-          const [left, right] = text.split(' · ').map(s => s.trim());
-          const halfW = (labelTagW - 0.04) / 2;
-          // Nhãn trái
-          const tagL = new THREE.Mesh(
-            new THREE.BoxGeometry(halfW, labelTagH, labelThk),
-            labelMat(left, halfW)
-          );
-          tagL.position.set(-halfW / 2 - 0.02, shelfYs[s], labelTagZ);
-          cabGroup.add(tagL);
-          // Nhãn phải
-          const tagR = new THREE.Mesh(
-            new THREE.BoxGeometry(halfW, labelTagH, labelThk),
-            labelMat(right, halfW)
-          );
-          tagR.position.set(halfW / 2 + 0.02, shelfYs[s], labelTagZ);
-          cabGroup.add(tagR);
-          // VÁCH NGĂN ĐỨNG dày 4cm (gọi "vách đôi": gồm 2 thanh song song
-          // cách nhau 1cm cho giống tủ trưng bày thật).
+        const parts = text.split(' · ').map(t => t.trim()).filter(Boolean);
+        const n = parts.length;
+        if (n > 1) {
+          // Nhiều nhóm dược lý chung 1 ngăn → chia n ô bằng nhau + vách đứng giữa.
+          const cw = usableWForCalc / n;
+          const innerW = cw - 0.03;
+          parts.forEach((p, ci) => {
+            const tag = new THREE.Mesh(
+              new THREE.BoxGeometry(innerW, labelTagH, labelThk),
+              labelMat(p, innerW)
+            );
+            tag.position.set(-usableWForCalc / 2 + cw * (ci + 0.5), shelfYs[s], labelTagZ);
+            cabGroup.add(tag);
+          });
           const dividerH = shelfH * 0.92;
           const dividerY = shelfYs[s] + dividerH / 2 + 0.025;
           const dividerMat = new THREE.MeshStandardMaterial({
             color: cab.accent || 0x0d9488, roughness: 0.55
           });
-          const dThk = 0.012, dGap = 0.012;
-          const dL = new THREE.Mesh(
-            new THREE.BoxGeometry(dThk, dividerH, D - 0.06),
-            dividerMat
-          );
-          dL.position.set(-dGap / 2 - dThk / 2, dividerY, 0);
-          cabGroup.add(dL);
-          const dR = new THREE.Mesh(
-            new THREE.BoxGeometry(dThk, dividerH, D - 0.06),
-            dividerMat
-          );
-          dR.position.set(dGap / 2 + dThk / 2, dividerY, 0);
-          cabGroup.add(dR);
+          const dThk = 0.012;
+          for (let k = 1; k < n; k++) {
+            const dv = new THREE.Mesh(
+              new THREE.BoxGeometry(dThk, dividerH, D - 0.06),
+              dividerMat
+            );
+            dv.position.set(-usableWForCalc / 2 + cw * k, dividerY, 0);
+            cabGroup.add(dv);
+          }
         } else {
           // Nhãn đơn full width
           const tag = new THREE.Mesh(
