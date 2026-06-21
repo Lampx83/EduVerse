@@ -15,12 +15,12 @@ export const CABINETS = [
     "shelves": 7,
     "shelfLabels": [
       "Thuốc nhỏ mắt, mũi, tai Rx",
-      "Thuốc tiêu hóa Rx",
-      "Thuốc điều trị loét dạ dày Rx",
-      "",
+      "Thuốc kháng virus Rx · Thuốc hô hấp Rx · Vitamin & khoáng chất Rx",
       "Kháng sinh Rx",
-      "Hormon và nội tiết Rx · Thuốc phụ khoa Rx",
-      "Thuốc điều trị đau nửa đầu Rx"
+      "Kháng sinh Rx",
+      "Hormon và nội tiết Rx",
+      "Hormon và nội tiết Rx",
+      "Thuốc thần kinh Rx"
     ]
   },
   {
@@ -33,13 +33,13 @@ export const CABINETS = [
     "isRx": true,
     "shelves": 7,
     "shelfLabels": [
-      "Thuốc tiêm, dịch truyền Rx",
-      "Thuốc hô hấp Rx",
-      "Thuốc giảm đau chống viêm Rx",
-      "Thuốc điều trị tiểu đường Rx",
-      "",
+      "Thuốc tiêm & dịch truyền Rx",
+      "Thuốc chống viêm Rx · Thuốc cơ, xương khớp Rx",
+      "Thuốc điều trị loét dạ dày Rx",
+      "Thuốc tiểu đường Rx",
       "Thuốc tim mạch Rx",
-      "Thuốc giãn cơ Rx · Thuốc kháng virus Rx"
+      "Thuốc tim mạch Rx",
+      "Thuốc phụ khoa Rx · Thuốc tiêu hóa Rx"
     ]
   },
   {
