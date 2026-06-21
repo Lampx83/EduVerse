@@ -1,13 +1,13 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0633';
-import { loadDrugs } from './catalog.js?v=ph0633';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0634';
+import { loadDrugs } from './catalog.js?v=ph0634';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { openPosTerminal } from './pos.js?v=ph0633';
-import { openLabelEditor } from './label-editor.js?v=ph0633';
+import { openPosTerminal } from './pos.js?v=ph0634';
+import { openLabelEditor } from './label-editor.js?v=ph0634';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0633';
+import { labelSectionHTML } from './drug-label.js?v=ph0634';
 
 const $ = (id) => document.getElementById(id);
 
@@ -246,6 +246,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     overlay.className = 'inspector-overlay';
     overlay.innerHTML = `
       <div class="inspector-modal">
+        <button class="ins-close" type="button" aria-label="Đóng">✕</button>
         <div class="inspector-3d"><canvas class="ins-canvas"></canvas></div>
         <div class="inspector-info">
           <div class="ins-head">
@@ -418,12 +419,20 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       const foil = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.6, roughness: 0.35 });
       const acc = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.5 });
       if (unitKind === 'vi') {
-        g.add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.78, 0.012, d * 0.82), foil));
-        for (let r = 0; r < 2; r++) for (let c = 0; c < 5; c++) {
-          const bump = new THREE.Mesh(new THREE.SphereGeometry(Math.min(w, d) * 0.06, 10, 8), acc);
-          bump.scale.y = 0.6;
-          bump.position.set((c - 2) * w * 0.14, 0.014, (r - 0.5) * d * 0.32);
-          g.add(bump);
+        // Vỉ ép: tấm nhôm nền + 2×5 viên nằm trong bầu nhựa TRONG (blister) cho giống thật.
+        const sheetW = w * 0.84, sheetD = d * 0.88;
+        g.add(new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.006, sheetD),
+          new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.5, roughness: 0.32 })));
+        const clearMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, roughness: 0.08, metalness: 0 });
+        const cols = 5, rows = 2;
+        const px = sheetW / (cols + 0.4), pz = sheetD / (rows + 0.3);
+        const rad = Math.min(px, pz) * 0.40;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+          const cx = (c - (cols - 1) / 2) * px, cz = (r - (rows - 1) / 2) * pz;
+          const pill = new THREE.Mesh(new THREE.SphereGeometry(rad, 14, 10), acc);
+          pill.scale.set(1, 0.55, 1); pill.position.set(cx, 0.009, cz); g.add(pill);
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(rad * 1.18, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), clearMat);
+          dome.position.set(cx, 0.008, cz); g.add(dome);
         }
       } else if (unitKind === 'goi') {
         g.add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.018, d * 0.78), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.55, roughness: 0.4 })));
@@ -467,6 +476,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     function close() {
       stopped = true;
       window.removeEventListener('resize', onResize);
+      document.removeEventListener('keydown', insEsc);
       renderer.dispose();
       tex.dispose(); tex2.dispose(); sideTex.dispose();
       overlay.remove();
@@ -475,6 +485,16 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       returnToShelf?.();
       close();
     });
+    // Nút X góc phải trên — đóng inspector (trả thuốc về kệ).
+    overlay.querySelector('.ins-close').addEventListener('click', () => {
+      returnToShelf?.();
+      close();
+    });
+    // Click nền tối ngoài modal cũng đóng.
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) { returnToShelf?.(); close(); } });
+    // Phím ESC đóng.
+    const insEsc = (e) => { if (e.key === 'Escape') { returnToShelf?.(); close(); } };
+    document.addEventListener('keydown', insEsc);
     overlay.querySelector('.ins-confirm').addEventListener('click', () => {
       confirmToTray?.();
       close();

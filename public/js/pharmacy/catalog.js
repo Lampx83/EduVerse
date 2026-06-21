@@ -4,32 +4,16 @@
 export const CABINETS = [
   // 4 tủ lưng quầy: 2 Rx + 2 OTC, mỗi tủ 7 ngăn. `shelfLabels` đánh dấu nhóm
   // dược lý từng ngăn (theo sơ đồ thầy Lâm gửi). Ngăn rỗng → string "".
+  // ĐẢO vị trí: tủ rx_2 (phụ khoa/tim mạch…) sang TRÁI, rx_1 (thần kinh…) sang PHẢI
+  // để khớp sơ đồ thầy. Giữ id rx_1/rx_2 để placement thuốc không vỡ; chỉ đổi thứ tự
+  // trong mảng (scene định vị tủ theo thứ tự mảng) + slot + shortLabel.
   {
-    "id": "rx_1",
+    "id": "rx_2",
     "label": "THUỐC KÊ ĐƠN Rx",
     "shortLabel": "Kê đơn 1",
     "accent": "#0d9488",
     "zone": "back",
     "slot": 0,
-    "isRx": true,
-    "shelves": 7,
-    "shelfLabels": [
-      "Thuốc nhỏ mắt, mũi, tai Rx",
-      "Thuốc kháng virus Rx · Thuốc hô hấp Rx · Vitamin & khoáng chất Rx",
-      "Kháng sinh Rx",
-      "Kháng sinh Rx",
-      "Hormon và nội tiết Rx",
-      "Hormon và nội tiết Rx",
-      "Thuốc thần kinh Rx"
-    ]
-  },
-  {
-    "id": "rx_2",
-    "label": "THUỐC KÊ ĐƠN Rx",
-    "shortLabel": "Kê đơn 2",
-    "accent": "#0d9488",
-    "zone": "back",
-    "slot": 1,
     "isRx": true,
     "shelves": 7,
     "shelfLabels": [
@@ -43,6 +27,25 @@ export const CABINETS = [
     ]
   },
   {
+    "id": "rx_1",
+    "label": "THUỐC KÊ ĐƠN Rx",
+    "shortLabel": "Kê đơn 2",
+    "accent": "#0d9488",
+    "zone": "back",
+    "slot": 1,
+    "isRx": true,
+    "shelves": 7,
+    "shelfLabels": [
+      "Thuốc nhỏ mắt, mũi, tai Rx",
+      "Thuốc kháng virus Rx · Thuốc hô hấp Rx · Vitamin & khoáng chất Rx",
+      "Kháng sinh Rx",
+      "Kháng sinh Rx",
+      "Hormon và nội tiết Rx",
+      "Hormon và nội tiết Rx",
+      "Thuốc thần kinh Rx"
+    ]
+  },
+  {
     "id": "otc_1",
     "label": "THUỐC KHÔNG KÊ ĐƠN OTC",
     "shortLabel": "OTC 1",
@@ -53,11 +56,11 @@ export const CABINETS = [
     "shelves": 7,
     "shelfLabels": [
       "Thuốc nhỏ mắt, mũi, tai OTC",
-      "",
+      "Thuốc kháng histamin OTC",
+      "Thuốc hô hấp OTC",
+      "Thuốc hô hấp OTC",
       "Thuốc hạ sốt giảm đau OTC",
-      "",
-      "Thuốc tiêu hóa OTC",
-      "Thuốc điều trị loét dạ dày OTC",
+      "Vitamin và khoáng chất OTC",
       "Vitamin và khoáng chất OTC"
     ]
   },
@@ -71,13 +74,13 @@ export const CABINETS = [
     "isRx": false,
     "shelves": 7,
     "shelfLabels": [
-      "",
-      "",
       "Thuốc có nguồn gốc dược liệu OTC",
-      "",
-      "Thuốc hô hấp OTC",
-      "Thuốc kháng histamin OTC",
-      "Thuốc phụ khoa OTC · Tránh thai OTC"
+      "Thuốc có nguồn gốc dược liệu OTC",
+      "Thuốc có nguồn gốc dược liệu OTC",
+      "Thuốc điều trị loét dạ dày OTC",
+      "Thuốc tiêu hóa OTC",
+      "Thuốc tiêu hóa OTC",
+      "Thuốc phụ khoa OTC · Tránh thai OTC · Giun sán OTC"
     ]
   },
   // 3 tủ bên phải quầy: 1 tủ kiểm soát đặc biệt (thấp, cửa kính, 4 ngăn) +

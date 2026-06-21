@@ -544,11 +544,20 @@
     padding: 20px;
   }
   .inspector-modal {
+    position: relative;
     width: min(1200px, 96vw); height: min(720px, 92vh);
     background: var(--card); border: 1px solid var(--border); border-radius: 16px;
     display: grid; grid-template-columns: 1.4fr 1fr;
     overflow: hidden;
   }
+  .ins-close {
+    position: absolute; top: 10px; right: 12px; z-index: 5;
+    width: 34px; height: 34px; border-radius: 9px;
+    background: rgba(15,23,42,0.78); border: 1px solid rgba(255,255,255,0.28);
+    color: #f1f5f9; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ins-close:hover { background: rgba(220,38,38,0.9); border-color: rgba(255,255,255,0.5); }
   .inspector-3d {
     position: relative; background: radial-gradient(circle at 50% 50%, #1e293b, #0f172a 80%);
   }
@@ -818,7 +827,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0633';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0634';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc thực hành - HMC' : moduleId;
