@@ -1,6 +1,6 @@
 // PosTerminal — port từ Pharmacy-AI/src/components/pos/PosTerminal.tsx (Phase 1).
 // MVP fidelity: cart, customer, payment, totals, invoice no, Rx warning, action log.
-import { ALL_DRUGS, getDrug, PHARMACY_INFO, VAT_RATE } from './catalog.js?v=ph0622';
+import { ALL_DRUGS, getDrug, PHARMACY_INFO, VAT_RATE } from './catalog.js?v=ph0623';
 
 const VND = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n)) + ' đ';
 
@@ -56,14 +56,26 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
   // State
   const lines = pickedIds.map(id => {
     const d = getDrug(id);
-    return d ? { id, qty: 1, unitPrice: d.unitPrice, discountPct: 0 } : null;
+    return d ? { id, qty: 1, discountPct: 0, mode: 'box' } : null;
   }).filter(Boolean);
   const meta = { customerName: '', customerPhone: '', cashier: 'DS A', payment: 'cash', rx: hasValidPrescription };
 
   const $ = (sel) => overlay.querySelector(sel);
   const $$ = (sel) => Array.from(overlay.querySelectorAll(sel));
 
-  function lineTotal(l) { return l.unitPrice * l.qty * (1 - l.discountPct / 100); }
+  // Giá theo đơn vị bán: 'box' = nguyên hộp; 'unit' = bán lẻ theo ĐƠN VỊ NHỎ NHẤT
+  // (viên/vỉ/ống) = giá bán/đơn vị, hoặc giá hộp ÷ số đơn vị/hộp nếu thiếu.
+  function unitPriceFor(l) {
+    const d = getDrug(l.id);
+    if (l.mode === 'unit')
+      return d.retailUnitPrice || (d.unitsPerBox ? Math.round((d.unitPrice || 0) / d.unitsPerBox) : d.unitPrice);
+    return d.unitPrice;
+  }
+  function unitLabelFor(l) {
+    const d = getDrug(l.id);
+    return l.mode === 'unit' ? (d.unit || 'đơn vị') : 'hộp';
+  }
+  function lineTotal(l) { return unitPriceFor(l) * l.qty * (1 - l.discountPct / 100); }
   function recompute() {
     const sub = lines.reduce((s, l) => s + lineTotal(l), 0);
     const vat = sub * VAT_RATE;
@@ -80,11 +92,14 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
       const d = getDrug(l.id);
       const rxBadge = d.isRx ? '<span class="rx-tag">Rx</span>' : '';
       const abxBadge = d.isAntibiotic ? '<span class="abx-tag">KS</span>' : '';
+      const u = unitLabelFor(l);
+      const tgLabel = l.mode === 'unit' ? `🔓 Bán lẻ (${u})` : '📦 Nguyên hộp';
       return `<tr data-i="${i}">
         <td>${i + 1}</td>
-        <td>${rxBadge}${abxBadge} ${d.brand} <small>${d.strength}</small></td>
-        <td><input class="qty" type="number" min="1" value="${l.qty}"/></td>
-        <td>${VND(l.unitPrice)}</td>
+        <td>${rxBadge}${abxBadge} ${d.brand} <small>${d.strength}</small>
+            <button class="mode-tg" type="button" title="Đổi nguyên hộp ↔ bán lẻ theo đơn vị nhỏ nhất">${tgLabel}</button></td>
+        <td><input class="qty" type="number" min="1" value="${l.qty}"/> <small>${u}</small></td>
+        <td>${VND(unitPriceFor(l))}<small>/${u}</small></td>
         <td><input class="disc" type="number" min="0" max="100" value="${l.discountPct}"/></td>
         <td>${VND(lineTotal(l))}</td>
         <td><button class="del" type="button">×</button></td>
@@ -92,6 +107,7 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
     }).join('') || '<tr><td colspan="7" class="empty">Chưa có thuốc nào. Lấy thuốc từ kệ hoặc tìm trong catalog.</td></tr>';
     tbody.querySelectorAll('.qty').forEach((el, i) => el.addEventListener('input', e => { lines[i].qty = Math.max(1, +e.target.value || 1); recompute(); }));
     tbody.querySelectorAll('.disc').forEach((el, i) => el.addEventListener('input', e => { lines[i].discountPct = Math.max(0, Math.min(100, +e.target.value || 0)); renderCart(); }));
+    tbody.querySelectorAll('.mode-tg').forEach((el, i) => el.addEventListener('click', () => { lines[i].mode = lines[i].mode === 'unit' ? 'box' : 'unit'; renderCart(); }));
     tbody.querySelectorAll('.del').forEach((el, i) => el.addEventListener('click', () => { lines.splice(i, 1); renderCart(); }));
     recompute();
   }
@@ -108,7 +124,7 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
     $$('.cat-add').forEach((btn, i) => btn.addEventListener('click', () => {
       const d = list[i];
       if (lines.some(l => l.id === d.id)) return;
-      lines.push({ id: d.id, qty: 1, unitPrice: d.unitPrice, discountPct: 0 });
+      lines.push({ id: d.id, qty: 1, discountPct: 0, mode: 'box' });
       renderCart();
       btn.disabled = true;
     }));
@@ -138,7 +154,7 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
       customer: { name: meta.customerName, phone: meta.customerPhone },
       cashier: meta.cashier,
       payment: meta.payment,
-      items: lines.map(l => ({ id: l.id, qty: l.qty, unitPrice: l.unitPrice, discountPct: l.discountPct, lineTotal: lineTotal(l) })),
+      items: lines.map(l => ({ id: l.id, qty: l.qty, mode: l.mode, unit: unitLabelFor(l), unitPrice: unitPriceFor(l), discountPct: l.discountPct, lineTotal: lineTotal(l) })),
       sub: Math.round(sub), vat: Math.round(vat), total: Math.round(total),
       includes_abx: includesAbx,
       rxItemsWithoutPrescription
@@ -162,7 +178,7 @@ function printInvoice(p) {
   if (!w) return;
   const rows = p.items.map(it => {
     const d = getDrug(it.id);
-    return `<tr><td>${d.brand}</td><td style="text-align:right">${it.qty}</td><td style="text-align:right">${new Intl.NumberFormat('vi-VN').format(it.lineTotal)}</td></tr>`;
+    return `<tr><td>${d.brand}${it.mode === 'unit' ? ' (lẻ)' : ''}</td><td style="text-align:right">${it.qty} ${it.unit || ''}</td><td style="text-align:right">${new Intl.NumberFormat('vi-VN').format(it.lineTotal)}</td></tr>`;
   }).join('');
   w.document.write(`
     <html><head><meta charset="utf-8"><title>${p.invoiceNo}</title>
