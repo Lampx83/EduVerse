@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0622';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0622';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0623';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0623';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -848,7 +848,7 @@ const CAMERA_PRESETS = {
   default:        { label: 'Toàn cảnh',                pos: [3.4, 4.0, 5.5],     target: [0, 0.9, -0.4],         minDist: 2.5, maxDist: 14 },
   fridge:         { label: 'Tủ lạnh 2-8°C',            pos: [-1.6, 1.6, 1.5],    target: [-3.6, 1.0, 1.45],      minDist: 0.8, maxDist: 5  },
   counter:        { label: 'Quầy giao dịch',           pos: [0.0, 1.9, 3.4],     target: [0.0, 1.05, 1.0],       minDist: 1.5, maxDist: 8  },
-  consult:        { label: 'Khu tư vấn',               pos: [-1.6, 2.0, 1.2],    target: [-3.4, 0.8, -0.4],      minDist: 1.0, maxDist: 7  },
+  consult:        { label: 'Khu tư vấn',               pos: [-1.3, 1.8, 3.6],    target: [-3.0, 0.8, 2.2],       minDist: 1.0, maxDist: 7  },
   // Camera presets lùi XA hơn + nâng CAO + nghiêng để nhìn toàn bộ tủ
   // (banner đỉnh + 7 ngăn + base). Trước đây pos sát quá nên user chỉ thấy
   // 2-3 ngăn giữa. Hiện distance ≈ 2.5m, polar angle hơi cúi xuống.
@@ -916,7 +916,8 @@ export function buildScene(canvas, opts = {}) {
   controls.target.set(...CAMERA_PRESETS.default.target);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.enablePan = false;
+  controls.enablePan = true;            // cho kéo (2 ngón / giữ chuột phải) để xem hết ngăn TRÊN–DƯỚI
+  controls.screenSpacePanning = true;   // kéo theo trục dọc màn hình (không trượt theo mặt sàn)
   controls.minDistance = CAMERA_PRESETS.default.minDist;
   controls.maxDistance = CAMERA_PRESETS.default.maxDist;
   controls.maxPolarAngle = Math.PI / 2.1;
@@ -1430,7 +1431,7 @@ export function buildScene(canvas, opts = {}) {
     { idx: 0, label: 'Thuốc dùng ngoài Rx',  type: 'glass', accent: '#0ea5e9' },
     { idx: 1, label: 'Thuốc dùng ngoài OTC', type: 'glass', accent: '#0ea5e9' },
     { idx: 2, label: 'Thuốc chờ xử lý',      type: 'solid', accent: '#0d9488' },
-    { idx: 3, label: 'Hồ sơ tài liệu',       type: 'solid', accent: '#0d9488' }
+    { idx: 3, label: 'Hồ sơ tài liệu',       type: 'glass', accent: '#0d9488' }
   ];
   const BAY_W = COUNTER_W / CABINET_BAYS.length; // 1.05m mỗi ngăn
   const BAY_GAP = 0.02;
@@ -1880,7 +1881,40 @@ export function buildScene(canvas, opts = {}) {
   printerGroup.add(prLED);
   printerGroup.userData = { printer: true, paper: prPaper };
 
-  // ── P2: Dược thư 2018 + MIMS Pharmacy — 2 cuốn sách tra cứu ─────────────
+  // ── P2: Dược thư + MIMS Pharmacy — 2 cuốn sách tra cứu ─────────────
+  // Vẽ bìa MÔ PHỎNG NHƯ THẬT (theo ảnh thầy gửi): Dược thư bìa xanh lá, MIMS bìa
+  // trắng chữ MIMS đỏ + dải đỏ dưới. Trả về CanvasTexture cho mặt bìa trên.
+  function makeBookCoverTex(kind) {
+    const c = document.createElement('canvas'); c.width = 360; c.height = 480;
+    const ctx = c.getContext('2d');
+    ctx.textAlign = 'center';
+    if (kind === 'duocthu') {
+      ctx.fillStyle = '#14532d'; ctx.fillRect(0, 0, 360, 480);
+      ctx.strokeStyle = '#bbf7d0'; ctx.lineWidth = 3; ctx.strokeRect(14, 14, 332, 452);
+      ctx.fillStyle = '#fef9c3'; ctx.font = 'bold 26px Georgia, serif'; ctx.fillText('BỘ Y TẾ', 180, 70);
+      ctx.font = 'bold 34px Georgia, serif';
+      ['DƯỢC THƯ', 'QUỐC GIA', 'VIỆT NAM'].forEach((t, i) => ctx.fillText(t, 180, 170 + i * 44));
+      ctx.fillStyle = '#bbf7d0'; ctx.font = 'italic 17px Georgia, serif';
+      ctx.fillText('(Vietnamese National', 180, 312); ctx.fillText('Drug Formulary)', 180, 334);
+      ctx.fillStyle = '#fef9c3'; ctx.font = 'bold 18px Georgia, serif'; ctx.fillText('Tập I  ·  A – H', 180, 376);
+      // Biểu tượng rắn–gậy đơn giản
+      ctx.strokeStyle = '#fef9c3'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(180, 396); ctx.lineTo(180, 436); ctx.stroke();
+      ctx.beginPath(); ctx.arc(180, 404, 9, 0.2, Math.PI); ctx.arc(180, 420, 9, Math.PI + 0.2, Math.PI * 2); ctx.stroke();
+      ctx.font = '13px Georgia, serif'; ctx.fillText('NHÀ XUẤT BẢN Y HỌC', 180, 462);
+    } else { // mims
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 360, 480);
+      ctx.fillStyle = '#e11d48'; ctx.font = '900 92px Arial, sans-serif'; ctx.fillText('MIMS', 180, 130);
+      ctx.fillStyle = '#f472b6'; ctx.font = '900 52px Arial, sans-serif'; ctx.fillText('PHARMACY', 180, 188);
+      ctx.fillStyle = '#334155'; ctx.font = 'bold 20px Arial, sans-serif'; ctx.fillText('PATIENT COUNSELLING', 180, 236);
+      ctx.fillText('GUIDE', 180, 262);
+      ctx.fillStyle = '#0f172a'; ctx.font = 'bold 22px Arial, sans-serif'; ctx.fillText('VIETNAM · 2025/2026', 180, 320);
+      ctx.fillStyle = '#e11d48'; ctx.fillRect(0, 392, 360, 88);
+      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px Arial, sans-serif'; ctx.fillText('WWW.MIMS.COM', 180, 444);
+    }
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    return tex;
+  }
   function buildBook(opts) {
     const g = new THREE.Group();
     const coverMat = new THREE.MeshStandardMaterial({ color: opts.color, roughness: 0.55 });
@@ -1892,12 +1926,12 @@ export function buildScene(canvas, opts = {}) {
     // Cover (bọc ngoài, dày hơn 0.5mm)
     const cover = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), coverMat);
     g.add(cover);
-    // Title plate trên cover front (mặt +y)
-    const titleTex = makeTextTexture(opts.title, {
+    // Title plate trên cover front (mặt +y) — bìa thật nếu có opts.coverTex
+    const titleTex = opts.coverTex || makeTextTexture(opts.title, {
       w: 768, h: 256, bg: opts.color, color: '#fef9c3', fontSize: 64
     });
     const titlePlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(W * 0.78, D * 0.42),
+      new THREE.PlaneGeometry(opts.coverTex ? W * 0.96 : W * 0.78, opts.coverTex ? D * 0.96 : D * 0.42),
       new THREE.MeshStandardMaterial({
         map: titleTex, roughness: 0.55,
         polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6
@@ -1923,27 +1957,33 @@ export function buildScene(canvas, opts = {}) {
     g.userData = { bookId: opts.id, bookTitle: opts.title };
     return g;
   }
+  // Đặt 2 cuốn ĐỨNG trong tủ "Hồ sơ tài liệu" (ngăn 3, cửa kính) — bìa hướng ra khách.
+  const bay3X = -COUNTER_W / 2 + BAY_W / 2 + 3 * BAY_W; // tâm ngăn hồ sơ
+  const bookZ = COUNTER_Z + COUNTER_D / 2 - 0.15;       // sát mặt kính trước
+  const shelfTopY = COUNTER_BODY_H / 2 + 0.02;          // mặt khay giữa của ngăn
+
   const duocThu = buildBook({
     id: 'duocthu2018',
     title: 'DƯỢC THƯ 2018',
-    spine: 'DƯỢC THƯ QUỐC GIA 2018',
-    color: 0x7f1d1d, // đỏ Bordeaux
-    w: 0.16, d: 0.22, thickness: 0.06
+    spine: 'DƯỢC THƯ QUỐC GIA',
+    color: 0x14532d,                        // xanh lá đậm như bản thật
+    coverTex: makeBookCoverTex('duocthu'),
+    w: 0.17, d: 0.235, thickness: 0.055
   });
-  duocThu.position.set(POS_X - 0.85, COUNTER_H + 0.04 + 0.03, COUNTER_Z + 0.20);
-  duocThu.rotation.y = -0.15;
+  duocThu.position.set(bay3X - 0.13, shelfTopY + 0.235 / 2, bookZ);
+  duocThu.rotation.x = -Math.PI / 2;        // dựng đứng, bìa quay ra trước
   scene.add(duocThu);
 
   const mims = buildBook({
     id: 'mims2024',
     title: 'MIMS PHARMACY',
-    spine: 'MIMS PHARMACY VIETNAM',
-    color: 0xb45309, // vàng cam
-    w: 0.14, d: 0.20, thickness: 0.04
+    spine: 'MIMS PHARMACY',
+    color: 0x991b1b,                        // gáy đỏ (bìa trắng ở mặt trên)
+    coverTex: makeBookCoverTex('mims'),
+    w: 0.155, d: 0.215, thickness: 0.05
   });
-  // Đặt CHỒNG LÊN Dược thư cho đẹp
-  mims.position.set(POS_X - 0.85, COUNTER_H + 0.04 + 0.085, COUNTER_Z + 0.22);
-  mims.rotation.y = 0.12;
+  mims.position.set(bay3X + 0.13, shelfTopY + 0.215 / 2, bookZ);
+  mims.rotation.x = -Math.PI / 2;
   scene.add(mims);
 
   // ── Khay BÁN HÀNG (pick tray) — port 1-1 từ upstream: mặt khay + 4 viền gờ + nhãn ──
@@ -2337,9 +2377,11 @@ export function buildScene(canvas, opts = {}) {
 
   // ── CONSULT DESK (round table + 2 chairs) ─────────────────────────────────
   const consult = new THREE.Group();
-  consult.position.set(-3.4, 0, -0.4);
+  // Dời ra trước (z>0.8 = sau lưng camera các tủ) + gọn hơn để KHÔNG che ngăn dưới
+  // tủ kê đơn (yêu cầu docx). Tránh tủ lạnh (x≈-3.6) và quầy (x∈[-2.1,2.1]).
+  consult.position.set(-3.0, 0, 2.2);
   scene.add(consult);
-  const table = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.04, 32), new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.45 }));
+  const table = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.04, 32), new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.45 }));
   table.position.y = 0.74; table.castShadow = table.receiveShadow = true; consult.add(table);
   const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.72, 16), new THREE.MeshStandardMaterial({ color: 0x92400e }));
   tableLeg.position.y = 0.36; consult.add(tableLeg);
@@ -2357,8 +2399,8 @@ export function buildScene(canvas, opts = {}) {
     });
     return ch;
   }
-  const chA = buildChair(); chA.position.set(0, 0, -0.8); consult.add(chA);
-  const chB = buildChair(); chB.position.set(0, 0, 0.8); chB.rotation.y = Math.PI; consult.add(chB);
+  const chA = buildChair(); chA.position.set(0, 0, -0.62); consult.add(chA);
+  const chB = buildChair(); chB.position.set(0, 0, 0.62); chB.rotation.y = Math.PI; consult.add(chB);
 
   // Trên mặt bàn tư vấn — TỜ GIẤY + BÚT để dược sĩ ghi chép. Click vào giấy
   // hoặc bút → mở notepad modal (handler ở simulation.js, dùng userData.noteOpen).
