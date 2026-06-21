@@ -575,6 +575,45 @@
   .ins-return { background: var(--border-h); color: var(--text); }
   .ins-confirm { background: linear-gradient(180deg, #10b981, #047857); color: #ecfdf5; }
 
+  /* ── P③: Nhãn thuốc mô phỏng theo TT 01/VBHN-BYT ────────────────────── */
+  .tt-section { width: 100%; }
+  .tt-section-head { font-size: 13px; font-weight: 800; color: #fde68a; margin-bottom: 8px; }
+  .tt-tt { font-weight: 600; color: #94a3b8; font-size: 11px; }
+  .tt-cards { display: flex; flex-direction: column; gap: 12px; }
+  .tt-card-cap { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px; }
+  .tt-label {
+    --tt-acc: #0d9488;
+    position: relative; background: #ffffff; color: #0f172a;
+    border: 1px solid #cbd5e1; border-left: 5px solid var(--tt-acc);
+    border-radius: 8px; padding: 12px 14px 8px;
+    font-family: 'Inter', system-ui, sans-serif;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  }
+  .tt-rx-corner {
+    position: absolute; top: 8px; left: 10px;
+    background: #b91c1c; color: #fff; font-weight: 800; font-size: 13px;
+    padding: 1px 8px; border-radius: 5px; letter-spacing: .5px;
+  }
+  .tt-rx-inline { background: #b91c1c; color: #fff; font-weight: 800; padding: 0 5px; border-radius: 4px; font-size: 11px; }
+  .tt-outer .tt-name { padding-left: 42px; min-height: 22px; }
+  .tt-name { font-size: 18px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+  .tt-name.sm { font-size: 14px; padding-left: 0; }
+  .tt-active { color: var(--tt-acc); font-weight: 700; font-size: 13px; margin-top: 2px; }
+  .tt-active.sm { font-size: 11px; font-weight: 600; color: #334155; }
+  .tt-form { font-size: 12px; color: #334155; margin: 6px 0 8px; }
+  .tt-fields { display: grid; gap: 3px; margin: 0 0 8px; padding: 0; }
+  .tt-fields > div { display: grid; grid-template-columns: 42% 58%; gap: 6px; font-size: 11.5px; border-bottom: 1px dotted #e2e8f0; padding: 2px 0; }
+  .tt-fields dt { color: #64748b; margin: 0; }
+  .tt-fields dd { margin: 0; color: #0f172a; }
+  .tt-warns { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 8px; }
+  .tt-chip { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+  .tt-chip-rx { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+  .tt-chip-route { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+  .tt-direct-rows { display: flex; gap: 16px; font-size: 12px; margin: 6px 0 4px; }
+  .tt-maker { font-size: 11px; color: #475569; }
+  .tt-foot { font-size: 10px; font-style: italic; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 5px; margin-top: 4px; text-align: center; }
+  .tt-foot.sm { font-size: 9px; padding-top: 4px; }
+
   /* ── P6a: Đơn thuốc theo Thông tư 26/2025/TT-BYT ─────────────────────── */
   .rx-overlay {
     position: fixed; inset: 0; z-index: 220;
@@ -767,7 +806,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0621';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0622';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc thực hành - HMC' : moduleId;

@@ -1,12 +1,13 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0621';
-import { loadDrugs } from './catalog.js?v=ph0621';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0622';
+import { loadDrugs } from './catalog.js?v=ph0622';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { openPosTerminal } from './pos.js?v=ph0621';
-import { openLabelEditor } from './label-editor.js?v=ph0621';
+import { openPosTerminal } from './pos.js?v=ph0622';
+import { openLabelEditor } from './label-editor.js?v=ph0622';
 import { STAGE_LABEL } from './rubric.js';
+import { labelSectionHTML } from './drug-label.js?v=ph0622';
 
 const $ = (id) => document.getElementById(id);
 
@@ -266,6 +267,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
             <tr><td>Barcode</td><td><code>${drug.barcode || '—'}</code></td></tr>
             <tr><td>Đơn giá</td><td>${(drug.unitPrice || 0).toLocaleString('vi')} đ</td></tr>
           </table>
+          ${labelSectionHTML(drug, meta)}
           <div class="ins-hint">💡 Kéo chuột để xoay hộp · Lăn để zoom</div>
           <div class="ins-actions">
             <button class="ins-return" type="button">↩ Trả về kệ</button>

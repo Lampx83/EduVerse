@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0621';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0621';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0622';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0622';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -608,14 +608,17 @@ export function makeDrugLabelTex(drug) {
   drawLabelBottomStrip(ctx, accent, textDark, drug.sku, 256);
   // QR-code mock ở góc trái-đáy (cùng hàng với barcode strip)
   drawQrMock(ctx, drug.sku || '', 12, 268, 3);
-  // HD/LOT + tên NSX — 2 dòng nhỏ dưới đáy
+  // HD/LOT + cơ sở SX THẬT + footer mô phỏng CBS (TT: nhãn mô phỏng phải có dòng này)
   ctx.fillStyle = textDark ? '#7c2d12' : '#fed7aa';
-  ctx.font = 'bold 12px "Courier New", monospace';
+  ctx.font = 'bold 11px "Courier New", monospace';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(`HD ${meta.expiry} · ${meta.lot}`, 128, 300);
-  const mfg = MFG_NAMES[((h >>> 9) % MFG_NAMES.length + MFG_NAMES.length) % MFG_NAMES.length] || MFG_NAMES[0];
-  ctx.fillStyle = subText; ctx.font = 'italic 11px Inter, sans-serif';
-  ctx.fillText(`SX: ${mfg}`, 128, 313);
+  ctx.fillText(`HD ${meta.expiry} · Lô ${meta.lot}`, 128, 296);
+  const mfg = (drug.manufacturer || '').trim()
+    || MFG_NAMES[((h >>> 9) % MFG_NAMES.length + MFG_NAMES.length) % MFG_NAMES.length] || MFG_NAMES[0];
+  ctx.fillStyle = subText; ctx.font = 'italic 10px Inter, sans-serif';
+  fitText(ctx, `SX: ${mfg}`, 128, 306, 244);
+  ctx.fillStyle = mutedText; ctx.font = '8px Inter, sans-serif';
+  fitText(ctx, 'Dữ liệu mô phỏng CBS – Chỉ dùng đào tạo dược', 128, 316, 248);
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
