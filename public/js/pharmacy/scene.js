@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0630';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0630';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0633';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0633';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -1970,20 +1970,29 @@ export function buildScene(canvas, opts = {}) {
     // Cover (bọc ngoài, dày hơn 0.5mm)
     const cover = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), coverMat);
     g.add(cover);
-    // Title plate trên cover front (mặt +y) — bìa thật nếu có opts.coverTex
+    // Bìa thật (opts.coverTex). Tủ hồ sơ là tủ KÍNH 2 MẶT → dán bìa lên CẢ HAI mặt lớn
+    // (±y) để đọc XUÔI từ phía KHÁCH lẫn phía DƯỢC SĨ (không bị soi gương/ngược).
     const titleTex = opts.coverTex || makeTextTexture(opts.title, {
       w: 768, h: 256, bg: opts.color, color: '#fef9c3', fontSize: 64
     });
-    const titlePlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(opts.coverTex ? W * 0.96 : W * 0.78, opts.coverTex ? D * 0.96 : D * 0.42),
-      new THREE.MeshStandardMaterial({
-        map: titleTex, roughness: 0.55,
-        polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6
-      })
-    );
+    const titleGeo = new THREE.PlaneGeometry(opts.coverTex ? W * 0.96 : W * 0.78, opts.coverTex ? D * 0.96 : D * 0.42);
+    // Mặt +y (sau khi dựng đứng → hướng DƯỢC SĨ, phía sau quầy): texture xoay 180°.
+    const titleTexPh = titleTex.clone();
+    titleTexPh.wrapS = THREE.RepeatWrapping; titleTexPh.wrapT = THREE.RepeatWrapping;
+    titleTexPh.repeat.set(-1, -1); titleTexPh.needsUpdate = true;
+    const titlePlane = new THREE.Mesh(titleGeo, new THREE.MeshStandardMaterial({
+      map: titleTexPh, roughness: 0.55, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6
+    }));
     titlePlane.rotation.x = -Math.PI / 2;
     titlePlane.position.set(0, H / 2 + 0.001, 0);
     g.add(titlePlane);
+    // Mặt -y (hướng KHÁCH, phía trước quầy): texture thường.
+    const titlePlaneBack = new THREE.Mesh(titleGeo, new THREE.MeshStandardMaterial({
+      map: titleTex, roughness: 0.55, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6
+    }));
+    titlePlaneBack.rotation.x = Math.PI / 2;
+    titlePlaneBack.position.set(0, -H / 2 - 0.001, 0);
+    g.add(titlePlaneBack);
     // Spine label (mặt bên +x): chữ viết dọc
     const spineTex = makeTextTexture(opts.spine || opts.title, {
       w: 768, h: 96, bg: opts.color, color: '#fef9c3', fontSize: 44
