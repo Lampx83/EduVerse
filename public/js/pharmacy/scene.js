@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0629';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0629';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0630';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0630';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -626,10 +626,24 @@ export function makeDrugLabelTex(drug) {
   return tex;
 }
 
-// Mỗi LOẠI thuốc đứng thành stack 3 hộp xếp dọc trục Z (ngoài → trong). Hàm này
-// trả về MỘT hộp duy nhất (body + nhãn dán mặt +z). Stack được build ở caller —
-// mỗi hộp là 1 entry độc lập trong `drugMeshes` để có thể pick lẻ.
-function buildSingleDrugBox(drug, style) {
+// Cache texture nhãn theo (loại|drug|màu) — MỌI bản sao cùng thuốc DÙNG CHUNG 1
+// texture thay vì mỗi hộp sinh canvas 256×320 riêng. Giảm mạnh RAM GPU + thời gian
+// dựng cảnh → mượt trên Safari/mobile (trước: ~1000 texture, sau: ~số thuốc).
+const _drugTexCache = new Map();
+function cachedDrugTex(kind, drug, bodyHex, accentHex) {
+  const key = `${kind}|${drug.id || drug.sku}|${bodyHex}|${accentHex}`;
+  let t = _drugTexCache.get(key);
+  if (!t) {
+    const props = { ...drug, bodyColor: bodyHex, groupAccent: accentHex, textDark: drug.textDark !== false };
+    t = kind === 'side' ? makeDrugSideLabelTex(props) : makeDrugLabelTex(props);
+    _drugTexCache.set(key, t);
+  }
+  return t;
+}
+
+// Mỗi LOẠI thuốc = stack hộp xếp dọc Z. Hàm trả về MỘT hộp. detailed=false (các hộp
+// phía SAU, bị che bởi hộp trước) chỉ vẽ THÂN → bỏ tem/nhãn/side để tiết kiệm draw call.
+function buildSingleDrugBox(drug, style, detailed = true) {
   const colors = getDrugColors(drug);
   // Body + ACCENT theo brand thật (DRUG_PLACEMENT.brandColor) để hộp trên kệ
   // và hộp zoom inspector ĐỒNG MÀU (trước đây stripe mesh dùng hash-based →
@@ -643,6 +657,7 @@ function buildSingleDrugBox(drug, style) {
   const box = new THREE.Mesh(new THREE.BoxGeometry(style.w, style.h, style.d), bodyMat);
   box.castShadow = true; box.receiveShadow = true;
   sub.add(box);
+  if (!detailed) return sub; // hộp phía sau (bị che) chỉ cần thân — tối ưu hiệu năng
 
   // Decoration: dải accent ngang theo brand. Mọi decal MỎNG đẩy ra trước
   // mặt body ≥3mm (PHYSICAL offset, không chỉ polygonOffset) để loại bỏ
@@ -669,12 +684,7 @@ function buildSingleDrugBox(drug, style) {
 
   // Nhãn dán mặt NGOÀI (+z) — group + brand + strength để dược sĩ nhận diện từ xa.
   // Merge accent/body color của drug để tem đồng bộ với màu thân hộp.
-  const labelTex = makeDrugLabelTex({
-    ...drug,
-    bodyColor: bodyHex,
-    groupAccent: accentHex,
-    textDark: drug.textDark !== false
-  });
+  const labelTex = cachedDrugTex('label', drug, bodyHex, accentHex);
   const labelMat = new THREE.MeshStandardMaterial({
     map: labelTex, roughness: 0.7,
     polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6
@@ -691,12 +701,7 @@ function buildSingleDrugBox(drug, style) {
   // và khi hash chọn variant ưu tiên có side (band/frame/doubleBand/pillTop/plate).
   const sideEnabled = style.d >= 0.04 && ['band', 'frame', 'doubleBand', 'pillTop', 'plate'].includes(variant);
   if (sideEnabled) {
-    const sideTex = makeDrugSideLabelTex({
-      ...drug,
-      bodyColor: bodyHex,
-      groupAccent: accentHex,
-      textDark: drug.textDark !== false
-    });
+    const sideTex = cachedDrugTex('side', drug, bodyHex, accentHex);
     const sideMat = new THREE.MeshStandardMaterial({
       map: sideTex, roughness: 0.7,
       polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6
@@ -1134,9 +1139,10 @@ export function buildScene(canvas, opts = {}) {
     // Cửa kính tủ kiểm soát đặc biệt — 2 CÁNH mở 2 bên (kiểu tủ trưng bày).
     // Hinge trái ở mép trái, hinge phải ở mép phải. Click cánh → mở/đóng.
     if (opts.glassDoor) {
-      const glassMat = new THREE.MeshPhysicalMaterial({
-        color: 0xbfdbfe, transparent: true, opacity: 0.22, roughness: 0.05,
-        metalness: 0, transmission: 0.6, ior: 1.5
+      // Kính transparent (KHÔNG transmission) — tránh transmission render-pass nặng
+      // trên Safari/mobile; vẫn trong suốt nhờ opacity.
+      const glassMat = new THREE.MeshStandardMaterial({
+        color: 0xbfdbfe, transparent: true, opacity: 0.28, roughness: 0.08, metalness: 0.0
       });
       const glassW = W - 0.08;
       // Cao kín gần như toàn mặt tủ: từ trên base kick (~y=0.12) lên sát nóc
@@ -1292,7 +1298,7 @@ export function buildScene(canvas, opts = {}) {
           for (let cx = 0; cx < nCols && placed < stock; cx++) {
             const colX = x - (nCols - 1) * colPitchX / 2 + cx * colPitchX;
             for (let i = 0; i < zCap && placed < stock; i++) {
-              const box = buildSingleDrugBox(drugWithBrand, style);
+              const box = buildSingleDrugBox(drugWithBrand, style, i === 0); // chỉ hộp trước có nhãn
               const z = frontEdgeZ - i * pitchZ;
               box.position.set(colX, y, z);
               box.userData = {
@@ -1437,9 +1443,9 @@ export function buildScene(canvas, opts = {}) {
   const BAY_GAP = 0.02;
   const tealMat = new THREE.MeshStandardMaterial({ color: 0x0d9488, roughness: 0.5, metalness: 0.1 });
   const innerDarkMat = new THREE.MeshStandardMaterial({ color: 0x065f46, roughness: 0.7 });
-  const glassMat = new THREE.MeshPhysicalMaterial({
-    color: 0xbfdbfe, transparent: true, opacity: 0.20, roughness: 0.05,
-    metalness: 0, transmission: 0.65, ior: 1.5
+  const glassMat = new THREE.MeshStandardMaterial({
+    color: 0xbfdbfe, transparent: true, opacity: 0.26, roughness: 0.08, metalness: 0.0,
+    side: THREE.DoubleSide  // tủ kính 2 mặt — nhìn xuyên cả trước lẫn sau
   });
 
   CABINET_BAYS.forEach((bay) => {
@@ -1639,7 +1645,7 @@ export function buildScene(canvas, opts = {}) {
   const dispense = new THREE.Group();
   dispense.position.set(-1.5, propY, COUNTER_Z - 0.02);
   (() => {
-    const glass = new THREE.MeshPhysicalMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.22, roughness: 0.05, transmission: 0.7, ior: 1.5, side: THREE.DoubleSide });
+    const glass = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.30, roughness: 0.08, metalness: 0.0, side: THREE.DoubleSide });
     const dw = 0.32, dh = 0.17, dd = 0.22, gt = 0.006;
     const mk = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), glass); m.position.set(x, y, z); dispense.add(m); };
     mk(dw, gt, dd, 0, gt / 2, 0);          // đáy
