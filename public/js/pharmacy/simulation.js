@@ -1,13 +1,13 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0634';
-import { loadDrugs } from './catalog.js?v=ph0634';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0636';
+import { loadDrugs } from './catalog.js?v=ph0636';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { openPosTerminal } from './pos.js?v=ph0634';
-import { openLabelEditor } from './label-editor.js?v=ph0634';
+import { openPosTerminal } from './pos.js?v=ph0636';
+import { openLabelEditor } from './label-editor.js?v=ph0636';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0634';
+import { labelSectionHTML } from './drug-label.js?v=ph0636';
 
 const $ = (id) => document.getElementById(id);
 
@@ -869,7 +869,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
             <div>
               <div class="senior-name">DS. ĐH Phạm Thị Hà</div>
               <div class="senior-role">Dược sĩ Đại học · Phụ trách chuyên môn</div>
-              <div class="senior-place">Nhà thuốc thực hành - HMC</div>
+              <div class="senior-place">Nhà thuốc Thực Hành</div>
             </div>
           </div>
           <p class="senior-note">

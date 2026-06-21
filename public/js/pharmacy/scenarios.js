@@ -1,6 +1,6 @@
 const GPP = {
   id: "gpp",
-  title: "Nhà thuốc thực hành - HMC",
+  title: "Nhà thuốc Thực Hành",
   setting:
     "Quầy thuốc GPP, tủ phân loại thuốc, máy POS, khu vực chờ. Khách hàng nữ ~28t bước vào hỏi mua thuốc cảm cúm và xin kháng sinh.",
   npcRole: "Khách hàng",
