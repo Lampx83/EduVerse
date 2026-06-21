@@ -1,7 +1,7 @@
 // LabelEditor — redesign theo sơ đồ Thầy Lâm: 2 cột (form trái + preview phải),
 // stepper Sáng/Trưa/Chiều/Tối, chips Thời điểm, quick chips Ghi chú.
 // Giữ semantic field cũ để backend chấm điểm + render in/dán nhãn vẫn work.
-import { ALL_DRUGS, getDrug } from './catalog.js?v=ph0627';
+import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0628';
 import { TIMING_LABEL, labelShortLine, totalPerDay } from './labels.js';
 
 const QUICK_NOTES = [
@@ -93,6 +93,7 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
         <div class="le2-right">
           <div class="le2-preview-title">Xem trước nhãn dán (kích thước thật)</div>
           <div class="le2-sticker">
+            <div class="le2-sk-pharm">${PHARMACY_INFO.name} · ${PHARMACY_INFO.address} · ĐT ${PHARMACY_INFO.phone}</div>
             <div class="le2-sk-head">HƯỚNG DẪN SỬ DỤNG</div>
             <div class="le2-sk-bn">BN: <b class="le2-sk-patient">Khách vãng lai</b></div>
             <div class="le2-sk-drug"><b class="le2-sk-brand">—</b></div>
@@ -111,6 +112,17 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
             <div class="le2-sk-notes"></div>
           </div>
           <p class="le2-hint">Sau khi bấm <b>Tạo nhãn</b>, con trỏ chuột sẽ mang theo nhãn → di chuyển sang kệ thuốc và <b>click vào hộp</b> để dán.</p>
+
+          <div class="le2-preview-title">Nhãn bao bì ra lẻ (khi ra lẻ)</div>
+          <div class="le2-bag">
+            <div class="le2-bag-pharm"><b>${PHARMACY_INFO.name}</b><br>Số điện thoại: ${PHARMACY_INFO.phone}</div>
+            <div class="le2-bag-special" hidden></div>
+            <div class="le2-bag-row"><b>Tên thuốc, Nồng độ/Hàm lượng:</b><br><span class="le2-bag-drug">—</span></div>
+            <div class="le2-bag-row"><b>Cách dùng, liều dùng:</b><br><span class="le2-bag-dose">—</span></div>
+            <div class="le2-bag-row"><b>Hạn dùng:</b> <span class="le2-bag-exp">—</span></div>
+            <div class="le2-bag-row"><b>*Lưu ý:</b> <span class="le2-bag-note">—</span></div>
+            <div class="le2-bag-foot">Dữ liệu mô phỏng CBS – Chỉ dùng cho đào tạo dược</div>
+          </div>
         </div>
       </div>
       <div class="label-foot-v2">
@@ -197,6 +209,7 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
       brand: d?.brand || d?.name || '',
       generic: d?.generic || '',
       strength: d?.strength || '',
+      exp: d?.expDate || '',
       patient: $('.le2-patient').value || 'Khách vãng lai',
       morning: getDose('morning'),
       noon: getDose('noon'),
@@ -224,6 +237,22 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
     $('.le2-sk-total').textContent = ` · ${totalPerDay(l)} viên/ngày`;
     $('.le2-sk-notes').textContent = l.notes ? '📝 ' + l.notes : '';
     $('.le2-total-val').textContent = `${totalPerDay(l)} viên`;
+    // Nhãn bao bì ra lẻ — màu theo loại bao bì + tiêu đề đặc biệt (vàng=dùng ngoài, hồng=kiểm soát đặc biệt)
+    const pkg = PACKAGE_OPTIONS.find(o => o.value === packageType) || PACKAGE_OPTIONS[0];
+    const bag = $('.le2-bag');
+    if (bag) {
+      bag.style.background = pkg.color; bag.style.color = pkg.text;
+      const specialMap = { yellow: 'THUỐC DÙNG NGOÀI', pink: 'THUỐC PHẢI KIỂM SOÁT ĐẶC BIỆT' };
+      const sp = $('.le2-bag-special');
+      if (specialMap[packageType]) { sp.textContent = specialMap[packageType]; sp.hidden = false; }
+      else sp.hidden = true;
+      $('.le2-bag-drug').textContent = (l.brand || '—') + (l.strength ? ' · ' + l.strength : '');
+      $('.le2-bag-dose').textContent = totalPerDay(l)
+        ? `Sáng ${l.morning} – Trưa ${l.noon} – Chiều ${l.afternoon} – Tối ${l.evening} (${TIMING_LABEL[l.timing] || 'bất kỳ'})`
+        : '—';
+      $('.le2-bag-exp').textContent = l.exp || '—';
+      $('.le2-bag-note').textContent = l.notes || '—';
+    }
   }
 
   // Close: X button + Huỷ + click overlay backdrop + ESC

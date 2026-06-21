@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0627';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0627';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0628';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0628';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -1484,14 +1484,14 @@ export function buildScene(canvas, opts = {}) {
     const panelMat = bay.type === 'glass' ? glassMat : innerDarkMat;
     const panelThk = bay.type === 'glass' ? 0.015 : 0.02;
 
-    const addBayDoor = (side) => {
+    // zSign = +1 cửa mặt TRƯỚC (khách), -1 cửa mặt SAU (dược sĩ).
+    const addBayDoor = (side, zSign = 1) => {
       const hinge = new THREE.Group();
-      hinge.position.set(side * fullPanelW / 2, 0, doorFrontZ);
+      hinge.position.set(side * fullPanelW / 2, 0, zSign * doorFrontZ);
       bayGroup.add(hinge);
-      // Mở ra TRƯỚC (về phía khách): trái xoay -, phải xoay + (góc lớn hơn 75°)
-      hinge.userData = { isOpen: false, openAngle: side * Math.PI / 2.2 };
+      hinge.userData = { isOpen: false, openAngle: zSign * side * Math.PI / 2.2 };
       openableDoors.push(hinge);
-      const panelCx = -side * halfPanelW / 2; // panel center cách hinge halfPanelW/2 về phía giữa
+      const panelCx = -side * halfPanelW / 2;
       const panel = new THREE.Mesh(
         new THREE.BoxGeometry(halfPanelW, doorH, panelThk),
         panelMat
@@ -1500,29 +1500,36 @@ export function buildScene(canvas, opts = {}) {
       panel.userData = { fridgeDoor: hinge };
       hinge.add(panel);
       if (bay.type === 'glass') {
-        // Khung 4 thanh viền teal cho cánh kính
         [[panelCx,                          doorH / 2 - frameT / 2, halfPanelW, frameT],
          [panelCx,                         -doorH / 2 + frameT / 2, halfPanelW, frameT],
          [panelCx - halfPanelW / 2 + frameT / 2,                 0, frameT, doorH],
          [panelCx + halfPanelW / 2 - frameT / 2,                 0, frameT, doorH]].forEach(p => {
           const bar = new THREE.Mesh(new THREE.BoxGeometry(p[2], p[3], 0.014), tealMat);
-          bar.position.set(p[0], p[1], 0.008);
+          bar.position.set(p[0], p[1], zSign * 0.008);
           bar.userData = { fridgeDoor: hinge };
           hinge.add(bar);
         });
       }
-      // Tay nắm — ở mép GIỮA cánh (gần khe)
       const handle = new THREE.Mesh(
         new THREE.CylinderGeometry(0.010, 0.010, 0.07, 12),
         handleMatBay
       );
       handle.rotation.z = Math.PI / 2;
-      handle.position.set(-side * (halfPanelW - 0.04), 0, 0.018);
+      handle.position.set(-side * (halfPanelW - 0.04), 0, zSign * 0.018);
       handle.userData = { fridgeDoor: hinge };
       hinge.add(handle);
     };
-    addBayDoor(-1);
-    addBayDoor(+1);
+    // Tủ thuốc dùng ngoài (ngăn 0,1): mặt TRƯỚC kính CỐ ĐỊNH (ko mở) + cửa MỞ phía SAU
+    // (dược sĩ lấy từ sau quầy — theo docx). Các ngăn khác: cửa mở phía trước như cũ.
+    const pharmacistAccess = (bay.idx === 0 || bay.idx === 1);
+    if (pharmacistAccess) {
+      const frontPane = new THREE.Mesh(new THREE.BoxGeometry(fullPanelW, doorH, 0.012), glassMat);
+      frontPane.position.set(0, 0, doorFrontZ);
+      bayGroup.add(frontPane);
+      addBayDoor(-1, -1); addBayDoor(+1, -1);
+    } else {
+      addBayDoor(-1, +1); addBayDoor(+1, +1);
+    }
 
     // Nhãn mặt trước — đặt CHÍCH PHÍA TRÊN cánh, lệch ra trước thêm 4cm so
     // với mặt body để không bao giờ z-fight với cánh/khung.
@@ -1539,6 +1546,22 @@ export function buildScene(canvas, opts = {}) {
     // y = mép trên cánh; z = trước cánh 3cm (cánh đã ở d/2+0.012 → label ở d/2+0.05)
     labelMesh.position.set(0, doorH / 2 + 0.02, d / 2 + 0.05);
     bayGroup.add(labelMesh);
+    // Nhãn mặt SAU (phía dược sĩ) cho tủ dùng ngoài — "dán nhãn trước và sau" (docx).
+    if (pharmacistAccess) {
+      const texB = makeTextTexture(bay.label.toUpperCase(), {
+        w: 768, h: 96, bg: '#ffffff', color: bay.accent, fontSize: 44
+      });
+      const labelB = new THREE.Mesh(
+        new THREE.PlaneGeometry(w * 0.86, 0.07),
+        new THREE.MeshStandardMaterial({
+          map: texB, transparent: true,
+          polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4
+        })
+      );
+      labelB.position.set(0, doorH / 2 + 0.02, -d / 2 - 0.05);
+      labelB.rotation.y = Math.PI;
+      bayGroup.add(labelB);
+    }
   });
   scene.add(counter);
 

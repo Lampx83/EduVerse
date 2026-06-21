@@ -405,6 +405,17 @@
   .le2-sk-foot { font-size: 12px; color: #78350f; padding-top: 4px; }
   .le2-sk-notes { font-size: 12px; color: #7c2d12; padding-top: 2px; min-height: 14px; }
   .le2-hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.5; }
+  /* Header nhà thuốc trên nhãn HDSD + Nhãn BAO BÌ RA LẺ (mẫu image8) */
+  .le2-sk-pharm { font-size: 11px; font-weight: 700; color: #7c2d12; text-align: center; padding-bottom: 3px; border-bottom: 1px solid #d97706; margin-bottom: 2px; }
+  .le2-bag {
+    border: 1px solid #94a3b8; border-radius: 10px; padding: 12px 14px; margin-top: 4px;
+    font-family: 'Inter', system-ui, sans-serif; font-size: 12px; line-height: 1.5;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .le2-bag-pharm { font-size: 12px; line-height: 1.35; border-bottom: 1px solid rgba(0,0,0,0.25); padding-bottom: 4px; margin-bottom: 4px; }
+  .le2-bag-special { text-align: center; font-weight: 800; font-size: 12.5px; letter-spacing: .5px; margin: 2px 0 6px; text-transform: uppercase; }
+  .le2-bag-row { padding: 3px 0; border-bottom: 1px dotted rgba(0,0,0,0.18); }
+  .le2-bag-foot { font-size: 9.5px; font-style: italic; opacity: 0.75; text-align: center; padding-top: 6px; }
   .label-foot-v2 {
     display: flex; gap: 10px; justify-content: flex-end;
     padding: 14px 22px; border-top: 1px solid var(--border);
@@ -807,7 +818,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0627';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0628';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc thực hành - HMC' : moduleId;

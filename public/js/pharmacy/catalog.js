@@ -199,9 +199,9 @@ export function getDrug(id) { return ALL_DRUGS.find(d => d.id === id); }
 export function getDrugsByCabinet(cabinetId) { return ALL_DRUGS.filter(d => d.cabinetId === cabinetId); }
 
 export const PHARMACY_INFO = {
-  name: 'Nhà thuốc thực hành – HMC (Mô phỏng đào tạo GPP)',
-  address: 'Số 207, Giải Phóng, Hai Bà Trưng, Hà Nội',
-  phone: '024 1234 5678',
+  name: 'Nhà thuốc Thực Hành',
+  address: '35 Đoàn Thị Điểm, Đống Đa, Hà Nội',
+  phone: '0972560XXX',
   taxCode: '0101010101',
   gpp: 'GPP-HN-2024-0001'
 };
