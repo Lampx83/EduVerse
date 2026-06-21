@@ -1,13 +1,13 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0625';
-import { loadDrugs } from './catalog.js?v=ph0625';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0626';
+import { loadDrugs } from './catalog.js?v=ph0626';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { openPosTerminal } from './pos.js?v=ph0625';
-import { openLabelEditor } from './label-editor.js?v=ph0625';
+import { openPosTerminal } from './pos.js?v=ph0626';
+import { openLabelEditor } from './label-editor.js?v=ph0626';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0625';
+import { labelSectionHTML } from './drug-label.js?v=ph0626';
 
 const $ = (id) => document.getElementById(id);
 
@@ -271,6 +271,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
           <div class="ins-hint">💡 Kéo chuột để xoay hộp · Lăn để zoom</div>
           <div class="ins-actions">
             <button class="ins-return" type="button">↩ Trả về kệ</button>
+            <button class="ins-retail" type="button">🔓 Tách lẻ (${drug.unit || 'đơn vị'})</button>
             <button class="ins-confirm" type="button">📥 Đưa vào khay (Quét barcode)</button>
           </div>
         </div>
@@ -430,6 +431,14 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     overlay.querySelector('.ins-confirm').addEventListener('click', () => {
       confirmToTray?.();
       close();
+    });
+    overlay.querySelector('.ins-retail').addEventListener('click', () => {
+      // "Mở hộp lấy vỉ/viên" → đưa vào khay + nhắc bán lẻ tại POS theo đơn vị nhỏ nhất.
+      confirmToTray?.();
+      postAction('retail_split', { drugId: drug.id, unit: drug.unit || 'đơn vị' });
+      close();
+      const per = drug.retailUnitPrice || (drug.unitsPerBox ? Math.round((drug.unitPrice || 0) / drug.unitsPerBox) : drug.unitPrice) || 0;
+      alert(`Đã tách lẻ "${drug.brand}" vào khay bán hàng.\n→ Mở POS, bật "Bán lẻ" ở dòng này để tính theo ${drug.unit || 'đơn vị'} (${per.toLocaleString('vi')} đ/${drug.unit || 'đv'}).\nDùng bao bì ra lẻ + dán nhãn HDSD trước khi giao.`);
     });
     postAction('inspect_drug', { drugId: drug.id });
   }

@@ -568,11 +568,12 @@
     border-left: 3px solid #38bdf8;
   }
   .ins-actions { display: flex; gap: 10px; margin-top: auto; }
-  .ins-return, .ins-confirm {
+  .ins-return, .ins-retail, .ins-confirm {
     flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer;
     font-weight: 700; font-size: 13px;
   }
   .ins-return { background: var(--border-h); color: var(--text); }
+  .ins-retail { background: linear-gradient(180deg, #f59e0b, #d97706); color: #fff; }
   .ins-confirm { background: linear-gradient(180deg, #10b981, #047857); color: #ecfdf5; }
 
   /* ── P③: Nhãn thuốc mô phỏng theo TT 01/VBHN-BYT ────────────────────── */
@@ -806,7 +807,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0625';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0626';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc thực hành - HMC' : moduleId;
