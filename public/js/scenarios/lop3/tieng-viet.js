@@ -436,6 +436,42 @@ export const P3TV_WEEKS = [
       'Đúng — hai từ gần nghĩa, đều chỉ nơi ta gắn bó.',
       'Sai — hai từ không đối lập mà gần nghĩa nhau.',
     ]),
+    Q('Nhân hoá là cách viết như thế nào?', ['Gọi hoặc tả con vật, cây cối, đồ vật... bằng những từ vốn dùng cho con người', 'So sánh hai sự vật bằng từ "như"', 'Kể lại một câu chuyện có thật', 'Liệt kê nhiều sự vật trong một câu'], 0, 'Nhân hoá là biến vật thành "người": gọi, tả vật như gọi, tả người.', [
+      'Đúng — nhân hoá là gọi, tả vật như gọi, tả con người.',
+      'Sai — dùng từ "như" để ví hai vật là phép so sánh, không phải nhân hoá.',
+      'Sai — kể chuyện có thật không phải là biện pháp nhân hoá.',
+      'Sai — kể ra nhiều sự vật là phép liệt kê, không phải nhân hoá.',
+    ]),
+    Q('Câu nào CÓ phép nhân hoá?', ['Ông mặt trời thức dậy, mỉm cười với em.', 'Mặt trời mọc ở phía đông.', 'Trời hôm nay rất nóng.', 'Em nhìn thấy mặt trời.'], 0, 'Gọi mặt trời là "ông" và tả nó "thức dậy", "mỉm cười" như người.', [
+      'Đúng — gọi "ông mặt trời", tả nó "thức dậy", "mỉm cười" như người.',
+      'Sai — câu chỉ kể mặt trời mọc, không coi nó như người.',
+      'Sai — câu chỉ nói trời nóng, không có hình ảnh nhân hoá.',
+      'Sai — câu chỉ kể việc em nhìn, vật không được tả như người.',
+    ]),
+    Q('Câu nào dùng phép NHÂN HOÁ (chứ không phải so sánh)?', ['Chú gà trống gọi mọi người thức dậy.', 'Tiếng gà trống vang như tiếng kèn.', 'Gà trống to như cái mũ.', 'Lông gà mượt như tơ.'], 0, 'Nhân hoá: gà "gọi" người như một con người; ba câu kia có "như" nên là so sánh.', [
+      'Đúng — gà trống "gọi" mọi người, được tả hành động như người.',
+      'Sai — câu có từ "như" nên là phép so sánh, không phải nhân hoá.',
+      'Sai — câu có từ "như" nên là phép so sánh, không phải nhân hoá.',
+      'Sai — câu có từ "như" nên là phép so sánh, không phải nhân hoá.',
+    ]),
+    Q('Trong câu "Chị gió đùa nghịch trên cành lá.", vật được nhân hoá bằng cách nào?', ['Gọi vật bằng từ chỉ người ("chị") và tả vật bằng hoạt động của người ("đùa nghịch")', 'So sánh gió với cành lá', 'Liệt kê các loại gió', 'Đặt câu hỏi về gió'], 0, 'Vừa gọi gió là "chị", vừa cho gió "đùa nghịch" như một bạn nhỏ.', [
+      'Đúng — gọi gió là "chị" và cho gió "đùa nghịch" như con người.',
+      'Sai — câu không có từ "như" nên không phải so sánh.',
+      'Sai — câu chỉ nói về một cơn gió, không liệt kê nhiều loại.',
+      'Sai — câu là câu kể, không phải câu hỏi.',
+    ]),
+    Q('Cách nhân hoá nào được dùng trong câu "Bác nông dân ơi, mây hỏi: trời sắp mưa rồi phải không?"', ['Trò chuyện, xưng hô với vật như nói với người', 'Đếm số đám mây', 'So sánh mây với mưa', 'Tả màu sắc của mây'], 0, 'Để mây "hỏi" và trò chuyện với người — đó là cách nhân hoá bằng trò chuyện.', [
+      'Đúng — cho mây "hỏi" và trò chuyện với người là một cách nhân hoá.',
+      'Sai — câu không đếm số đám mây.',
+      'Sai — câu không có từ "như" để so sánh mây với mưa.',
+      'Sai — câu không tả màu sắc mà cho mây nói chuyện.',
+    ]),
+    Q('Từ nào trong câu "Những bông hoa cười tươi trong nắng." cho thấy phép nhân hoá?', ['cười', 'những', 'trong', 'nắng'], 0, 'Hoa không biết cười; gán hành động "cười" của người cho hoa là nhân hoá.', [
+      'Đúng — "cười" là hoạt động của người, gán cho hoa nên là nhân hoá.',
+      'Sai — "những" chỉ số nhiều, không tạo nên nhân hoá.',
+      'Sai — "trong" là từ chỉ nơi chốn, không phải dấu hiệu nhân hoá.',
+      'Sai — "nắng" là sự vật, không phải từ làm nên nhân hoá.',
+    ]),
   ]),
 
   M(12, 'Tập đọc: "Nắng phương Nam"', [
