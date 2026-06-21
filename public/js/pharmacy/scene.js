@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0628';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0628';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0629';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0629';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -1546,8 +1546,8 @@ export function buildScene(canvas, opts = {}) {
     // y = mép trên cánh; z = trước cánh 3cm (cánh đã ở d/2+0.012 → label ở d/2+0.05)
     labelMesh.position.set(0, doorH / 2 + 0.02, d / 2 + 0.05);
     bayGroup.add(labelMesh);
-    // Nhãn mặt SAU (phía dược sĩ) cho tủ dùng ngoài — "dán nhãn trước và sau" (docx).
-    if (pharmacistAccess) {
+    // Nhãn mặt SAU (phía dược sĩ) — "dán nhãn trước và sau" (docx): tủ dùng ngoài + tủ hồ sơ.
+    if (pharmacistAccess || bay.idx === 3) {
       const texB = makeTextTexture(bay.label.toUpperCase(), {
         w: 768, h: 96, bg: '#ffffff', color: bay.accent, fontSize: 44
       });

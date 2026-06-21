@@ -1,13 +1,13 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0628';
-import { loadDrugs } from './catalog.js?v=ph0628';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0629';
+import { loadDrugs } from './catalog.js?v=ph0629';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { openPosTerminal } from './pos.js?v=ph0628';
-import { openLabelEditor } from './label-editor.js?v=ph0628';
+import { openPosTerminal } from './pos.js?v=ph0629';
+import { openLabelEditor } from './label-editor.js?v=ph0629';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0628';
+import { labelSectionHTML } from './drug-label.js?v=ph0629';
 
 const $ = (id) => document.getElementById(id);
 
