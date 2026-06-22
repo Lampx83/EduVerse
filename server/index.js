@@ -1247,7 +1247,17 @@ r.get('/api/requests', (req, res) => {
   const domain = String(req.query.domain || '').trim();
   if (!domain) return res.status(400).json({ error: 'domain required' });
   const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
-  res.json({ items: listRequests(domain, limit), stats: getRequestStats(domain) });
+  // RIÊNG TƯ: mỗi tài khoản CHỈ thấy yêu cầu của CHÍNH MÌNH — không thấy của
+  // tài khoản khác. Lọc server-side theo display_name lấy từ session (attachUser
+  // luôn gắn req.user, client không giả mạo được). Khách chưa đăng nhập → không
+  // có yêu cầu cá nhân → trả rỗng để board degrade mượt (không 401).
+  // Quy mô nhỏ (vài chục/ trường) nên lọc trong JS sau khi lấy tối đa 200 là đủ.
+  const me = String(req.user?.display_name || '').trim();
+  if (!me) return res.json({ items: [], stats: {} });
+  const mine = listRequests(domain, 200).filter(it => it.student === me).slice(0, limit);
+  const stats = {};
+  for (const it of mine) stats[it.status] = (stats[it.status] || 0) + 1;
+  res.json({ items: mine, stats });
 });
 
 r.post('/api/requests/:id/vote', (req, res) => {
