@@ -291,54 +291,98 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     });
   }
 
-  // 6a3. Trình tạo nhân vật Ready Player Me (nhúng iframe — chỉ bấm chuột, không
-  // cần phần mềm/đồ hoạ). Khi người dùng tạo xong, RPM gửi postMessage chứa URL
-  // .glb → lưu localStorage + nạp thẳng vào scene.
+  // 6a3. Đổi/tạo nhân vật. Mặc định CHẠY NGAY (không cần tài khoản): chọn sẵn
+  // Nam/Nữ (avatar RPM offline) + ô dán link .glb tùy biến. RPM bỏ subdomain
+  // "demo" chung → chỉ nhúng trình tạo (có selfie) khi có subdomain RPM riêng
+  // (qua ?rpm=<sub> hoặc localStorage 'tizia_rpm_subdomain').
   const avatarBtn = $('avatar-create');
   if (avatarBtn && sim.reloadAvatar) {
-    const RPM_SUBDOMAIN = 'demo'; // có thể đổi sang subdomain riêng khi đăng ký RPM
+    const PRESETS = {
+      nam: './models/pharmacy/avatar/Masculine_TPose.glb',
+      nu: './models/pharmacy/avatar/Feminine_TPose.glb'
+    };
+    const rpmSub = new URLSearchParams(location.search).get('rpm')
+      || (() => { try { return localStorage.getItem('tizia_rpm_subdomain'); } catch { return null; } })();
     let overlay = null;
-    function closeCreator() {
+    const closeAvatarModal = () => {
       window.removeEventListener('message', onRpmMessage);
       if (overlay) { overlay.remove(); overlay = null; }
+    };
+    function applyAvatar(url) {
+      if (!url) return;
+      try { localStorage.setItem(AVATAR_KEY, url); } catch {}
+      sim.reloadAvatar(url);
+    }
+    function normalizeUrl(s) {
+      s = (s || '').trim();
+      if (!s) return null;
+      if (/^[a-f0-9]{20,32}$/i.test(s)) return `https://models.readyplayer.me/${s}.glb`; // chỉ id
+      if (/readyplayer\.me\/[a-f0-9]+$/i.test(s)) return s + '.glb';                       // thiếu .glb
+      return s;
     }
     function onRpmMessage(event) {
       let json = event.data;
       try { if (typeof json === 'string') json = JSON.parse(json); } catch { return; }
       if (!json || json.source !== 'readyplayerme') return;
-      // Đăng ký nhận sự kiện ngay khi frame sẵn sàng.
       if (json.eventName === 'v1.frame.ready') {
-        const iframe = overlay?.querySelector('iframe');
-        iframe?.contentWindow?.postMessage(
+        overlay?.querySelector('iframe')?.contentWindow?.postMessage(
           JSON.stringify({ target: 'readyplayerme', type: 'subscribe', eventName: 'v1.**' }), '*');
       }
-      if (json.eventName === 'v1.avatar.exported') {
-        const url = json.data?.url;
-        if (url) {
-          try { localStorage.setItem(AVATAR_KEY, url); } catch {}
-          sim.reloadAvatar(url);
-        }
-        closeCreator();
-      }
+      if (json.eventName === 'v1.avatar.exported') { applyAvatar(json.data?.url); closeAvatarModal(); }
     }
     avatarBtn.addEventListener('click', () => {
       if (overlay) return;
       overlay = document.createElement('div');
       overlay.className = 'rpm-overlay';
-      overlay.innerHTML = `
-        <div class="rpm-modal">
-          <div class="rpm-head">
-            <b>🧑 Tạo nhân vật của bạn</b>
-            <span>Chọn khuôn mặt, tóc, trang phục… hoặc chụp selfie. Xong bấm <b>Next/Done</b>.</span>
-            <button class="rpm-close" type="button" aria-label="Đóng">✕</button>
-          </div>
-          <iframe allow="camera *; microphone *" title="Ready Player Me"
-            src="https://${RPM_SUBDOMAIN}.readyplayer.me/avatar?frameApi&clearCache"></iframe>
-        </div>`;
-      document.body.appendChild(overlay);
-      overlay.querySelector('.rpm-close').addEventListener('click', closeCreator);
-      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeCreator(); });
-      window.addEventListener('message', onRpmMessage);
+      if (rpmSub) {
+        // Có subdomain riêng → nhúng trình tạo đầy đủ (kèm selfie).
+        overlay.innerHTML = `
+          <div class="rpm-modal">
+            <div class="rpm-head"><b>🧑 Tạo nhân vật của bạn</b>
+              <span>Chọn mặt/tóc/áo hoặc chụp selfie. Xong bấm <b>Next/Done</b>.</span>
+              <button class="rpm-close" type="button" aria-label="Đóng">✕</button></div>
+            <iframe allow="camera *; microphone *" title="Ready Player Me"
+              src="https://${rpmSub}.readyplayer.me/avatar?frameApi&clearCache"></iframe>
+          </div>`;
+        document.body.appendChild(overlay);
+        window.addEventListener('message', onRpmMessage);
+      } else {
+        overlay.innerHTML = `
+          <div class="rpm-modal rpm-modal-sm">
+            <div class="rpm-head"><b>🧑 Chọn / đổi nhân vật</b>
+              <button class="rpm-close" type="button" aria-label="Đóng">✕</button></div>
+            <div class="rpm-body">
+              <div class="rpm-section">Mẫu có sẵn (bấm là dùng ngay)</div>
+              <div class="rpm-presets">
+                <button class="rpm-preset" data-k="nam" type="button">🧑 Dược sĩ Nam</button>
+                <button class="rpm-preset" data-k="nu" type="button">👩 Dược sĩ Nữ</button>
+              </div>
+              <div class="rpm-section">Avatar giống bạn (nâng cao)</div>
+              <p class="rpm-help">Tạo nhân vật tại Ready Player Me (chọn kiểu hoặc chụp selfie),
+                rồi <b>copy link .glb</b> dán vào ô dưới.</p>
+              <a class="rpm-open" href="https://readyplayer.me/avatar" target="_blank" rel="noopener">🔗 Mở Ready Player Me (tab mới)</a>
+              <div class="rpm-form">
+                <input id="rpm-url" type="text" placeholder="Dán link .glb (vd models.readyplayer.me/….glb)" />
+                <button id="rpm-apply" type="button">Áp dụng</button>
+              </div>
+              <div id="rpm-msg" class="rpm-msg"></div>
+            </div>
+          </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelectorAll('.rpm-preset').forEach(b =>
+          b.addEventListener('click', () => { applyAvatar(PRESETS[b.dataset.k]); closeAvatarModal(); }));
+        const apply = () => {
+          const u = normalizeUrl(overlay.querySelector('#rpm-url').value);
+          const msg = overlay.querySelector('#rpm-msg');
+          if (!u) { msg.textContent = '⚠️ Hãy dán một link .glb hợp lệ.'; return; }
+          msg.textContent = 'Đang nạp nhân vật…';
+          applyAvatar(u); setTimeout(closeAvatarModal, 700);
+        };
+        overlay.querySelector('#rpm-apply').addEventListener('click', apply);
+        overlay.querySelector('#rpm-url').addEventListener('keydown', e => { if (e.key === 'Enter') apply(); });
+      }
+      overlay.querySelector('.rpm-close').addEventListener('click', closeAvatarModal);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeAvatarModal(); });
     });
   }
 
