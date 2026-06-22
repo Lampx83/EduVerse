@@ -79,7 +79,6 @@ export function outerLabelHTML(drug, meta) {
       <span class="tt-chip">Đọc kỹ hướng dẫn sử dụng trước khi dùng</span>
       ${warns.map(w => `<span class="tt-chip tt-chip-route">${esc(w)}</span>`).join('')}
     </div>
-    <div class="tt-foot">${SIM_FOOTER}</div>
   </div>`;
 }
 
@@ -97,7 +96,6 @@ export function directLabelHTML(drug, meta) {
       <span><b>HSD:</b> ${esc(exp)}</span>
     </div>
     <div class="tt-maker">${esc(drug.manufacturer || '—')}</div>
-    <div class="tt-foot sm">${SIM_FOOTER}</div>
   </div>`;
 }
 

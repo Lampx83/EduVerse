@@ -1,7 +1,7 @@
 // LabelEditor — redesign theo sơ đồ Thầy Lâm: 2 cột (form trái + preview phải),
 // stepper Sáng/Trưa/Chiều/Tối, chips Thời điểm, quick chips Ghi chú.
 // Giữ semantic field cũ để backend chấm điểm + render in/dán nhãn vẫn work.
-import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0635';
+import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0640';
 import { TIMING_LABEL, labelShortLine, totalPerDay } from './labels.js';
 
 const QUICK_NOTES = [
@@ -121,7 +121,6 @@ export function openLabelEditor({ pickedIds = [], onCreate, onClose }) {
             <div class="le2-bag-row"><b>Cách dùng, liều dùng:</b><br><span class="le2-bag-dose">—</span></div>
             <div class="le2-bag-row"><b>Hạn dùng:</b> <span class="le2-bag-exp">—</span></div>
             <div class="le2-bag-row"><b>*Lưu ý:</b> <span class="le2-bag-note">—</span></div>
-            <div class="le2-bag-foot">Dữ liệu mô phỏng CBS – Chỉ dùng cho đào tạo dược</div>
           </div>
         </div>
       </div>
