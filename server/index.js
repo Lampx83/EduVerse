@@ -1147,8 +1147,14 @@ const MIME_TO_EXT = {
   'application/vnd.ms-powerpoint': '.ppt', 'application/zip': '.zip',
 };
 // Ảnh raster an toàn để render inline (img src + mở thẳng). Mọi định dạng khác
-// (pdf/office/zip/txt/csv) bị ép tải về để không bao giờ thực thi trong origin.
+// (pdf/office/zip/txt/csv/db/sql) bị ép tải về để không bao giờ thực thi trong origin.
 const REQUEST_INLINE_SAFE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+// File DỮ LIỆU (CSDL SQLite + script SQL). Định danh theo PHẦN MỞ RỘNG vì trình
+// duyệt hay để Content-Type rỗng/application/octet-stream cho các đuôi này → không
+// thể tin whitelist MIME. SQLite kiểm magic header; .sql là văn bản. Tất cả đều
+// bị ép tải về (không nằm trong INLINE_SAFE) nên không thực thi trong origin.
+const REQUEST_SQLITE_EXTS = new Set(['.db', '.sqlite', '.sqlite3']);
+const REQUEST_DATA_EXTS = new Set(['.db', '.sqlite', '.sqlite3', '.sql']);
 // Magic-byte sniffing chống Content-Type spoofing: client tự đặt header Content-Type
 // nên với định dạng có chữ ký rõ ràng ta kiểm bytes đầu. text/plain & text/csv không
 // có chữ ký tin cậy → chấp nhận. Trả false nếu không khớp (handler sẽ từ chối 415).
@@ -1181,11 +1187,18 @@ function requestUploadSniffOk(mime, buf) {
 }
 r.post('/api/requests/attachments',
   requireAuth, requireEnrolled,
-  express.raw({ type: () => true, limit: '8mb' }),
+  // 50MB: ảnh/office nhỏ, nhưng file dữ liệu (.db SQLite, .sql dump) có thể lớn.
+  express.raw({ type: () => true, limit: '50mb' }),
   async (req, res) => {
     try {
       const mime = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
-      if (!REQUEST_UPLOAD_MIME_WHITELIST.has(mime)) {
+      const rawName = String(req.headers['x-filename'] || '').slice(0, 200);
+      const nameExt = path.extname(rawName).toLowerCase();
+      const isSqlite = REQUEST_SQLITE_EXTS.has(nameExt);
+      const isData = REQUEST_DATA_EXTS.has(nameExt);
+      // File dữ liệu (DB/SQL) nhận theo ĐUÔI vì Content-Type không tin được; còn
+      // lại bắt buộc nằm trong whitelist MIME.
+      if (!isData && !REQUEST_UPLOAD_MIME_WHITELIST.has(mime)) {
         return res.status(415).json({ error: 'unsupported_media_type', mime, message: 'Định dạng file không hỗ trợ.' });
       }
       const buf = req.body;
@@ -1193,10 +1206,22 @@ r.post('/api/requests/attachments',
         return res.status(400).json({ error: 'empty_body', message: 'File rỗng.' });
       }
       // Chống Content-Type spoofing: nội dung phải khớp định dạng khai báo.
-      if (!requestUploadSniffOk(mime, buf)) {
+      if (isSqlite) {
+        // SQLite có magic header cố định 16 byte: 15 ký tự "SQLite format 3" + 1 byte NUL.
+        const sqliteOk = buf.length >= 16
+          && buf.subarray(0, 15).toString('latin1') === 'SQLite format 3'
+          && buf[15] === 0x00;
+        if (!sqliteOk) {
+          return res.status(415).json({ error: 'content_mismatch', message: 'File không phải cơ sở dữ liệu SQLite hợp lệ.' });
+        }
+      } else if (isData) {
+        // .sql là văn bản: chặn nếu trông như nhị phân (có null byte ở 8KB đầu).
+        if (buf.subarray(0, 8192).includes(0x00)) {
+          return res.status(415).json({ error: 'content_mismatch', message: 'File .sql phải là văn bản SQL (không phải nhị phân).' });
+        }
+      } else if (!requestUploadSniffOk(mime, buf)) {
         return res.status(415).json({ error: 'content_mismatch', mime, message: 'Nội dung file không khớp định dạng khai báo.' });
       }
-      const rawName = String(req.headers['x-filename'] || '').slice(0, 200);
       const kind = String(req.headers['x-kind'] || 'file').toLowerCase() === 'screenshot' ? 'screenshot' : 'file';
       // Sanitize tên hiển thị: loại bỏ ký tự nguy hiểm để tránh XSS khi render trong inbox.
       const safeName = rawName.replace(/[\\/\x00-\x1f<>"|?*]/g, '_').trim()
@@ -1205,12 +1230,15 @@ r.post('/api/requests/attachments',
       const day = new Date().toISOString().slice(0, 10);
       const targetDir = path.join(REQUEST_UPLOADS_DIR, day);
       await fs.mkdir(targetDir, { recursive: true });
-      const ext = MIME_TO_EXT[mime] || path.extname(safeName).toLowerCase().slice(0, 8) || '';
+      // Data file giữ đúng đuôi gốc; còn lại suy từ MIME đã kiểm.
+      const ext = isData ? nameExt : (MIME_TO_EXT[mime] || path.extname(safeName).toLowerCase().slice(0, 8) || '');
       const fname = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
       const fpath = path.join(targetDir, fname);
       await fs.writeFile(fpath, buf);
       const url = `/uploads/requests/${day}/${fname}`;
-      res.json({ ok: true, url, name: safeName, mime, size: buf.length, kind });
+      // Chuẩn hoá MIME trả về cho data file để FE/inbox hiển thị đúng (không phải ảnh).
+      const reportMime = isSqlite ? 'application/x-sqlite3' : (nameExt === '.sql' ? 'application/sql' : mime);
+      res.json({ ok: true, url, name: safeName, mime: reportMime, size: buf.length, kind });
     } catch (err) {
       console.warn('[requests/attachments] upload failed:', err?.message || err);
       res.status(500).json({ error: 'upload_failed', message: 'Không lưu được file.' });
@@ -1390,7 +1418,7 @@ r.get('/api/export.csv', (_req, res) => {
 const HEADER_TAG = `<script type="module" src="js/auth-header.js"></script>`;
 // ?v=attach2 — cache-bust khi nâng UX đính kèm (preview thumbnail, kéo-thả, dán
 // ảnh, lọc loại, chống trùng + siết whitelist bỏ SVG). Bump mỗi lần đổi UX FAB.
-const SGF_TAG = `<script type="module" src="js/suggestion-fab.js?v=attach2"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
+const SGF_TAG = `<script type="module" src="js/suggestion-fab.js?v=data-files"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
 // Analytics: chỉ gtag loader (analytics.js). Consent banner đã được bỏ theo
 // yêu cầu user (jun 2026) — gây phiền và che nội dung. Analytics vẫn hoạt
 // động theo mặc định "denied" (xem analytics.js) cho đến khi có cơ chế consent
