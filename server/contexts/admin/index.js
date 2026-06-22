@@ -10,7 +10,7 @@
 // ============================================================
 
 import { scryptSync, randomBytes } from 'node:crypto';
-import { db, createNotification, setUserPlan, createUser, getUserById, getUserByUsername, updateUserEditable } from '../../db.js';
+import { db, createNotification, addRequestMessage, setUserPlan, createUser, getUserById, getUserByUsername, updateUserEditable } from '../../db.js';
 import { VALID_USER_PLANS, expiresAtFor } from '../billing/user-plans.js';
 import { listAiPrompts, listAiPromptsForUser } from '../../ai-quota.js';
 import { attachBackup, scheduleAutoBackup } from './backup.js';
@@ -316,6 +316,12 @@ export function attachAdmin(r) {
       status, reason: `[admin] ${req.user.username} → ${status}`,
       public_note: message.slice(0, 500), t: Date.now(),
     });
+
+    // Ghi tin vào thread để giữ luồng trao đổi nhiều lượt (HS có thể nhắn lại).
+    // Hiển thị dưới danh nghĩa "Ban điều hành AI" — trường do AI điều hành.
+    try {
+      addRequestMessage({ request_id: id, role: 'ai', author_name: 'Ban điều hành AI', body: message });
+    } catch (e) { console.warn('[admin/reply] thread append failed:', e?.message || e); }
 
     const titleByStatus = {
       done:      'Yêu cầu của bạn đã hoàn thành ✓',

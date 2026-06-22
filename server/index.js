@@ -4,7 +4,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb, getUserState, putUserState, UserStateValueTooLargeError } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, getRequestById, addRequestMessage, listRequestMessages, reopenRequestIfClosed, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb, getUserState, putUserState, UserStateValueTooLargeError } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
@@ -1275,6 +1275,62 @@ r.post('/api/requests/:id/status', (req, res) => {
 // Audit trail quyết định của AI Agent cho 1 góp ý (minh bạch + cho phép xem lại).
 r.get('/api/requests/:id/decisions', (req, res) => {
   res.json({ decisions: getDecisionsForRequest(req.params.id) });
+});
+
+// ── Phiên trao đổi (thread) của 1 yêu cầu ──────────────────────────────────
+// Mở luồng hội thoại: HS gửi yêu cầu → Ban điều hành AI phản hồi → HS trao đổi
+// tiếp… tới khi hoàn thành. GET công khai (như board); POST chỉ chủ yêu cầu.
+//
+// GET trả { request, messages }. messages[0] = tin mở đầu dựng từ chính nội dung
+// yêu cầu (head, không lưu lặp ở request_messages). Yêu cầu cũ (trước tính năng
+// này) có admin_note nhưng chưa có message → bù 1 tin AI ảo để không mất phản hồi.
+r.get('/api/requests/:id/thread', (req, res) => {
+  const reqRow = getRequestById(req.params.id);
+  if (!reqRow) return res.status(404).json({ error: 'not_found' });
+  const msgs = listRequestMessages(reqRow.id);
+  const hasBoardMsg = msgs.some(m => m.role === 'ai' || m.role === 'admin');
+  const thread = [{
+    id: 0, request_id: reqRow.id, role: 'student', author_name: reqRow.student,
+    body: reqRow.detail || reqRow.title, attachments: reqRow.attachments,
+    created_at: reqRow.created_at,
+  }];
+  // admin_note giữ phản hồi/ghi nhận gần nhất của Ban điều hành. Nếu thread chưa
+  // có tin nào từ Ban điều hành (yêu cầu cũ trước tính năng thread, hoặc mới chỉ
+  // được ghi nhận) thì bù vào ngay sau tin mở đầu để không mất ngữ cảnh.
+  if (reqRow.admin_note && !hasBoardMsg) {
+    thread.push({
+      id: -1, request_id: reqRow.id, role: 'ai', author_name: 'Ban điều hành AI',
+      body: reqRow.admin_note, attachments: [], created_at: reqRow.created_at,
+    });
+  }
+  thread.push(...msgs);
+  res.json({
+    request: {
+      id: reqRow.id, domain: reqRow.domain, type: reqRow.type, title: reqRow.title,
+      status: reqRow.status, student: reqRow.student, votes: reqRow.votes,
+      created_at: reqRow.created_at, updated_at: reqRow.updated_at,
+    },
+    messages: thread,
+  });
+});
+
+// HS (chủ yêu cầu) hoặc admin gửi tin nhắn tiếp theo vào thread. Yêu cầu đã đóng
+// (done/rejected) tự mở lại 'reviewing' để Ban điều hành xem tiếp. KHÔNG gọi LLM
+// — Ban điều hành AI (Routine Claude Opus) trả lời bất đồng bộ qua /admin/.../reply.
+r.post('/api/requests/:id/messages', requireAuth, (req, res) => {
+  const reqRow = getRequestById(req.params.id);
+  if (!reqRow) return res.status(404).json({ error: 'not_found' });
+  const me = req.user.display_name;
+  const isAdmin = req.user.role === 'admin';
+  const isOwner = !!me && me === reqRow.student;
+  if (!isOwner && !isAdmin) return res.status(403).json({ error: 'forbidden' });
+  const body = String(req.body?.body || '').trim();
+  if (!body) return res.status(400).json({ error: 'empty' });
+  const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : null;
+  const role = isOwner ? 'student' : 'admin';
+  const msg = addRequestMessage({ request_id: reqRow.id, role, author_name: me, body, attachments });
+  const reopened = role === 'student' ? reopenRequestIfClosed(reqRow.id) : false;
+  res.json({ ok: true, message_id: msg.id, reopened });
 });
 // Bảng quyết định AI gần đây của trường (cho dashboard "Ban điều hành AI").
 r.get('/api/ai-decisions', (req, res) => {

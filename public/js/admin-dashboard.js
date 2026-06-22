@@ -475,12 +475,25 @@ async function toggleDetail(id) {
   detail.innerHTML = `<td colspan="${colspan}"><div class="detail-box">Đang tải…</div></td>`;
   tr.after(detail);
   const r = reqCache.find(x => x.id === id);
-  const dr = await api(`/api/requests/${id}/decisions`);
+  const [dr, tr2] = await Promise.all([
+    api(`/api/requests/${id}/decisions`),
+    api(`/api/requests/${id}/thread`),
+  ]);
   const decisions = dr.data?.decisions || [];
+  const msgs = tr2.data?.messages || [];
+  const threadHtml = msgs.map(m => {
+    const board = m.role === 'ai' || m.role === 'admin';
+    const who = board ? `🏛️ ${esc(m.author_name || 'Ban điều hành AI')}` : `👤 ${esc(m.author_name || 'HS')}`;
+    return `<div class="blk" style="border-left:3px solid ${board ? '#10b981' : '#6366f1'};margin-bottom:6px">
+      <div style="font-size:11px;opacity:.6;margin-bottom:3px">${who} · ${fmt(m.created_at)}</div>
+      <div style="white-space:pre-wrap">${esc(m.body)}</div>
+    </div>`;
+  }).join('');
   detail.querySelector('.detail-box').innerHTML = `
     <h4>Nội dung yêu cầu</h4>
     <div class="blk">${esc(r.title)}${r.detail ? `<div style="opacity:.7;margin-top:5px">${esc(r.detail)}</div>` : ''}</div>
-    ${r.admin_note ? `<h4>Phản hồi đã gửi cho HS</h4><div class="blk note">${esc(r.admin_note)}</div>` : ''}
+    <h4>Phiên trao đổi (${msgs.length})</h4>
+    ${threadHtml || '<div class="blk" style="opacity:.6">Chưa có trao đổi nào.</div>'}
     <h4>Lịch sử quyết định AI (${decisions.length})</h4>
     ${decisions.length === 0 ? '<div class="blk" style="opacity:.6">Chưa có quyết định nào.</div>' :
       decisions.map(d => `

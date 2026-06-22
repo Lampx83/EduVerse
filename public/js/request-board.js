@@ -11,6 +11,7 @@
 // ============================================================
 
 import { getPlayerName } from './api.js';
+import { renderRequestThread } from './request-thread.js';
 
 const TYPE_META = {
   game:   { icon: '🎮', label: 'Thêm trò chơi' },
@@ -120,9 +121,11 @@ function renderList(host, items, reload) {
     host.innerHTML = '<div class="rb-empty">Chưa có yêu cầu nào. Hãy là người đầu tiên đề xuất cải tiến trường! 🚀</div>';
     return;
   }
+  const me = getPlayerName() || '';
   host.innerHTML = items.map(it => {
     const tm = TYPE_META[it.type] || TYPE_META.other;
     const sm = STATUS_META[it.status] || STATUS_META.pending;
+    const mine = me && it.student === me;
     return `
       <div class="rb-item">
         <div class="rb-vote" data-vote="${it.id}" title="Ủng hộ yêu cầu này">
@@ -137,7 +140,11 @@ function renderList(host, items, reload) {
           <div class="rb-item-meta">
             <span class="rb-status ${sm.cls}">${sm.label}</span>
             <span class="rb-by">👤 ${escapeHtml(it.student)}</span>
+            <button type="button" class="rb-thread-toggle" data-thread="${it.id}">
+              💬 ${mine ? 'Trao đổi với Ban điều hành' : 'Xem trao đổi'}
+            </button>
           </div>
+          <div class="rb-thread" id="rb-thread-${it.id}" hidden></div>
         </div>
       </div>
     `;
@@ -150,6 +157,33 @@ function renderList(host, items, reload) {
       catch { el.style.pointerEvents = ''; }
     });
   });
+
+  host.querySelectorAll('[data-thread]').forEach(btn => {
+    btn.addEventListener('click', () => toggleThread(host, btn.dataset.thread, me, reload));
+  });
+
+  // Tự mở thread khi điều hướng tới #req-<id> (vd từ chuông / FAB).
+  try {
+    const m = /#req-(\d+)/.exec(location.hash || '');
+    if (m) {
+      const id = m[1];
+      const btn = host.querySelector(`[data-thread="${id}"]`);
+      if (btn) { openThread(host, id, me, reload); btn.closest('.rb-item')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    }
+  } catch {}
+}
+
+function openThread(host, id, me, reload) {
+  const panel = host.querySelector(`#rb-thread-${id}`);
+  if (!panel || !panel.hidden) return;
+  panel.hidden = false;
+  renderRequestThread({ host: panel, requestId: id, me, onChange: reload });
+}
+function toggleThread(host, id, me, reload) {
+  const panel = host.querySelector(`#rb-thread-${id}`);
+  if (!panel) return;
+  if (panel.hidden) openThread(host, id, me, reload);
+  else { panel.hidden = true; panel.innerHTML = ''; }
 }
 
 // Render đính kèm (ảnh thumbnail + link file) — chỉ hiển thị, board không tự
@@ -240,6 +274,14 @@ function injectStylesOnce() {
     .rb-status.done      { background: rgba(16,185,129,0.25); }
     .rb-status.rejected  { background: rgba(239,68,68,0.22); opacity: 0.8; }
     .rb-by { opacity: 0.6; }
+    .rb-thread-toggle {
+      margin-left: auto; border: 1px solid rgba(255,255,255,0.18); cursor: pointer;
+      background: rgba(255,255,255,0.06); color: #e5e7eb; font: 700 11px/1 inherit;
+      padding: 4px 9px; border-radius: 7px; white-space: nowrap;
+    }
+    .rb-thread-toggle:hover { background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.5); }
+    .rb-thread { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .rb-thread[hidden] { display: none; }
   `;
   const style = document.createElement('style');
   style.setAttribute('data-injected', 'request-board');

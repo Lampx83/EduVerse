@@ -226,6 +226,25 @@ db.exec(`
     ON notifications(request_id);
 `);
 
+// Phiên trao đổi (thread) của 1 yêu cầu: cho phép HS và Ban điều hành AI nhắn
+// qua lại nhiều lượt tới khi yêu cầu hoàn thành — thay vì chỉ 1 phản hồi
+// admin_note đơn lẻ. Tin mở đầu (head) = chính nội dung request, không lưu lặp
+// ở đây; bảng này chỉ chứa các lượt trao đổi tiếp theo. role: 'student' (HS) |
+// 'ai' (Ban điều hành) | 'admin' (người vận hành) | 'system'.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS request_messages (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id  INTEGER NOT NULL,
+    role        TEXT    NOT NULL,
+    author_name TEXT,
+    body        TEXT    NOT NULL,
+    attachments TEXT,                            -- JSON [{url,name,mime,size,kind}]
+    created_at  INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_request_messages
+    ON request_messages(request_id, created_at);
+`);
+
 // Khung năng lực GDPT 2018: 5 phẩm chất + 10 năng lực (catalog tham chiếu của Bộ
 // GD-ĐT). Mỗi `skill` (kỹ năng cụ thể HS đạt được tại 1 space/lesson/mini-game)
 // thuộc 1 competency cha → cho phép roll-up báo cáo theo khung quốc gia.
@@ -660,6 +679,77 @@ export function markAllNotificationsRead(user_display_name) {
   const u = String(user_display_name || '').trim();
   if (!u) return 0;
   return markAllReadStmt.run({ user: u, t: Date.now() }).changes;
+}
+
+// --- Request thread (phiên trao đổi của 1 yêu cầu) ---
+const VALID_MSG_ROLES = new Set(['student', 'ai', 'admin', 'system']);
+const getRequestByIdStmt = db.prepare(`
+  SELECT id, domain, type, title, detail, student, status, votes, admin_note, created_at, updated_at, attachments
+  FROM requests WHERE id = ?
+`);
+const insertReqMsgStmt = db.prepare(`
+  INSERT INTO request_messages (request_id, role, author_name, body, attachments, created_at)
+  VALUES (@request_id, @role, @author_name, @body, @attachments, @created_at)
+`);
+const listReqMsgStmt = db.prepare(`
+  SELECT id, request_id, role, author_name, body, attachments, created_at
+  FROM request_messages WHERE request_id = ? ORDER BY created_at ASC, id ASC
+`);
+const touchRequestStmt = db.prepare(`UPDATE requests SET updated_at = @t WHERE id = @id`);
+// Mở lại yêu cầu đã đóng (done/rejected) → 'reviewing' khi HS gửi thêm tin nhắn.
+const reopenRequestStmt = db.prepare(`
+  UPDATE requests SET status = 'reviewing', updated_at = @t
+  WHERE id = @id AND status IN ('done', 'rejected')
+`);
+
+function safeParseAtts(s) {
+  if (!s) return [];
+  try { const a = JSON.parse(s); return Array.isArray(a) ? a : []; } catch { return []; }
+}
+// Chuẩn hoá + cap attachments (≤10, chỉ field cần) — dùng chung cho message.
+function normAttachments(attachments) {
+  if (!Array.isArray(attachments) || !attachments.length) return null;
+  const safe = attachments.slice(0, 10).map(a => ({
+    url: String(a?.url || '').slice(0, 500),
+    name: String(a?.name || '').slice(0, 200),
+    mime: String(a?.mime || '').slice(0, 100),
+    size: Number(a?.size) || 0,
+    kind: a?.kind === 'screenshot' ? 'screenshot' : 'file',
+  })).filter(a => a.url);
+  return safe.length ? JSON.stringify(safe) : null;
+}
+
+export function getRequestById(id) {
+  const row = getRequestByIdStmt.get(Number(id));
+  if (!row) return null;
+  row.attachments = safeParseAtts(row.attachments);
+  return row;
+}
+
+export function addRequestMessage({ request_id, role, author_name = null, body, attachments = null }) {
+  if (!VALID_MSG_ROLES.has(role)) role = 'system';
+  const t = Date.now();
+  const info = insertReqMsgStmt.run({
+    request_id: Number(request_id),
+    role,
+    author_name: author_name ? String(author_name).slice(0, 60) : null,
+    body: String(body || '').slice(0, 10000),
+    attachments: normAttachments(attachments),
+    created_at: t,
+  });
+  // Đụng updated_at để yêu cầu nổi lên trong dashboard khi có lượt trao đổi mới.
+  touchRequestStmt.run({ id: Number(request_id), t });
+  return { id: info.lastInsertRowid, created_at: t };
+}
+
+export function listRequestMessages(request_id) {
+  const rows = listReqMsgStmt.all(Number(request_id));
+  for (const r of rows) r.attachments = safeParseAtts(r.attachments);
+  return rows;
+}
+
+export function reopenRequestIfClosed(id) {
+  return reopenRequestStmt.run({ id: Number(id), t: Date.now() }).changes > 0;
 }
 
 // --- Kho học liệu AI sinh thêm ---

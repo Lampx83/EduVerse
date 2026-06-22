@@ -12,6 +12,7 @@
 // ============================================================
 
 import { getPlayerName } from './api.js';
+import { renderRequestThread } from './request-thread.js';
 
 const TYPES = [
   { v: 'game',   icon: '🎮', label: 'Thêm trò chơi / mini-game' },
@@ -439,16 +440,29 @@ function bind(root) {
         inbox.innerHTML = '<div class="sgf-empty">Chưa có yêu cầu nào. Hãy là người đầu tiên đề xuất cải tiến trang này! 🚀</div>';
         return;
       }
-      inbox.innerHTML = shown.map(renderItem).join('');
+      inbox.innerHTML = shown.map(it => renderItem(it, me)).join('');
+      // Mỗi item mở rộng thành phiên trao đổi (thread) ngay trong modal.
+      inbox.querySelectorAll('[data-req-toggle]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.reqToggle;
+          const panel = inbox.querySelector(`#sgf-thread-${id}`);
+          if (!panel) return;
+          if (panel.hidden) {
+            panel.hidden = false;
+            renderRequestThread({ host: panel, requestId: id, me, onChange: loadInbox });
+          } else { panel.hidden = true; panel.innerHTML = ''; }
+        });
+      });
     } catch {
       inbox.innerHTML = '<div class="sgf-empty">Không tải được — cần backend chạy.</div>';
     }
   }
 }
 
-function renderItem(it) {
+function renderItem(it, me = '') {
   const sm = STATUS[it.status] || STATUS.pending;
   const t = (TYPES.find(t => t.v === it.type) || TYPES[4]);
+  const mine = me && it.student === me;
   const atts = Array.isArray(it.attachments) ? it.attachments : [];
   const attHtml = atts.length ? `
     <div class="sgf-it-att">
@@ -472,6 +486,10 @@ function renderItem(it) {
       </div>
       ${attHtml}
       ${it.admin_note ? `<div class="sgf-it-note">🏛️ ${escapeHtml(it.admin_note)}</div>` : ''}
+      <button type="button" class="sgf-it-thread-btn" data-req-toggle="${it.id}">
+        💬 ${mine ? 'Trao đổi với Ban điều hành' : 'Xem trao đổi'}
+      </button>
+      <div class="sgf-it-thread" id="sgf-thread-${it.id}" hidden></div>
     </div>
   `;
 }
@@ -597,6 +615,13 @@ function injectStyles() {
       font-size: 12px; color: #1f2937; margin-top: 6px; padding: 6px 9px; border-radius: 8px;
       background: #fef3c7; border-left: 3px solid #f59e0b;
     }
+    .sgf-it-thread-btn {
+      margin-top: 7px; border: 1px solid #c7d2fe; background: #eef2ff; color: #4338ca;
+      cursor: pointer; font: 700 11.5px/1 inherit; padding: 5px 10px; border-radius: 7px;
+    }
+    .sgf-it-thread-btn:hover { background: #e0e7ff; }
+    .sgf-it-thread { margin-top: 8px; }
+    .sgf-it-thread[hidden] { display: none; }
 
     @media (prefers-color-scheme: dark) {
       .sgf-dialog { background: #1e1b4b; color: #e5e7eb; }
@@ -624,6 +649,8 @@ function injectStyles() {
       .sgf-it-file { background: #312e81; color: #c7d2fe; border-color: #4338ca; }
       .sgf-it-file:hover { background: #4338ca; }
       .sgf-it-thumb { border-color: #4338ca; }
+      .sgf-it-thread-btn { background: #312e81; color: #c7d2fe; border-color: #4338ca; }
+      .sgf-it-thread-btn:hover { background: #4338ca; }
     }
   `;
   const st = document.createElement('style');
