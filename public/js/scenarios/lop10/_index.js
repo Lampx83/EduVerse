@@ -3,7 +3,7 @@
 // ============================================================
 let m_toan = {}, m_nv = {}, m_ta = {}, m_ly = {}, m_hoa = {};
 let m_sinh = {}, m_su = {}, m_dia = {}, m_gdcd = {};
-let m_tin = {}, m_cn = {}, m_gdqp = {};
+let m_tin = {}, m_cn = {}, m_gdqp = {}, m_hdtn = {};
 
 try { ({ H10TOAN_SCENARIOS: m_toan } = await import('./toan.js')); } catch {}
 try { ({ H10NV_SCENARIOS:   m_nv   } = await import('./ngu-van.js')); } catch {}
@@ -17,6 +17,7 @@ try { ({ H10GDCD_SCENARIOS: m_gdcd } = await import('./gdcd.js')); } catch {}
 try { ({ H10TIN_SCENARIOS:  m_tin  } = await import('./tin-hoc.js')); } catch {}
 try { ({ H10CN_SCENARIOS:   m_cn   } = await import('./cong-nghe.js')); } catch {}
 try { ({ H10GDQP_SCENARIOS: m_gdqp } = await import('./gdqp.js')); } catch {}
+try { ({ H10HDTN_SCENARIOS: m_hdtn } = await import('./hdtn.js')); } catch {}
 
 let LOP10_LESSONS = {};
 try { ({ LOP10_LESSONS } = await import('./lessons/_index.js')); } catch {}
@@ -24,7 +25,7 @@ try { ({ LOP10_LESSONS } = await import('./lessons/_index.js')); } catch {}
 export const HIGHSCHOOL_LOP10_SCENARIOS = {
   ...m_toan, ...m_nv, ...m_ta, ...m_ly, ...m_hoa,
   ...m_sinh, ...m_su, ...m_dia, ...m_gdcd,
-  ...m_tin, ...m_cn, ...m_gdqp,
+  ...m_tin, ...m_cn, ...m_gdqp, ...m_hdtn,
 };
 
 for (const [id, sc] of Object.entries(HIGHSCHOOL_LOP10_SCENARIOS)) {

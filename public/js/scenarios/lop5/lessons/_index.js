@@ -8,7 +8,7 @@
 
 let mod_toan = {}, mod_tv = {};
 let mod_ta = {}, mod_kh = {}, mod_lsdl = {}, mod_dd = {};
-let mod_an = {}, mod_mt = {}, mod_gdtc = {}, mod_hdtn = {}, mod_cn = {};
+let mod_an = {}, mod_mt = {}, mod_gdtc = {}, mod_hdtn = {}, mod_cn = {}, mod_tin = {};
 
 try { ({ P5_TOAN_LESSONS: mod_toan } = await import('./toan.js')); } catch {}
 try { ({ P5TV_LESSONS:    mod_tv   } = await import('./tieng-viet.js')); } catch {}
@@ -21,6 +21,7 @@ try { ({ P5MT_LESSONS:    mod_mt   } = await import('./my-thuat.js')); } catch {
 try { ({ P5GDTC_LESSONS:  mod_gdtc } = await import('./gdtc.js')); } catch {}
 try { ({ P5HDTN_LESSONS:  mod_hdtn } = await import('./hdtn.js')); } catch {}
 try { ({ P5CN_LESSONS:    mod_cn   } = await import('./cong-nghe.js')); } catch {}
+try { ({ P5TIN_LESSONS:   mod_tin  } = await import('./tin-hoc.js')); } catch {}
 
 export const LOP5_LESSONS = {
   ...(mod_toan || {}),
@@ -34,4 +35,5 @@ export const LOP5_LESSONS = {
   ...(mod_gdtc || {}),
   ...(mod_hdtn || {}),
   ...(mod_cn   || {}),
+  ...(mod_tin  || {}),
 };

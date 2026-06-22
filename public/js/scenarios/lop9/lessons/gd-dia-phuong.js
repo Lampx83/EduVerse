@@ -101,6 +101,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Điều gì khiến cuộc rút lui của Trung đoàn Thủ đô đêm 17/2/1947 được gọi là "thần kỳ"?', a: 'Hàng nghìn người, có cả thương binh và thiếu niên liên lạc, rút khỏi nội thành ngay dưới chân địch: luồn qua gầm cầu Long Biên nơi lính Pháp canh gác phía trên, vượt sông Hồng trong đêm rét mà giữ bí mật tuyệt đối. Địch không hề hay biết, lực lượng ta bảo toàn gần như nguyên vẹn.' },
       { q: 'Ngày 10/10/1954 có ý nghĩa như thế nào với Hà Nội?', a: 'Là Ngày Giải phóng Thủ đô: bộ đội ta tiến về tiếp quản Hà Nội sau 9 năm kháng chiến chống Pháp, chấm dứt ách chiếm đóng của thực dân, thực hiện trọn lời hẹn "ra đi, hẹn một ngày về" của các chiến sĩ Trung đoàn Thủ đô năm 1947.' },
+      { q: 'Vì sao thành phần chiến sĩ của Trung đoàn Thủ đô lại được coi là một nét đẹp tiêu biểu của Hà Nội?', a: 'Vì họ đến từ mọi tầng lớp người Hà Nội: công nhân, học sinh, sinh viên, người buôn bán nhỏ, cả thiếu niên làm liên lạc. Khi Thủ đô lâm nguy, họ gác lại nghề nghiệp, học hành để cầm súng giữ từng tấc đất quê hương — thể hiện tinh thần "cảm tử cho Tổ quốc quyết sinh" và lòng yêu Hà Nội của đủ mọi người dân.' },
     ],
   },
 
@@ -133,6 +134,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao nói trong những năm 1947-1954, Hà Nội vẫn là một mặt trận dù bộ đội chủ lực đã rút lên chiến khu?', a: 'Vì cuộc đấu tranh vẫn tiếp diễn ngay trong lòng thành phố với nhiều hình thức: cơ sở bí mật hoạt động, học sinh - sinh viên bãi khoá và biểu tình, công nhân bãi công, các đội biệt động tập kích kho tàng, sân bay địch. Nhân dân nuôi giấu cán bộ, tạo "thế trận lòng dân" giữa vùng địch chiếm.' },
       { q: 'Việc ta tiếp quản Hà Nội nguyên vẹn năm 1954 có ý nghĩa gì?', a: 'Điện, nước, nhà máy, công sở được giữ gần như nguyên vẹn giúp đời sống thành phố nhanh chóng ổn định ngay sau giải phóng, chính quyền mới có cơ sở vật chất để khôi phục kinh tế, không phải xây lại từ đống đổ nát. Đó là thắng lợi của đấu tranh khôn khéo, có tổ chức.' },
+      { q: 'Hãy nối chuỗi sự kiện dẫn tới Giải phóng Thủ đô và rút ra nhận xét.', a: 'Chiến thắng Điện Biên Phủ (7/5/1954) → buộc Pháp ký Hiệp định Genève (21/7/1954) → quân Pháp rút khỏi Hà Nội → Giải phóng Thủ đô (10/10/1954). Nhận xét: thắng lợi ở Thủ đô không tách rời thắng lợi chung của cả nước; chiến công trên chiến trường (Điện Biên Phủ) tạo điều kiện cho thắng lợi trên bàn đàm phán và trong cuộc tiếp quản hoà bình ở Hà Nội.' },
     ],
   },
 
@@ -167,6 +169,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao Hà Nội được gọi là "trái tim của hậu phương lớn" trong giai đoạn 1954-1965?', a: 'Vì Hà Nội là nơi Trung ương Đảng, Chính phủ và Bác Hồ trực tiếp lãnh đạo cách mạng cả nước; là trung tâm sản xuất công nghiệp, đào tạo cán bộ, huy động sức người sức của chi viện cho miền Nam; là nơi khởi phát các phong trào thi đua lớn như "Ba sẵn sàng".' },
       { q: 'Phong trào "Ba sẵn sàng" của thanh niên Hà Nội gồm những nội dung gì?', a: 'Sẵn sàng chiến đấu; sẵn sàng nhập ngũ; sẵn sàng đi bất cứ nơi đâu Tổ quốc cần. Phong trào thể hiện nhiệt huyết của tuổi trẻ Thủ đô và nhanh chóng lan rộng khắp miền Bắc.' },
+      { q: 'Kể tên một nhà máy tiêu biểu của Hà Nội giai đoạn 1954-1965 và cho biết vì sao nó được gọi là "đứa con đầu lòng" của ngành cơ khí Việt Nam.', a: 'Đó là Nhà máy Cơ khí Hà Nội. Được xây dựng và đi vào hoạt động trong những năm khôi phục kinh tế sau 1954, đây là nhà máy cơ khí hiện đại đầu tiên do ta tự xây dựng, mở đầu cho ngành chế tạo máy của miền Bắc — sản xuất máy công cụ phục vụ các nhà máy khác, nên được ví là "đứa con đầu lòng" của ngành cơ khí nước nhà.' },
     ],
   },
 
@@ -198,6 +201,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Mục đích của Mỹ khi đánh phá Hà Nội và miền Bắc là gì? Kết quả ra sao?', a: 'Mỹ muốn phá tiềm lực kinh tế - quốc phòng miền Bắc, chặn chi viện cho miền Nam và đè bẹp ý chí của nhân dân ta. Nhưng quân dân Hà Nội vừa sản xuất vừa chiến đấu, bắn rơi nhiều máy bay, mạch máu chi viện không hề đứt — âm mưu của địch thất bại.' },
       { q: 'Em hiểu thế nào về khẩu hiệu "tay búa, tay súng" của công nhân Hà Nội?', a: 'Công nhân vừa đứng máy sản xuất ra hàng hoá, vũ khí (tay búa), vừa tham gia tự vệ trực chiến trên trận địa pháo bảo vệ nhà máy, bầu trời thành phố (tay súng). Khẩu hiệu thể hiện tinh thần vừa lao động vừa chiến đấu của người Hà Nội thời chiến.' },
+      { q: 'Vì sao hình ảnh em nhỏ Hà Nội đội mũ rơm đến lớp lại trở thành ký ức không quên của thời chống chiến tranh phá hoại?', a: 'Vì nó cho thấy ngay dưới bom đạn, việc học của trẻ em Hà Nội vẫn không ngừng: lớp học sơ tán về nông thôn có hầm hào, các em đội mũ rơm để tránh mảnh bom, đạn khi máy bay địch tới. Hình ảnh ấy thể hiện ý chí "địch phá ta cứ học", tinh thần hiếu học bền bỉ và sự che chở của cả cộng đồng dành cho thế hệ tương lai của Thủ đô.' },
     ],
   },
 
@@ -229,6 +233,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao Mỹ mở cuộc tập kích B-52 vào Hà Nội cuối tháng 12/1972?', a: 'Vì đàm phán Paris bế tắc do phía Mỹ lật lọng. Mỹ muốn dùng sức mạnh huỷ diệt của B-52 gây sức ép tối đa, buộc ta phải nhượng bộ, ký hiệp định theo các điều kiện có lợi cho Mỹ.' },
       { q: 'Vì sao Mỹ tin B-52 là "bất khả xâm phạm" khi đánh Hà Nội?', a: 'B-52 bay cao ngoài tầm nhiều loại pháo, mang lượng bom huỷ diệt lớn, lại được hộ tống bởi máy bay chiến thuật và hệ thống gây nhiễu điện tử dày đặc làm "mù" radar. Tuy nhiên bộ đội ta đã nghiên cứu được cách vạch nhiễu tìm B-52 và bắn rơi nó ngay từ đêm đầu tiên.' },
+      { q: 'Câu chuyện bộ đội ta biên soạn tài liệu "cách đánh B-52" trước tháng 12/1972 cho thấy điều gì về sự chuẩn bị của quân dân ta?', a: 'Cho thấy ta không bị động: từ nhiều năm trước, làm đúng dự báo của Chủ tịch Hồ Chí Minh, bộ đội tên lửa và radar đã kiên trì nghiên cứu cách vạch nhiễu, nhận dạng và bắn rơi B-52, đúc kết thành tài liệu để huấn luyện. Nhờ chủ động chuẩn bị về cả cách đánh lẫn việc sơ tán dân, đào hầm hào, ngay đêm mở màn 18/12/1972 ta đã hạ được B-52 — chứng minh chiến thắng đến từ trí tuệ và sự chuẩn bị công phu chứ không phải may mắn.' },
     ],
   },
 
@@ -295,6 +300,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vai trò "Tổng hành dinh" của Hà Nội trong mùa Xuân 1975 thể hiện như thế nào?', a: 'Hà Nội là nơi Bộ Chính trị và Quân uỷ Trung ương họp hạ quyết tâm chiến lược, nơi phát đi các mệnh lệnh chỉ đạo những cánh quân thần tốc tiến về Sài Gòn — tức là trung tâm đầu não chỉ huy toàn bộ cuộc Tổng tiến công và nổi dậy mùa Xuân 1975.' },
       { q: 'Vị thế của Hà Nội thay đổi như thế nào sau năm 1976?', a: 'Từ Thủ đô của miền Bắc xã hội chủ nghĩa, Hà Nội trở thành Thủ đô của nước Cộng hoà xã hội chủ nghĩa Việt Nam thống nhất — trung tâm chính trị, văn hoá của cả nước liền một dải từ Bắc chí Nam.' },
+      { q: 'Theo em, vì sao niềm vui ngày 30/4/1975 ở Hà Nội lại "vừa mừng vừa nghẹn ngào"?', a: 'Mừng vì miền Nam được giải phóng, đất nước sạch bóng quân xâm lược, khát vọng thống nhất bao năm thành hiện thực. Nhưng nghẹn ngào vì để có ngày ấy, biết bao người con Hà Nội đã "xếp bút nghiên" lên đường và mãi mãi không trở về; niềm vui chung hoà cùng nỗi đau riêng của nhiều gia đình — nhắc các em trân trọng giá trị của hoà bình, độc lập hôm nay.' },
     ],
   },
 
@@ -327,6 +333,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao cơ chế bao cấp khiến sản xuất trì trệ?', a: 'Vì mọi thứ do Nhà nước quyết định và phân phối đồng đều theo định mức, người làm nhiều cũng hưởng như người làm ít nên không ai có động lực làm tốt hơn; doanh nghiệp không cần cạnh tranh, không nhạy bén với nhu cầu thực tế. Kết quả là hàng hoá khan hiếm, kinh tế khủng hoảng.' },
       { q: 'Kể tên ba hình ảnh đặc trưng của Hà Nội thời bao cấp và ý nghĩa của việc tìm hiểu chúng.', a: 'Ví dụ: cảnh xếp hàng đặt cục gạch trước cửa hàng mậu dịch, cuốn sổ gạo và tem phiếu, khu nhà tập thể với bếp than tổ ong. Tìm hiểu để hiểu sự gian khó của thế hệ trước, trân trọng thành quả Đổi mới và rút ra bài học về cơ chế quản lý kinh tế.' },
+      { q: 'Vì sao người ta nói thời bao cấp tuy gian khó nhưng vẫn đọng lại nhiều kỷ niệm đẹp về tình người Hà Nội?', a: 'Vì trong cảnh thiếu thốn, người Hà Nội giữ nếp sống tình nghĩa: hàng xóm khu tập thể "tối lửa tắt đèn có nhau", chia nhau từng lạng gạo, cùng xem nhờ một chiếc tivi đen trắng của cả dãy nhà, nhường nhịn nhau khi xếp hàng. Chính sự sẻ chia ấy giúp mọi người vượt qua khó khăn và để lại ký ức ấm áp, cho thấy giá trị tinh thần không phụ thuộc hoàn toàn vào vật chất.' },
     ],
   },
 
@@ -362,6 +369,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Nội dung cốt lõi của đường lối Đổi mới về kinh tế là gì?', a: 'Xoá bỏ cơ chế tập trung quan liêu bao cấp, phát triển kinh tế hàng hoá nhiều thành phần vận hành theo cơ chế thị trường có sự quản lý của Nhà nước, thừa nhận kinh tế tư nhân và mở cửa hội nhập với thế giới.' },
       { q: 'Hãy nêu hai thay đổi dễ thấy nhất của Hà Nội trong những năm đầu Đổi mới so với thời bao cấp.', a: 'Một là hàng hoá: từ khan hiếm, mua theo tem phiếu chuyển sang phong phú, mua bán tự do ở chợ và cửa hàng tư nhân. Hai là quyền làm ăn: người dân được tự do mở cửa hàng, xưởng sản xuất thay vì chỉ làm trong khu vực nhà nước; phố phường buôn bán nhộn nhịp trở lại.' },
+      { q: 'Tinh thần "nhìn thẳng vào sự thật, đánh giá đúng sự thật, nói rõ sự thật" của Đại hội VI có ý nghĩa gì và để lại bài học gì cho mỗi người?', a: 'Đó là thái độ dũng cảm thừa nhận những sai lầm, yếu kém của cơ chế cũ thay vì né tránh, từ đó mới tìm ra đường lối Đổi mới đúng đắn đưa đất nước thoát khủng hoảng. Bài học cho mỗi người: muốn tiến bộ thì phải dám nhìn nhận đúng điểm yếu của bản thân và dám thay đổi — trong học tập cũng vậy, biết mình hổng kiến thức chỗ nào thì mới sửa và giỏi lên được.' },
     ],
   },
 
@@ -393,6 +401,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Sau ngày 1/8/2008, Hà Nội được mở rộng từ những vùng đất nào?', a: 'Hợp nhất toàn bộ tỉnh Hà Tây, huyện Mê Linh của tỉnh Vĩnh Phúc và 4 xã thuộc huyện Lương Sơn của tỉnh Hoà Bình vào Thủ đô Hà Nội, đưa diện tích lên khoảng 3.300 km vuông — gấp hơn ba lần trước đó.' },
       { q: 'Việc hợp nhất Hà Tây mang lại cho Hà Nội những giá trị văn hoá nào?', a: 'Kho tàng văn hoá xứ Đoài: làng cổ Đường Lâm, chùa Hương, chùa Thầy, chùa Tây Phương, lụa Vạn Phúc, múa rối nước và hàng trăm làng nghề truyền thống — bổ sung và hoà quyện với văn hoá Thăng Long, làm giàu bản sắc của Thủ đô mở rộng.' },
+      { q: 'Theo em, việc mở rộng Hà Nội năm 2008 đặt ra những thách thức gì cần tiếp tục giải quyết?', a: 'Mở rộng đem lại không gian phát triển nhưng cũng nảy sinh khó khăn: chênh lệch trình độ phát triển giữa nội đô và vùng nông thôn, miền núi mới sáp nhập; bài toán quản lý một đô thị quy mô rất lớn; và yêu cầu vừa hiện đại hoá vừa giữ gìn bản sắc riêng của từng vùng (Thăng Long thanh lịch và xứ Đoài mộc mạc) trong một Hà Nội thống nhất. Đây là những vấn đề Thủ đô vẫn đang tiếp tục xử lý.' },
     ],
   },
 
@@ -425,6 +434,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao năm 2010 Hà Nội kỷ niệm 1000 năm Thăng Long - Hà Nội?', a: 'Vì năm 1010 vua Lý Thái Tổ dời đô từ Hoa Lư về Đại La và đặt tên kinh đô mới là Thăng Long. Tính từ đó đến 2010 là tròn 1000 năm Hà Nội giữ vai trò kinh đô - thủ đô, nên Đại lễ được tổ chức trọng thể vào tháng 10/2010.' },
       { q: 'Sự kiện Hoàng thành Thăng Long được UNESCO ghi danh năm 2010 có ý nghĩa gì?', a: 'Khẳng định giá trị toàn cầu của khu di sản: minh chứng cho lịch sử liên tục hơn mười thế kỷ của trung tâm quyền lực Thăng Long - Hà Nội qua các triều đại; nâng tầm vị thế văn hoá của Thủ đô và đặt ra trách nhiệm bảo tồn di sản cho các thế hệ sau.' },
+      { q: 'Vì sao "con đường gốm sứ" ven sông Hồng được xem là một món quà nghệ thuật ý nghĩa của Đại lễ 1000 năm?', a: 'Vì đó là bức tranh gốm dài hàng nghìn mét do nhiều hoạ sĩ trong và ngoài nước cùng thực hiện, từng được ghi nhận kỷ lục Guinness là bức tranh gốm dài nhất thế giới. Công trình vừa làm đẹp tuyến đê sông Hồng, vừa thể hiện sự chung tay của bạn bè quốc tế mừng Hà Nội nghìn tuổi, lại tôn vinh nghề gốm truyền thống — một sản phẩm nghệ thuật công cộng gắn quá khứ với hiện tại.' },
     ],
   },
 
@@ -460,6 +470,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao SEA Games 31 diễn ra năm 2022 dù theo chu kỳ phải tổ chức năm 2021?', a: 'Do đại dịch COVID-19 bùng phát, để bảo đảm an toàn, Việt Nam và Liên đoàn Thể thao Đông Nam Á thống nhất lùi Đại hội sang tháng 5/2022. Việc tổ chức thành công sau đại dịch càng có ý nghĩa, thể hiện hình ảnh Hà Nội - Việt Nam an toàn, phục hồi mạnh mẽ.' },
       { q: 'SEA Games 31 mang lại lợi ích gì cho Hà Nội ngoài thể thao?', a: 'Quảng bá hình ảnh Thủ đô thân thiện đến bạn bè khu vực; kích cầu du lịch, khách sạn, ẩm thực; nâng cấp cơ sở vật chất thể thao; tích luỹ kinh nghiệm tổ chức sự kiện quốc tế; bồi đắp tinh thần tình nguyện và văn hoá cổ vũ đẹp của người Hà Nội.' },
+      { q: 'Vì sao Ban tổ chức chọn Sao La làm linh vật và khẩu hiệu "Vì một Đông Nam Á mạnh mẽ hơn" cho SEA Games 31?', a: 'Sao La là loài thú quý hiếm được mệnh danh "kỳ lân châu Á", chỉ có ở dãy Trường Sơn của Việt Nam và Lào — chọn làm linh vật vừa giới thiệu thiên nhiên đặc hữu của nước chủ nhà, vừa gửi thông điệp bảo vệ động vật hoang dã. Khẩu hiệu "Vì một Đông Nam Á mạnh mẽ hơn" thể hiện tinh thần đoàn kết, cùng vượt qua khó khăn (đặc biệt sau đại dịch) để khu vực phát triển — phù hợp ý nghĩa một đại hội thể thao hữu nghị.' },
     ],
   },
 
@@ -495,6 +506,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Hà Nội được UNESCO công nhận Thành phố sáng tạo năm nào, ở lĩnh vực gì? Vì sao chọn lĩnh vực đó?', a: 'Năm 2019, ở lĩnh vực Thiết kế. Vì Thiết kế bao trùm và kết nối được các thế mạnh của Hà Nội: di sản kiến trúc nghìn năm, mạng lưới làng nghề thủ công tài hoa, đội ngũ nhà thiết kế trẻ và các trường đào tạo mỹ thuật - kiến trúc lớn.' },
       { q: 'Kể một hoạt động thể hiện tinh thần "Thành phố sáng tạo" mà học sinh Hà Nội có thể tham gia.', a: 'Ví dụ: tham quan Lễ hội Thiết kế sáng tạo Hà Nội hằng năm, tham gia vẽ tranh - thiết kế sản phẩm tái chế ở trường, trải nghiệm làm gốm ở Bát Tràng và sáng tạo mẫu mã mới, hoặc giới thiệu không gian sáng tạo của Hà Nội trên mạng xã hội một cách văn minh.' },
+      { q: 'Phân biệt hai danh hiệu UNESCO của Hà Nội: "Thành phố vì hoà bình" (1999) và "Thành phố sáng tạo" (2019).', a: 'Năm 1999, Hà Nội được UNESCO trao danh hiệu "Thành phố vì hoà bình" — tôn vinh một thủ đô năng động, đoàn kết, bình yên sau chiến tranh. Năm 2019, Hà Nội gia nhập Mạng lưới các Thành phố sáng tạo của UNESCO ở lĩnh vực Thiết kế — ghi nhận tiềm năng dùng sáng tạo và công nghiệp văn hoá làm động lực phát triển. Một danh hiệu nói về giá trị HOÀ BÌNH, một danh hiệu nói về năng lực SÁNG TẠO; cả hai cùng làm nên thương hiệu của Thủ đô.' },
     ],
   },
 
@@ -526,6 +538,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Hãy xếp các công trình sau vào đúng lớp kiến trúc: Khuê Văn Các, Nhà hát Lớn, khu tập thể Kim Liên, cầu Nhật Tân.', a: 'Khuê Văn Các — kiến trúc truyền thống (Văn Miếu); Nhà hát Lớn — kiến trúc thời Pháp; khu tập thể Kim Liên — kiến trúc thời kỳ xây dựng XHCN sau 1954; cầu Nhật Tân — kiến trúc hiện đại.' },
       { q: 'Đặc trưng của nhà ống phố cổ Hà Nội là gì và vì sao có hình dáng đó?', a: 'Mặt tiền hẹp, chiều sâu rất dài, thường có sân trong lấy sáng; tầng dưới làm cửa hàng, phía sau và tầng trên để ở. Hình dáng này hình thành do đất mặt phố buôn bán đắt giá, người xưa chia nhỏ mặt tiền để nhiều nhà cùng có chỗ bán hàng trên các phố nghề.' },
+      { q: 'Vì sao việc các lớp kiến trúc cùng tồn tại lại được coi là "cái hay" của Hà Nội, và điều đó đặt ra trách nhiệm gì?', a: 'Cái hay là ở chỗ đi trong thành phố, ta có thể "đọc" được cả nghìn năm lịch sử: mái đình chùa cổ, biệt thự Pháp, khu tập thể thời bao cấp, toà tháp kính hiện đại — mỗi lớp kể tiếp câu chuyện của lớp trước, tạo nên một đô thị có chiều sâu, không lẫn với nơi nào. Trách nhiệm đặt ra: phải bảo tồn lớp kiến trúc cũ (trùng tu biệt thự cổ, kiểm soát chiều cao xây dựng khu trung tâm) để khi phát triển hiện đại, Hà Nội không đánh mất "hồn phố" của mình.' },
     ],
   },
 
@@ -562,6 +575,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao nói làng nghề là "bảo tàng sống" của văn hoá Hà Nội?', a: 'Vì làng nghề không chỉ giữ sản phẩm mà giữ cả con người và đời sống quanh nghề: bí quyết kỹ thuật truyền đời, tín ngưỡng thờ tổ nghề, lễ hội, nếp sinh hoạt cộng đồng. Tất cả vẫn đang "sống" và vận hành hằng ngày chứ không chỉ trưng bày như hiện vật.' },
       { q: 'Làng nghề Hà Nội cần làm gì để tồn tại trong thời hiện đại? Cho ví dụ.', a: 'Đổi mới mẫu mã trên nền kỹ thuật truyền thống, kết hợp du lịch trải nghiệm, bán hàng trực tuyến, tham gia OCOP và liên kết với nhà thiết kế trẻ. Ví dụ: Bát Tràng mở xưởng cho khách tự nặn gốm, Vạn Phúc tổ chức tuần văn hoá lụa thu hút du khách tham quan và mua sắm.' },
+      { q: 'Hãy ghép đúng cặp "làng nghề - sản phẩm": Bát Tràng, Vạn Phúc, làng Chuông, Ngũ Xã, làng Vòng, Xuân La.', a: 'Bát Tràng (Gia Lâm) - gốm sứ; Vạn Phúc (Hà Đông) - lụa; làng Chuông (Thanh Oai) - nón lá; Ngũ Xã - đúc đồng; làng Vòng (Cầu Giấy) - cốm; Xuân La (Phú Xuyên) - tò he. Mỗi cặp gắn với một vùng đất và bí quyết riêng, cho thấy vì sao Hà Nội được mệnh danh là "đất trăm nghề".' },
     ],
   },
 
@@ -640,6 +654,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Phân tích vì sao phở được coi là "đại sứ" của ẩm thực Hà Nội và Việt Nam.', a: 'Phở hội tụ đặc trưng ẩm thực Hà thành: nước dùng ninh công phu mà trong và thanh, hài hoà gia vị, ăn nóng từ tốn. Phở theo chân người Việt ra khắp thế giới, xuất hiện trong từ điển nhiều nước, được du khách và truyền thông quốc tế nhắc đến đầu tiên khi nói về ẩm thực Việt Nam.' },
       { q: 'Cốm làng Vòng gắn với mùa nào của Hà Nội và nói lên điều gì về sự tinh tế của người Hà thành?', a: 'Cốm gắn với mùa thu Hà Nội. Sự tinh tế thể hiện ở chỗ: chọn đúng lúa nếp non đầu mùa, rang giã thủ công nhiều công đoạn, gói bằng lá sen cho thơm, ăn nhúm nhỏ nhẩn nha cùng chuối trứng cuốc hoặc trà — "ăn lấy hương lấy hoa" chứ không ăn lấy no.' },
+      { q: 'Hãy giải thích đặc trưng "thanh - tinh - khéo" của ẩm thực Hà thành qua một món ăn em biết.', a: 'Ví dụ món bún thang: THANH ở nước dùng trong, vị nhẹ nhàng không gắt; TINH ở chỗ hội tụ hàng chục nguyên liệu được chuẩn bị cầu kỳ (giò lụa, trứng tráng mỏng, thịt gà xé, tôm khô, củ cải...); KHÉO ở cách thái sợi đều tăm tắp và bày biện nhiều màu sắc hài hoà trong bát. Một bát bún thang cho thấy người Hà Nội coi nấu ăn như một nghệ thuật, trọng cả hương vị lẫn hình thức.' },
     ],
   },
 
@@ -676,6 +691,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao Hội Gióng được UNESCO ghi danh là Di sản văn hoá phi vật thể đại diện của nhân loại?', a: 'Vì Hội Gióng bảo lưu hệ thống nghi lễ - diễn xướng dân gian độc đáo, tái hiện sống động trận đánh của Thánh Gióng với các vai ông Hiệu, phường Ải Lao, cờ lệnh...; do chính cộng đồng tổ chức và trao truyền qua nhiều thế hệ; chuyển tải khát vọng hoà bình và tinh thần chống ngoại xâm của dân tộc.' },
       { q: 'Phân biệt phần lễ và phần hội qua ví dụ hội gò Đống Đa.', a: 'Phần lễ: dâng hương, tế lễ, rước kiệu tưởng nhớ vua Quang Trung và nghĩa quân Tây Sơn — trang nghiêm, thành kính. Phần hội: múa rồng lửa Thăng Long, đấu vật, cờ người, các trò chơi dân gian — vui tươi, sôi động. Hai phần bổ sung cho nhau: vừa tri ân tiền nhân vừa gắn kết cộng đồng.' },
+      { q: 'Nêu ba việc thể hiện cách ứng xử văn minh khi em đi trẩy hội chùa Hương hoặc hội Gióng.', a: 'Ví dụ: (1) ăn mặc kín đáo, lịch sự và giữ trật tự, không chen lấn xô đẩy nơi tế lễ; (2) không xả rác, không bẻ cành hái hoa, không khắc vẽ lên di tích, thắp hương đúng nơi quy định; (3) cảnh giác với mê tín dị đoan, cờ bạc trá hình và nạn "chặt chém" giá cả, đồng thời nhắc nhở bạn bè cùng giữ nét đẹp của lễ hội. Ứng xử văn minh giúp lễ hội giữ được sự tôn nghiêm và an toàn.' },
     ],
   },
 
@@ -714,6 +730,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao Văn Miếu - Quốc Tử Giám được coi là biểu tượng của truyền thống hiếu học Việt Nam?', a: 'Văn Miếu thờ Khổng Tử và các bậc tiên hiền; Quốc Tử Giám lập năm 1076 là trường đại học đầu tiên của nước ta, đào tạo nhân tài suốt nhiều thế kỷ; 82 bia tiến sĩ khắc tên những người đỗ đạt nhắc nhở đạo học. Ngày nay sĩ tử vẫn đến đây trước mùa thi, Khuê Văn Các trở thành biểu tượng của Hà Nội.' },
       { q: 'Em sẽ giới thiệu di tích nhà tù Hoả Lò với một du khách như thế nào trong ba câu?', a: 'Ví dụ: "Đây là nhà tù do thực dân Pháp xây để giam giữ những người Việt Nam yêu nước, từng được mệnh danh là địa ngục trần gian giữa lòng Hà Nội. Nơi đây nhiều chiến sĩ cách mạng đã biến nhà tù thành trường học đấu tranh. Tham quan Hoả Lò, bạn sẽ hiểu cái giá của độc lập, tự do hôm nay."' },
+      { q: 'Hãy phân nhóm các di tích sau theo cấp độ giá trị: Hoàng thành Thăng Long, Văn Miếu - Quốc Tử Giám, nhà 48 Hàng Ngang, thành Cổ Loa.', a: 'Di sản văn hoá thế giới: Hoàng thành Thăng Long (UNESCO ghi danh 2010). Di tích quốc gia đặc biệt: Văn Miếu - Quốc Tử Giám và thành Cổ Loa. "Địa chỉ đỏ" cách mạng: nhà 48 Hàng Ngang — nơi Chủ tịch Hồ Chí Minh viết Tuyên ngôn Độc lập. Việc phân tầng giúp ta hiểu mỗi di tích có giá trị và yêu cầu bảo tồn khác nhau, nhưng tất cả đều là ký ức quý không thể làm lại của Thủ đô.' },
     ],
   },
 
@@ -748,6 +765,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Truyền thuyết Hồ Gươm gửi gắm thông điệp gì của dân tộc Việt Nam?', a: 'Khát vọng hoà bình: gươm thần được mượn để đánh giặc cứu nước, khi đất nước sạch bóng quân thù thì trả lại — nghĩa là người Việt cầm vũ khí vì bất đắc dĩ, hết chiến tranh là mong dựng xây trong hoà bình. Tên Hoàn Kiếm ("trả gươm") nhắc nhở thông điệp ấy giữa lòng Thủ đô.' },
       { q: 'Vì sao hai hòn đảo trong hồ Bảy Mẫu mang tên Hoà Bình và Thống Nhất?', a: 'Công viên và hồ được xây dựng cuối thập niên 1950, khi đất nước tạm chia hai miền. Người Hà Nội đặt tên đảo Hoà Bình, đảo Thống Nhất (và tên công viên Thống Nhất) để gửi gắm khát vọng non sông liền một dải — một cách "viết" mong ước vào chính cảnh quan thành phố.' },
+      { q: 'Hệ thống hồ nước có vai trò sinh thái gì với Hà Nội, và mỗi người cần làm gì để bảo vệ?', a: 'Về sinh thái, hồ giúp điều hoà khí hậu, là nơi chứa và thoát nước mưa chống úng ngập, được ví là "lá phổi xanh" của đô thị. Để bảo vệ, mỗi người cần: không xả rác, nước thải xuống hồ; không lấn chiếm bờ hồ; tham gia làm sạch, trồng cây quanh hồ và lên tiếng khi thấy hành vi gây ô nhiễm. Giữ hồ sạch chính là giữ cảnh quan, sức khoẻ và cả những câu chuyện văn hoá gắn với mỗi mặt hồ.' },
     ],
   },
 
@@ -783,6 +801,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Phố đi bộ hồ Hoàn Kiếm mang lại những lợi ích gì cho Hà Nội?', a: 'Tạo không gian công cộng cho người dân vui chơi, giao lưu; nuôi dưỡng nghệ thuật đường phố và trò chơi dân gian; thu hút du khách, thúc đẩy thương mại - dịch vụ và kinh tế đêm; giảm phương tiện cơ giới khu trung tâm vào cuối tuần, góp phần giảm ồn và khí thải.' },
       { q: 'Nếu được đề xuất một hoạt động mới cho phố đi bộ, em sẽ đề xuất gì? Giải thích.', a: 'Ví dụ: góc "Em kể chuyện Hà Nội" — nơi học sinh các trường thay nhau giới thiệu di tích, kể truyền thuyết Hồ Gươm cho du khách bằng tiếng Việt và tiếng Anh. Hoạt động vừa rèn kỹ năng thuyết trình, vừa quảng bá văn hoá, đúng tinh thần Thành phố sáng tạo và phù hợp không gian quanh hồ.' },
+      { q: 'Vì sao nói phố đi bộ là cách "thiết kế lại" công năng đô thị, và bên cạnh lợi ích còn điều gì cần hoàn thiện?', a: 'Phố đi bộ biến mặt đường vốn chỉ dành cho xe cộ thành không gian công cộng đa năng: sân khấu biểu diễn, sân chơi dân gian, phòng triển lãm ngoài trời — ai cũng có thể là nghệ sĩ hoặc khán giả. Đó là tư duy thiết kế đô thị vì con người. Tuy nhiên cần hoàn thiện: giữ vệ sinh, kiểm soát hàng rong chèo kéo và âm thanh quá lớn, lo đủ chỗ gửi xe, và cân bằng giữa sự sôi động với nét tĩnh lặng vốn có của không gian hồ Gươm.' },
     ],
   },
 
@@ -815,6 +834,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Tour đêm "Tinh hoa đạo học" ở Văn Miếu khác gì so với tham quan ban ngày, và vì sao hút giới trẻ?', a: 'Ban ngày khách chủ yếu nhìn hiện vật và nghe thuyết minh; tour đêm dùng trình chiếu ánh sáng 3D mapping, âm nhạc, kể chuyện theo kịch bản khiến lịch sử khoa cử "sống dậy" trên chính các công trình cổ. Trải nghiệm giàu cảm xúc, đẹp mắt, dễ chia sẻ trên mạng xã hội nên đặc biệt hấp dẫn giới trẻ.' },
       { q: 'Việc biến nhà máy xe lửa Gia Lâm, tháp nước Hàng Đậu thành không gian triển lãm nói lên điều gì về tư duy phát triển của Hà Nội?', a: 'Thay vì bỏ hoang hay phá dỡ, Hà Nội "tái sinh" di sản công nghiệp thành không gian văn hoá - sáng tạo. Điều đó thể hiện tư duy phát triển bền vững: trân trọng ký ức đô thị, tiết kiệm nguồn lực, đồng thời tạo sản phẩm mới cho công nghiệp văn hoá — đúng cam kết của Thành phố sáng tạo UNESCO.' },
+      { q: 'Em hiểu thế nào về "công nghiệp văn hoá" và "kinh tế đêm" qua các hoạt động nghệ thuật đêm của Hà Nội?', a: 'Công nghiệp văn hoá là việc dùng sáng tạo và di sản để tạo ra sản phẩm, dịch vụ có giá trị kinh tế — như tour đêm di sản, lễ hội thiết kế, biểu diễn nghệ thuật. Kinh tế đêm là các hoạt động kinh doanh, vui chơi, ăn uống diễn ra về đêm (tour đêm, phố ẩm thực, chợ đêm) giúp du khách ở lại lâu hơn, chi tiêu nhiều hơn. Hai khái niệm gắn với nhau: nghệ thuật đêm vừa làm phong phú đời sống tinh thần, vừa là nguồn thu mới cho Thủ đô.' },
     ],
   },
 
@@ -850,6 +870,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao dịch vụ chiếm tỷ trọng lớn nhất trong cơ cấu kinh tế Hà Nội?', a: 'Vì Hà Nội là Thủ đô — trung tâm chính trị, văn hoá, giáo dục, y tế của cả nước nên nhu cầu dịch vụ rất lớn; dân cư đông, thu nhập khá tạo thị trường tiêu dùng mạnh; kho di sản và vị thế quốc tế thu hút du lịch; các cơ quan, doanh nghiệp, ngân hàng, trường đại học tập trung dày đặc kéo theo dịch vụ hỗ trợ phát triển.' },
       { q: 'Khu công nghệ cao Hoà Lạc có vai trò gì với tương lai kinh tế Hà Nội?', a: 'Là hạt nhân thu hút tập đoàn công nghệ, viện nghiên cứu, đại học về phía tây thành phố; nơi ươm tạo doanh nghiệp đổi mới sáng tạo và đào tạo nhân lực chất lượng cao — giúp Hà Nội chuyển sang kinh tế tri thức, kinh tế số thay vì chỉ dựa vào lao động giá rẻ và thương mại truyền thống.' },
+      { q: 'Là học sinh lớp 9 chuẩn bị phân luồng, em có thể liên hệ kinh tế Thủ đô với việc chọn hướng nghề như thế nào?', a: 'Hiểu cơ cấu kinh tế Hà Nội giúp em chọn hướng phù hợp xu thế: dịch vụ và công nghệ cao đang dẫn dắt nên các ngành như công nghệ thông tin, thiết kế, du lịch - hướng dẫn viên di sản, phân tích dữ liệu, logistics có nhiều cơ hội; công nghiệp văn hoá mở ra nghề cho người yêu nghệ thuật. Em có thể tự đánh giá năng lực, sở thích rồi chọn học nghề hoặc học tiếp THPT theo định hướng đó, thay vì chọn theo phong trào.' },
     ],
   },
 
@@ -885,6 +906,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao phát triển đường sắt đô thị được coi là giải pháp căn cơ cho giao thông Hà Nội?', a: 'Một đoàn tàu điện chở được lượng khách bằng hàng trăm xe máy, chạy trên làn riêng nên nhanh và đúng giờ, không chiếm mặt đường, ít phát thải. Khi mạng lưới metro hoàn chỉnh, người dân sẽ giảm dùng phương tiện cá nhân — giải quyết ùn tắc từ gốc thay vì chỉ mở rộng đường.' },
       { q: 'Nêu ba việc cụ thể học sinh lớp 9 có thể làm để thể hiện văn hoá giao thông.', a: 'Ví dụ: luôn đội mũ bảo hiểm đạt chuẩn khi ngồi xe máy, xe đạp điện; không dàn hàng ngang, không vượt đèn đỏ khi đi xe đạp; ưu tiên đi xe buýt, tàu điện hoặc đi bộ đúng vạch sang đường; nhắc nhở bạn bè cùng thực hiện.' },
+      { q: 'Vì sao tuyến metro Cát Linh - Hà Đông được coi là một dấu mốc của giao thông Hà Nội?', a: 'Vì đây là tuyến đường sắt đô thị (metro) đầu tiên của cả Việt Nam, vận hành thương mại từ tháng 11/2021. Tàu chạy trên làn riêng nên nhanh, đúng giờ, không ùn tắc, chở được lượng khách bằng hàng trăm xe máy mà ít phát thải — mở đầu cho việc thay đổi thói quen đi lại của người Hà Nội từ phương tiện cá nhân sang giao thông công cộng hiện đại, đồng thời gợi nhớ hình ảnh tàu điện "leng keng" của Hà Nội xưa.' },
     ],
   },
 
@@ -920,6 +942,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Những dẫn chứng nào cho thấy Hà Nội là trung tâm giáo dục - đào tạo lớn nhất cả nước?', a: 'Hà Nội tập trung nhiều trường đại học, học viện, viện nghiên cứu nhất nước; quy mô trường lớp phổ thông thuộc hàng lớn nhất; học sinh Thủ đô liên tục dẫn đầu kỳ thi học sinh giỏi quốc gia và có mặt trong các đội tuyển Olympic quốc tế; đồng thời là nơi đi đầu thí điểm các đổi mới giáo dục.' },
       { q: 'Theo em, học sinh lớp 9 tiếp nối truyền thống hiếu học của Hà Nội bằng cách nào thiết thực nhất?', a: 'Học thực chất và trung thực: chuẩn bị bài, chủ động hỏi - đáp, không quay cóp; chọn hướng học tập phù hợp năng lực khi phân luồng sau lớp 9; tham gia hoạt động tìm hiểu di sản, giúp bạn cùng tiến. Truyền thống khoa bảng được viết tiếp bằng việc học tử tế mỗi ngày chứ không phải bằng lời tự hào suông.' },
+      { q: 'Hãy nối truyền thống khoa bảng xưa với giáo dục Hà Nội hôm nay thành một mạch liên tục.', a: 'Năm 1070 nhà Lý dựng Văn Miếu, năm 1076 lập Quốc Tử Giám — trường đại học đầu tiên của nước ta; 82 bia tiến sĩ lưu danh người đỗ đạt và đề cao "hiền tài là nguyên khí quốc gia". Mạch hiếu học ấy chảy đến nay: Hà Nội là trung tâm giáo dục - đào tạo lớn nhất cả nước, dẫn đầu thi học sinh giỏi quốc gia, đi đầu đổi mới theo Chương trình GDPT 2018 và chuyển đổi số. Truyền thống không phải quá khứ đóng khung mà được viết tiếp bằng việc học hôm nay của chính các em.' },
     ],
   },
 
@@ -993,6 +1016,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Khởi nghĩa Hai Bà Trưng có ý nghĩa đặc biệt gì khi nói về truyền thống phụ nữ vùng đất Hà Nội?', a: 'Hai Bà Trưng quê ở Mê Linh (nay thuộc Hà Nội) lãnh đạo cuộc khởi nghĩa lớn đầu tiên chống ách đô hộ phương Bắc năm 40 và xưng vương — chứng tỏ từ buổi đầu lịch sử, phụ nữ vùng đất này đã can đảm gánh vác việc nước, mở đầu truyền thống "giặc đến nhà, đàn bà cũng đánh" của dân tộc.' },
       { q: 'Theo em, nét "thanh lịch" của phụ nữ Hà thành xưa còn giá trị với cả nam và nữ ngày nay không? Vì sao?', a: 'Còn nguyên giá trị, vì cốt lõi của thanh lịch là cách ứng xử: nói năng nhã nhặn, ăn mặc phù hợp, cư xử ý tứ, tôn trọng người khác. Đó là phẩm chất của một người văn minh nói chung, không phân biệt giới tính — học sinh nam hay nữ đều nên rèn luyện.' },
+      { q: 'Nêu một việc cụ thể học sinh có thể làm để thực hành bình đẳng giới ngay trong lớp học.', a: 'Ví dụ: phân công công việc trực nhật, hoạt động nhóm không theo định kiến "việc nặng của con trai, việc nhẹ của con gái" mà theo khả năng và sự tự nguyện; nam sinh sẵn sàng làm những việc tỉ mỉ, nữ sinh tham gia các vai trò lãnh đạo nhóm; tôn trọng ý kiến của bạn khác giới, không trêu chọc, miệt thị về giới. Bình đẳng giới bắt đầu từ chính cách bạn nam và bạn nữ tôn trọng, hợp tác với nhau mỗi ngày.' },
     ],
   },
 
@@ -1025,6 +1049,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Em hiểu thế nào về câu "Chẳng thơm cũng thể hoa nhài / Dẫu không thanh lịch cũng người Tràng An"?', a: 'Hoa nhài không rực rỡ nhưng có hương thơm dịu bền; người Tràng An (Thăng Long - Hà Nội) cũng vậy: có thể không phô trương nhưng toát lên sự thanh lịch trong lời nói, cử chỉ. Câu ca vừa khẳng định niềm tự hào về phẩm chất người Hà Nội, vừa nhắc mỗi người phải sống sao cho xứng với danh ấy.' },
       { q: 'Trên xe buýt đông, một bạn mở loa ngoài xem video rất to. Theo "chuẩn" thanh lịch văn minh, em sẽ ứng xử thế nào?', a: 'Bản thân không làm vậy: dùng tai nghe, giữ trật tự nơi công cộng. Với bạn, có thể nhắc nhẹ nhàng, lịch sự ("bạn đeo tai nghe giúp mình nhé, xe đông quá") thay vì gắt gỏng hay quay clip bêu xấu lên mạng — vì cách nhắc nhở cũng phải thanh lịch như điều mình muốn bạn thực hiện.' },
+      { q: 'Vì sao năm 2017 Hà Nội ban hành hai Quy tắc ứng xử, và "thanh lịch số" trên mạng nghĩa là gì?', a: 'Năm 2017, Hà Nội ban hành Quy tắc ứng xử của cán bộ, công chức, viên chức trong cơ quan thành phố và Quy tắc ứng xử nơi công cộng nhằm biến giá trị thanh lịch truyền thống thành những chuẩn mực hành vi cụ thể, giúp xây dựng người Hà Nội văn minh giữa nhịp sống đô thị hiện đại. "Thanh lịch số" là sự nối dài nét ấy lên không gian mạng: bình luận có văn hoá, không nói tục, không chia sẻ tin giả, tôn trọng sự khác biệt — ứng xử đẹp cả ngoài đời lẫn trên Internet.' },
     ],
   },
 
@@ -1062,6 +1087,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Vì sao nói ở Hà Nội "văn hoá nuôi du lịch, du lịch nuôi văn hoá"?', a: 'Sức hút của du lịch Hà Nội đến từ chiều sâu văn hoá: di tích, phố cổ, ẩm thực, lễ hội — đó là "văn hoá nuôi du lịch". Ngược lại, nguồn thu và sự quan tâm từ du lịch tạo kinh phí trùng tu di tích, giúp làng nghề - lễ hội sống được bằng nghề — đó là "du lịch nuôi văn hoá". Hai bên phụ thuộc nhau nên phát triển phải đi đôi với bảo tồn.' },
       { q: 'Một du khách nước ngoài hỏi em nên dành một ngày ở Hà Nội thế nào. Hãy gợi ý lịch trình ngắn và giải thích.', a: 'Ví dụ: sáng viếng Lăng Bác và Hoàng thành Thăng Long (lịch sử); trưa ăn phở hoặc bún chả (ẩm thực); chiều thăm Văn Miếu rồi dạo hồ Gươm - phố cổ (di sản, đời sống); tối thưởng thức múa rối nước hoặc tour đêm di sản và dạo phố đi bộ. Lịch trình gói gọn bốn thế mạnh: di sản, ẩm thực, đời sống phố phường và nghệ thuật truyền thống.' },
+      { q: 'Là "đại sứ du lịch nhỏ tuổi", em có thể làm gì để góp phần quảng bá hình ảnh đẹp của Hà Nội?', a: 'Ứng xử thân thiện, sẵn lòng chỉ đường, giúp đỡ du khách; giữ gìn vệ sinh, cảnh quan tại điểm tham quan và không tiếp tay cho nạn "chặt chém", chèo kéo; trau dồi ngoại ngữ và kiến thức về di sản để có thể giới thiệu về thành phố; chia sẻ hình ảnh đẹp của Hà Nội trên mạng xã hội một cách trung thực, văn minh. Mỗi học sinh cư xử đẹp chính là một "tấm danh thiếp sống" của Thủ đô trong mắt bạn bè quốc tế.' },
     ],
   },
 
@@ -1099,6 +1125,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Định hướng "thành phố quay mặt ra sông Hồng" khác gì so với hiện trạng và mang lại lợi ích gì?', a: 'Lâu nay đô thị phát triển chủ yếu phía nam sông, vùng ven sông bị xem là "mặt sau" với bãi bồi, dân cư tự phát. Quy hoạch mới coi sông Hồng là trục cảnh quan trung tâm: hai bên sông được tổ chức công viên, không gian công cộng, đô thị hiện đại nhìn ra sông — tận dụng cảnh quan, cân bằng phát triển hai bờ và tạo bản sắc đô thị sông nước.' },
       { q: 'Vì sao Hà Nội cần các đô thị vệ tinh thay vì tiếp tục dồn mọi thứ vào nội đô?', a: 'Nội đô đã quá tải về dân cư, giao thông, trường học, bệnh viện. Đô thị vệ tinh (Hoà Lạc về khoa học - giáo dục, Sơn Tây về văn hoá - du lịch...) chia sẻ bớt chức năng và dân số, kéo giãn phát triển ra ngoài, giúp nội đô giảm tải để bảo tồn khu phố cổ, đồng thời tạo động lực phát triển cho các vùng xa trung tâm.' },
+      { q: 'Em hiểu tầm nhìn "Văn hiến - Văn minh - Hiện đại" của Hà Nội đến năm 2050 như thế nào?', a: 'Đó là mục tiêu phát triển hài hoà ba mặt: VĂN HIẾN — giữ gìn và phát huy bề dày nghìn năm văn hoá, di sản; VĂN MINH — xây dựng con người, nếp sống đô thị văn minh, thanh lịch; HIỆN ĐẠI — hạ tầng, kinh tế, công nghệ tiên tiến, chuyển đổi xanh và số, sánh vai thủ đô các nước phát triển. Tầm nhìn này cho thấy Hà Nội muốn tiến lên hiện đại mà không đánh mất bản sắc, để vừa phát triển vừa giữ được "hồn" của Thủ đô.' },
     ],
   },
 
@@ -1181,6 +1208,7 @@ export const S9GDDP_LESSONS = {
     examples: [
       { q: 'Nhóm em được giao tham quan Văn Miếu - Quốc Tử Giám. Hãy nêu 3 câu hỏi tìm hiểu nên chuẩn bị trước.', a: 'Ví dụ: (1) Khuê Văn Các có ý nghĩa biểu tượng gì và vì sao được chọn làm biểu tượng của Hà Nội? (2) Bia tiến sĩ ghi những thông tin gì và vì sao được UNESCO ghi danh Di sản tư liệu? (3) Vì sao ngày nay không nên xoa đầu rùa đội bia — hành động đó ảnh hưởng thế nào đến hiện vật?' },
       { q: 'Sau buổi tham quan nhà tù Hoả Lò, sản phẩm thu hoạch của nhóm cần có những phần nào để đạt yêu cầu?', a: 'Ba phần: (1) thông tin chính xác về di tích — lịch sử xây dựng, các nhân vật, sự kiện gắn với nơi này; (2) cảm nhận chân thật của các thành viên sau khi tận mắt thấy xà lim, hiện vật; (3) một đề xuất cụ thể, ví dụ cách giới thiệu tour "Đêm thiêng liêng" tới các bạn trẻ hoặc ý tưởng giữ gìn, quảng bá di tích.' },
+      { q: 'Vì sao quy trình tham quan cần cả bước "tìm hiểu trước" và bước "thu hoạch", chứ không chỉ đi xem?', a: 'Nếu không tìm hiểu trước, đến nơi em sẽ chỉ "cưỡi ngựa xem hoa", không biết nên quan sát gì, hỏi gì cho đáng. Nếu không có bước thu hoạch (viết bài, làm video, poster, đề xuất bảo tồn), những điều thấy được sẽ nhanh quên và chuyến đi thành đi chơi đơn thuần. Tìm hiểu trước giúp tham quan có mục tiêu, còn thu hoạch giúp biến trải nghiệm thành kiến thức và cảm xúc bền vững — đó mới là học qua trải nghiệm thực sự.' },
     ],
   },
 

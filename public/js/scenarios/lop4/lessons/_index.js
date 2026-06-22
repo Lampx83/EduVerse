@@ -3,7 +3,7 @@
 // ============================================================
 let mod_toan = {}, mod_tv = {}, mod_ta = {}, mod_kh = {}, mod_lsdl = {};
 let mod_gdtc = {}, mod_hdtn = {}, mod_cn = {};
-let mod_dd = {}, mod_an = {}, mod_mt = {};
+let mod_dd = {}, mod_an = {}, mod_mt = {}, mod_tin = {};
 
 try { ({ P4_TOAN_LESSONS: mod_toan } = await import('./toan.js')); } catch {}
 try { ({ P4TV_LESSONS:    mod_tv   } = await import('./tieng-viet.js')); } catch {}
@@ -16,6 +16,7 @@ try { ({ P4CN_LESSONS:    mod_cn   } = await import('./cong-nghe.js')); } catch 
 try { ({ P4DD_LESSONS:    mod_dd   } = await import('./dao-duc.js')); } catch {}
 try { ({ P4AN_LESSONS:    mod_an   } = await import('./am-nhac.js')); } catch {}
 try { ({ P4MT_LESSONS:    mod_mt   } = await import('./my-thuat.js')); } catch {}
+try { ({ P4TIN_LESSONS:   mod_tin  } = await import('./tin-hoc.js')); } catch {}
 
 export const LOP4_LESSONS = {
   ...(mod_toan || {}),
@@ -29,4 +30,5 @@ export const LOP4_LESSONS = {
   ...(mod_dd   || {}),
   ...(mod_an   || {}),
   ...(mod_mt   || {}),
+  ...(mod_tin  || {}),
 };

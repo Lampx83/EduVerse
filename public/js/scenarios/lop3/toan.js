@@ -670,6 +670,24 @@ export const P3_TOAN_WEEKS = [
       'Sai — 32 là em lấy 36 − 4, nhưng gấp 4 lần phải chia.',
       'Sai — 12 không đúng, hãy chia 36 cho 4.',
     ]),
+    Q('Tính giá trị biểu thức: 5 + 3 × 4 = ?', ['17', '32', '20', '12'], 0, 'Nhân trước: 3 × 4 = 12; rồi cộng: 5 + 12 = 17.', [
+      'Đúng — trong biểu thức có cả nhân và cộng thì nhân trước: 3 × 4 = 12, sau đó 5 + 12 = 17.',
+      'Sai — 32 là em cộng 5 + 3 = 8 trước rồi nhân 8 × 4, nhưng phải nhân trước cộng sau.',
+      'Sai — 20 là em lấy 5 × 4, bỏ sót số 3 trong biểu thức.',
+      'Sai — 12 mới là 3 × 4, em quên cộng thêm 5.',
+    ]),
+    Q('Tính giá trị biểu thức: 24 : 4 + 2 = ?', ['8', '4', '6', '12'], 0, 'Chia trước: 24 : 4 = 6; rồi cộng: 6 + 2 = 8.', [
+      'Đúng — chia trước rồi cộng sau: 24 : 4 = 6, sau đó 6 + 2 = 8.',
+      'Sai — 4 là em lấy 24 : (4 + 2) = 24 : 6, nhưng không có ngoặc thì chia trước.',
+      'Sai — 6 mới là 24 : 4, em quên cộng thêm 2.',
+      'Sai — 12 không đúng, hãy chia 24 cho 4 trước rồi mới cộng 2.',
+    ]),
+    Q('Tính giá trị biểu thức có dấu ngoặc: (15 − 7) × 2 = ?', ['16', '1', '13', '8'], 0, 'Trong ngoặc trước: 15 − 7 = 8; rồi nhân: 8 × 2 = 16.', [
+      'Đúng — luôn tính trong ngoặc trước: 15 − 7 = 8, sau đó nhân 8 × 2 = 16.',
+      'Sai — 1 là em lấy 15 − 7 × 2 = 15 − 14, nhưng có ngoặc nên trừ trước.',
+      'Sai — 13 không đúng, hãy tính phép trừ trong ngoặc trước.',
+      'Sai — 8 mới là kết quả trong ngoặc 15 − 7, em quên nhân với 2.',
+    ]),
   ]),
 
   M(18, 'Ôn tập học kì 1', [
@@ -748,6 +766,18 @@ export const P3_TOAN_WEEKS = [
       'Đúng — kéo dài thêm thì cộng: 4 + 3 = 7 cm.',
       'Sai — 34 là em viết liền hai số, hãy cộng 4 + 3.',
       'Sai — 12 là 4 × 3, nhưng kéo dài thêm phải cộng.',
+    ]),
+    Q('Điểm O ở giữa hai điểm A và B khi nào?', ['A, O, B thẳng hàng và O nằm giữa A với B', 'O nằm ngoài đoạn AB', 'O trùng với A', 'A, O, B không thẳng hàng'], 0, 'Điểm ở giữa: ba điểm thẳng hàng và điểm đó nằm giữa hai điểm kia.', [
+      'Đúng — điểm O ở giữa A và B khi ba điểm A, O, B thẳng hàng và O nằm trong khoảng giữa A với B.',
+      'Sai — nếu O nằm ngoài đoạn AB thì O không thể ở giữa A và B.',
+      'Sai — nếu O trùng với A thì O chính là điểm A, không phải ở giữa.',
+      'Sai — muốn O ở giữa thì ba điểm phải thẳng hàng, không thẳng hàng thì không có điểm giữa.',
+    ]),
+    Q('Đoạn thẳng AB dài 8 cm, M là trung điểm. Đoạn AM dài?', ['4 cm', '8 cm', '16 cm', '2 cm'], 0, 'Trung điểm chia đoạn thành hai phần bằng nhau: 8 : 2 = 4 cm.', [
+      'Đúng — trung điểm M chia AB thành hai phần bằng nhau, nên AM = 8 : 2 = 4 cm.',
+      'Sai — 8 cm là cả đoạn AB, trung điểm chỉ lấy nửa đoạn.',
+      'Sai — 16 cm là em lấy 8 × 2, nhưng trung điểm phải chia đôi.',
+      'Sai — 2 cm là em chia 8 cho 4, nhưng trung điểm chỉ chia đoạn làm 2 phần.',
     ]),
   ]),
 
@@ -866,6 +896,24 @@ export const P3_TOAN_WEEKS = [
       'Sai — 900 là 30 × 30, đó là diện tích chứ không phải chu vi.',
       'Sai — 90 là 30 × 3, mới có 3 cạnh.',
     ]),
+    Q('Diện tích của một hình là gì?', ['Số đo phần mặt bên trong hình', 'Độ dài đường bao quanh hình', 'Số cạnh của hình', 'Số đỉnh của hình'], 0, 'Diện tích là số đo phần mặt nằm bên trong hình.', [
+      'Đúng — diện tích cho biết độ lớn phần mặt nằm bên trong hình.',
+      'Sai — độ dài đường bao quanh hình là chu vi, không phải diện tích.',
+      'Sai — số cạnh là đặc điểm của hình, không phải diện tích.',
+      'Sai — số đỉnh là đặc điểm của hình, không phải diện tích.',
+    ]),
+    Q('Hình chữ nhật dài 6 cm, rộng 4 cm. Diện tích?', ['24 cm²', '20 cm²', '10 cm²', '24 cm'], 0, 'Diện tích = dài × rộng = 6 × 4 = 24 cm².', [
+      'Đúng — diện tích hình chữ nhật = dài × rộng = 6 × 4 = 24 cm².',
+      'Sai — 20 cm² là chu vi (6 + 4) × 2, đề hỏi diện tích phải nhân hai cạnh.',
+      'Sai — 10 cm² là em cộng 6 + 4, nhưng diện tích phải nhân.',
+      'Sai — số đúng là 24 nhưng đơn vị diện tích là cm² chứ không phải cm.',
+    ]),
+    Q('Hình vuông cạnh 5 cm có diện tích?', ['25 cm²', '20 cm²', '10 cm²', '25 cm'], 0, 'Diện tích = cạnh × cạnh = 5 × 5 = 25 cm².', [
+      'Đúng — diện tích hình vuông = cạnh × cạnh = 5 × 5 = 25 cm².',
+      'Sai — 20 cm² là chu vi 5 × 4, đề hỏi diện tích phải nhân cạnh với cạnh.',
+      'Sai — 10 cm² là em lấy 5 × 2, nhưng diện tích là cạnh nhân cạnh.',
+      'Sai — số đúng là 25 nhưng đơn vị diện tích là cm² chứ không phải cm.',
+    ]),
   ]),
 
   M(23, 'Số có 4 chữ số – So sánh số', [
@@ -904,6 +952,18 @@ export const P3_TOAN_WEEKS = [
       'Sai — 6991 nhỏ hơn 6999, không phải số liền sau.',
       'Sai — 6998 là số liền trước 6999, không phải liền sau.',
       'Sai — 7001 cách 6999 tới 2 đơn vị, không phải liền sau.',
+    ]),
+    Q('Làm tròn số 47 đến hàng chục được số nào?', ['50', '40', '47', '60'], 0, 'Đơn vị 7 ≥ 5 nên làm tròn lên: 47 → 50.', [
+      'Đúng — chữ số hàng đơn vị là 7 (≥ 5) nên làm tròn lên thành 50.',
+      'Sai — 40 là làm tròn xuống, nhưng đơn vị 7 ≥ 5 phải làm tròn lên.',
+      'Sai — 47 chưa được làm tròn, hãy xét chữ số hàng đơn vị.',
+      'Sai — 60 là làm tròn quá xa, 47 gần 50 hơn nên tròn về 50.',
+    ]),
+    Q('Làm tròn số 3 280 đến hàng nghìn được số nào?', ['3000', '4000', '3200', '3300'], 0, 'Chữ số hàng trăm là 2 (< 5) nên làm tròn xuống: 3 280 → 3000.', [
+      'Đúng — chữ số hàng trăm là 2 (< 5) nên làm tròn xuống còn 3000.',
+      'Sai — 4000 là làm tròn lên, nhưng hàng trăm 2 < 5 phải làm tròn xuống.',
+      'Sai — 3200 là làm tròn đến hàng trăm, đề yêu cầu đến hàng nghìn.',
+      'Sai — 3300 là làm tròn đến hàng trăm và còn sai, đề yêu cầu hàng nghìn.',
     ]),
   ]),
 

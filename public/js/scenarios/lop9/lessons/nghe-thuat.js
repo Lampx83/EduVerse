@@ -68,6 +68,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Xây hợp âm G7.', a: 'Hợp âm Son trưởng: Son — Si — Rê. Thêm âm bậc 7 hạ nửa cung: Pha. Vậy G7 = Son — Si — Rê — Pha (G — B — D — F). Đây là hợp âm 7 át của giọng Đô trưởng, thường giải quyết về C.' },
       { q: 'Nghe một đoạn nhạc jazz thấy êm, mơ màng — nhiều khả năng đang dùng loại hợp âm 7 nào?', a: 'Nhiều khả năng là hợp âm 7 trưởng (maj7) hoặc 7 thứ (m7) — hai loại có màu âm êm ái, đặc trưng của jazz ballad; còn hợp âm 7 át nghe căng hơn.' },
+      { q: 'So sánh số nốt của hợp âm ba và hợp âm 7; vì sao hợp âm 7 hay đứng trước hợp âm chủ?', a: 'Hợp âm ba có 3 nốt (âm 1 — 3 — 5), hợp âm 7 có 4 nốt (thêm âm bậc 7). Âm bậc 7 tạo độ "căng" muốn được giải quyết, nên hợp âm 7 át (như G7) thường đứng ngay trước hợp âm chủ (C) để dẫn về một cách trọn vẹn — đây là kết bài kinh điển V7 → I.' },
     ],
   },
 
@@ -111,6 +112,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Viết vòng I — V — vi — IV ở giọng Son trưởng.', a: 'Giọng Son trưởng: I = G, V = D, vi = Em, IV = C. Vòng hợp âm: G — D — Em — C.' },
       { q: 'Vòng C — F — G — C thuộc dạng vòng nào? Cảm giác kết thúc ra sao?', a: 'Đây là vòng I — IV — V — I. Kết bằng V về I (G về C) tạo kết trọn vẹn, cảm giác bài hát khép lại chắc chắn, thoả mãn.' },
+      { q: 'Nghe vòng F — G — Am ở giọng Đô trưởng — quy về số La Mã và giải thích màu cảm xúc.', a: 'F = IV, G = V, Am = vi. Vòng IV — V — vi: đi từ IV mở rộng, qua V căng lên, nhưng thay vì về I lại "lừa" sang vi (La thứ) — gọi là kết gãy (deceptive cadence), tạo cảm giác chưa trọn, man mác buồn, rất hay dùng cuối đoạn để kéo dài cảm xúc.' },
     ],
   },
 
@@ -133,6 +135,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Xếp các nhạc sĩ sau vào đúng thời kỳ: Bach, Mozart, Chopin, Vivaldi.', a: 'Baroque: Bach, Vivaldi. Cổ điển Vienna: Mozart. Lãng mạn: Chopin. Có thể nhớ theo trục thời gian: Baroque (1600 — 1750) → Cổ điển (1750 — 1820) → Lãng mạn (thế kỷ 19).' },
       { q: 'Phân biệt giao hưởng và concerto.', a: 'Giao hưởng viết cho cả dàn nhạc cùng diễn tấu, thường 4 chương. Concerto có một nhạc cụ độc tấu nổi bật (piano, violin...) đối đáp với dàn nhạc, thường 3 chương — như cuộc trò chuyện giữa "nhân vật chính" và "tập thể".' },
+      { q: 'Vì sao Beethoven được coi là "cầu nối" giữa thời Cổ điển và Lãng mạn?', a: 'Beethoven kế thừa hình thức cân đối, chặt chẽ của thời Cổ điển Vienna (sonata, giao hưởng 4 chương) nhưng đẩy cảm xúc cá nhân và quy mô lên mức chưa từng có — như Giao hưởng số 9 có thêm hợp xướng. Chính sự bứt phá đề cao cảm xúc đó mở đường cho thời Lãng mạn thế kỷ 19.' },
     ],
   },
 
@@ -154,6 +157,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Điểm khác biệt lớn nhất giữa cách biểu diễn jazz và nhạc cổ điển là gì?', a: 'Nhạc cổ điển trình diễn trung thành với văn bản nhạc đã viết sẵn; jazz đề cao ngẫu hứng — nghệ sĩ ứng tác giai điệu mới ngay trên sân khấu dựa trên vòng hợp âm, nên mỗi buổi diễn là duy nhất.' },
       { q: 'Vì sao nói hợp âm 7 là "gia vị" của jazz?', a: 'Hoà thanh jazz hiếm khi dùng hợp âm ba trơn; hầu hết các hợp âm được mở rộng thành 7, 9, 13... tạo màu âm dày, sang và hơi "lơ lửng" — chính là chất riêng khiến ta nhận ra jazz ngay khi nghe.' },
+      { q: '"Swing" và "blue note" đóng góp gì vào màu sắc đặc trưng của jazz?', a: 'Swing là cách chơi tiết tấu lắc lư, không đều tăm tắp, khiến nhạc "nhún nhảy" tự nhiên thay vì cứng nhắc. Blue note là những nốt hơi "non" (giáng nhẹ) so với gam trưởng, vay từ blues, tạo màu buồn da diết. Hai yếu tố này kết hợp với ngẫu hứng làm nên chất jazz không thể nhầm lẫn.' },
     ],
   },
 
@@ -175,6 +179,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Nghe một ca khúc, làm sao nhận ra đâu là điệp khúc (chorus)?', a: 'Điệp khúc thường là đoạn được lặp lại nhiều lần nhất, giai điệu cao và bắt tai nhất, thường chứa tên bài hát, và phối khí dày hơn phiên khúc — cảm giác "bùng nổ" rõ rệt.' },
       { q: 'Vì sao Michael Jackson được gọi là "Ông hoàng nhạc pop"?', a: 'Ông kết hợp giọng hát, vũ đạo (như bước moonwalk) và MV thành màn trình diễn tổng thể chưa từng có; album Thriller (1982) thành công vang dội toàn cầu, nâng tầm chuẩn mực sản xuất của cả ngành công nghiệp âm nhạc.' },
+      { q: 'Phân biệt vai trò của verse, chorus và bridge trong một bản pop.', a: 'Verse (phiên khúc) kể chuyện, dẫn dắt, giai điệu vừa phải và lời thường đổi mỗi lần. Chorus (điệp khúc) là cao trào bắt tai nhất, lặp lại nhiều lần và hay chứa tên bài. Bridge (đoạn chuyển) là mảng tương phản đặt trước điệp khúc cuối, tạo bất ngờ rồi đưa cảm xúc lên đỉnh — ba phần phối hợp giúp bài không nhàm.' },
     ],
   },
 
@@ -196,6 +201,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Kể tên đội hình nhạc cụ chuẩn của một ban nhạc rock và vai trò từng vị trí.', a: 'Hát chính (truyền tải ca từ, làm chủ sân khấu), ghi-ta lead (chơi giai điệu, solo), ghi-ta đệm (chơi hợp âm làm nền), bass (giữ nền trầm kết nối hoà thanh với tiết tấu), trống (giữ nhịp, tạo năng lượng).' },
       { q: 'Rock and roll thập niên 1950 chịu ảnh hưởng từ những dòng nhạc nào?', a: 'Từ blues và R&B của người Mỹ gốc Phi (cấu trúc 12 ô nhịp, blue note) kết hợp với nhạc country của người Mỹ da trắng — Elvis Presley chính là người hoà trộn hai dòng chảy này thành cơn sốt toàn cầu.' },
+      { q: 'Vì sao ghi-ta điện được coi là "linh hồn" của rock?', a: 'Tiếng distortion (méo tiếng) của ghi-ta điện vừa dày vừa gai góc, tạo năng lượng và sự dữ dội đặc trưng của rock; các đoạn solo cho nghệ sĩ phô diễn kỹ thuật và cá tính. Chỉ cần nghe vài giây tiếng ghi-ta điện méo tiếng cùng trống mạnh là nhận ra ngay đây là rock chứ không phải pop hay jazz.' },
     ],
   },
 
@@ -217,6 +223,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Phân biệt vai trò của MC và DJ trong văn hoá hip-hop.', a: 'DJ phụ trách phần nhạc: chọn đĩa, cắt ghép, kéo dài đoạn break, scratch tạo hiệu ứng. MC (rapper) phụ trách phần lời: đọc rap có vần điệu trên nền nhạc của DJ và khuấy động khán giả.' },
       { q: 'Vì sao gieo vần trong rap tiếng Việt vừa khó vừa thú vị?', a: 'Tiếng Việt có 6 thanh điệu, vần phải khớp cả âm lẫn thanh mới nghe "mượt"; nhưng chính hệ thống thanh điệu phong phú lại cho phép tạo những chuỗi vần đa âm tiết độc đáo mà nhiều ngôn ngữ khác không có.' },
+      { q: 'Trong rap, "flow" là gì và khác "beat" như thế nào?', a: 'Beat là phần nhạc nền lặp theo chu kỳ do producer tạo ra — cái khung tiết tấu cố định. Flow là cách rapper "lướt" lời trên beat: tốc độ nhả chữ, chỗ ngắt nghỉ, cách dồn chữ. Cùng một beat, hai rapper có flow khác nhau sẽ cho ra hai bài nghe rất khác — flow là dấu ấn cá nhân của rapper.' },
     ],
   },
 
@@ -240,6 +247,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Phân biệt công việc của producer và DJ.', a: 'Producer sáng tạo bản nhạc trong phòng thu: viết giai điệu, thiết kế âm thanh, mix. DJ biểu diễn trực tiếp: chọn bài, ghép nối các bản nhạc liền mạch, điều khiển năng lượng đám đông. Một người có thể làm cả hai nghề.' },
       { q: 'Đoạn nhạc dồn dập tăng dần rồi bùng nổ cực mạnh — hai phần đó gọi là gì?', a: 'Phần tăng dần độ căng là build-up, khoảnh khắc bùng nổ ngay sau đó là drop — cấu trúc cảm xúc đặc trưng nhất của EDM.' },
+      { q: 'Một bản nhạc điện tử nhịp 4/4 đều ở khoảng 124 BPM, ấm và groovy — nhiều khả năng thuộc nhánh nào? Vì sao?', a: 'Nhiều khả năng là house — nhánh ra đời ở Chicago thập niên 1980, đặc trưng nhịp 4/4 đều khoảng 120 — 128 BPM, ấm và groovy. Nếu lạnh và máy móc hơn thì là techno; nếu giai điệu bay bổng và nhanh hơn (130 — 140 BPM) thì là trance.' },
     ],
   },
 
@@ -261,6 +269,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Một bài hát có ghi-ta điện distortion, trống mạnh, đoạn solo dài — thể loại gì? Nếu thay bằng beat máy, có rap — thể loại gì?', a: 'Trường hợp 1 là rock (đặc trưng ghi-ta điện méo tiếng và solo). Trường hợp 2 là hip-hop/rap (beat điện tử lặp chu kỳ và lời đọc có vần).' },
       { q: 'Vòng Am — F — C — G thuộc dạng bậc nào ở giọng Đô trưởng?', a: 'Quy về bậc: Am = vi, F = IV, C = I, G = V. Đây là vòng vi — IV — I — V — chính là vòng "pop" I — V — vi — IV nhưng bắt đầu từ vi, màu buồn hơn, rất phổ biến trong ballad.' },
+      { q: 'Lập "hồ sơ phân tích" nhanh cho một bản pop ở giọng Đô trưởng dùng vòng C — G — Am — F: hãy chỉ ra thể loại, vòng bậc và đề xuất dịch giọng nếu bài quá cao.', a: 'Thể loại: pop (giai điệu bắt tai, cấu trúc verse — chorus). Vòng bậc: I — V — vi — IV, "công thức hit" kinh điển. Nếu bài quá cao so với giọng người hát, dịch xuống ví dụ 2 bán cung về giọng Bb trưởng: vòng thành Bb — F — Gm — Eb, giai điệu giữ nguyên chỉ hạ độ cao tổng thể.' },
     ],
   },
 
@@ -307,6 +316,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Câu mẫu: Hợp âm Dm7 gồm những nốt nào?', a: 'Dm = Rê — Pha — La. Thêm âm bậc 7 thứ: Đô. Vậy Dm7 = Rê — Pha — La — Đô (D — F — A — C).' },
       { q: 'Câu mẫu: Dòng nhạc nào ra đời tại Bronx, New York thập niên 1970 với 4 yếu tố rap, DJ, breakdance, graffiti?', a: 'Hip-hop. Từ khoá "Bronx", "thập niên 1970" và "4 yếu tố" đều trỏ thẳng về văn hoá hip-hop.' },
+      { q: 'Câu mẫu: Dịch vòng C — G — Am — F (giọng Đô trưởng) lên giọng Rê trưởng.', a: 'Nâng đều mọi hợp âm 1 cung (2 bán cung): C → D, G → A, Am → Bm, F → G. Vòng mới ở giọng Rê trưởng: D — A — Bm — G. Mẹo đếm bằng số La Mã: I — V — vi — IV giữ nguyên bậc, chỉ đổi giọng nền.' },
     ],
   },
 
@@ -330,6 +340,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'So sánh điểm mạnh của mỹ thuật Hy Lạp và La Mã.', a: 'Hy Lạp mạnh về cái đẹp lý tưởng: điêu khắc cơ thể hoàn mỹ, đền đài tỉ lệ hài hoà. La Mã mạnh về kỹ thuật và quy mô: vòm cuốn, bê tông, công trình công cộng khổng lồ (Colosseum, Pantheon) và chân dung tả thực.' },
       { q: 'Nhìn một toà nhà có hàng cột đầu xoắn ốc hai bên — đó là thức cột gì?', a: 'Thức cột Ionic — nhận diện bằng hai cuộn xoắn ốc đối xứng ở đầu cột; thanh mảnh hơn Doric và ít cầu kỳ hơn Corinthian.' },
+      { q: 'Vì sao đền Pantheon của La Mã đứng vững gần 2000 năm dù mái vòm rất lớn?', a: 'Người La Mã làm chủ kỹ thuật mái vòm và bê tông La Mã: trọng lượng được phân tán đều theo dạng vòm, lớp bê tông phía đỉnh nhẹ dần và có ô tròn lấy sáng (oculus) giảm tải. Chính tư duy kỹ thuật — công năng (chứ không chỉ cái đẹp lý tưởng như Hy Lạp) giúp công trình bền vững tới nay.' },
     ],
   },
 
@@ -377,6 +388,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Chiaroscuro là gì và ai là người tiêu biểu cho kỹ thuật này?', a: 'Chiaroscuro là kỹ thuật tương phản sáng — tối mạnh để tạo khối và kịch tính. Caravaggio là người đẩy kỹ thuật này tới cực đoan, ảnh hưởng cả thế hệ hoạ sĩ Baroque trong đó có Rembrandt.' },
       { q: 'Một bức tranh vẽ quý cô đu xích đu giữa vườn hoa, màu hồng phấn mơ màng — phong cách gì, thế kỷ nào?', a: 'Rococo, thế kỷ 18 — đề tài vui chơi quý tộc, màu phấn nhẹ và không khí tình tứ là dấu hiệu nhận biết; gợi nhớ bức Chiếc xích đu của Fragonard.' },
+      { q: 'Bức Thiếu nữ đeo hoa tai ngọc trai của Vermeer thuộc thời kỳ nào? Nêu một đặc điểm khớp với phong cách đó.', a: 'Thuộc thời Baroque (Hà Lan, thế kỷ 17). Đặc điểm khớp: ánh sáng dịu rọi từ một phía làm gương mặt và viên ngọc trai bừng lên trên nền tối — đúng tinh thần dùng tương phản sáng — tối để tạo chiều sâu và điểm nhấn của hội hoạ Baroque, dù Vermeer tiết chế nhẹ nhàng hơn Caravaggio.' },
     ],
   },
 
@@ -400,6 +412,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Câu tổng hợp: Bach và Caravaggio có điểm chung gì về thời đại nghệ thuật?', a: 'Cả hai đều thuộc thời Baroque (thế kỷ 17 — nửa đầu 18): Bach là đỉnh cao âm nhạc Baroque với phức điệu cầu kỳ, Caravaggio là người mở đường hội hoạ Baroque với ánh sáng kịch tính — cùng tinh thần mãnh liệt, giàu trang trí của thời đại.' },
       { q: 'Sắp xếp theo thứ tự thời gian: Rococo, Hy Lạp cổ, Baroque, Phục Hưng.', a: 'Hy Lạp cổ (trước Công nguyên) → Phục Hưng (thế kỷ 14 — 16) → Baroque (thế kỷ 17) → Rococo (thế kỷ 18).' },
+      { q: 'Câu tổng hợp liên môn: hãy nối một kiệt tác âm nhạc với một kiệt tác hội hoạ cùng thời kỳ và giải thích điểm chung.', a: 'Ví dụ: bộ concerto Bốn mùa của Vivaldi (âm nhạc Baroque) và bức Tuần tra đêm của Rembrandt (hội hoạ Baroque) — cùng thế kỷ 17, cùng tinh thần Baroque: giàu trang trí, kịch tính, tương phản mạnh (Vivaldi tương phản nhanh — chậm, sáng — tối của các mùa; Rembrandt tương phản sáng — tối của ánh sáng). Cả hai cho thấy nghệ thuật các ngành cùng thở một bầu không khí thời đại.' },
     ],
   },
 
@@ -447,6 +460,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Lập thể khác phối cảnh Phục Hưng ở điểm cốt lõi nào?', a: 'Phối cảnh Phục Hưng tái hiện thế giới từ MỘT điểm nhìn cố định như mắt người đứng yên. Lập thể ghép NHIỀU góc nhìn đồng thời lên một mặt phẳng — như ta đi vòng quanh vật thể rồi tổng hợp mọi mặt của nó vào một hình ảnh.' },
       { q: 'Vì sao Picasso chỉ dùng đen — trắng — xám cho Guernica?', a: 'Gam màu tang tóc gợi ảnh báo chí thời sự về vụ ném bom, tước bỏ mọi vẻ đẹp trang trí để nỗi đau hiện lên trần trụi — màu sắc rực rỡ sẽ làm loãng tiếng thét phản chiến của tác phẩm.' },
+      { q: 'Phân biệt Lập thể phân tích và Lập thể tổng hợp.', a: 'Lập thể phân tích (1909 — 1912): "đập vỡ" đối tượng thành vô số mảng nhỏ, màu trầm nâu — xám, gần như trừu tượng và khó nhận ra vật. Lập thể tổng hợp (từ 1912): ghép thêm vật liệu thật như mẩu báo, giấy dán tường vào tranh (kỹ thuật collage), hình đơn giản hơn và màu sắc tươi trở lại. Một bên phân rã, một bên lắp ghép.' },
     ],
   },
 
@@ -470,6 +484,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Vì sao Kandinsky hay so sánh hội hoạ trừu tượng với âm nhạc?', a: 'Vì âm nhạc thuần khiết không mô tả vật thể nào mà vẫn truyền cảm xúc mãnh liệt — Kandinsky tin màu sắc và đường nét cũng có khả năng đó: màu vang lên như nốt nhạc, bố cục như bản giao hưởng, nên ông đặt tên tranh là Composition.' },
       { q: 'Hình ảnh đồng hồ mềm chảy trong tranh Dali nói lên điều gì?', a: 'Trong Sự dai dẳng của ký ức, đồng hồ — biểu tượng của thời gian chính xác — bị mềm nhũn cho thấy trong giấc mơ và ký ức, thời gian co giãn chủ quan, không còn tuân theo máy móc; đó chính là tinh thần Siêu thực: dùng hình ảnh phi lý nói điều có thật về tâm trí.' },
+      { q: 'Cho hai bức: (A) toàn những ô vuông đỏ — vàng — xanh và đường kẻ đen, (B) một con tàu lao ra từ lò sưởi vẽ tỉ mỉ như thật. Mỗi bức thuộc trường phái nào?', a: '(A) là Trừu tượng hình học — kiểu Mondrian: chỉ đường thẳng, ô chữ nhật và 3 màu cơ bản, không mô tả vật gì. (B) là Siêu thực — vật vẫn nhận ra nhưng đặt trong tình huống phi lý như mơ. Mẹo: không nhận ra vật → Trừu tượng; nhận ra vật nhưng phi lý → Siêu thực.' },
     ],
   },
 
@@ -493,6 +508,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Vì sao Warhol cố tình lặp lại chân dung Marilyn Monroe hàng chục lần với màu khác nhau?', a: 'Sự nhân bản hàng loạt biến gương mặt minh tinh thành "sản phẩm tiêu dùng" như lon súp — vừa tôn vinh sự nổi tiếng, vừa châm biếm việc truyền thông sao chép hình ảnh con người đến mất cá tính; kỹ thuật in lụa công nghiệp càng tô đậm thông điệp đó.' },
       { q: 'Pop Art khác Trừu tượng (tuần 21) thế nào về thái độ với đời sống thường nhật?', a: 'Trừu tượng quay lưng với hình ảnh đời thường để theo đuổi cảm xúc thuần khiết bằng màu và nét; Pop Art làm ngược lại — ôm lấy hình ảnh thường nhật nhất (hàng hoá, quảng cáo) làm chất liệu trung tâm của nghệ thuật.' },
+      { q: 'Roy Lichtenstein làm gì với khung truyện tranh, và chi tiết "chấm Ben-Day" có vai trò gì?', a: 'Lichtenstein phóng to một khung truyện tranh lên khổ lớn, giữ nguyên nét viền đen đậm và lời thoại trong bong bóng. Chấm Ben-Day là kỹ thuật in chấm li ti của báo chí giá rẻ — ông vẽ tay tỉ mỉ những chấm này, biến thứ "rẻ tiền" của in ấn đại chúng thành tranh treo bảo tàng, buộc người xem nghĩ lại ranh giới giữa nghệ thuật và giải trí.' },
     ],
   },
 
@@ -540,6 +556,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Đổi mới 1986 thay đổi mỹ thuật Việt Nam ở những mặt nào?', a: 'Ba mặt chính: (1) đề tài — phong cách tự do, cá nhân hơn; (2) thị trường — gallery, nhà sưu tập, đấu giá quốc tế hình thành; (3) loại hình — sắp đặt, trình diễn, video art du nhập bên cạnh giá vẽ truyền thống.' },
       { q: 'Việc tranh Đông Dương đạt giá hàng triệu đô-la tại đấu giá quốc tế nói lên điều gì?', a: 'Khẳng định giá trị nghệ thuật của mỹ thuật Việt Nam trong mắt thế giới, thúc đẩy việc sưu tầm — bảo tồn di sản hội hoạ, đồng thời nâng vị thế và giá trị cho cả thế hệ nghệ sĩ Việt đương đại.' },
+      { q: 'Sắp đặt, trình diễn, video art khác tranh giá vẽ truyền thống ở điểm cốt lõi nào, và vì sao chúng du nhập mạnh sau Đổi mới?', a: 'Tranh giá vẽ là một vật phẳng treo tường để ngắm; sắp đặt biến cả không gian thành tác phẩm để khán giả bước vào, trình diễn lấy hành động — cơ thể nghệ sĩ làm tác phẩm trực tiếp, video art dùng hình ảnh động. Sau Đổi mới 1986, mở cửa giao lưu quốc tế giúp các loại hình này du nhập, nghệ sĩ được tự do thử nghiệm hình thức và đối thoại về môi trường, đô thị, toàn cầu hoá.' },
     ],
   },
 
@@ -563,6 +580,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Một nghệ sĩ xếp 1000 chiếc ghế nhựa cũ thành ngọn sóng khổng lồ trong sân triển lãm. Đây là loại hình gì và có thể mang thông điệp nào?', a: 'Đây là nghệ thuật sắp đặt (installation). Thông điệp có thể về ký ức đời sống vỉa hè, sức mạnh của số đông từ những vật tầm thường, hoặc vấn đề rác thải nhựa — người xem được tự liên tưởng, miễn có căn cứ từ chất liệu và hình thức.' },
       { q: 'Vì sao chiếc bồn tiểu của Duchamp được coi là bước ngoặt lịch sử nghệ thuật?', a: 'Vì nó tách giá trị nghệ thuật khỏi tay nghề chế tác: vật thể sản xuất hàng loạt trở thành tác phẩm nhờ Ý TƯỞNG và bối cảnh nghệ sĩ đặt nó vào. Từ đây "nghệ thuật là gì" trở thành câu hỏi mở — nền tảng của nghệ thuật ý niệm và đương đại.' },
+      { q: 'Phân biệt "mỹ thuật hiện đại" và "nghệ thuật đương đại" về mốc thời gian và tinh thần.', a: 'Mỹ thuật hiện đại (modern art) là các trào lưu từ cuối thế kỷ 19 đến giữa thế kỷ 20 — Ấn tượng, Lập thể, Trừu tượng, Siêu thực... vẫn chủ yếu là tranh, tượng. Nghệ thuật đương đại (contemporary art) là nghệ thuật từ khoảng nửa sau thế kỷ 20 đến nay: không giới hạn chất liệu, đề cao ý niệm và thường mời khán giả tham gia. "Hiện đại" đã thành lịch sử, "đương đại" là của thời chúng ta.' },
     ],
   },
 
@@ -586,6 +604,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Vẽ con đường làng hun hút về phía xa — áp dụng luật xa gần thế nào?', a: 'Hai mép đường vẽ hội tụ dần về điểm tụ trên đường chân trời; hàng cây gần to — đậm — rõ, càng xa càng nhỏ — nhạt — ngả lam; đặt đường chân trời ở 1/3 khung tranh và một điểm nhấn (người, xe) ở khoảng 1/3 chiều sâu con đường.' },
       { q: 'Bày tĩnh vật gồm 1 lọ hoa, 2 quả cam, 1 tấm vải — bày sao cho đẹp?', a: 'Đặt lọ hoa (vật chính, cao nhất) lệch khỏi tâm theo quy tắc 1/3; hai quả cam thấp đặt lệch phía đối diện, một quả chồng lấn nhẹ trước chân lọ tạo liên kết; tấm vải buông mềm dẫn mắt vào nhóm mẫu; chiếu sáng từ một phía để khối và bóng đổ rõ ràng.' },
+      { q: 'Bức tĩnh vật của bạn bị chê "phẳng, không có khối". Theo 5 thành phần sáng tối, em hướng dẫn bạn sửa thế nào?', a: 'Quan sát lại từng khối theo 5 thành phần: vùng sáng (gần nguồn sáng nhất), vùng trung gian, vùng tối (bên khuất sáng), phản quang (ánh sáng hắt lại làm rìa vùng tối hơi sáng) và bóng đổ trên mặt bàn. Bạn thường thiếu vùng trung gian và phản quang nên vật trông phẳng — hãy chuyển độ đậm nhạt liền mạch, đừng tô một màu đều, và để bóng đổ đậm nhất ở sát chân vật.' },
     ],
   },
 
@@ -609,6 +628,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Bạn em vẽ chân dung mà trán lúc nào cũng quá ngắn, mắt dính sát đỉnh đầu. Sửa thế nào?', a: 'Bạn mắc lỗi kinh điển: quên rằng đường mắt nằm ở GIỮA chiều cao đầu (tính cả vòm sọ và tóc). Cách sửa: vẽ oval đầu xong kẻ ngay đường ngang chính giữa làm đường mắt, phần trên dành cho trán + tóc sẽ tự nhiên đủ rộng.' },
       { q: 'Muốn chân dung trông buồn man mác, em điều chỉnh những chi tiết nào?', a: 'Hạ nhẹ khoé miệng, mí mắt trên hơi sụp xuống, ánh nhìn chếch xuống dưới, lông mày hơi xuôi và nhíu nhẹ phía đầu trong; thêm đậm nhạt trầm quanh hốc mắt — tổng hoà các chi tiết nhỏ tạo nên tâm trạng.' },
+      { q: 'Dùng "bản đồ tỉ lệ", hãy định vị miệng và tai trên khuôn mặt chính diện.', a: 'Chia đoạn từ chân mũi đến cằm thành 3 phần: miệng nằm ở khoảng 1/3 trên của đoạn này, mép miệng thẳng hàng dọc với tâm hai mắt. Tai kéo dài theo chiều cao từ ngang lông mày xuống ngang chân mũi. Đặt đúng hai mốc này, khuôn mặt lập tức cân đối và "giống người" hơn.' },
     ],
   },
 
@@ -632,6 +652,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Poster ngày hội đọc sách của lớp bị chê "rối mắt": 5 kiểu chữ, 8 màu, chữ rải khắp nơi. Hãy đưa phương án sửa.', a: 'Áp 4 nguyên tắc: rút về 2 kiểu chữ (1 cho tiêu đề, 1 cho nội dung); rút bảng màu còn 1 chủ đạo + 1 nhấn + nền; nhóm thông tin liên quan lại gần nhau (thời gian + địa điểm thành 1 khối); căn mọi khối theo một lưới; phóng to duy nhất tiêu đề "NGÀY HỘI ĐỌC SÁCH" làm điểm tương phản.' },
       { q: 'Thiết kế logo câu lạc bộ bóng rổ nên chọn kiểu chữ và màu thế nào?', a: 'Kiểu chữ sans-serif nét đậm, khoẻ, có thể nghiêng nhẹ tạo cảm giác chuyển động; màu năng lượng cao như đỏ — cam hoặc cam — đen; hình khối đơn giản (quả bóng, vòng rổ cách điệu) để thu nhỏ in lên áo vẫn rõ.' },
+      { q: 'Giải thích nguyên tắc "gần kề" (proximity) qua ví dụ một poster sự kiện.', a: 'Gần kề nghĩa là thông tin liên quan đặt sát nhau thành một nhóm để người xem hiểu nhanh. Trên poster sự kiện, ngày — giờ — địa điểm nên gom thành một khối; tên sự kiện và slogan một khối; logo nhà tài trợ một khối riêng ở dưới. Nếu rải đều các dòng chữ khắp trang, mắt người xem không biết cái nào đi với cái nào — gom nhóm giúp đọc nhanh và gọn gàng.' },
     ],
   },
 
@@ -655,6 +676,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Phân tích vì sao tranh cổ động thường dùng mảng màu phẳng, hình đơn giản, ít chữ.', a: 'Vì tranh cổ động phải truyền thông điệp trong vài giây với người đi đường: hình đơn giản nhận ra từ xa, màu phẳng tương phản mạnh đập vào mắt, khẩu hiệu ngắn đọc xong trước khi bước qua — tất cả phục vụ tốc độ truyền đạt.' },
       { q: 'Lớp em muốn làm tác phẩm tái chế về chủ đề đại dương từ chai nhựa đã dùng. Đề xuất ý tưởng và các bước.', a: 'Ý tưởng ví dụ: cắt đáy chai nhựa xanh — trắng ghép thành đàn cá và con sóng lớn, giữa sóng cài các mảnh rác thật nhỏ để gây ám ảnh. Các bước: thu gom chai ở trường 1 tuần → rửa sạch phơi khô → phân màu → phác bố cục trên tấm bìa lớn → cắt ghép, cố định → viết bảng thông điệp kèm số liệu rác nhựa → trưng bày ở sảnh trường.' },
+      { q: 'So sánh hai khẩu hiệu cho tranh cổ động chống xả rác: "Đừng xả rác" và "Chai nhựa cần 450 năm để phân huỷ — bạn chỉ cần 4 giây để bỏ đúng chỗ". Cái nào hiệu quả hơn, vì sao?', a: 'Câu thứ hai hiệu quả hơn vì cụ thể và tích cực: con số 450 năm gây ấn tượng mạnh, vế "chỉ cần 4 giây" cho người xem một hành động dễ làm thay vì chỉ cấm đoán chung chung. Thông điệp mạnh = cụ thể + tích cực + kêu gọi hành động rõ ràng — đúng nguyên tắc của nghệ thuật vì xã hội.' },
     ],
   },
 
@@ -678,6 +700,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Nghe bản EDM có build-up dồn dập rồi drop bùng nổ (tuần 11) — nếu vẽ lại bằng tranh trừu tượng, em vẽ thế nào?', a: 'Build-up: các nét chéo song song dồn nén dần, màu nóng tăng đậm, khoảng cách nét hẹp lại tạo căng thẳng; khoảnh khắc drop: một mảng màu lớn bùng vỡ ở trung tâm, nét toả tia ra mọi hướng, tương phản mạnh nhất bức tranh — đúng cấu trúc căng — giãn của âm nhạc.' },
       { q: 'Vì sao đạo diễn MV ballad buồn thường chọn tông màu xanh xám, ánh sáng mờ?', a: 'Màu lạnh và ánh sáng yếu gợi cô đơn, hoài niệm — khớp với giai điệu chậm và hợp âm thứ của ballad buồn; nếu dùng màu nóng rực rỡ, hình ảnh sẽ "cãi nhau" với âm nhạc, phá vỡ cảm xúc tổng thể.' },
+      { q: 'Chỉ ra ba cặp "từ vựng" dùng chung giữa âm nhạc và mỹ thuật, kèm ý nghĩa.', a: 'Cặp 1 — nhịp điệu: âm nhạc có tiết tấu lặp, hội hoạ có nhịp lặp của nét và mảng. Cặp 2 — "gam": gam nhạc (chuỗi nốt) và gam màu (chuỗi màu) dùng chung một chữ. Cặp 3 — cường độ: nhạc to — nhỏ tương ứng màu đậm — nhạt, mảng lớn — bé. Sự trùng từ vựng cho thấy hai môn cùng một logic biểu đạt cảm xúc.' },
     ],
   },
 
@@ -701,6 +724,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Layer (lớp) trong phần mềm vẽ giúp gì mà giấy vẽ không làm được?', a: 'Mỗi thành phần (nét, màu nền, bóng đổ) nằm trên một lớp trong suốt riêng — sửa hoặc xoá lớp này không ảnh hưởng lớp khác; có thể thử nhiều phương án màu cho cùng nét vẽ, điều bất khả thi trên giấy.' },
       { q: 'Nêu một lập luận ỦNG HỘ và một lập luận LO NGẠI về tranh do AI tạo ra.', a: 'Ủng hộ: AI dân chủ hoá sáng tạo — người không học vẽ vẫn diễn đạt được ý tưởng thị giác, và là công cụ phác thảo nhanh cho nghệ sĩ. Lo ngại: AI học từ tác phẩm của hoạ sĩ mà không xin phép hay trả thù lao, có thể ảnh hưởng sinh kế và làm mờ ranh giới bản quyền — cần quy định rõ ràng.' },
+      { q: 'Có ý kiến: "Máy ảnh từng bị coi là kẻ giết hội hoạ, nhưng hội hoạ vẫn sống". Bài học này gợi gì cho cuộc tranh luận về AI?', a: 'Khi máy ảnh ra đời, hội hoạ thôi phải ganh đua chép thực và chuyển mình — sinh ra Ấn tượng và các trào lưu hiện đại. Tương tự, AI có thể không giết nghệ thuật mà đẩy nghệ sĩ tìm giá trị riêng mà máy khó thay: trải nghiệm sống, ý niệm cá nhân, cảm xúc thật. Công nghệ mở rộng công cụ, còn cốt lõi — bố cục, cảm xúc, ý tưởng — vẫn do con người quyết định.' },
     ],
   },
 
@@ -724,6 +748,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Bạn A vẽ đẹp nhưng hướng nội, thích làm việc một mình và mê game. Gợi ý nhóm nghề phù hợp?', a: 'Hoạ sĩ minh hoạ, thiết kế nhân vật/môi trường game, hoạ sĩ truyện tranh hoặc digital artist tự do — các nghề cho phép làm việc độc lập, sản phẩm gắn với sở thích game; bạn nên bắt đầu xây portfolio vẽ nhân vật ngay từ bây giờ.' },
       { q: 'Muốn trở thành producer âm nhạc, ngay từ lớp 9 có thể chuẩn bị gì?', a: 'Học vững nhạc lý (hợp âm, vòng hợp âm — chính là chương trình HK1!), tập một nhạc cụ phím, làm quen DAW miễn phí, nghe nhạc có phân tích cấu trúc, và thử làm lại beat của bài mình thích — mỗi tuần một dự án nhỏ sẽ tích luỹ thành kỹ năng lớn.' },
+      { q: 'Bạn B thích vẽ và mê công nghệ, muốn ngành "vừa nghệ thuật vừa kiếm sống tốt". Gợi ý hướng đi và cách chuẩn bị từ lớp 9.', a: 'Hướng phù hợp: thiết kế đồ hoạ hoặc UI/UX (giao diện ứng dụng) — kết hợp thẩm mỹ với công nghệ, nhu cầu tuyển dụng cao. Chuẩn bị từ lớp 9: rèn nền tảng mỹ thuật (bố cục, màu, chữ — đúng tuần 28), học một phần mềm thiết kế miễn phí, làm thử poster/logo cho lớp để bắt đầu portfolio, và rèn ngoại ngữ để đọc tài liệu quốc tế. Portfolio và luyện tập đều đặn quan trọng hơn mọi lời nói.' },
     ],
   },
 
@@ -747,6 +772,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Câu mẫu: Bức tranh vẽ bến cảng buổi sớm, nét cọ thoáng, ánh sáng lung linh, ký tên Monet — trường phái nào và vì sao?', a: 'Trường phái Ấn tượng. Dấu hiệu: đề tài khoảnh khắc ánh sáng (bình minh trên cảng), nét cọ ngắn thoáng không tô lì, và Monet chính là người sáng lập — bức mô tả gợi đúng kiệt tác Ấn tượng, mặt trời mọc (1872).' },
       { q: 'Câu mẫu: Xếp thứ tự ra đời: Pop Art, Ấn tượng, Siêu thực, Lập thể.', a: 'Ấn tượng (1870s) → Lập thể (1907) → Siêu thực (1920s) → Pop Art (1950s — 60s). Nhớ bằng chuỗi nhân quả: máy ảnh → khoa học mới → phân tâm học → xã hội tiêu dùng.' },
+      { q: 'Câu mẫu mỹ thuật Việt: ghép tác giả với tác phẩm/chất liệu — Chơi ô ăn quan, Thiếu nữ bên hoa huệ, Em Thúy, tranh phố cổ Hà Nội.', a: 'Chơi ô ăn quan — Nguyễn Phan Chánh (tranh lụa); Thiếu nữ bên hoa huệ — Tô Ngọc Vân (sơn dầu); Em Thúy — Trần Văn Cẩn (sơn dầu, bảo vật quốc gia); tranh phố cổ Hà Nội ("Phố Phái") — Bùi Xuân Phái. Mẹo nhớ: Chánh — lụa, Trí — sơn mài, Vân + Cẩn — sơn dầu, Phái — phố.' },
     ],
   },
 
@@ -770,6 +796,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Chứng minh kiến thức âm nhạc và mỹ thuật lớp 9 "gặp nhau" ít nhất ở 2 điểm.', a: 'Điểm 1 — Baroque: vừa là thời kỳ âm nhạc (Bach, Vivaldi) vừa là trường phái hội hoạ (Caravaggio, Rembrandt), chung tinh thần kịch tính cầu kỳ. Điểm 2 — Kandinsky vẽ trừu tượng theo nguyên lý âm nhạc, đặt tên tranh là Composition; cấu trúc căng — giãn của vòng hợp âm tương ứng nhịp điệu thị giác trong tranh.' },
       { q: 'Một bạn nói: "Thi vào 10 không có môn Nghệ thuật, học làm gì?" Em phản biện thế nào?', a: 'Nghệ thuật rèn óc quan sát, sáng tạo và khả năng truyền đạt — các năng lực dùng trong MỌI môn và mọi nghề; nó còn là công cụ giảm áp lực thi cử hiệu quả. Giá trị của môn học không đo bằng việc có trong đề thi, mà bằng việc nó theo ta bao lâu trong đời.' },
+      { q: 'Tóm tắt "hành trang" âm nhạc và mỹ thuật mà một học sinh mang theo sau 4 năm THCS.', a: 'Về âm nhạc: đọc được bản nhạc cơ bản (nốt, nhịp, ký hiệu), hiểu "bộ máy" bài hát (hợp âm, vòng hoà thanh, verse — chorus), có bản đồ thể loại (cổ điển — jazz — pop — rock — hip-hop — EDM và nhạc truyền thống Việt). Về mỹ thuật: kỹ năng nền (dựng hình, bố cục, đậm nhạt, phối màu, luật xa gần), vốn lịch sử nghệ thuật từ Hy — La đến đương đại, niềm tự hào mỹ thuật Việt và tư duy thiết kế. Quan trọng nhất: trở thành người thưởng thức nghệ thuật có hiểu biết.' },
     ],
   },
 
@@ -793,6 +820,7 @@ export const S9NT_LESSONS = {
     examples: [
       { q: 'Em định vẽ bìa album cho ca khúc V-pop yêu thích. Hãy lập kế hoạch theo quy trình 5 bước.', a: 'B1: nghe kỹ bài, ghi 5 từ khoá cảm xúc. B2: xem 10 bìa album cùng thể loại, phân tích màu — chữ — bố cục; ôn nguyên tắc thiết kế tuần 28. B3: phác 3 phương án thumbnail khác hẳn nhau. B4: dựng phương án tốt nhất, bảng màu khớp tinh thần bài hát (ballad buồn → tông lạnh), tối đa 2 kiểu chữ, tên nghệ sĩ — tên album phân cấp rõ. B5: in/trình chiếu, thuyết minh vì sao màu và bố cục "dịch" đúng âm nhạc sang thị giác.' },
       { q: 'Dự án nhóm dàn dựng tiết mục hát nhưng bài gốc quá cao so với giọng cả nhóm. Vận dụng kiến thức nào để xử lý?', a: 'Vận dụng dịch giọng (tuần 4): xác định bài cao hơn tầm giọng bao nhiêu bán cung, hạ toàn bộ xuống khoảng đó (ví dụ từ G về E là hạ 3 bán cung), người đệm đàn chuyển hợp âm tương ứng hoặc kẹp capo/chỉnh transpose — cả nhóm hát thoải mái mà bài không đổi giai điệu.' },
+      { q: 'Khi trình bày tác phẩm cuối năm trước lớp, em nên trả lời gọn những ý nào để bài thuyết minh thuyết phục?', a: 'Bốn ý theo gợi ý quy trình: (1) tác phẩm tên gì; (2) vì sao em chọn đề tài này (cảm xúc thật); (3) em đã vận dụng kiến thức nào của năm học — trường phái, vòng hợp âm, nguyên tắc thiết kế...; (4) điều em hài lòng nhất và điều muốn làm tốt hơn. Tự tin nhưng chân thành, và lắng nghe góp ý với tinh thần cầu thị — chính việc chỉ ra được kiến thức đã học trong tác phẩm là điểm cộng lớn nhất.' },
     ],
   },
 };

@@ -83,6 +83,10 @@ export const MODULES = [
     '35 tuần — bài thể dục liên hoàn, chạy 30m, bật xa, nhảy dây, đá cầu, bóng rổ mini, trò chơi dân gian.'),
   M('P3HDTN', 'HĐ trải nghiệm lớp 3',3, 'htn',
     '35 tuần — kế hoạch tuần, sinh nhật, an toàn xe đạp, làm thiệp, Đội Thiếu niên, dã ngoại.'),
+  M('P3TIN',  'Tin học lớp 3',       3, 'tin-hoc',
+    '35 tuần — bộ phận máy tính, chuột-bàn phím, thông tin, Paint, lưu/mở tệp, Internet an toàn, thư mục-tệp, đạo đức số, thuật toán đời thường.'),
+  M('P3CN',   'Công nghệ lớp 3',     3, 'cong-nghe',
+    '35 tuần — sản phẩm công nghệ gia đình, dùng đèn-quạt-tivi-tủ lạnh an toàn, tiết kiệm điện, thủ công kĩ thuật (gấp-cắt-dán, làm đồ chơi, tái chế).'),
 
   // ──────────────── LỚP 4 — 11 môn × 35 tuần ────────────────
   M('P4',     'Toán lớp 4',          4, 'toan',
@@ -108,6 +112,8 @@ export const MODULES = [
     '35 tuần — kỹ năng học tập, làm việc nhóm, dã ngoại an toàn, các nghề trong cộng đồng, ngày lễ lớn.'),
   M('P4CN',   'Công nghệ lớp 4',     4, 'cong-nghe',
     '35 tuần — hoa cây cảnh, chậu cây tự chế, an toàn lao động, dụng cụ kỹ thuật, lắp ghép, máy tính cá nhân.'),
+  M('P4TIN',  'Tin học lớp 4',       4, 'tin-hoc',
+    '35 tuần — phần cứng-phần mềm, gõ 10 ngón, thư mục-tệp, Internet & tìm kiếm an toàn, đạo đức số, soạn thảo-trình chiếu, thuật toán & lập trình Scratch.'),
 
   // ──────────────── LỚP 5 — 11 môn × 35 tuần ────────────────
   M('P5',     'Toán lớp 5',          5, 'toan',
@@ -133,4 +139,6 @@ export const MODULES = [
     '35 tuần — chuẩn bị lên cấp 2, kỹ năng tự lập, kế hoạch tuần, dã ngoại, ngày lễ lớn, tổng kết cấp 1.'),
   M('P5CN',   'Công nghệ lớp 5',     5, 'cong-nghe',
     '35 tuần — trồng rau, chăm gà-cá cảnh, an toàn điện, máy vi tính, lắp ghép, làm bếp đơn giản.'),
+  M('P5TIN',  'Tin học lớp 5',       5, 'tin-hoc',
+    '35 tuần — tổ chức dữ liệu, tìm kiếm-an toàn thông tin, đạo đức-pháp luật số, soạn thảo-trình chiếu-bảng tính, thuật toán & lập trình Scratch (biến/rẽ nhánh/lặp).'),
 ];

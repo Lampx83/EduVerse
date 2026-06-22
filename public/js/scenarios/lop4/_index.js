@@ -3,7 +3,7 @@
 // File thiếu sẽ được skip qua try/catch.
 // ============================================================
 let m_toan = {}, m_tv = {}, m_ta = {}, m_kh = {}, m_lsdl = {},
-    m_dd = {}, m_an = {}, m_mt = {}, m_gdtc = {}, m_hdtn = {}, m_cn = {};
+    m_dd = {}, m_an = {}, m_mt = {}, m_gdtc = {}, m_hdtn = {}, m_cn = {}, m_tin = {};
 
 try { ({ P4_TOAN_SCENARIOS:    m_toan } = await import('./toan.js')); } catch {}
 try { ({ P4TV_SCENARIOS:       m_tv   } = await import('./tieng-viet.js')); } catch {}
@@ -16,13 +16,14 @@ try { ({ P4MT_SCENARIOS:       m_mt   } = await import('./my-thuat.js')); } catc
 try { ({ P4GDTC_SCENARIOS:     m_gdtc } = await import('./gdtc.js')); } catch {}
 try { ({ P4HDTN_SCENARIOS:     m_hdtn } = await import('./hdtn.js')); } catch {}
 try { ({ P4CN_SCENARIOS:       m_cn   } = await import('./cong-nghe.js')); } catch {}
+try { ({ P4TIN_SCENARIOS:      m_tin  } = await import('./tin-hoc.js')); } catch {}
 
 let LOP4_LESSONS = {};
 try { ({ LOP4_LESSONS } = await import('./lessons/_index.js')); } catch {}
 
 export const PRIMARY_LOP4_SCENARIOS = {
   ...m_toan, ...m_tv, ...m_ta, ...m_kh, ...m_lsdl,
-  ...m_dd, ...m_an, ...m_mt, ...m_gdtc, ...m_hdtn, ...m_cn,
+  ...m_dd, ...m_an, ...m_mt, ...m_gdtc, ...m_hdtn, ...m_cn, ...m_tin,
 };
 
 for (const [id, sc] of Object.entries(PRIMARY_LOP4_SCENARIOS)) {

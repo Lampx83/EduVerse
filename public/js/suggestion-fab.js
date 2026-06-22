@@ -12,6 +12,7 @@
 // ============================================================
 
 import { getPlayerName } from './api.js';
+import { renderRequestThread } from './request-thread.js';
 
 const TYPES = [
   { v: 'game',   icon: '🎮', label: 'Thêm trò chơi / mini-game' },
@@ -97,8 +98,8 @@ function autoMount() {
               <span>📸 Đính kèm ảnh chụp <b>màn hình hiện tại</b> (Ban điều hành xem trực tiếp giao diện anh/chị đang gặp)</span>
             </label>
             <label class="sgf-attach-row sgf-file-row">
-              <span class="sgf-attach-lbl">📎 Đính kèm file (ảnh / PDF / Word / Excel / PPT — tối đa 8MB × 5 file):</span>
-              <input type="file" id="sgf-file-in" multiple accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" />
+              <span class="sgf-attach-lbl">📎 Đính kèm file (ảnh / PDF / Word / Excel / PPT / CSDL .db / .sql — tối đa 50MB × 5 file):</span>
+              <input type="file" id="sgf-file-in" multiple accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.db,.sqlite,.sqlite3,.sql,application/sql,application/x-sqlite3" />
             </label>
             <div class="sgf-attach-hint">💡 Có thể <b>kéo-thả</b> file vào khung này hoặc <b>dán ảnh</b> trực tiếp (Ctrl/⌘+V).</div>
             <div class="sgf-attach-list" id="sgf-attach-list"></div>
@@ -161,9 +162,10 @@ function bind(root) {
   const attachList = root.querySelector('#sgf-attach-list');
   const attachBox = root.querySelector('.sgf-attach');
   const MAX_FILES = 5;
-  const MAX_BYTES = 8 * 1024 * 1024;          // 8MB/file (khớp giới hạn BE)
-  const MAX_TOTAL = 20 * 1024 * 1024;         // 20MB tổng/đề nghị
+  const MAX_BYTES = 50 * 1024 * 1024;         // 50MB/file (khớp giới hạn BE)
+  const MAX_TOTAL = 120 * 1024 * 1024;        // 120MB tổng/đề nghị
   // Khớp whitelist BE (server/index.js) — lọc sớm phía client cho UX tốt hơn.
+  // File dữ liệu .db/.sqlite/.sql nhận theo ĐUÔI (trình duyệt hay để type rỗng).
   const ALLOWED_MIME = new Set([
     'image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf',
     'text/plain', 'text/csv', 'application/zip',
@@ -171,8 +173,9 @@ function bind(root) {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/msword', 'application/vnd.ms-excel', 'application/vnd.ms-powerpoint',
+    'application/sql', 'application/x-sqlite3', 'application/vnd.sqlite3',
   ]);
-  const ALLOWED_EXT = /\.(png|jpe?g|webp|gif|pdf|txt|csv|docx?|xlsx?|pptx?|zip)$/i;
+  const ALLOWED_EXT = /\.(png|jpe?g|webp|gif|pdf|txt|csv|docx?|xlsx?|pptx?|zip|db|sqlite|sqlite3|sql)$/i;
   const isAllowed = f => ALLOWED_MIME.has(f.type) || ALLOWED_EXT.test(f.name || '');
   // pendingFiles[i] ↔ previewUrls[i] (object URL cho ảnh, null cho file khác).
   let pendingFiles = [];
@@ -186,6 +189,7 @@ function bind(root) {
     if (/\.pptx?$/.test(n)) return '📑';
     if (/\.zip$/.test(n)) return '🗜️';
     if (/\.txt$/.test(n)) return '📃';
+    if (/\.(db|sqlite3?|sql)$/.test(n)) return '🗄️';
     return '📎';
   }
   function clearAttachments() {
@@ -222,7 +226,7 @@ function bind(root) {
     for (const f of [...(list || [])]) {
       if (pendingFiles.length >= MAX_FILES) { errs.push(`tối đa ${MAX_FILES} file`); break; }
       if (!isAllowed(f)) { errs.push(`"${f.name}" sai định dạng`); continue; }
-      if (f.size > MAX_BYTES) { errs.push(`"${f.name}" > 8MB`); continue; }
+      if (f.size > MAX_BYTES) { errs.push(`"${f.name}" > ${Math.round(MAX_BYTES / 1048576)}MB`); continue; }
       if (pendingFiles.some(p => p.name === f.name && p.size === f.size)) { errs.push(`"${f.name}" đã thêm`); continue; }
       const total = pendingFiles.reduce((s, p) => s + p.size, 0) + f.size;
       if (total > MAX_TOTAL) { errs.push(`vượt tổng ${Math.round(MAX_TOTAL / 1048576)}MB`); continue; }
@@ -439,16 +443,29 @@ function bind(root) {
         inbox.innerHTML = '<div class="sgf-empty">Chưa có yêu cầu nào. Hãy là người đầu tiên đề xuất cải tiến trang này! 🚀</div>';
         return;
       }
-      inbox.innerHTML = shown.map(renderItem).join('');
+      inbox.innerHTML = shown.map(it => renderItem(it, me)).join('');
+      // Mỗi item mở rộng thành phiên trao đổi (thread) ngay trong modal.
+      inbox.querySelectorAll('[data-req-toggle]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.reqToggle;
+          const panel = inbox.querySelector(`#sgf-thread-${id}`);
+          if (!panel) return;
+          if (panel.hidden) {
+            panel.hidden = false;
+            renderRequestThread({ host: panel, requestId: id, me, onChange: loadInbox });
+          } else { panel.hidden = true; panel.innerHTML = ''; }
+        });
+      });
     } catch {
       inbox.innerHTML = '<div class="sgf-empty">Không tải được — cần backend chạy.</div>';
     }
   }
 }
 
-function renderItem(it) {
+function renderItem(it, me = '') {
   const sm = STATUS[it.status] || STATUS.pending;
   const t = (TYPES.find(t => t.v === it.type) || TYPES[4]);
+  const mine = me && it.student === me;
   const atts = Array.isArray(it.attachments) ? it.attachments : [];
   const attHtml = atts.length ? `
     <div class="sgf-it-att">
@@ -472,6 +489,10 @@ function renderItem(it) {
       </div>
       ${attHtml}
       ${it.admin_note ? `<div class="sgf-it-note">🏛️ ${escapeHtml(it.admin_note)}</div>` : ''}
+      <button type="button" class="sgf-it-thread-btn" data-req-toggle="${it.id}">
+        💬 ${mine ? 'Trao đổi với Ban điều hành' : 'Xem trao đổi'}
+      </button>
+      <div class="sgf-it-thread" id="sgf-thread-${it.id}" hidden></div>
     </div>
   `;
 }
@@ -597,6 +618,13 @@ function injectStyles() {
       font-size: 12px; color: #1f2937; margin-top: 6px; padding: 6px 9px; border-radius: 8px;
       background: #fef3c7; border-left: 3px solid #f59e0b;
     }
+    .sgf-it-thread-btn {
+      margin-top: 7px; border: 1px solid #c7d2fe; background: #eef2ff; color: #4338ca;
+      cursor: pointer; font: 700 11.5px/1 inherit; padding: 5px 10px; border-radius: 7px;
+    }
+    .sgf-it-thread-btn:hover { background: #e0e7ff; }
+    .sgf-it-thread { margin-top: 8px; }
+    .sgf-it-thread[hidden] { display: none; }
 
     @media (prefers-color-scheme: dark) {
       .sgf-dialog { background: #1e1b4b; color: #e5e7eb; }
@@ -624,6 +652,8 @@ function injectStyles() {
       .sgf-it-file { background: #312e81; color: #c7d2fe; border-color: #4338ca; }
       .sgf-it-file:hover { background: #4338ca; }
       .sgf-it-thumb { border-color: #4338ca; }
+      .sgf-it-thread-btn { background: #312e81; color: #c7d2fe; border-color: #4338ca; }
+      .sgf-it-thread-btn:hover { background: #4338ca; }
     }
   `;
   const st = document.createElement('style');

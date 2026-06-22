@@ -17,10 +17,10 @@ export const MODULES = [
     scenarioIds: ['S7TOAN-w01-quiz'], knowledgeQuiz: 'S7TOAN-w01-quiz', minStarsToUnlock: 3, prerequisites: ['S6'],
     description: 'Số hữu tỉ · số thực · tỉ lệ thức · tam giác · thống kê & xác suất.' },
   { category: 'curriculum', id: 'S8', title: 'Toán lớp 8', yearLevel: 3, subject: 'toan',
-    scenarioIds: ['S8-toan-quiz'], knowledgeQuiz: 'S8-toan-quiz', minStarsToUnlock: 6, prerequisites: ['S7'],
+    scenarioIds: ['S8TOAN-w01-quiz'], knowledgeQuiz: 'S8TOAN-w01-quiz', minStarsToUnlock: 6, prerequisites: ['S7'],
     description: 'Hằng đẳng thức · phương trình bậc nhất · định lí Pythagore · tứ giác · hàm số.' },
   { category: 'curriculum', id: 'S9', title: 'Toán lớp 9', yearLevel: 4, subject: 'toan',
-    scenarioIds: ['S9-toan-quiz'], knowledgeQuiz: 'S9-toan-quiz', minStarsToUnlock: 9, prerequisites: ['S8'],
+    scenarioIds: ['S9TOAN-w01-quiz'], knowledgeQuiz: 'S9TOAN-w01-quiz', minStarsToUnlock: 9, prerequisites: ['S8'],
     description: 'Căn bậc hai · hệ phương trình · phương trình bậc hai · hệ thức lượng · đường tròn.' },
 
   // ───────── Môn Ngữ văn ─────────
@@ -31,10 +31,10 @@ export const MODULES = [
     scenarioIds: ['S7NV-w01-quiz'], knowledgeQuiz: 'S7NV-w01-quiz', minStarsToUnlock: 3, prerequisites: ['SV6'],
     description: 'Ca dao · tục ngữ · thành ngữ · từ Hán Việt · điệp ngữ · liệt kê · số từ · phó từ.' },
   { category: 'curriculum', id: 'SV8', title: 'Ngữ văn lớp 8', yearLevel: 3, subject: 'ngu-van',
-    scenarioIds: ['SV8-van-quiz'], knowledgeQuiz: 'SV8-van-quiz', minStarsToUnlock: 6, prerequisites: ['SV7'],
+    scenarioIds: ['S8NV-w01-quiz'], knowledgeQuiz: 'S8NV-w01-quiz', minStarsToUnlock: 6, prerequisites: ['SV7'],
     description: 'Truyện hiện thực (Lão Hạc, Tắt đèn) · thơ Đường luật · nói quá - nói giảm · câu ghép · trợ từ - thán từ.' },
   { category: 'curriculum', id: 'SV9', title: 'Ngữ văn lớp 9', yearLevel: 4, subject: 'ngu-van',
-    scenarioIds: ['SV9-van-quiz'], knowledgeQuiz: 'SV9-van-quiz', minStarsToUnlock: 9, prerequisites: ['SV8'],
+    scenarioIds: ['S9NV-w01-quiz'], knowledgeQuiz: 'S9NV-w01-quiz', minStarsToUnlock: 9, prerequisites: ['SV8'],
     description: 'Truyện Kiều · truyện - thơ hiện đại · phương châm hội thoại · cách dẫn trực tiếp/gián tiếp · nghĩa hàm ý.' },
 
   // ───────── Lớp 6 — 11 môn × 36 tuần (HK1: T1–18 · HK2: T19–36) ─────────

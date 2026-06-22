@@ -188,6 +188,44 @@
   }
   .cam-btn:hover:not(.active) { background: rgba(56,189,248,0.2); }
   .cam-btn.active { background: var(--accent); color: #0f172a; border-color: var(--accent); cursor: default; }
+  .walk-btn { background: rgba(16,185,129,0.9); color: #042f2e; border-color: #10b981; }
+  .walk-btn:hover:not(.active) { background: rgba(16,185,129,0.7); }
+  .walk-btn.active { background: #f59e0b; border-color: #f59e0b; color: #1c1300; }
+  .walk-prompt {
+    position: absolute; left: 50%; top: 64px; transform: translateX(-50%);
+    background: rgba(15,23,42,0.92); color: #fde68a; border: 1px solid #f59e0b;
+    padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    z-index: 20; pointer-events: none; box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .walk-hint {
+    position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+    background: rgba(15,23,42,0.85); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.3);
+    padding: 6px 14px; border-radius: 8px; font-size: 12px; z-index: 20; pointer-events: none;
+  }
+  .walk-hint b { color: #5eead4; }
+  .avatar-btn { background: rgba(139,92,246,0.9); color: #faf5ff; border-color: #8b5cf6; }
+  .avatar-btn:hover:not(.active) { background: rgba(139,92,246,0.7); }
+  .rpm-overlay {
+    position: fixed; inset: 0; background: rgba(2,6,23,0.78); z-index: 9999;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .rpm-modal {
+    width: min(960px, 96vw); height: min(86vh, 760px); background: #0f172a;
+    border: 1px solid rgba(148,163,184,0.35); border-radius: 14px; overflow: hidden;
+    display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .rpm-head {
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    background: rgba(30,41,59,0.9); border-bottom: 1px solid rgba(148,163,184,0.2);
+    color: #e2e8f0; font-size: 13px;
+  }
+  .rpm-head span { color: #94a3b8; flex: 1; }
+  .rpm-head b { color: #c4b5fd; }
+  .rpm-close {
+    background: rgba(239,68,68,0.85); color: #fff; border: none; border-radius: 6px;
+    width: 30px; height: 30px; font-size: 15px; cursor: pointer; flex-shrink: 0;
+  }
+  .rpm-modal iframe { flex: 1; width: 100%; border: 0; background: #fff; }
 
   .light-bar {
     position: absolute; top: 12px; right: 12px;
@@ -198,6 +236,26 @@
   }
   .light-bar-label { font-size: 11px; color: #cbd5e1; min-width: 14px; text-align: center; }
   .light-bar input[type="range"] { width: 110px; accent-color: #38bdf8; cursor: pointer; margin: 0; }
+
+  /* Pad di chuyển camera lên/xuống theo ngăn tủ */
+  .vpan-bar {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 8px; align-items: center;
+    z-index: 3;
+  }
+  .vpan-label {
+    font-size: 9px; color: #cbd5e1; letter-spacing: .04em; writing-mode: vertical-rl;
+    text-orientation: mixed; opacity: .75; margin: 2px 0;
+  }
+  .vpan-btn {
+    width: 40px; height: 40px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(56,189,248,0.45); background: rgba(15,23,42,0.82);
+    color: #e2e8f0; font-size: 18px; line-height: 1; font-family: inherit;
+    backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, transform 0.08s;
+  }
+  .vpan-btn:hover { background: rgba(56,189,248,0.28); }
+  .vpan-btn:active { transform: scale(0.92); }
 
   .side {
     display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
@@ -405,6 +463,17 @@
   .le2-sk-foot { font-size: 12px; color: #78350f; padding-top: 4px; }
   .le2-sk-notes { font-size: 12px; color: #7c2d12; padding-top: 2px; min-height: 14px; }
   .le2-hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; line-height: 1.5; }
+  /* Header nhà thuốc trên nhãn HDSD + Nhãn BAO BÌ RA LẺ (mẫu image8) */
+  .le2-sk-pharm { font-size: 11px; font-weight: 700; color: #7c2d12; text-align: center; padding-bottom: 3px; border-bottom: 1px solid #d97706; margin-bottom: 2px; }
+  .le2-bag {
+    border: 1px solid #94a3b8; border-radius: 10px; padding: 12px 14px; margin-top: 4px;
+    font-family: 'Inter', system-ui, sans-serif; font-size: 12px; line-height: 1.5;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .le2-bag-pharm { font-size: 12px; line-height: 1.35; border-bottom: 1px solid rgba(0,0,0,0.25); padding-bottom: 4px; margin-bottom: 4px; }
+  .le2-bag-special { text-align: center; font-weight: 800; font-size: 12.5px; letter-spacing: .5px; margin: 2px 0 6px; text-transform: uppercase; }
+  .le2-bag-row { padding: 3px 0; border-bottom: 1px dotted rgba(0,0,0,0.18); }
+  .le2-bag-foot { font-size: 9.5px; font-style: italic; opacity: 0.75; text-align: center; padding-top: 6px; }
   .label-foot-v2 {
     display: flex; gap: 10px; justify-content: flex-end;
     padding: 14px 22px; border-top: 1px solid var(--border);
@@ -533,11 +602,20 @@
     padding: 20px;
   }
   .inspector-modal {
+    position: relative;
     width: min(1200px, 96vw); height: min(720px, 92vh);
     background: var(--card); border: 1px solid var(--border); border-radius: 16px;
     display: grid; grid-template-columns: 1.4fr 1fr;
     overflow: hidden;
   }
+  .ins-close {
+    position: absolute; top: 10px; right: 12px; z-index: 5;
+    width: 34px; height: 34px; border-radius: 9px;
+    background: rgba(15,23,42,0.78); border: 1px solid rgba(255,255,255,0.28);
+    color: #f1f5f9; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ins-close:hover { background: rgba(220,38,38,0.9); border-color: rgba(255,255,255,0.5); }
   .inspector-3d {
     position: relative; background: radial-gradient(circle at 50% 50%, #1e293b, #0f172a 80%);
   }
@@ -568,11 +646,12 @@
     border-left: 3px solid #38bdf8;
   }
   .ins-actions { display: flex; gap: 10px; margin-top: auto; }
-  .ins-return, .ins-confirm {
+  .ins-return, .ins-retail, .ins-confirm {
     flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer;
     font-weight: 700; font-size: 13px;
   }
   .ins-return { background: var(--border-h); color: var(--text); }
+  .ins-retail { background: linear-gradient(180deg, #f59e0b, #d97706); color: #fff; }
   .ins-confirm { background: linear-gradient(180deg, #10b981, #047857); color: #ecfdf5; }
 
   /* ── P③: Nhãn thuốc mô phỏng theo TT 01/VBHN-BYT ────────────────────── */
@@ -744,11 +823,22 @@
     <div class="cam-bar" id="cam-bar">
       <span class="cam-bar-label">📷 Góc nhìn:</span>
       <div class="cam-bar-buttons" id="cam-buttons"></div>
+      <button class="cam-btn walk-btn" id="walk-toggle" type="button">🚶 Đi dạo (nhập vai)</button>
+      <button class="cam-btn avatar-btn" id="avatar-create" type="button">🧑 Tạo nhân vật</button>
+    </div>
+    <div id="walk-prompt" class="walk-prompt" hidden></div>
+    <div id="walk-hint" class="walk-hint" hidden>
+      <b>WASD</b> / click sàn để đi · <b>Shift</b> chạy · <b>E</b> với tay / cầm thuốc · <b>F</b> ngồi · kéo chuột xoay góc
     </div>
     <div class="light-bar" id="light-bar">
       <span class="light-bar-label">💡</span>
       <input id="exposure-slider" type="range" min="0.2" max="1.5" step="0.05" />
       <span id="exposure-value" class="light-bar-label">—</span>
+    </div>
+    <div class="vpan-bar" id="vpan-bar">
+      <button class="vpan-btn" id="vpan-up" type="button" title="Xem ngăn phía trên" aria-label="Xem ngăn phía trên">▲</button>
+      <span class="vpan-label">NGĂN</span>
+      <button class="vpan-btn" id="vpan-down" type="button" title="Xem ngăn phía dưới" aria-label="Xem ngăn phía dưới">▼</button>
     </div>
   </div>
 
@@ -781,7 +871,6 @@
       <button class="btn" id="btn-pos" type="button">💻 Mở phần mềm bán hàng</button>
       <button class="btn" id="btn-rx" type="button">📋 Xem đơn thuốc</button>
       <button class="btn" id="btn-doctor" type="button">📞 Gọi bác sĩ</button>
-      <button class="btn" id="btn-senior" type="button">👨‍⚕️ DS đại học</button>
     </div>
     <label class="rx-line"><input type="checkbox" id="rx-toggle"/> Khách có đơn thuốc hợp lệ</label>
 
@@ -806,10 +895,10 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0623';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0643';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
-  document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc thực hành - HMC' : moduleId;
+  document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;
   startSimulation({ moduleId });
 
   // Wire độ sáng slider — chờ sim sẵn sàng (buildScene chạy trong startSimulation)

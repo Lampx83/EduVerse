@@ -4,7 +4,7 @@ import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb, getUserState, putUserState, UserStateValueTooLargeError } from './db.js';
+import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, getRequestById, addRequestMessage, listRequestMessages, reopenRequestIfClosed, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb, getUserState, putUserState, UserStateValueTooLargeError } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
@@ -1147,8 +1147,14 @@ const MIME_TO_EXT = {
   'application/vnd.ms-powerpoint': '.ppt', 'application/zip': '.zip',
 };
 // Ảnh raster an toàn để render inline (img src + mở thẳng). Mọi định dạng khác
-// (pdf/office/zip/txt/csv) bị ép tải về để không bao giờ thực thi trong origin.
+// (pdf/office/zip/txt/csv/db/sql) bị ép tải về để không bao giờ thực thi trong origin.
 const REQUEST_INLINE_SAFE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+// File DỮ LIỆU (CSDL SQLite + script SQL). Định danh theo PHẦN MỞ RỘNG vì trình
+// duyệt hay để Content-Type rỗng/application/octet-stream cho các đuôi này → không
+// thể tin whitelist MIME. SQLite kiểm magic header; .sql là văn bản. Tất cả đều
+// bị ép tải về (không nằm trong INLINE_SAFE) nên không thực thi trong origin.
+const REQUEST_SQLITE_EXTS = new Set(['.db', '.sqlite', '.sqlite3']);
+const REQUEST_DATA_EXTS = new Set(['.db', '.sqlite', '.sqlite3', '.sql']);
 // Magic-byte sniffing chống Content-Type spoofing: client tự đặt header Content-Type
 // nên với định dạng có chữ ký rõ ràng ta kiểm bytes đầu. text/plain & text/csv không
 // có chữ ký tin cậy → chấp nhận. Trả false nếu không khớp (handler sẽ từ chối 415).
@@ -1181,11 +1187,18 @@ function requestUploadSniffOk(mime, buf) {
 }
 r.post('/api/requests/attachments',
   requireAuth, requireEnrolled,
-  express.raw({ type: () => true, limit: '8mb' }),
+  // 50MB: ảnh/office nhỏ, nhưng file dữ liệu (.db SQLite, .sql dump) có thể lớn.
+  express.raw({ type: () => true, limit: '50mb' }),
   async (req, res) => {
     try {
       const mime = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
-      if (!REQUEST_UPLOAD_MIME_WHITELIST.has(mime)) {
+      const rawName = String(req.headers['x-filename'] || '').slice(0, 200);
+      const nameExt = path.extname(rawName).toLowerCase();
+      const isSqlite = REQUEST_SQLITE_EXTS.has(nameExt);
+      const isData = REQUEST_DATA_EXTS.has(nameExt);
+      // File dữ liệu (DB/SQL) nhận theo ĐUÔI vì Content-Type không tin được; còn
+      // lại bắt buộc nằm trong whitelist MIME.
+      if (!isData && !REQUEST_UPLOAD_MIME_WHITELIST.has(mime)) {
         return res.status(415).json({ error: 'unsupported_media_type', mime, message: 'Định dạng file không hỗ trợ.' });
       }
       const buf = req.body;
@@ -1193,10 +1206,22 @@ r.post('/api/requests/attachments',
         return res.status(400).json({ error: 'empty_body', message: 'File rỗng.' });
       }
       // Chống Content-Type spoofing: nội dung phải khớp định dạng khai báo.
-      if (!requestUploadSniffOk(mime, buf)) {
+      if (isSqlite) {
+        // SQLite có magic header cố định 16 byte: 15 ký tự "SQLite format 3" + 1 byte NUL.
+        const sqliteOk = buf.length >= 16
+          && buf.subarray(0, 15).toString('latin1') === 'SQLite format 3'
+          && buf[15] === 0x00;
+        if (!sqliteOk) {
+          return res.status(415).json({ error: 'content_mismatch', message: 'File không phải cơ sở dữ liệu SQLite hợp lệ.' });
+        }
+      } else if (isData) {
+        // .sql là văn bản: chặn nếu trông như nhị phân (có null byte ở 8KB đầu).
+        if (buf.subarray(0, 8192).includes(0x00)) {
+          return res.status(415).json({ error: 'content_mismatch', message: 'File .sql phải là văn bản SQL (không phải nhị phân).' });
+        }
+      } else if (!requestUploadSniffOk(mime, buf)) {
         return res.status(415).json({ error: 'content_mismatch', mime, message: 'Nội dung file không khớp định dạng khai báo.' });
       }
-      const rawName = String(req.headers['x-filename'] || '').slice(0, 200);
       const kind = String(req.headers['x-kind'] || 'file').toLowerCase() === 'screenshot' ? 'screenshot' : 'file';
       // Sanitize tên hiển thị: loại bỏ ký tự nguy hiểm để tránh XSS khi render trong inbox.
       const safeName = rawName.replace(/[\\/\x00-\x1f<>"|?*]/g, '_').trim()
@@ -1205,12 +1230,15 @@ r.post('/api/requests/attachments',
       const day = new Date().toISOString().slice(0, 10);
       const targetDir = path.join(REQUEST_UPLOADS_DIR, day);
       await fs.mkdir(targetDir, { recursive: true });
-      const ext = MIME_TO_EXT[mime] || path.extname(safeName).toLowerCase().slice(0, 8) || '';
+      // Data file giữ đúng đuôi gốc; còn lại suy từ MIME đã kiểm.
+      const ext = isData ? nameExt : (MIME_TO_EXT[mime] || path.extname(safeName).toLowerCase().slice(0, 8) || '');
       const fname = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`;
       const fpath = path.join(targetDir, fname);
       await fs.writeFile(fpath, buf);
       const url = `/uploads/requests/${day}/${fname}`;
-      res.json({ ok: true, url, name: safeName, mime, size: buf.length, kind });
+      // Chuẩn hoá MIME trả về cho data file để FE/inbox hiển thị đúng (không phải ảnh).
+      const reportMime = isSqlite ? 'application/x-sqlite3' : (nameExt === '.sql' ? 'application/sql' : mime);
+      res.json({ ok: true, url, name: safeName, mime: reportMime, size: buf.length, kind });
     } catch (err) {
       console.warn('[requests/attachments] upload failed:', err?.message || err);
       res.status(500).json({ error: 'upload_failed', message: 'Không lưu được file.' });
@@ -1247,7 +1275,17 @@ r.get('/api/requests', (req, res) => {
   const domain = String(req.query.domain || '').trim();
   if (!domain) return res.status(400).json({ error: 'domain required' });
   const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
-  res.json({ items: listRequests(domain, limit), stats: getRequestStats(domain) });
+  // RIÊNG TƯ: mỗi tài khoản CHỈ thấy yêu cầu của CHÍNH MÌNH — không thấy của
+  // tài khoản khác. Lọc server-side theo display_name lấy từ session (attachUser
+  // luôn gắn req.user, client không giả mạo được). Khách chưa đăng nhập → không
+  // có yêu cầu cá nhân → trả rỗng để board degrade mượt (không 401).
+  // Quy mô nhỏ (vài chục/ trường) nên lọc trong JS sau khi lấy tối đa 200 là đủ.
+  const me = String(req.user?.display_name || '').trim();
+  if (!me) return res.json({ items: [], stats: {} });
+  const mine = listRequests(domain, 200).filter(it => it.student === me).slice(0, limit);
+  const stats = {};
+  for (const it of mine) stats[it.status] = (stats[it.status] || 0) + 1;
+  res.json({ items: mine, stats });
 });
 
 r.post('/api/requests/:id/vote', (req, res) => {
@@ -1265,6 +1303,62 @@ r.post('/api/requests/:id/status', (req, res) => {
 // Audit trail quyết định của AI Agent cho 1 góp ý (minh bạch + cho phép xem lại).
 r.get('/api/requests/:id/decisions', (req, res) => {
   res.json({ decisions: getDecisionsForRequest(req.params.id) });
+});
+
+// ── Phiên trao đổi (thread) của 1 yêu cầu ──────────────────────────────────
+// Mở luồng hội thoại: HS gửi yêu cầu → Ban điều hành AI phản hồi → HS trao đổi
+// tiếp… tới khi hoàn thành. GET công khai (như board); POST chỉ chủ yêu cầu.
+//
+// GET trả { request, messages }. messages[0] = tin mở đầu dựng từ chính nội dung
+// yêu cầu (head, không lưu lặp ở request_messages). Yêu cầu cũ (trước tính năng
+// này) có admin_note nhưng chưa có message → bù 1 tin AI ảo để không mất phản hồi.
+r.get('/api/requests/:id/thread', (req, res) => {
+  const reqRow = getRequestById(req.params.id);
+  if (!reqRow) return res.status(404).json({ error: 'not_found' });
+  const msgs = listRequestMessages(reqRow.id);
+  const hasBoardMsg = msgs.some(m => m.role === 'ai' || m.role === 'admin');
+  const thread = [{
+    id: 0, request_id: reqRow.id, role: 'student', author_name: reqRow.student,
+    body: reqRow.detail || reqRow.title, attachments: reqRow.attachments,
+    created_at: reqRow.created_at,
+  }];
+  // admin_note giữ phản hồi/ghi nhận gần nhất của Ban điều hành. Nếu thread chưa
+  // có tin nào từ Ban điều hành (yêu cầu cũ trước tính năng thread, hoặc mới chỉ
+  // được ghi nhận) thì bù vào ngay sau tin mở đầu để không mất ngữ cảnh.
+  if (reqRow.admin_note && !hasBoardMsg) {
+    thread.push({
+      id: -1, request_id: reqRow.id, role: 'ai', author_name: 'Ban điều hành AI',
+      body: reqRow.admin_note, attachments: [], created_at: reqRow.created_at,
+    });
+  }
+  thread.push(...msgs);
+  res.json({
+    request: {
+      id: reqRow.id, domain: reqRow.domain, type: reqRow.type, title: reqRow.title,
+      status: reqRow.status, student: reqRow.student, votes: reqRow.votes,
+      created_at: reqRow.created_at, updated_at: reqRow.updated_at,
+    },
+    messages: thread,
+  });
+});
+
+// HS (chủ yêu cầu) hoặc admin gửi tin nhắn tiếp theo vào thread. Yêu cầu đã đóng
+// (done/rejected) tự mở lại 'reviewing' để Ban điều hành xem tiếp. KHÔNG gọi LLM
+// — Ban điều hành AI (Routine Claude Opus) trả lời bất đồng bộ qua /admin/.../reply.
+r.post('/api/requests/:id/messages', requireAuth, (req, res) => {
+  const reqRow = getRequestById(req.params.id);
+  if (!reqRow) return res.status(404).json({ error: 'not_found' });
+  const me = req.user.display_name;
+  const isAdmin = req.user.role === 'admin';
+  const isOwner = !!me && me === reqRow.student;
+  if (!isOwner && !isAdmin) return res.status(403).json({ error: 'forbidden' });
+  const body = String(req.body?.body || '').trim();
+  if (!body) return res.status(400).json({ error: 'empty' });
+  const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : null;
+  const role = isOwner ? 'student' : 'admin';
+  const msg = addRequestMessage({ request_id: reqRow.id, role, author_name: me, body, attachments });
+  const reopened = role === 'student' ? reopenRequestIfClosed(reqRow.id) : false;
+  res.json({ ok: true, message_id: msg.id, reopened });
 });
 // Bảng quyết định AI gần đây của trường (cho dashboard "Ban điều hành AI").
 r.get('/api/ai-decisions', (req, res) => {
@@ -1324,7 +1418,7 @@ r.get('/api/export.csv', (_req, res) => {
 const HEADER_TAG = `<script type="module" src="js/auth-header.js"></script>`;
 // ?v=attach2 — cache-bust khi nâng UX đính kèm (preview thumbnail, kéo-thả, dán
 // ảnh, lọc loại, chống trùng + siết whitelist bỏ SVG). Bump mỗi lần đổi UX FAB.
-const SGF_TAG = `<script type="module" src="js/suggestion-fab.js?v=attach2"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
+const SGF_TAG = `<script type="module" src="js/suggestion-fab.js?v=data-files"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
 // Analytics: chỉ gtag loader (analytics.js). Consent banner đã được bỏ theo
 // yêu cầu user (jun 2026) — gây phiền và che nội dung. Analytics vẫn hoạt
 // động theo mặc định "denied" (xem analytics.js) cho đến khi có cơ chế consent

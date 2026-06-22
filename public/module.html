@@ -265,17 +265,35 @@
       'P2HDTN': { href:'/lop2-phan-loai-rac.html',  ic:'♻️',  name:'Phân Loại Rác',         sub:'mini-game kéo thả phân loại' },
       'P2TNXH': { href:'/ban-do-vn.html',           ic:'🗺️',  name:'Bản đồ 34 tỉnh',        sub:'mini-game khám phá địa lý' },
       'P2DD':   { href:'/lop2-dao-duc.html',        ic:'✅', name:'Đúng hay Sai',          sub:'mini-game tình huống đạo đức' },
-      // ── Các lớp khác — Toán dùng chung Bão Số Học (level tự nhận theo lớp) ──
-      'P1': { href:'/bao-so-hoc.html', ic:'⛈️', name:'Bão Số Học', sub:'mini-game luyện tính' },
-      'P3': { href:'/bao-so-hoc.html', ic:'⛈️', name:'Bão Số Học', sub:'mini-game luyện tính' },
-      'P4': { href:'/bao-so-hoc.html', ic:'⛈️', name:'Bão Số Học', sub:'mini-game luyện tính' },
-      'P5': { href:'/bao-so-hoc.html', ic:'⛈️', name:'Bão Số Học', sub:'mini-game luyện tính' },
+      // ── Lớp 1/3/4/5 — KHÔNG liệt kê từng môn ở đây nữa; game suy theo MÔN
+      //    (hậu tố moduleId) qua SUBJECT_GAME bên dưới — req #9 (vừa học vừa chơi).
       // ── Mầm non N1/N2/N3 — game cute, đếm-nhận diện không cần biết đọc ──
       'N1': { href:'/dem-qua.html',      ic:'🍎', name:'Đếm Quả Trên Cây',  sub:'tap đúng số quả cô yêu cầu' },
       'N2': { href:'/ghep-chu-cai.html', ic:'🔤', name:'Ghép Chữ Cái',       sub:'nhận diện bảng chữ cái A-Á-Â' },
       'N3': { href:'/dem-ngon-tay.html', ic:'✋', name:'Đếm Ngón Tay',       sub:'đếm 1-10 cùng cô' },
     };
-    const g = MODULE_GAMES[moduleId];
+    // req #9 (Enderboy, 14 lượt): lồng "vừa học vừa chơi" vào MỌI bài học Tiểu
+    // học. Lớp 2 đã có 9 game riêng (ở trên); lớp 1/3/4/5 suy game theo MÔN
+    // (hậu tố moduleId) — tái dùng kho mini-game sẵn có, không tạo link chết.
+    const SUBJECT_GAME = {
+      '':     { href:'/bao-so-hoc.html',         ic:'⛈️',  name:'Bão Số Học',       sub:'mini-game luyện tính nhẩm' },
+      'TV':   { href:'/lop2-ghep-van.html',      ic:'🔤', name:'Ghép Vần',         sub:'mini-game ghép chữ thành tiếng' },
+      'TA':   { href:'/lop2-anh-memory.html',    ic:'🎴', name:'Memory Match',     sub:'mini-game lật thẻ Anh ↔ Việt' },
+      'DD':   { href:'/lop2-dao-duc.html',       ic:'✅', name:'Đúng hay Sai',     sub:'mini-game tình huống đạo đức' },
+      'AN':   { href:'/lop2-am-nhac.html',       ic:'🎶', name:'Đô-Rê-Mi Bay',     sub:'mini-game gõ nốt theo nhịp' },
+      'MT':   { href:'/pixel-art-studio.html',   ic:'🖌️', name:'Pixel Art Studio', sub:'mini-game vẽ pixel sáng tạo' },
+      'GDTC': { href:'/lop2-the-thao.html',      ic:'🏃', name:'Phản Xạ Cầu Thủ',  sub:'mini-game luyện phản xạ' },
+      'HDTN': { href:'/lop2-phan-loai-rac.html', ic:'♻️',  name:'Phân Loại Rác',    sub:'mini-game kéo thả phân loại' },
+      'TNXH': { href:'/ban-do-vn.html',          ic:'🗺️',  name:'Bản đồ 34 tỉnh',   sub:'mini-game khám phá tự nhiên – xã hội' },
+      'KH':   { href:'/cay-tri-thuc.html',       ic:'🌳', name:'Cây Tri Thức',     sub:'mini-game gieo hạt khám phá khoa học' },
+      'LSDL': { href:'/ban-do-vn.html',          ic:'🗺️',  name:'Bản đồ 34 tỉnh',   sub:'mini-game lịch sử – địa lý' },
+      'TIN':  { href:'/lap-trinh-game.html',     ic:'🕹️', name:'Lập Trình Game',   sub:'mini-game kéo khối lập trình' },
+      'CN':   { href:'/lop2-phan-loai-rac.html', ic:'🛠️', name:'Khéo Tay',         sub:'mini-game phân loại & lắp ghép' },
+    };
+    let g = MODULE_GAMES[moduleId];
+    if (!g && /^P[1345]/.test(moduleId)) {
+      g = SUBJECT_GAME[moduleId.replace(/^P[1345]/, '')];
+    }
     if (g) {
       const games = document.createElement('div');
       games.style.cssText = 'margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;';
