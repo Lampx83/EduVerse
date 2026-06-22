@@ -100,17 +100,27 @@ export async function createCharacter(ctx) {
   const _qeuler = (x, y, z) => new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z));
   // Hằng tư thế — tinh chỉnh trực quan. SIT.drop = hạ hông xuống mặt ghế.
   const SIT = {
-    upLeg: _qeuler(-1.5, 0, 0),    // đùi gập ra trước (ngang) — tuned trực quan
-    leg: _qeuler(-1.55, 0, 0),     // cẳng chân buông thẳng xuống
-    foot: _qeuler(0.5, 0, 0),      // bàn chân phẳng trên sàn
+    upLeg: _qeuler(-1.45, 0, 0),   // đùi gập ra trước (ngang) — tuned trực quan
+    leg: _qeuler(-1.95, 0, 0),     // gập gối sâu → cẳng chân thẳng xuống dưới gối
+    foot: _qeuler(0.35, 0, 0),     // bàn chân phẳng trên sàn
     spine: _qeuler(0.12, 0, 0),
-    drop: 0.6                      // hạ hông xuống mặt ghế, chân chạm sàn
+    drop: 0.66                     // hạ hông xuống mặt ghế đẩu, bàn chân chạm sàn
   };
   const REACH = {
     arm: _qeuler(0, -1.25, -0.5),  // cánh tay phải đưa ra trước (xoay quanh trục đứng)
     fore: _qeuler(0, -0.2, 0)
   };
   function poseSlerp(bone, targetQuat, w) { if (bone) bone.quaternion.slerp(targetQuat, w); }
+
+  // Ghế đẩu hiện ra dưới mông khi ngồi (để không lơ lửng). Cylinder cao SEAT_H,
+  // tự đặt dưới nhân vật + lùi nhẹ về phía sau lưng. Không dịch chuyển nhân vật.
+  let SEAT_H = 0.38;
+  const stool = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.19, 0.205, 1, 24),
+    new THREE.MeshStandardMaterial({ color: 0x3b82a6, roughness: 0.7, metalness: 0.05 })
+  );
+  stool.castShadow = true; stool.receiveShadow = true; stool.visible = false;
+  scene.add(stool);
 
   // ── Trạng thái điều khiển ──────────────────────────────────────────────────
   const pos = root.position;
@@ -233,7 +243,7 @@ export async function createCharacter(ctx) {
   }
 
   // ── Update mỗi frame ───────────────────────────────────────────────────────
-  const _fwd = new THREE.Vector3(), _right = new THREE.Vector3(), _dir = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+  const _fwd = new THREE.Vector3(), _right = new THREE.Vector3(), _dir = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0), _seatTmp = new THREE.Vector3();
   function update(dt) {
     mixer.update(dt);
     let vx = 0, vz = 0;
@@ -286,6 +296,19 @@ export async function createCharacter(ctx) {
       poseSlerp(bones.spine, SIT.spine, sitW);
     }
     root.position.y = -SIT.drop * sitW;
+    // Ghế dưới mông: hiện khi ngồi, đặt lùi nhẹ về sau lưng, cao SEAT_H chạm sàn.
+    if (sitting || sitW > 0.02) {
+      const bx = Math.sin(heading), bz = Math.cos(heading); // hướng trước mặt
+      // Tự canh cao ghế theo xương hông (robust mọi avatar) — mặt ghế ngay dưới mông.
+      const hipY = bones.hips ? bones.hips.getWorldPosition(_seatTmp).y : 0.4;
+      const seatTop = Math.max(0.14, hipY - 0.07 + SEAT_H - 0.38);
+      stool.scale.y = seatTop;
+      stool.position.set(pos.x - bx * 0.10, seatTop / 2, pos.z - bz * 0.10);
+      stool.rotation.y = heading;
+      stool.visible = true;
+    } else {
+      stool.visible = false;
+    }
     if (reachW > 0.002) {
       poseSlerp(bones.armR, REACH.arm, reachW);
       poseSlerp(bones.foreR, REACH.fore, reachW);
@@ -324,6 +347,7 @@ export async function createCharacter(ctx) {
     setMoveTarget: (p) => { moveTarget = p; },
     // Tinh chỉnh trực quan: đổi góc khớp ngồi/vươn rồi xem ngay.
     _setPose: (group, key, x, y, z) => { (group === 'reach' ? REACH : SIT)[key] = _qeuler(x, y, z); },
-    _setDrop: (d) => { SIT.drop = d; }
+    _setDrop: (d) => { SIT.drop = d; },
+    _setSeat: (h) => { SEAT_H = h; }
   };
 }
