@@ -7,8 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0638';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0638';
+import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0640';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0640';
+import { createCharacter } from './character.js?v=ph0640';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -1533,6 +1534,16 @@ export function buildScene(canvas, opts = {}) {
     );
     frontPane.position.set(0, 0, doorFrontZ);
     bayGroup.add(frontPane);
+    // Tủ KÍN (chờ xử lý): mặt trước đặc che mất khay giữa → thêm 1 THANH NGANG
+    // ở giữa mặt trước cho giống các tủ kính (vốn lộ vạch khay giữa qua kính).
+    if (bay.type !== 'glass') {
+      const midBar = new THREE.Mesh(
+        new THREE.BoxGeometry(fullPanelW, 0.035, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.5 })
+      );
+      midBar.position.set(0, 0, doorFrontZ + 0.013);
+      bayGroup.add(midBar);
+    }
     addBayDoor(-1, -1); addBayDoor(+1, -1);
 
     // Nhãn mặt trước — đặt CHÍCH PHÍA TRÊN cánh, lệch ra trước thêm 4cm so
@@ -1579,7 +1590,10 @@ export function buildScene(canvas, opts = {}) {
     const bayCx = -COUNTER_W / 2 + BAY_W / 2 + bayIdx * BAY_W;
     const usableW = BAY_W - 0.16;
     const frontZ = COUNTER_Z + COUNTER_D / 2 - 0.10;     // gần mặt kính trước
-    const tierBaseY = [0.05, COUNTER_BODY_H / 2 + 0.04]; // đáy 2 tầng (world Y)
+    // Đáy 2 tầng (world Y) — ĐÚNG mặt kệ: tầng dưới = mặt sàn ngăn (~wallT),
+    // tầng trên = mặt trên khay giữa (COUNTER_BODY_H/2 + wallT/2). Trước đây
+    // +0.05/+0.04 khiến hộp lơ lửng cách kệ ~3cm.
+    const tierBaseY = [0.022, COUNTER_BODY_H / 2 + 0.012];
     const half = Math.ceil(drugs.length / 2);
     [drugs.slice(0, half), drugs.slice(half)].forEach((tier, t) => {
       if (!tier.length) return;
@@ -2727,6 +2741,42 @@ export function buildScene(canvas, opts = {}) {
   }
   loadAllModels();
 
+  // ── Nhân vật người thật điều khiển được (Phase walkable) ───────────────────
+  // AABB chặn va chạm (world-space) + biên phòng. Bán kính nhân vật cộng trong
+  // character.js. Quầy ngang giữa, tủ ốp tường sau, tủ lạnh trái, tủ phụ phải.
+  let character = null;
+  const _charColliders = [
+    { minX: -COUNTER_W / 2, maxX: COUNTER_W / 2, minZ: COUNTER_Z - COUNTER_D / 2, maxZ: COUNTER_Z + COUNTER_D / 2 }, // quầy
+    { minX: -4.2, maxX: 4.2, minZ: BACK_Z, maxZ: BACK_Z + 0.7 },   // dải tủ ốp tường sau
+    { minX: -4.2, maxX: -3.3, minZ: 0.9, maxZ: 2.1 },              // tủ lạnh + góc trái
+    { minX: 3.3, maxX: 4.2, minZ: -1.2, maxZ: 2.9 }                // tủ phụ phải
+  ];
+  const _charBounds = { minX: -ROOM_W / 2 + 0.35, maxX: ROOM_W / 2 - 0.35, minZ: BACK_Z + 0.35, maxZ: ROOM_D / 2 - 0.35 };
+  const _charInteractables = [
+    { pos: new THREE.Vector3(0, 0, COUNTER_Z + 0.7), label: 'Quầy giao dịch' },
+    { pos: new THREE.Vector3(-3.2, 0, COUNTER_Z + 0.1), label: 'Tủ lạnh 2–8°C' },
+    { pos: new THREE.Vector3(-1.9, 0, BACK_Z + 0.9), label: 'Tủ kê đơn' },
+    { pos: new THREE.Vector3(1.9, 0, BACK_Z + 0.9), label: 'Tủ OTC' }
+  ];
+  let _walkWanted = false;
+  // Tạo (hoặc tạo lại khi đổi avatar) nhân vật. Giữ nguyên trạng thái đi dạo.
+  function spawnCharacter(url) {
+    const wasWalking = _walkWanted || !!character?.isEnabled?.();
+    character?.dispose();
+    character = null;
+    return createCharacter({
+      scene, camera, controls, canvas,
+      colliders: _charColliders,
+      bounds: _charBounds,
+      interactables: _charInteractables,
+      spawn: { x: 0, z: 3.0, heading: Math.PI },
+      avatarUrl: url || opts.avatarUrl || null,
+      onPrompt: (txt) => opts.onWalkPrompt?.(txt)
+    }).then(c => { character = c; if (wasWalking) c.setEnabled(true); opts.onCharacterReady?.(); return c; })
+      .catch(e => console.warn('[scene] nhân vật lỗi:', e));
+  }
+  spawnCharacter();
+
   // ── Camera preset switching with 700ms lerp ───────────────────────────────
   let currentPreset = 'default';
   let presetStartedAt = null;
@@ -2799,6 +2849,8 @@ export function buildScene(canvas, opts = {}) {
     fridgeLED.material.emissiveIntensity = anyOpen ? 1.4 : 0.2;
     // Character animations
     charMixers.forEach(m => m.update(dt));
+    // Nhân vật điều khiển được (di chuyển + anim + camera bám khi bật đi dạo)
+    if (character) character.update(dt);
 
     // P2: Scanner LED pulse + beam tia laser
     const now = performance.now();
@@ -3044,26 +3096,37 @@ export function buildScene(canvas, opts = {}) {
     opts.onAction?.('label_dose', { drugId, label });
   }
 
-  canvas.addEventListener('pointerdown', (e) => {
+  // Chọn thuốc/POS/sách… xử lý trên POINTERUP (không phải pointerdown) + ngưỡng
+  // kéo, để: (1) kéo xoay không vô tình mở modal; (2) OrbitControls nhận đủ
+  // pointerup → reset trạng thái xoay. Mở modal HOÃN 1 nhịp (setTimeout 0) để
+  // controls xử lý xong pointerup TRƯỚC, tránh lỗi camera tự xoay sau khi đóng
+  // modal (pointerup bị overlay nuốt mất → controls kẹt state ROTATE).
+  let _pdX = 0, _pdY = 0, _pdBtn = -1;
+  canvas.addEventListener('pointerdown', (e) => { _pdX = e.clientX; _pdY = e.clientY; _pdBtn = e.button; });
+  canvas.addEventListener('pointerup', (e) => {
+    if (_pdBtn !== 0 || e.button !== 0) return;                       // chỉ chuột trái
+    if (Math.abs(e.clientX - _pdX) > 6 || Math.abs(e.clientY - _pdY) > 6) return; // đã kéo → bỏ qua
     const hit = clickAt(e.clientX, e.clientY);
     if (!hit) return;
-    if (hit.kind === 'pos') opts.onPosOpen?.();
-    else if (hit.kind === 'label') opts.onLabelOpen?.();
-    else if (hit.kind === 'notepad') opts.onNotepadOpen?.();
-    else if (hit.kind === 'sales_tray') opts.onSalesTrayOpen?.();
-    else if (hit.kind === 'book') opts.onBookOpen?.(hit.book.userData.bookId);
-    else if (hit.kind === 'door') hit.door.userData.isOpen = !hit.door.userData.isOpen;
-    else if (hit.kind === 'drug') {
-      const sub = hit.group;
-      if (pendingLabel) {
-        attachLabelToPickedDrug(sub.userData.drugId, pendingLabel);
-        pendingLabel = null;
-        opts.onPendingLabelClear?.();
-      } else {
-        // Truyền sub mesh trực tiếp — pickDrug sẽ decide pick thêm vs unpick.
-        pickDrug(sub);
+    const act = () => {
+      if (hit.kind === 'pos') opts.onPosOpen?.();
+      else if (hit.kind === 'label') opts.onLabelOpen?.();
+      else if (hit.kind === 'notepad') opts.onNotepadOpen?.();
+      else if (hit.kind === 'sales_tray') opts.onSalesTrayOpen?.();
+      else if (hit.kind === 'book') opts.onBookOpen?.(hit.book.userData.bookId);
+      else if (hit.kind === 'door') hit.door.userData.isOpen = !hit.door.userData.isOpen;
+      else if (hit.kind === 'drug') {
+        const sub = hit.group;
+        if (pendingLabel) {
+          attachLabelToPickedDrug(sub.userData.drugId, pendingLabel);
+          pendingLabel = null;
+          opts.onPendingLabelClear?.();
+        } else {
+          pickDrug(sub);
+        }
       }
-    }
+    };
+    setTimeout(act, 0);
   });
 
   // ── Hover detect cho tooltip + search focus ─────────────────────────────
@@ -3158,6 +3221,10 @@ export function buildScene(canvas, opts = {}) {
     setExposure: (v) => applyBrightness(v, true),
     getExposure: () => currentBrightness,
     getCurrentPreset: () => currentPreset,
+    setWalkMode: (on) => { _walkWanted = on; presetStartedAt = null; _panVel.set(0, 0, 0); character?.setEnabled(on); },
+    isWalkMode: () => !!character?.isEnabled(),
+    isCharacterReady: () => !!character,
+    reloadAvatar: (url) => spawnCharacter(url),
     getPickedIds: () => picked.map(s => s.userData.drugId),
     getLabels: () => Object.fromEntries(labelsByDrug.entries()),
     setPendingLabel: (l) => { pendingLabel = l; },
@@ -3174,6 +3241,7 @@ export function buildScene(canvas, opts = {}) {
       renderer.dispose();
       window.removeEventListener('resize', resize);
       window.removeEventListener('keydown', _onKeyNav);
+      character?.dispose();
     }
   };
 }
