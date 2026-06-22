@@ -827,7 +827,6 @@
       <button class="btn" id="btn-pos" type="button">💻 Mở phần mềm bán hàng</button>
       <button class="btn" id="btn-rx" type="button">📋 Xem đơn thuốc</button>
       <button class="btn" id="btn-doctor" type="button">📞 Gọi bác sĩ</button>
-      <button class="btn" id="btn-senior" type="button">👨‍⚕️ DS đại học</button>
     </div>
     <label class="rx-line"><input type="checkbox" id="rx-toggle"/> Khách có đơn thuốc hợp lệ</label>
 
@@ -852,7 +851,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0637';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0638';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;

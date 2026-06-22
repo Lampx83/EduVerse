@@ -1,15 +1,25 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0637';
-import { loadDrugs } from './catalog.js?v=ph0637';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle } from './scene.js?v=ph0638';
+import { loadDrugs } from './catalog.js?v=ph0638';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { openPosTerminal } from './pos.js?v=ph0637';
-import { openLabelEditor } from './label-editor.js?v=ph0637';
+import { openPosTerminal } from './pos.js?v=ph0638';
+import { openLabelEditor } from './label-editor.js?v=ph0638';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0637';
+import { labelSectionHTML } from './drug-label.js?v=ph0638';
 
 const $ = (id) => document.getElementById(id);
+
+// Số viên trên 1 vỉ — đọc từ quy cách đóng gói (vd "Hộp, 3 vỉ x 14 viên" → 14).
+// Mặc định 10 nếu không nhận diện được. Giới hạn 30 để vỉ không quá rộng.
+function pillsPerBlister(drug) {
+  const s = (drug.pack || drug.retailUnit || '').toLowerCase();
+  let m = s.match(/vỉ\s*[x×*]\s*(\d+)/);          // "n vỉ x m viên"
+  if (!m) m = s.match(/[x×*]\s*(\d+)\s*viên/);     // "... x m viên"
+  if (!m) m = s.match(/(\d+)\s*viên\s*\/\s*vỉ/);   // "m viên/vỉ"
+  return m ? Math.min(30, Math.max(1, +m[1])) : 10;
+}
 
 export async function startSimulation({ moduleId = 'gpp' } = {}) {
   // 0. Nạp danh mục thuốc từ DB (content_datasets) TRƯỚC khi buildScene — scene.js
@@ -199,6 +209,8 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   function openSalesTray() {
     if (document.querySelector('.salestray-overlay')) return;
     const picked = sim.getPickedIds();
+    const catMap = {};
+    (sim.getCatalog?.() || []).forEach(it => { catMap[it.drug.id] = it; });
     const overlay = document.createElement('div');
     overlay.className = 'salestray-overlay';
     overlay.innerHTML = `
@@ -210,7 +222,11 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         <div class="salestray-body">
           ${picked.length === 0
             ? '<div class="salestray-empty">Chưa có thuốc nào trong khay.<br>Click vào hộp thuốc trên kệ để đưa vào khay.</div>'
-            : '<ul class="salestray-list">' + picked.map(id => `<li><b>${id}</b></li>`).join('') + '</ul>'}
+            : '<ul class="salestray-list">' + picked.map(id => {
+                const it = catMap[id];
+                const name = it ? (it.drug.brand || it.drug.name || id) : id;
+                return `<li><button class="salestray-item" type="button" data-id="${id}">💊 ${name} <span class="sti-go">› xem chi tiết</span></button></li>`;
+              }).join('') + '</ul>'}
         </div>
         <div class="salestray-foot">
           <button class="salestray-done" type="button">Đóng</button>
@@ -222,6 +238,15 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     overlay.querySelector('.salestray-close').addEventListener('click', close);
     overlay.querySelector('.salestray-done').addEventListener('click', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    // Bấm 1 thuốc trong khay → mở cửa sổ chi tiết (ẩn nút "Đưa vào khay" vì đã ở khay).
+    overlay.querySelectorAll('.salestray-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const it = catMap[btn.dataset.id];
+        if (!it) return;
+        close();
+        openInspector({ drug: it.drug, meta: it.meta, fromTray: true, returnToShelf: () => {}, confirmToTray: () => {} });
+      });
+    });
     document.addEventListener('keydown', esc);
   }
 
@@ -255,7 +280,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
 
   // P3: Inspector modal — hộp thuốc zoom giữa màn hình, tự xoay, drag xoay,
   // info panel + 2 nút (Đưa vào khay / Trả về kệ). Dùng mini-scene Three.js riêng.
-  function openInspector({ drug, meta, confirmToTray, returnToShelf }) {
+  function openInspector({ drug, meta, confirmToTray, returnToShelf, fromTray = false }) {
+    // Khi mở từ khay bán hàng (hoặc thuốc đã nằm trong khay) → ẩn nút "Đưa vào
+    // khay" vì đã ở trên khay rồi.
+    const alreadyInTray = fromTray || (sim.getPickedIds?.() || []).includes(drug.id);
     const overlay = document.createElement('div');
     overlay.className = 'inspector-overlay';
     overlay.innerHTML = `
@@ -283,11 +311,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
             <tr><td>Đơn giá</td><td>${(drug.unitPrice || 0).toLocaleString('vi')} đ</td></tr>
           </table>
           ${labelSectionHTML(drug, meta)}
-          <div class="ins-hint">💡 Kéo chuột để xoay hộp · Lăn để zoom</div>
           <div class="ins-actions">
             <button class="ins-return" type="button">↩ Trả về kệ</button>
             <button class="ins-retail" type="button">🔓 Tách lẻ (${drug.unit || 'đơn vị'})</button>
-            <button class="ins-confirm" type="button">📥 Đưa vào khay (Quét barcode)</button>
+            ${alreadyInTray ? '' : '<button class="ins-confirm" type="button">📥 Đưa vào khay (Quét barcode)</button>'}
           </div>
         </div>
       </div>`;
@@ -423,31 +450,54 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
 
     // ── "Mở hộp lấy vỉ/gói/lọ/ống" — đơn vị nhỏ nhất bên trong hộp, trượt ra khi tách lẻ ──
     const formStr = (drug.form || '').toLowerCase();
+    const catStr = (drug.category || '').toLowerCase();
     let unitKind = 'vi';
     if (/gói|bột|cốm/.test(formStr)) unitKind = 'goi';
     else if (/ống|tiêm/.test(formStr)) unitKind = 'ong';
-    else if (/lọ|dung dịch|siro|nhỏ|xịt|gel|kem|cao|mỡ|dầu/.test(formStr)) unitKind = 'lo';
-    const unitWordVN = { vi: 'vỉ', goi: 'gói', lo: 'lọ', ong: 'ống' }[unitKind];
+    else if (/lọ|chai|dung dịch|siro|nhỏ|xịt|gel|kem|cao|mỡ|dầu/.test(formStr)) unitKind = 'lo';
+    // Thiết bị / dụng cụ y tế (nhiệt kế, máy đo, que thử, băng gạc…) — KHÔNG phải
+    // vỉ thuốc. Mở hộp ra phải là chính thiết bị đó.
+    if (/thiết bị|dụng cụ|nhiệt kế|máy|que thử|test|kit|băng|gạc|bông|khẩu trang|bơm tiêm|kim/.test(formStr)
+        || /dụng cụ|thiết bị/.test(catStr)) unitKind = 'device';
+    const unitWordVN = { vi: 'vỉ', goi: 'gói', lo: 'lọ', ong: 'ống', device: 'thiết bị' }[unitKind];
     const unit = (() => {
       const g = new THREE.Group();
       const foil = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.6, roughness: 0.35 });
       const acc = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.5 });
       if (unitKind === 'vi') {
-        // Vỉ ép: tấm nhôm nền + 2×5 viên nằm trong bầu nhựa TRONG (blister) cho giống thật.
-        const sheetW = w * 0.84, sheetD = d * 0.88;
-        g.add(new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.006, sheetD),
+        // Vỉ ép: tấm nhôm MỎNG + viên trong bầu nhựa trong. Số viên theo quy cách
+        // đóng gói (vd vỉ 14 viên → 14), xếp lưới tự cân.
+        const per = pillsPerBlister(drug);
+        const rows = per <= 7 ? 1 : per <= 14 ? 2 : per <= 21 ? 3 : Math.ceil(per / 8);
+        const cols = Math.ceil(per / rows);
+        const sheetW = w * Math.min(1.05, 0.5 + cols * 0.075), sheetD = d * 0.9;
+        g.add(new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.004, sheetD),
           new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.5, roughness: 0.32 })));
-        const clearMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, roughness: 0.08, metalness: 0 });
-        const cols = 5, rows = 2;
+        const clearMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.20, roughness: 0.08, metalness: 0 });
         const px = sheetW / (cols + 0.4), pz = sheetD / (rows + 0.3);
         const rad = Math.min(px, pz) * 0.40;
-        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        let placed = 0;
+        for (let r = 0; r < rows && placed < per; r++) for (let c = 0; c < cols && placed < per; c++) {
           const cx = (c - (cols - 1) / 2) * px, cz = (r - (rows - 1) / 2) * pz;
           const pill = new THREE.Mesh(new THREE.SphereGeometry(rad, 14, 10), acc);
-          pill.scale.set(1, 0.55, 1); pill.position.set(cx, 0.009, cz); g.add(pill);
-          const dome = new THREE.Mesh(new THREE.SphereGeometry(rad * 1.18, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), clearMat);
-          dome.position.set(cx, 0.008, cz); g.add(dome);
+          pill.scale.set(1, 0.42, 1); pill.position.set(cx, 0.006, cz); g.add(pill);
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(rad * 1.14, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), clearMat);
+          dome.position.set(cx, 0.005, cz); g.add(dome);
+          placed++;
         }
+      } else if (unitKind === 'device') {
+        // Thiết bị y tế (mô phỏng kiểu nhiệt kế điện tử): thân thuôn dài trắng +
+        // đầu cảm biến kim loại + màn hình nhỏ. Đại diện chung cho dụng cụ.
+        const white = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 });
+        const bodyL = Math.max(h, w) * 0.95;
+        const stick = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.07, w * 0.07, bodyL, 18), white);
+        stick.rotation.z = Math.PI / 2; g.add(stick);
+        const tip = new THREE.Mesh(new THREE.SphereGeometry(w * 0.075, 14, 10),
+          new THREE.MeshStandardMaterial({ color: 0xc0c4cc, metalness: 0.8, roughness: 0.3 }));
+        tip.position.x = -bodyL / 2; g.add(tip);
+        const disp = new THREE.Mesh(new THREE.BoxGeometry(w * 0.18, w * 0.13, 0.004),
+          new THREE.MeshStandardMaterial({ color: 0x0f172a, emissive: 0x14532d, emissiveIntensity: 0.5 }));
+        disp.position.set(bodyL * 0.28, w * 0.075, 0); g.add(disp);
       } else if (unitKind === 'goi') {
         g.add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.018, d * 0.78), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.55, roughness: 0.4 })));
         g.add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.02, d * 0.16), acc));
@@ -509,7 +559,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     // Phím ESC đóng.
     const insEsc = (e) => { if (e.key === 'Escape') { returnToShelf?.(); close(); } };
     document.addEventListener('keydown', insEsc);
-    overlay.querySelector('.ins-confirm').addEventListener('click', () => {
+    overlay.querySelector('.ins-confirm')?.addEventListener('click', () => {
       confirmToTray?.();
       close();
     });
