@@ -354,8 +354,8 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
             <div class="rpm-body">
               <div class="rpm-section">Mẫu có sẵn (bấm là dùng ngay)</div>
               <div class="rpm-presets">
-                <button class="rpm-preset" data-k="nam" type="button">🧑 Dược sĩ Nam</button>
-                <button class="rpm-preset" data-k="nu" type="button">👩 Dược sĩ Nữ</button>
+                <button class="rpm-preset" data-k="nam" type="button">🧑 Bệnh nhân Nam</button>
+                <button class="rpm-preset" data-k="nu" type="button">👩 Bệnh nhân Nữ</button>
               </div>
               <div class="rpm-section">Avatar giống bạn (nâng cao)</div>
               <p class="rpm-help">Tạo nhân vật tại Ready Player Me (chọn kiểu hoặc chụp selfie),
