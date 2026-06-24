@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CABINETS, ALL_DRUGS } from './catalog.js?v=ph0640';
 import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0640';
-import { createCharacter } from './character.js?v=ph0643';
+import { createCharacter } from './character.js?v=ph0647';
 
 const MODELS_BASE = './models/pharmacy/';
 
