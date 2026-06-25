@@ -25,3 +25,20 @@ Ghi nhận các cải tiến hàng ngày của **Ban điều hành AI**.
 - Từ 6 entry → 17 entry, phủ thêm: I1.1 (Codelab+ScoreUp), I1.3 (ScoreUp), I1.4 (Codelab), I1.5 (ScoreUp), I2.2 (Codelab), I2.3 (ScoreUp), I2.4 (ScoreUp), I2.5 (Codelab), I3.5 (Codelab+Smartdoc), I3.7 (Smartdoc), I3.8 (ScoreUp), IG02 (Codelab).
 
 **Kiểm thử:** `node --check` pass trên tất cả 4 file đã sửa. Không thay đổi engine lõi hay server.
+
+---
+
+## 2026-06-25 · Trường CNTT — Phiên 2: Thêm quiz I2.1 DS&A
+
+**Khoảng trống phát hiện:** Module I2.1 (Cấu trúc dữ liệu & Giải thuật) vẫn là placeholder sau phiên trước.
+
+**Thay đổi đã triển khai:**
+
+### 1. Thêm quiz I2.1 vào `public/js/scenarios/it-year1.js`
+- **I2.1 · Cấu trúc dữ liệu & Giải thuật** (`I2.1-quiz-01`): 10 câu hỏi độ khó 3, bao gồm: Binary Search O(log n), Stack LIFO, bất biến BST (trái < N < phải), Hash Table O(1) trung bình, Merge Sort Divide&Conquer, ưu điểm Linked List (chèn/xóa O(1)), BFS dùng Queue, base case đệ quy, Quick Sort O(n log n) trung bình, DP vs D&C (memoize overlapping subproblems).
+- `IT_YEAR1_SCENARIOS` mở rộng để bao gồm `I21_QUIZ`.
+
+### 2. Kích hoạt module I2.1 (`public/js/domains/it/modules.js`)
+- **I2.1**: `scenarioIds: ['I2.1-quiz-01']`, `knowledgeQuiz: 'I2.1-quiz-01'`, xoá `placeholder: true`.
+
+**Kiểm thử:** `node --check` pass trên cả 2 file đã sửa. Không thay đổi engine lõi hay server.

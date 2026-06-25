@@ -183,8 +183,102 @@ export const I12_QUIZ = {
   ],
 };
 
-/** Tập hợp scenarios Trường IT Năm 1 để seed vào DB. */
+// ─────────────── I2.1 · Cấu trúc dữ liệu & Giải thuật ───────────────
+export const I21_QUIZ = {
+  id: 'I2.1-quiz-01',
+  title: 'I2.1 · Cấu trúc dữ liệu & Giải thuật — Cơ bản',
+  kind: 'quiz',
+  yearLevel: 2,
+  subject: 'cau-truc-du-lieu',
+  difficulty: 3,
+  skillsTrained: ['algorithm-complexity', 'data-structures', 'sorting', 'searching', 'graph-traversal'],
+  questions: [
+    {
+      stem: 'Thuật toán tìm kiếm nhị phân (Binary Search) có độ phức tạp thời gian trường hợp xấu nhất là:',
+      choices: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
+      answer: 1,
+      explanation: 'Binary Search chia đôi không gian tìm kiếm mỗi bước → T(n) = T(n/2) + O(1). Giải ra T(n) = O(log n). Đây là lý do thuật toán này hiệu quả hơn rất nhiều so với tìm kiếm tuyến tính O(n) trên mảng đã sắp xếp.',
+    },
+    {
+      stem: 'Stack (ngăn xếp) hoạt động theo nguyên tắc:',
+      choices: ['FIFO — phần tử vào trước, ra trước', 'LIFO — phần tử vào sau, ra trước', 'LILO — phần tử vào sau, ra sau', 'FILO — phần tử vào trước, ra sau'],
+      answer: 1,
+      explanation: 'Stack là LIFO (Last In, First Out): phần tử được đẩy vào (push) cuối cùng sẽ được lấy ra (pop) đầu tiên. Ứng dụng: call stack của hàm đệ quy, undo/redo, kiểm tra dấu ngoặc cân bằng. Queue (hàng đợi) mới là FIFO.',
+    },
+    {
+      stem: 'Trong cây nhị phân tìm kiếm (BST), với mọi nút N, mệnh đề nào ĐÚNG?',
+      choices: [
+        'Tất cả nút cây con trái > N và tất cả nút cây con phải < N',
+        'Tất cả nút cây con trái ≥ N và tất cả nút cây con phải ≤ N',
+        'Tất cả nút cây con trái < N và tất cả nút cây con phải > N',
+        'Không có ràng buộc nào về thứ tự giữa nút cha và nút con',
+      ],
+      answer: 2,
+      explanation: 'Định nghĩa BST: với mỗi nút N, toàn bộ cây con trái chứa các giá trị nhỏ hơn N, toàn bộ cây con phải chứa các giá trị lớn hơn N. Bất biến này cho phép tìm kiếm, chèn, xóa trong O(h) với h là chiều cao cây (O(log n) nếu cân bằng).',
+    },
+    {
+      stem: 'Cấu trúc dữ liệu nào có thao tác tìm kiếm trung bình O(1)?',
+      choices: ['Mảng (Array)', 'Danh sách liên kết (Linked List)', 'Cây nhị phân tìm kiếm (BST)', 'Bảng băm (Hash Table)'],
+      answer: 3,
+      explanation: 'Hash Table dùng hàm băm để ánh xạ key → index trực tiếp → tìm kiếm O(1) trung bình. Xung đột (collision) xử lý qua chaining hoặc open addressing. Trường hợp xấu nhất là O(n) khi tất cả key cùng hash về một bucket, nhưng với hàm băm tốt điều này rất hiếm.',
+    },
+    {
+      stem: 'Thuật toán sắp xếp nào thuộc chiến lược "Chia để trị" (Divide and Conquer)?',
+      choices: ['Bubble Sort', 'Insertion Sort', 'Merge Sort', 'Selection Sort'],
+      answer: 2,
+      explanation: 'Merge Sort chia mảng làm đôi đệ quy cho đến khi còn 1 phần tử (trivially sorted), rồi merge ngược lại. T(n) = 2T(n/2) + O(n) → O(n log n) theo Master Theorem. Quick Sort cũng là D&C nhưng không có trong đáp án. Bubble/Insertion/Selection Sort là so sánh trực tiếp, không dùng D&C.',
+    },
+    {
+      stem: 'So sánh Danh sách liên kết (Linked List) và Mảng (Array): đâu là ưu điểm của Linked List?',
+      choices: [
+        'Truy cập ngẫu nhiên O(1) theo chỉ số',
+        'Chèn/xóa ở giữa O(1) khi đã có con trỏ vị trí',
+        'Bộ nhớ liên tục giúp cache hiệu quả hơn',
+        'Kích thước cố định giúp tính trước bộ nhớ',
+      ],
+      answer: 1,
+      explanation: 'Linked List chỉ cần cập nhật con trỏ prev/next khi chèn/xóa → O(1) nếu đã có con trỏ. Ngược lại, Array phải dịch chuyển các phần tử → O(n). Tuy nhiên, Linked List mất O(n) để truy cập theo chỉ số (phải duyệt từ đầu), trong khi Array cho O(1) random access.',
+    },
+    {
+      stem: 'BFS (Breadth-First Search) trên đồ thị sử dụng cấu trúc dữ liệu nào để theo dõi các nút cần thăm?',
+      choices: ['Stack', 'Queue (Hàng đợi)', 'Priority Queue (Heap)', 'Linked List đơn'],
+      answer: 1,
+      explanation: 'BFS duyệt theo lớp (tất cả hàng xóm cấp 1 trước, rồi cấp 2, …) → cần Queue (FIFO) để đảm bảo xử lý các nút theo thứ tự khoảng cách. DFS (Depth-First Search) mới dùng Stack (hoặc đệ quy). Queue đảm bảo BFS tìm đường ngắn nhất trên đồ thị không trọng số.',
+    },
+    {
+      stem: 'Đệ quy (Recursion) bắt buộc phải có:',
+      choices: [
+        'Độ phức tạp O(log n)',
+        'Trường hợp cơ sở (base case) để dừng đệ quy',
+        'Ít nhất 2 lời gọi đệ quy trong mỗi hàm',
+        'Biến toàn cục để lưu kết quả trung gian',
+      ],
+      answer: 1,
+      explanation: 'Nếu không có base case, hàm đệ quy sẽ tự gọi mãi mãi → Stack Overflow. Base case là điều kiện dừng (ví dụ: `if n == 0: return 1` trong factorial). Không phải mọi đệ quy đều O(log n) (factorial là O(n)), và không cần 2 lời gọi hay biến toàn cục.',
+    },
+    {
+      stem: 'Quick Sort có độ phức tạp thời gian trung bình là:',
+      choices: ['O(n)', 'O(n log n)', 'O(n²)', 'O(log n)'],
+      answer: 1,
+      explanation: 'Quick Sort chọn pivot, chia mảng thành 2 phần (nhỏ hơn/lớn hơn pivot) và đệ quy. Trường hợp trung bình T(n) = 2T(n/2) + O(n) → O(n log n). Trường hợp xấu nhất O(n²) khi pivot luôn là min/max (mảng đã sắp xếp + pivot = đầu). Thực tế Quick Sort thường nhanh hơn Merge Sort do cache locality tốt hơn.',
+    },
+    {
+      stem: 'Điểm khác biệt chính giữa Quy hoạch động (Dynamic Programming) và Chia để trị (Divide & Conquer) là:',
+      choices: [
+        'DP chỉ áp dụng cho bài toán tối ưu, D&C cho mọi loại bài toán',
+        'DP ghi nhớ (memoize) kết quả các bài toán con trùng nhau, D&C không làm vậy',
+        'D&C luôn nhanh hơn DP về độ phức tạp thời gian',
+        'DP không dùng đệ quy, D&C bắt buộc phải dùng đệ quy',
+      ],
+      answer: 1,
+      explanation: 'DP lưu kết quả các bài toán con (overlapping subproblems) vào bảng/mảng để tránh tính lại → tối ưu hóa thời gian đáng kể. D&C chia thành các bài toán con độc lập (không trùng) nên không cần memoization. Ví dụ: Fibonacci đệ quy thuần là D&C O(2ⁿ), Fibonacci DP là O(n).',
+    },
+  ],
+};
+
+/** Tập hợp scenarios Trường IT Năm 1 & Năm 2 (DS&A) để seed vào DB. */
 export const IT_YEAR1_SCENARIOS = {
   [I11_QUIZ.id]: I11_QUIZ,
   [I12_QUIZ.id]: I12_QUIZ,
+  [I21_QUIZ.id]: I21_QUIZ,
 };
