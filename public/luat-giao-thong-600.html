@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🚦 Lý thuyết Lái xe — 600 câu · Tizia</title>
-<meta name="description" content="Bộ 600 câu hỏi lý thuyết B1/B2 theo Bộ GTVT — chế độ luyện + thi thử, có câu liệt (điểm liệt phải trả lời đúng để qua)." />
+<title>🚦 Lý thuyết Lái xe ô tô — Thi sát hạch theo hạng · Tizia</title>
+<meta name="description" content="Câu hỏi lý thuyết lái xe ô tô theo Luật TTATGT 2024 — luyện tập theo chủ đề + thi thử theo hạng GPLX (B, C1, C, D1, D2, D…), có câu điểm liệt phải trả lời đúng để qua." />
 <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
 <meta name="theme-color" content="#dc2626" />
 <style>
@@ -76,7 +76,7 @@
 </style>
 </head>
 <body>
-<h1>🚦 Lý thuyết Lái xe B1/B2 — Luật giao thông đường bộ</h1>
+<h1>🚦 Lý thuyết Lái xe ô tô — Luật giao thông đường bộ</h1>
 
 <div class="toolbar">
   <button data-mode="learn" class="active">📖 Luyện tập</button>
@@ -100,6 +100,10 @@
 
 <div id="classPicker">
   <h2>🚗 Chọn hạng bằng để bắt đầu thi sát hạch</h2>
+  <p style="text-align:center;color:var(--muted);font-size:12.5px;max-width:680px;margin:-8px auto 14px;line-height:1.5">
+    Từ 01/01/2025 (Luật TTATGT 2024): hạng <b>B1, B2 cũ</b> gộp thành hạng <b>B</b> (ô tô đến 8 chỗ).
+    Mỗi hạng bốc <b>đề ngẫu nhiên</b> từ ngân hàng câu hỏi, có ít nhất 1 câu điểm liệt.
+  </p>
   <div class="clsGrid" id="clsGrid"></div>
 </div>
 
@@ -315,7 +319,7 @@
     el('catBar').style.display = 'none'; el('qcard').style.display = 'none'; el('stats').style.display = 'none';
     el('emptyMsg').style.display = 'none'; el('summary').classList.remove('show');
     document.querySelector('.nav').style.display = 'none';
-    el('classPicker').style.display = '';
+    el('classPicker').style.display = 'block';   // CSS mặc định #classPicker{display:none} → phải set 'block' (set '' sẽ về none, ẩn mất màn chọn hạng)
     el('clsGrid').innerHTML = EXAM_CLASSES.map((c, i) => `
       <button class="cls" data-cls="${i}">
         ${c.up ? '<span class="up">NÂNG HẠNG</span>' : ''}
