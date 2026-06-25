@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0669';
-import { loadDrugs } from './catalog.js?v=ph0669';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0670';
+import { loadDrugs } from './catalog.js?v=ph0670';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,10 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0669';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0669';
+import { openPosTerminal } from './pos.js?v=ph0670';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0670';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0669';
+import { labelSectionHTML } from './drug-label.js?v=ph0670';
 
 const $ = (id) => document.getElementById(id);
 
@@ -1105,8 +1105,15 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         const cTex = makeContactLabelTex(drug, meta); cTex.anisotropy = 4;
         const cMat = new THREE.MeshStandardMaterial({ map: cTex, roughness: 0.55, side: THREE.DoubleSide,
           polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
-        if (unitKind === 'vi' || unitKind === 'goi') {
-          // Tấm vỉ/gói nằm ngang → nhãn dán mặt TRÊN, hướng lên.
+        if (unitKind === 'vi') {
+          // Vỉ: nhãn in trên MÀNG NHÔM MẶT SAU (mặt dưới, đối diện bầu thuốc) —
+          // đúng quy cách thật. Vỉ được LẬT khi trượt ra để khoe mặt nhãn.
+          const pw = w * 0.82, ph = pw * (200 / 360);
+          const lab = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), cMat);
+          lab.rotation.x = Math.PI / 2; lab.rotation.z = Math.PI; lab.position.set(0, -0.013, 0);
+          g.add(lab);
+        } else if (unitKind === 'goi') {
+          // Gói (tấm dẹt 1 lớp): nhãn in mặt trước, giữ mặt trên.
           const pw = w * 0.82, ph = pw * (200 / 360);
           const lab = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), cMat);
           lab.rotation.x = -Math.PI / 2; lab.position.set(0, 0.013, 0);
@@ -1152,7 +1159,8 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         const e = 1 - Math.pow(1 - extractT, 3); // easeOutCubic
         unit.position.lerpVectors(extractFrom, extractTo, e);
         unit.rotation.y = e * 0.6;
-        if (unitKind === 'vi' || unitKind === 'goi') unit.rotation.z = -e * 0.5; // nghiêng cho thấy mặt vỉ
+        if (unitKind === 'vi') { unit.rotation.x = -e * Math.PI; unit.rotation.z = -e * 0.25; } // LẬT vỉ → khoe MẶT SAU (nhãn nhôm)
+        else if (unitKind === 'goi') unit.rotation.z = -e * 0.5; // nghiêng cho thấy mặt gói
       }
       ctrl.update();
       renderer.render(scene2, camera2);
