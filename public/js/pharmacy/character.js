@@ -508,6 +508,8 @@ export async function createCharacter(ctx) {
     setShirtColor: (hex) => { _shirtHex = hex || null; applyAppearance(); },
     setSkinCondition: (c) => { _condition = c || 'none'; applyAppearance(); },
     getSkinCondition: () => _condition,
+    setHairColor: (h) => { _hairColor = h || null; applyAppearance(); },
+    getHairColor: () => _hairColor,
     setExpression: (e) => { _expr = (e && e !== 'none') ? e : null; },
     getExpression: () => _expr || 'none',
     _setExprPose: (state, key, x, y, z) => { if (EXPR[state]) EXPR[state][key] = _qeuler(x, y, z); },

@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0668';
 import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0668';
-import { createCharacter } from './character.js?v=ph0668';
+import { createCharacter } from './character.js?v=ph0669';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -2963,6 +2963,7 @@ export function buildScene(canvas, opts = {}) {
   let _shirtColor = opts.shirtColor || null;
   let _condition = opts.condition || 'none';
   let _expression = opts.expression || 'none';
+  let _hairColor = opts.hairColor || null;
   // Tạo (hoặc tạo lại khi đổi avatar) nhân vật. Giữ nguyên trạng thái đi dạo.
   function spawnCharacter(url) {
     const wasWalking = _walkWanted || !!character?.isEnabled?.();
@@ -2980,6 +2981,7 @@ export function buildScene(canvas, opts = {}) {
       shirtColor: _shirtColor,
       condition: _condition,
       expression: _expression,
+      hairColor: _hairColor,
       onPrompt: (txt) => opts.onWalkPrompt?.(txt)
     }).then(c => { character = c; if (wasWalking) c.setEnabled(true); opts.onCharacterReady?.(); return c; })
       .catch(e => console.warn('[scene] nhân vật lỗi:', e));
@@ -3664,6 +3666,8 @@ export function buildScene(canvas, opts = {}) {
     getAvatarCondition: () => _condition,
     setAvatarExpression: (e) => { _expression = e || 'none'; character?.setExpression(_expression); },
     getAvatarExpression: () => _expression,
+    setAvatarHair: (h) => { _hairColor = h || null; character?.setHairColor(_hairColor); },
+    getAvatarHair: () => _hairColor,
     getAvatarShirt: () => _shirtColor,
     getPickedIds: () => picked.map(s => s.userData.drugId),
     getLabels: () => Object.fromEntries(labelsByDrug.entries()),
