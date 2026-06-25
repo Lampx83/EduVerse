@@ -1,6 +1,6 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0668';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0669';
 import { loadDrugs } from './catalog.js?v=ph0668';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -86,9 +86,11 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   const AVATAR_SHIRT_KEY = 'tizia_pharmacy_avatar_shirt';
   const AVATAR_COND_KEY = 'tizia_pharmacy_avatar_cond';
   const AVATAR_EXPR_KEY = 'tizia_pharmacy_avatar_expr';
+  const AVATAR_HAIR_KEY = 'tizia_pharmacy_avatar_hair';
   const SHIRT_COLORS = ['#2563eb', '#0d9488', '#16a34a', '#e11d48', '#f59e0b', '#6b7280', '#f5f5f5', '#7c3aed'];
-  const CONDITIONS = [['none', 'Bình thường'], ['rash', 'Phát ban'], ['hives', 'Mề đay'], ['jaundice', 'Vàng da'], ['pallor', 'Xanh xao'], ['flush', 'Đỏ (sốt)']];
+  const CONDITIONS = [['none', 'Bình thường'], ['rash', 'Phát ban'], ['hives', 'Mề đay'], ['jaundice', 'Vàng da'], ['pallor', 'Xanh xao'], ['flush', 'Đỏ (sốt)'], ['bruise', 'Bầm tím'], ['cyanosis', 'Tím tái']];
   const EXPRESSIONS = [['none', 'Bình thường'], ['pain', '😣 Đau'], ['worried', '😟 Lo lắng']];
+  const HAIR_SW = [['none', '#3a3330'], ['black', '#1c1816'], ['brown', '#5c3822'], ['gray', '#c8c5c1'], ['blonde', '#c9a460']];
   const _avatarUrl = new URLSearchParams(location.search).get('avatar')
     || (() => { try { return localStorage.getItem(AVATAR_KEY); } catch { return null; } })()
     || null;
@@ -97,6 +99,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   const _avatarShirt = (() => { try { return localStorage.getItem(AVATAR_SHIRT_KEY) || null; } catch { return null; } })();
   const _avatarCond = (() => { try { return localStorage.getItem(AVATAR_COND_KEY) || 'none'; } catch { return 'none'; } })();
   const _avatarExpr = (() => { try { return localStorage.getItem(AVATAR_EXPR_KEY) || 'none'; } catch { return 'none'; } })();
+  const _avatarHair = (() => { try { return localStorage.getItem(AVATAR_HAIR_KEY) || null; } catch { return null; } })();
   const sim = buildScene($('scene-canvas'), {
     avatarUrl: _avatarUrl,
     avatarHeight: _avatarHeight,
@@ -104,6 +107,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     shirtColor: _avatarShirt,
     condition: _avatarCond,
     expression: _avatarExpr,
+    hairColor: _avatarHair,
     onAction: async (type, payload) => {
       await postAction(type, payload);
     },
@@ -609,6 +613,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       const curShirt = sim.getAvatarShirt ? sim.getAvatarShirt() : null;
       const curCond = sim.getAvatarCondition ? sim.getAvatarCondition() : 'none';
       const curExpr = sim.getAvatarExpression ? sim.getAvatarExpression() : 'none';
+      const curHair = sim.getAvatarHair ? (sim.getAvatarHair() || 'none') : 'none';
       // {i: index thật trong SKIN_TONES, c: màu xem trước} — xếp sáng → đậm.
       const SKIN_SW = [
         { i: 2, c: '#fadcc8' }, // rất sáng
@@ -623,7 +628,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       overlay.className = 'rpm-overlay';
       overlay.innerHTML = `
         <div class="rpm-modal rpm-modal-sm">
-          <div class="rpm-head"><b>🧑 Chọn nhân vật (bệnh nhân)</b>
+          <div class="rpm-head"><b>👤 Khách hàng</b>
             <button class="rpm-close" type="button" aria-label="Đóng">✕</button></div>
           <div class="rpm-body">
             <div class="rpm-section">Giới tính</div>
@@ -641,6 +646,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
             <div class="rpm-section">Tông da</div>
             <div class="rpm-swatches" id="rpm-skins">
               ${SKIN_SW.map(o => `<button class="rpm-sw ${o.i === curSkin ? 'on' : ''}" data-skin="${o.i}" style="background:${o.c}"></button>`).join('')}
+            </div>
+            <div class="rpm-section">Màu tóc</div>
+            <div class="rpm-swatches" id="rpm-hairs">
+              ${HAIR_SW.map(([v, c]) => `<button class="rpm-sw ${v === curHair ? 'on' : ''}" data-hair="${v}" style="background:${c}" title="${v}"></button>`).join('')}
             </div>
             <div class="rpm-section">Màu áo</div>
             <div class="rpm-swatches" id="rpm-shirts">
@@ -676,6 +685,11 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         overlay.querySelectorAll('#rpm-skins .rpm-sw').forEach(x => x.classList.toggle('on', x === b));
         const t = +b.dataset.skin; sim.setAvatarSkin && sim.setAvatarSkin(t);
         try { localStorage.setItem(AVATAR_SKIN_KEY, String(t)); } catch {}
+      }));
+      overlay.querySelectorAll('#rpm-hairs .rpm-sw').forEach(b => b.addEventListener('click', () => {
+        overlay.querySelectorAll('#rpm-hairs .rpm-sw').forEach(x => x.classList.toggle('on', x === b));
+        const h = b.dataset.hair; sim.setAvatarHair && sim.setAvatarHair(h === 'none' ? null : h);
+        try { localStorage.setItem(AVATAR_HAIR_KEY, h); } catch {}
       }));
       overlay.querySelectorAll('#rpm-shirts .rpm-sw').forEach(b => b.addEventListener('click', () => {
         overlay.querySelectorAll('#rpm-shirts .rpm-sw').forEach(x => x.classList.toggle('on', x === b));

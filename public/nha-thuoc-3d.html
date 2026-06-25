@@ -978,7 +978,7 @@
     <div class="cam-bar" id="cam-bar">
       <span class="cam-bar-label">📷 Góc nhìn:</span>
       <select class="cam-select" id="cam-select" title="Chọn góc nhìn"></select>
-      <button class="cam-btn avatar-btn" id="avatar-create" type="button">🧑 Nhân vật</button>
+      <button class="cam-btn avatar-btn" id="avatar-create" type="button">👤 Khách hàng</button>
     </div>
     <div class="light-bar" id="light-bar">
       <span class="light-bar-label">💡</span>
@@ -1040,7 +1040,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0668';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0669';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;
