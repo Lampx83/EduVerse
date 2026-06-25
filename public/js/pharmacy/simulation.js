@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0672';
-import { loadDrugs } from './catalog.js?v=ph0672';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0671';
+import { loadDrugs } from './catalog.js?v=ph0673';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,10 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0672';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0672';
+import { openPosTerminal } from './pos.js?v=ph0673';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0673';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0672';
+import { labelSectionHTML } from './drug-label.js?v=ph0673';
 
 const $ = (id) => document.getElementById(id);
 
@@ -89,7 +89,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   const AVATAR_HAIR_KEY = 'tizia_pharmacy_avatar_hair';
   const SHIRT_COLORS = ['#2563eb', '#0d9488', '#16a34a', '#e11d48', '#f59e0b', '#6b7280', '#f5f5f5', '#7c3aed'];
   const CONDITIONS = [['none', 'Bình thường'], ['rash', 'Phát ban'], ['hives', 'Mề đay'], ['jaundice', 'Vàng da'], ['pallor', 'Xanh xao'], ['flush', 'Đỏ (sốt)'], ['bruise', 'Bầm tím'], ['cyanosis', 'Tím tái']];
-  const EXPRESSIONS = [['none', 'Bình thường'], ['pain', '😣 Đau'], ['worried', '😟 Lo lắng']];
+  const EXPRESSIONS = [['none', 'Bình thường'], ['pain', '😣 Đau bụng'], ['painHead', '🤕 Đau đầu'], ['worried', '😟 Lo lắng']];
   const HAIR_SW = [['none', '#3a3330'], ['black', '#1c1816'], ['brown', '#5c3822'], ['gray', '#c8c5c1'], ['blonde', '#c9a460']];
   const _avatarUrl = new URLSearchParams(location.search).get('avatar')
     || (() => { try { return localStorage.getItem(AVATAR_KEY); } catch { return null; } })()
@@ -988,6 +988,12 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       }
     }
 
+    // Gom toàn bộ BAO BÌ (hộp/chai + nhãn) vào 1 group để THU NHỎ + lùi sang bên
+    // khi mở lấy đơn vị, để focus vào vật vừa lấy ra. (Đèn giữ nguyên ở scene2.)
+    const pkgGroup = new THREE.Group();
+    [...scene2.children].filter(c => !c.isLight).forEach(c => pkgGroup.add(c));
+    scene2.add(pkgGroup);
+
     // ── "Mở hộp lấy vỉ/gói/lọ/ống" — đơn vị nhỏ nhất bên trong hộp, trượt ra khi tách lẻ ──
     const formStr = (drug.form || '').toLowerCase();
     const catStr = (drug.category || '').toLowerCase();
@@ -1152,21 +1158,34 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     if (unitGlbFile) swapUnitToGlb(unit, unitGlbFile, Math.max(w, h) * 0.9);
     unit.visible = false;
     scene2.add(unit);
-    let extracting = false, extractT = 0;
+    // extractTarget: 0 = trong hộp, 1 = đã lấy ra. extractT lerp dần tới target →
+    // mở/CẤT đều có animation, có thể đảo chiều (cất vỉ trở lại hộp).
+    let extractTarget = 0, extractT = 0;
     const extractFrom = new THREE.Vector3(0, 0, 0);
-    const extractTo = new THREE.Vector3(w * 0.1, 0, d / 2 + Math.max(w, d) * 0.6); // y=0: ngang tầm hộp
+    // Lấy ra: đưa đơn vị RA TRƯỚC + nâng nhẹ, gần camera để focus.
+    const extractTo = new THREE.Vector3(0, h * 0.12, d / 2 + Math.max(w, h) * 0.72);
 
     let stopped = false;
     function tick() {
       if (stopped) return;
-      if (extracting && extractT < 1) {
-        extractT = Math.min(1, extractT + 0.022);
-        const e = 1 - Math.pow(1 - extractT, 3); // easeOutCubic
-        unit.position.lerpVectors(extractFrom, extractTo, e);
-        unit.rotation.y = e * 0.6;
-        if (unitKind === 'vi') { unit.rotation.x = -e * Math.PI; unit.rotation.z = -e * 0.25; } // LẬT vỉ → khoe MẶT SAU (nhãn nhôm)
-        else if (unitKind === 'goi') unit.rotation.z = -e * 0.5; // nghiêng cho thấy mặt gói
+      if (Math.abs(extractT - extractTarget) > 0.0005) {
+        extractT += Math.sign(extractTarget - extractT) * 0.04;
+        extractT = Math.max(0, Math.min(1, extractT));
       }
+      const t = extractT;
+      const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // easeInOutCubic
+      unit.visible = t > 0.004;
+      if (unit.visible) {
+        unit.position.lerpVectors(extractFrom, extractTo, e);
+        unit.rotation.y = e * 0.5;
+        // KHÔNG lật — giữ MẶT CÓ THUỐC (bầu/vỉ) NGỬA LÊN; chỉ ngả nhẹ cho thấy 3D.
+        unit.rotation.x = -e * 0.32;
+        if (unitKind === 'goi') unit.rotation.z = -e * 0.3;
+      }
+      // Thu nhỏ + lùi hộp sang trái để focus vào đơn vị vừa lấy ra.
+      const s = 1 - e * 0.46;            // 1 → 0.54
+      pkgGroup.scale.setScalar(s);
+      pkgGroup.position.set(-e * Math.max(w, h) * 0.55, 0, 0);
       ctrl.update();
       renderer.render(scene2, camera2);
       requestAnimationFrame(tick);
@@ -1197,28 +1216,37 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     // Phím ESC đóng.
     const insEsc = (e) => { if (e.key === 'Escape') { returnToShelf?.(); close(); } };
     document.addEventListener('keydown', insEsc);
-    overlay.querySelector('.ins-confirm')?.addEventListener('click', () => {
-      confirmToTray?.();
-      close();
+    // Nút XANH (ins-confirm): chưa lấy đơn vị ra → đưa NGUYÊN HỘP vào khay; đang
+    // lấy ra rồi → "Cho … vào GIỎ RA LẺ".
+    const greenBtn = overlay.querySelector('.ins-confirm');
+    greenBtn?.addEventListener('click', () => {
+      if (extractTarget === 1) {
+        addRetailUnit(drug, unitWordVN);
+        postAction('retail_split', { drugId: drug.id, unit: drug.unit || unitWordVN });
+        close();
+        const per = drug.retailUnitPrice || (drug.unitsPerBox ? Math.round((drug.unitPrice || 0) / drug.unitsPerBox) : drug.unitPrice) || 0;
+        alert(`Đã cho 1 ${unitWordVN} "${drug.brand}" vào GIỎ RA LẺ.\n→ Mở POS, bật "Bán lẻ" để tính theo ${drug.unit || 'đơn vị'} (${per.toLocaleString('vi')} đ/${drug.unit || 'đv'}).\n→ Click 1 BAO BÌ RA LẺ trên quầy để đựng + ghi nhãn, dán nhãn HDSD trước khi giao.`);
+      } else {
+        confirmToTray?.();
+        close();
+      }
     });
-    // Nút "Tách lẻ / Mở hộp" CHỈ có với HỘP GIẤY (carton). Chai/dịch truyền bán
-    // nguyên chai → không có nút này, dùng "Đưa vào khay (Quét barcode)" như mọi hộp.
+    // Nút "Mở hộp lấy đơn vị" CHỈ có với HỘP GIẤY (carton). Bấm = TOGGLE mở ↔ CẤT
+    // vỉ trở lại hộp (đảo được). Khi đã lấy ra: nút xanh đổi thành "Cho … vào giỏ".
     const retailBtn = overlay.querySelector('.ins-retail');
     if (retailBtn) {
       retailBtn.textContent = `🔓 Mở hộp lấy ${unitWordVN}`;
       retailBtn.addEventListener('click', () => {
-        if (!extracting) {
-          // Lần 1: MỞ HỘP — đơn vị nhỏ nhất (vỉ/gói/lọ/ống) trượt ra khỏi hộp.
-          extracting = true; extractT = 0; unit.visible = true;
-          retailBtn.textContent = `📥 Cho ${unitWordVN} vào giỏ`;
+        if (extractTarget === 0) {
+          extractTarget = 1; unit.visible = true;
+          retailBtn.textContent = `📦 Cất ${unitWordVN} vào hộp`;
+          if (greenBtn) greenBtn.textContent = `📥 Cho ${unitWordVN} vào giỏ`;
           postAction('open_box_unit', { drugId: drug.id, unit: unitWordVN });
         } else {
-          // Lần 2: đơn vị ra lẻ vào GIỎ RA LẺ (không phải khay bán hàng hộp nguyên).
-          addRetailUnit(drug, unitWordVN);
-          postAction('retail_split', { drugId: drug.id, unit: drug.unit || unitWordVN });
-          close();
-          const per = drug.retailUnitPrice || (drug.unitsPerBox ? Math.round((drug.unitPrice || 0) / drug.unitsPerBox) : drug.unitPrice) || 0;
-          alert(`Đã cho 1 ${unitWordVN} "${drug.brand}" vào GIỎ RA LẺ.\n→ Mở POS, bật "Bán lẻ" để tính theo ${drug.unit || 'đơn vị'} (${per.toLocaleString('vi')} đ/${drug.unit || 'đv'}).\n→ Click 1 BAO BÌ RA LẺ trên quầy (trắng/vàng/hồng/zip) để đựng đơn vị này + ghi nhãn, và dán nhãn HDSD trước khi giao.`);
+          extractTarget = 0;
+          retailBtn.textContent = `🔓 Mở hộp lấy ${unitWordVN}`;
+          if (greenBtn && !alreadyInTray) greenBtn.textContent = `📥 Đưa vào khay (Quét barcode)`;
+          postAction('close_box_unit', { drugId: drug.id, unit: unitWordVN });
         }
       });
     }
