@@ -8,7 +8,7 @@ import { db, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts,
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
 import { attachPharmacy } from './pharmacy.js';
-import { reviewAndDecideRequest, getDecisionsForRequest, getRecentDecisions } from './contexts/ai-agent/decisions.js';
+import { acknowledgeNewRequest, getDecisionsForRequest, getRecentDecisions } from './contexts/ai-agent/decisions.js';
 import { attachAppProxies } from './app-proxy.js';
 import { attachScoreUpWebhook } from './contexts/integration/scoreup-webhook.js';
 import { attachCodelabWebhook } from './contexts/integration/codelab-webhook.js';
@@ -1259,16 +1259,16 @@ r.post('/api/requests', requireAuth, requireEnrolled, (req, res) => {
   });
   res.json({ ok: true, ...row });
 
-  // Ban điều hành AI tự QUYẾT ĐỊNH ngay (nền, không chặn response): approve /
-  // reject / defer / priority kèm lý do, ghi audit trail vào ai_decisions, rồi
-  // áp dụng vào status request. Client reload để thấy phản hồi.
-  reviewAndDecideRequest({
-    requestId: row.id,
-    domain, type: b.type, title, detail: b.detail,
-    votes: 1,
-    student: String(b.student || '').trim() || null,
-    attachments: Array.isArray(b.attachments) ? b.attachments : [],
-  }).catch(err => console.warn('[requests] AI decision failed:', err?.message || err));
+  // Server CHỈ tự GHI NHẬN góp ý (giữ pending) + báo chuông cho HS. KHÔNG tự
+  // quyết định nữa — Ollama đã gỡ; quyết định approve/reject/defer/priority do
+  // Ban điều hành AI (Routine Claude Opus trên Claude Desktop) xử lý riêng.
+  // Không chặn response, lỗi chỉ log.
+  try {
+    acknowledgeNewRequest({
+      requestId: row.id, domain, title,
+      student: String(b.student || '').trim() || null,
+    });
+  } catch (err) { console.warn('[requests] acknowledge failed:', err?.message || err); }
 });
 
 r.get('/api/requests', (req, res) => {

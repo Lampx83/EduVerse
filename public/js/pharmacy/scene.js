@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0663';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0663';
-import { createCharacter } from './character.js?v=ph0663';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0668';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0668';
+import { createCharacter } from './character.js?v=ph0668';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -2961,6 +2961,8 @@ export function buildScene(canvas, opts = {}) {
   let _avatarHeight = opts.avatarHeight || 1;
   let _skinTone = opts.skinTone || 0;
   let _shirtColor = opts.shirtColor || null;
+  let _condition = opts.condition || 'none';
+  let _expression = opts.expression || 'none';
   // Tạo (hoặc tạo lại khi đổi avatar) nhân vật. Giữ nguyên trạng thái đi dạo.
   function spawnCharacter(url) {
     const wasWalking = _walkWanted || !!character?.isEnabled?.();
@@ -2976,6 +2978,8 @@ export function buildScene(canvas, opts = {}) {
       heightScale: _avatarHeight,
       skinTone: _skinTone,
       shirtColor: _shirtColor,
+      condition: _condition,
+      expression: _expression,
       onPrompt: (txt) => opts.onWalkPrompt?.(txt)
     }).then(c => { character = c; if (wasWalking) c.setEnabled(true); opts.onCharacterReady?.(); return c; })
       .catch(e => console.warn('[scene] nhân vật lỗi:', e));
@@ -3345,6 +3349,42 @@ export function buildScene(canvas, opts = {}) {
     };
   }
 
+  // getDrugFace3D — render CHÍNH hình 3D của thuốc (hộp HOẶC chai, đúng quy cách)
+  // ra ảnh canvas để cửa sổ dán nhãn hiện đúng hình (thay vì mặt phẳng hộp).
+  // Render 1 LẦN bằng renderer tạm rồi dispose ngay (không giữ WebGL context).
+  function getDrugFace3D(drugId, pxW = 460, pxH = 560) {
+    const sub = (labelTargetSub && labelTargetSub.userData.drugId === drugId)
+      ? labelTargetSub : frontDrugBox(drugId);
+    if (!sub) return null;
+    const drug = sub.userData.drug;
+    const style = sub.userData.style;
+    const isBottle = packType(drug) !== 'carton';
+    const clone = sub.clone(true);
+    const oldS = clone.getObjectByName('hdsd-sticker');
+    if (oldS && oldS.parent) oldS.parent.remove(oldS);
+    clone.position.set(0, 0, 0); clone.rotation.set(0, 0, 0); clone.scale.set(1, 1, 1);
+    const rs = new THREE.Scene();
+    rs.add(clone);
+    rs.add(new THREE.AmbientLight(0xffffff, 1.0));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.65); dl.position.set(1, 2, 3); rs.add(dl);
+    const cam = new THREE.PerspectiveCamera(32, pxW / pxH, 0.01, 20);
+    const dist = Math.max(style.w, style.h) * 2.5;
+    cam.position.set(0, 0, dist); cam.lookAt(0, 0, 0);
+    let out = null;
+    try {
+      const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+      r.setPixelRatio(1); r.setSize(pxW, pxH); r.outputColorSpace = THREE.SRGBColorSpace;
+      r.render(rs, cam);
+      out = document.createElement('canvas'); out.width = pxW; out.height = pxH;
+      out.getContext('2d').drawImage(r.domElement, 0, 0);
+      r.forceContextLoss?.(); r.dispose();
+    } catch (e) { return null; }
+    return {
+      canvas: out, brand: drug.brand || drug.name || '', isBottle,
+      style: { w: style.w, h: style.h, d: style.d }, already: labelsByDrug.has(drugId)
+    };
+  }
+
   // Vẽ nhãn HDSD nhỏ (dán lên hộp) — pharmacy + tên thuốc + liều S/T/C/T + thời điểm.
   function _timingTextScene(l) {
     const map = { before_meal: 'Trước ăn', after_meal: 'Sau ăn', with_meal: 'Cùng bữa ăn', any: 'Bất kỳ' };
@@ -3620,6 +3660,10 @@ export function buildScene(canvas, opts = {}) {
     setAvatarSkin: (t) => { _skinTone = t | 0; character?.setSkinTone(_skinTone); },
     getAvatarSkin: () => _skinTone,
     setAvatarShirt: (hex) => { _shirtColor = hex || null; character?.setShirtColor(_shirtColor); },
+    setAvatarCondition: (c) => { _condition = c || 'none'; character?.setSkinCondition(_condition); },
+    getAvatarCondition: () => _condition,
+    setAvatarExpression: (e) => { _expression = e || 'none'; character?.setExpression(_expression); },
+    getAvatarExpression: () => _expression,
     getAvatarShirt: () => _shirtColor,
     getPickedIds: () => picked.map(s => s.userData.drugId),
     getLabels: () => Object.fromEntries(labelsByDrug.entries()),
@@ -3637,6 +3681,7 @@ export function buildScene(canvas, opts = {}) {
     },
     attachLabelToPickedDrug,
     getDrugFace,
+    getDrugFace3D,
     applyHdsdSticker,
     makeHdsdStickerTex,
     getDrugAtPointer,
