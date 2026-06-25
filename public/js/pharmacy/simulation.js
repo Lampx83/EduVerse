@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
 import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0668';
-import { loadDrugs } from './catalog.js?v=ph0665';
+import { loadDrugs } from './catalog.js?v=ph0668';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,10 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0665';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0665';
+import { openPosTerminal } from './pos.js?v=ph0668';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0668';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0665';
+import { labelSectionHTML } from './drug-label.js?v=ph0668';
 
 const $ = (id) => document.getElementById(id);
 
@@ -552,6 +552,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     let idx = -1;
     if (/^[1-9]$/.test(e.key)) idx = +e.key - 1;
     else if (e.key === '0') idx = 9;
+    else if (EXTRA_KEYS.includes(e.key.toLowerCase())) idx = 10 + EXTRA_KEYS.indexOf(e.key.toLowerCase());
     else if (e.key === '[' || e.key === ']') {
       const cur = camSelect ? presetKeys.indexOf(camSelect.value) : 0;
       idx = (cur + (e.key === ']' ? 1 : -1) + presetKeys.length) % presetKeys.length;
