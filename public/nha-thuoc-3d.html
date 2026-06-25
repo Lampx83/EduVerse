@@ -23,7 +23,14 @@
     transition: grid-template-columns 0.25s ease;
   }
   .app.sidebar-collapsed { grid-template-columns: 1fr 0px; gap: 0; }
-  .app.sidebar-collapsed .side { display: none; }
+  /* Khi thu gọn: KHÔNG display:none cả .side — vì nút MỞ LẠI là CON của .side,
+     ẩn cả .side sẽ ẩn luôn nút (con của display:none không render dù position:fixed).
+     Thay vào đó: ẩn mọi nội dung TRỪ nút toggle + bỏ nền/viền/padding cho .side
+     "vô hình"; nút toggle thoát ra position:fixed (rule bên dưới) ở rìa phải. */
+  .app.sidebar-collapsed .side {
+    overflow: visible; padding: 0; background: none; border: none;
+  }
+  .app.sidebar-collapsed .side > *:not(.side-toggle) { display: none; }
   @media (max-width: 980px) { .app { grid-template-columns: 1fr; grid-template-rows: 60vh 1fr; overflow-y: auto; height: auto; } }
 
   /* Nút ⇆ thu/mở panel — nằm TRONG panel (góc trên), khi collapsed thì FIXED
@@ -39,6 +46,7 @@
   .side-toggle:hover { background: rgba(15,23,42,1); border-color: rgba(56,189,248,0.6); }
   .app.sidebar-collapsed .side-toggle {
     position: fixed; top: 86px; right: 12px; z-index: 10;
+    width: auto; padding: 0 12px; gap: 4px; white-space: nowrap; font-size: 13px;
     background: rgba(15,23,42,0.92); backdrop-filter: blur(8px);
   }
 
@@ -171,14 +179,21 @@
   .ds-row .ds-brand { color: #fde68a; font-weight: 600; }
   .ds-row .ds-sku { color: #cbd5e1; font-family: 'Courier New', monospace; font-size: 11px; }
   .cam-bar {
-    position: absolute; left: 12px; right: 12px; bottom: 12px;
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    position: absolute; left: 12px; bottom: 12px;
+    display: inline-flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+    max-width: calc(100% - 24px);
     background: rgba(15,23,42,0.78); border: 1px solid rgba(56,189,248,0.35);
-    border-radius: 10px; padding: 6px 12px;
+    border-radius: 10px; padding: 5px 10px;
     backdrop-filter: blur(8px);
   }
-  .cam-bar-label { font-size: 11px; color: #94a3b8; }
-  .cam-bar-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cam-bar-label { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+  .cam-select {
+    font-size: 11px; font-weight: 600; font-family: inherit;
+    padding: 5px 8px; border-radius: 6px; cursor: pointer;
+    border: 1px solid rgba(148,163,184,0.4);
+    background: rgba(30,41,59,0.92); color: #e2e8f0; max-width: 160px;
+  }
+  .cam-select:hover { background: rgba(56,189,248,0.2); }
   .cam-btn {
     padding: 5px 10px; font-size: 11px; font-weight: 600;
     border-radius: 6px; border: 1px solid rgba(148,163,184,0.4);
@@ -237,6 +252,10 @@
     font-family: inherit; transition: background .12s, transform .1s;
   }
   .rpm-preset:hover { background: rgba(56,189,248,0.25); transform: translateY(-1px); }
+  .rpm-preset.on { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+  .rpm-slider { display: flex; align-items: center; gap: 10px; }
+  .rpm-slider span { font-size: 11px; color: #94a3b8; }
+  .rpm-slider input[type=range] { flex: 1; accent-color: var(--accent); }
   .rpm-help { font-size: 12.5px; color: #cbd5e1; line-height: 1.55; margin: 0 0 10px; }
   .rpm-help b { color: #c4b5fd; }
   .rpm-open {
@@ -382,6 +401,10 @@
   .pos-cart input { width: 60px; padding: 4px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 4px; color: var(--text); }
   .pos-cart .empty { text-align: center; color: var(--muted); padding: 16px; }
   .pos-cart .del { background: transparent; border: 1px solid var(--border); color: var(--red); padding: 2px 8px; border-radius: 4px; cursor: pointer; }
+  .pos-cart .ln-warn { font-size: 10px; line-height: 1.5; margin-top: 3px; }
+  .pos-cart .ln-bad { color: var(--red); font-weight: 700; margin-right: 6px; }
+  .pos-cart .ln-near { color: var(--amber); font-weight: 600; margin-right: 6px; }
+  .pos-checkout:disabled { opacity: 0.45; cursor: not-allowed; }
   .rx-tag { background: var(--red); color: white; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; }
   .abx-tag { background: var(--amber); color: #3e2723; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; }
   .pos-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
@@ -512,6 +535,83 @@
   }
   .le2-cancel { background: var(--border-h); color: var(--text); }
   .le2-create { background: #f59e0b; color: #1c1917; }
+  /* Ô số phút trước/sau ăn trong nhãn HDSD */
+  .le2-offset-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+
+  /* ── Overlay DÁN NHÃN HDSD lên hộp (kéo-thả chọn chỗ trống) ─────────────── */
+  .sticker-place-overlay, .pkgflow-overlay, .pkg-overlay {
+    position: fixed; inset: 0; z-index: 300; background: rgba(2,6,23,0.74);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .sp-modal, .pkgflow-modal {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px 18px; width: min(560px, 96vw); max-height: 92vh; overflow: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .sp-head, .pkgflow-modal .sp-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 8px;
+  }
+  .sp-close, .pkgflow-close {
+    background: rgba(239,68,68,0.85); color: #fff; border: none; border-radius: 6px;
+    width: 28px; height: 28px; font-size: 14px; cursor: pointer; flex-shrink: 0;
+  }
+  .sp-hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+  .sp-hint b { color: #fde68a; }
+  .sp-stage {
+    position: relative; display: flex; justify-content: center;
+    background: rgba(15,23,42,0.6); border-radius: 12px; padding: 18px; margin-bottom: 12px;
+  }
+  .sp-box { position: relative; border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+  .sp-face { display: block; border-radius: 6px; }
+  /* Nhãn kéo-thả = canvas render ĐÚNG thiết kế nhãn HDSD (giống lúc dán thật). */
+  .sp-sticker {
+    position: absolute; left: 0; top: 0; cursor: grab; user-select: none; touch-action: none;
+    border-radius: 4px; box-shadow: 0 3px 12px rgba(0,0,0,0.45);
+    outline: 2px solid rgba(13,148,136,0.9); outline-offset: -1px;
+  }
+  .sp-sticker:active { cursor: grabbing; }
+  /* Toast nhắc thao tác (vd phải đưa thuốc vào khay trước khi dán nhãn). */
+  .pharm-toast {
+    position: fixed; top: 92px; left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    z-index: 400; max-width: 420px; padding: 12px 18px;
+    background: rgba(15,23,42,0.96); color: #fde68a; border: 1px solid rgba(56,189,248,0.5);
+    border-radius: 12px; font-size: 13px; font-weight: 600; line-height: 1.45; text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .pharm-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .sp-foot, .pkgflow-modal .sp-foot {
+    display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;
+  }
+  .sp-cancel, .sp-apply, .pkgflow-cancel, .pkgflow-next {
+    padding: 9px 16px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; font-size: 13px;
+  }
+  .sp-cancel, .pkgflow-cancel { background: var(--border-h); color: var(--text); }
+  .sp-apply, .pkgflow-next { background: #10b981; color: #042f2e; }
+  .pkgflow-drug { width: 100%; padding: 8px; border-radius: 8px; background: rgba(15,23,42,0.6); color: var(--text); border: 1px solid var(--border); font-size: 13px; }
+
+  /* ── Modal ghi nhãn BAO BÌ RA LẺ (phong bì trắng/vàng/hồng) ─────────────── */
+  .pkg-modal {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    width: min(760px, 96vw); max-height: 92vh; overflow: auto; display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .pkg-body { display: flex; gap: 18px; padding: 16px 22px; flex-wrap: wrap; }
+  .pkg-form { flex: 1 1 280px; display: flex; flex-direction: column; gap: 10px; }
+  .pkg-preview-wrap { flex: 0 0 280px; }
+  .pkg-sticker {
+    border: 2px solid #9ca3af; border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.5;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  }
+  .pkg-sk-head { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 8px; }
+  .pkg-sk-logo {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #b91c1c; color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .pkg-sk-special { text-align: center; font-weight: 800; font-size: 14px; margin: 6px 0; text-transform: uppercase; }
+  .pkg-sk-row { padding: 4px 0; border-bottom: 1px dotted rgba(0,0,0,0.25); font-size: 12.5px; }
 
   /* ── Phone dialpad ─────────────────────────────────────────────────────── */
   .phone-overlay { z-index: 200; }
@@ -673,7 +773,14 @@
     background: rgba(56,189,248,0.10); border-radius: 8px;
     border-left: 3px solid #38bdf8;
   }
-  .ins-actions { display: flex; gap: 10px; margin-top: auto; }
+  /* 3 nút thao tác GHIM ở đáy panel info (sticky) → luôn bấm được không cần cuộn
+     dù phần nhãn TT01 phía trên dài. Nền + đổ bóng che nội dung cuộn phía sau. */
+  .ins-actions {
+    display: flex; gap: 10px; margin-top: auto;
+    position: sticky; bottom: 0; z-index: 3;
+    padding: 12px 0 4px; background: var(--card);
+    box-shadow: 0 -10px 18px -8px var(--card);
+  }
   .ins-return, .ins-retail, .ins-confirm {
     flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer;
     font-weight: 700; font-size: 13px;
@@ -850,13 +957,8 @@
     <div id="pending-label" class="pending-label" hidden>🏷️ <span id="pending-label-text"></span></div>
     <div class="cam-bar" id="cam-bar">
       <span class="cam-bar-label">📷 Góc nhìn:</span>
-      <div class="cam-bar-buttons" id="cam-buttons"></div>
-      <button class="cam-btn walk-btn" id="walk-toggle" type="button">🚶 Đi dạo (nhập vai)</button>
-      <button class="cam-btn avatar-btn" id="avatar-create" type="button">🧑 Tạo nhân vật</button>
-    </div>
-    <div id="walk-prompt" class="walk-prompt" hidden></div>
-    <div id="walk-hint" class="walk-hint" hidden>
-      <b>WASD</b> / click sàn để đi · <b>Shift</b> chạy · <b>E</b> với tay / cầm thuốc · <b>F</b> ngồi · kéo chuột xoay góc
+      <select class="cam-select" id="cam-select" title="Chọn góc nhìn"></select>
+      <button class="cam-btn avatar-btn" id="avatar-create" type="button">🧑 Nhân vật</button>
     </div>
     <div class="light-bar" id="light-bar">
       <span class="light-bar-label">💡</span>
@@ -923,7 +1025,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0648';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0657';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;
@@ -949,10 +1051,21 @@
   // Sidebar collapse — bấm ⇆ để thu/mở panel bên phải; trigger resize cho renderer
   const sideToggle = document.getElementById('side-toggle');
   const app = document.querySelector('.app');
+  // Đổi icon/tooltip theo trạng thái: thu gọn → nút nổi rìa phải hiện "‹ Bảng"
+  // (gợi ý mở lại); mở → "⇆".
+  const syncSideToggle = () => {
+    const collapsed = app.classList.contains('sidebar-collapsed');
+    if (sideToggle) {
+      sideToggle.textContent = collapsed ? '‹ Bảng' : '⇆';
+      sideToggle.title = collapsed ? 'Mở lại panel bên phải' : 'Thu gọn panel bên phải';
+    }
+  };
   sideToggle?.addEventListener('click', () => {
     app.classList.toggle('sidebar-collapsed');
+    syncSideToggle();
     setTimeout(() => window.dispatchEvent(new Event('resize')), 260);
   });
+  syncSideToggle();
 
   // Proxy buttons trong header thay cho 2 FAB gốc (sgf-fab + tts-toggle).
   // FAB gốc bị ẩn bằng CSS; proxy click → click FAB gốc để mở modal/toggle.

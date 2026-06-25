@@ -1,6 +1,6 @@
 // PosTerminal — port từ Pharmacy-AI/src/components/pos/PosTerminal.tsx (Phase 1).
 // MVP fidelity: cart, customer, payment, totals, invoice no, Rx warning, action log.
-import { ALL_DRUGS, getDrug, PHARMACY_INFO, VAT_RATE } from './catalog.js?v=ph0640';
+import { ALL_DRUGS, getDrug, PHARMACY_INFO, VAT_RATE } from './catalog.js?v=ph0657';
 
 const VND = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n)) + ' đ';
 
@@ -76,8 +76,51 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
     return l.mode === 'unit' ? (d.unit || 'đơn vị') : 'hộp';
   }
   function lineTotal(l) { return unitPriceFor(l) * l.qty * (1 - l.discountPct / 100); }
+
+  // ── Tồn kho & hạn dùng ──────────────────────────────────────────────
+  // Tồn kho đếm theo HỘP. Bán lẻ (mode 'unit') quy đổi viên → số hộp cần lấy.
+  const NOW = new Date();
+  const DAY = 86400000;
+  function parseVNDate(s) {
+    const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s || '').trim());
+    return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+  }
+  function boxesNeeded(l) {
+    const d = getDrug(l.id);
+    return l.mode === 'unit' ? Math.ceil(l.qty / (d.unitsPerBox || 1)) : l.qty;
+  }
+  function expiryState(d) {
+    const exp = parseVNDate(d?.expDate);
+    if (!exp) return { state: 'ok', days: null };
+    const days = Math.round((exp - NOW) / DAY);
+    if (days < 0) return { state: 'expired', days };
+    if (days <= 180) return { state: 'near', days };
+    return { state: 'ok', days };
+  }
+
+  // Lý do chặn thanh toán của lần recompute gần nhất (đọc khi checkout).
+  let blockedReasons = [];
+
   function recompute() {
-    const sub = lines.reduce((s, l) => s + lineTotal(l), 0);
+    let sub = 0;
+    blockedReasons = [];
+    lines.forEach((l, i) => {
+      const d = getDrug(l.id);
+      const lt = lineTotal(l);
+      sub += lt;
+      const row = overlay.querySelector(`tr[data-i="${i}"]`);
+      if (!row) return;
+      const lnCell = row.querySelector('.ln');
+      if (lnCell) lnCell.textContent = VND(lt);
+      const msgs = [];
+      const ex = expiryState(d);
+      if (ex.state === 'expired') { msgs.push(`<span class="ln-bad">⛔ Hết hạn ${d.expDate} — không được bán</span>`); blockedReasons.push(`${d.brand}: đã hết hạn (${d.expDate})`); }
+      else if (ex.state === 'near') { msgs.push(`<span class="ln-near">⚠️ Cận hạn (còn ${ex.days} ngày)</span>`); }
+      const need = boxesNeeded(l), stock = d.stock ?? 0;
+      if (need > stock) { msgs.push(`<span class="ln-bad">⛔ Vượt tồn: cần ${need} hộp · còn ${stock}</span>`); blockedReasons.push(`${d.brand}: vượt tồn kho (cần ${need} hộp, còn ${stock})`); }
+      const warn = row.querySelector('.ln-warn');
+      if (warn) warn.innerHTML = msgs.join(' ');
+    });
     const vat = sub * VAT_RATE;
     const total = sub + vat;
     $('.sub').textContent = VND(sub);
@@ -85,6 +128,9 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
     $('.total').textContent = VND(total);
     const hasRx = lines.some(l => getDrug(l.id)?.isRx);
     $('.pos-rx-warn').hidden = !(hasRx && !meta.rx);
+    const btn = $('.pos-checkout');
+    btn.disabled = blockedReasons.length > 0;
+    btn.title = blockedReasons.length ? ('Không thể thanh toán:\n• ' + blockedReasons.join('\n• ')) : '';
   }
   function renderCart() {
     const tbody = $('.pos-cart tbody');
@@ -97,16 +143,17 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
       return `<tr data-i="${i}">
         <td>${i + 1}</td>
         <td>${rxBadge}${abxBadge} ${d.brand} <small>${d.strength}</small>
-            <button class="mode-tg" type="button" title="Đổi nguyên hộp ↔ bán lẻ theo đơn vị nhỏ nhất">${tgLabel}</button></td>
+            <button class="mode-tg" type="button" title="Đổi nguyên hộp ↔ bán lẻ theo đơn vị nhỏ nhất">${tgLabel}</button>
+            <div class="ln-warn"></div></td>
         <td><input class="qty" type="number" min="1" value="${l.qty}"/> <small>${u}</small></td>
         <td>${VND(unitPriceFor(l))}<small>/${u}</small></td>
         <td><input class="disc" type="number" min="0" max="100" value="${l.discountPct}"/></td>
-        <td>${VND(lineTotal(l))}</td>
+        <td class="ln">${VND(lineTotal(l))}</td>
         <td><button class="del" type="button">×</button></td>
       </tr>`;
     }).join('') || '<tr><td colspan="7" class="empty">Chưa có thuốc nào. Lấy thuốc từ kệ hoặc tìm trong catalog.</td></tr>';
     tbody.querySelectorAll('.qty').forEach((el, i) => el.addEventListener('input', e => { lines[i].qty = Math.max(1, +e.target.value || 1); recompute(); }));
-    tbody.querySelectorAll('.disc').forEach((el, i) => el.addEventListener('input', e => { lines[i].discountPct = Math.max(0, Math.min(100, +e.target.value || 0)); renderCart(); }));
+    tbody.querySelectorAll('.disc').forEach((el, i) => el.addEventListener('input', e => { lines[i].discountPct = Math.max(0, Math.min(100, +e.target.value || 0)); recompute(); }));
     tbody.querySelectorAll('.mode-tg').forEach((el, i) => el.addEventListener('click', () => { lines[i].mode = lines[i].mode === 'unit' ? 'box' : 'unit'; renderCart(); }));
     tbody.querySelectorAll('.del').forEach((el, i) => el.addEventListener('click', () => { lines.splice(i, 1); renderCart(); }));
     recompute();
@@ -143,6 +190,8 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
   });
   $('.pos-checkout').addEventListener('click', () => {
     if (!lines.length) { alert('Giỏ hàng trống.'); return; }
+    recompute();
+    if (blockedReasons.length) { alert('Không thể thanh toán:\n• ' + blockedReasons.join('\n• ')); return; }
     const invoiceNo = `HD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(Math.floor(Math.random()*9999)).padStart(4,'0')}`;
     const sub = lines.reduce((s, l) => s + lineTotal(l), 0);
     const vat = sub * VAT_RATE;
@@ -154,11 +203,13 @@ export function openPosTerminal({ pickedIds = [], hasValidPrescription = false, 
       customer: { name: meta.customerName, phone: meta.customerPhone },
       cashier: meta.cashier,
       payment: meta.payment,
-      items: lines.map(l => ({ id: l.id, qty: l.qty, mode: l.mode, unit: unitLabelFor(l), unitPrice: unitPriceFor(l), discountPct: l.discountPct, lineTotal: lineTotal(l) })),
+      items: lines.map(l => ({ id: l.id, qty: l.qty, boxes: boxesNeeded(l), mode: l.mode, unit: unitLabelFor(l), unitPrice: unitPriceFor(l), discountPct: l.discountPct, lineTotal: lineTotal(l) })),
       sub: Math.round(sub), vat: Math.round(vat), total: Math.round(total),
       includes_abx: includesAbx,
       rxItemsWithoutPrescription
     };
+    // Trừ tồn kho (theo hộp) — ALL_DRUGS là tham chiếu chung nên tooltip/inspector cập nhật theo.
+    lines.forEach(l => { const d = getDrug(l.id); if (d) d.stock = Math.max(0, (d.stock || 0) - boxesNeeded(l)); });
     onCheckout?.(payload);
     printInvoice(payload);
     close();

@@ -46,6 +46,70 @@ export async function createCharacter(ctx) {
   model.traverse(o => {
     if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; }
   });
+
+  // ── Diện mạo: tô lại texture atlas để đổi TÔNG DA + MÀU ÁO (tạo nhiều loại
+  // bệnh nhân). Da nhận diện theo tông màu ấm (robust cả nam/nữ); áo ở vùng
+  // dưới-trái atlas. Giữ ảnh gốc để tô lại không bị chồng màu.
+  let _skinMat = null, _baseImg = null;
+  model.traverse(o => { if (o.isMesh && o.material && o.material.map && !_skinMat) _skinMat = o.material; });
+  const SKIN_TONES = [
+    [1, 1, 1],          // 0 mặc định
+    [0.88, 0.74, 0.62], // 1 ngăm nhẹ
+    [0.72, 0.55, 0.43], // 2 nâu
+    [0.55, 0.40, 0.30]  // 3 đậm
+  ];
+  let _skinTone = Math.max(0, Math.min(SKIN_TONES.length - 1, ctx.skinTone || 0));
+  let _shirtHex = ctx.shirtColor || null;            // null = giữ áo gốc
+  const SHIRT_RECT = { x0: 0.0, x1: 0.50, y0: 0.50, y1: 0.82 };
+  function _hexToHsl(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return null;
+    const n = parseInt(m[1], 16); const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let hh = 0, s = 0; const l = (mx + mn) / 2;
+    if (mx !== mn) { const dd = mx - mn; s = l > 0.5 ? dd / (2 - mx - mn) : dd / (mx + mn);
+      hh = mx === r ? (g - b) / dd + (g < b ? 6 : 0) : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4; hh /= 6; }
+    return { h: hh, s, l };
+  }
+  function _hslToRgb(h, s, l) {
+    if (s === 0) { const v = l * 255; return [v, v, v]; }
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s; const p = 2 * l - q;
+    const f = (t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; };
+    return [f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255];
+  }
+  function applyAppearance() {
+    if (!_skinMat || !_skinMat.map) return;
+    if (!_baseImg) _baseImg = _skinMat.map.image;
+    const img = _baseImg; if (!img || !img.width) return;
+    const w = img.width, H = img.height;
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = H;
+    const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
+    const idata = cx.getImageData(0, 0, w, H); const d = idata.data;
+    const skin = SKIN_TONES[_skinTone]; const skinOn = _skinTone > 0;
+    const shirt = _shirtHex ? _hexToHsl(_shirtHex) : null;
+    const sx0 = SHIRT_RECT.x0 * w, sx1 = SHIRT_RECT.x1 * w, sy0 = SHIRT_RECT.y0 * H, sy1 = SHIRT_RECT.y1 * H;
+    for (let y = 0; y < H; y++) {
+      const inShirtRow = shirt && y >= sy0 && y < sy1;
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) << 2;
+        let r = d[i], g = d[i + 1], b = d[i + 2];
+        if (skinOn) {
+          const mx = Math.max(r, g, b), mn = Math.min(r, g, b); const sat = mx === 0 ? 0 : (mx - mn) / mx;
+          if (r > g && g >= b && sat > 0.12 && sat < 0.8 && mx > 55) { r *= skin[0]; g *= skin[1]; b *= skin[2]; }
+        }
+        if (inShirtRow && x >= sx0 && x < sx1) {
+          const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          const L = Math.min(0.9, Math.max(0.12, 0.5 + (lum - 0.5) * 0.55));
+          const rgb = _hslToRgb(shirt.h, shirt.s, L); r = rgb[0]; g = rgb[1]; b = rgb[2];
+        }
+        d[i] = r; d[i + 1] = g; d[i + 2] = b;
+      }
+    }
+    cx.putImageData(idata, 0, 0);
+    const old = _skinMat.map;
+    const tex = new THREE.CanvasTexture(cv);
+    tex.flipY = old.flipY; tex.colorSpace = old.colorSpace; tex.wrapS = old.wrapS; tex.wrapT = old.wrapT;
+    _skinMat.map = tex; _skinMat.needsUpdate = true;
+  }
+
   // Chuẩn hoá chiều cao về ~1.7m + đặt chân chạm sàn y=0.
   let box = new THREE.Box3().setFromObject(model);
   const h = box.max.y - box.min.y;
@@ -54,12 +118,16 @@ export async function createCharacter(ctx) {
     box = new THREE.Box3().setFromObject(model);
   }
   model.position.y -= box.min.y;
+  if (_skinTone > 0 || _shirtHex) applyAppearance();   // chỉ tô khi khác mặc định
 
   const root = new THREE.Group();
   root.add(model);
   root.position.set(spawn.x, 0, spawn.z);
   let heading = spawn.heading ?? Math.PI;
   root.rotation.y = heading;
+  // Chiều cao/vóc dáng: scale đều quanh gốc chân (chân vẫn chạm sàn).
+  let heightScale = Math.max(0.8, Math.min(1.25, ctx.heightScale || 1));
+  root.scale.setScalar(heightScale);
   scene.add(root);
 
   // 2. Nạp các clip animation (anim-only, cùng tên xương với avatar).
@@ -345,6 +413,13 @@ export async function createCharacter(ctx) {
     toggleCarry, triggerReach, toggleSit,
     isSitting: () => sitting,
     setMoveTarget: (p) => { moveTarget = p; },
+    setHeightScale: (s) => { heightScale = Math.max(0.8, Math.min(1.25, s)); root.scale.setScalar(heightScale); },
+    getHeightScale: () => heightScale,
+    setSkinTone: (t) => { _skinTone = Math.max(0, Math.min(SKIN_TONES.length - 1, t | 0)); applyAppearance(); },
+    setShirtColor: (hex) => { _shirtHex = hex || null; applyAppearance(); },
+    getSkinTone: () => _skinTone,
+    getShirtColor: () => _shirtHex,
+    _setShirtRect: (x0, x1, y0, y1) => { SHIRT_RECT.x0 = x0; SHIRT_RECT.x1 = x1; SHIRT_RECT.y0 = y0; SHIRT_RECT.y1 = y1; applyAppearance(); },
     // Tinh chỉnh trực quan: đổi góc khớp ngồi/vươn rồi xem ngay.
     _setPose: (group, key, x, y, z) => { (group === 'reach' ? REACH : SIT)[key] = _qeuler(x, y, z); },
     _setDrop: (d) => { SIT.drop = d; },
