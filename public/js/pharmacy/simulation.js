@@ -1,6 +1,6 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0673';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0671';
 import { loadDrugs } from './catalog.js?v=ph0673';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -89,7 +89,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   const AVATAR_HAIR_KEY = 'tizia_pharmacy_avatar_hair';
   const SHIRT_COLORS = ['#2563eb', '#0d9488', '#16a34a', '#e11d48', '#f59e0b', '#6b7280', '#f5f5f5', '#7c3aed'];
   const CONDITIONS = [['none', 'Bình thường'], ['rash', 'Phát ban'], ['hives', 'Mề đay'], ['jaundice', 'Vàng da'], ['pallor', 'Xanh xao'], ['flush', 'Đỏ (sốt)'], ['bruise', 'Bầm tím'], ['cyanosis', 'Tím tái']];
-  const EXPRESSIONS = [['none', 'Bình thường'], ['pain', '😣 Đau bụng'], ['painHead', '🤕 Đau đầu'], ['worried', '😟 Lo lắng']];
+  const EXPRESSIONS = [['none', 'Bình thường'], ['pain', '😣 Đau bụng'], ['worried', '😟 Lo lắng']];
   const HAIR_SW = [['none', '#3a3330'], ['black', '#1c1816'], ['brown', '#5c3822'], ['gray', '#c8c5c1'], ['blonde', '#c9a460']];
   const _avatarUrl = new URLSearchParams(location.search).get('avatar')
     || (() => { try { return localStorage.getItem(AVATAR_KEY); } catch { return null; } })()

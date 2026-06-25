@@ -235,18 +235,11 @@ export async function createCharacter(ctx) {
   // Biểu cảm qua TƯ THẾ (avatar không có morph mặt). Mỗi state = góc xương đắp lên
   // tư thế đứng. Tinh chỉnh trực quan như SIT.
   const EXPR = {
-    // Đau bụng: gập người + cúi đầu + 2 tay ôm bụng.
+    // Đau bụng: gập người + cúi đầu + MỘT tay phải ôm bụng (tay trái buông tự nhiên).
     pain: {
       spine: _qeuler(0.34, 0, 0), spine1: _qeuler(0.22, 0, 0), spine2: _qeuler(0.10, 0, 0),
       neck: _qeuler(0.30, 0, 0), head: _qeuler(0.18, 0, 0),
-      armR: _qeuler(0, -0.42, -1.05), foreR: _qeuler(0, 0, -2.15),   // tay phải co ôm bụng
-      armL: _qeuler(0, 0.42, 1.05), foreL: _qeuler(0, 0, 2.15)       // tay trái co ôm bụng
-    },
-    // Đau đầu: hơi cúi + 2 tay ôm đầu.
-    painHead: {
-      spine: _qeuler(0.10, 0, 0), neck: _qeuler(0.10, 0, 0), head: _qeuler(0.08, 0, 0),
-      armR: _qeuler(0, -0.5, 1.75), foreR: _qeuler(0, 0, 2.25),      // tay phải lên đầu
-      armL: _qeuler(0, 0.5, -1.75), foreL: _qeuler(0, 0, -2.25)      // tay trái lên đầu
+      armR: _qeuler(0, -0.42, -1.05), foreR: _qeuler(0, 0, -2.15)    // 1 tay phải co ôm bụng
     },
     // Lo lắng: hơi cúi + nghiêng đầu nhẹ
     worried: {
