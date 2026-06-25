@@ -90,26 +90,33 @@ export async function createCharacter(ctx) {
     const hex = '#' + [r / n, g / n, b / n].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
     return _hexToHsl(hex);
   }
-  // Vẽ bệnh lý ngoài da lên 1 pixel da → trả [r,g,b] mới.
-  function _applyCondition(cond, x, y, r, g, b) {
-    if (cond === 'jaundice') {            // vàng da
+  // Vùng DA HỞ để hiện nốt bệnh (mề đay/bầm/mẩn): mặt (trên-trái) + bàn tay
+  // (dưới-phải atlas). KHÔNG lên cánh tay/tóc. (tune trực quan)
+  function _inCondRegion(x, y, w, H) {
+    const u = x / w, v = y / H;
+    return (u < 0.42 && v < 0.42) || (u > 0.66 && v > 0.34 && v < 0.72);
+  }
+  // Vẽ bệnh lý ngoài da lên 1 pixel da → trả [r,g,b]. spotOk=true → được phép hiện
+  // NỐT (mề đay/bầm/mẩn) ở pixel này (đã giới hạn vùng mặt+tay + đủ sáng).
+  function _applyCondition(cond, x, y, r, g, b, spotOk) {
+    if (cond === 'jaundice') {            // vàng da (toàn da)
       r = Math.min(255, r * 1.02 + 16); g = Math.min(255, g + 10); b = b * 0.6;
-    } else if (cond === 'pallor') {       // xanh xao / nhợt nhạt
+    } else if (cond === 'pallor') {       // xanh xao / nhợt nhạt (toàn da)
       const lum = (r + g + b) / 3;
       r = Math.min(255, r * 0.55 + lum * 0.45 + 14); g = Math.min(255, g * 0.55 + lum * 0.45 + 20); b = Math.min(255, b * 0.55 + lum * 0.45 + 28);
-    } else if (cond === 'flush') {        // đỏ bừng (sốt)
+    } else if (cond === 'flush') {        // đỏ bừng (sốt — toàn da)
       r = Math.min(255, r + 42); g = g * 0.9; b = b * 0.86;
-    } else if (cond === 'rash' || cond === 'hives') {  // mẩn đỏ / mề đay
-      const sh = cond === 'hives' ? 3 : 1;
-      const hsh = ((((x >> sh) * 73856093) ^ ((y >> sh) * 19349663)) >>> 0) % 100;
-      if (hsh < (cond === 'hives' ? 17 : 26)) {
-        r = Math.min(255, r + (cond === 'hives' ? 88 : 62)); g = g * 0.7; b = b * 0.68;
-      }
-    } else if (cond === 'bruise') {       // bầm tím (đốm tím rải rác)
-      const hsh = ((((x >> 2) * 73856093) ^ ((y >> 2) * 19349663)) >>> 0) % 100;
-      if (hsh < 15) { r = r * 0.6 + 26; g = g * 0.5 + 16; b = Math.min(255, b * 0.72 + 58); }
     } else if (cond === 'cyanosis') {     // tím tái (xanh tím toàn da — thiếu oxy)
       r = r * 0.76; g = g * 0.82; b = Math.min(255, b * 0.95 + 24);
+    } else if (spotOk && (cond === 'rash' || cond === 'hives')) {  // mẩn đỏ / mề đay — chỉ mặt+tay, thưa
+      const sh = cond === 'hives' ? 3 : 1;
+      const hsh = ((((x >> sh) * 73856093) ^ ((y >> sh) * 19349663)) >>> 0) % 100;
+      if (hsh < (cond === 'hives' ? 8 : 11)) {
+        r = Math.min(255, r + (cond === 'hives' ? 84 : 58)); g = g * 0.72; b = b * 0.7;
+      }
+    } else if (spotOk && cond === 'bruise') {       // bầm tím — chỉ mặt+tay, thưa
+      const hsh = ((((x >> 2) * 73856093) ^ ((y >> 2) * 19349663)) >>> 0) % 100;
+      if (hsh < 7) { r = r * 0.6 + 26; g = g * 0.5 + 16; b = Math.min(255, b * 0.72 + 58); }
     }
     return [r, g, b];
   }
@@ -139,7 +146,10 @@ export async function createCharacter(ctx) {
               r *= skin.m[0]; g *= skin.m[1]; b *= skin.m[2];
               if (skin.l) { r += (255 - r) * skin.l; g += (255 - g) * skin.l; b += (255 - b) * skin.l; }
             }
-            if (condOn) { const c = _applyCondition(_condition, x, y, r, g, b); r = c[0]; g = c[1]; b = c[2]; }
+            if (condOn && mx > 90) {   // mx>90: chỉ da sáng → loại tóc/bóng tối
+              const spotOk = _inCondRegion(x, y, w, H);
+              const c = _applyCondition(_condition, x, y, r, g, b, spotOk); r = c[0]; g = c[1]; b = c[2];
+            }
           } else if (hair && x < hairX && y < hairY) {
             // pixel tóc = tối + KHÔNG phải da, ở vùng đầu → tô màu tóc giữ chút biến thiên.
             const lum = (r + g + b) / 3;
