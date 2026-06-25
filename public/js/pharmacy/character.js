@@ -52,15 +52,19 @@ export async function createCharacter(ctx) {
   // dưới-trái atlas. Giữ ảnh gốc để tô lại không bị chồng màu.
   let _skinMat = null, _baseImg = null;
   model.traverse(o => { if (o.isMesh && o.material && o.material.map && !_skinMat) _skinMat = o.material; });
+  // m = nhân (làm tối), l = kéo về trắng (làm sáng). Index 0 = mặc định.
   const SKIN_TONES = [
-    [1, 1, 1],          // 0 mặc định
-    [0.88, 0.74, 0.62], // 1 ngăm nhẹ
-    [0.72, 0.55, 0.43], // 2 nâu
-    [0.55, 0.40, 0.30]  // 3 đậm
+    { m: [1, 1, 1], l: 0 },                 // 0 mặc định
+    { m: [1.0, 0.99, 0.97], l: 0.18 },      // 1 sáng
+    { m: [1.0, 0.97, 0.94], l: 0.34 },      // 2 rất sáng (hồng nhạt)
+    { m: [0.85, 0.70, 0.58], l: 0 },        // 3 ngăm
+    { m: [0.66, 0.48, 0.38], l: 0 },        // 4 nâu
+    { m: [0.48, 0.34, 0.26], l: 0 }         // 5 đậm
   ];
   let _skinTone = Math.max(0, Math.min(SKIN_TONES.length - 1, ctx.skinTone || 0));
   let _shirtHex = ctx.shirtColor || null;            // null = giữ áo gốc
-  const SHIRT_RECT = { x0: 0.0, x1: 0.50, y0: 0.50, y1: 0.82 };
+  let _condition = ctx.condition || 'none';          // bệnh lý ngoài da: none|rash|hives|jaundice|pallor|flush
+  const SHIRT_RECT = { x0: 0.0, x1: 0.50, y0: 0.50, y1: 1.0 };
   function _hexToHsl(hex) {
     const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return null;
     const n = parseInt(m[1], 16); const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
@@ -75,6 +79,15 @@ export async function createCharacter(ctx) {
     const f = (t) => { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; };
     return [f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255];
   }
+  // Lấy mẫu màu nền áo (vùng dưới, tránh logo ở ngực) để tô phẳng → xoá chữ.
+  function _sampleShirt(d, w, H) {
+    let r = 0, g = 0, b = 0, n = 0;
+    const x0 = (0.05 * w) | 0, x1 = (0.45 * w) | 0, y0 = (0.83 * H) | 0, y1 = (0.97 * H) | 0;
+    for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) { const i = (y * w + x) << 2; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+    if (!n) return null;
+    const hex = '#' + [r / n, g / n, b / n].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+    return _hexToHsl(hex);
+  }
   function applyAppearance() {
     if (!_skinMat || !_skinMat.map) return;
     if (!_baseImg) _baseImg = _skinMat.map.image;
@@ -84,7 +97,7 @@ export async function createCharacter(ctx) {
     const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
     const idata = cx.getImageData(0, 0, w, H); const d = idata.data;
     const skin = SKIN_TONES[_skinTone]; const skinOn = _skinTone > 0;
-    const shirt = _shirtHex ? _hexToHsl(_shirtHex) : null;
+    const shirt = _shirtHex ? _hexToHsl(_shirtHex) : _sampleShirt(d, w, H);
     const sx0 = SHIRT_RECT.x0 * w, sx1 = SHIRT_RECT.x1 * w, sy0 = SHIRT_RECT.y0 * H, sy1 = SHIRT_RECT.y1 * H;
     for (let y = 0; y < H; y++) {
       const inShirtRow = shirt && y >= sy0 && y < sy1;
@@ -93,11 +106,15 @@ export async function createCharacter(ctx) {
         let r = d[i], g = d[i + 1], b = d[i + 2];
         if (skinOn) {
           const mx = Math.max(r, g, b), mn = Math.min(r, g, b); const sat = mx === 0 ? 0 : (mx - mn) / mx;
-          if (r > g && g >= b && sat > 0.12 && sat < 0.8 && mx > 55) { r *= skin[0]; g *= skin[1]; b *= skin[2]; }
+          if (r > g && g >= b && sat > 0.12 && sat < 0.8 && mx > 55) {
+            r *= skin.m[0]; g *= skin.m[1]; b *= skin.m[2];
+            if (skin.l) { r += (255 - r) * skin.l; g += (255 - g) * skin.l; b += (255 - b) * skin.l; }
+          }
         }
         if (inShirtRow && x >= sx0 && x < sx1) {
           const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-          const L = Math.min(0.9, Math.max(0.12, 0.5 + (lum - 0.5) * 0.55));
+          // Tô PHẲNG quanh độ sáng của màu áo (biến thiên rất nhỏ) → chữ logo biến mất.
+          const L = Math.min(0.97, Math.max(0.06, shirt.l));   // phẳng tuyệt đối → xoá sạch logo
           const rgb = _hslToRgb(shirt.h, shirt.s, L); r = rgb[0]; g = rgb[1]; b = rgb[2];
         }
         d[i] = r; d[i + 1] = g; d[i + 2] = b;
@@ -118,7 +135,7 @@ export async function createCharacter(ctx) {
     box = new THREE.Box3().setFromObject(model);
   }
   model.position.y -= box.min.y;
-  if (_skinTone > 0 || _shirtHex) applyAppearance();   // chỉ tô khi khác mặc định
+  applyAppearance();   // luôn chạy: tối thiểu để xoá logo "Ready Player Me" trên áo
 
   const root = new THREE.Group();
   root.add(model);
