@@ -3,9 +3,9 @@
 #
 # Steps to set up a named tunnel (one-time):
 #
-#   cloudflared tunnel login                          # opens browser, picks limio.vn zone
+#   cloudflared tunnel login                          # opens browser, picks tizia.vn zone
 #   cloudflared tunnel create tizia             # outputs UUID
-#   cloudflared tunnel route dns tizia ps.limio.vn   # creates DNS CNAME
+#   cloudflared tunnel route dns tizia ps.tizia.vn   # creates DNS CNAME
 #
 # Then copy this file → ~/.cloudflared/config.yml
 # (replace UUID-HERE with the UUID from `create`)
@@ -22,17 +22,17 @@ tunnel: tizia
 credentials-file: /home/codelab/.cloudflared/UUID-HERE.json
 
 # ============================================================
-# Pattern A — Subdomain ps.limio.vn (recommended, zero app config)
+# Pattern A — Subdomain ps.tizia.vn (recommended, zero app config)
 # ============================================================
 ingress:
-  - hostname: ps.limio.vn
+  - hostname: ps.tizia.vn
     service: http://localhost:8041
 
   # Optional fallback for any other host
   - service: http_status:404
 
 # ============================================================
-# Pattern B — Path-based limio.vn/ps (requires BASE_PATH=/ps on app)
+# Pattern B — Path-based tizia.vn/ps (requires BASE_PATH=/ps on app)
 # ============================================================
 # Cloudflared does NOT strip path — paths arrive at backend as-is.
 # So the app MUST be started with BASE_PATH=/ps env var so its routes
@@ -41,7 +41,7 @@ ingress:
 # Uncomment this and remove Pattern A above to use:
 #
 # ingress:
-#   - hostname: limio.vn
+#   - hostname: tizia.vn
 #     path: ^/ps(/.*)?$
 #     service: http://localhost:8041
 #   - service: http_status:404

@@ -65,7 +65,7 @@ const REQUEST_UPLOADS_DIR = path.resolve(ROOT_DIR, 'data', 'uploads', 'requests'
 const PORT = Number(process.env.PORT) || 8041;
 const HOST = process.env.HOST || '0.0.0.0';
 // Optional path prefix when deployed behind a reverse proxy at a sub-path
-// e.g. https://limio.vn/ps/* → set BASE_PATH=/ps so all routes work under /ps.
+// e.g. https://tizia.vn/ps/* → set BASE_PATH=/ps so all routes work under /ps.
 const BASE_PATH = (process.env.BASE_PATH || '').replace(/\/$/, '');
 
 const VALID_VERSIONS = new Set([
@@ -1033,7 +1033,7 @@ if (PAYMENT_ENABLED) {
 attachAssets(r, PUBLIC_DIR);
 
 // ============================================================
-// ADAPTIVE QUIZ (GAP 11) — BKT-lite + Limio passthrough
+// ADAPTIVE QUIZ (GAP 11) — BKT-lite (local)
 // ============================================================
 attachAdaptive(r);
 

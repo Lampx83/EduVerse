@@ -460,7 +460,7 @@ children.push(table(
   ],
   [2200, 3380, 3780],
 ));
-children.push(P([run('Công thức cập nhật BKT (khi quan sát kết quả đúng): hậu nghiệm '), code('P(L|đúng) = P(L)(1−slip) / [P(L)(1−slip) + (1−P(L))·guess]'), run(', sau đó cộng cơ hội học '), code('P_next = P(L|obs) + (1−P(L|obs))·pLearn'), run('. BKT có thể forward sự kiện sang dịch vụ Limio (nếu cấu hình '), code('LIMIO_URL'), run(') nhưng vẫn chạy độc lập khi không có Limio.')]));
+children.push(P([run('Công thức cập nhật BKT (khi quan sát kết quả đúng): hậu nghiệm '), code('P(L|đúng) = P(L)(1−slip) / [P(L)(1−slip) + (1−P(L))·guess]'), run(', sau đó cộng cơ hội học '), code('P_next = P(L|obs) + (1−P(L|obs))·pLearn'), run('. BKT chạy hoàn toàn local trong process Tizia, không phụ thuộc dịch vụ ngoài.')]));
 children.push(callout('🧩 Phối hợp', [
   'IRT chọn ĐỘ KHÓ câu hỏi vừa sức trong một môn; BKT quyết định NÊN HỌC KỸ NĂNG NÀO tiếp theo và khi nào cần ôn lại. Knowledge graph (skill_prereq) cung cấp thứ tự tiên quyết giữa các kỹ năng.',
 ]));
