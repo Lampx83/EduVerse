@@ -1,6 +1,6 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0665';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0668';
 import { loadDrugs } from './catalog.js?v=ph0665';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -84,18 +84,26 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   const AVATAR_HEIGHT_KEY = 'tizia_pharmacy_avatar_height';
   const AVATAR_SKIN_KEY = 'tizia_pharmacy_avatar_skin';
   const AVATAR_SHIRT_KEY = 'tizia_pharmacy_avatar_shirt';
+  const AVATAR_COND_KEY = 'tizia_pharmacy_avatar_cond';
+  const AVATAR_EXPR_KEY = 'tizia_pharmacy_avatar_expr';
   const SHIRT_COLORS = ['#2563eb', '#0d9488', '#16a34a', '#e11d48', '#f59e0b', '#6b7280', '#f5f5f5', '#7c3aed'];
+  const CONDITIONS = [['none', 'Bình thường'], ['rash', 'Phát ban'], ['hives', 'Mề đay'], ['jaundice', 'Vàng da'], ['pallor', 'Xanh xao'], ['flush', 'Đỏ (sốt)']];
+  const EXPRESSIONS = [['none', 'Bình thường'], ['pain', '😣 Đau'], ['worried', '😟 Lo lắng']];
   const _avatarUrl = new URLSearchParams(location.search).get('avatar')
     || (() => { try { return localStorage.getItem(AVATAR_KEY); } catch { return null; } })()
     || null;
   const _avatarHeight = (() => { try { return +localStorage.getItem(AVATAR_HEIGHT_KEY) || 1; } catch { return 1; } })();
   const _avatarSkin = (() => { try { return +localStorage.getItem(AVATAR_SKIN_KEY) || 0; } catch { return 0; } })();
   const _avatarShirt = (() => { try { return localStorage.getItem(AVATAR_SHIRT_KEY) || null; } catch { return null; } })();
+  const _avatarCond = (() => { try { return localStorage.getItem(AVATAR_COND_KEY) || 'none'; } catch { return 'none'; } })();
+  const _avatarExpr = (() => { try { return localStorage.getItem(AVATAR_EXPR_KEY) || 'none'; } catch { return 'none'; } })();
   const sim = buildScene($('scene-canvas'), {
     avatarUrl: _avatarUrl,
     avatarHeight: _avatarHeight,
     skinTone: _avatarSkin,
     shirtColor: _avatarShirt,
+    condition: _avatarCond,
+    expression: _avatarExpr,
     onAction: async (type, payload) => {
       await postAction(type, payload);
     },
@@ -516,6 +524,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   // Góc nhìn — gom các preset vào 1 dropdown gọn (thay vì dải nút wrap 2 hàng che ngăn tủ).
   const camSelect = $('cam-select');
   const presetKeys = Object.keys(sim.cameraPresets);
+  // Phím tắt cho preset thứ 11 trở đi (sau 1–9 + 0): q w e r t y u… để MỌI góc nhìn
+  // đều có phím tắt. Không xung WASD vì hotkey góc nhìn bị chặn khi đang đi dạo.
+  const EXTRA_KEYS = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i'];
+  const hotFor = (i) => i < 9 ? `${i + 1}` : i === 9 ? '0' : (EXTRA_KEYS[i - 10] || '');
   function applyPreset(key) {
     if (!sim.cameraPresets[key]) return;
     sim.setCameraPreset(key);
@@ -523,17 +535,19 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   }
   if (camSelect) {
     camSelect.innerHTML = Object.entries(sim.cameraPresets).map(([k, p], i) => {
-      const hot = i < 9 ? ` [${i + 1}]` : (i === 9 ? ' [0]' : '');
+      const h = hotFor(i);
+      const hot = h ? ` [${h.toUpperCase()}]` : '';
       return `<option value="${k}" ${k === 'default' ? 'selected' : ''}>${p.label}${hot}</option>`;
     }).join('');
     camSelect.addEventListener('change', () => applyPreset(camSelect.value));
   }
-  // 6a1. HOTKEY góc nhìn: phím 1–9 + 0 chuyển nhanh 10 góc nhìn đầu (bỏ qua khi đang
-  // gõ trong ô nhập / có modal mở). [ ] để lùi/tiến tuần tự qua mọi preset.
+  // 6a1. HOTKEY góc nhìn: 1–9 + 0 cho 10 góc đầu, q w e… cho các góc còn lại (mọi
+  // góc đều có phím). [ ] lùi/tiến tuần tự. Bỏ qua khi gõ ô nhập / có modal / đi dạo.
   document.addEventListener('keydown', (e) => {
     const a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (sim.isWalkMode && sim.isWalkMode()) return;   // đi dạo: WASD để di chuyển, không bắt hotkey góc nhìn
     if (document.querySelector('.inspector-overlay, .pos-overlay, .label-overlay-v2, .pkg-overlay, .pkgflow-overlay, .salestray-overlay, .sticker-place-overlay, .notepad-overlay, .rpm-overlay')) return;
     let idx = -1;
     if (/^[1-9]$/.test(e.key)) idx = +e.key - 1;
@@ -550,6 +564,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     pendingCancel.addEventListener('click', () => {
       sim.setPendingLabel(null);
       $('pending-label').hidden = true;
+      showToast('Đã huỷ nhãn đang chờ dán.');
     });
   }
 
@@ -591,6 +606,8 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       const curH = sim.getAvatarHeight ? sim.getAvatarHeight() : 1;
       const curSkin = sim.getAvatarSkin ? sim.getAvatarSkin() : 0;
       const curShirt = sim.getAvatarShirt ? sim.getAvatarShirt() : null;
+      const curCond = sim.getAvatarCondition ? sim.getAvatarCondition() : 'none';
+      const curExpr = sim.getAvatarExpression ? sim.getAvatarExpression() : 'none';
       // {i: index thật trong SKIN_TONES, c: màu xem trước} — xếp sáng → đậm.
       const SKIN_SW = [
         { i: 2, c: '#fadcc8' }, // rất sáng
@@ -628,6 +645,14 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
             <div class="rpm-swatches" id="rpm-shirts">
               ${SHIRT_COLORS.map(c => `<button class="rpm-sw ${c === curShirt ? 'on' : ''}" data-shirt="${c}" style="background:${c}"></button>`).join('')}
             </div>
+            <div class="rpm-section">Tình trạng da (bệnh lý)</div>
+            <div class="rpm-presets rpm-wrap" id="rpm-conds">
+              ${CONDITIONS.map(([v, t]) => `<button class="rpm-chip ${v === curCond ? 'on' : ''}" data-cond="${v}" type="button">${t}</button>`).join('')}
+            </div>
+            <div class="rpm-section">Biểu cảm / tư thế</div>
+            <div class="rpm-presets rpm-wrap" id="rpm-exprs">
+              ${EXPRESSIONS.map(([v, t]) => `<button class="rpm-chip ${v === curExpr ? 'on' : ''}" data-expr="${v}" type="button">${t}</button>`).join('')}
+            </div>
           </div>
         </div>`;
       document.body.appendChild(overlay);
@@ -656,24 +681,22 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         const hex = b.dataset.shirt; sim.setAvatarShirt && sim.setAvatarShirt(hex);
         try { localStorage.setItem(AVATAR_SHIRT_KEY, hex); } catch {}
       }));
+      overlay.querySelectorAll('#rpm-conds .rpm-chip').forEach(b => b.addEventListener('click', () => {
+        overlay.querySelectorAll('#rpm-conds .rpm-chip').forEach(x => x.classList.toggle('on', x === b));
+        const c = b.dataset.cond; sim.setAvatarCondition && sim.setAvatarCondition(c);
+        try { localStorage.setItem(AVATAR_COND_KEY, c); } catch {}
+      }));
+      overlay.querySelectorAll('#rpm-exprs .rpm-chip').forEach(b => b.addEventListener('click', () => {
+        overlay.querySelectorAll('#rpm-exprs .rpm-chip').forEach(x => x.classList.toggle('on', x === b));
+        const e = b.dataset.expr; sim.setAvatarExpression && sim.setAvatarExpression(e);
+        try { localStorage.setItem(AVATAR_EXPR_KEY, e); } catch {}
+      }));
       overlay.querySelector('.rpm-close').addEventListener('click', closeAvatarModal);
       overlay.addEventListener('click', (e) => { if (e.target === overlay) closeAvatarModal(); });
     });
   }
 
-  // 6b. Pan dọc theo ngăn tủ (▲ lên / ▼ xuống). Giữ chuột để lặp liên tục.
-  const bindVpan = (id, dir) => {
-    const el = $(id);
-    if (!el || !sim.nudgeVertical) return;
-    let timer = null;
-    const fire = () => sim.nudgeVertical(dir);
-    const start = (e) => { e.preventDefault(); fire(); timer = setInterval(fire, 260); };
-    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
-    el.addEventListener('pointerdown', start);
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => el.addEventListener(ev, stop));
-  };
-  bindVpan('vpan-up', +1);
-  bindVpan('vpan-down', -1);
+  // (Đã bỏ nút ▲▼ NGĂN — dùng kéo pan / hotkey góc nhìn thay thế.)
 
   // Nhãn TIẾP XÚC TRỰC TIẾP (TT 3.2) IN THẲNG lên vỉ/lọ/ống — canvas để dán lên
   // mô hình 3D đơn vị ra lẻ (thay vì chỉ hiện card HTML). Trắng, viền nhóm, Rx +

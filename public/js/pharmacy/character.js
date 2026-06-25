@@ -222,16 +222,14 @@ export async function createCharacter(ctx) {
   // Biểu cảm qua TƯ THẾ (avatar không có morph mặt). Mỗi state = góc xương đắp lên
   // tư thế đứng. Tinh chỉnh trực quan như SIT.
   const EXPR = {
-    // Đau (ôm bụng, gập người, cúi đầu)
+    // Đau: gập người sâu + cúi đầu (đọc rõ "đau/mệt"); tay để idle buông tự nhiên.
     pain: {
-      spine: _qeuler(0.28, 0, 0), spine1: _qeuler(0.20, 0, 0), neck: _qeuler(0.25, 0, 0), head: _qeuler(0.18, 0, 0),
-      armR: _qeuler(0.55, 0, -0.65), foreR: _qeuler(0, -1.5, 0),   // tay phải ôm bụng
-      armL: _qeuler(0.55, 0, 0.65), foreL: _qeuler(0, 1.5, 0)      // tay trái ôm bụng
+      spine: _qeuler(0.36, 0, 0), spine1: _qeuler(0.24, 0, 0), spine2: _qeuler(0.12, 0, 0),
+      neck: _qeuler(0.32, 0, 0), head: _qeuler(0.20, 0, 0)
     },
-    // Lo lắng (cúi nhẹ, tay phải đưa lên cằm)
+    // Lo lắng: hơi cúi + nghiêng đầu nhẹ
     worried: {
-      spine: _qeuler(0.08, 0, 0), neck: _qeuler(0.18, 0, 0), head: _qeuler(0.12, 0, 0),
-      armR: _qeuler(0.2, -0.2, -1.15), foreR: _qeuler(0, -2.0, 0)   // tay phải lên cằm
+      spine: _qeuler(0.10, 0, 0), neck: _qeuler(0.22, 0, 0.10), head: _qeuler(0.14, 0, 0.12)
     }
   };
   function poseSlerp(bone, targetQuat, w) { if (bone) bone.quaternion.slerp(targetQuat, w); }
