@@ -1,28 +1,22 @@
 // ============================================================
-// Adaptive Quiz bridge (GAP 11) — BKT-lite + Limio passthrough.
+// Adaptive Quiz — BKT-lite (Bayesian Knowledge Tracing).
 // ============================================================
 //
 // Mục đích:
 //   - Nhận sự kiện học tập (LearningEvent) từ FE: HS làm 1 câu quiz đúng/sai.
-//   - Cập nhật xác suất "đã thông thạo" cho từng skill bằng Bayesian Knowledge
-//     Tracing (BKT) — implement local trong process Tizia, KHÔNG cần backend.
+//   - Cập nhật xác suất "đã thông thạo" cho từng skill bằng BKT local.
 //   - Khi đến lúc chọn câu tiếp theo, FE gọi /api/adaptive/next?learner=X&skill=Y
 //     → trả về gợi ý: tiếp tục skill cũ, đổi sang skill yếu hơn, hoặc remediate.
-//
-// Tích hợp Limio (Wave 1 light):
-//   - Nếu env LIMIO_URL có giá trị, sẽ forward event sang Limio LearningEvent API
-//     (best-effort, không chặn response).
-//   - Nếu Limio chưa chạy → BKT local vẫn vận hành bình thường.
 //
 // BKT parameters (mặc định, có thể tinh chỉnh sau):
 //   pInit     = 0.20  → xác suất biết trước
 //   pLearn    = 0.20  → xác suất học được sau 1 câu
 //   pSlip     = 0.10  → xác suất biết nhưng làm sai
 //   pGuess    = 0.20  → xác suất không biết nhưng đoán đúng
-//   threshold = 0.85  → coi như đã thông thạo (Limio cũng dùng threshold này)
+//   threshold = 0.85  → coi như đã thông thạo
 //
-// Persist: SQLite bảng `adaptive_state(learner, skill, p_known, attempts, last_at)`
-//          và `learning_events(...)` — schema gọn để dễ migrate sang Limio sau.
+// Persist: bảng `adaptive_state(learner, skill, p_known, attempts, last_at)`
+//          và `learning_events(...)`.
 // ============================================================
 
 import { db } from './db.js';
@@ -35,9 +29,6 @@ const PARAMS = {
   threshold: 0.85,
   remedialFailStreak: 2, // 2 fail liên tiếp → đề xuất nội dung cứu trợ
 };
-
-const LIMIO_URL = (process.env.LIMIO_URL || '').replace(/\/+$/, '');
-const LIMIO_API_KEY = process.env.LIMIO_API_KEY || '';
 
 function ensureSchema() {
   db.exec(`
@@ -117,28 +108,6 @@ function bktUpdate(pKnown, correct) {
   return Math.max(0, Math.min(1, pNext));
 }
 
-/** Best-effort forward event sang Limio nếu cấu hình. Không chặn. */
-function forwardToLimio(event) {
-  if (!LIMIO_URL) return;
-  const body = JSON.stringify({
-    learner: event.learner,
-    skill: event.skill,
-    correct: !!event.correct,
-    durationMs: event.duration_ms || null,
-    questionId: event.question_id || null,
-    source: 'tizia',
-    occurredAt: event.created_at,
-  });
-  fetch(`${LIMIO_URL}/api/learning-events`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(LIMIO_API_KEY ? { 'Authorization': `Bearer ${LIMIO_API_KEY}` } : {}),
-    },
-    body,
-  }).catch(err => console.warn('[adaptive] limio forward failed:', err?.message || err));
-}
-
 /**
  * Suggest câu tiếp theo dựa trên state hiện tại.
  * - Nếu mastered (p>=threshold): suggest skill khác / level cao hơn
@@ -206,9 +175,6 @@ export function attachAdaptive(r) {
       b.context ? String(b.context).slice(0, 80) : null,
     );
 
-    // Forward Limio (không chặn)
-    forwardToLimio({ ...updated, question_id: b.questionId, duration_ms: b.durationMs });
-
     const suggestion = suggestNext(updated, Array.isArray(b.availableSkills) ? b.availableSkills : []);
     res.json({
       ok: true,
@@ -267,10 +233,6 @@ export function attachAdaptive(r) {
 
   /** Health check */
   r.get('/api/adaptive/health', (_req, res) => {
-    res.json({
-      ok: true,
-      params: PARAMS,
-      limioBridge: LIMIO_URL ? { url: LIMIO_URL, hasKey: !!LIMIO_API_KEY } : 'disabled',
-    });
+    res.json({ ok: true, params: PARAMS });
   });
 }
