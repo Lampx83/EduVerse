@@ -122,6 +122,49 @@
     .pop { animation: pop .4s cubic-bezier(.2,1.3,.4,1); }
     @keyframes pop { from { transform:scale(.7); opacity:0 } to { transform:scale(1); opacity:1 } }
   }
+
+  /* ── Luyện Nghe (req #28) ── */
+  #listen { width:100%; max-width:560px; display:none; flex-direction:column; gap:14px; align-items:stretch; }
+  .lbig { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:30px 24px; text-align:center; }
+  .lspeak { width:96px; height:96px; border-radius:50%; border:0; cursor:pointer; font-size:40px; margin:0 auto 8px;
+    background:linear-gradient(135deg,var(--accent),#6366f1); color:#fff; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 30px rgba(14,165,233,.35); transition:transform .12s; }
+  .lspeak:hover { transform:scale(1.05); }
+  .lspeak:active { transform:scale(.95); }
+  .lhint { color:var(--muted); font-size:13px; margin-top:6px; }
+  .lreplay { background:none; border:0; color:var(--accent); cursor:pointer; font-size:13px; font-family:inherit; margin-top:4px; }
+  .linput { width:100%; font-family:inherit; font-size:19px; text-align:center; letter-spacing:1px;
+    background:rgba(0,0,0,.25); color:var(--text); border:2px solid var(--border); padding:14px; border-radius:12px; }
+  .linput:focus { outline:0; border-color:var(--accent); }
+  .lreveal { display:none; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px 20px; }
+  .lreveal.show { display:block; }
+  .lreveal.ok { border-left:4px solid var(--green); }
+  .lreveal.no { border-left:4px solid var(--red); }
+  .lreveal .rword { font-size:26px; font-weight:800; }
+  .lreveal .rmeta { color:var(--accent); font-size:14px; margin:4px 0; font-family:'Times New Roman',serif; }
+  .lreveal .rmean { font-size:17px; margin:6px 0 2px; }
+  .lreveal .rex { color:var(--muted); font-size:13.5px; font-style:italic; }
+
+  /* ── Luyện Viết (req #32) ── */
+  #write { width:100%; max-width:560px; display:none; flex-direction:column; gap:14px; align-items:stretch; }
+  .wcard { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px 24px; }
+  .wprompt { font-size:13px; color:var(--muted); margin-bottom:6px; }
+  .wword { font-size:30px; font-weight:800; }
+  .wmeta { color:var(--accent); font-size:14px; font-family:'Times New Roman',serif; margin:3px 0; }
+  .wmean { font-size:16px; color:var(--text); margin-top:4px; }
+  .wta { width:100%; min-height:84px; font-family:inherit; font-size:15px; resize:vertical;
+    background:rgba(0,0,0,.25); color:var(--text); border:1px solid var(--border); padding:13px; border-radius:12px; margin-top:14px; }
+  .wta:focus { outline:0; border-color:var(--accent); }
+  .wfeed { display:none; border-radius:14px; padding:16px 18px; font-size:14.5px; line-height:1.55; margin-top:2px; }
+  .wfeed.show { display:block; }
+  .wfeed.ok { background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.35); }
+  .wfeed.no { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.35); }
+  .wfeed .wscore { font-size:18px; font-weight:800; }
+  .wfeed .wline { margin-top:8px; }
+  .wfeed .wlabel { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.4px; }
+  .wspin { display:inline-block; width:15px; height:15px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff;
+    border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -131,7 +174,9 @@
 
 <div class="tabs">
   <button id="tabCard" class="active">🃏 Học thẻ</button>
-  <button id="tabQuiz">✍️ Kiểm tra</button>
+  <button id="tabQuiz">📝 Kiểm tra</button>
+  <button id="tabListen">🎧 Nghe</button>
+  <button id="tabWrite">✍️ Viết</button>
 </div>
 
 <div class="toolbar">
@@ -214,6 +259,45 @@
     <button class="opt" id="reviewRetry" style="flex:1">🔁 Làm lại</button>
     <button class="opt" id="reviewBack" style="flex:1">🃏 Về học thẻ</button>
   </div>
+</div>
+
+<!-- ───── Luyện Nghe (req #28) ───── -->
+<div id="listen">
+  <div class="qbar"><span>Câu <b id="lIdx">1</b>/<b id="lTotal">10</b></span><span>Đúng: <b id="lRight">0</b></span></div>
+  <div class="lbig">
+    <div class="wprompt">🎧 Nghe và gõ lại từ tiếng Anh bạn nghe được:</div>
+    <button class="lspeak" id="lSpeak" title="Nghe lại">🔊</button>
+    <div class="lhint">Bấm loa để nghe lại · Enter để kiểm tra</div>
+    <button class="lreplay" id="lSlow">🐢 Nghe chậm</button>
+  </div>
+  <input class="linput" id="lInput" placeholder="gõ từ ở đây…" autocomplete="off" autocapitalize="off" spellcheck="false" />
+  <div class="lreveal" id="lReveal">
+    <div class="rword" id="lWord">—</div>
+    <div class="rmeta" id="lPhon"></div>
+    <div class="rmean" id="lMean"></div>
+    <div class="rex" id="lEx"></div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="opt primary" id="lCheck" style="flex:1;background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;border:0;font-weight:700">Kiểm tra</button>
+    <button class="opt" id="lNext" style="flex:1;display:none">Câu sau →</button>
+  </div>
+</div>
+
+<!-- ───── Luyện Viết (req #32) ───── -->
+<div id="write">
+  <div class="qbar"><span>Từ <b id="wIdx">1</b>/<b id="wTotal">8</b></span><span>Đặt câu đúng: <b id="wRight">0</b></span></div>
+  <div class="wcard">
+    <div class="wprompt">✍️ Đặt MỘT câu tiếng Anh có dùng từ chuyên ngành dưới đây:</div>
+    <div class="wword" id="wWord">—</div>
+    <div class="wmeta" id="wPhon"></div>
+    <div class="wmean" id="wMean"></div>
+    <textarea class="wta" id="wInput" placeholder="Ví dụ: The new algorithm runs much faster than the old one."></textarea>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="opt primary" id="wSubmit" style="flex:1;background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;border:0;font-weight:700">Chấm câu</button>
+      <button class="opt" id="wSkip" style="flex:0 0 auto">Từ khác →</button>
+    </div>
+  </div>
+  <div class="wfeed" id="wFeed"></div>
 </div>
 
 <!-- ───── Modal thêm từ (req #25) ───── -->
@@ -598,6 +682,9 @@
   };
   function finishQuiz() {
     bumpStreak(); renderStreak();
+    // Khôi phục 2 nút overlay cho chế độ Kiểm tra (Nghe/Viết có thể đã đổi handler).
+    el('mReview').style.display = ''; el('mReview').onclick = showReview;
+    el('mAgain').onclick = () => { el('overlay').classList.remove('show'); startQuiz(); };
     const n = quiz.items.length, r = quiz.right, pct = Math.round(r / n * 100);
     el('mScore').textContent = r + '/' + n;
     const pass = pct >= 70;
@@ -625,19 +712,183 @@
     }).join('');
   }
 
+  // ─────────────── LUYỆN NGHE (req #28) ───────────────
+  // Phát âm từ tiếng Anh (TTS) → SV gõ lại → chấm chính tả → hiện nghĩa/IPA/ví dụ.
+  let listen = null;   // { items:[it], idx, right }
+  const LISTEN_LEN = 10;
+  function buildListen() {
+    const pool = VOCAB[topic];
+    const ranked = [...pool].sort((a, b) => cardState(topic, a.w).box - cardState(topic, b.w).box);
+    const items = ranked.slice(0, Math.min(LISTEN_LEN, pool.length)).sort(() => Math.random() - .5);
+    listen = { items, idx: 0, right: 0 };
+  }
+  function renderListen() {
+    const it = listen.items[listen.idx];
+    el('lIdx').textContent = listen.idx + 1; el('lTotal').textContent = listen.items.length;
+    el('lRight').textContent = listen.right;
+    el('lReveal').classList.remove('show', 'ok', 'no');
+    el('lInput').value = ''; el('lInput').disabled = false;
+    el('lCheck').style.display = ''; el('lNext').style.display = 'none';
+    el('lNext').textContent = listen.idx < listen.items.length - 1 ? 'Câu sau →' : '🏁 Xem kết quả';
+    el('lInput').focus();
+    speak(it.w);                       // tự phát âm khi vào câu mới
+  }
+  function checkListen() {
+    const it = listen.items[listen.idx];
+    if (el('lInput').disabled) return;
+    const guess = el('lInput').value.trim().toLowerCase();
+    if (!guess) { el('lInput').focus(); return; }
+    const correct = guess === it.w.toLowerCase();
+    if (correct) listen.right++;
+    grade(topic, it.w, correct);
+    el('lRight').textContent = listen.right;
+    el('lInput').disabled = true;
+    el('lCheck').style.display = 'none'; el('lNext').style.display = '';
+    el('lWord').textContent = it.w;
+    el('lPhon').textContent = it.ph + ' · ' + it.pos;
+    el('lMean').textContent = (correct ? '✅ Chính xác! ' : '❌ Bạn gõ: “' + (guess || '—') + '”. ') + it.v;
+    el('lEx').textContent = it.ex || '';
+    el('lReveal').classList.add('show', correct ? 'ok' : 'no');
+  }
+  function startListen() {
+    if (!('speechSynthesis' in window)) {
+      setView('listen');
+      el('listen').innerHTML = '<div class="lbig">🔇 Trình duyệt của bạn không hỗ trợ phát âm (Web Speech API). Hãy thử Chrome/Edge/Safari mới nhé.</div>';
+      return;
+    }
+    buildListen(); setView('listen'); renderListen();
+  }
+  el('lSpeak').onclick = () => { const it = listen?.items[listen.idx]; if (it) speak(it.w); };
+  el('lSlow').onclick = () => {
+    const it = listen?.items[listen.idx]; if (!it || !('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(it.w); u.lang = 'en-US'; u.rate = .5;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  };
+  el('lCheck').onclick = checkListen;
+  el('lInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); checkListen(); } });
+  el('lNext').onclick = () => {
+    if (listen.idx < listen.items.length - 1) { listen.idx++; renderListen(); }
+    else { bumpStreak(); renderStreak(); finishListenWrite('🎧 Luyện Nghe', listen.right, listen.items.length, startListen); }
+  };
+
+  // ─────────────── LUYỆN VIẾT (req #32) ───────────────
+  // Cho thuật ngữ → SV đặt câu tiếng Anh → gọi /api/ai/grade-sentence chấm (Ollama).
+  let write = null;   // { items:[it], idx, right }
+  const WRITE_LEN = 8;
+  function buildWrite() {
+    const pool = VOCAB[topic];
+    const ranked = [...pool].sort((a, b) => cardState(topic, a.w).box - cardState(topic, b.w).box);
+    const items = ranked.slice(0, Math.min(WRITE_LEN, pool.length)).sort(() => Math.random() - .5);
+    write = { items, idx: 0, right: 0 };
+  }
+  function renderWrite() {
+    const it = write.items[write.idx];
+    el('wIdx').textContent = write.idx + 1; el('wTotal').textContent = write.items.length;
+    el('wRight').textContent = write.right;
+    el('wWord').textContent = it.w;
+    el('wPhon').textContent = it.ph + ' · ' + it.pos;
+    el('wMean').textContent = '➡️ ' + it.v;
+    el('wInput').value = ''; el('wInput').disabled = false;
+    el('wFeed').classList.remove('show', 'ok', 'no'); el('wFeed').innerHTML = '';
+    el('wSubmit').disabled = false; el('wSubmit').textContent = 'Chấm câu';
+    el('wInput').focus();
+  }
+  async function submitWrite() {
+    const it = write.items[write.idx];
+    if (el('wInput').disabled) return;
+    const sentence = el('wInput').value.trim();
+    if (sentence.split(/\s+/).filter(Boolean).length < 3) {
+      el('wFeed').className = 'wfeed show no';
+      el('wFeed').innerHTML = '✍️ Hãy viết một câu hoàn chỉnh (ít nhất vài từ) có dùng từ <b>' + it.w + '</b>.';
+      el('wInput').focus(); return;
+    }
+    el('wSubmit').disabled = true; el('wSubmit').innerHTML = '<span class="wspin"></span> Đang chấm…';
+    let r = null;
+    try {
+      const resp = await fetch('/api/ai/grade-sentence', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ word: it.w, meaning: it.v, pos: it.pos, sentence }),
+      });
+      if (resp.ok) r = await resp.json();
+      else if (resp.status === 401) r = { _guest: true };
+    } catch (e) {}
+    el('wInput').disabled = true; el('wSubmit').style.display = 'none';
+    // Fallback phía client nếu chưa đăng nhập / AI lỗi: kiểm tra cơ bản + cho xem ví dụ mẫu.
+    if (!r || r._guest || r.score == null) {
+      const usesWord = new RegExp('\\b' + it.w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(sentence);
+      const ok = usesWord && sentence.split(/\s+/).filter(Boolean).length >= 4;
+      if (ok) write.right++;
+      el('wRight').textContent = write.right;
+      el('wFeed').className = 'wfeed show ' + (ok ? 'ok' : 'no');
+      el('wFeed').innerHTML =
+        '<div class="wscore">' + (ok ? '✅ Câu hợp lệ' : '⚠️ Cần xem lại') + '</div>' +
+        '<div class="wline">' + (usesWord ? 'Câu của bạn có dùng từ <b>' + it.w + '</b>. ' : 'Câu chưa dùng từ <b>' + it.w + '</b>. ') +
+        (r && r._guest ? 'Đăng nhập để được AI chấm chi tiết ngữ pháp & cách dùng.' : 'AI chấm chi tiết tạm offline.') + '</div>' +
+        '<div class="wline"><span class="wlabel">Câu mẫu</span><br>' + escapeHtmlClient(it.ex) + '</div>';
+    } else {
+      if (r.correct) write.right++;
+      el('wRight').textContent = write.right;
+      el('wFeed').className = 'wfeed show ' + (r.correct ? 'ok' : 'no');
+      let html = '<div class="wscore">' + (r.correct ? '✅' : '✍️') + ' ' + (r.score) + '/100</div>';
+      if (r.feedback) html += '<div class="wline">' + escapeHtmlClient(r.feedback) + '</div>';
+      if (r.corrected && r.corrected.trim().toLowerCase() !== sentence.toLowerCase())
+        html += '<div class="wline"><span class="wlabel">Gợi ý sửa</span><br>' + escapeHtmlClient(r.corrected) + '</div>';
+      if (r.betterExample)
+        html += '<div class="wline"><span class="wlabel">Câu hay hơn</span><br>' + escapeHtmlClient(r.betterExample) + '</div>';
+      el('wFeed').innerHTML = html;
+      grade(topic, it.w, !!r.correct);   // dùng SRS: đặt câu đúng → dời lịch ôn xa hơn
+    }
+    // nút Câu khác → chuyển thành "tiếp theo"
+    el('wSkip').textContent = write.idx < write.items.length - 1 ? 'Từ sau →' : '🏁 Xong';
+  }
+  function escapeHtmlClient(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+  function startWrite() { buildWrite(); setView('write'); renderWrite(); }
+  el('wSubmit').onclick = submitWrite;
+  el('wSkip').onclick = () => {
+    if (write.idx < write.items.length - 1) { write.idx++; renderWrite(); }
+    else { bumpStreak(); renderStreak(); finishListenWrite('✍️ Luyện Viết', write.right, write.items.length, startWrite); }
+  };
+
+  // Màn kết quả dùng chung cho Nghe + Viết (tái dùng overlay congrats).
+  function finishListenWrite(label, right, total, retry) {
+    const pct = Math.round(right / total * 100), pass = pct >= 70;
+    el('mScore').textContent = right + '/' + total;
+    el('mEmoji').textContent = pct === 100 ? '🏆' : pass ? '🎉' : '💪';
+    el('mTitle').textContent = label + (pct === 100 ? ' — Tuyệt đối!' : pass ? ' — Tốt lắm!' : ' — Cố lên!');
+    el('mMsg').innerHTML = 'Bạn đạt <b>' + pct + '%</b>. Chuỗi học: 🔥 <b>' + streakValid() + ' ngày</b>.';
+    // Nghe/Viết không có màn "xem lại" riêng → ẩn nút đó, chỉ giữ "Làm lại".
+    el('mReview').style.display = 'none';
+    el('mAgain').onclick = () => { el('overlay').classList.remove('show'); retry(); };
+    el('overlay').classList.add('show');
+  }
+
   // ─────────────── Điều hướng view/tab ───────────────
   function setView(v) {
     el('flash').style.display = v === 'card' ? 'flex' : 'none';
     el('quiz').style.display = v === 'quiz' ? 'flex' : 'none';
-    el('review').style.display = v === 'review' ? 'flex' : 'none';
-    el('tabCard').classList.toggle('active', v === 'card');
-    el('tabQuiz').classList.toggle('active', v !== 'card');
+    el('review').style.display = v === 'review' ? 'flex' : 'none';   // review thuộc tab Kiểm tra
+    el('listen').style.display = v === 'listen' ? 'flex' : 'none';
+    el('write').style.display = v === 'write' ? 'flex' : 'none';
+    const map = { card:'tabCard', quiz:'tabQuiz', review:'tabQuiz', listen:'tabListen', write:'tabWrite' };
+    ['tabCard','tabQuiz','tabListen','tabWrite'].forEach(id => el(id).classList.toggle('active', map[v] === id));
   }
   function startQuiz() { buildQuiz(); setView('quiz'); renderQuiz(); }
+  // Khi đổi chủ đề/chế độ, refresh đúng tab đang mở
+  function refreshTab() {
+    if (tab === 'card') renderCard();
+    else if (tab === 'quiz') startQuiz();
+    else if (tab === 'listen') startListen();
+    else if (tab === 'write') startWrite();
+  }
   el('tabCard').onclick = () => { tab = 'card'; setView('card'); flipped = false; renderCard(); };
   el('tabQuiz').onclick = () => { tab = 'quiz'; startQuiz(); };
-  el('topicSel').onchange = e => { topic = e.target.value; flipped = false; reviewAhead = false; (tab === 'card' ? renderCard() : startQuiz()); };
-  el('modeSel').onchange = e => { mode = e.target.value; flipped = false; (tab === 'card' ? renderCard() : startQuiz()); };
+  el('tabListen').onclick = () => { tab = 'listen'; startListen(); };
+  el('tabWrite').onclick = () => { tab = 'write'; startWrite(); };
+  el('topicSel').onchange = e => { topic = e.target.value; flipped = false; reviewAhead = false; refreshTab(); };
+  el('modeSel').onchange = e => { mode = e.target.value; flipped = false; refreshTab(); };
   el('mAgain').onclick = () => { el('overlay').classList.remove('show'); startQuiz(); };
   el('mReview').onclick = showReview;
   el('reviewRetry').onclick = () => startQuiz();

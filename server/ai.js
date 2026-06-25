@@ -53,6 +53,7 @@ export function attachAi(r) {
   r.post('/api/ai/quiz-generate',     ...wrapAi('quiz-generate',     handleQuizGenerate));
   r.post('/api/ai/pdf-quiz',          ...wrapAi('pdf-quiz',          handlePdfQuiz));
   r.post('/api/ai/practice-more',     ...wrapAi('practice-more',     handlePracticeMore));
+  r.post('/api/ai/grade-sentence',    ...wrapAi('grade-sentence',    handleGradeSentence));
   r.post('/api/ai/lesson-coach',      ...wrapAi('lesson-coach',      handleLessonCoach));
   r.get( '/api/ai/lesson-bank',       wrap(handleLessonBank));   // đọc kho — không gọi AI, không quota
   r.get( '/api/ai/health',            wrap(handleHealth));
@@ -897,6 +898,98 @@ Soạn ${n} câu hỏi. CHỈ JSON.`;
   return {
     questions: Array.isArray(parsed.questions) ? parsed.questions.slice(0, n) : [],
     pageNumber,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// GRADE SENTENCE (req #32) — chấm 1 câu tiếng Anh SV đặt với từ vựng cho trước
+// Dùng cho phần "Luyện Viết" trong Từ vựng Tiếng Anh chuyên ngành.
+// ─────────────────────────────────────────────────────────────
+
+const SENTENCE_SYSTEM = `Bạn là giáo viên tiếng Anh chuyên ngành cho sinh viên Việt Nam.
+Nhiệm vụ: chấm MỘT câu tiếng Anh do sinh viên tự đặt, BẮT BUỘC phải dùng từ vựng cho trước.
+
+QUY TẮC CHẤM:
+1. usesWord = true nếu câu có dùng đúng từ cho trước (chấp nhận biến thể: số nhiều, thì, V-ing, V-ed).
+2. Đánh giá NGỮ PHÁP, CHÍNH TẢ và việc từ có được dùng ĐÚNG NGHĨA/ngữ cảnh không.
+3. correct = true CHỈ KHI usesWord=true VÀ ngữ pháp ổn VÀ dùng từ hợp nghĩa.
+4. score 0–100: trừ điểm cho lỗi ngữ pháp, dùng sai nghĩa, hoặc không dùng từ.
+5. feedback: nhận xét NGẮN bằng TIẾNG VIỆT (1–2 câu), khen điểm tốt + chỉ lỗi cụ thể.
+6. corrected: câu đã sửa lại đúng (giữ nguyên nếu câu đã đúng).
+7. CHỈ trả JSON, không viết gì thêm.
+
+Format JSON BẮT BUỘC:
+{
+  "usesWord": true,
+  "correct": true,
+  "score": 0,
+  "feedback": "...",
+  "corrected": "...",
+  "betterExample": "một câu ví dụ hay khác có dùng từ này"
+}`;
+
+async function handleGradeSentence({ word, meaning = '', pos = '', sentence }) {
+  if (!word || !sentence) throw new Error('word and sentence are required');
+  const w = String(word).trim().slice(0, 60);
+  const sent = String(sentence).trim().slice(0, 400);
+
+  // Heuristic dùng cho fallback + để đưa tín hiệu vào prompt.
+  const usesWordLocal = new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(sent);
+
+  const prompt = `<TỪ VỰNG>
+- Từ: ${w}${pos ? ' (' + pos + ')' : ''}
+- Nghĩa: ${meaning || '(không cung cấp)'}
+</TỪ VỰNG>
+
+<CÂU CỦA SINH VIÊN>
+${sent}
+</CÂU CỦA SINH VIÊN>
+
+Chấm câu trên theo rubric. CHỈ trả JSON.`;
+
+  let parsed = null;
+  try {
+    const raw = await ollamaGenerate({
+      prompt, system: SENTENCE_SYSTEM, temperature: 0.2, json: true, maxTokens: 400,
+    });
+    parsed = safeParseJson(raw);
+  } catch (e) {
+    console.warn('[grade-sentence] AI failed, dùng heuristic:', e?.message || e);
+  }
+
+  // Fallback heuristic khi AI lỗi/timeout — vẫn cho phản hồi cơ bản, không chặn SV.
+  if (!parsed || typeof parsed !== 'object' || parsed.score == null) {
+    const words = sent.split(/\s+/).filter(Boolean);
+    const startsUpper = /^[A-Z]/.test(sent);
+    const endsPunct = /[.!?]$/.test(sent);
+    const longEnough = words.length >= 4;
+    const ok = usesWordLocal && longEnough;
+    const tips = [];
+    if (!usesWordLocal) tips.push(`câu chưa dùng từ «${w}»`);
+    if (!longEnough) tips.push('câu hơi ngắn, hãy viết đủ ý');
+    if (!startsUpper) tips.push('nên viết hoa chữ đầu câu');
+    if (!endsPunct) tips.push('nên có dấu chấm câu cuối');
+    return {
+      usesWord: usesWordLocal,
+      correct: ok,
+      score: ok ? 70 : (usesWordLocal ? 50 : 20),
+      feedback: (ok ? '✅ Câu của bạn dùng đúng từ vựng. ' : '')
+        + (tips.length ? 'Gợi ý: ' + tips.join('; ') + '.' : 'Tiếp tục luyện thêm nhé!')
+        + ' (AI chấm chi tiết tạm offline — đây là kiểm tra cơ bản.)',
+      corrected: sent,
+      betterExample: '',
+      source: 'heuristic',
+    };
+  }
+
+  return {
+    usesWord: parsed.usesWord ?? usesWordLocal,
+    correct: !!parsed.correct,
+    score: Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0))),
+    feedback: String(parsed.feedback || '').slice(0, 600),
+    corrected: String(parsed.corrected || sent).slice(0, 400),
+    betterExample: String(parsed.betterExample || '').slice(0, 300),
+    source: 'ai',
   };
 }
 
