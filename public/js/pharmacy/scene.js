@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0670';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0670';
-import { createCharacter } from './character.js?v=ph0670';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0671';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0671';
+import { createCharacter } from './character.js?v=ph0671';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -3508,7 +3508,7 @@ export function buildScene(canvas, opts = {}) {
       cx = Math.max(-faceW / 2 + sw / 2, Math.min(faceW / 2 - sw / 2, cx));
       cy = Math.max(-faceH / 2 + sh / 2, Math.min(faceH / 2 - sh / 2, cy));
       sticker = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), mat);
-      sticker.position.set(cx, cy, style.d / 2 + 0.008);
+      sticker.position.set(cx, cy, style.d / 2 + 0.0012); // SÁT mặt hộp (chạm), polygonOffset chống z-fight
     }
     sticker.name = 'hdsd-sticker';
     sub.add(sticker);

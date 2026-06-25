@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0670';
-import { loadDrugs } from './catalog.js?v=ph0670';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0671';
+import { loadDrugs } from './catalog.js?v=ph0671';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,10 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0670';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0670';
+import { openPosTerminal } from './pos.js?v=ph0671';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0671';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0670';
+import { labelSectionHTML } from './drug-label.js?v=ph0671';
 
 const $ = (id) => document.getElementById(id);
 
@@ -969,7 +969,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
           scx = Math.max(-faceW / 2 + sw / 2, Math.min(faceW / 2 - sw / 2, scx));
           scy = Math.max(-faceH / 2 + sh / 2, Math.min(faceH / 2 - sh / 2, scy));
           const skMesh = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), skMat);
-          skMesh.position.set(scx, scy, d / 2 + 0.01);
+          skMesh.position.set(scx, scy, d / 2 + 0.0015); // SÁT mặt hộp (chạm)
           scene2.add(skMesh);
         } else {
           // Chai: cylinder segment ôm thân.
@@ -1110,7 +1110,9 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
           // đúng quy cách thật. Vỉ được LẬT khi trượt ra để khoe mặt nhãn.
           const pw = w * 0.82, ph = pw * (200 / 360);
           const lab = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), cMat);
-          lab.rotation.x = Math.PI / 2; lab.rotation.z = Math.PI; lab.position.set(0, -0.013, 0);
+          // IN THẲNG (áp sát) lên màng nhôm mặt sau — không nổi/cách rời (foil dày
+          // 0.004 ở y=0 → mặt sau ≈ -0.002; đặt sát ngay đó, polygonOffset chống z-fight).
+          lab.rotation.x = Math.PI / 2; lab.rotation.z = Math.PI; lab.position.set(0, -0.0023, 0);
           g.add(lab);
         } else if (unitKind === 'goi') {
           // Gói (tấm dẹt 1 lớp): nhãn in mặt trước, giữ mặt trên.
