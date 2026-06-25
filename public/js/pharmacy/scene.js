@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0674';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0674';
-import { createCharacter } from './character.js?v=ph0674';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0675';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0675';
+import { createCharacter } from './character.js?v=ph0675';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -2919,10 +2919,11 @@ export function buildScene(canvas, opts = {}) {
         scene.add(obj);
       } catch (e) { console.warn('Counter model load failed:', m.url, e); }
     }
-    // Plants × 2 with sway animation — nhỏ + dịch ra xa tường để không z-fight.
+    // Plants × 2 with sway animation — đặt SÁT 2 góc trước (sát tường bên + ra
+    // gần cửa/mặt tiền) để gọn, không chắn lối.
     for (const p of [
-      { x: -ROOM_W / 2 + 0.90, z: 3.60, phase: 0 },
-      { x:  ROOM_W / 2 - 0.90, z: 3.60, phase: 1.2 }
+      { x: -ROOM_W / 2 + 0.55, z: 4.05, phase: 0 },
+      { x:  ROOM_W / 2 - 0.55, z: 4.05, phase: 1.2 }
     ]) {
       try {
         const gltf = await loadGLB(MODELS_BASE + 'plant.glb');
