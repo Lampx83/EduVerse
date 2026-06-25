@@ -63,7 +63,9 @@ export async function createCharacter(ctx) {
   ];
   let _skinTone = Math.max(0, Math.min(SKIN_TONES.length - 1, ctx.skinTone || 0));
   let _shirtHex = ctx.shirtColor || null;            // null = giữ áo gốc
-  let _condition = ctx.condition || 'none';          // bệnh lý ngoài da: none|rash|hives|jaundice|pallor|flush
+  let _condition = ctx.condition || 'none';          // bệnh lý ngoài da: none|rash|hives|jaundice|pallor|flush|bruise|cyanosis
+  let _hairColor = ctx.hairColor || null;            // null=giữ gốc; 'gray'|'brown'|'blonde'|'black'
+  const HAIR_COLORS = { gray: [200, 197, 193], brown: [92, 56, 34], blonde: [201, 164, 96], black: [28, 24, 22] };
   const SHIRT_RECT = { x0: 0.0, x1: 0.50, y0: 0.50, y1: 1.0 };
   function _hexToHsl(hex) {
     const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return null;
@@ -103,6 +105,11 @@ export async function createCharacter(ctx) {
       if (hsh < (cond === 'hives' ? 17 : 26)) {
         r = Math.min(255, r + (cond === 'hives' ? 88 : 62)); g = g * 0.7; b = b * 0.68;
       }
+    } else if (cond === 'bruise') {       // bầm tím (đốm tím rải rác)
+      const hsh = ((((x >> 2) * 73856093) ^ ((y >> 2) * 19349663)) >>> 0) % 100;
+      if (hsh < 15) { r = r * 0.6 + 26; g = g * 0.5 + 16; b = Math.min(255, b * 0.72 + 58); }
+    } else if (cond === 'cyanosis') {     // tím tái (xanh tím toàn da — thiếu oxy)
+      r = r * 0.76; g = g * 0.82; b = Math.min(255, b * 0.95 + 24);
     }
     return [r, g, b];
   }
@@ -116,6 +123,8 @@ export async function createCharacter(ctx) {
     const idata = cx.getImageData(0, 0, w, H); const d = idata.data;
     const skin = SKIN_TONES[_skinTone]; const skinOn = _skinTone > 0;
     const condOn = _condition && _condition !== 'none';
+    const hair = (_hairColor && HAIR_COLORS[_hairColor]) || null;   // tô tóc
+    const hairX = 0.52 * w, hairY = 0.5 * H;                        // vùng đầu (trên-trái)
     const shirt = _shirtHex ? _hexToHsl(_shirtHex) : _sampleShirt(d, w, H);
     const sx0 = SHIRT_RECT.x0 * w, sx1 = SHIRT_RECT.x1 * w, sy0 = SHIRT_RECT.y0 * H, sy1 = SHIRT_RECT.y1 * H;
     for (let y = 0; y < H; y++) {
@@ -123,7 +132,7 @@ export async function createCharacter(ctx) {
       for (let x = 0; x < w; x++) {
         const i = (y * w + x) << 2;
         let r = d[i], g = d[i + 1], b = d[i + 2];
-        if (skinOn || condOn) {
+        if (skinOn || condOn || hair) {
           const mx = Math.max(r, g, b), mn = Math.min(r, g, b); const sat = mx === 0 ? 0 : (mx - mn) / mx;
           if (r > g && g >= b && sat > 0.12 && sat < 0.8 && mx > 55) {   // pixel da
             if (skinOn) {
@@ -131,6 +140,10 @@ export async function createCharacter(ctx) {
               if (skin.l) { r += (255 - r) * skin.l; g += (255 - g) * skin.l; b += (255 - b) * skin.l; }
             }
             if (condOn) { const c = _applyCondition(_condition, x, y, r, g, b); r = c[0]; g = c[1]; b = c[2]; }
+          } else if (hair && x < hairX && y < hairY) {
+            // pixel tóc = tối + KHÔNG phải da, ở vùng đầu → tô màu tóc giữ chút biến thiên.
+            const lum = (r + g + b) / 3;
+            if (lum < 78) { const k = 0.45 + lum / 130; r = hair[0] * k; g = hair[1] * k; b = hair[2] * k; }
           }
         }
         if (inShirtRow && x >= sx0 && x < sx1) {
@@ -233,6 +246,9 @@ export async function createCharacter(ctx) {
     }
   };
   function poseSlerp(bone, targetQuat, w) { if (bone) bone.quaternion.slerp(targetQuat, w); }
+  const _qadd = new THREE.Quaternion();
+  function poseAdd(bone, x, y, z) { if (bone) { _qadd.setFromEuler(new THREE.Euler(x, y, z)); bone.quaternion.multiply(_qadd); } }
+  let _t = 0;   // đồng hồ cho chuyển động "sống" (thở/lắc nhẹ)
 
   // Ghế đẩu hiện ra dưới mông khi ngồi (để không lơ lửng). Cylinder cao SEAT_H,
   // tự đặt dưới nhân vật + lùi nhẹ về phía sau lưng. Không dịch chuyển nhân vật.
@@ -442,6 +458,18 @@ export async function createCharacter(ctx) {
       const e = EXPR[_expr];
       for (const k in e) poseSlerp(bones[k], e[k], exprW);
     }
+
+    // Chuyển động "sống" — thở + lắc nhẹ, KHÁC nhau theo trạng thái (đắp delta nhỏ
+    // mỗi frame lên xương; gốc đã reset bởi mixer/pose nên không cộng dồn).
+    _t += dt;
+    let amp = 0.013, freq = 1.25, hd = 0.012, swy = 0.012;        // bình thường: nhẹ, đều
+    if (_expr === 'pain') { amp = 0.024; freq = 0.85; hd = 0.018; swy = 0.014; }      // thở chậm, nặng nhọc
+    else if (_expr === 'worried') { amp = 0.012; freq = 1.9; hd = 0.030; swy = 0.024; } // bồn chồn, đầu động nhiều
+    const breathe = Math.sin(_t * freq), slow = Math.sin(_t * freq * 0.45 + 0.6);
+    poseAdd(bones.spine1 || bones.spine, breathe * amp, 0, slow * swy * 0.4);
+    poseAdd(bones.spine2, breathe * amp * 0.6, 0, 0);
+    poseAdd(bones.head, breathe * hd * 0.4 + slow * hd, slow * swy * 0.8, 0);
+    poseAdd(bones.hips, 0, 0, slow * swy * 0.5);
 
     // Camera bám: dịch camera + target đúng bằng delta nhân vật (giữ orbit/zoom),
     // rồi kéo nhẹ target về ngực nhân vật cho mượt.
