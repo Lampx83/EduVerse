@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0675';
-import { loadDrugs } from './catalog.js?v=ph0675';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0676';
+import { loadDrugs } from './catalog.js?v=ph0676';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,10 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0675';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0675';
+import { openPosTerminal } from './pos.js?v=ph0676';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0676';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0675';
+import { labelSectionHTML } from './drug-label.js?v=ph0676';
 
 const $ = (id) => document.getElementById(id);
 
@@ -1021,24 +1021,33 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       const foil = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.6, roughness: 0.35 });
       const acc = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.5 });
       if (unitKind === 'vi') {
-        // Vỉ ép: tấm nhôm MỎNG + viên trong bầu nhựa trong. Số viên theo quy cách
-        // đóng gói (vd vỉ 14 viên → 14), xếp lưới tự cân.
+        // Vỉ ép: màng nhôm MỎNG + BO GÓC (như thật) + viên trong bầu nhựa trong.
         const per = pillsPerBlister(drug);
         const rows = per <= 7 ? 1 : per <= 14 ? 2 : per <= 21 ? 3 : Math.ceil(per / 8);
         const cols = Math.ceil(per / rows);
-        const sheetW = w * Math.min(1.05, 0.5 + cols * 0.075), sheetD = d * 0.9;
-        const sheet = new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.0012, sheetD), // màng nhôm RẤT MỎNG như thật
-          new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.5, roughness: 0.32 }));
+        const sheetW = w * Math.min(0.86, 0.40 + cols * 0.058), sheetD = d * 0.72; // nhỏ gọn hơn
+        // Tấm nhôm BO GÓC: ExtrudeGeometry từ rounded-rect, RẤT MỎNG (0.0012), phẳng XZ.
+        const FT = 0.0012, rc = Math.min(sheetW, sheetD) * 0.16;
+        const rr = new THREE.Shape();
+        { const x = -sheetW / 2, y = -sheetD / 2, w0 = sheetW, d0 = sheetD, r = rc;
+          rr.moveTo(x + r, y);
+          rr.lineTo(x + w0 - r, y); rr.quadraticCurveTo(x + w0, y, x + w0, y + r);
+          rr.lineTo(x + w0, y + d0 - r); rr.quadraticCurveTo(x + w0, y + d0, x + w0 - r, y + d0);
+          rr.lineTo(x + r, y + d0); rr.quadraticCurveTo(x, y + d0, x, y + d0 - r);
+          rr.lineTo(x, y + r); rr.quadraticCurveTo(x, y, x + r, y); }
+        const foilGeo = new THREE.ExtrudeGeometry(rr, { depth: FT, bevelEnabled: false, curveSegments: 6 });
+        foilGeo.rotateX(-Math.PI / 2); foilGeo.translate(0, -FT / 2, 0); // mỏng quanh y=0, phẳng XZ
+        const sheet = new THREE.Mesh(foilGeo,
+          new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.5, roughness: 0.32, side: THREE.DoubleSide }));
         g.add(sheet);
-        // Nhãn tiếp xúc IN nhỏ gọn THẲNG lên màng nhôm mặt sau: là CHILD của tấm
-        // nhôm (dính chặt, KHÔNG tách rời) + flush ngay mặt -y. Cỡ nhỏ, gọn trong vỉ.
+        // Nhãn tiếp xúc IN nhỏ gọn lên màng nhôm mặt sau (child của tấm → dính chặt).
         {
           const cTex = makeContactLabelTex(drug, meta); cTex.anisotropy = 4;
-          const lh = sheetD * 0.72, lw = Math.min(sheetW * 0.8, lh * (360 / 200));
+          const lh = sheetD * 0.74, lw = Math.min(sheetW * 0.82, lh * (360 / 200));
           const lab = new THREE.Mesh(new THREE.PlaneGeometry(lw, lh),
             new THREE.MeshStandardMaterial({ map: cTex, roughness: 0.5, side: THREE.DoubleSide,
               polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
-          lab.rotation.x = Math.PI / 2; lab.position.set(0, -0.0008, 0); // flush mặt -y màng nhôm mỏng (sau)
+          lab.rotation.x = Math.PI / 2; lab.position.set(0, -FT / 2 - 0.0002, 0); // flush mặt sau
           sheet.add(lab);
         }
         const clearMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.20, roughness: 0.08, metalness: 0 });
@@ -1048,9 +1057,9 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         for (let r = 0; r < rows && placed < per; r++) for (let c = 0; c < cols && placed < per; c++) {
           const cx = (c - (cols - 1) / 2) * px, cz = (r - (rows - 1) / 2) * pz;
           const pill = new THREE.Mesh(new THREE.SphereGeometry(rad, 14, 10), acc);
-          pill.scale.set(1, 0.42, 1); pill.position.set(cx, 0.006, cz); g.add(pill);
+          pill.scale.set(1, 0.42, 1); pill.position.set(cx, FT / 2 + rad * 0.42, cz); g.add(pill); // SÁT mặt nhôm
           const dome = new THREE.Mesh(new THREE.SphereGeometry(rad * 1.14, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), clearMat);
-          dome.position.set(cx, 0.005, cz); g.add(dome);
+          dome.position.set(cx, FT / 2, cz); g.add(dome); // bầu nhựa nằm TRÊN mặt nhôm
           placed++;
         }
       } else if (unitKind === 'device') {
@@ -1162,13 +1171,14 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     // mở/CẤT đều có animation, có thể đảo chiều (cất vỉ trở lại hộp).
     let extractTarget = 0, extractT = 0;
     const extractFrom = new THREE.Vector3(0, 0, 0);
-    // Lấy ra: đưa đơn vị RA TRƯỚC + nâng nhẹ, gần camera để focus.
-    const extractTo = new THREE.Vector3(0, h * 0.12, d / 2 + Math.max(w, h) * 0.72);
+    // Lấy ra: chỉ nhô ra trước 1 CHÚT (sát hộp) + lệch phải (hộp lùi trái).
+    const extractTo = new THREE.Vector3(Math.max(w, h) * 0.14, h * 0.10, d / 2 + Math.max(w, h) * 0.30);
 
     let stopped = false;
     function tick() {
       if (stopped) return;
-      if (Math.abs(extractT - extractTarget) > 0.0005) {
+      const animating = Math.abs(extractT - extractTarget) > 0.0005;
+      if (animating) {
         extractT += Math.sign(extractTarget - extractT) * 0.04;
         extractT = Math.max(0, Math.min(1, extractT));
       }
@@ -1179,13 +1189,23 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         unit.position.lerpVectors(extractFrom, extractTo, e);
         unit.rotation.y = e * 0.5;
         // KHÔNG lật — giữ MẶT CÓ THUỐC (bầu/vỉ) NGỬA LÊN; chỉ ngả nhẹ cho thấy 3D.
-        unit.rotation.x = -e * 0.32;
+        unit.rotation.x = -e * 0.30;
         if (unitKind === 'goi') unit.rotation.z = -e * 0.3;
       }
-      // Thu nhỏ + lùi hộp sang trái để focus vào đơn vị vừa lấy ra.
-      const s = 1 - e * 0.46;            // 1 → 0.54
-      pkgGroup.scale.setScalar(s);
-      pkgGroup.position.set(-e * Math.max(w, h) * 0.55, 0, 0);
+      // Thu nhỏ + lùi hộp sang trái để nhường focus cho đơn vị.
+      pkgGroup.scale.setScalar(1 - e * 0.5);
+      pkgGroup.position.set(-e * Math.max(w, h) * 0.5, 0, 0);
+      // Camera FOCUS: chỉ chỉnh KHI đang animate (mở/cất) — target bám theo đơn vị
+      // (auto-rotate + drag → xoay quanh CHÍNH vật) + zoom gần dần. Animate xong thì
+      // BUÔNG cho user tự xoay/zoom (không giành lại).
+      if (animating) {
+        ctrl.target.lerp(extractTo.clone().multiplyScalar(e), 0.12);
+        const dir = camera2.position.clone().sub(ctrl.target);
+        let want = THREE.MathUtils.lerp(camDist, Math.max(w, h) * 1.2, e);
+        want = Math.max(ctrl.minDistance, Math.min(ctrl.maxDistance, want));
+        dir.setLength(THREE.MathUtils.lerp(dir.length(), want, 0.1));
+        camera2.position.copy(ctrl.target).add(dir);
+      }
       ctrl.update();
       renderer.render(scene2, camera2);
       requestAnimationFrame(tick);
