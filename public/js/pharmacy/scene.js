@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0657';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0657';
-import { createCharacter } from './character.js?v=ph0657';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0663';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0663';
+import { createCharacter } from './character.js?v=ph0663';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -1840,10 +1840,10 @@ export function buildScene(canvas, opts = {}) {
     const wl = new THREE.Mesh(new THREE.BoxGeometry(t, h, d), mat); wl.position.set(-w / 2 + t / 2, h / 2, 0); basket.add(wl);
     const wr = wl.clone(); wr.position.x = w / 2 - t / 2; basket.add(wr);
   })();
-  basket.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData = { salesTrayClick: true }; } });
-  basket.userData = { salesTrayClick: true };
+  basket.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData = { retailBasketClick: true }; } });
+  basket.userData = { retailBasketClick: true };
   scene.add(basket);
-  propLabel('GIỎ ĐỰNG', 0.24, '#0ea5e9', -0.78, propY + 0.11, COUNTER_Z - 0.13);
+  propLabel('GIỎ RA LẺ', 0.24, '#0ea5e9', -0.78, propY + 0.11, COUNTER_Z - 0.13);
 
   // HỘP RA LẺ — hộp kính trong, bên trong có khay inox + thanh gạt; nhãn "HỘP RA LẺ".
   const dispense = new THREE.Group();
@@ -2641,7 +2641,16 @@ export function buildScene(canvas, opts = {}) {
     group.position.set(stock.x, y, 0.05);
     group.userData = {
       drugId: stock.id, isFridgeStock: true,
-      drug: { id: stock.id, brand: stock.label, generic: stock.label, strength: '', isRx: true, isAntibiotic: false, unitPrice: 50000 },
+      // Đủ field cho inspector (sku BẮT BUỘC — hashSku đọc .length) + nhãn mô phỏng.
+      drug: {
+        id: stock.id, sku: ('VAC-' + stock.id).replace(/[^a-z0-9-]/gi, '').slice(0, 14).toUpperCase(),
+        brand: stock.label, name: stock.label, generic: stock.label, activeIngredient: stock.label,
+        strength: '', form: 'Dung dịch tiêm', pack: 'Hộp 1 lọ', category: 'Thuốc bảo quản lạnh 2–8°C',
+        retailUnit: 'lọ', unit: 'lọ', storage: 'Bảo quản 2–8°C, tránh ánh sáng',
+        isRx: true, isAntibiotic: false, unitPrice: 50000, barcode: '893' + String(stock.id).replace(/\D/g, '').slice(0, 9)
+      },
+      style: getBoxStyle({ id: stock.id, sku: 'VAC-' + stock.id, form: 'lọ' }),
+      boxIndex: 0,
       homePosition: group.position.clone()
     };
     fridgeGroup.add(group);
@@ -3183,20 +3192,30 @@ export function buildScene(canvas, opts = {}) {
     pointer.y = -((clientY - r.top) / r.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObjects(scene.children, true);
+    // Duyệt từ GẦN→XA. Quy tắc:
+    //  • THUỐC ưu tiên cao nhất — kể cả nằm SAU cửa kính (kính trong suốt cho click)
+    //    → thuốc trong tủ lạnh / tủ kính bấm được bình thường như trên kệ.
+    //  • CỬA (kính/tay nắm) chỉ mở khi KHÔNG có thuốc/vật tương tác phía trước và
+    //    KHÔNG bị VẬT CHE đặc chắn — tránh "bấm vật che → cửa sau vẫn mở".
+    //  • Vật KHÔNG tương tác, KHÔNG phải cửa/thuốc = vật cản đặc → DỪNG (chặn cửa sau).
+    let firstDoor = null;
     for (const h of hits) {
-      if (h.object.userData?.posClick) return { kind: 'pos' };
-      if (h.object.userData?.packageClick) return { kind: 'package', packageType: h.object.userData.packageType };
-      if (h.object.userData?.labelClick) return { kind: 'label' };
-      if (h.object.userData?.notepadClick) return { kind: 'notepad' };
-      if (h.object.userData?.salesTrayClick) return { kind: 'sales_tray' };
+      const ud = h.object.userData || {};
+      if (ud.posClick) return { kind: 'pos' };
+      if (ud.packageClick) return { kind: 'package', packageType: ud.packageType };
+      if (ud.retailBasketClick) return { kind: 'retail_basket' };
+      if (ud.labelClick) return { kind: 'label' };
+      if (ud.notepadClick) return { kind: 'notepad' };
+      if (ud.salesTrayClick) return { kind: 'sales_tray' };
       const book = findBookAncestor(h.object);
       if (book) return { kind: 'book', book };
-      const door = findFridgeDoor(h.object);
-      if (door) return { kind: 'door', door };
       const drugGroup = findDrugAncestor(h.object);
-      if (drugGroup) return { kind: 'drug', group: drugGroup };
+      if (drugGroup && drugGroup.userData.drug) return { kind: 'drug', group: drugGroup };
+      const door = findFridgeDoor(h.object);
+      if (door) { if (!firstDoor) firstDoor = door; continue; } // kính: cho click xuyên qua tìm thuốc
+      break; // vật cản đặc (kệ/tường/prop/quầy) → không xét tiếp lớp phía sau
     }
-    return null;
+    return firstDoor ? { kind: 'door', door: firstDoor } : null;
   }
 
   // Pick logic: click TRÊN KỆ → opts.onInspectDrug callback (P3 modal). Nếu
@@ -3333,40 +3352,74 @@ export function buildScene(canvas, opts = {}) {
     if ((l.timing === 'before_meal' || l.timing === 'after_meal') && l.mealOffsetMin > 0) return `${base} ${l.mealOffsetMin}'`;
     return base;
   }
+  // Tỉ lệ nhãn HDSD = PORTRAIT 360×480, tông VÀNG KEM giống HỆT bản xem trước
+  // trong trình soạn nhãn (.le2-sticker): nền #fef3c7, viền cam #d97706, ô liều
+  // vàng #fde68a, chữ nâu — để "soạn" và "dán lên" GIỐNG NHAU (màu + shape).
+  const HDSD_W = 360, HDSD_H = 480;
   function makeHdsdStickerTex(label) {
     const c = document.createElement('canvas');
-    c.width = 360; c.height = 240;
+    c.width = HDSD_W; c.height = HDSD_H;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = '#fffef5'; ctx.fillRect(0, 0, 360, 240);
-    ctx.strokeStyle = '#0d9488'; ctx.lineWidth = 6; ctx.strokeRect(3, 3, 354, 234);
-    ctx.fillStyle = '#0d9488'; ctx.fillRect(0, 0, 360, 30);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Inter, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('HƯỚNG DẪN SỬ DỤNG', 180, 16);
-    ctx.fillStyle = '#334155'; ctx.font = '11px Inter, sans-serif';
-    ctx.fillText(`${PHARMACY_INFO.name} · ĐT ${PHARMACY_INFO.phone}`, 180, 44);
-    ctx.fillStyle = '#0f172a'; ctx.textAlign = 'left';
-    ctx.font = 'bold 17px Inter, sans-serif';
-    ctx.fillText(`${(label.brand || '').slice(0, 22)}`, 16, 70);
-    ctx.fillStyle = '#475569'; ctx.font = '12px Inter, sans-serif';
-    ctx.fillText(`${(label.strength || label.generic || '').slice(0, 30)}`, 16, 90);
-    ctx.fillText(`BN: ${(label.patient || 'Khách vãng lai').slice(0, 26)}`, 16, 108);
-    // Lưới liều S/T/C/T
+    const FONT = "'Courier New', monospace";
+    const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+    // Nền kem + viền cam bo góc
+    ctx.fillStyle = '#fef3c7'; rr(4, 4, HDSD_W - 8, HDSD_H - 8, 18); ctx.fill();
+    ctx.strokeStyle = '#d97706'; ctx.lineWidth = 4; ctx.stroke();
+    ctx.textBaseline = 'middle';
+    let y = 30;
+    // Header nhà thuốc — căn giữa, gạch dưới cam
+    ctx.fillStyle = '#7c2d12'; ctx.font = `bold 14px ${FONT}`; ctx.textAlign = 'center';
+    ctx.fillText(`${PHARMACY_INFO.name} · ĐT ${PHARMACY_INFO.phone}`, HDSD_W / 2, y);
+    y += 16;
+    ctx.strokeStyle = '#d97706'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(22, y); ctx.lineTo(HDSD_W - 22, y); ctx.stroke();
+    y += 26;
+    // Tiêu đề + gạch đứt
+    ctx.fillStyle = '#422006'; ctx.font = `800 22px ${FONT}`; ctx.textAlign = 'left';
+    ctx.fillText('HƯỚNG DẪN SỬ DỤNG', 24, y);
+    y += 18;
+    ctx.setLineDash([7, 4]); ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(22, y); ctx.lineTo(HDSD_W - 22, y); ctx.stroke(); ctx.setLineDash([]);
+    y += 28;
+    // BN
+    ctx.fillStyle = '#422006'; ctx.font = `15px ${FONT}`;
+    ctx.fillText(`BN: ${(label.patient || 'Khách vãng lai').slice(0, 28)}`, 24, y);
+    y += 30;
+    // Tên thuốc (đậm, lớn)
+    ctx.font = `800 24px ${FONT}`;
+    ctx.fillText((label.brand || '').slice(0, 22), 24, y);
+    y += 26;
+    // Hoạt chất / hàm lượng — tự xuống dòng theo bề ngang
+    ctx.fillStyle = '#5b3a1a'; ctx.font = `15px ${FONT}`;
+    const words = String(label.strength || label.generic || '').split(' ');
+    let line = '';
+    for (const w of words) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > HDSD_W - 48 && line) { ctx.fillText(line, 24, y); y += 19; line = w; }
+      else line = test;
+    }
+    if (line) { ctx.fillText(line, 24, y); y += 19; }
+    y += 10;
+    // Lưới liều S/T/C/T — ô vàng, số nâu đậm
     const cells = [['Sáng', label.morning], ['Trưa', label.noon], ['Chiều', label.afternoon], ['Tối', label.evening]];
-    const cw = 80, x0 = 16, y0 = 122;
+    const gx0 = 24, gap = 8, cw = (HDSD_W - 48 - 3 * gap) / 4, ch = 58;
     cells.forEach(([t, n], i) => {
-      const x = x0 + i * cw;
-      ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5; ctx.strokeRect(x, y0, cw - 6, 52);
-      ctx.fillStyle = '#64748b'; ctx.font = '11px Inter'; ctx.textAlign = 'center';
-      ctx.fillText(t, x + (cw - 6) / 2, y0 + 14);
-      ctx.fillStyle = '#0d9488'; ctx.font = 'bold 22px Inter';
-      ctx.fillText(String(n ?? 0), x + (cw - 6) / 2, y0 + 36);
+      const x = gx0 + i * (cw + gap);
+      ctx.fillStyle = '#fde68a'; rr(x, y, cw, ch, 8); ctx.fill();
+      ctx.fillStyle = '#78350f'; ctx.font = `12px ${FONT}`; ctx.textAlign = 'center';
+      ctx.fillText(t, x + cw / 2, y + 16);
+      ctx.fillStyle = '#422006'; ctx.font = `800 26px ${FONT}`;
+      ctx.fillText(String(n ?? 0), x + cw / 2, y + 38);
     });
-    ctx.fillStyle = '#7c2d12'; ctx.font = 'bold 13px Inter'; ctx.textAlign = 'left';
-    ctx.fillText(`🕒 ${_timingTextScene(label)}`, 16, 192);
+    y += ch + 26;
+    // Thời điểm + tổng liều/ngày
+    const total = (label.morning || 0) + (label.noon || 0) + (label.afternoon || 0) + (label.evening || 0);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#78350f'; ctx.font = `bold 15px ${FONT}`;
+    ctx.fillText(`🕒 ${_timingTextScene(label)} · ${total} viên/ngày`, 24, y);
+    y += 26;
     if (label.notes) {
-      ctx.fillStyle = '#475569'; ctx.font = '11px Inter';
-      ctx.fillText(('📝 ' + label.notes).slice(0, 48), 16, 214);
+      ctx.fillStyle = '#7c2d12'; ctx.font = `13px ${FONT}`;
+      ctx.fillText(('📝 ' + label.notes).slice(0, 40), 24, y);
     }
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -3383,24 +3436,39 @@ export function buildScene(canvas, opts = {}) {
     // Gỡ sticker cũ nếu dán lại
     const old = sub.getObjectByName('hdsd-sticker');
     if (old) sub.remove(old);
-    const faceW = style.w * 0.92, faceH = style.h * 0.88;
-    // Sticker rộng ~66% mặt hộp (to rõ, đọc được liều), tỉ lệ 360:240
-    const sw = Math.min(faceW * 0.72, faceH * 0.72 * (360 / 240));
-    const sh = sw * (240 / 360);
     const u = Math.max(0, Math.min(1, placement?.u ?? 0.5));
     const v = Math.max(0, Math.min(1, placement?.v ?? 0.5));
-    // Tâm sticker, clamp để không tràn mặt hộp
-    let cx = (u - 0.5) * faceW;
-    let cy = (0.5 - v) * faceH;
-    cx = Math.max(-faceW / 2 + sw / 2, Math.min(faceW / 2 - sw / 2, cx));
-    cy = Math.max(-faceH / 2 + sh / 2, Math.min(faceH / 2 - sh / 2, cy));
     const mat = new THREE.MeshStandardMaterial({
-      map: makeHdsdStickerTex(label), roughness: 0.6,
+      map: makeHdsdStickerTex(label), roughness: 0.6, side: THREE.DoubleSide,
       polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8
     });
-    const sticker = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), mat);
+    let sticker;
+    const isBottle = packType(sub.userData.drug) !== 'carton';
+    if (isBottle) {
+      // CHAI/DỊCH TRUYỀN: nhãn UỐN TRÒN ôm theo thân chai (cylinder segment),
+      // không phẳng. v điều khiển độ cao dọc thân.
+      const r = Math.min(style.w, style.d) * 0.5;
+      const bodyH = style.h * 0.74, baseY = -style.h / 2;
+      const sh = Math.min(bodyH * 0.6, r * 2.0 * (HDSD_H / HDSD_W));
+      const sw = sh * (HDSD_W / HDSD_H);
+      const arc = Math.min(Math.PI * 0.72, sw / r);
+      sticker = new THREE.Mesh(
+        new THREE.CylinderGeometry(r * 1.015, r * 1.015, sh, 28, 1, true, -arc / 2, arc), mat);
+      let cy = baseY + bodyH * (1 - v);
+      cy = Math.max(baseY + sh / 2, Math.min(baseY + bodyH - sh / 2, cy));
+      sticker.position.set(0, cy, 0);
+    } else {
+      // HỘP GIẤY: nhãn phẳng dán mặt trước +Z, tỉ lệ PORTRAIT 360:480.
+      const faceW = style.w * 0.92, faceH = style.h * 0.88;
+      const sw = Math.min(faceW * 0.62, faceH * 0.8 * (HDSD_W / HDSD_H));
+      const sh = sw * (HDSD_H / HDSD_W);
+      let cx = (u - 0.5) * faceW, cy = (0.5 - v) * faceH;
+      cx = Math.max(-faceW / 2 + sw / 2, Math.min(faceW / 2 - sw / 2, cx));
+      cy = Math.max(-faceH / 2 + sh / 2, Math.min(faceH / 2 - sh / 2, cy));
+      sticker = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), mat);
+      sticker.position.set(cx, cy, style.d / 2 + 0.008);
+    }
     sticker.name = 'hdsd-sticker';
-    sticker.position.set(cx, cy, style.d / 2 + 0.008);
     sub.add(sticker);
     labelsByDrug.set(drugId, { ...label, placement: { u, v } });
     opts.onAction?.('label_dose', { drugId, label });
@@ -3425,6 +3493,7 @@ export function buildScene(canvas, opts = {}) {
     const act = () => {
       if (hit.kind === 'pos') opts.onPosOpen?.();
       else if (hit.kind === 'package') opts.onPackageOpen?.(hit.packageType);
+      else if (hit.kind === 'retail_basket') opts.onRetailBasketOpen?.();
       else if (hit.kind === 'label') opts.onLabelOpen?.();
       else if (hit.kind === 'notepad') opts.onNotepadOpen?.();
       else if (hit.kind === 'sales_tray') opts.onSalesTrayOpen?.();
@@ -3554,8 +3623,18 @@ export function buildScene(canvas, opts = {}) {
     getAvatarShirt: () => _shirtColor,
     getPickedIds: () => picked.map(s => s.userData.drugId),
     getLabels: () => Object.fromEntries(labelsByDrug.entries()),
-    setPendingLabel: (l) => { pendingLabel = l; },
+    setPendingLabel: (l) => { pendingLabel = l; if (!l) labelTargetSub = null; },
     pickDrug,
+    // Đưa 1 hộp của thuốc vào KHAY BÁN HÀNG (không mở inspector) — dùng sau khi
+    // đóng gói ra lẻ để món hàng hiện trong khay như các thuốc khác.
+    pickToTray: (drugId) => {
+      const boxes = drugMeshes
+        .filter(g => g.userData.drugId === drugId && !g.userData.picked)
+        .sort((a, b) => (a.userData.boxIndex || 0) - (b.userData.boxIndex || 0));
+      if (!boxes.length) return false;
+      triggerBarcodeScan();
+      return pickSub(boxes[0]);
+    },
     attachLabelToPickedDrug,
     getDrugFace,
     applyHdsdSticker,

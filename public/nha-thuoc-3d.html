@@ -105,8 +105,11 @@
   .salestray-body { padding: 18px 22px; min-height: 160px; max-height: 50vh; overflow: auto; }
   .salestray-empty { color: var(--muted); text-align: center; padding: 30px 10px; line-height: 1.6; }
   .salestray-list { margin: 0; padding-left: 22px; }
-  .salestray-list li { padding: 6px 0; color: var(--text); }
-  .salestray-foot { padding: 10px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+  .salestray-list li { padding: 6px 0; color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .salestray-foot { padding: 10px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .rb-hint { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .rb-hint b { color: #c4b5fd; }
+  .rb-del { background: rgba(239,68,68,0.85); color: #fff; border: none; border-radius: 6px; width: 24px; height: 24px; font-size: 13px; cursor: pointer; flex-shrink: 0; }
 
   .scene-wrap {
     position: relative; background: #e8eef5; border-radius: 14px; overflow: hidden;
@@ -136,7 +139,14 @@
     background: var(--amber); color: #3e2723;
     padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
     box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+    display: flex; align-items: center; gap: 10px;
   }
+  #pending-label-cancel {
+    background: rgba(127,29,29,0.9); color: #fff; border: none; border-radius: 7px;
+    padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+    white-space: nowrap;
+  }
+  #pending-label-cancel:hover { background: #991b1b; }
   /* Tooltip hover hộp thuốc — float cạnh chuột */
   .drug-tooltip {
     position: absolute; z-index: 90; pointer-events: none;
@@ -256,6 +266,13 @@
   .rpm-slider { display: flex; align-items: center; gap: 10px; }
   .rpm-slider span { font-size: 11px; color: #94a3b8; }
   .rpm-slider input[type=range] { flex: 1; accent-color: var(--accent); }
+  .rpm-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .rpm-sw {
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer; padding: 0;
+    border: 2px solid rgba(148,163,184,0.4); transition: transform .1s;
+  }
+  .rpm-sw:hover { transform: scale(1.12); }
+  .rpm-sw.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
   .rpm-help { font-size: 12.5px; color: #cbd5e1; line-height: 1.55; margin: 0 0 10px; }
   .rpm-help b { color: #c4b5fd; }
   .rpm-open {
@@ -749,9 +766,14 @@
   }
   .inspector-3d .ins-canvas { width: 100%; height: 100%; display: block; cursor: grab; }
   .inspector-3d .ins-canvas:active { cursor: grabbing; }
+  /* Panel phải = cột flex KHÔNG cuộn; nội dung cuộn trong .ins-scroll, 3 nút
+     ghim SÁT ĐÁY (.ins-actions, flex-shrink:0) → luôn ở đáy dialog. */
   .inspector-info {
-    padding: 22px 28px; display: flex; flex-direction: column; gap: 14px;
-    overflow-y: auto;
+    padding: 0; display: flex; flex-direction: column; overflow: hidden; min-height: 0;
+  }
+  .ins-scroll {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    padding: 22px 28px 12px; display: flex; flex-direction: column; gap: 14px;
   }
   .ins-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .ins-brand { width: 100%; font-size: 22px; font-weight: 800; color: #fde68a; }
@@ -764,6 +786,14 @@
   .ins-tag.ins-otc { background: #15803d; color: #ecfdf5; }
   .ins-tag.ins-abx { background: #d97706; color: #fffbeb; }
   .ins-tag.ins-warn { background: #7c2d12; color: #fed7aa; }
+  /* Dòng thông tin vận hành gọn (thay bảng trùng nhãn): tồn kho · đơn giá · mã. */
+  .ins-meta {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px;
+    padding: 8px 12px; background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.2); border-radius: 10px; color: var(--text);
+  }
+  .ins-meta b { color: #fde68a; }
+  .ins-meta code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; font-size: 11px; }
   .ins-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
   .ins-tbl td { padding: 7px 6px; border-bottom: 1px dashed rgba(255,255,255,0.08); }
   .ins-tbl td:first-child { color: var(--muted); width: 40%; }
@@ -776,10 +806,9 @@
   /* 3 nút thao tác GHIM ở đáy panel info (sticky) → luôn bấm được không cần cuộn
      dù phần nhãn TT01 phía trên dài. Nền + đổ bóng che nội dung cuộn phía sau. */
   .ins-actions {
-    display: flex; gap: 10px; margin-top: auto;
-    position: sticky; bottom: 0; z-index: 3;
-    padding: 12px 0 4px; background: var(--card);
-    box-shadow: 0 -10px 18px -8px var(--card);
+    flex: 0 0 auto; display: flex; gap: 10px;
+    padding: 14px 28px; background: var(--card);
+    border-top: 1px solid var(--border);
   }
   .ins-return, .ins-retail, .ins-confirm {
     flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer;
@@ -954,7 +983,7 @@
       <input id="drug-search-input" type="search" placeholder="🔎 Tìm thuốc theo tên hoặc SKU…" autocomplete="off"/>
       <div id="drug-search-results" class="drug-search-results"></div>
     </div>
-    <div id="pending-label" class="pending-label" hidden>🏷️ <span id="pending-label-text"></span></div>
+    <div id="pending-label" class="pending-label" hidden>🏷️ <span id="pending-label-text"></span><button id="pending-label-cancel" type="button" title="Huỷ nhãn đang chờ dán">✕ Huỷ dán</button></div>
     <div class="cam-bar" id="cam-bar">
       <span class="cam-bar-label">📷 Góc nhìn:</span>
       <select class="cam-select" id="cam-select" title="Chọn góc nhìn"></select>
@@ -1025,7 +1054,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0657';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0663';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;
