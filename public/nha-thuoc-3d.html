@@ -143,6 +143,9 @@
     box-shadow: 0 6px 18px rgba(0,0,0,0.3);
     display: flex; align-items: center; gap: 10px;
   }
+  /* `display:flex` ở trên ghi đè thuộc tính [hidden] (UA chỉ display:none) → banner
+     luôn hiện dù hidden=true. Rule này cho [hidden] thắng → chỉ hiện khi đang chờ dán. */
+  .pending-label[hidden] { display: none; }
   #pending-label-cancel {
     background: rgba(127,29,29,0.9); color: #fff; border: none; border-radius: 7px;
     padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
