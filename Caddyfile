@@ -3,16 +3,16 @@
 # Two common patterns supported:
 #
 #   1. SUBDOMAIN (easiest, no app config needed):
-#      Domain: ps.limio.vn  →  reverse_proxy eduverse:8041
+#      Domain: ps.tizia.vn  →  reverse_proxy eduverse:8041
 #      Run app with BASE_PATH unset (default).
 #
-#   2. PATH (limio.vn/ps/*):
-#      Domain: limio.vn   →  handle /ps/* {…}
+#   2. PATH (tizia.vn/ps/*):
+#      Domain: tizia.vn   →  handle /ps/* {…}
 #      Caddy passes /ps/* through without stripping; app must run with
 #      BASE_PATH=/ps so its routes match.
 #
 # Toggle by uncommenting the block you want. Set DOMAIN env var when launching:
-#   DOMAIN=ps.limio.vn ACME_EMAIL=you@email.com \
+#   DOMAIN=ps.tizia.vn ACME_EMAIL=you@email.com \
 #     docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d
 
 # ============================================================
@@ -40,7 +40,7 @@
 # ============================================================
 # Pattern 2 — Path-based (uncomment + set BASE_PATH=/ps env in compose)
 # ============================================================
-# limio.vn {
+# tizia.vn {
 # 	tls {$EMAIL}
 #
 # 	handle /ps/* {
@@ -50,6 +50,6 @@
 # 		}
 # 	}
 # 	handle / {
-# 		respond "limio.vn — apps: /ps" 200
+# 		respond "tizia.vn — apps: /ps" 200
 # 	}
 # }

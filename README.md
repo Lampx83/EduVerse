@@ -166,23 +166,23 @@ Mở `http://<host>:8041`.
 | `PORT` | `8041` | Cổng HTTP |
 | `HOST` | `0.0.0.0` | Bind address |
 | `DATA_DIR` | `./data` (host) / `/data` (Docker) | Thư mục SQLite |
-| `BASE_PATH` | `` | Path prefix (vd `/ps` cho `limio.vn/ps`) |
+| `BASE_PATH` | `` | Path prefix (vd `/ps` cho `tizia.vn/ps`) |
 | `OLLAMA_URL` | dev tunnel | Endpoint Ollama |
 | `OLLAMA_SECKEY` | `pharmasim` | Header `x-ollama-seckey` (shared secret nội bộ) |
 | `OLLAMA_MODEL` | `qwen2.5:14b-instruct-ctx16k` | Tên model |
 
 ---
 
-## 🌐 Deploy dưới sub-path (vd `https://limio.vn/ps`)
+## 🌐 Deploy dưới sub-path (vd `https://tizia.vn/ps`)
 
 ### A. Cloudflare Tunnel + Subdomain
-Trỏ `ps.limio.vn` → server. Xem [cloudflared-config.example.yml](cloudflared-config.example.yml).
+Trỏ `ps.tizia.vn` → server. Xem [cloudflared-config.example.yml](cloudflared-config.example.yml).
 
-### B. Path-based `limio.vn/ps` (cần `BASE_PATH=/ps`)
+### B. Path-based `tizia.vn/ps` (cần `BASE_PATH=/ps`)
 ```yaml
 # ~/.cloudflared/config.yml
 ingress:
-  - hostname: limio.vn
+  - hostname: tizia.vn
     path: ^/ps(/.*)?$
     service: http://localhost:8041
   - service: http_status:404

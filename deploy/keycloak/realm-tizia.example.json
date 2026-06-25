@@ -32,12 +32,11 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": [
-        "https://tizia.vn/api/auth/oidc/callback",
-        "https://limio.vn/ps/api/auth/oidc/callback"
+        "https://tizia.vn/api/auth/oidc/callback"
       ],
-      "webOrigins": ["https://tizia.vn", "https://limio.vn"],
+      "webOrigins": ["https://tizia.vn"],
       "attributes": {
-        "post.logout.redirect.uris": "https://tizia.vn/+https://limio.vn/ps/"
+        "post.logout.redirect.uris": "https://tizia.vn/"
       },
       "defaultClientScopes": ["openid", "profile", "email", "roles"]
     }
