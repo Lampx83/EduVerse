@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0663';
-import { loadDrugs } from './catalog.js?v=ph0663';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0665';
+import { loadDrugs } from './catalog.js?v=ph0664';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,10 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0663';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0663';
+import { openPosTerminal } from './pos.js?v=ph0664';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0664';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0663';
+import { labelSectionHTML } from './drug-label.js?v=ph0664';
 
 const $ = (id) => document.getElementById(id);
 
@@ -247,20 +247,22 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     });
   }
 
-  // Overlay 2D: phóng to mặt hộp + kéo nhãn HDSD vào CHỖ TRỐNG (không che thông tin).
+  // Overlay: hiện ĐÚNG hình 3D thuốc (hộp HOẶC chai) + kéo nhãn HDSD vào chỗ trống.
   function openStickerPlacement(drugId, label) {
-    const face = sim.getDrugFace?.(drugId);
+    // getDrugFace3D render chính hình 3D (hộp/chai) → hết cảnh "chai mà hiện hộp".
+    const face = sim.getDrugFace3D?.(drugId) || sim.getDrugFace?.(drugId);
     if (!face) { sim.applyHdsdSticker?.(drugId, label, { u: 0.5, v: 0.5 }); return; }
     if (document.querySelector('.sticker-place-overlay')) return;
+    const shapeWord = face.isBottle ? 'chai' : 'hộp';
     const overlay = document.createElement('div');
     overlay.className = 'sticker-place-overlay';
     overlay.innerHTML = `
       <div class="sp-modal">
         <div class="sp-head">
-          <span>🏷️ Dán nhãn HDSD lên hộp <b>${face.brand || ''}</b></span>
+          <span>🏷️ Dán nhãn HDSD lên ${shapeWord} <b>${face.brand || ''}</b></span>
           <button class="sp-close" type="button" aria-label="Đóng">✕</button>
         </div>
-        <div class="sp-hint">Kéo nhãn tới <b>vùng trống</b> trên hộp, sao cho không che tên/thông tin thuốc. Rồi bấm <b>Dán</b>.</div>
+        <div class="sp-hint">Kéo nhãn tới <b>vùng trống</b> trên ${shapeWord}, không che tên/thông tin thuốc.${face.isBottle ? ' Nhãn sẽ <b>uốn cong ôm thân chai</b> khi dán.' : ''} Rồi bấm <b>Dán</b>.</div>
         <div class="sp-stage">
           <div class="sp-box">
             <canvas class="sp-face"></canvas>
