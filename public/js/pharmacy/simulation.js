@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0672';
-import { loadDrugs } from './catalog.js?v=ph0673';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0674';
+import { loadDrugs } from './catalog.js?v=ph0674';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,10 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0673';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0673';
+import { openPosTerminal } from './pos.js?v=ph0674';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0674';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0673';
+import { labelSectionHTML } from './drug-label.js?v=ph0674';
 
 const $ = (id) => document.getElementById(id);
 
@@ -1027,7 +1027,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         const rows = per <= 7 ? 1 : per <= 14 ? 2 : per <= 21 ? 3 : Math.ceil(per / 8);
         const cols = Math.ceil(per / rows);
         const sheetW = w * Math.min(1.05, 0.5 + cols * 0.075), sheetD = d * 0.9;
-        const sheet = new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.004, sheetD),
+        const sheet = new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.0012, sheetD), // màng nhôm RẤT MỎNG như thật
           new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.5, roughness: 0.32 }));
         g.add(sheet);
         // Nhãn tiếp xúc IN nhỏ gọn THẲNG lên màng nhôm mặt sau: là CHILD của tấm
@@ -1038,7 +1038,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
           const lab = new THREE.Mesh(new THREE.PlaneGeometry(lw, lh),
             new THREE.MeshStandardMaterial({ map: cTex, roughness: 0.5, side: THREE.DoubleSide,
               polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
-          lab.rotation.x = Math.PI / 2; lab.position.set(0, -0.0021, 0); // mặt -y (sau, đối diện bầu thuốc)
+          lab.rotation.x = Math.PI / 2; lab.position.set(0, -0.0008, 0); // flush mặt -y màng nhôm mỏng (sau)
           sheet.add(lab);
         }
         const clearMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.20, roughness: 0.08, metalness: 0 });
