@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0671';
-import { loadDrugs } from './catalog.js?v=ph0671';
+import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0672';
+import { loadDrugs } from './catalog.js?v=ph0672';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,10 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0671';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0671';
+import { openPosTerminal } from './pos.js?v=ph0672';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0672';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0671';
+import { labelSectionHTML } from './drug-label.js?v=ph0672';
 
 const $ = (id) => document.getElementById(id);
 
@@ -1021,8 +1021,20 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         const rows = per <= 7 ? 1 : per <= 14 ? 2 : per <= 21 ? 3 : Math.ceil(per / 8);
         const cols = Math.ceil(per / rows);
         const sheetW = w * Math.min(1.05, 0.5 + cols * 0.075), sheetD = d * 0.9;
-        g.add(new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.004, sheetD),
-          new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.5, roughness: 0.32 })));
+        const sheet = new THREE.Mesh(new THREE.BoxGeometry(sheetW, 0.004, sheetD),
+          new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.5, roughness: 0.32 }));
+        g.add(sheet);
+        // Nhãn tiếp xúc IN nhỏ gọn THẲNG lên màng nhôm mặt sau: là CHILD của tấm
+        // nhôm (dính chặt, KHÔNG tách rời) + flush ngay mặt -y. Cỡ nhỏ, gọn trong vỉ.
+        {
+          const cTex = makeContactLabelTex(drug, meta); cTex.anisotropy = 4;
+          const lh = sheetD * 0.72, lw = Math.min(sheetW * 0.8, lh * (360 / 200));
+          const lab = new THREE.Mesh(new THREE.PlaneGeometry(lw, lh),
+            new THREE.MeshStandardMaterial({ map: cTex, roughness: 0.5, side: THREE.DoubleSide,
+              polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+          lab.rotation.x = Math.PI / 2; lab.position.set(0, -0.0021, 0); // mặt -y (sau, đối diện bầu thuốc)
+          sheet.add(lab);
+        }
         const clearMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.20, roughness: 0.08, metalness: 0 });
         const px = sheetW / (cols + 0.4), pz = sheetD / (rows + 0.3);
         const rad = Math.min(px, pz) * 0.40;
@@ -1099,22 +1111,13 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         const tip = new THREE.Mesh(new THREE.ConeGeometry(w * 0.08, h * 0.12, 16), cl); tip.position.y = h * 0.64; g.add(tip);
         const band = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.085, w * 0.085, h * 0.05, 16), acc); band.position.y = h * 0.42; g.add(band);
       }
-      // IN nhãn tiếp xúc trực tiếp LÊN đơn vị ra lẻ (vỉ/gói: mặt trên; lọ/ống:
-      // cuốn quanh thân) — thầy yêu cầu nhãn này phải nằm TRÊN bao bì bên trong.
-      if (unitKind === 'vi' || unitKind === 'goi' || unitKind === 'lo' || unitKind === 'ong') {
+      // IN nhãn tiếp xúc trực tiếp LÊN đơn vị ra lẻ. VỈ đã in thẳng lên màng nhôm
+      // ở khối dựng vỉ phía trên (child của tấm nhôm) → ở đây chỉ xử lý gói/lọ/ống.
+      if (unitKind === 'goi' || unitKind === 'lo' || unitKind === 'ong') {
         const cTex = makeContactLabelTex(drug, meta); cTex.anisotropy = 4;
         const cMat = new THREE.MeshStandardMaterial({ map: cTex, roughness: 0.55, side: THREE.DoubleSide,
           polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
-        if (unitKind === 'vi') {
-          // Vỉ: nhãn in trên MÀNG NHÔM MẶT SAU (mặt dưới, đối diện bầu thuốc) —
-          // đúng quy cách thật. Vỉ được LẬT khi trượt ra để khoe mặt nhãn.
-          const pw = w * 0.82, ph = pw * (200 / 360);
-          const lab = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), cMat);
-          // IN THẲNG (áp sát) lên màng nhôm mặt sau — không nổi/cách rời (foil dày
-          // 0.004 ở y=0 → mặt sau ≈ -0.002; đặt sát ngay đó, polygonOffset chống z-fight).
-          lab.rotation.x = Math.PI / 2; lab.rotation.z = Math.PI; lab.position.set(0, -0.0023, 0);
-          g.add(lab);
-        } else if (unitKind === 'goi') {
+        if (unitKind === 'goi') {
           // Gói (tấm dẹt 1 lớp): nhãn in mặt trước, giữ mặt trên.
           const pw = w * 0.82, ph = pw * (200 / 360);
           const lab = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), cMat);
