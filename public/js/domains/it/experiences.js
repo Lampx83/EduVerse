@@ -35,12 +35,32 @@ const PAGES = {
 
 /** @type {Record<string, ExperienceMode[]>} */
 const MODULE_PAGES = {
-  'I1.1': [PAGES.codelab],   // Nhập môn lập trình (Python)
-  'I2.1': [PAGES.codelab],   // Cấu trúc dữ liệu & Giải thuật
-  'IG01': [PAGES.codelab],   // Code Race — Giải thuật 5 phút
-  'I1.2': [PAGES.scoreup],   // Toán rời rạc — luyện trắc nghiệm
-  'I3.1': [PAGES.smartdoc],  // Kỹ thuật phần mềm — giáo trình
-  'I4.5': [PAGES.feedback],  // Khoá luận CNTT — exam + phản hồi
+  // Năm 1
+  'I1.1': [PAGES.codelab, PAGES.scoreup],  // Python — code + trắc nghiệm
+  'I1.2': [PAGES.scoreup],                 // Toán rời rạc — luyện trắc nghiệm
+  'I1.3': [PAGES.scoreup],                 // Kiến trúc máy tính — lý thuyết trắc nghiệm
+  'I1.4': [PAGES.codelab],                 // Hệ điều hành Linux — thực hành lệnh
+  'I1.5': [PAGES.scoreup],                 // Tiếng Anh CNTT — luyện từ vựng kỹ thuật
+
+  // Năm 2
+  'I2.1': [PAGES.codelab],                 // CTDL & Giải thuật — code giải bài
+  'I2.2': [PAGES.codelab],                 // OOP Java — code thực hành
+  'I2.3': [PAGES.scoreup],                 // Cơ sở dữ liệu SQL — luyện query
+  'I2.4': [PAGES.scoreup],                 // Mạng máy tính — lý thuyết giao thức
+  'I2.5': [PAGES.codelab],                 // Web HTML/CSS/JS — code thực hành
+
+  // Năm 3
+  'I3.1': [PAGES.smartdoc],               // Kỹ thuật phần mềm — giáo trình
+  'I3.5': [PAGES.codelab, PAGES.smartdoc], // Web Full-stack — code + tài liệu
+  'I3.7': [PAGES.smartdoc],               // DevOps & Cloud — giáo trình
+  'I3.8': [PAGES.scoreup],                // An toàn thông tin — luyện thi chứng chỉ
+
+  // Năm 4
+  'I4.5': [PAGES.feedback],               // Khoá luận — exam + phản hồi AI
+
+  // Game / thực hành
+  'IG01': [PAGES.codelab],                // Code Race — giải thuật 5 phút
+  'IG02': [PAGES.codelab],                // Bug Hunt — debug thực tế
 };
 
 export function getExperiencesFor(moduleId) {

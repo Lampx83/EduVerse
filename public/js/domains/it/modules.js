@@ -23,14 +23,14 @@
 /** @type {import('../../engine/types.js').CourseModule[]} */
 export const MODULES = [
   // ──────────── NĂM 1 — ĐẠI CƯƠNG ────────────
-  { category: 'curriculum', id: 'I1.1', title: 'Nhập môn lập trình (Python)', yearLevel: 1, subject: 'lap-trinh-co-ban', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.1', placeholder: true, minStarsToUnlock: 0 },
-  { category: 'curriculum', id: 'I1.2', title: 'Toán rời rạc',                yearLevel: 1, subject: 'toan-roi-rac',     scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.2', placeholder: true, minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'I1.1', title: 'Nhập môn lập trình (Python)', yearLevel: 1, subject: 'lap-trinh-co-ban', scenarioIds: ['I1.1-python-basics'], knowledgeQuiz: 'I1.1-python-basics', minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'I1.2', title: 'Toán rời rạc',                yearLevel: 1, subject: 'toan-roi-rac',     scenarioIds: ['I1.2-discrete-math'],  knowledgeQuiz: 'I1.2-discrete-math',  minStarsToUnlock: 0 },
   { category: 'curriculum', id: 'I1.3', title: 'Kiến trúc máy tính',          yearLevel: 1, subject: 'kien-truc-may-tinh', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.3', placeholder: true, minStarsToUnlock: 0 },
   { category: 'curriculum', id: 'I1.4', title: 'Hệ điều hành (Linux căn bản)', yearLevel: 1, subject: 'he-dieu-hanh',    scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.4', placeholder: true, minStarsToUnlock: 0 },
   { category: 'curriculum', id: 'I1.5', title: 'Tiếng Anh CNTT',              yearLevel: 1, subject: 'tieng-anh-it',     scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.5', placeholder: true, minStarsToUnlock: 0 },
 
   // ──────────── NĂM 2 — CƠ SỞ NGÀNH ────────────
-  { category: 'curriculum', id: 'I2.1', title: 'Cấu trúc dữ liệu & Giải thuật', yearLevel: 2, subject: 'cau-truc-du-lieu', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.1', placeholder: true, minStarsToUnlock: 5, prerequisites: ['I1.1'] },
+  { category: 'curriculum', id: 'I2.1', title: 'Cấu trúc dữ liệu & Giải thuật', yearLevel: 2, subject: 'cau-truc-du-lieu', scenarioIds: ['I2.1-quiz-01'], knowledgeQuiz: 'I2.1-quiz-01', minStarsToUnlock: 5, prerequisites: ['I1.1'] },
   { category: 'curriculum', id: 'I2.2', title: 'Lập trình hướng đối tượng (Java)', yearLevel: 2, subject: 'oop',           scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.2', placeholder: true, minStarsToUnlock: 5, prerequisites: ['I1.1'] },
   { category: 'curriculum', id: 'I2.3', title: 'Cơ sở dữ liệu (SQL)',         yearLevel: 2, subject: 'co-so-du-lieu',   scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.3', placeholder: true, minStarsToUnlock: 5 },
   { category: 'curriculum', id: 'I2.4', title: 'Mạng máy tính',               yearLevel: 2, subject: 'mang-may-tinh',    scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.4', placeholder: true, minStarsToUnlock: 5 },
