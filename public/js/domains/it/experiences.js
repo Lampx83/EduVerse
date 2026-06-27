@@ -35,12 +35,15 @@ const PAGES = {
 
 /** @type {Record<string, ExperienceMode[]>} */
 const MODULE_PAGES = {
-  'I1.1': [PAGES.codelab],   // Nhập môn lập trình (Python)
-  'I2.1': [PAGES.codelab],   // Cấu trúc dữ liệu & Giải thuật
-  'IG01': [PAGES.codelab],   // Code Race — Giải thuật 5 phút
-  'I1.2': [PAGES.scoreup],   // Toán rời rạc — luyện trắc nghiệm
-  'I3.1': [PAGES.smartdoc],  // Kỹ thuật phần mềm — giáo trình
-  'I4.5': [PAGES.feedback],  // Khoá luận CNTT — exam + phản hồi
+  'I1.1': [PAGES.codelab, PAGES.scoreup], // Nhập môn Python — thực hành code + luyện quiz
+  'I1.2': [PAGES.scoreup],                // Toán rời rạc — luyện trắc nghiệm
+  'I1.3': [PAGES.scoreup],                // Kiến trúc máy tính — luyện trắc nghiệm
+  'I1.4': [PAGES.scoreup],                // Hệ điều hành Linux — luyện trắc nghiệm
+  'I1.5': [PAGES.scoreup],                // Tiếng Anh CNTT — luyện trắc nghiệm
+  'I2.1': [PAGES.codelab],                // Cấu trúc dữ liệu & Giải thuật
+  'IG01': [PAGES.codelab],                // Code Race — Giải thuật 5 phút
+  'I3.1': [PAGES.smartdoc],               // Kỹ thuật phần mềm — giáo trình
+  'I4.5': [PAGES.feedback],               // Khoá luận CNTT — exam + phản hồi
 };
 
 export function getExperiencesFor(moduleId) {

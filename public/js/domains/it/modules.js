@@ -23,11 +23,11 @@
 /** @type {import('../../engine/types.js').CourseModule[]} */
 export const MODULES = [
   // ──────────── NĂM 1 — ĐẠI CƯƠNG ────────────
-  { category: 'curriculum', id: 'I1.1', title: 'Nhập môn lập trình (Python)', yearLevel: 1, subject: 'lap-trinh-co-ban', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.1', placeholder: true, minStarsToUnlock: 0 },
-  { category: 'curriculum', id: 'I1.2', title: 'Toán rời rạc',                yearLevel: 1, subject: 'toan-roi-rac',     scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.2', placeholder: true, minStarsToUnlock: 0 },
-  { category: 'curriculum', id: 'I1.3', title: 'Kiến trúc máy tính',          yearLevel: 1, subject: 'kien-truc-may-tinh', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.3', placeholder: true, minStarsToUnlock: 0 },
-  { category: 'curriculum', id: 'I1.4', title: 'Hệ điều hành (Linux căn bản)', yearLevel: 1, subject: 'he-dieu-hanh',    scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.4', placeholder: true, minStarsToUnlock: 0 },
-  { category: 'curriculum', id: 'I1.5', title: 'Tiếng Anh CNTT',              yearLevel: 1, subject: 'tieng-anh-it',     scenarioIds: [], knowledgeQuiz: 'quiz-stub-I1.5', placeholder: true, minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'I1.1', title: 'Nhập môn lập trình (Python)', yearLevel: 1, subject: 'lap-trinh-co-ban', scenarioIds: ['I1.1-python-quiz'],        knowledgeQuiz: 'I1.1-python-quiz',        minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'I1.2', title: 'Toán rời rạc',                yearLevel: 1, subject: 'toan-roi-rac',     scenarioIds: ['I1.2-discrete-math-quiz'], knowledgeQuiz: 'I1.2-discrete-math-quiz', minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'I1.3', title: 'Kiến trúc máy tính',          yearLevel: 1, subject: 'kien-truc-may-tinh', scenarioIds: ['I1.3-computer-arch-quiz'], knowledgeQuiz: 'I1.3-computer-arch-quiz', minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'I1.4', title: 'Hệ điều hành (Linux căn bản)', yearLevel: 1, subject: 'he-dieu-hanh',    scenarioIds: ['I1.4-linux-quiz'],          knowledgeQuiz: 'I1.4-linux-quiz',         minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'I1.5', title: 'Tiếng Anh CNTT',              yearLevel: 1, subject: 'tieng-anh-it',     scenarioIds: ['I1.5-it-english-quiz'],    knowledgeQuiz: 'I1.5-it-english-quiz',   minStarsToUnlock: 0 },
 
   // ──────────── NĂM 2 — CƠ SỞ NGÀNH ────────────
   { category: 'curriculum', id: 'I2.1', title: 'Cấu trúc dữ liệu & Giải thuật', yearLevel: 2, subject: 'cau-truc-du-lieu', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.1', placeholder: true, minStarsToUnlock: 5, prerequisites: ['I1.1'] },
@@ -54,19 +54,12 @@ export const MODULES = [
   { category: 'curriculum', id: 'I4.5', title: 'Khoá luận CNTT',                yearLevel: 4, subject: 'khoa-luan-it',    scenarioIds: [], knowledgeQuiz: 'quiz-stub-I4.5', placeholder: true, minStarsToUnlock: 24, prerequisites: ['I3.1', 'I3.4'], hasCertificate: true },
 
   // ──────────── PRACTICE / SKILL ────────────
-  // directHref → mở thẳng practice site, không qua scenario engine.
-  // Note: ?contest=<slug> trỏ vào contest Tizia đã tạo trên Codelab (xem
-  // server/integrations/codelab-contests.js). 325049 = Python nhập môn (I1.1),
-  // 255760 = CTDL & GT (I2.1), 511768 = Code Race 5 bài.
   { category: 'practice', id: 'IP01', title: 'Startup Lab — Khởi nghiệp số',    subject: 'startup-lab',  scenarioIds: [], directHref: '/it-code-lab.html?contest=325049',  minStarsToUnlock: 18, icon: '🚀' },
   { category: 'practice', id: 'IP02', title: 'Hackathon 48h',                   subject: 'hackathon',    scenarioIds: [], directHref: '/it-code-lab.html?contest=511768',  minStarsToUnlock: 12, icon: '⚡' },
   { category: 'practice', id: 'IP03', title: 'CTF Lab — Capture The Flag',     subject: 'ctf-lab',       scenarioIds: [], directHref: '/it-ctf-web.html',                  minStarsToUnlock: 18, icon: '🚩' },
   { category: 'practice', id: 'IP04', title: 'Open Source Contribution Lab',  subject: 'open-source',   scenarioIds: [], directHref: '/it-code-lab.html?contest=325049',  minStarsToUnlock: 12, icon: '🐙' },
 
   // ──────────── CAREER ────────────
-  // Career modules dùng practice sites tương ứng nghề. Module dùng Code Lab
-  // trỏ contest phù hợp nghề: SE → CTDL&GT (kiến thức cốt lõi), DevOps → Python
-  // nhập môn (DevOps cần kỹ năng scripting).
   { category: 'career', id: 'IC01', title: 'Software Engineer',                 subject: 'career', scenarioIds: [], directHref: '/it-code-lab.html?contest=255760', minStarsToUnlock: 18, icon: '👨‍💻' },
   { category: 'career', id: 'IC02', title: 'Data Scientist',                    subject: 'career', scenarioIds: [], directHref: '/it-sql-playground.html',          minStarsToUnlock: 18, icon: '📊' },
   { category: 'career', id: 'IC03', title: 'DevOps Engineer',                   subject: 'career', scenarioIds: [], directHref: '/it-code-lab.html?contest=325049', minStarsToUnlock: 18, icon: '☁️' },
@@ -75,7 +68,6 @@ export const MODULES = [
   { category: 'career', id: 'IC06', title: 'AI / ML Engineer',                  subject: 'career', scenarioIds: [], directHref: '/it-algo-viz.html',         minStarsToUnlock: 24, icon: '🤖' },
 
   // ──────────── GAMES ────────────
-  // Game modules: chưa wire — placeholder cho tới khi có game/scenario riêng.
   { category: 'game', id: 'IG01', title: 'Code Race — Giải thuật 5 phút',       subject: 'game', scenarioIds: [], knowledgeQuiz: 'quiz-stub-IG01', placeholder: true, minStarsToUnlock: 6, icon: '⚡' },
   { category: 'game', id: 'IG02', title: 'Bug Hunt — Debug speed',              subject: 'game', scenarioIds: [], knowledgeQuiz: 'quiz-stub-IG02', placeholder: true, minStarsToUnlock: 6, icon: '🐛' },
   { category: 'game', id: 'IG03', title: 'SQL Detective',                       subject: 'game', scenarioIds: [], knowledgeQuiz: 'quiz-stub-IG03', placeholder: true, minStarsToUnlock: 12, icon: '🔎' },
