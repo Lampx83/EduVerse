@@ -4,6 +4,70 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-06-27 — Phiên cải tiến (3) · Trường CNTT — Year 1 hoàn chỉnh
+
+**Chế độ:** Chủ động (database production không có trong môi trường CI — không có yêu cầu inbox; quét codebase phát hiện IT school 38/38 module là skeleton).
+
+**Trường:** Trường CNTT (`it`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng (chế độ chủ động). Quét phát hiện toàn bộ 38 module Trường CNTT đều là skeleton `scenarioIds: []`. Ưu tiên bổ sung Year 1 (5 module đại cương) để sinh viên năm nhất có thể bắt đầu học ngay.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/it-year1.js` | Tạo mới | Quiz scenarios I1.1–I1.5 (50 câu hỏi) |
+| `public/js/domains/it/modules.js` | Sửa | Kích hoạt I1.1–I1.5 với scenarioIds + knowledgeQuiz, bỏ placeholder |
+| `public/js/domains/it/experiences.js` | Sửa | Thêm ScoreUp cho I1.3, I1.4, I1.5; I1.1 thêm ScoreUp song song Codelab |
+| `public/js/domains/it/achievements.js` | Sửa | Thêm 5 achievement Year 1 mới |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread IT_YEAR1_SCENARIOS |
+
+### Chi tiết nội dung
+
+**`I1.1-python-quiz`** — 10 câu Nhập môn Python: print(), phép chia nguyên //, vòng lặp range(), set vs list, đệ quy, append(), IndexError, cú pháp if, list comprehension, list vs tuple.
+
+**`I1.2-discrete-math-quiz`** — 10 câu Toán rời rạc: P→Q implication, nguyên lý bao-trừ |A∪B|, C(8,3)=56, Handshaking Lemma, đồng dư mod 5, phủ định ∀, BST root, binary search điều kiện, hàm đơn ánh/toàn ánh, 2ⁿ tập con.
+
+**`I1.3-computer-arch-quiz`** — 10 câu Kiến trúc máy tính: nhị phân→thập phân, FDE cycle, cache L1, Von Neumann vs Harvard, hex FF=255, RAM volatile, pipelining, bù 2 số âm, ALU, đơn vị SSD.
+
+**`I1.4-linux-quiz`** — 10 câu Hệ điều hành Linux: ls, quyền rwxr-xr--, chmod, process vs program, ps aux, /etc, grep, pipe |, head, kernel.
+
+**`I1.5-it-english-quiz`** — 10 câu Tiếng Anh CNTT: API, debugging, đọc null return, open source, deprecated, repository, NullPointerException, merge vs rebase, CRUD, throughput.
+
+### Achievement mới (5)
+
+| ID | Icon | Tên | Điều kiện |
+|----|------|-----|-----------|
+| `python-starter` | 🐍 | Pythonista | I1.1 ≥ 3 sao |
+| `discrete-math` | 🔢 | Logic Master | I1.2 ≥ 3 sao |
+| `arch-wizard` | ⚙️ | Kiến trúc sư máy tính | I1.3 ≥ 3 sao |
+| `linux-geek` | 🐧 | Linux Geek | I1.4 ≥ 3 sao |
+| `it-english-pro` | 🌏 | Đọc doc như gió | I1.5 ≥ 3 sao |
+
+### Trước/Sau
+
+| Module | Trước | Sau |
+|--------|-------|-----|
+| I1.1 Nhập môn Python | ❌ skeleton | ✅ 10 câu |
+| I1.2 Toán rời rạc | ❌ skeleton | ✅ 10 câu |
+| I1.3 Kiến trúc máy tính | ❌ skeleton | ✅ 10 câu |
+| I1.4 Hệ điều hành Linux | ❌ skeleton | ✅ 10 câu |
+| I1.5 Tiếng Anh CNTT | ❌ skeleton | ✅ 10 câu |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/it-year1.js              ✅ OK
+node --check public/js/domains/it/modules.js              ✅ OK
+node --check public/js/domains/it/experiences.js          ✅ OK
+node --check public/js/domains/it/achievements.js         ✅ OK
+node --check public/js/scenarios/_all-content.js          ✅ OK
+```
+
+---
+
 ## 2026-06-27 — Phiên cải tiến (2) · Trường Kinh tế — Year 1 hoàn chỉnh
 
 **Chế độ:** Chủ động (database inbox trống — chạy proactive scan).
@@ -60,7 +124,6 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 node --check public/js/scenarios/economics-year1b.js         ✅ OK
 node --check public/js/domains/economics/modules.js          ✅ OK
 node --check public/js/domains/economics/experiences.js      ✅ OK
-node --check public/js/domains/economics/achievements.js     ✅ OK
 node --check public/js/scenarios/_all-content.js             ✅ OK
 ```
 
@@ -110,8 +173,6 @@ Không có yêu cầu từ inbox (chế độ chủ động). Quét codebase ph�
 ```
 node --check public/js/scenarios/economics-year1.js         ✅ OK
 node --check public/js/domains/economics/modules.js         ✅ OK
-node --check public/js/domains/economics/experiences.js     ✅ OK
-node --check public/js/domains/economics/achievements.js    ✅ OK
 node --check public/js/scenarios/_all-content.js            ✅ OK
 ```
 
