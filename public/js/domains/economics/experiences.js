@@ -1,14 +1,27 @@
 // ============================================================
-// Economics domain — Experience registry (skeleton)
-// ============================================================
-// Hiện chưa có HTML page riêng cho trường Kinh tế.
-// Khi build "Stock sim", "Tycoon" hoặc "Doanh nghiệp 3D"
-// sẽ map ở đây.
+// Economics domain — Experience registry
 // ============================================================
 
-/** @type {Record<string, Array<import('../../engine/types.js').ExperienceMode>>} */
+/** @typedef {import('../../engine/types.js').ExperienceMode} ExperienceMode */
+
+const PAGES = {
+  scoreup: {
+    mode: 'quiz', icon: '📝', label: 'ScoreUp', tech: 'Trắc nghiệm · Ngân hàng câu hỏi', url: 'apps.html?app=scoreup',
+    desc: 'Mở ScoreUp — luyện & thi trắc nghiệm với câu hỏi thật, chấm điểm tức thì.',
+    specs: ['ok:Câu hỏi thật', 'Đề thi', 'Gợi ý AI', 'bad:Cần ScoreUp chạy'],
+  },
+  smartdoc: {
+    mode: 'meta', icon: '📚', label: 'Smartdoc', tech: 'Giáo trình tương tác', url: 'apps.html?app=smartdoc',
+    desc: 'Mở Smartdoc — giáo trình & bài giảng web tương tác.',
+    specs: ['ok:Word → web', 'Sách điện tử', 'Phòng học', 'bad:Cần Smartdoc chạy'],
+  },
+};
+
+/** @type {Record<string, ExperienceMode[]>} */
 const MODULE_PAGES = {
-  // Future: 'EP02': [{ mode:'2d', url:'stock-sim.html', ... }]
+  'E1.1': [PAGES.scoreup],   // Kinh tế Vi mô 1 — luyện trắc nghiệm
+  'E1.2': [PAGES.scoreup],   // Toán cho kinh tế — luyện trắc nghiệm
+  'E4.6': [PAGES.smartdoc],  // Khoá luận kinh tế — giáo trình
 };
 
 export function getExperiencesFor(moduleId) {
