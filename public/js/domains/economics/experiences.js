@@ -21,6 +21,9 @@ const PAGES = {
 const MODULE_PAGES = {
   'E1.1': [PAGES.scoreup],   // Kinh tế Vi mô 1 — luyện trắc nghiệm
   'E1.2': [PAGES.scoreup],   // Toán cho kinh tế — luyện trắc nghiệm
+  'E1.3': [PAGES.scoreup],   // Nguyên lý kế toán — luyện trắc nghiệm
+  'E1.4': [PAGES.scoreup],   // Pháp luật kinh tế — luyện trắc nghiệm
+  'E1.5': [PAGES.scoreup],   // Tin học cho kinh tế — luyện trắc nghiệm
   'E4.6': [PAGES.smartdoc],  // Khoá luận kinh tế — giáo trình
 };
 

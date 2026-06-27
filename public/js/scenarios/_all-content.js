@@ -13,6 +13,7 @@
 
 import { YEAR12_SCENARIOS } from './year1-2.js';
 import { ECONOMICS_YEAR1_SCENARIOS } from './economics-year1.js';
+import { ECONOMICS_YEAR1B_SCENARIOS } from './economics-year1b.js';
 import { L33_SCENARIOS, SCENARIO_L33_QUIZ, SCENARIO_L33_DRAG }
   from './L3.3-tuong-tac-warfarin-clarithromycin.js';
 import { YEAR34_SCENARIOS } from './year3-4.js';
@@ -48,6 +49,7 @@ try { ({ PRESCHOOL_WEEKS_SCENARIOS } = await import('./preschool-weeks.js')); } 
 export const ALL_SCENARIOS = {
   ...YEAR12_SCENARIOS,
   ...ECONOMICS_YEAR1_SCENARIOS,
+  ...ECONOMICS_YEAR1B_SCENARIOS,
   [SCENARIO_L33_QUIZ.id]: SCENARIO_L33_QUIZ,
   [SCENARIO_L33_DRAG.id]: SCENARIO_L33_DRAG,
   ...YEAR34_SCENARIOS,
