@@ -43,4 +43,16 @@ export const ACHIEVEMENTS = [
   { id: 'math-ace',     icon: '🔢', title: 'Toán tài ba',
     desc: 'Hoàn thành module Toán cho kinh tế (E1.2) với 3 sao',
     trigger: { moduleStars: { 'E1.2': 3 } } },
+
+  { id: 'accounting-ace', icon: '📒', title: 'Kế toán xuất sắc',
+    desc: 'Hoàn thành module Nguyên lý kế toán (E1.3) với 3 sao',
+    trigger: { moduleStars: { 'E1.3': 3 } } },
+
+  { id: 'law-aware',    icon: '⚖️', title: 'Hiểu luật kinh doanh',
+    desc: 'Hoàn thành module Pháp luật kinh tế (E1.4) với 3 sao',
+    trigger: { moduleStars: { 'E1.4': 3 } } },
+
+  { id: 'tech-savvy',   icon: '💻', title: 'Công nghệ thành thạo',
+    desc: 'Hoàn thành module Tin học cho kinh tế (E1.5) với 3 sao',
+    trigger: { moduleStars: { 'E1.5': 3 } } },
 ];
