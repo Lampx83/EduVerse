@@ -12,9 +12,9 @@ export const MODULES = [
   // ──────────── NĂM 1 — ĐẠI CƯƠNG ────────────
   { category: 'curriculum', id: 'E1.1', title: 'Kinh tế Vi mô 1',         yearLevel: 1, subject: 'kinh-te-vi-mo-1', scenarioIds: ['E1.1-micro-quiz'],       knowledgeQuiz: 'E1.1-micro-quiz',       minStarsToUnlock: 0 },
   { category: 'curriculum', id: 'E1.2', title: 'Toán cho kinh tế',         yearLevel: 1, subject: 'toan-kinh-te',    scenarioIds: ['E1.2-math-econ-quiz'],   knowledgeQuiz: 'E1.2-math-econ-quiz',   minStarsToUnlock: 0 },
-  { category: 'curriculum', id: 'E1.3', title: 'Nguyên lý kế toán',        yearLevel: 1, subject: 'ke-toan',         scenarioIds: [], minStarsToUnlock: 0 },
-  { category: 'curriculum', id: 'E1.4', title: 'Pháp luật kinh tế',        yearLevel: 1, subject: 'phap-luat-kt',    scenarioIds: [], minStarsToUnlock: 0 },
-  { category: 'curriculum', id: 'E1.5', title: 'Tin học cho kinh tế',      yearLevel: 1, subject: 'tin-hoc-kt',      scenarioIds: [], minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'E1.3', title: 'Nguyên lý kế toán',        yearLevel: 1, subject: 'ke-toan',         scenarioIds: ['E1.3-accounting-quiz'], knowledgeQuiz: 'E1.3-accounting-quiz', minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'E1.4', title: 'Pháp luật kinh tế',        yearLevel: 1, subject: 'phap-luat-kt',    scenarioIds: ['E1.4-bizlaw-quiz'],     knowledgeQuiz: 'E1.4-bizlaw-quiz',     minStarsToUnlock: 0 },
+  { category: 'curriculum', id: 'E1.5', title: 'Tin học cho kinh tế',      yearLevel: 1, subject: 'tin-hoc-kt',      scenarioIds: ['E1.5-it-econ-quiz'],    knowledgeQuiz: 'E1.5-it-econ-quiz',    minStarsToUnlock: 0 },
 
   // ──────────── NĂM 2 — CƠ SỞ NGÀNH ────────────
   { category: 'curriculum', id: 'E2.1', title: 'Kinh tế Vĩ mô 1',          yearLevel: 2, subject: 'kinh-te-vi-mo-3', scenarioIds: [], minStarsToUnlock: 5, prerequisites: ['E1.1'] },

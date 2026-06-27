@@ -4,6 +4,66 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-06-27 — Phiên cải tiến (2) · Trường Kinh tế — Year 1 hoàn chỉnh
+
+**Chế độ:** Chủ động (phiên 2 — bổ sung phần còn thiếu sau phiên sáng).
+
+**Trường:** Trường Kinh tế (`economics`)
+
+### Yêu cầu xử lý
+
+Phiên sáng đã bổ sung E1.1 và E1.2. Phiên chiều bổ sung nốt 3 module còn lại của Năm 1 (E1.3, E1.4, E1.5) để Year 1 có đầy đủ 5/5 module có quiz.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/economics-year1b.js` | Tạo mới | Quiz scenarios E1.3, E1.4, E1.5 (30 câu) |
+| `public/js/domains/economics/modules.js` | Sửa | Kích hoạt E1.3/E1.4/E1.5 với scenarioIds + knowledgeQuiz |
+| `public/js/domains/economics/experiences.js` | Sửa | Thêm ScoreUp cho E1.3, E1.4, E1.5 |
+| `public/js/domains/economics/achievements.js` | Sửa | Thêm 3 achievement mới |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread ECONOMICS_YEAR1B_SCENARIOS |
+
+### Chi tiết nội dung
+
+**`E1.3-accounting-quiz`** — 10 câu Nguyên lý kế toán:
+Phương trình kế toán (A = L + E), ghi chép kép, tài sản ngắn/dài hạn, khấu hao,
+Bảng cân đối kế toán, nhận doanh thu (IFRS 15/VAS 14), nguyên tắc phù hợp,
+lợi nhuận gộp, báo cáo lưu chuyển tiền tệ (3 nhóm), accrual vs cash basis.
+
+**`E1.4-bizlaw-quiz`** — 10 câu Pháp luật kinh tế:
+Điều kiện pháp nhân (BLDS 2015 Đ.74), TNHH vs DNTN (trách nhiệm hữu hạn),
+CTCP phát hành cổ phiếu, Luật Cạnh tranh 2018 (price-fixing), công chứng HĐ,
+phá sản (Luật PS 2014), LSHTT (quyền tác giả 50 năm), BLLĐ 2019 (48h/tuần),
+bất khả kháng (Đ.351 BLDS), hộ kinh doanh vs DNTN.
+
+**`E1.5-it-econ-quiz`** — 10 câu Tin học cho kinh tế:
+VLOOKUP, PivotTable, SELECT * FROM SQL, Primary Key, AVERAGE(),
+ERP (SAP/Oracle/MISA), biểu đồ tròn (cơ cấu %), mã hoá/Encryption,
+Big Data 3V (Volume/Velocity/Variety), FinTech (MoMo/P2P/Robo-advisor).
+
+### Trước/Sau
+
+| Module | Trước | Sau |
+|--------|-------|-----|
+| E1.1 | ✅ 10 câu | ✅ 10 câu |
+| E1.2 | ✅ 10 câu | ✅ 10 câu |
+| E1.3 | ❌ skeleton | ✅ 10 câu |
+| E1.4 | ❌ skeleton | ✅ 10 câu |
+| E1.5 | ❌ skeleton | ✅ 10 câu |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/economics-year1b.js              ✅ OK
+node --check public/js/domains/economics/modules.js               ✅ OK
+node --check public/js/domains/economics/experiences.js           ✅ OK
+node --check public/js/domains/economics/achievements.js          ✅ OK
+node --check public/js/scenarios/_all-content.js                  ✅ OK
+```
+
+---
+
 ## 2026-06-27 — Phiên cải tiến · Trường Kinh tế
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` chưa tồn tại — PR #7 chưa merge).
