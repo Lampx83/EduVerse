@@ -1,5 +1,5 @@
 // ============================================================
-// Economics domain — Achievement catalog (skeleton)
+// Economics domain — Achievement catalog
 // ============================================================
 
 /** @type {import('../../engine/types.js').Achievement[]} */
@@ -35,4 +35,12 @@ export const ACHIEVEMENTS = [
   { id: 'all-year-1',   icon: '🥇', title: 'Tốt nghiệp Năm 1',
     desc: 'Hoàn thành mọi module Năm 1',
     trigger: { yearComplete: 1 } },
+
+  { id: 'micro-star',   icon: '📉', title: 'Chuyên gia Vi mô',
+    desc: 'Hoàn thành module Kinh tế Vi mô 1 (E1.1) với 3 sao',
+    trigger: { moduleStars: { 'E1.1': 3 } } },
+
+  { id: 'math-ace',     icon: '🔢', title: 'Toán tài ba',
+    desc: 'Hoàn thành module Toán cho kinh tế (E1.2) với 3 sao',
+    trigger: { moduleStars: { 'E1.2': 3 } } },
 ];
