@@ -4,6 +4,66 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-06-27 — Phiên cải tiến (3) · Trường CNTT — Year 1 hoàn chỉnh
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending).
+
+**Trường:** Trường CNTT (`it`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox. Quét codebase phát hiện toàn bộ 23 module curriculum Trường CNTT đều là skeleton với `scenarioIds: []`. Ưu tiên bổ sung Year 1 (5 module đại cương) để sinh viên năm 1 có nội dung học ngay.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/it-year1.js` | Tạo mới | 5 quiz scenarios I1.1–I1.5 (50 câu hỏi, đầy đủ explanation) |
+| `public/js/domains/it/modules.js` | Sửa | Kích hoạt I1.1–I1.5: bổ sung `scenarioIds` + `knowledgeQuiz`, bỏ `placeholder` |
+| `public/js/domains/it/experiences.js` | Sửa | Mở rộng từ 6 → 14 entries; Year 1 có Codelab + ScoreUp |
+| `public/js/domains/it/achievements.js` | Sửa | Thêm 6 achievement Year 1 mới (5 module + 1 hoàn thành Năm 1) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `IT_YEAR1_SCENARIOS` |
+
+### Chi tiết nội dung (50 câu hỏi)
+
+**`I1.1-python-quiz`** (10 câu) — Nhập môn lập trình Python:
+print(), chia lấy phần nguyên //, range() 0-index, tuple bất biến, đệ quy, list.append(), IndexError, cú pháp if thụt lề, list comprehension, list vs tuple.
+
+**`I1.2-discrete-math-quiz`** (10 câu) — Toán rời rạc:
+P→Q ≡ ¬P∨Q, nguyên lý bù trừ |A∪B|, C(8,3)=56, Định lý Handshaking, 15 mod 4, phủ định ∀, BST property, binary search yêu cầu, đơn ánh/toàn ánh, Power set 2ⁿ.
+
+**`I1.3-computer-arch-quiz`** (10 câu) — Kiến trúc máy tính:
+1011₂=11₁₀, chu trình FDE, cache L1 nhỏ-nhanh, Von Neumann vs Harvard, FF₁₆=255, RAM volatile, pipelining, bù 2 cho −5, ALU, đơn vị SSD.
+
+**`I1.4-linux-quiz`** (10 câu) — Hệ điều hành Linux:
+ls -a file ẩn, rwxr-xr-- permissions, chmod 755, process vs program, ps aux, /etc cấu hình, grep -r đệ quy, pipe |, head -N, kernel space.
+
+**`I1.5-it-english-quiz`** (10 câu) — Tiếng Anh CNTT:
+API định nghĩa, debugging, null vs 0, open source vs freeware, deprecated, Git repository, NullPointerException, merge vs rebase, CRUD, throughput vs latency.
+
+### Achievement mới (6)
+
+| ID | Icon | Tên | Điều kiện |
+|----|------|-----|-----------|  
+| `python-starter` | 🐍 | Pythonista | I1.1 ≥ 3 sao |
+| `logic-master` | 🔢 | Logic Master | I1.2 ≥ 3 sao |
+| `arch-wizard` | ⚙️ | Kiến trúc sư máy tính | I1.3 ≥ 3 sao |
+| `linux-geek` | 🐧 | Linux Geek | I1.4 ≥ 3 sao |
+| `it-english-pro` | 🌏 | Đọc doc như gió | I1.5 ≥ 3 sao |
+| `year1-it-complete` | 🥇 | Hoàn thành Năm 1 CNTT | Năm 1 hoàn chỉnh |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/it-year1.js              ✅ OK
+node --check public/js/domains/it/modules.js              ✅ OK
+node --check public/js/domains/it/experiences.js          ✅ OK
+node --check public/js/domains/it/achievements.js         ✅ OK
+node --check public/js/scenarios/_all-content.js          ✅ OK
+```
+
+---
+
 ## 2026-06-27 — Phiên cải tiến (2) · Trường Kinh tế — Year 1 hoàn chỉnh
 
 **Chế độ:** Chủ động (phiên 2 — bổ sung phần còn thiếu sau phiên sáng).
