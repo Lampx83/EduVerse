@@ -1,5 +1,5 @@
 // ============================================================
-// IT domain — Achievement catalog (skeleton)
+// IT domain — Achievement catalog
 // ============================================================
 
 /** @type {import('../../engine/types.js').Achievement[]} */
@@ -11,6 +11,31 @@ export const ACHIEVEMENTS = [
   { id: 'streak-5',    icon: '🔥', title: 'Cháy 5 ngày',
     desc: 'Streak 5 ngày liên tiếp',
     trigger: { streak: 5 } },
+
+  // ── Year 1 Achievements (mới) ──
+  { id: 'python-starter', icon: '🐍', title: 'Pythonista',
+    desc: 'Pass Nhập môn lập trình Python (I1.1) với 3 sao',
+    trigger: { moduleStars: { 'I1.1': 3 } } },
+
+  { id: 'logic-master', icon: '🔢', title: 'Logic Master',
+    desc: 'Pass Toán rời rạc (I1.2) với 3 sao',
+    trigger: { moduleStars: { 'I1.2': 3 } } },
+
+  { id: 'arch-wizard', icon: '⚙️', title: 'Kiến trúc sư máy tính',
+    desc: 'Pass Kiến trúc máy tính (I1.3) với 3 sao',
+    trigger: { moduleStars: { 'I1.3': 3 } } },
+
+  { id: 'linux-geek', icon: '🐧', title: 'Linux Geek',
+    desc: 'Pass Hệ điều hành Linux (I1.4) với 3 sao',
+    trigger: { moduleStars: { 'I1.4': 3 } } },
+
+  { id: 'it-english-pro', icon: '🌏', title: 'Đọc doc như gió',
+    desc: 'Pass Tiếng Anh CNTT (I1.5) với 3 sao',
+    trigger: { moduleStars: { 'I1.5': 3 } } },
+
+  { id: 'year1-it-complete', icon: '🥇', title: 'Hoàn thành Năm 1 CNTT',
+    desc: 'Pass toàn bộ 5 module Năm 1 (I1.1–I1.5)',
+    trigger: { yearComplete: 1 } },
 
   { id: 'algorithmist', icon: '🌳', title: 'Algorithmist',
     desc: 'Pass Cấu trúc dữ liệu & Giải thuật (I2.1) với 3 sao',
