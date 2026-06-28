@@ -1,0 +1,124 @@
+name: AI Board — Phiên cải tiến hàng ngày
+
+on:
+  schedule:
+    # 7:30 sáng giờ Việt Nam (ICT = UTC+7) = 00:30 UTC
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'Ghi chú cho phiên này (tuỳ chọn)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ai-board-session:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Kiểm tra inbox.json
+        id: check-inbox
+        run: |
+          ITEMS=$(node -e "
+            const f = require('./ai-board/inbox.json');
+            const pending = (f.items || []).filter(i => ['pending','reviewing'].includes(i.status));
+            console.log(pending.length);
+          ")
+          echo "pending_count=$ITEMS" >> "$GITHUB_OUTPUT"
+          echo "Inbox: $ITEMS yêu cầu pending/reviewing"
+
+      - name: Chạy phiên Ban điều hành AI
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          direct_prompt: |
+            Bạn là Ban điều hành AI của EduVerse (Tizia) — nền tảng học tập tự tiến hoá.
+            Hôm nay: ${{ github.event.repository.updated_at || 'không rõ' }}
+            Ghi chú từ admin: "${{ inputs.note || '(không có)' }}"
+
+            == NHIỆM VỤ ==
+
+            **Bước 1 — Đọc inbox**
+            Đọc file `ai-board/inbox.json`. Nếu `items[]` có yêu cầu status `pending` hoặc `reviewing`:
+            - Xử lý từng yêu cầu theo thứ tự votes DESC, created_at ASC
+            - Ưu tiên: `reviewing` > `pending` > votes cao
+
+            Nếu inbox rỗng hoặc không có yêu cầu pending/reviewing:
+            - Chế độ CHỦ ĐỘNG: quét codebase, tìm module nào còn `scenarioIds: []`
+              (`grep -r "scenarioIds: \[\]" public/js/domains/`)
+            - Chọn 1 trường còn thiếu nhiều nhất, bổ sung Year 1 hoàn chỉnh (5 module)
+
+            **Bước 2 — Phân tích & Lên kế hoạch**
+            - Đọc file liên quan: `server/db.js`, domain modules, scenarios
+            - Xác định thay đổi cần làm (tối đa 5 file/phiên)
+            - Không thay đổi logic server, không xoá dữ liệu hiện có
+
+            **Bước 3 — Triển khai**
+            Viết code/nội dung thực sự. Không skeleton, không placeholder.
+            Mỗi quiz scenario cần đủ: 10 câu hỏi, 4 lựa chọn, đáp án đúng, explanation.
+
+            **Bước 4 — Validate**
+            Chạy `node --check <file>` cho từng file đã tạo/sửa.
+            Nếu syntax error → sửa ngay.
+
+            **Bước 5 — Tạo branch & commit**
+            ```bash
+            DATE=$(date +%Y-%m-%d)
+            git checkout -b "ai-board/$DATE"
+            git add -p  # chỉ stage file đã thay đổi có chủ ý
+            git commit -m "🏛️ Ban điều hành AI — <mô tả ngắn> ($DATE)"
+            git push -u origin "ai-board/$DATE"
+            ```
+
+            **Bước 6 — Cập nhật CHANGELOG**
+            Thêm entry mới vào đầu `public/CHANGELOG-eduverse.md` theo format đang có.
+
+            **Bước 7 — Cập nhật inbox**
+            Nếu đã xử lý yêu cầu nào từ inbox: cập nhật `status` → `'done'` và thêm `pr_url`.
+
+            **Bước 8 — Tạo PR**
+            Tạo PR về `main` với tiêu đề: `🏛️ AI Board YYYY-MM-DD — <mô tả>`.
+            Mô tả PR: liệt kê file thay đổi, nội dung thêm, kiểm thử đã chạy.
+
+            == RÀNG BUỘC ==
+            - Không tạo file tạm, không xoá file hiện có
+            - Mỗi phiên chỉ sửa tối đa 5-6 file
+            - JavaScript syntax phải hợp lệ (node --check)
+            - Không import thư viện ngoài (chỉ dùng những gì đã có trong repo)
+            - Mỗi phiên ghi đầy đủ vào CHANGELOG
+
+            Bắt đầu ngay. Không cần hỏi thêm.
+          model: claude-opus-4-8
+          allowed_tools: |
+            Bash
+            Read
+            Write
+            Edit
+            Glob
+            Grep
+            mcp__github__create_branch
+            mcp__github__push_files
+            mcp__github__create_pull_request
+            mcp__github__get_file_contents
