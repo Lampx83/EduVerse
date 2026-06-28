@@ -4,6 +4,64 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-06-28 — Phiên cải tiến (5) · Trường CNTT — Year 2 hoàn chỉnh
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
+
+**Trường:** Trường CNTT (`it`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox. Quét codebase phát hiện 32/37 module Trường CNTT còn là skeleton. Năm 1 đã hoàn chỉnh (phiên 2026-06-27). Ưu tiên bổ sung Year 2 (5 module cơ sở ngành) để sinh viên năm 2 có nội dung học: Cấu trúc dữ liệu & Giải thuật, OOP Java, SQL, Mạng máy tính, Thiết kế Web.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/it-year2.js` | Tạo mới | 5 quiz scenarios I2.1–I2.5 (50 câu hỏi, đầy đủ explanation) |
+| `public/js/domains/it/modules.js` | Sửa | Kích hoạt I2.1–I2.5: bổ sung `scenarioIds` + `knowledgeQuiz`, bỏ `placeholder` |
+| `public/js/domains/it/achievements.js` | Sửa | Thêm 6 achievement Year 2 mới (5 module + 1 hoàn thành Năm 2) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `IT_YEAR2_SCENARIOS` |
+
+### Chi tiết nội dung (50 câu hỏi)
+
+**`I2.1-dsa-quiz`** (10 câu) — Cấu trúc dữ liệu & Giải thuật:
+Big-O notation, Stack (LIFO/FIFO), Linked List vs Array, BST search complexity, Hash Table O(1), Merge Sort O(n log n), BFS (Queue) vs DFS (Stack), Bubble Sort, Complete Binary Tree, Quick Sort space complexity.
+
+**`I2.2-oop-java-quiz`** (10 câu) — Lập trình hướng đối tượng Java:
+4 pillars OOP (A PIE), extends (kế thừa đơn), Runtime Polymorphism / dynamic dispatch, Abstract class vs Interface, finally block, ArrayList vs Array, Encapsulation (private + getter/setter), Static method, HashMap hashCode/equals, super().
+
+**`I2.3-sql-quiz`** (10 câu) — Cơ sở dữ liệu SQL:
+HAVING vs WHERE, INNER JOIN vs LEFT JOIN, Primary Key, 1NF normalization, INDEX B-Tree, ACID Consistency, DELETE vs TRUNCATE, GROUP BY + HAVING, Subquery (AVG), Foreign Key Constraint.
+
+**`I2.4-networking-quiz`** (10 câu) — Mạng máy tính:
+OSI 7 tầng + Layer 3 routing, TCP vs UDP (reliable vs fast), DNS (phonebook Internet), HTTP status codes (404), Subnet mask /24, HTTPS (TLS/SSL), Router vs Switch, DHCP, TCP 3-way handshake (SYN-SYN/ACK-ACK), Port numbers.
+
+**`I2.5-web-quiz`** (10 câu) — Thiết kế Web:
+HTML5 Semantic tags, CSS Box Model, Flexbox justify-content, Media Query (max-width), DOM, let vs var (block scope), addEventListener, Fetch API (AJAX), CSS Specificity, Arrow function (lexical this).
+
+### Achievement mới (6)
+
+| ID | Icon | Tên | Điều kiện |
+|----|------|-----|-----------|
+| `java-ninja` | ☕ | Java Ninja | I2.2 ≥ 3 sao |
+| `sql-hero` | 🗄️ | SQL Hero | I2.3 ≥ 3 sao |
+| `network-engineer` | 🌐 | Network Engineer | I2.4 ≥ 3 sao |
+| `web-crafter` | 🎨 | Web Crafter | I2.5 ≥ 3 sao |
+| `algorithmist` | 🌳 | Algorithmist | I2.1 ≥ 3 sao (đã có sẵn, nay có scenario) |
+| `year2-it-complete` | 🥈 | Tốt nghiệp Năm 2 CNTT | Năm 2 hoàn chỉnh |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/it-year2.js              ✅ OK
+node --check public/js/domains/it/modules.js              ✅ OK
+node --check public/js/domains/it/achievements.js         ✅ OK
+node --check public/js/scenarios/_all-content.js          ✅ OK
+```
+
+---
+
 ## 2026-06-28 — Phiên cải tiến (4) · Trường Kinh tế — Year 2 hoàn chỉnh
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).

@@ -41,6 +41,26 @@ export const ACHIEVEMENTS = [
     desc: 'Pass Cấu trúc dữ liệu & Giải thuật (I2.1) với 3 sao',
     trigger: { moduleStars: { 'I2.1': 3 } } },
 
+  { id: 'java-ninja',  icon: '☕', title: 'Java Ninja',
+    desc: 'Pass Lập trình hướng đối tượng Java (I2.2) với 3 sao',
+    trigger: { moduleStars: { 'I2.2': 3 } } },
+
+  { id: 'sql-hero',    icon: '🗄️', title: 'SQL Hero',
+    desc: 'Pass Cơ sở dữ liệu SQL (I2.3) với 3 sao',
+    trigger: { moduleStars: { 'I2.3': 3 } } },
+
+  { id: 'network-engineer', icon: '🌐', title: 'Network Engineer',
+    desc: 'Pass Mạng máy tính (I2.4) với 3 sao',
+    trigger: { moduleStars: { 'I2.4': 3 } } },
+
+  { id: 'web-crafter', icon: '🎨', title: 'Web Crafter',
+    desc: 'Pass Thiết kế Web HTML/CSS/JS (I2.5) với 3 sao',
+    trigger: { moduleStars: { 'I2.5': 3 } } },
+
+  { id: 'year2-it-complete', icon: '🥈', title: 'Tốt nghiệp Năm 2 CNTT',
+    desc: 'Pass toàn bộ 5 module Năm 2 (I2.1–I2.5)',
+    trigger: { yearComplete: 2 } },
+
   { id: 'fullstack',   icon: '🌐', title: 'Full-stack Dev',
     desc: 'Pass Web Full-stack (I3.5) với 3 sao',
     trigger: { moduleStars: { 'I3.5': 3 } } },
