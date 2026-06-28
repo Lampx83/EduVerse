@@ -55,4 +55,29 @@ export const ACHIEVEMENTS = [
   { id: 'tech-savvy',   icon: '💻', title: 'Công nghệ thành thạo',
     desc: 'Hoàn thành module Tin học cho kinh tế (E1.5) với 3 sao',
     trigger: { moduleStars: { 'E1.5': 3 } } },
+
+  // ── Năm 2 ──────────────────────────────────────────────────
+  { id: 'macro-master',    icon: '🏦', title: 'Macro Master',
+    desc: 'Hoàn thành module Kinh tế Vĩ mô 1 (E2.1) với 3 sao',
+    trigger: { moduleStars: { 'E2.1': 3 } } },
+
+  { id: 'stats-pro',       icon: '📊', title: 'Chuyên gia Thống kê',
+    desc: 'Hoàn thành module Thống kê cho kinh tế (E2.2) với 3 sao',
+    trigger: { moduleStars: { 'E2.2': 3 } } },
+
+  { id: 'finance-guru',    icon: '💰', title: 'Tài chính – Tiền tệ Pro',
+    desc: 'Hoàn thành module Tài chính – Tiền tệ (E2.3) với 3 sao',
+    trigger: { moduleStars: { 'E2.3': 3 } } },
+
+  { id: 'mgmt-leader',     icon: '🧭', title: 'Nhà Quản trị Xuất sắc',
+    desc: 'Hoàn thành module Quản trị học đại cương (E2.4) với 3 sao',
+    trigger: { moduleStars: { 'E2.4': 3 } } },
+
+  { id: 'marketing-star',  icon: '📣', title: 'Marketing Star',
+    desc: 'Hoàn thành module Marketing căn bản (E2.5) với 3 sao',
+    trigger: { moduleStars: { 'E2.5': 3 } } },
+
+  { id: 'all-year-2-econ', icon: '🥈', title: 'Tốt nghiệp Năm 2 Kinh tế',
+    desc: 'Hoàn thành toàn bộ module Năm 2 Kinh tế',
+    trigger: { yearComplete: 2 } },
 ];
