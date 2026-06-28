@@ -17,11 +17,11 @@ export const MODULES = [
   { category: 'curriculum', id: 'E1.5', title: 'Tin học cho kinh tế',      yearLevel: 1, subject: 'tin-hoc-kt',      scenarioIds: ['E1.5-it-econ-quiz'],    knowledgeQuiz: 'E1.5-it-econ-quiz',    minStarsToUnlock: 0 },
 
   // ──────────── NĂM 2 — CƠ SỞ NGÀNH ────────────
-  { category: 'curriculum', id: 'E2.1', title: 'Kinh tế Vĩ mô 1',          yearLevel: 2, subject: 'kinh-te-vi-mo-3', scenarioIds: [], minStarsToUnlock: 5, prerequisites: ['E1.1'] },
-  { category: 'curriculum', id: 'E2.2', title: 'Thống kê cho kinh tế',     yearLevel: 2, subject: 'thong-ke',        scenarioIds: [], minStarsToUnlock: 5, prerequisites: ['E1.2'] },
-  { category: 'curriculum', id: 'E2.3', title: 'Tài chính – Tiền tệ',      yearLevel: 2, subject: 'tai-chinh-tien-te', scenarioIds: [], minStarsToUnlock: 5 },
-  { category: 'curriculum', id: 'E2.4', title: 'Quản trị học đại cương',   yearLevel: 2, subject: 'quan-tri',        scenarioIds: [], minStarsToUnlock: 5 },
-  { category: 'curriculum', id: 'E2.5', title: 'Marketing căn bản',        yearLevel: 2, subject: 'marketing',       scenarioIds: [], minStarsToUnlock: 5 },
+  { category: 'curriculum', id: 'E2.1', title: 'Kinh tế Vĩ mô 1',          yearLevel: 2, subject: 'kinh-te-vi-mo-3', scenarioIds: ['E2.1-macro-quiz'],      knowledgeQuiz: 'E2.1-macro-quiz',      minStarsToUnlock: 5, prerequisites: ['E1.1'] },
+  { category: 'curriculum', id: 'E2.2', title: 'Thống kê cho kinh tế',     yearLevel: 2, subject: 'thong-ke',        scenarioIds: ['E2.2-statistics-quiz'], knowledgeQuiz: 'E2.2-statistics-quiz', minStarsToUnlock: 5, prerequisites: ['E1.2'] },
+  { category: 'curriculum', id: 'E2.3', title: 'Tài chính – Tiền tệ',      yearLevel: 2, subject: 'tai-chinh-tien-te', scenarioIds: ['E2.3-money-quiz'],    knowledgeQuiz: 'E2.3-money-quiz',      minStarsToUnlock: 5 },
+  { category: 'curriculum', id: 'E2.4', title: 'Quản trị học đại cương',   yearLevel: 2, subject: 'quan-tri',        scenarioIds: ['E2.4-management-quiz'], knowledgeQuiz: 'E2.4-management-quiz', minStarsToUnlock: 5 },
+  { category: 'curriculum', id: 'E2.5', title: 'Marketing căn bản',        yearLevel: 2, subject: 'marketing',       scenarioIds: ['E2.5-marketing-quiz'],  knowledgeQuiz: 'E2.5-marketing-quiz',  minStarsToUnlock: 5 },
 
   // ──────────── NĂM 3 — CHUYÊN NGÀNH ────────────
   { category: 'curriculum', id: 'E3.1', title: 'Kinh tế lượng',            yearLevel: 3, subject: 'kinh-te-luong',   scenarioIds: [], minStarsToUnlock: 12, prerequisites: ['E2.2'] },

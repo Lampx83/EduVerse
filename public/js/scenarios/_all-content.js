@@ -14,6 +14,7 @@
 import { YEAR12_SCENARIOS } from './year1-2.js';
 import { ECONOMICS_YEAR1_SCENARIOS } from './economics-year1.js';
 import { ECONOMICS_YEAR1B_SCENARIOS } from './economics-year1b.js';
+import { ECONOMICS_YEAR2_SCENARIOS } from './economics-year2.js';
 import { IT_YEAR1_SCENARIOS } from './it-year1.js';
 import { L33_SCENARIOS, SCENARIO_L33_QUIZ, SCENARIO_L33_DRAG }
   from './L3.3-tuong-tac-warfarin-clarithromycin.js';
@@ -51,6 +52,7 @@ export const ALL_SCENARIOS = {
   ...YEAR12_SCENARIOS,
   ...ECONOMICS_YEAR1_SCENARIOS,
   ...ECONOMICS_YEAR1B_SCENARIOS,
+  ...ECONOMICS_YEAR2_SCENARIOS,
   ...IT_YEAR1_SCENARIOS,
   [SCENARIO_L33_QUIZ.id]: SCENARIO_L33_QUIZ,
   [SCENARIO_L33_DRAG.id]: SCENARIO_L33_DRAG,
