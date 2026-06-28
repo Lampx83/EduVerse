@@ -106,6 +106,50 @@
     border:1px solid rgba(16,185,129,.4); border-radius:14px; padding:18px; margin-top:12px; display:none; }
   .winbanner.show { display:block; animation:fade .3s; }
   .winbanner .em { font-size:40px; }
+
+  /* ──────── ROADMAP & SKILL TREE (req #37) ──────── */
+  .rmWrap { display:grid; grid-template-columns:212px 1fr; gap:16px; }
+  @media (max-width:760px){ .rmWrap{ grid-template-columns:1fr; } }
+  .rmRoles { display:flex; flex-direction:column; gap:9px; }
+  @media (max-width:760px){ .rmRoles{ flex-direction:row; overflow-x:auto; padding-bottom:4px; } }
+  .rmRole { display:flex; align-items:center; gap:10px; text-align:left; background:rgba(0,0,0,.22); border:1px solid var(--border);
+    border-radius:12px; padding:11px 13px; cursor:pointer; font-family:inherit; color:var(--text); transition:.15s; white-space:nowrap; }
+  .rmRole:hover { border-color:rgba(34,211,238,.5); }
+  .rmRole.sel { border-color:var(--accent); background:rgba(34,211,238,.1); }
+  .rmRole .ic { font-size:21px; } .rmRole .nm { font-weight:700; font-size:13px; }
+  .rmInsights { background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(99,102,241,.07)); border:1px solid var(--border);
+    border-radius:14px; padding:16px; margin-bottom:14px; }
+  .rmInsights h3 { margin:0 0 4px; font-size:17px; }
+  .rmInsights .rmdesc { color:var(--muted); font-size:13.5px; line-height:1.55; margin-bottom:12px; }
+  .salGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .salBox { background:rgba(0,0,0,.24); border:1px solid var(--border); border-radius:10px; padding:9px 6px; text-align:center; }
+  .salBox .lv { font-size:11px; color:var(--muted); } .salBox .vl { font-weight:800; font-size:14px; color:var(--accent); margin-top:2px; }
+  .demand { font-size:12.5px; color:var(--muted); margin-bottom:5px; display:flex; justify-content:space-between; }
+  .demand b { color:var(--text); }
+  .demandBar { height:9px; background:rgba(255,255,255,.08); border-radius:6px; overflow:hidden; }
+  .demandBar i { display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:6px; transition:width .5s; }
+  .rmTreeWrap { background:rgba(0,0,0,.18); border:1px solid var(--border); border-radius:14px; padding:8px 6px 12px; }
+  .rmTreeHint { font-size:12px; color:var(--muted); text-align:center; margin:6px 0 4px; }
+  #rmTree svg { width:100%; height:auto; display:block; }
+  .tnode { cursor:default; }
+  .tnode rect { fill:rgba(255,255,255,.05); stroke:var(--border); stroke-width:1.4; transition:.15s; }
+  .tnode text { fill:var(--text); font-size:12.5px; font-family:inherit; font-weight:600; pointer-events:none; }
+  .tnode.has { cursor:pointer; }
+  .tnode.has rect { fill:rgba(34,211,238,.1); stroke:rgba(34,211,238,.45); }
+  .tnode.has:hover rect { fill:rgba(34,211,238,.22); stroke:var(--accent); }
+
+  .ovl { position:fixed; inset:0; background:rgba(4,10,22,.74); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:40; padding:18px; }
+  .ovl.show { display:flex; animation:fade .2s; }
+  .skillModal { background:linear-gradient(160deg,#11203d,#0c1730); border:1px solid var(--border); border-radius:18px;
+    padding:24px; max-width:440px; width:100%; }
+  .skillModal .sic { font-size:34px; } .skillModal h3 { margin:6px 0 8px; font-size:19px; }
+  .skillModal .sd { color:var(--muted); font-size:14px; line-height:1.6; margin-bottom:14px; }
+  .skillModal .reslbl { font-size:12px; color:var(--accent); font-weight:700; margin-bottom:4px; }
+  .skillModal .reslist a { display:block; color:#bfe9ff; font-size:13.5px; text-decoration:none; padding:7px 0; border-bottom:1px solid var(--border); }
+  .skillModal .reslist a:hover { color:var(--accent); }
+  .mrow { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap; }
+  .mrow .gho { background:var(--card); border:1px solid var(--border); color:var(--text); }
 </style>
 </head>
 <body>
@@ -116,7 +160,7 @@
     <p>Trạm dừng chân định hướng bản thân, khám phá các lĩnh vực công việc CNTT và nhập vai thực tập tại công ty công nghệ giả lập <b>Tizia&nbsp;Tech</b>.</p>
     <div class="xpbar">
       <div class="pill">⭐ Điểm: <b id="xp">0</b></div>
-      <div class="pill">🏅 Hoàn thành: <b id="doneCount">0</b>/6</div>
+      <div class="pill">🏅 Hoàn thành: <b id="doneCount">0</b>/7</div>
     </div>
   </header>
 
@@ -136,6 +180,10 @@
         <h3>Ví dụ thực tế &amp; Case Study</h3>
         <p>Vòng đời của một dòng code: từ lúc viết đến khi bàn giao, các phòng ban phối hợp ra sao.</p>
         <button class="cbtn">XEM VÍ DỤ</button></div>
+      <div class="ccard" data-go="roadmap"><span class="tag know">LỘ TRÌNH</span><div class="cic">🗺️</div>
+        <h3>Sơ đồ Lộ trình &amp; Cây Kỹ năng</h3>
+        <p>Chọn vị trí (SE, DevOps, Data, Security, AI/ML…) → xem cây kỹ năng từ cơ bản đến nâng cao, mức lương tham khảo, độ hot &amp; link học ngay từng kỹ năng.</p>
+        <button class="cbtn">XEM LỘ TRÌNH</button></div>
     </div>
 
     <div class="group-title">🎮 Nhóm 2 · Play Roles — Dự án giả lập "VinaApp"</div>
@@ -222,6 +270,39 @@
       <div class="vhead"><span class="vic">🔒</span><h2>Ứng cứu sự cố bảo mật VinaApp</h2></div>
       <div class="prog" id="secProg"></div>
       <div id="secBody"></div>
+    </div>
+  </div>
+
+  <!-- ROADMAP & SKILL TREE (req #37) -->
+  <div class="view" id="roadmap">
+    <button class="vback" data-back>← Về trung tâm</button>
+    <div class="panel">
+      <div class="vhead"><span class="vic">🗺️</span><h2>Sơ đồ Lộ trình Nghề nghiệp &amp; Cây Kỹ năng CNTT</h2></div>
+      <p style="color:var(--muted);font-size:13.5px;margin-top:0">Chọn một vị trí nghề nghiệp ở cột trái → xem cây kỹ năng từ cơ bản đến nâng cao. Bấm vào một kỹ năng để xem mô tả và <b>học ngay</b> bằng module của trường.</p>
+      <div class="rmWrap">
+        <div class="rmRoles" id="rmRoles"></div>
+        <div class="rmMain">
+          <div class="rmInsights" id="rmInsights"></div>
+          <div class="rmTreeWrap">
+            <div class="rmTreeHint">🌳 Cây kỹ năng — bấm vào ô kỹ năng để mở chi tiết</div>
+            <div id="rmTree"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Skill detail modal (req #37) -->
+<div class="ovl" id="skillOvl">
+  <div class="skillModal">
+    <div class="sic" id="skIc">📘</div>
+    <h3 id="skTitle">Kỹ năng</h3>
+    <div class="sd" id="skDesc"></div>
+    <div id="skRes"></div>
+    <div class="mrow">
+      <button class="vback gho" id="skClose" style="margin:0">Đóng</button>
+      <a class="cbtn" id="skLearn" href="#" style="text-decoration:none;display:none">🚀 Học ngay</a>
     </div>
   </div>
 </div>
@@ -424,9 +505,136 @@
     });
   }
 
+  // ───────────────── 7. ROADMAP & SKILL TREE (req #37) ─────────────────
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // Link tới 1 module CNTT của trường (35 module sẵn có).
+  const modHref = id => '/module.html?domain=it&module=' + encodeURIComponent(id);
+
+  // Từ điển kỹ năng dùng chung cho mọi lộ trình. `mod` = id module trường;
+  // `href` = trang thực hành; nếu không có cả hai → hiện lý thuyết nhanh + nguồn tự học (`res`).
+  const SKILLS = {
+    py:    { ic:'🐍', label:'Nhập môn Python',     mod:'I1.1', d:'Ngôn ngữ lập trình phổ biến, dễ học — nền tảng cho mọi nhánh CNTT. Học biến, vòng lặp, hàm, cấu trúc dữ liệu cơ bản.' },
+    math:  { ic:'➗', label:'Toán & Logic',        mod:'I1.2', d:'Toán rời rạc, logic, xác suất–thống kê: nền tảng tư duy cho giải thuật, AI và phân tích dữ liệu.' },
+    arch:  { ic:'🖥️', label:'Kiến trúc máy tính',  mod:'I1.3', d:'Cách máy tính hoạt động: CPU, bộ nhớ, biểu diễn nhị phân — hiểu để viết code hiệu quả.' },
+    linux: { ic:'🐧', label:'Hệ điều hành Linux',  mod:'I1.4', d:'Dòng lệnh, quản lý tiến trình, file, quyền. Kỹ năng bắt buộc cho DevOps, bảo mật và server.' },
+    ctdl:  { ic:'🧮', label:'CTDL & Giải thuật',   mod:'I2.1', d:'Mảng, danh sách, cây, đồ thị + thuật toán sắp xếp, tìm kiếm. "Xương sống" của lập trình viên giỏi.' },
+    oop:   { ic:'🧩', label:'Lập trình HĐT (OOP)', mod:'I2.2', d:'Tư duy hướng đối tượng: lớp, kế thừa, đa hình — cách tổ chức code lớn, dễ bảo trì.' },
+    sql:   { ic:'🗃️', label:'Cơ sở dữ liệu SQL',   mod:'I2.3', d:'Thiết kế bảng, truy vấn SELECT/JOIN, tối ưu. Mọi ứng dụng đều cần lưu và truy xuất dữ liệu.' },
+    net:   { ic:'🌐', label:'Mạng máy tính',       mod:'I2.4', d:'TCP/IP, HTTP, DNS, mô hình OSI. Hiểu mạng để làm web, cloud, và đặc biệt là an toàn thông tin.' },
+    web:   { ic:'🎨', label:'Thiết kế Web',        mod:'I2.5', d:'HTML, CSS, JavaScript — dựng giao diện chạy trên trình duyệt, bước đầu của web & mobile.' },
+    ktpm:  { ic:'🏗️', label:'Kỹ thuật phần mềm',   mod:'I3.1', d:'Quy trình phát triển phần mềm: phân tích yêu cầu, thiết kế, kiểm thử, làm việc nhóm theo Agile.' },
+    ai:    { ic:'🧠', label:'Trí tuệ nhân tạo',    mod:'I3.3', d:'Tìm kiếm, suy luận, học máy cơ bản — nền tảng để xây dựng hệ thống thông minh.' },
+    ml:    { ic:'🤖', label:'Machine Learning',    mod:'I3.4', d:'Mô hình học từ dữ liệu: hồi quy, phân loại, mạng nơ-ron. Kỹ năng lõi của AI/ML Engineer.' },
+    full:  { ic:'🧱', label:'Web Full-stack',      mod:'I3.5', d:'Node.js + React: làm cả backend lẫn frontend, dựng ứng dụng web hoàn chỉnh đầu–cuối.' },
+    mob:   { ic:'📱', label:'Mobile Dev',          mod:'I3.6', d:'Xây ứng dụng Android/iOS: vòng đời màn hình, gọi API, lưu dữ liệu, đưa app lên store.' },
+    devops:{ ic:'☁️', label:'DevOps & Cloud',      mod:'I3.7', d:'Tự động hoá build–deploy, container, giám sát hệ thống trên cloud (AWS/GCP).' },
+    sec:   { ic:'🛡️', label:'An toàn thông tin',   mod:'I3.8', d:'Lỗ hổng web, mã hoá, phòng thủ & tấn công có đạo đức. Nghề đang rất khát nhân lực.' },
+    patt:  { ic:'📐', label:'Design Patterns',     mod:'I4.1', d:'Mẫu thiết kế tái sử dụng (Singleton, Factory, Observer…) giúp code sạch, mở rộng dễ.' },
+    cloud: { ic:'⛅', label:'Điện toán đám mây',    mod:'I4.2', d:'Triển khai và vận hành dịch vụ trên AWS/GCP/Azure: máy ảo, lưu trữ, mở rộng tự động.' },
+    ds:    { ic:'📈', label:'Khoa học dữ liệu',     mod:'I4.3', d:'Toàn trình xử lý dữ liệu: thu thập, làm sạch, mô hình hoá, kể chuyện bằng dữ liệu.' },
+    // Kỹ năng chưa có module riêng → lý thuyết nhanh + nguồn tự học uy tín.
+    git:   { ic:'🔧', label:'Git & GitHub', d:'Quản lý phiên bản code, làm việc nhóm qua branch/commit/pull request. Kỹ năng dùng hằng ngày của mọi lập trình viên.',
+             res:[['roadmap.sh — Git & GitHub','https://roadmap.sh/git-github'],['Tài liệu Git chính thức (tiếng Việt)','https://git-scm.com/book/vi/v2']] },
+    viz:   { ic:'📊', label:'Trực quan hoá dữ liệu', d:'Biến số liệu thành biểu đồ dễ hiểu để ra quyết định: bar, line, scatter, dashboard.',
+             res:[['Power BI — Microsoft Learn','https://learn.microsoft.com/training/powerbi/'],['Data Visualization — freeCodeCamp','https://www.freecodecamp.org/learn/data-visualization/']] },
+    docker:{ ic:'🐳', label:'Docker & Container', mod:'I3.7', d:'Đóng gói ứng dụng vào container để chạy giống nhau ở mọi nơi — kỹ năng cốt lõi của DevOps.' },
+    cicd:  { ic:'🔁', label:'CI/CD', d:'Tự động build, test, triển khai mỗi khi code thay đổi — giúp ra mắt nhanh và an toàn.',
+             res:[['roadmap.sh — DevOps','https://roadmap.sh/devops'],['GitHub Actions — tài liệu','https://docs.github.com/actions']] },
+    ctf:   { ic:'🚩', label:'Pentest & CTF', href:'/it-ctf-web.html', d:'Thực hành tìm và khai thác lỗ hổng có đạo đức qua các thử thách Capture-The-Flag.' },
+  };
+
+  // Mỗi nghề: thông tin thị trường (insights) + cây kỹ năng theo tầng (cơ bản → nâng cao).
+  const ROADMAP = {
+    se:   { ic:'👨‍💻', name:'Software Engineer', desc:'Thiết kế, viết và bảo trì phần mềm: web, backend, ứng dụng. Giải bài toán bằng code, làm việc nhóm theo quy trình.',
+            sal:{intern:'5–8 tr',junior:'12–22 tr',senior:'35–70 tr+'}, demand:95,
+            tree:[['py'],['ctdl','oop'],['git','sql','web'],['ktpm','full'],['patt']] },
+    data: { ic:'📊', name:'Data Analyst / Scientist', desc:'Biến dữ liệu thô thành insight: truy vấn, phân tích xu hướng, mô hình hoá và đề xuất quyết định.',
+            sal:{intern:'6–9 tr',junior:'14–24 tr',senior:'40–75 tr+'}, demand:90,
+            tree:[['py'],['math','sql'],['viz','ml'],['ds']] },
+    devops:{ ic:'☁️', name:'DevOps Engineer', desc:'Tự động hoá vòng đời phần mềm: build, deploy, giám sát hạ tầng cloud — cầu nối giữa Dev và vận hành.',
+            sal:{intern:'6–9 tr',junior:'15–26 tr',senior:'40–80 tr+'}, demand:88,
+            tree:[['linux'],['net','py'],['docker','cicd'],['devops','cloud']] },
+    sec:  { ic:'🛡️', name:'Cybersecurity Specialist', desc:'Bảo vệ hệ thống: rà soát lỗ hổng, kiểm thử xâm nhập, ứng cứu sự cố. Ngành đang rất khát nhân lực.',
+            sal:{intern:'6–10 tr',junior:'15–28 tr',senior:'45–90 tr+'}, demand:92,
+            tree:[['net'],['linux','py'],['sec'],['ctf']] },
+    aiml: { ic:'🤖', name:'AI / ML Engineer', desc:'Xây dựng hệ thống học máy: xử lý dữ liệu, huấn luyện mô hình, đưa AI vào sản phẩm thực tế.',
+            sal:{intern:'7–11 tr',junior:'16–30 tr',senior:'50–100 tr+'}, demand:93,
+            tree:[['py'],['math','ctdl'],['ai','ml'],['ds']] },
+    mobile:{ ic:'📱', name:'Mobile Developer', desc:'Phát triển ứng dụng di động Android/iOS: giao diện mượt, gọi API, đưa app lên store.',
+            sal:{intern:'5–8 tr',junior:'12–22 tr',senior:'35–65 tr+'}, demand:82,
+            tree:[['py'],['oop','web'],['mob'],['full']] },
+  };
+
+  let rmRole = 'se', rmSkillOpened = false;
+  INIT_roadmap = () => {
+    el('rmRoles').innerHTML = Object.entries(ROADMAP).map(([k,r]) =>
+      `<button class="rmRole${k===rmRole?' sel':''}" data-role="${k}"><span class="ic">${r.ic}</span><span class="nm">${esc(r.name)}</span></button>`).join('');
+    el('rmRoles').querySelectorAll('.rmRole').forEach(b => b.onclick = () => selectRole(b.dataset.role));
+    selectRole(rmRole);
+  };
+  function selectRole(k){
+    rmRole = k; const r = ROADMAP[k];
+    el('rmRoles').querySelectorAll('.rmRole').forEach(b => b.classList.toggle('sel', b.dataset.role === k));
+    el('rmInsights').innerHTML =
+      `<h3>${r.ic} ${esc(r.name)}</h3><div class="rmdesc">${esc(r.desc)}</div>` +
+      `<div class="salGrid">
+        <div class="salBox"><div class="lv">Thực tập</div><div class="vl">${r.sal.intern}</div></div>
+        <div class="salBox"><div class="lv">Junior</div><div class="vl">${r.sal.junior}</div></div>
+        <div class="salBox"><div class="lv">Senior</div><div class="vl">${r.sal.senior}</div></div>
+      </div>` +
+      `<div class="demand"><span>🔥 Độ hot tuyển dụng</span><b>${r.demand}/100</b></div>` +
+      `<div class="demandBar"><i style="width:${r.demand}%"></i></div>`;
+    renderTree(r.tree);
+  }
+  function renderTree(tree){
+    const W = 680, levelH = 104, nodeH = 44, topPad = 16;
+    const H = topPad*2 + (tree.length-1)*levelH + nodeH;
+    const pos = {};
+    tree.forEach((lvl, li) => {
+      const y = topPad + li*levelH, n = lvl.length;
+      lvl.forEach((key, ki) => {
+        const s = SKILLS[key] || { label:key };
+        const w = Math.min(210, Math.max(104, s.label.length*8 + 30));
+        pos[key] = { x: W*(ki+1)/(n+1), y, w };
+      });
+    });
+    let edges = '';
+    for (let li = 0; li < tree.length-1; li++)
+      tree[li].forEach(a => tree[li+1].forEach(b => {
+        const p = pos[a], q = pos[b];
+        edges += `<path d="M${p.x},${p.y+nodeH} C${p.x},${p.y+nodeH+44} ${q.x},${q.y-44} ${q.x},${q.y}" stroke="rgba(34,211,238,.3)" stroke-width="2" fill="none"/>`;
+      }));
+    let nodes = '';
+    tree.forEach(lvl => lvl.forEach(key => {
+      const s = SKILLS[key] || { label:key }, p = pos[key];
+      const has = !!(s.mod || s.href || s.res);
+      nodes += `<g class="tnode${has?' has':''}" data-key="${key}" transform="translate(${p.x - p.w/2},${p.y})">
+        <rect width="${p.w}" height="${nodeH}" rx="11"/>
+        <text x="${p.w/2}" y="${nodeH/2+5}" text-anchor="middle">${esc((s.ic?s.ic+' ':'') + s.label)}</text></g>`;
+    }));
+    el('rmTree').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cây kỹ năng">${edges}${nodes}</svg>`;
+    el('rmTree').querySelectorAll('.tnode.has').forEach(g => g.onclick = () => openSkill(g.dataset.key));
+  }
+  function openSkill(key){
+    const s = SKILLS[key]; if (!s) return;
+    el('skIc').textContent = s.ic || '📘';
+    el('skTitle').textContent = s.label;
+    el('skDesc').textContent = s.d || '';
+    const learn = el('skLearn');
+    if (s.mod) { learn.href = modHref(s.mod); learn.style.display = ''; learn.textContent = '🚀 Học ngay tại trường'; el('skRes').innerHTML = ''; }
+    else if (s.href) { learn.href = s.href; learn.style.display = ''; learn.textContent = '🚀 Vào thực hành'; el('skRes').innerHTML = ''; }
+    else { learn.style.display = 'none';
+      el('skRes').innerHTML = s.res ? '<div class="reslbl">📚 Nguồn tự học uy tín</div><div class="reslist">' +
+        s.res.map(([n,u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(n)} ↗</a>`).join('') + '</div>' : ''; }
+    el('skillOvl').classList.add('show');
+    if (!rmSkillOpened) { rmSkillOpened = true; award('roadmap', 20); }
+  }
+  el('skClose').onclick = () => el('skillOvl').classList.remove('show');
+  el('skillOvl').onclick = e => { if (e.target === el('skillOvl')) el('skillOvl').classList.remove('show'); };
+
   // INIT registry
-  const INIT = { career: () => INIT_career(), guide: () => INIT_guide(), case: () => INIT_case(), dev: () => INIT_dev(), test: () => INIT_test(), sec: () => INIT_sec() };
-  var INIT_career, INIT_guide, INIT_case, INIT_dev, INIT_test, INIT_sec;
+  const INIT = { career: () => INIT_career(), guide: () => INIT_guide(), case: () => INIT_case(), dev: () => INIT_dev(), test: () => INIT_test(), sec: () => INIT_sec(), roadmap: () => INIT_roadmap() };
+  var INIT_career, INIT_guide, INIT_case, INIT_dev, INIT_test, INIT_sec, INIT_roadmap;
 
   // back link theo domain
   const _dom = new URLSearchParams(location.search).get('domain');
