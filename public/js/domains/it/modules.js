@@ -30,11 +30,11 @@ export const MODULES = [
   { category: 'curriculum', id: 'I1.5', title: 'Tiếng Anh CNTT',              yearLevel: 1, subject: 'tieng-anh-it',       scenarioIds: ['I1.5-it-english-quiz'],    knowledgeQuiz: 'I1.5-it-english-quiz',    minStarsToUnlock: 0 },
 
   // ──────────── NĂM 2 — CƠ SỞ NGÀNH ────────────
-  { category: 'curriculum', id: 'I2.1', title: 'Cấu trúc dữ liệu & Giải thuật', yearLevel: 2, subject: 'cau-truc-du-lieu', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.1', placeholder: true, minStarsToUnlock: 5, prerequisites: ['I1.1'] },
-  { category: 'curriculum', id: 'I2.2', title: 'Lập trình hướng đối tượng (Java)', yearLevel: 2, subject: 'oop',           scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.2', placeholder: true, minStarsToUnlock: 5, prerequisites: ['I1.1'] },
-  { category: 'curriculum', id: 'I2.3', title: 'Cơ sở dữ liệu (SQL)',         yearLevel: 2, subject: 'co-so-du-lieu',   scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.3', placeholder: true, minStarsToUnlock: 5 },
-  { category: 'curriculum', id: 'I2.4', title: 'Mạng máy tính',               yearLevel: 2, subject: 'mang-may-tinh',    scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.4', placeholder: true, minStarsToUnlock: 5 },
-  { category: 'curriculum', id: 'I2.5', title: 'Thiết kế Web (HTML/CSS/JS)',  yearLevel: 2, subject: 'thiet-ke-web',    scenarioIds: [], knowledgeQuiz: 'quiz-stub-I2.5', placeholder: true, minStarsToUnlock: 5 },
+  { category: 'curriculum', id: 'I2.1', title: 'Cấu trúc dữ liệu & Giải thuật', yearLevel: 2, subject: 'cau-truc-du-lieu', scenarioIds: ['I2.1-dsa-quiz'],        knowledgeQuiz: 'I2.1-dsa-quiz',        minStarsToUnlock: 5, prerequisites: ['I1.1'] },
+  { category: 'curriculum', id: 'I2.2', title: 'Lập trình hướng đối tượng (Java)', yearLevel: 2, subject: 'oop',          scenarioIds: ['I2.2-oop-java-quiz'],    knowledgeQuiz: 'I2.2-oop-java-quiz',   minStarsToUnlock: 5, prerequisites: ['I1.1'] },
+  { category: 'curriculum', id: 'I2.3', title: 'Cơ sở dữ liệu (SQL)',         yearLevel: 2, subject: 'co-so-du-lieu',    scenarioIds: ['I2.3-sql-quiz'],         knowledgeQuiz: 'I2.3-sql-quiz',        minStarsToUnlock: 5 },
+  { category: 'curriculum', id: 'I2.4', title: 'Mạng máy tính',               yearLevel: 2, subject: 'mang-may-tinh',    scenarioIds: ['I2.4-networking-quiz'],  knowledgeQuiz: 'I2.4-networking-quiz', minStarsToUnlock: 5 },
+  { category: 'curriculum', id: 'I2.5', title: 'Thiết kế Web (HTML/CSS/JS)',  yearLevel: 2, subject: 'thiet-ke-web',     scenarioIds: ['I2.5-web-quiz'],         knowledgeQuiz: 'I2.5-web-quiz',        minStarsToUnlock: 5 },
 
   // ──────────── NĂM 3 — CHUYÊN NGÀNH ────────────
   { category: 'curriculum', id: 'I3.1', title: 'Kỹ thuật phần mềm',           yearLevel: 3, subject: 'ky-thuat-pm',     scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.1', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I2.2'] },
