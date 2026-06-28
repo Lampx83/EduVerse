@@ -54,6 +54,7 @@ export function attachAi(r) {
   r.post('/api/ai/pdf-quiz',          ...wrapAi('pdf-quiz',          handlePdfQuiz));
   r.post('/api/ai/practice-more',     ...wrapAi('practice-more',     handlePracticeMore));
   r.post('/api/ai/grade-sentence',    ...wrapAi('grade-sentence',    handleGradeSentence));
+  r.post('/api/ai/extract-vocab',     ...wrapAi('extract-vocab',     handleExtractVocab));
   r.post('/api/ai/lesson-coach',      ...wrapAi('lesson-coach',      handleLessonCoach));
   r.get( '/api/ai/lesson-bank',       wrap(handleLessonBank));   // đọc kho — không gọi AI, không quota
   r.get( '/api/ai/health',            wrap(handleHealth));
@@ -991,6 +992,87 @@ Chấm câu trên theo rubric. CHỈ trả JSON.`;
     betterExample: String(parsed.betterExample || '').slice(0, 300),
     source: 'ai',
   };
+}
+
+// ─────────────────────────────────────────────────────────────
+// EXTRACT VOCAB (req #31) — bóc tách từ vựng chuyên ngành từ văn bản
+// (SV tải file Word/.txt lên → client trích text → gửi vào đây).
+// AI lọc ra các thuật ngữ tiếng Anh đáng học, dịch nghĩa + IPA + ví dụ,
+// và XẾP mỗi từ vào MỘT chủ đề chuyên ngành CÓ SẴN do client gửi lên.
+// ─────────────────────────────────────────────────────────────
+
+async function handleExtractVocab({ text, topics, max = 30 }) {
+  if (!text || typeof text !== 'string') throw new Error('text required');
+  const txt = text.replace(/\s+/g, ' ').trim().slice(0, 8000);
+  if (txt.length < 3) return { words: [] };
+  const n = Math.max(5, Math.min(40, Number(max) || 30));
+
+  // Danh sách chủ đề có sẵn (key + nhãn). Mặc định = 4 chuyên ngành gốc.
+  const topicList = (Array.isArray(topics) && topics.length ? topics : [
+    { key: 'cntt', label: 'Công nghệ thông tin' },
+    { key: 'yte', label: 'Y tế' },
+    { key: 'giaoduc', label: 'Giáo dục' },
+    { key: 'business', label: 'Kinh doanh' },
+  ]).filter(t => t && t.key).slice(0, 16);
+  const keys = topicList.map(t => String(t.key));
+  const topicLines = topicList.map(t => `- ${t.key}: ${t.label}`).join('\n');
+
+  const sys = `Bạn là giáo viên tiếng Anh chuyên ngành cho sinh viên Việt Nam.
+Nhiệm vụ: từ đoạn văn bản được cung cấp, TRÍCH ra các TỪ/CỤM TỪ tiếng Anh CHUYÊN NGÀNH đáng học (ưu tiên thuật ngữ, danh từ/động từ chuyên môn). BỎ QUA các từ quá thông dụng (the, and, is, people…), tên riêng, số.
+
+Với MỖI từ trích được, trả về:
+- en: từ/cụm tiếng Anh (viết thường, dạng nguyên gốc)
+- vi: nghĩa tiếng Việt ngắn gọn, chính xác
+- pos: loại từ (noun/verb/adj/adv)
+- ipa: phiên âm IPA (nếu không chắc, để chuỗi rỗng)
+- ex: MỘT câu ví dụ tiếng Anh ngắn dùng từ đó
+- topic: XẾP từ vào ĐÚNG MỘT trong các key chủ đề dưới đây; nếu không hợp chủ đề nào thì để "khac".
+
+CÁC CHỦ ĐỀ CÓ SẴN:
+${topicLines}
+
+QUY TẮC: tối đa ${n} từ, KHÔNG trùng lặp, KHÔNG bịa từ không có trong văn bản. CHỈ trả JSON, không viết gì khác.
+Format BẮT BUỘC:
+{ "words": [ { "en": "...", "vi": "...", "pos": "noun", "ipa": "...", "ex": "...", "topic": "cntt" } ] }`;
+
+  const prompt = `<VĂN BẢN>
+${txt}
+</VĂN BẢN>
+
+Trích tối đa ${n} từ vựng chuyên ngành. CHỈ JSON.`;
+
+  let parsed = {};
+  try {
+    const raw = await ollamaGenerate({
+      prompt, system: sys, temperature: 0.2, json: true, maxTokens: 2200,
+    });
+    parsed = safeParseJson(raw);
+  } catch (e) {
+    console.warn('[extract-vocab] AI failed:', e?.message || e);
+  }
+
+  const allow = new Set([...keys, 'khac']);
+  const seen = new Set();
+  const words = (Array.isArray(parsed.words) ? parsed.words : [])
+    .map(w => {
+      const en = String(w?.en || '').trim().toLowerCase().slice(0, 60);
+      const vi = String(w?.vi || '').trim().slice(0, 120);
+      if (!en || !vi || !/[a-z]/.test(en)) return null;
+      let topic = String(w?.topic || 'khac').trim();
+      if (!allow.has(topic)) topic = 'khac';
+      let pos = String(w?.pos || 'noun').trim().toLowerCase();
+      if (!['noun', 'verb', 'adj', 'adv'].includes(pos)) pos = 'noun';
+      return {
+        en, vi, pos, topic,
+        ipa: String(w?.ipa || '').trim().slice(0, 60),
+        ex: String(w?.ex || '').trim().slice(0, 200),
+      };
+    })
+    .filter(Boolean)
+    .filter(w => { if (seen.has(w.en)) return false; seen.add(w.en); return true; })
+    .slice(0, n);
+
+  return { words, source: words.length ? 'ai' : 'empty' };
 }
 
 // ─────────────────────────────────────────────────────────────

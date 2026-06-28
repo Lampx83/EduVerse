@@ -1745,9 +1745,9 @@ const SPACES_DRIVING = {
     ]},
 
   'exam-theory':{emoji:'📝',name:'Phòng Thi Lý thuyết',accent:'#f59e0b',
-    intro:'Mô phỏng kỳ thi sát hạch: 25 câu / 22 phút. Sai 1 câu LIỆT là trượt dù tổng điểm đủ. Đạt ≥ 21/25.',
+    intro:'Mô phỏng kỳ thi sát hạch theo hạng GPLX (B, C1, C, D1, D2, D…). Mỗi hạng có 15 đề ngẫu nhiên cố định. Sai 1 câu LIỆT là trượt dù tổng điểm đủ.',
     rooms:[
-      {ic:'📝',name:'Thi thử 25 câu',rd:'Đề ngẫu nhiên có câu LIỆT, đồng hồ đếm ngược, không gợi ý trong lúc thi.',href:'/luat-giao-thong-600.html?mode=exam'},
+      {ic:'📝',name:'Thi sát hạch theo hạng — 15 đề',rd:'Chọn hạng bằng (B/C1/C/D…) rồi chọn 1 trong 15 đề ngẫu nhiên cố định: số câu & thời gian đúng theo hạng, có câu điểm liệt, đồng hồ đếm ngược.',href:'/luat-giao-thong-600.html?mode=exam'},
       {ic:'⚠️',name:'Chỉ luyện câu LIỆT',rd:'Tập trung vào những câu có thể khiến trượt: nồng độ cồn, sương mù, lùi xe, làn buýt.',href:'/luat-giao-thong-600.html?mode=critical'},
     ],
     skills:['Quản lý thời gian thi','Tránh câu LIỆT','Đọc câu hỏi cẩn thận'],
