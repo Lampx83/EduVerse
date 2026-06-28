@@ -204,6 +204,8 @@
   <input id="searchInput" placeholder="🔍 Tìm từ (Anh hoặc Việt)…" autocomplete="off" />
   <button id="searchBtn">Tìm</button>
   <button class="primary" id="addWordBtn">➕ Thêm từ mới</button>
+  <button id="importBtn" title="Tải file Word/.txt — AI tự lọc từ vựng chuyên ngành">📄 Nhập từ file</button>
+  <input type="file" id="importFile" accept=".txt,.csv,.md,.docx" style="display:none" />
 </div>
 <div class="searchMsg" id="searchMsg"></div>
 
@@ -230,6 +232,19 @@
   <div class="actions">
     <button class="again" id="againBtn">😵 Chưa nhớ</button>
     <button class="know" id="knowBtn">✅ Thuộc rồi</button>
+  </div>
+  <!-- ── #36: Nghe + Viết ngay trên Flashcard (gộp 3 phần vào một giao diện) ── -->
+  <div id="fcPractice" style="width:100%;max-width:520px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="opt" id="fcListen" style="flex:0 0 auto">🎧 Nghe từ</button>
+      <button class="opt" id="fcSlow" style="flex:0 0 auto">🐢 Nghe chậm</button>
+      <button class="opt" id="fcWriteToggle" style="flex:0 0 auto">✍️ Đặt câu với từ này</button>
+    </div>
+    <div id="fcWriteBox" style="display:none;flex-direction:column;gap:8px">
+      <textarea class="wta" id="fcInput" style="margin-top:0" placeholder="Đặt một câu tiếng Anh có dùng từ này…"></textarea>
+      <button class="opt primary" id="fcGrade" style="background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;border:0;font-weight:700">Chấm câu</button>
+      <div class="wfeed" id="fcFeed"></div>
+    </div>
   </div>
   <div class="stats">
     <span>Cần ôn hôm nay: <b id="due">0</b></span>
@@ -319,6 +334,19 @@
     <div class="mbtns" style="margin-top:16px">
       <button id="awCancel">Huỷ</button>
       <button class="primary" id="awSave">Lưu từ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ───── Modal nhập từ vựng từ file (req #31) ───── -->
+<div class="overlay" id="importOverlay">
+  <div class="modal" style="max-width:560px;text-align:left">
+    <h2 style="margin:0 0 2px">📄 Nhập từ vựng từ file</h2>
+    <p id="impStatus" style="margin:2px 0 10px;color:var(--muted);font-size:13.5px">Chọn file Word (.docx) hoặc .txt — hệ thống tự lọc từ vựng chuyên ngành và xếp vào chủ đề phù hợp.</p>
+    <div id="impList" style="max-height:46vh;overflow:auto;display:flex;flex-direction:column;gap:8px"></div>
+    <div class="mbtns" style="margin-top:14px">
+      <button id="impCancel">Đóng</button>
+      <button class="primary" id="impAdd" style="display:none">Thêm <span id="impCount">0</span> từ</button>
     </div>
   </div>
 </div>
@@ -601,6 +629,8 @@
     el('due').textContent = due; el('mastered').textContent = mastered; el('all').textContent = total;
     el('bar').style.width = (mastered / total * 100) + '%';
     el('reviewAll').style.display = (!cur && !reviewAhead) ? '' : 'none';
+    resetFcPractice();                       // #36: reset ô nghe/đặt câu cho thẻ mới
+    el('fcPractice').style.display = cur ? 'flex' : 'none';
     if (!cur) {
       el('boxFront').textContent = ''; el('posFront').textContent = '';
       el('wordFront').textContent = '🎉'; el('phoneticFront').textContent = '';
@@ -627,6 +657,42 @@
   el('knowBtn').onclick = () => { if (!cur) return; grade(topic, cur.w, true); bumpStreak(); flipped = false; renderStreak(); renderCard(); };
   el('againBtn').onclick = () => { if (!cur) return; grade(topic, cur.w, false); flipped = false; renderCard(); };
   el('reviewAll').onclick = () => { reviewAhead = true; flipped = false; renderCard(); };
+
+  // ── #36: Nghe + Viết ngay trên Flashcard ──
+  function resetFcPractice() {
+    el('fcWriteBox').style.display = 'none';
+    el('fcInput').value = ''; el('fcInput').disabled = false;
+    el('fcGrade').disabled = false; el('fcGrade').textContent = 'Chấm câu';
+    el('fcFeed').className = 'wfeed'; el('fcFeed').innerHTML = '';
+    el('fcWriteToggle').textContent = '✍️ Đặt câu với từ này';
+  }
+  el('fcListen').onclick = () => { if (cur) speak(cur.w); };
+  el('fcSlow').onclick = () => {
+    if (!cur || !('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(cur.w); u.lang = 'en-US'; u.rate = .5;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  };
+  el('fcWriteToggle').onclick = () => {
+    const show = el('fcWriteBox').style.display === 'none';
+    el('fcWriteBox').style.display = show ? 'flex' : 'none';
+    el('fcWriteToggle').textContent = show ? '✖️ Đóng đặt câu' : '✍️ Đặt câu với từ này';
+    if (show) el('fcInput').focus();
+  };
+  el('fcGrade').onclick = async () => {
+    if (!cur || el('fcInput').disabled) return;
+    const sentence = el('fcInput').value.trim();
+    if (sentence.split(/\s+/).filter(Boolean).length < 3) {
+      el('fcFeed').className = 'wfeed show no';
+      el('fcFeed').innerHTML = '✍️ Hãy viết một câu hoàn chỉnh có dùng từ <b>' + cur.w + '</b>.';
+      el('fcInput').focus(); return;
+    }
+    el('fcGrade').disabled = true; el('fcGrade').innerHTML = '<span class="wspin"></span> Đang chấm…';
+    const res = await gradeSentence(cur, sentence);
+    el('fcGrade').disabled = false; el('fcGrade').textContent = 'Chấm câu lại';
+    el('fcFeed').className = 'wfeed show ' + (res.correct ? 'ok' : 'no');
+    el('fcFeed').innerHTML = res.html;
+    if (res.ai && res.correct) { bumpStreak(); renderStreak(); }  // đặt câu đúng cũng tính học
+  };
 
   // ─────────────── QUIZ ───────────────
   let quiz = null;   // { items:[{it, opts:[], answer, picked}], idx, right }
@@ -793,16 +859,9 @@
     el('wSubmit').disabled = false; el('wSubmit').textContent = 'Chấm câu';
     el('wInput').focus();
   }
-  async function submitWrite() {
-    const it = write.items[write.idx];
-    if (el('wInput').disabled) return;
-    const sentence = el('wInput').value.trim();
-    if (sentence.split(/\s+/).filter(Boolean).length < 3) {
-      el('wFeed').className = 'wfeed show no';
-      el('wFeed').innerHTML = '✍️ Hãy viết một câu hoàn chỉnh (ít nhất vài từ) có dùng từ <b>' + it.w + '</b>.';
-      el('wInput').focus(); return;
-    }
-    el('wSubmit').disabled = true; el('wSubmit').innerHTML = '<span class="wspin"></span> Đang chấm…';
+  // Chấm 1 câu tiếng Anh → trả {ok, ai, guest, html}. Dùng chung cho tab Viết
+  // và phần "Đặt câu" ngay trên Flashcard (#36). KHÔNG đụng tới DOM của caller.
+  async function gradeSentence(it, sentence) {
     let r = null;
     try {
       const resp = await fetch('/api/ai/grade-sentence', {
@@ -813,32 +872,43 @@
       if (resp.ok) r = await resp.json();
       else if (resp.status === 401) r = { _guest: true };
     } catch (e) {}
-    el('wInput').disabled = true; el('wSubmit').style.display = 'none';
-    // Fallback phía client nếu chưa đăng nhập / AI lỗi: kiểm tra cơ bản + cho xem ví dụ mẫu.
+    // Fallback phía client nếu chưa đăng nhập / AI lỗi: kiểm tra cơ bản + ví dụ mẫu.
     if (!r || r._guest || r.score == null) {
       const usesWord = new RegExp('\\b' + it.w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(sentence);
       const ok = usesWord && sentence.split(/\s+/).filter(Boolean).length >= 4;
-      if (ok) write.right++;
-      el('wRight').textContent = write.right;
-      el('wFeed').className = 'wfeed show ' + (ok ? 'ok' : 'no');
-      el('wFeed').innerHTML =
+      const html =
         '<div class="wscore">' + (ok ? '✅ Câu hợp lệ' : '⚠️ Cần xem lại') + '</div>' +
         '<div class="wline">' + (usesWord ? 'Câu của bạn có dùng từ <b>' + it.w + '</b>. ' : 'Câu chưa dùng từ <b>' + it.w + '</b>. ') +
         (r && r._guest ? 'Đăng nhập để được AI chấm chi tiết ngữ pháp & cách dùng.' : 'AI chấm chi tiết tạm offline.') + '</div>' +
         '<div class="wline"><span class="wlabel">Câu mẫu</span><br>' + escapeHtmlClient(it.ex) + '</div>';
-    } else {
-      if (r.correct) write.right++;
-      el('wRight').textContent = write.right;
-      el('wFeed').className = 'wfeed show ' + (r.correct ? 'ok' : 'no');
-      let html = '<div class="wscore">' + (r.correct ? '✅' : '✍️') + ' ' + (r.score) + '/100</div>';
-      if (r.feedback) html += '<div class="wline">' + escapeHtmlClient(r.feedback) + '</div>';
-      if (r.corrected && r.corrected.trim().toLowerCase() !== sentence.toLowerCase())
-        html += '<div class="wline"><span class="wlabel">Gợi ý sửa</span><br>' + escapeHtmlClient(r.corrected) + '</div>';
-      if (r.betterExample)
-        html += '<div class="wline"><span class="wlabel">Câu hay hơn</span><br>' + escapeHtmlClient(r.betterExample) + '</div>';
-      el('wFeed').innerHTML = html;
-      grade(topic, it.w, !!r.correct);   // dùng SRS: đặt câu đúng → dời lịch ôn xa hơn
+      return { ok, correct: ok, ai: false, guest: !!(r && r._guest), html };
     }
+    let html = '<div class="wscore">' + (r.correct ? '✅' : '✍️') + ' ' + (r.score) + '/100</div>';
+    if (r.feedback) html += '<div class="wline">' + escapeHtmlClient(r.feedback) + '</div>';
+    if (r.corrected && r.corrected.trim().toLowerCase() !== sentence.toLowerCase())
+      html += '<div class="wline"><span class="wlabel">Gợi ý sửa</span><br>' + escapeHtmlClient(r.corrected) + '</div>';
+    if (r.betterExample)
+      html += '<div class="wline"><span class="wlabel">Câu hay hơn</span><br>' + escapeHtmlClient(r.betterExample) + '</div>';
+    return { ok: !!r.correct, correct: !!r.correct, ai: true, guest: false, html };
+  }
+
+  async function submitWrite() {
+    const it = write.items[write.idx];
+    if (el('wInput').disabled) return;
+    const sentence = el('wInput').value.trim();
+    if (sentence.split(/\s+/).filter(Boolean).length < 3) {
+      el('wFeed').className = 'wfeed show no';
+      el('wFeed').innerHTML = '✍️ Hãy viết một câu hoàn chỉnh (ít nhất vài từ) có dùng từ <b>' + it.w + '</b>.';
+      el('wInput').focus(); return;
+    }
+    el('wSubmit').disabled = true; el('wSubmit').innerHTML = '<span class="wspin"></span> Đang chấm…';
+    const res = await gradeSentence(it, sentence);
+    el('wInput').disabled = true; el('wSubmit').style.display = 'none';
+    if (res.correct) write.right++;
+    el('wRight').textContent = write.right;
+    el('wFeed').className = 'wfeed show ' + (res.correct ? 'ok' : 'no');
+    el('wFeed').innerHTML = res.html;
+    if (res.ai) grade(topic, it.w, res.correct);   // chỉ cập nhật SRS khi AI thực chấm
     // nút Câu khác → chuyển thành "tiếp theo"
     el('wSkip').textContent = write.idx < write.items.length - 1 ? 'Từ sau →' : '🏁 Xong';
   }
@@ -973,6 +1043,122 @@
     el('addOverlay').classList.remove('show');
     topic = tk; el('topicSel').value = tk; tab = 'card'; setView('card'); forced = item; flipped = false; renderCard();
     el('searchMsg').innerHTML = '✓ Đã thêm <b>' + en + '</b> vào «' + (customStore.labels[tk]||TOPIC_LABELS[tk]||tk) + '»';
+  };
+
+  // ── #31: Nhập từ vựng từ file Word/.txt → AI lọc + xếp chủ đề ──
+  const IMPORT_TOPIC = 'custom_import';     // chủ đề chứa từ chưa khớp chuyên ngành nào
+  let importWords = [];
+
+  // Trích text từ .docx (ZIP) ngay trên trình duyệt — đọc word/document.xml.
+  async function readDocx(file) {
+    const buf = new Uint8Array(await file.arrayBuffer());
+    const dv = new DataView(buf.buffer);
+    let eocd = -1;
+    for (let i = buf.length - 22; i >= 0 && i >= buf.length - 22 - 65536; i--) {
+      if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('File .docx không hợp lệ.');
+    const cdOffset = dv.getUint32(eocd + 16, true), cdCount = dv.getUint16(eocd + 10, true);
+    let p = cdOffset, target = null;
+    for (let i = 0; i < cdCount; i++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      const comp = dv.getUint16(p + 10, true), compSize = dv.getUint32(p + 20, true);
+      const nameLen = dv.getUint16(p + 28, true), extraLen = dv.getUint16(p + 30, true), commentLen = dv.getUint16(p + 32, true);
+      const lho = dv.getUint32(p + 42, true);
+      const name = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + nameLen));
+      if (name === 'word/document.xml') { target = { comp, compSize, lho }; break; }
+      p += 46 + nameLen + extraLen + commentLen;
+    }
+    if (!target) throw new Error('Không tìm thấy nội dung trong file Word.');
+    const lh = target.lho;
+    if (dv.getUint32(lh, true) !== 0x04034b50) throw new Error('Cấu trúc .docx lỗi.');
+    const dataStart = lh + 30 + dv.getUint16(lh + 26, true) + dv.getUint16(lh + 28, true);
+    const raw = buf.subarray(dataStart, dataStart + target.compSize);
+    let xmlBytes;
+    if (target.comp === 0) xmlBytes = raw;
+    else {
+      if (typeof DecompressionStream === 'undefined') throw new Error('Trình duyệt không hỗ trợ đọc .docx — hãy lưu file thành .txt rồi tải lên.');
+      const stream = new Response(raw).body.pipeThrough(new DecompressionStream('deflate-raw'));
+      xmlBytes = new Uint8Array(await new Response(stream).arrayBuffer());
+    }
+    return new TextDecoder('utf-8').decode(xmlBytes)
+      .replace(/<\/w:p>/g, '\n').replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/[ \t]+/g, ' ');
+  }
+  async function extractText(file) {
+    return (file.name || '').toLowerCase().endsWith('.docx') ? readDocx(file) : file.text();
+  }
+  function topicOptions(sel) {
+    const labels = { ...TOPIC_LABELS, ...customStore.labels };
+    const order = ['cntt','yte','giaoduc','business','basic','travel','academic','ielts', ...Object.keys(customStore.labels)];
+    const seen = new Set();
+    let html = order.filter(k => { if (seen.has(k) || !VOCAB[k]) return false; seen.add(k); return true; })
+      .map(k => '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+escapeHtmlClient(labels[k]||k)+'</option>').join('');
+    html += '<option value="khac"'+(labels[sel]?'':' selected')+'>📄 Khác (từ file)</option>';
+    return html;
+  }
+  function updateImpCount() { el('impCount').textContent = el('impList').querySelectorAll('.impChk:checked').length; }
+  function renderImportList(words) {
+    importWords = words;
+    el('impStatus').innerHTML = '✓ Tìm thấy <b>' + words.length + '</b> từ. Bỏ chọn từ không cần, chỉnh chủ đề nếu muốn, rồi bấm «Thêm».';
+    el('impList').innerHTML = words.map((w, i) =>
+      '<label class="rrow ok" style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">'
+      + '<input type="checkbox" class="impChk" data-i="'+i+'" checked style="margin-top:4px" />'
+      + '<div style="flex:1;min-width:0">'
+      +   '<div class="rw">'+escapeHtmlClient(w.en)+' <span style="color:var(--accent);font-size:12px">'+escapeHtmlClient(w.ipa||'')+'</span> <span style="color:var(--muted);font-size:12px">'+escapeHtmlClient(w.pos)+'</span></div>'
+      +   '<div class="ra">'+escapeHtmlClient(w.vi)+'</div>'
+      + '</div>'
+      + '<select class="impTopic" data-i="'+i+'" style="font-family:inherit;background:rgba(0,0,0,.25);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px;font-size:12px;max-width:150px">'+topicOptions(w.topic)+'</select>'
+      + '</label>'
+    ).join('');
+    el('impAdd').style.display = ''; updateImpCount();
+    el('impList').querySelectorAll('.impChk').forEach(c => c.onchange = updateImpCount);
+  }
+  function openImport() { el('impList').innerHTML = ''; el('impAdd').style.display = 'none'; el('importOverlay').classList.add('show'); }
+  el('importBtn').onclick = () => el('importFile').click();
+  el('impCancel').onclick = () => el('importOverlay').classList.remove('show');
+  el('importFile').onchange = async e => {
+    const file = e.target.files[0]; if (!file) return;
+    el('importFile').value = '';
+    openImport();
+    el('impStatus').innerHTML = '<span class="wspin"></span> Đang đọc «' + escapeHtmlClient(file.name) + '»…';
+    let text = '';
+    try { text = await extractText(file); }
+    catch (err) { el('impStatus').textContent = '⚠️ ' + (err.message || 'Không đọc được file.'); return; }
+    if (!text || text.trim().length < 3) { el('impStatus').textContent = '⚠️ File không có nội dung chữ để trích.'; return; }
+    el('impStatus').innerHTML = '<span class="wspin"></span> AI đang lọc từ vựng chuyên ngành…';
+    const labels = { ...TOPIC_LABELS, ...customStore.labels };
+    const topics = Object.keys(labels).filter(k => VOCAB[k] && k !== IMPORT_TOPIC)
+      .map(k => ({ key: k, label: labels[k].replace(/^[^\p{L}]+/u, '').trim() || k }));
+    let words = [];
+    try {
+      const resp = await fetch('/api/ai/extract-vocab', {
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, topics, max: 30 }),
+      });
+      if (resp.status === 401) { el('impStatus').innerHTML = '🔒 Hãy <a href="/login.html" style="color:var(--accent)">đăng nhập</a> để dùng tính năng nhập từ file.'; return; }
+      if (resp.ok) { const d = await resp.json(); words = d.words || []; }
+    } catch (err) {}
+    if (!words.length) { el('impStatus').textContent = '😅 Chưa trích được từ vựng phù hợp. Thử file có nhiều thuật ngữ tiếng Anh hơn nhé.'; return; }
+    renderImportList(words);
+  };
+  el('impAdd').onclick = () => {
+    const chks = [...el('impList').querySelectorAll('.impChk:checked')];
+    let added = 0, firstTopic = null;
+    chks.forEach(c => {
+      const i = +c.dataset.i, w = importWords[i]; if (!w) return;
+      let tk = el('impList').querySelector('.impTopic[data-i="' + i + '"]').value;
+      if (tk === 'khac') { tk = IMPORT_TOPIC; if (!customStore.labels[tk]) customStore.labels[tk] = '📄 Từ nhập file'; }
+      const item = { w: w.en, pos: w.pos, ph: w.ipa || ('/' + w.en + '/'), v: w.vi, ex: w.ex || (w.en + ' — ' + w.vi), custom: true };
+      const dup = (customStore.words[tk] || []).some(x => x.w.toLowerCase() === item.w.toLowerCase())
+        || (VOCAB[tk] || []).some(x => x.w.toLowerCase() === item.w.toLowerCase());
+      if (!dup) { customStore.words[tk] = customStore.words[tk] || []; customStore.words[tk].push(item); added++; if (!firstTopic) firstTopic = tk; }
+    });
+    saveCustom(); mergeCustom(); rebuildTopicSelect();
+    el('importOverlay').classList.remove('show');
+    if (added && firstTopic) { topic = firstTopic; el('topicSel').value = firstTopic; tab = 'card'; setView('card'); flipped = false; renderCard(); }
+    el('searchMsg').innerHTML = added ? '✓ Đã nhập <b>' + added + '</b> từ từ file vào kho từ vựng.' : 'Các từ đã có sẵn trong kho.';
   };
 
   mergeCustom();
