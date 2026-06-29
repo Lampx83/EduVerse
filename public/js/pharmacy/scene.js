@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0676';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0676';
-import { createCharacter } from './character.js?v=ph0676';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0681';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0681';
+import { createCharacter } from './character.js?v=ph0681';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -109,10 +109,19 @@ function lightenHex(hex, amount = 0.18) {
   const mix = (c) => Math.round(c + (255 - c) * amount);
   return `#${[mix(r), mix(g), mix(b)].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
+// Hộp tối hay sáng? (luminance) → chọn chữ trắng/đậm cho tương phản (yêu cầu #6:
+// hộp có nhiều màu, nền đậm thì chữ sáng).
+function isDarkHex(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.56;
+}
 function getDrugColors(drug) {
   const h = hashSku(drug.sku);
   const accent = DRUG_ACCENT_PALETTE[h % DRUG_ACCENT_PALETTE.length];
-  return { accent, body: lightenHex(accent, 0.85) };
+  return { accent, body: lightenHex(accent, 0.5) };
 }
 export function getBoxStyle(drug) {
   const h = hashSku(drug.sku);
@@ -462,8 +471,12 @@ function drugRegulatoryLines(drug) {
 export function makeDrugLabelTex(drug) {
   const c = document.createElement('canvas');
   const MAIN_H = 320, REG_H = 150;
-  c.width = 256; c.height = MAIN_H + REG_H;
+  // Render ở độ phân giải GẤP 3 (SS=3) rồi scale ctx → chữ SẮC NÉT, hết mờ
+  // (yêu cầu thầy #6: chữ trên nhãn rõ ràng, dễ đọc). Toạ độ vẽ giữ nguyên.
+  const SS = 3;
+  c.width = 256 * SS; c.height = (MAIN_H + REG_H) * SS;
   const ctx = c.getContext('2d');
+  ctx.scale(SS, SS);
   const accent = drug.groupAccent || '#0d9488';
   const body   = drug.bodyColor || '#f8fafc';
   const textDark = drug.textDark !== false;
@@ -471,7 +484,13 @@ export function makeDrugLabelTex(drug) {
   const subText  = textDark ? '#475569' : '#cbd5e1';
   const mutedText= textDark ? '#64748b' : '#e2e8f0';
   const brand    = (drug.brand || drug.name || '').slice(0, 16);
-  const generic  = (drug.generic || '').slice(0, 24);
+  // Quy tắc TT 01/VBHN-BYT (yêu cầu #6): <3 hoạt chất → ghi hoạt chất+hàm lượng
+  // ngay dưới tên thuốc; ≥3 hoạt chất → KHÔNG ghi dưới tên (đưa vào mục Thành
+  // phần ở mặt sau). Đếm hoạt chất tách theo ';' hoặc ' + '.
+  const _nAct = String(drug.activeIngredient || drug.generic || '')
+    .split(/;|\s\+\s/).map(s => s.trim()).filter(Boolean).length;
+  const underName = (_nAct > 0 && _nAct < 3) ? (drug.activeIngredient || drug.generic || '') : '';
+  const generic  = underName.slice(0, 30);
   const strength = (drug.strength || '').slice(0, 20);
   const form     = (drug.form || '').slice(0, 26);
   // Padding 12px mỗi bên — text không được tràn quá vùng này
@@ -711,6 +730,76 @@ export function makeDrugLabelTex(drug) {
   return tex;
 }
 
+// Nhãn MẶT SAU hộp — in ĐỦ trường nhãn bao bì ngoài theo TT 01/VBHN-BYT (yêu cầu
+// thầy 28/6 #4: mọi thông tin nhãn mô phỏng phải in lên hộp). Mặt trước giữ nhận
+// diện thương hiệu; mặt sau là "nhãn chi tiết" để dược sĩ xoay hộp đọc trong 3D.
+export function makeDrugBackLabelTex(drug) {
+  const W = 280, H = 470, SS = 3;
+  const c = document.createElement('canvas'); c.width = W * SS; c.height = H * SS;
+  const ctx = c.getContext('2d'); ctx.scale(SS, SS);
+  const accent = drug.groupAccent || '#0d9488';
+  const meta = getDrugMeta(drug);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  // Header accent + tên thuốc.
+  ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 42);
+  ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold 20px Inter, sans-serif';
+  fitText(ctx, (drug.brand || drug.name || '').slice(0, 22), W / 2, 21, W - 60);
+  if (drug.isRx) {
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 15px Georgia, serif';
+    ctx.textAlign = 'right'; ctx.fillText('℞ Rx', W - 10, 21); ctx.textAlign = 'left';
+  }
+  ctx.textBaseline = 'top';
+  let iy = 52;
+  const field = (label, value, strong = false) => {
+    const val = String(value ?? '').trim();
+    if (!val) return;
+    ctx.fillStyle = '#64748b'; ctx.font = 'bold 11px Inter, sans-serif';
+    ctx.fillText(label, 12, iy);
+    const labW = ctx.measureText(label).width + 6;
+    ctx.fillStyle = strong ? accent : '#1f2937';
+    ctx.font = `${strong ? 'bold ' : ''}13px Inter, sans-serif`;
+    const maxW = W - 24, words = val.split(' ');
+    let line = '', first = true;
+    const flush = () => { ctx.fillText(line, first ? 12 + labW : 12, iy); iy += 16; first = false; line = ''; };
+    for (const wd of words) {
+      const t = line ? line + ' ' + wd : wd;
+      const avail = first ? maxW - labW : maxW;
+      if (ctx.measureText(t).width > avail && line) flush();
+      line = line ? line + ' ' + wd : wd;
+    }
+    if (line) flush();
+    iy += 4;
+  };
+  const lot = drug.lot || meta.lot || '—';
+  const reg = drug.regNo || drug.sdk || '—';
+  const mfgD = drug.mfgDate || '—';
+  const expD = drug.expDate || meta.expiry || '—';
+  field('Thành phần, hàm lượng:', drug.activeIngredient || drug.generic, true);
+  field('Dạng bào chế:', drug.form);
+  field('Quy cách đóng gói:', drug.packaging || drug.pack);
+  field('Chỉ định, cách dùng, CCĐ:', 'Xin đọc trong tờ hướng dẫn sử dụng thuốc.');
+  field('Số giấy ĐK lưu hành:', reg);
+  field('Số lô SX:', lot);
+  field('NSX – HSD:', `${mfgD} – ${expD}`);
+  field('Tiêu chuẩn chất lượng:', 'TCCS');
+  field('Bảo quản:', drug.storage || 'Nơi khô, dưới 30°C, tránh ánh sáng.');
+  field('Cơ sở sản xuất:', drug.manufacturer);
+  if (drug.country && !/việt\s*nam/i.test(drug.country)) field('Xuất xứ:', drug.country);
+  // Khuyến cáo bắt buộc.
+  ctx.fillStyle = '#b91c1c'; ctx.font = 'bold 12px Inter, sans-serif';
+  iy += 2; ctx.fillText('Để xa tầm tay trẻ em.', 12, iy); iy += 16;
+  ctx.fillText('Đọc kỹ hướng dẫn sử dụng trước khi dùng.', 12, iy);
+  // Footer mô phỏng.
+  ctx.fillStyle = accent; ctx.fillRect(0, H - 22, W, 22);
+  ctx.fillStyle = '#ffffff'; ctx.font = 'italic 10px Inter, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('Dữ liệu mô phỏng CBS – Chỉ dùng cho đào tạo dược', W / 2, H - 11);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  return tex;
+}
+
 // Cache texture nhãn theo (loại|drug|màu) — MỌI bản sao cùng thuốc DÙNG CHUNG 1
 // texture thay vì mỗi hộp sinh canvas 256×320 riêng. Giảm mạnh RAM GPU + thời gian
 // dựng cảnh → mượt trên Safari/mobile (trước: ~1000 texture, sau: ~số thuốc).
@@ -720,9 +809,10 @@ function cachedDrugTex(kind, drug, bodyHex, accentHex) {
   let t = _drugTexCache.get(key);
   if (!t) {
     if (kind === 'labelBack') {
-      // Nhãn MẶT SAU = nhãn trước lật ngang để đọc xuôi khi nhìn từ phía sau hộp
-      // (tủ kính 2 mặt — dược sĩ nhìn từ sau quầy không bị mặt trắng trơn).
-      t = cachedDrugTex('label', drug, bodyHex, accentHex).clone();
+      // Nhãn MẶT SAU = nhãn CHI TIẾT (đủ trường TT 01/VBHN-BYT). Lật ngang để đọc
+      // xuôi khi nhìn từ phía sau hộp (tủ kính 2 mặt).
+      const props = { ...drug, bodyColor: bodyHex, groupAccent: accentHex, textDark: drug.textDark !== false };
+      t = makeDrugBackLabelTex(props);
       t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.needsUpdate = true;
     } else {
       const props = { ...drug, bodyColor: bodyHex, groupAccent: accentHex, textDark: drug.textDark !== false };
@@ -821,7 +911,7 @@ function buildBottlePackage(drug, style, pkg, bodyHex, accentHex, detailed) {
   return sub;
 }
 
-function buildSingleDrugBox(drug, style, detailed = true, backLabel = false) {
+function buildSingleDrugBox(drug, style, detailed = true, backLabel = false, withSides = true) {
   const colors = getDrugColors(drug);
   // Body + ACCENT theo brand thật (DRUG_PLACEMENT.brandColor) để hộp trên kệ
   // và hộp zoom inspector ĐỒNG MÀU (trước đây stripe mesh dùng hash-based →
@@ -886,7 +976,7 @@ function buildSingleDrugBox(drug, style, detailed = true, backLabel = false) {
 
   // Nhãn MẶT BÊN — chỉ áp khi hộp đủ dày (d >= 0.04m) để side label nhìn rõ,
   // và khi hash chọn variant ưu tiên có side (band/frame/doubleBand/pillTop/plate).
-  const sideEnabled = style.d >= 0.04 && ['band', 'frame', 'doubleBand', 'pillTop', 'plate'].includes(variant);
+  const sideEnabled = withSides && style.d >= 0.04 && ['band', 'frame', 'doubleBand', 'pillTop', 'plate'].includes(variant);
   if (sideEnabled) {
     const sideTex = cachedDrugTex('side', drug, bodyHex, accentHex);
     const sideMat = new THREE.MeshStandardMaterial({
@@ -1039,15 +1129,15 @@ function autoScaleGLB(obj, targetSize) {
 const CAMERA_PRESETS = {
   default:        { label: 'Toàn cảnh',                pos: [3.4, 4.0, 5.5],     target: [0, 0.9, -0.4],         minDist: 2.5, maxDist: 14 },
   fridge:         { label: 'Tủ lạnh 2-8°C',            pos: [-1.6, 1.6, 1.5],    target: [-3.6, 1.0, 1.45],      minDist: 0.8, maxDist: 5  },
-  counter:        { label: 'Quầy giao dịch',           pos: [0.0, 1.9, 3.4],     target: [0.0, 1.05, 1.0],       minDist: 1.5, maxDist: 8  },
+  counter:        { label: 'Quầy giao dịch',           pos: [0.0, 1.62, 4.7],    target: [0.0, 1.42, 1.4],       minDist: 1.5, maxDist: 9  },
   consult:        { label: 'Khu tư vấn',               pos: [-1.9, 1.7, 1.4],    target: [-3.85, 0.75, -0.25],   minDist: 1.0, maxDist: 7  },
-  // Camera presets lùi XA hơn + nâng CAO + nghiêng để nhìn toàn bộ tủ
-  // (banner đỉnh + 7 ngăn + base). Trước đây pos sát quá nên user chỉ thấy
-  // 2-3 ngăn giữa. Hiện distance ≈ 2.5m, polar angle hơi cúi xuống.
-  cab_rx_1:       { label: 'Kê đơn 1',                 pos: [-2.82, 2.3,  0.80], target: [-2.82, 1.20, -2.125],  minDist: 1.2, maxDist: 6 },
-  cab_rx_2:       { label: 'Kê đơn 2',                 pos: [-0.94, 2.3,  0.80], target: [-0.94, 1.20, -2.125],  minDist: 1.2, maxDist: 6 },
-  cab_otc_1:      { label: 'OTC 1',                    pos: [ 0.94, 2.3,  0.80], target: [ 0.94, 1.20, -2.125],  minDist: 1.2, maxDist: 6 },
-  cab_otc_2:      { label: 'OTC 2',                    pos: [ 2.82, 2.3,  0.80], target: [ 2.82, 1.20, -2.125],  minDist: 1.2, maxDist: 6 },
+  // Góc nhìn tủ SONG SONG MẶT ĐẤT (vuông góc tường) — yêu cầu thầy: pos.y = target.y
+  // → camera ngang tầm, không cúi xuống. Lùi xa (z=1.25) để thấy nhiều ngăn; user
+  // có thể kéo dọc (pan) lên/xuống xem ngăn trên/dưới.
+  cab_rx_1:       { label: 'Kê đơn 1',                 pos: [-2.82, 1.30, 1.25], target: [-2.82, 1.30, -2.125],  minDist: 1.2, maxDist: 6 },
+  cab_rx_2:       { label: 'Kê đơn 2',                 pos: [-0.94, 1.30, 1.25], target: [-0.94, 1.30, -2.125],  minDist: 1.2, maxDist: 6 },
+  cab_otc_1:      { label: 'OTC 1',                    pos: [ 0.94, 1.30, 1.25], target: [ 0.94, 1.30, -2.125],  minDist: 1.2, maxDist: 6 },
+  cab_otc_2:      { label: 'OTC 2',                    pos: [ 2.82, 1.30, 1.25], target: [ 2.82, 1.30, -2.125],  minDist: 1.2, maxDist: 6 },
   cab_special:    { label: 'Kiểm soát đặc biệt',       pos: [ 1.20, 1.6, -1.18], target: [ 4.10, 0.90, -1.18],   minDist: 1.0, maxDist: 6 },
   cab_supp_1:     { label: 'Không phải thuốc 1',       pos: [ 1.20, 2.0,  0.45], target: [ 4.10, 1.20,  0.45],   minDist: 1.2, maxDist: 6 },
   cab_supp_2:     { label: 'Không phải thuốc 2',       pos: [ 1.20, 2.0,  2.23], target: [ 4.10, 1.20,  2.23],   minDist: 1.2, maxDist: 6 },
@@ -1055,7 +1145,7 @@ const CAMERA_PRESETS = {
   // Dược sĩ POV — đứng SÁT mép sau quầy (Z ≈ 0.4, lùi ra sau counter back-edge
   // 0.95 khoảng 55cm), mắt 1.7m, target NẰM TRÊN mặt quầy (z=1.45, y=1.06) để
   // ưu tiên thấy POS + 2 khay + dải trưng bày — công cụ thao tác chính của dược sĩ.
-  pharmacist:     { label: 'Dược sĩ (sau quầy)',       pos: [ 0.3,  1.92, 0.05], target: [ 0.3, 1.06, 1.50],     minDist: 0.8, maxDist: 6 }
+  pharmacist:     { label: 'Dược sĩ (sau quầy)',       pos: [ 0.3,  1.66, 0.05], target: [ 0.3, 1.45, 2.0],      minDist: 0.8, maxDist: 6 }
 };
 
 // ── Fridge stock (13 items, port 1-1) ───────────────────────────────────────
@@ -1084,10 +1174,12 @@ export function buildScene(canvas, opts = {}) {
     canvas, antialias: true, alpha: false,
     logarithmicDepthBuffer: true
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Cap pixelRatio 1.5 (yêu cầu tối ưu): màn Retina không cần 2x → giảm ~44% pixel
+  // phải vẽ, đỡ giật mà nhìn vẫn nét.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;   // rẻ hơn PCFSoft, đỡ nặng
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   // Master brightness — slider chỉnh đồng bộ exposure + cường độ TẤT CẢ đèn + environment.
@@ -1414,6 +1506,9 @@ export function buildScene(canvas, opts = {}) {
     const MAX_PER_SHELF = 99;
     const usableWForCalc = W - 0.20;
     const shelfLabelOverride = new Map();
+    // shelfIdx → mép trái tích lũy của các ô con (phân số 0..1), tính ở vòng đặt
+    // hộp theo trọng số số thuốc. Vòng dựng vách/nhãn dùng lại để khớp vị trí.
+    const cellEdgesByShelf = new Map();
     const findEmptyShelf = (origin) => {
       // Quét theo bán kính tăng dần (1,2,3,...) — ưu tiên ngăn TRÊN (origin+k)
       // trước rồi tới ngăn DƯỚI (origin-k), để overflow đi xuống một cách
@@ -1445,24 +1540,40 @@ export function buildScene(canvas, opts = {}) {
       const usableW = W - 0.20;
       // Số ô con trên ngăn (nhiều nhóm dược lý chung 1 ngăn → vách " · ").
       const cells = Math.max(1, ...items.map(it => it.placement.cells || 1));
-      const cellW = usableW / cells;
       const byCell = new Map();
       for (const it of items) {
         const c = Math.min(Math.max(it.placement.cell || 0, 0), cells - 1);
         if (!byCell.has(c)) byCell.set(c, []);
         byCell.get(c).push(it);
       }
+      // Bề ngang mỗi ô con TỈ LỆ với số thuốc trong ô (yêu cầu thầy 28/6 #1):
+      // vách ngăn tự dịch về phía nhóm ÍT thuốc (vd Phụ khoa Rx 2 thuốc → ô hẹp,
+      // dồn sát nhau) còn nhóm NHIỀU thuốc (Tiêu hóa Rx) trải rộng → mọi thuốc
+      // trên ngăn được dàn ĐỀU một mật độ. edges[] = mép trái tích lũy (phân số 0..1)
+      // để vòng dựng vách/nhãn phía dưới dùng CHUNG → vách khớp đúng chỗ chia hộp.
+      const weights = [];
+      for (let c = 0; c < cells; c++) weights.push(Math.max(1, (byCell.get(c) || []).length));
+      const totW = weights.reduce((a, b) => a + b, 0) || 1;
+      const edges = [0];
+      for (let c = 0; c < cells; c++) edges.push(edges[c] + weights[c] / totW);
+      cellEdgesByShelf.set(shelfIdx, edges);
       for (const [c, cellItems] of byCell) {
         const perCell = cellItems.length;
+        const cellW = usableW * (weights[c] / totW);
         const slotW = cellW / Math.max(perCell, 1);
-        const cellLeft = -usableW / 2 + c * cellW;
+        const cellLeft = -usableW / 2 + edges[c] * usableW;
         cellItems.forEach(({ drug, placement }, slotIdx) => {
           // Inject brand color + groupLabel để buildSingleDrugBox dùng (Phase H).
+          // Màu thân hộp giữ NHIỀU màu thương hiệu hơn (không gần trắng) — yêu cầu
+          // thầy #6: hộp thuốc thực tế nhiều màu; nền đậm thì chữ tự chuyển sáng.
+          const _accentC = placement.brandColor || drug.groupAccent || '#0d9488';
+          const _bodyC = lightenHex(_accentC, 0.5);
           const drugWithBrand = {
             ...drug,
-            groupAccent: placement.brandColor || drug.groupAccent,
+            groupAccent: _accentC,
             groupLabel: placement.groupLabel || drug.groupLabel,
-            bodyColor: lightenHex(placement.brandColor || drug.groupAccent || '#e2e8f0', 0.85)
+            bodyColor: _bodyC,
+            textDark: !isDarkHex(_bodyC)
           };
           const style = getBoxStyle(drugWithBrand);
           // Co bề ngang hộp cho vừa slot (ngăn đông theo sơ đồ) — giữ chiều cao,
@@ -1473,7 +1584,11 @@ export function buildScene(canvas, opts = {}) {
           // chiều NGANG để lấp đầy bề rộng slot (yêu cầu: ngăn bớt trống, hàng
           // tiêm/dịch truyền trải ngang). Hàng trước phủ hết các cột rồi mới xếp
           // lùi vào sâu (Z) cho các hộp còn lại — nhìn từ ngoài luôn thấy đầy mặt.
-          const stock = Math.max(1, Math.round(Number(drug.stock) || 1));
+          // TỐI ƯU HIỆU NĂNG (yêu cầu thầy): chỉ DỰNG tối đa N hộp/thuốc thay vì
+          // cả tồn kho (có thuốc tồn ~200 → 200 mesh!). Tồn kho THẬT vẫn hiện ở
+          // inspector (getDrugMeta) — đây chỉ là số hộp bày trên kệ.
+          const STOCK_RENDER_CAP = 14;
+          const stock = Math.min(STOCK_RENDER_CAP, Math.max(1, Math.round(Number(drug.stock) || 1)));
           style.copies = stock;
           const slotLeft = cellLeft + slotIdx * slotW;
           const y = shelfYs[shelfIdx] + 0.02 + style.h / 2;
@@ -1494,7 +1609,9 @@ export function buildScene(canvas, opts = {}) {
             const dr = Math.floor(i / nCols);
             const colX = slotLeft + subW * (cx + 0.5);
             const z = frontEdgeZ - dr * pitchZ;
-            const box = buildSingleDrugBox(drugWithBrand, style, dr === 0); // chỉ hàng trước có nhãn
+            // MỌI hộp đều có nhãn mặt trước (yêu cầu thầy: lấy hộp ngoài cùng đi
+            // không lộ hộp trắng). Nhãn mặt BÊN chỉ ở hàng trước (tiết kiệm draw call).
+            const box = buildSingleDrugBox(drugWithBrand, style, true, false, dr === 0);
             box.position.set(colX, y, z);
             box.userData = {
               drugId: drug.id, drug: drugWithBrand, style,
@@ -1540,15 +1657,21 @@ export function buildScene(canvas, opts = {}) {
         const parts = text.split(' · ').map(t => t.trim()).filter(Boolean);
         const n = parts.length;
         if (n > 1) {
-          // Nhiều nhóm dược lý chung 1 ngăn → chia n ô bằng nhau + vách đứng giữa.
-          const cw = usableWForCalc / n;
-          const innerW = cw - 0.03;
+          // Nhiều nhóm dược lý chung 1 ngăn → chia ô theo TRỌNG SỐ số thuốc (khớp
+          // vòng đặt hộp) → vách đứng dịch về phía nhóm ít thuốc. Fallback chia đều
+          // nếu thiếu dữ liệu edges.
+          const ed = cellEdgesByShelf.get(s);
+          const useEdges = ed && ed.length === n + 1;
+          const segLeft = (ci) => (useEdges ? ed[ci] : ci / n) * usableWForCalc;
+          const segW = (ci) => (useEdges ? ed[ci + 1] - ed[ci] : 1 / n) * usableWForCalc;
           parts.forEach((p, ci) => {
+            const cw = segW(ci);
+            const innerW = Math.max(0.05, cw - 0.03);
             const tag = new THREE.Mesh(
               new THREE.BoxGeometry(innerW, labelTagH, labelThk),
               labelMat(p, innerW)
             );
-            tag.position.set(-usableWForCalc / 2 + cw * (ci + 0.5), shelfYs[s], labelTagZ);
+            tag.position.set(-usableWForCalc / 2 + segLeft(ci) + cw / 2, shelfYs[s], labelTagZ);
             cabGroup.add(tag);
           });
           const dividerH = shelfH * 0.92;
@@ -1562,7 +1685,7 @@ export function buildScene(canvas, opts = {}) {
               new THREE.BoxGeometry(dThk, dividerH, D - 0.06),
               dividerMat
             );
-            dv.position.set(-usableWForCalc / 2 + cw * k, dividerY, 0);
+            dv.position.set(-usableWForCalc / 2 + segLeft(k), dividerY, 0);
             cabGroup.add(dv);
           }
         } else {
@@ -1828,22 +1951,9 @@ export function buildScene(canvas, opts = {}) {
     m.position.set(x, y, z); m.rotation.x = tiltX; scene.add(m);
   };
 
-  // GIỎ ĐỰNG — khay nhựa hở gom thuốc đã lấy / ra lẻ trước khi dán nhãn.
-  const basket = new THREE.Group();
-  basket.position.set(-0.78, propY, COUNTER_Z - 0.02);
-  (() => {
-    const mat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.5, side: THREE.DoubleSide });
-    const w = 0.30, h = 0.09, d = 0.22, t = 0.008;
-    const base = new THREE.Mesh(new THREE.BoxGeometry(w, t, d), mat); base.position.y = t / 2; basket.add(base);
-    const wf = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), mat); wf.position.set(0, h / 2, d / 2 - t / 2); basket.add(wf);
-    const wb = wf.clone(); wb.position.z = -d / 2 + t / 2; basket.add(wb);
-    const wl = new THREE.Mesh(new THREE.BoxGeometry(t, h, d), mat); wl.position.set(-w / 2 + t / 2, h / 2, 0); basket.add(wl);
-    const wr = wl.clone(); wr.position.x = w / 2 - t / 2; basket.add(wr);
-  })();
-  basket.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData = { retailBasketClick: true }; } });
-  basket.userData = { retailBasketClick: true };
-  scene.add(basket);
-  propLabel('GIỎ RA LẺ', 0.24, '#0ea5e9', -0.78, propY + 0.11, COUNTER_Z - 0.13);
+  // Yêu cầu thầy #8: ĐÃ BỎ "GIỎ RA LẺ" riêng — gom chức năng vào KHAY BÁN HÀNG
+  // (nay tạo dáng giỏ hở, xem khối pickTray bên dưới). Đơn vị ra lẻ cho vào BAO
+  // BÌ RA LẺ (trắng/vàng/hồng/kín khí) rồi ghi nhãn.
 
   // HỘP RA LẺ — hộp kính trong, bên trong có khay inox + thanh gạt; nhãn "HỘP RA LẺ".
   const dispense = new THREE.Group();
@@ -1875,7 +1985,10 @@ export function buildScene(canvas, opts = {}) {
     { type: 'pink',   color: 0xfbcfe8, hex: '#fbcfe8', outline: 0xbe185d, special: 'KIỂM SOÁT ĐẶC BIỆT' },
     { type: 'zip',    color: 0xcffafe, hex: '#cffafe', outline: 0x0891b2, airtight: true }
   ];
-  const PKG_TRAY_X = -1.5, PKG_TRAY_Z = COUNTER_Z + 0.26;
+  // Yêu cầu thầy #7: trước đây tray bao bì ra lẻ nằm NGAY TRƯỚC "HỘP RA LẺ"
+  // (cùng x=-1.5) → che mất. Dời sang BÊN CẠNH (lệch phải, sát mép trước quầy)
+  // để không che hộp ra lẻ.
+  const PKG_TRAY_X = -1.02, PKG_TRAY_Z = COUNTER_Z + 0.30;
   const pkgTray = new THREE.Mesh(
     new THREE.BoxGeometry(0.56, 0.012, 0.20),
     new THREE.MeshStandardMaterial({ color: 0xe7e5e4, roughness: 0.6 })
@@ -2319,20 +2432,21 @@ export function buildScene(canvas, opts = {}) {
   );
   pickBase.userData = { salesTrayClick: true };
   pickTray.add(pickBase);
-  // 4 viền gờ — đổi sang accent xanh dương + emissive nhẹ để khay nổi bật
-  // trên mặt teal counter, dược sĩ dễ nhận diện chỗ "RA THUỐC".
-  const rimMat = new THREE.MeshStandardMaterial({
-    color: 0x0284c7, roughness: 0.45,
-    emissive: 0x0284c7, emissiveIntensity: 0.25
-  });
+  // Yêu cầu thầy #8: KHAY BÁN HÀNG đổi dạng GIỎ HỞ (4 thành cao màu xanh nhựa
+  // giống "giỏ ra lẻ" cũ — nay đã bỏ giỏ ra lẻ riêng). Thành cao 8.5cm để đựng
+  // hộp/đơn vị thuốc, mặt trước thấp hơn cho dễ nhìn vào trong.
+  const WALL_H = 0.085, WALL_T = 0.012;
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.5, side: THREE.DoubleSide });
   [
-    [0,                                  PICK_TRAY_T / 2 + 0.005, -PICK_TRAY_D / 2 + 0.005, PICK_TRAY_W,    0.012, PICK_TRAY_RIM],
-    [0,                                  PICK_TRAY_T / 2 + 0.005,  PICK_TRAY_D / 2 - 0.005, PICK_TRAY_W,    0.012, PICK_TRAY_RIM],
-    [-PICK_TRAY_W / 2 + 0.005,           PICK_TRAY_T / 2 + 0.005, 0,                        PICK_TRAY_RIM, 0.012, PICK_TRAY_D],
-    [ PICK_TRAY_W / 2 - 0.005,           PICK_TRAY_T / 2 + 0.005, 0,                        PICK_TRAY_RIM, 0.012, PICK_TRAY_D]
+    // [x, y, z, w, h, d] — thành sau cao, thành trước thấp (0.05) cho dễ thấy bên trong
+    [0,                        PICK_TRAY_T / 2 + WALL_H / 2,  -PICK_TRAY_D / 2 + WALL_T / 2, PICK_TRAY_W, WALL_H, WALL_T],
+    [0,                        PICK_TRAY_T / 2 + 0.05 / 2,     PICK_TRAY_D / 2 - WALL_T / 2, PICK_TRAY_W, 0.05,   WALL_T],
+    [-PICK_TRAY_W / 2 + WALL_T / 2, PICK_TRAY_T / 2 + WALL_H / 2, 0,                         WALL_T,      WALL_H, PICK_TRAY_D],
+    [ PICK_TRAY_W / 2 - WALL_T / 2, PICK_TRAY_T / 2 + WALL_H / 2, 0,                         WALL_T,      WALL_H, PICK_TRAY_D]
   ].forEach(p => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(p[3], p[4], p[5]), rimMat);
     m.position.set(p[0], p[1], p[2]);
+    m.userData = { salesTrayClick: true };
     pickTray.add(m);
   });
   // Nhãn "KHAY BÁN HÀNG" — nền vàng kem + viền cam để nổi bật giống tool tray
@@ -2390,6 +2504,10 @@ export function buildScene(canvas, opts = {}) {
   toolTrayGroup.position.set(TOOLTRAY_X, COUNTER_H + 0.04 + 0.01 * TT_SCALE, COUNTER_Z - 0.05);
   toolTrayGroup.scale.setScalar(TT_SCALE);
   scene.add(toolTrayGroup);
+  // Yêu cầu thầy #9: BỎ cụm dụng cụ (kéo/băng dính/bút/khay) trên quầy — gây rối
+  // mắt. Soạn nhãn HDSD nay chỉ qua NÚT "Soạn nhãn mới" trên màn hình. Ẩn nguyên
+  // group (raycaster bỏ qua object .visible=false → không còn click vào khay).
+  toolTrayGroup.visible = false;
 
   // Khay nền (click để soạn nhãn HDSD)
   const toolTrayBase = new THREE.Mesh(
@@ -3036,9 +3154,23 @@ export function buildScene(canvas, opts = {}) {
 
   // ── Render loop ──────────────────────────────────────────────────────────
   const clock = new THREE.Clock();
+  const _focusMarkers = [];   // mũi tên/vòng đánh dấu thuốc tìm được (focusDrug)
   function render() {
     const dt = Math.min(clock.getDelta(), 0.05);
     const t = clock.elapsedTime;
+
+    // Marker focus: nảy nhẹ + hết hạn sau 5s.
+    for (let i = _focusMarkers.length - 1; i >= 0; i--) {
+      const fm = _focusMarkers[i];
+      const age = t - fm.born;
+      if (age > 5) {
+        scene.remove(fm.grp);
+        fm.grp.traverse(o => { o.geometry?.dispose?.(); o.material?.dispose?.(); });
+        _focusMarkers.splice(i, 1);
+      } else if (fm.grp.children[0]) {
+        fm.grp.children[0].position.y += Math.sin(t * 6) * 0.0015; // nảy mũi tên
+      }
+    }
 
     // Fan rotation
     fanBlades.rotation.y += dt * 4.5;
@@ -3307,6 +3439,11 @@ export function buildScene(canvas, opts = {}) {
     sub.userData.picked = false;
     const idx = picked.indexOf(sub);
     if (idx >= 0) picked.splice(idx, 1);
+    // Yêu cầu thầy #10: trả hộp về kệ → HỦY nhãn HDSD đã dán, trả về trạng thái
+    // ban đầu (gỡ mesh sticker + xoá bản ghi nhãn của thuốc này).
+    const oldSticker = sub.getObjectByName('hdsd-sticker');
+    if (oldSticker) { sub.remove(oldSticker); oldSticker.material?.map?.dispose?.(); oldSticker.material?.dispose?.(); oldSticker.geometry?.dispose?.(); }
+    labelsByDrug.delete(sub.userData.drugId);
     // Đưa về kệ gốc: reparent lại cabGroup + dùng homePosition LOCAL gốc.
     if (sub.userData.originalParent) {
       sub.userData.originalParent.attach(sub);
@@ -3502,8 +3639,9 @@ export function buildScene(canvas, opts = {}) {
       sticker.position.set(0, cy, 0);
     } else {
       // HỘP GIẤY: nhãn phẳng dán mặt trước +Z, tỉ lệ PORTRAIT 360:480.
+      // Nhãn NHỎ lại (yêu cầu thầy #10: nhãn đang quá to so với hộp).
       const faceW = style.w * 0.92, faceH = style.h * 0.88;
-      const sw = Math.min(faceW * 0.62, faceH * 0.8 * (HDSD_W / HDSD_H));
+      const sw = Math.min(faceW * 0.42, faceH * 0.62 * (HDSD_W / HDSD_H));
       const sh = sw * (HDSD_H / HDSD_W);
       let cx = (u - 0.5) * faceW, cy = (0.5 - v) * faceH;
       cx = Math.max(-faceW / 2 + sw / 2, Math.min(faceW / 2 - sw / 2, cx));
@@ -3612,35 +3750,51 @@ export function buildScene(canvas, opts = {}) {
   }
 
   function focusDrug(drugId) {
-    // Tìm box ngoài cùng (boxIndex=0) của drug, pan camera tới nó.
+    // Tìm box ngoài cùng (boxIndex=0) của drug.
     const candidates = drugMeshes
       .filter(m => m.userData.drugId === drugId)
       .sort((a, b) => (a.userData.boxIndex || 0) - (b.userData.boxIndex || 0));
     if (candidates.length === 0) return false;
+    const box0 = candidates[0];
     const target = new THREE.Vector3();
-    candidates[0].getWorldPosition(target);
-    // Camera pos lùi ra 1.6m theo trục camera→target hiện tại, nâng nhẹ.
-    const dir = new THREE.Vector3().subVectors(camera.position, controls.target).normalize();
-    const newPos = target.clone().add(dir.multiplyScalar(1.6));
-    newPos.y = Math.max(newPos.y, target.y + 0.4);
-    // Đăng ký preset tạm "_focused" + activate
+    box0.getWorldPosition(target);
+    // Camera VUÔNG GÓC mặt hộp (yêu cầu thầy): lấy pháp tuyến +Z của hộp trong
+    // world (tủ bên xoay 90° → pháp tuyến ±X), bỏ thành phần Y để nhìn ngang tầm.
+    const quat = new THREE.Quaternion(); box0.getWorldQuaternion(quat);
+    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);
+    normal.y = 0;
+    if (normal.lengthSq() < 1e-4) normal.set(0, 0, 1);
+    normal.normalize();
+    const newPos = target.clone().addScaledVector(normal, 1.25);
+    newPos.y = target.y + 0.12;          // gần như ngang tầm hộp
     CAMERA_PRESETS._focused = {
-      label: '🎯 ' + (candidates[0].userData.drug?.brand || drugId),
+      label: '🎯 ' + (box0.userData.drug?.brand || drugId),
       pos: [newPos.x, newPos.y, newPos.z],
       target: [target.x, target.y, target.z],
       minDist: 0.4, maxDist: 4
     };
     setCameraPreset('_focused');
-    // Highlight emissive pulse 2s
-    candidates.forEach(m => {
-      m.traverse(o => {
-        if (o.material && o.material.emissive !== undefined) {
-          o.material.emissive = new THREE.Color(0xfacc15);
-          o.material.emissiveIntensity = 0.7;
-          setTimeout(() => { if (o.material) { o.material.emissiveIntensity = 0; } }, 2200);
-        }
-      });
-    });
+    // MARKER rõ ràng: mũi tên vàng chỉ xuống + vòng sáng ôm mặt hộp, tồn tại ~5s.
+    const style = box0.userData.style || { h: 0.14, w: 0.08, d: 0.05 };
+    const glowMat = () => new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xf59e0b, emissiveIntensity: 1.0 });
+    const marker = new THREE.Group();
+    marker.position.copy(target);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.085, 18), glowMat());
+    cone.position.y = style.h / 2 + 0.11; cone.rotation.x = Math.PI; marker.add(cone);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(Math.max(style.w, style.h) * 0.62, 0.006, 10, 30), glowMat());
+    ring.position.copy(normal.clone().multiplyScalar(style.d / 2 + 0.012));
+    ring.quaternion.copy(quat); marker.add(ring);
+    scene.add(marker);
+    _focusMarkers.push({ grp: marker, born: clock.elapsedTime });
+    // Pulse emissive trên thân hộp ~5s.
+    candidates.forEach(m => m.traverse(o => {
+      if (o.material && o.material.emissive !== undefined) {
+        o.material.emissive = new THREE.Color(0xf59e0b);
+        o.material.emissiveIntensity = 0.6;
+        setTimeout(() => { if (o.material) o.material.emissiveIntensity = 0; }, 5000);
+      }
+    }));
     return true;
   }
 

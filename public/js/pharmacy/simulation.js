@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0676';
-import { loadDrugs } from './catalog.js?v=ph0676';
+import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0681';
+import { loadDrugs } from './catalog.js?v=ph0681';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,10 +29,9 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0676';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0676';
+import { openPosTerminal } from './pos.js?v=ph0681';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0681';
 import { STAGE_LABEL } from './rubric.js';
-import { labelSectionHTML } from './drug-label.js?v=ph0676';
 
 const $ = (id) => document.getElementById(id);
 
@@ -44,6 +43,32 @@ function pillsPerBlister(drug) {
   if (!m) m = s.match(/[x×*]\s*(\d+)\s*viên/);     // "... x m viên"
   if (!m) m = s.match(/(\d+)\s*viên\s*\/\s*vỉ/);   // "m viên/vỉ"
   return m ? Math.min(30, Math.max(1, +m[1])) : 10;
+}
+
+// Nhận dạng DẠNG BAO BÌ TRỰC TIẾP (đơn vị nhỏ nhất chứa thuốc): vỉ / gói / ống / lọ.
+// Yêu cầu thầy 28/6 #3: phải theo ĐÚNG quy cách đóng gói trong danh mục, KHÔNG
+// chỉ suy từ "form". Ví dụ Enterogermina form="Hỗn dịch uống" nhưng quy cách
+// "Hộp 02 vỉ x 10 ống x 05ml" → bao bì trực tiếp là ỐNG (không phải lọ).
+// Đọc token từ quy cách (pack/packaging) + retailUnit + stockUnit; tách theo
+// khoảng trắng/số để khớp ĐÚNG từ "ống" (tránh dính "uống" trong form).
+function detectUnitKind(drug) {
+  const blob = [drug.pack, drug.packaging, drug.retailUnit, drug.stockUnit]
+    .filter(Boolean).join(' ').toLowerCase();
+  const tokens = new Set(blob.split(/[\s\d×x*().,\/+\-]+/).filter(Boolean));
+  const has = (...ws) => ws.some(w => tokens.has(w));
+  // Thứ tự ưu tiên: gói → ống → vỉ → lọ/tuýp/chai → (viên rời) vỉ. Đặt "ống"/"vỉ"
+  // trước để quy cách "x vỉ x ống" (ống đựng) hoặc "x vỉ x viên" (vỉ ép) ra đúng.
+  if (has('gói', 'cốm', 'sachet')) return 'goi';
+  if (has('ống', 'ong', 'ampoule', 'ampul')) return 'ong';
+  if (has('vỉ', 'blister')) return 'vi';
+  if (has('lọ', 'chai', 'tuýp', 'tuyp', 'tube', 'bottle')) return 'lo';
+  if (has('viên', 'nén', 'nang', 'capsule', 'tablet')) return 'vi';
+  // Fallback: suy từ form khi danh mục thiếu quy cách.
+  const f = (drug.form || '').toLowerCase();
+  if (/gói|bột|cốm/.test(f)) return 'goi';
+  if (/tiêm|dung dịch tiêm/.test(f)) return 'ong';
+  if (/lọ|chai|dung dịch|hỗn dịch|huyền dịch|siro|sirô|nhỏ|xịt|gel|kem|cao|mỡ|dầu/.test(f)) return 'lo';
+  return 'vi';
 }
 
 export async function startSimulation({ moduleId = 'gpp' } = {}) {
@@ -134,8 +159,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   // GIỎ RA LẺ — gom các ĐƠN VỊ ra lẻ (vỉ/gói/viên/ống) đã tách khỏi hộp, chờ cho
   // vào bao bì ra lẻ. KHÁC với KHAY BÁN HÀNG (hộp nguyên đem tính tiền).
   const retailBasket = []; // [{ drugId, brand, strength, unit, drug }]
-  function addRetailUnit(drug, unit) {
-    retailBasket.push({ drugId: drug.id, brand: drug.brand || drug.name, strength: drug.strength || '', unit, drug });
+  function addRetailUnit(drug, unit, qty = 1) {
+    const n = Math.max(1, Math.floor(qty) || 1);
+    for (let i = 0; i < n; i++)
+      retailBasket.push({ drugId: drug.id, brand: drug.brand || drug.name, strength: drug.strength || '', unit, drug });
   }
 
   // Toast nổi giữa-trên màn hình (nhắc thao tác, ví dụ phải đưa thuốc vào khay
@@ -290,8 +317,8 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     const cv = overlay.querySelector('.sp-face');
     const box = overlay.querySelector('.sp-box');
     const sticker = overlay.querySelector('.sp-sticker');
-    // Vẽ mặt hộp (canvas 256×320) — giữ tỉ lệ trong khung cố định cao 360px
-    const FACE_H = 360, FACE_W = Math.round(FACE_H * (face.canvas.width / face.canvas.height));
+    // Vẽ mặt hộp — khung CAO HƠN (hộp to lên, yêu cầu thầy #10) để dễ chọn vùng dán.
+    const FACE_H = 460, FACE_W = Math.round(FACE_H * (face.canvas.width / face.canvas.height));
     cv.width = face.canvas.width; cv.height = face.canvas.height;
     cv.getContext('2d').drawImage(face.canvas, 0, 0);
     cv.style.width = FACE_W + 'px'; cv.style.height = FACE_H + 'px';
@@ -306,7 +333,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       sticker.getContext('2d').drawImage(stickerTex.image, 0, 0);
       stickerTex.dispose?.();
     }
-    const SK_W = Math.round(FACE_W * 0.5);
+    const SK_W = Math.round(FACE_W * 0.42);   // nhãn NHỎ lại so với hộp (yêu cầu #10), khớp tỉ lệ dán thật
     sticker.style.width = SK_W + 'px';
     sticker.style.height = Math.round(SK_W * skRatio) + 'px';
     // Sticker vị trí ban đầu: góc dưới (chỗ thường trống)
@@ -717,9 +744,9 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   // mô hình 3D đơn vị ra lẻ (thay vì chỉ hiện card HTML). Trắng, viền nhóm, Rx +
   // tên + thành phần (≤3 hoạt chất) + Lô/HSD + nhà SX.
   function makeContactLabelTex(drug, meta) {
-    const W = 360, H = 200;
-    const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const ctx = c.getContext('2d');
+    const W = 360, H = 200, SS = 3;
+    const c = document.createElement('canvas'); c.width = W * SS; c.height = H * SS;
+    const ctx = c.getContext('2d'); ctx.scale(SS, SS);
     const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
     ctx.fillStyle = '#ffffff'; rr(3, 3, W - 6, H - 6, 12); ctx.fill();
     ctx.strokeStyle = drug.groupAccent || '#0d9488'; ctx.lineWidth = 3; ctx.stroke();
@@ -745,12 +772,18 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       }
       if (line) { ctx.fillText(line, 18, y); y += 18; }
     }
-    y = Math.max(y, 120);
+    // Dạng bào chế + số ĐK lưu hành (TT 01/VBHN-BYT, nhãn tiếp xúc trực tiếp).
+    y = Math.max(y, 104);
+    ctx.fillStyle = '#475569'; ctx.font = '12px Inter, sans-serif';
+    if (drug.form) { ctx.fillText(`Dạng: ${String(drug.form).slice(0, 40)}`, 18, y); y += 17; }
+    const reg = drug.regNo || drug.sdk;
+    if (reg) { ctx.fillText(`SĐK: ${reg}`, 18, y); y += 17; }
+    y = Math.max(y, 150);
     const lot = drug.lot || meta?.lot || '—', exp = drug.expDate || meta?.expiry || '—';
     ctx.fillStyle = '#0f172a'; ctx.font = 'bold 14px Inter, sans-serif';
     ctx.fillText(`Lô: ${lot}`, 18, y); ctx.fillText(`HSD: ${exp}`, 180, y);
     ctx.fillStyle = '#64748b'; ctx.font = '12px Inter, sans-serif';
-    ctx.fillText((drug.manufacturer || '—').slice(0, 44), 18, 178);
+    ctx.fillText((drug.manufacturer || '—').slice(0, 44), 18, 184);
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
   }
@@ -794,7 +827,8 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
               <span>💵 Đơn giá: <b>${(drug.unitPrice || 0).toLocaleString('vi')} đ</b></span>
               <span>🏷️ <code>${drug.barcode || drug.sku || '—'}</code></span>
             </div>
-            ${labelSectionHTML(drug, meta)}
+            <!-- Yêu cầu thầy #5: BỎ panel nhãn mô phỏng — mọi thông tin nhãn đã in
+                 ĐẦY ĐỦ lên hộp + bao bì trực tiếp. (Bỏ luôn dòng hướng dẫn xoay hộp.) -->
           </div>
           <div class="ins-actions">
             <button class="ins-return" type="button">↩ Trả về kệ</button>
@@ -867,30 +901,9 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     // trong texture, luôn là lớp trên cùng của mặt hộp).
     const tex = makeDrugLabelTex(drug); tex.anisotropy = 4;
     const frontMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 });
-    // Mặt sau: nhãn tóm tắt (canvas riêng)
-    const lc2 = document.createElement('canvas'); lc2.width = 512; lc2.height = 768;
-    const lc2x = lc2.getContext('2d');
-    lc2x.fillStyle = body; lc2x.fillRect(0, 0, 512, 768);
-    lc2x.fillStyle = accent; lc2x.fillRect(0, 720, 512, 48);
-    lc2x.fillStyle = '#0f172a'; lc2x.font = '28px Inter, sans-serif';
-    lc2x.textAlign = 'left'; lc2x.textBaseline = 'top';
-    lc2x.fillText('Thành phần:', 30, 40);
-    lc2x.font = '24px Inter, sans-serif';
-    lc2x.fillText(`${drug.generic || drug.name}`, 30, 80);
-    lc2x.fillText(`Hàm lượng: ${drug.strength || '—'}`, 30, 130);
-    lc2x.fillText(`Quy cách: ${drug.pack || '—'}`, 30, 180);
-    lc2x.fillText(`Dạng: ${drug.form || '—'}`, 30, 230);
-    lc2x.font = 'bold 22px Inter, sans-serif'; lc2x.fillStyle = '#7f1d1d';
-    lc2x.fillText(drug.isRx ? '⚠ THUỐC KÊ ĐƠN (Rx)' : 'OTC – Không kê đơn', 30, 300);
-    if (drug.isAntibiotic) lc2x.fillText('💊 Kháng sinh – chú ý chỉ định', 30, 340);
-    if (drug.isHazardPregnancy) lc2x.fillText('⚠ Cẩn trọng phụ nữ có thai', 30, 380);
-    lc2x.fillStyle = '#fef9c3'; lc2x.font = 'bold 32px Inter, sans-serif';
-    lc2x.textAlign = 'center'; lc2x.textBaseline = 'middle';
-    lc2x.fillText((drug.brand || drug.name || ''), 256, 744);
-    const tex2 = new THREE.CanvasTexture(lc2);
-    tex2.colorSpace = THREE.SRGBColorSpace;
-    // Mặt -Z của BoxGeometry nhìn từ phía sau đọc XUÔI với texture thường (UV nz
-    // đã đảo chiều ngang sẵn). Trước đây lật repeat.x=-1 → chữ bị ngược → bỏ.
+    // Mặt SAU: nhãn CHI TIẾT đủ trường TT 01/VBHN-BYT (yêu cầu #4) — xoay hộp để
+    // đọc đủ Thành phần/Quy cách/SĐK/Lô/NSX-HSD/Bảo quản/Cơ sở SX/Xuất xứ.
+    const tex2 = makeDrugBackLabelTex(drug); tex2.anisotropy = 4;
     const backMat = new THREE.MeshStandardMaterial({ map: tex2, roughness: 0.6 });
     // Bao bì NGOÀI phải đúng QUY CÁCH đóng gói: "Chai …ml"/dịch truyền → CHAI
     // thật (không có hộp giấy ngoài). Khớp packType()+buildBottlePackage() của
@@ -963,7 +976,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         // Tỉ lệ nhãn PORTRAIT 360:480 (khớp bản soạn). Chai → UỐN TRÒN, hộp → phẳng.
         if (pkgKind === 'carton') {
           const faceW = w * 0.92, faceH = h * 0.88;
-          const sw = Math.min(faceW * 0.62, faceH * 0.8 * (360 / 480));
+          const sw = Math.min(faceW * 0.42, faceH * 0.62 * (360 / 480));
           const sh = sw * (480 / 360);
           let scx = (uu - 0.5) * faceW, scy = (0.5 - vv) * faceH;
           scx = Math.max(-faceW / 2 + sw / 2, Math.min(faceW / 2 - sw / 2, scx));
@@ -999,11 +1012,8 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     const catStr = (drug.category || '').toLowerCase();
     const nameStr = (drug.brand || drug.name || '').toLowerCase();
     const hay = formStr + ' ' + catStr + ' ' + nameStr;
-    let unitKind = 'vi';
-    if (/gói|bột|cốm/.test(formStr)) unitKind = 'goi';
-    // ỐNG TIÊM: chỉ khi tiêm/ống tiêm — KHÔNG nhầm với "uống" (chứa chuỗi "ống").
-    else if (/tiêm|ống tiêm|^ống\b|dung dịch tiêm/.test(formStr)) unitKind = 'ong';
-    else if (/lọ|chai|dung dịch|hỗn dịch|huyền dịch|siro|sirô|nhỏ|xịt|gel|kem|cao|mỡ|dầu|dịch uống/.test(formStr)) unitKind = 'lo';
+    // Bao bì trực tiếp suy từ QUY CÁCH đóng gói (đúng dạng đóng gói thật).
+    let unitKind = detectUnitKind(drug);
     // Thiết bị / dụng cụ y tế — KHÔNG phải vỉ thuốc; mở hộp ra phải là CHÍNH món đó.
     let deviceKind = null;
     if (/dụng cụ|thiết bị/.test(catStr)
@@ -1115,16 +1125,67 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
             new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.6 })));
         }
       } else if (unitKind === 'goi') {
-        g.add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.018, d * 0.78), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.55, roughness: 0.4 })));
-        g.add(new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.02, d * 0.16), acc));
+        // Gói bột/cốm: túi giấy-nhôm DẸT bo góc + mép răng cưa (crimp) 2 đầu +
+        // dải accent đầu túi — giống mẫu gói Hapacol thầy gửi.
+        const gw = w * 0.80, gd = d * 0.94, gt = 0.009, rc = Math.min(gw, gd) * 0.14;
+        const foilMat = new THREE.MeshStandardMaterial({ color: 0xeef2f6, metalness: 0.4, roughness: 0.42, side: THREE.DoubleSide });
+        const sh = new THREE.Shape();
+        { const x = -gw / 2, y = -gd / 2, W0 = gw, D0 = gd, r = rc;
+          sh.moveTo(x + r, y); sh.lineTo(x + W0 - r, y); sh.quadraticCurveTo(x + W0, y, x + W0, y + r);
+          sh.lineTo(x + W0, y + D0 - r); sh.quadraticCurveTo(x + W0, y + D0, x + W0 - r, y + D0);
+          sh.lineTo(x + r, y + D0); sh.quadraticCurveTo(x, y + D0, x, y + D0 - r);
+          sh.lineTo(x, y + r); sh.quadraticCurveTo(x, y, x + r, y); }
+        const geo = new THREE.ExtrudeGeometry(sh, { depth: gt, bevelEnabled: true, bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 2, curveSegments: 8 });
+        geo.rotateX(-Math.PI / 2); geo.translate(0, -gt / 2, 0);
+        g.add(new THREE.Mesh(geo, foilMat));
+        // Mép răng cưa (gân nổi) ở 2 đầu sâu (±Z).
+        const ribMat = new THREE.MeshStandardMaterial({ color: 0xc2cad4, metalness: 0.45, roughness: 0.55 });
+        [-1, 1].forEach(s => {
+          for (let i = 0; i < 9; i++) {
+            const rib = new THREE.Mesh(new THREE.BoxGeometry(gw * 0.018, gt * 1.25, gd * 0.10), ribMat);
+            rib.position.set(-gw / 2 + gw * (i + 0.5) / 9, 0, s * (gd / 2 - gd * 0.05));
+            g.add(rib);
+          }
+        });
+        // Dải accent đầu túi.
+        const hdr = new THREE.Mesh(new THREE.BoxGeometry(gw, gt * 1.05, gd * 0.13), acc);
+        hdr.position.set(0, 0, -gd * 0.36); g.add(hdr);
       } else if (unitKind === 'lo') {
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.22, w * 0.22, h * 0.55, 20), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 })); b.position.y = h * 0.275; g.add(b);
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.16, w * 0.16, h * 0.12, 20), acc); cap.position.y = h * 0.6; g.add(cap);
+        // Lọ/chai: thân thuỷ tinh có vai + cổ + nắp vặn màu nhóm — giống mẫu chai
+        // siro HoAstex. Siro/hỗn dịch → thuỷ tinh nâu hổ phách; còn lại → trắng trong.
+        const r = w * 0.22, bodyH = h * 0.46;
+        const glassCol = /siro|sirô|hỗn dịch|huyền dịch|dung dịch|dầu/.test(formStr) ? '#7c3a12' : '#d9eef3';
+        const glass = new THREE.MeshStandardMaterial({ color: new THREE.Color(glassCol), roughness: 0.22, metalness: 0, transparent: true, opacity: 0.9 });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.97, bodyH, 28), glass); body.position.y = bodyH / 2; g.add(body);
+        const shoulder = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.44, r, h * 0.07, 28), glass); shoulder.position.y = bodyH + h * 0.035; g.add(shoulder);
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.44, r * 0.44, h * 0.05, 20), glass); neck.position.y = bodyH + h * 0.07 + h * 0.025; g.add(neck);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.52, r * 0.52, h * 0.10, 24), acc); cap.position.y = bodyH + h * 0.095 + h * 0.05; g.add(cap);
       } else {
-        const cl = new THREE.MeshStandardMaterial({ color: 0xdbeafe, transparent: true, opacity: 0.6, roughness: 0.2 });
-        const b = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.08, w * 0.08, h * 0.58, 16), cl); b.position.y = h * 0.29; g.add(b);
-        const tip = new THREE.Mesh(new THREE.ConeGeometry(w * 0.08, h * 0.12, 16), cl); tip.position.y = h * 0.64; g.add(tip);
-        const band = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.085, w * 0.085, h * 0.05, 16), acc); band.position.y = h * 0.42; g.add(band);
+        // Ống: TIÊM → thuỷ tinh trong, cổ thắt + chỏm nhọn + vạch bẻ màu. UỐNG →
+        // ống nhựa thân màu dịch (nâu) + vai tròn + nắp vặn/bẻ màu nhóm (mẫu ống uống).
+        const isInject = /tiêm/.test(formStr);
+        // Ống uống: thân dịch ĐẬM (gần đen) + nắp vặn VÀNG KIM bầu tròn + nằm
+        // trong vỉ nhựa CAM (mẫu Thủy Đình Thanh thầy gửi). Ống tiêm: thuỷ tinh trong.
+        const r = isInject ? w * 0.10 : Math.max(w, d) * 0.16, bodyH = h * (isInject ? 0.50 : 0.46);
+        const liqCol = isInject ? '#eaf2fb' : '#1c0f06';
+        const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(liqCol), roughness: isInject ? 0.15 : 0.4, metalness: 0, transparent: isInject, opacity: isInject ? 0.55 : 1 });
+        if (!isInject) {
+          // Vỉ nhựa cam (1 hốc) phía sau ống.
+          const bl = new THREE.Mesh(new THREE.BoxGeometry(r * 3.0, bodyH * 1.5, 0.005),
+            new THREE.MeshStandardMaterial({ color: 0xe8722c, roughness: 0.6, side: THREE.DoubleSide }));
+          bl.position.set(0, bodyH * 0.5, -r * 1.2); g.add(bl);
+        }
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, bodyH, 22), mat); body.position.y = bodyH / 2; g.add(body);
+        if (isInject) {
+          const neck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.45, r, h * 0.06, 16), mat); neck.position.y = bodyH + h * 0.03; g.add(neck);
+          const tip = new THREE.Mesh(new THREE.ConeGeometry(r * 0.45, h * 0.10, 16), mat); tip.position.y = bodyH + h * 0.06 + h * 0.05; g.add(tip);
+          const ring = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.05, r * 1.05, h * 0.02, 16), acc); ring.position.y = bodyH * 0.66; g.add(ring);
+        } else {
+          // Nắp vặn vàng kim: cổ thắt + bầu tròn vàng ánh kim.
+          const gold = new THREE.MeshStandardMaterial({ color: 0xcf9b2e, metalness: 0.75, roughness: 0.3 });
+          const collar = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.85, r, h * 0.045, 18), gold); collar.position.y = bodyH + h * 0.022; g.add(collar);
+          const bulb = new THREE.Mesh(new THREE.SphereGeometry(r * 0.92, 18, 14), gold); bulb.scale.set(1, 1.2, 1); bulb.position.y = bodyH + h * 0.045 + r * 0.85; g.add(bulb);
+        }
       }
       // IN nhãn tiếp xúc trực tiếp LÊN đơn vị ra lẻ. VỈ đã in thẳng lên màng nhôm
       // ở khối dựng vỉ phía trên (child của tấm nhôm) → ở đây chỉ xử lý gói/lọ/ống.
@@ -1133,15 +1194,16 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         const cMat = new THREE.MeshStandardMaterial({ map: cTex, roughness: 0.55, side: THREE.DoubleSide,
           polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
         if (unitKind === 'goi') {
-          // Gói (tấm dẹt 1 lớp): nhãn in mặt trước, giữ mặt trên.
-          const pw = w * 0.82, ph = pw * (200 / 360);
+          // Gói (túi dẹt mỏng): nhãn in mặt TRÊN, ngay trên mặt túi.
+          const pw = w * 0.66, ph = pw * (200 / 360);
           const lab = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), cMat);
-          lab.rotation.x = -Math.PI / 2; lab.position.set(0, 0.013, 0);
+          lab.rotation.x = -Math.PI / 2; lab.position.set(0, 0.0075, 0);
           g.add(lab);
         } else {
-          // Lọ/ống đứng → nhãn UỐN quanh thân.
-          const r = (unitKind === 'lo') ? w * 0.22 : w * 0.085;
-          const cy = (unitKind === 'lo') ? h * 0.28 : h * 0.30;
+          // Lọ/ống đứng → nhãn UỐN quanh thân (khớp bán kính thân ở trên).
+          const isInjectU = /tiêm/.test(formStr);
+          const r = (unitKind === 'lo') ? w * 0.22 : (isInjectU ? w * 0.10 : Math.max(w, d) * 0.16);
+          const cy = (unitKind === 'lo') ? h * 0.28 : h * 0.22;
           const ph = Math.min((unitKind === 'lo' ? h * 0.55 : h * 0.58) * 0.7, r * 2 * (200 / 360) * 1.6);
           const arc = Math.PI * 0.95;
           const lab = new THREE.Mesh(
@@ -1163,7 +1225,9 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       (unitKind === 'device' && /bông/.test(hay)) ? 'cotton.glb' :
       (unitKind === 'device' && deviceKind === 'gauze') ? 'gauze.glb' :
       (unitKind === 'lo' && /kem|gel|mỡ|tuýp|tuyp|cao xoa|\bbôi\b/.test(formStr)) ? 'tube.glb' :
-      (unitKind === 'lo') ? 'pillbottle.glb' : null;
+      // Chỉ lọ ĐỰNG VIÊN dùng model nhựa pillbottle; lọ DỊCH (siro/hỗn dịch/dung
+      // dịch/nhỏ) giữ chai thuỷ tinh procedural (model pillbottle trông sai dạng).
+      (unitKind === 'lo' && !/siro|sirô|hỗn dịch|huyền dịch|dung dịch|dầu|nhỏ|xịt|nước/.test(formStr)) ? 'pillbottle.glb' : null;
     if (unitGlbFile) swapUnitToGlb(unit, unitGlbFile, Math.max(w, h) * 0.9);
     unit.visible = false;
     scene2.add(unit);
@@ -1239,13 +1303,51 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     // Nút XANH (ins-confirm): chưa lấy đơn vị ra → đưa NGUYÊN HỘP vào khay; đang
     // lấy ra rồi → "Cho … vào GIỎ RA LẺ".
     const greenBtn = overlay.querySelector('.ins-confirm');
+    // Yêu cầu thầy #12: chọn SỐ LƯỢNG đơn vị lấy ra (nhiều gói/vỉ/ống) và với VỈ
+    // có thể "Cắt viên" (lấy vài viên trong vỉ). Stepper hiện khi đã mở hộp.
+    let retailMode = unitKind;                    // 'vi'|'goi'|'ong'|'lo'; vỉ đổi được sang 'vien'
+    let retailQty = 1;
+    const perBlister = pillsPerBlister(drug);
+    const curUnitWord = () => retailMode === 'vien' ? 'viên' : unitWordVN;
+    const curMax = () => retailMode === 'vien' ? perBlister : 30;
+    let qtyWrap = null, valEl = null;
+    if (pkgKind === 'carton' && unitKind !== 'device') {
+      qtyWrap = document.createElement('div');
+      qtyWrap.className = 'ins-qty'; qtyWrap.style.display = 'none';
+      qtyWrap.innerHTML = `
+        ${unitKind === 'vi' ? `<div class="insq-modes"><button type="button" class="insq-mode insq-on" data-m="vi">Nguyên vỉ</button><button type="button" class="insq-mode" data-m="vien">Cắt viên</button></div>` : ''}
+        <div class="insq-row"><span class="insq-lbl">Số lượng</span>
+          <button class="insq-minus" type="button">−</button>
+          <span class="insq-val">1</span>
+          <button class="insq-plus" type="button">+</button>
+          <span class="insq-unit"></span>
+        </div>`;
+      const actions = overlay.querySelector('.ins-actions');
+      actions.parentNode.insertBefore(qtyWrap, actions);
+      valEl = qtyWrap.querySelector('.insq-val');
+      const unitEl = qtyWrap.querySelector('.insq-unit');
+      const refreshQty = () => {
+        retailQty = Math.max(1, Math.min(curMax(), retailQty));
+        valEl.textContent = retailQty;
+        unitEl.textContent = curUnitWord() + (retailMode === 'vien' ? ` (1 vỉ ${perBlister} viên)` : '');
+        if (greenBtn) greenBtn.textContent = `📥 Cho ${retailQty} ${curUnitWord()} vào khay`;
+      };
+      qtyWrap.querySelector('.insq-minus').addEventListener('click', () => { retailQty--; refreshQty(); });
+      qtyWrap.querySelector('.insq-plus').addEventListener('click', () => { retailQty++; refreshQty(); });
+      qtyWrap.querySelectorAll('.insq-mode').forEach(b => b.addEventListener('click', () => {
+        qtyWrap.querySelectorAll('.insq-mode').forEach(x => x.classList.toggle('insq-on', x === b));
+        retailMode = b.dataset.m; retailQty = 1; refreshQty();
+      }));
+      qtyWrap._refresh = refreshQty;
+    }
     greenBtn?.addEventListener('click', () => {
       if (extractTarget === 1) {
-        addRetailUnit(drug, unitWordVN);
-        postAction('retail_split', { drugId: drug.id, unit: drug.unit || unitWordVN });
+        const word = curUnitWord();
+        addRetailUnit(drug, word, retailQty);
+        postAction('retail_split', { drugId: drug.id, unit: word, qty: retailQty });
         close();
-        const per = drug.retailUnitPrice || (drug.unitsPerBox ? Math.round((drug.unitPrice || 0) / drug.unitsPerBox) : drug.unitPrice) || 0;
-        alert(`Đã cho 1 ${unitWordVN} "${drug.brand}" vào GIỎ RA LẺ.\n→ Mở POS, bật "Bán lẻ" để tính theo ${drug.unit || 'đơn vị'} (${per.toLocaleString('vi')} đ/${drug.unit || 'đv'}).\n→ Click 1 BAO BÌ RA LẺ trên quầy để đựng + ghi nhãn, dán nhãn HDSD trước khi giao.`);
+        // Yêu cầu thầy: cho vào khay LUÔN, không hiện dialog/alert — chỉ toast nhẹ.
+        showToast(`Đã cho ${retailQty} ${word} "${drug.brand}" vào khay bán hàng.`);
       } else {
         confirmToTray?.();
         close();
@@ -1260,11 +1362,13 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         if (extractTarget === 0) {
           extractTarget = 1; unit.visible = true;
           retailBtn.textContent = `📦 Cất ${unitWordVN} vào hộp`;
-          if (greenBtn) greenBtn.textContent = `📥 Cho ${unitWordVN} vào giỏ`;
+          if (qtyWrap) { qtyWrap.style.display = ''; qtyWrap._refresh?.(); }
+          else if (greenBtn) greenBtn.textContent = `📥 Cho ${unitWordVN} vào khay`;
           postAction('open_box_unit', { drugId: drug.id, unit: unitWordVN });
         } else {
           extractTarget = 0;
           retailBtn.textContent = `🔓 Mở hộp lấy ${unitWordVN}`;
+          if (qtyWrap) qtyWrap.style.display = 'none';
           if (greenBtn && !alreadyInTray) greenBtn.textContent = `📥 Đưa vào khay (Quét barcode)`;
           postAction('close_box_unit', { drugId: drug.id, unit: unitWordVN });
         }

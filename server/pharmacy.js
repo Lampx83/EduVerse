@@ -43,16 +43,42 @@ function stubReply(moduleId) {
   return 'Em cứ trình bày tiếp đi, tôi đang nghe.';
 }
 
+// Quy tắc nhập vai chung → ép Ollama đóng vai bệnh nhân/khách THẬT, tự nhiên
+// (yêu cầu thầy: hỏi-đáp giống bệnh nhân thật). Ghép sau persona riêng từng scenario.
+const ROLEPLAY_RULES = `
+
+QUY TẮC NHẬP VAI (BẮT BUỘC):
+- ⚠️ CHỈ dùng TIẾNG VIỆT có dấu. TUYỆT ĐỐI KHÔNG dùng chữ Hán/tiếng Trung (汉字), tiếng Anh hay ngôn ngữ khác. Nếu lỡ định viết chữ Hán, hãy thay bằng từ tiếng Việt tương đương.
+- LUÔN giữ đúng vai, TUYỆT ĐỐI không thừa nhận mình là AI/trợ lý/mô hình.
+- Nói như người Việt đời thường: câu NGẮN, tự nhiên, có cảm xúc thật (sốt ruột, lo lắng, nài nỉ, biết ơn…).
+- CHỈ tiết lộ thông tin cá nhân (tiền sử, thai kỳ, dị ứng, thuốc đang dùng, nghề nghiệp) KHI dược sĩ hỏi đúng — không tự khai trước.
+- Phản ứng hợp lý theo lời dược sĩ: nếu được giải thích thuyết phục + đồng cảm thì DẦN nghe theo; nếu chưa thì còn phân vân/nài nỉ thêm.
+- Thỉnh thoảng hỏi ngược lại dược sĩ (giá tiền, cách dùng, bao lâu thì khỏi, có tác dụng phụ không).
+- Trả lời 1–3 câu thoại tiếng Việt, KHÔNG markdown, KHÔNG gạch đầu dòng, KHÔNG kèm tiền tố "NPC:".`;
+
+// Dọn output: bỏ tiền tố vai + nhãn ngoặc; CHẶN chữ Hán/CJK mà Qwen hay lẫn vào
+// (giữ trải nghiệm thuần Việt). Nếu sau khi lọc còn quá ngắn → trả '' để dùng stub.
+function cleanReply(s) {
+  let r = String(s || '')
+    .replace(/^\s*(NPC|Khách hàng|Bệnh nhân|Bác sĩ|Assistant|AI)\s*[:：]\s*/i, '')
+    .replace(/^["“]|["”]$/g, '')
+    .trim();
+  // Bỏ ký tự CJK (Hán/Nhật/Hàn) + dấu câu Trung nếu lọt vào (dùng \u cho chắc).
+  const CJK = /[　-〿぀-ヿ㐀-䶿一-鿿가-힯＀-￯]+/g;
+  if (CJK.test(r)) r = r.replace(CJK, ' ').replace(/\s{2,}/g, ' ').replace(/\s+([,.!?;:])/g, '$1').trim();
+  return r.length >= 4 ? r : '';
+}
+
 async function npcReply(scenario, history, userMessage) {
   const prompt = buildPrompt(scenario.npcPersona, history, userMessage);
   try {
     const reply = await ollamaGenerate({
       prompt,
-      system: scenario.npcPersona,
-      temperature: 0.7,
+      system: (scenario.npcPersona || '') + ROLEPLAY_RULES,
+      temperature: 0.8,
       maxTokens: 200
     });
-    return reply || stubReply(scenario.id);
+    return cleanReply(reply) || stubReply(scenario.id);
   } catch (err) {
     console.error('[pharmacy] ollama failed, using stub:', err.message);
     return stubReply(scenario.id);
