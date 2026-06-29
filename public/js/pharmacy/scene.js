@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0681';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0681';
-import { createCharacter } from './character.js?v=ph0681';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0682';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0682';
+import { createCharacter } from './character.js?v=ph0682';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -109,19 +109,21 @@ function lightenHex(hex, amount = 0.18) {
   const mix = (c) => Math.round(c + (255 - c) * amount);
   return `#${[mix(r), mix(g), mix(b)].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
-// Hộp tối hay sáng? (luminance) → chọn chữ trắng/đậm cho tương phản (yêu cầu #6:
-// hộp có nhiều màu, nền đậm thì chữ sáng).
-function isDarkHex(hex) {
+// Làm SẪM/ĐẬM màu (trộn về đen) cho ~20% hộp màu — chữ sẽ chuyển trắng.
+function darkenHex(hex, amount = 0.2) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
-  if (!m) return false;
+  if (!m) return hex;
   const n = parseInt(m[1], 16);
   const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.56;
+  const mix = (c) => Math.round(c * (1 - amount));
+  return `#${[mix(r), mix(g), mix(b)].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
+// ~20% SKU dùng hộp màu sẫm + chữ trắng; còn lại nền sáng + chữ đậm (deterministic).
+function isColoredBox(drug) { return (hashSku(drug.sku || drug.id || '') % 5) === 0; }
 function getDrugColors(drug) {
   const h = hashSku(drug.sku);
   const accent = DRUG_ACCENT_PALETTE[h % DRUG_ACCENT_PALETTE.length];
-  return { accent, body: lightenHex(accent, 0.5) };
+  return { accent, body: isColoredBox(drug) ? darkenHex(accent, 0.18) : lightenHex(accent, 0.82) };
 }
 export function getBoxStyle(drug) {
   const h = hashSku(drug.sku);
@@ -1564,16 +1566,17 @@ export function buildScene(canvas, opts = {}) {
         const cellLeft = -usableW / 2 + edges[c] * usableW;
         cellItems.forEach(({ drug, placement }, slotIdx) => {
           // Inject brand color + groupLabel để buildSingleDrugBox dùng (Phase H).
-          // Màu thân hộp giữ NHIỀU màu thương hiệu hơn (không gần trắng) — yêu cầu
-          // thầy #6: hộp thuốc thực tế nhiều màu; nền đậm thì chữ tự chuyển sáng.
+          // Yêu cầu thầy: CHỈ ~20% hộp đổi sang màu SẪM/ĐẬM + chữ TRẮNG; còn lại
+          // giữ nền sáng + chữ đậm như cũ. isColoredBox() chọn ~20% theo hash SKU.
           const _accentC = placement.brandColor || drug.groupAccent || '#0d9488';
-          const _bodyC = lightenHex(_accentC, 0.5);
+          const _colored = isColoredBox(drug);
+          const _bodyC = _colored ? darkenHex(_accentC, 0.18) : lightenHex(_accentC, 0.82);
           const drugWithBrand = {
             ...drug,
             groupAccent: _accentC,
             groupLabel: placement.groupLabel || drug.groupLabel,
             bodyColor: _bodyC,
-            textDark: !isDarkHex(_bodyC)
+            textDark: !_colored   // hộp màu sẫm → chữ sáng/trắng; hộp sáng → chữ đậm
           };
           const style = getBoxStyle(drugWithBrand);
           // Co bề ngang hộp cho vừa slot (ngăn đông theo sơ đồ) — giữ chiều cao,
