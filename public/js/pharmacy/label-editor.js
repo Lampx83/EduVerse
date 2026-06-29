@@ -2,7 +2,7 @@
 //   • openHdsdEditor   — Nhãn HƯỚNG DẪN SỬ DỤNG dán lên HỘP thuốc (liều + thời điểm + số phút trước/sau ăn)
 //   • openPackageEditor — Nhãn BAO BÌ RA LẺ (trắng/vàng/hồng) theo mẫu phong bì; túi zip chỉ đựng kín khí
 // Giữ semantic field cũ để backend chấm điểm + render in/dán nhãn vẫn work.
-import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0676';
+import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0681';
 import { TIMING_LABEL, totalPerDay } from './labels.js';
 
 const QUICK_NOTES = [
@@ -58,7 +58,8 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
         <div class="le2-left">
           <label class="le2-field">
             <span class="le2-lbl">Chọn thuốc</span>
-            <select class="le2-drug"></select>
+            <input class="le2-drug-search" type="search" placeholder="🔎 Gõ tên thuốc để tìm nhanh…" autocomplete="off"/>
+            <select class="le2-drug" size="1"></select>
           </label>
           <label class="le2-field">
             <span class="le2-lbl">Bệnh nhân</span>
@@ -136,17 +137,29 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
   const $ = (s) => overlay.querySelector(s);
   const $$ = (s) => Array.from(overlay.querySelectorAll(s));
 
-  // Populate drug select
+  // Populate drug select — có Ô TÌM (yêu cầu thầy #10: gõ tên thuốc tìm nhanh).
   const pickedDrugs = pickedIds.map(getDrug).filter(Boolean);
   const otherDrugs = ALL_DRUGS.filter(d => !pickedIds.includes(d.id));
-  const groups = [];
-  if (pickedDrugs.length) groups.push(['Đã chọn từ kệ', pickedDrugs]);
-  groups.push(['Tất cả catalog', otherDrugs.slice(0, 80)]);
-  $('.le2-drug').innerHTML = groups.map(([gName, items]) => `
-    <optgroup label="${gName}">
-      ${items.map(d => `<option value="${d.id}">${d.brand || d.name} ${d.strength || ''}</option>`).join('')}
-    </optgroup>
-  `).join('');
+  const norm = (s) => String(s || '').toLowerCase();
+  function renderDrugOptions(query = '') {
+    const q = norm(query).trim();
+    const match = (d) => !q || norm(`${d.brand} ${d.name} ${d.generic} ${d.sku} ${d.strength}`).includes(q);
+    const prevVal = $('.le2-drug').value;
+    const groups = [];
+    if (pickedDrugs.length) groups.push(['Đã chọn từ kệ', pickedDrugs.filter(match)]);
+    const others = otherDrugs.filter(match);
+    // Khi đang tìm → cho xem tới 200 kết quả; mặc định 80 để select gọn.
+    groups.push([q ? `Kết quả (${others.length})` : 'Tất cả catalog', others.slice(0, q ? 200 : 80)]);
+    $('.le2-drug').innerHTML = groups.filter(([, it]) => it.length).map(([gName, items]) => `
+      <optgroup label="${gName}">
+        ${items.map(d => `<option value="${d.id}">${d.brand || d.name} ${d.strength || ''}</option>`).join('')}
+      </optgroup>
+    `).join('') || '<option value="">— Không có thuốc khớp —</option>';
+    // Giữ lựa chọn cũ nếu còn trong danh sách lọc.
+    if (prevVal && [...$('.le2-drug').options].some(o => o.value === prevVal)) $('.le2-drug').value = prevVal;
+  }
+  renderDrugOptions();
+  $('.le2-drug-search').addEventListener('input', (e) => { renderDrugOptions(e.target.value); renderPreview(); });
 
   // Stepper handlers
   function getDose(k) { return +$(`.le2-val[data-k="${k}"]`).textContent || 0; }
