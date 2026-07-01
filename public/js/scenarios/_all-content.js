@@ -27,6 +27,7 @@ import { SECONDARY_MATH_SCENARIOS } from './secondary-math.js';
 import { SECONDARY_LIT_SCENARIOS } from './secondary-literature.js';
 import { MATH6_LESSON_SCENARIOS } from './secondary-math6-lessons.js';
 import { PRESCHOOL_SCENARIOS } from './preschool-basics.js';
+import { PRESCHOOL_FIELDS_SCENARIOS } from './preschool-fields.js';
 import { PRIMARY_LOP1_SCENARIOS } from './lop1/_index.js';
 let PRIMARY_LOP3_SCENARIOS = {}, PRIMARY_LOP4_SCENARIOS = {}, PRIMARY_LOP5_SCENARIOS = {};
 let SECONDARY_LOP7_SCENARIOS = {}, SECONDARY_LOP8_SCENARIOS = {}, SECONDARY_LOP9_SCENARIOS = {};
@@ -72,4 +73,5 @@ export const ALL_SCENARIOS = {
   ...MATH6_LESSON_SCENARIOS,
   ...PRESCHOOL_SCENARIOS,
   ...PRESCHOOL_WEEKS_SCENARIOS,
+  ...PRESCHOOL_FIELDS_SCENARIOS,
 };

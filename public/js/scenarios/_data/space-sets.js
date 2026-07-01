@@ -1446,6 +1446,15 @@ const SPACES_PRESCHOOL = {
     rooms:[
       {ic:'🔢',name:'Làm quen Toán · Đếm & Màu',rd:'Đếm 1–5 và nhận biết màu sắc qua đồ vật.',
         href:'/module.html?domain=preschool&module=N1'},
+      // 4 lĩnh vực phát triển còn lại (TT 51/2020) — mỗi thẻ mở module đầy đủ.
+      {ic:'🤸',name:'Phát triển thể chất',rd:'Vận động, ăn ngủ vệ sinh, giữ an toàn.',
+        href:'/module.html?domain=preschool&module=N1TC'},
+      {ic:'🗣️',name:'Phát triển ngôn ngữ',rd:'Chào hỏi, gọi tên đồ vật, nghe kể chuyện.',
+        href:'/module.html?domain=preschool&module=N1NN'},
+      {ic:'😊',name:'Tình cảm – Xã hội',rd:'Nhận biết cảm xúc, lễ phép, chơi cùng bạn.',
+        href:'/module.html?domain=preschool&module=N1TX'},
+      {ic:'🎨',name:'Phát triển thẩm mỹ',rd:'Hát, tô màu, tập tạo hình cùng cô.',
+        href:'/module.html?domain=preschool&module=N1TM'},
       {ic:'🃏',name:'Lật thẻ con vật',rd:'Bé bấm thẻ để gọi tên con vật.',panel:[
         {p:'Bấm vào thẻ để xem tên con vật và bé bắt chước tiếng kêu của chúng nhé!'},
         {flash:[{e:'🐶',f:'Con chó',b:'Kêu "gâu gâu"'},{e:'🐱',f:'Con mèo',b:'Kêu "meo meo"'},{e:'🐤',f:'Gà con',b:'Kêu "chiếp chiếp"'},{e:'🦆',f:'Con vịt',b:'Kêu "cạp cạp"'},{e:'🐰',f:'Con thỏ',b:'Có hai tai dài'},{e:'🐢',f:'Con rùa',b:'Bò chậm rãi'}]}]},
@@ -1490,6 +1499,15 @@ const SPACES_PRESCHOOL = {
     rooms:[
       {ic:'🔟',name:'Đếm tới 10 & Hình khối',rd:'Đếm tới 10 và nhận biết các hình cơ bản.',
         href:'/module.html?domain=preschool&module=N2'},
+      // 4 lĩnh vực phát triển còn lại (TT 51/2020) — mỗi thẻ mở module đầy đủ.
+      {ic:'🤾',name:'Phát triển thể chất',rd:'Khéo tay, thăng bằng, dinh dưỡng, an toàn.',
+        href:'/module.html?domain=preschool&module=N2TC'},
+      {ic:'📖',name:'Phát triển ngôn ngữ',rd:'Kể chuyện theo tranh, làm quen âm chữ cái.',
+        href:'/module.html?domain=preschool&module=N2NN'},
+      {ic:'🤝',name:'Tình cảm – Xã hội',rd:'Chia sẻ, hợp tác nhóm, yêu gia đình.',
+        href:'/module.html?domain=preschool&module=N2TX'},
+      {ic:'🖌️',name:'Phát triển thẩm mỹ',rd:'Vẽ, pha màu, nhận biết nhạc cụ, nhịp điệu.',
+        href:'/module.html?domain=preschool&module=N2TM'},
       {ic:'⭕',name:'Lật thẻ hình khối',rd:'Bé bấm để gọi tên hình.',panel:[
         {flash:[{e:'⭕',f:'Hình tròn',b:'Quả bóng, ông mặt trời'},{e:'⬛',f:'Hình vuông',b:'Quân xúc xắc, bánh chưng'},{e:'🔺',f:'Hình tam giác',b:'Cái nón, miếng dưa hấu'},{e:'⭐',f:'Ngôi sao',b:'Trên lá cờ Tổ quốc'},{e:'❤️',f:'Trái tim',b:'Yêu thương cô và bạn'}]},
         {note:'Bé tìm thử quanh lớp xem có đồ vật nào giống các hình này không.'}]},
@@ -1530,6 +1548,15 @@ const SPACES_PRESCHOOL = {
     rooms:[
       {ic:'🎒',name:'Sẵn sàng vào lớp 1 · Toán',rd:'So sánh nhiều/ít, đếm tới 20, ghép số với số lượng.',
         href:'/module.html?domain=preschool&module=N3'},
+      // 4 lĩnh vực phát triển còn lại (TT 51/2020) — mỗi thẻ mở module đầy đủ.
+      {ic:'🚦',name:'Phát triển thể chất',rd:'Vận động phối hợp, cầm bút, an toàn giao thông.',
+        href:'/module.html?domain=preschool&module=N3TC'},
+      {ic:'📚',name:'Phát triển ngôn ngữ',rd:'29 chữ cái, ghép vần, đọc thơ, kể chuyện.',
+        href:'/module.html?domain=preschool&module=N3NN'},
+      {ic:'🇻🇳',name:'Tình cảm – Xã hội',rd:'Giải quyết xung đột, tự hào Việt Nam, vào lớp 1.',
+        href:'/module.html?domain=preschool&module=N3TX'},
+      {ic:'🎭',name:'Phát triển thẩm mỹ',rd:'Biểu diễn tự tin, cảm nhận dân ca Việt Nam.',
+        href:'/module.html?domain=preschool&module=N3TM'},
       {ic:'✏️',name:'Tập tô chữ & số',rd:'Bé tập cầm bút và tô theo nét.',panel:[
         {h:'Bé cầm bút đúng cách'},
         {ol:['Cầm bút bằng 3 ngón tay (cái – trỏ – giữa)','Đặt tay nhẹ trên bàn, lưng thẳng','Tô từ trên xuống, từ trái sang phải','Tô chậm theo nét đứt rồi đậm dần']},
