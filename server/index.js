@@ -61,10 +61,7 @@ const PUBLIC_DIR = path.resolve(ROOT_DIR, 'public');
 const MEDIAPIPE_DIR = path.resolve(ROOT_DIR, 'node_modules', '@mediapipe', 'tasks-vision');
 // Thư mục lưu ảnh/file đính kèm cho "Ban điều hành AI". Tạo lười khi cần.
 // File phục vụ qua /uploads/requests/... (mount express.static phía dưới).
-// PHẢI nằm trong DATA_DIR (volume /data) — không đặt trong /app vì /app bị ghi
-// đè mỗi lần rebuild image → mất hết file SV đính kèm (đã từng xảy ra).
-const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.resolve(ROOT_DIR, 'data');
-const REQUEST_UPLOADS_DIR = path.resolve(DATA_DIR, 'uploads', 'requests');
+const REQUEST_UPLOADS_DIR = path.resolve(ROOT_DIR, 'data', 'uploads', 'requests');
 const PORT = Number(process.env.PORT) || 8041;
 const HOST = process.env.HOST || '0.0.0.0';
 // Optional path prefix when deployed behind a reverse proxy at a sub-path
