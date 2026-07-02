@@ -37,14 +37,14 @@ export const MODULES = [
   { category: 'curriculum', id: 'I2.5', title: 'Thiết kế Web (HTML/CSS/JS)',  yearLevel: 2, subject: 'thiet-ke-web',     scenarioIds: ['I2.5-web-quiz'],         knowledgeQuiz: 'I2.5-web-quiz',        minStarsToUnlock: 5 },
 
   // ──────────── NĂM 3 — CHUYÊN NGÀNH ────────────
-  { category: 'curriculum', id: 'I3.1', title: 'Kỹ thuật phần mềm',           yearLevel: 3, subject: 'ky-thuat-pm',     scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.1', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I2.2'] },
-  { category: 'curriculum', id: 'I3.2', title: 'Phân tích & Thiết kế hệ thống', yearLevel: 3, subject: 'phan-tich-tk',  scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.2', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I3.1'] },
-  { category: 'curriculum', id: 'I3.3', title: 'Trí tuệ nhân tạo',            yearLevel: 3, subject: 'tri-tue-nhan-tao', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.3', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I2.1'] },
-  { category: 'curriculum', id: 'I3.4', title: 'Machine Learning',            yearLevel: 3, subject: 'machine-learning', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.4', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I3.3'] },
-  { category: 'curriculum', id: 'I3.5', title: 'Web Full-stack (Node + React)', yearLevel: 3, subject: 'web-fullstack',  scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.5', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I2.5'] },
-  { category: 'curriculum', id: 'I3.6', title: 'Mobile dev (Android/iOS)',    yearLevel: 3, subject: 'mobile-dev',      scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.6', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I2.2'] },
-  { category: 'curriculum', id: 'I3.7', title: 'DevOps & Cloud',              yearLevel: 3, subject: 'devops',          scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.7', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I2.4'] },
-  { category: 'curriculum', id: 'I3.8', title: 'An toàn thông tin',           yearLevel: 3, subject: 'an-toan-thong-tin', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I3.8', placeholder: true, minStarsToUnlock: 12, prerequisites: ['I2.4'] },
+  { category: 'curriculum', id: 'I3.1', title: 'Kỹ thuật phần mềm',           yearLevel: 3, subject: 'ky-thuat-pm',     scenarioIds: ['I3.1-se-quiz'],        knowledgeQuiz: 'I3.1-se-quiz',        minStarsToUnlock: 12, prerequisites: ['I2.2'] },
+  { category: 'curriculum', id: 'I3.2', title: 'Phân tích & Thiết kế hệ thống', yearLevel: 3, subject: 'phan-tich-tk',  scenarioIds: ['I3.2-sad-quiz'],       knowledgeQuiz: 'I3.2-sad-quiz',       minStarsToUnlock: 12, prerequisites: ['I3.1'] },
+  { category: 'curriculum', id: 'I3.3', title: 'Trí tuệ nhân tạo',            yearLevel: 3, subject: 'tri-tue-nhan-tao', scenarioIds: ['I3.3-ai-quiz'],       knowledgeQuiz: 'I3.3-ai-quiz',        minStarsToUnlock: 12, prerequisites: ['I2.1'] },
+  { category: 'curriculum', id: 'I3.4', title: 'Machine Learning',            yearLevel: 3, subject: 'machine-learning', scenarioIds: ['I3.4-ml-quiz'],       knowledgeQuiz: 'I3.4-ml-quiz',        minStarsToUnlock: 12, prerequisites: ['I3.3'] },
+  { category: 'curriculum', id: 'I3.5', title: 'Web Full-stack (Node + React)', yearLevel: 3, subject: 'web-fullstack',  scenarioIds: ['I3.5-fullstack-quiz'], knowledgeQuiz: 'I3.5-fullstack-quiz', minStarsToUnlock: 12, prerequisites: ['I2.5'] },
+  { category: 'curriculum', id: 'I3.6', title: 'Mobile dev (Android/iOS)',    yearLevel: 3, subject: 'mobile-dev',      scenarioIds: ['I3.6-mobile-quiz'],    knowledgeQuiz: 'I3.6-mobile-quiz',    minStarsToUnlock: 12, prerequisites: ['I2.2'] },
+  { category: 'curriculum', id: 'I3.7', title: 'DevOps & Cloud',              yearLevel: 3, subject: 'devops',          scenarioIds: ['I3.7-devops-quiz'],    knowledgeQuiz: 'I3.7-devops-quiz',    minStarsToUnlock: 12, prerequisites: ['I2.4'] },
+  { category: 'curriculum', id: 'I3.8', title: 'An toàn thông tin',           yearLevel: 3, subject: 'an-toan-thong-tin', scenarioIds: ['I3.8-security-quiz'], knowledgeQuiz: 'I3.8-security-quiz',  minStarsToUnlock: 12, prerequisites: ['I2.4'] },
 
   // ──────────── NĂM 4 — TÍCH HỢP ────────────
   { category: 'curriculum', id: 'I4.1', title: 'Kiến trúc phần mềm + Patterns', yearLevel: 4, subject: 'kien-truc-phan-mem', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I4.1', placeholder: true, minStarsToUnlock: 20, prerequisites: ['I3.1'] },

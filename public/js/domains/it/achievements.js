@@ -61,17 +61,42 @@ export const ACHIEVEMENTS = [
     desc: 'Pass toàn bộ 5 module Năm 2 (I2.1–I2.5)',
     trigger: { yearComplete: 2 } },
 
-  { id: 'fullstack',   icon: '🌐', title: 'Full-stack Dev',
-    desc: 'Pass Web Full-stack (I3.5) với 3 sao',
-    trigger: { moduleStars: { 'I3.5': 3 } } },
+  // ── Year 3 Achievements ──
+  { id: 'se-architect', icon: '🏗️', title: 'Software Architect',
+    desc: 'Pass Kỹ thuật phần mềm (I3.1) với 3 sao',
+    trigger: { moduleStars: { 'I3.1': 3 } } },
+
+  { id: 'system-designer', icon: '📐', title: 'System Designer',
+    desc: 'Pass Phân tích & Thiết kế hệ thống (I3.2) với 3 sao',
+    trigger: { moduleStars: { 'I3.2': 3 } } },
+
+  { id: 'ai-scientist', icon: '🧠', title: 'AI Scientist',
+    desc: 'Pass Trí tuệ nhân tạo (I3.3) với 3 sao',
+    trigger: { moduleStars: { 'I3.3': 3 } } },
 
   { id: 'ai-master',   icon: '🤖', title: 'AI Master',
     desc: 'Pass Machine Learning (I3.4) với 3 sao',
     trigger: { moduleStars: { 'I3.4': 3 } } },
 
+  { id: 'fullstack',   icon: '🌐', title: 'Full-stack Dev',
+    desc: 'Pass Web Full-stack (I3.5) với 3 sao',
+    trigger: { moduleStars: { 'I3.5': 3 } } },
+
+  { id: 'mobile-dev',  icon: '📱', title: 'Mobile Developer',
+    desc: 'Pass Mobile dev Android/iOS (I3.6) với 3 sao',
+    trigger: { moduleStars: { 'I3.6': 3 } } },
+
+  { id: 'devops-pro',  icon: '⚙️', title: 'DevOps Pro',
+    desc: 'Pass DevOps & Cloud (I3.7) với 3 sao',
+    trigger: { moduleStars: { 'I3.7': 3 } } },
+
   { id: 'hacker',      icon: '🚩', title: 'Hacker',
     desc: 'Pass An toàn thông tin (I3.8) với 3 sao',
     trigger: { moduleStars: { 'I3.8': 3 } } },
+
+  { id: 'year3-it-complete', icon: '🥉', title: 'Tốt nghiệp Năm 3 CNTT',
+    desc: 'Pass toàn bộ 8 module Năm 3 (I3.1–I3.8)',
+    trigger: { yearComplete: 3 } },
 
   { id: 'cloud-pro',   icon: '☁️', title: 'Cloud Pro',
     desc: 'Pass Cloud (I4.2) với 3 sao',

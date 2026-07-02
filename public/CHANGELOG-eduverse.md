@@ -4,6 +4,76 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-02 — Phiên cải tiến (6) · Trường CNTT — Year 3 hoàn chỉnh
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
+
+**Trường:** Trường CNTT (`it`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox. Quét codebase phát hiện 8 module Năm 3 Trường CNTT (I3.1–I3.8) đều là skeleton với `scenarioIds: []` + `placeholder: true`. Năm 1 & Năm 2 đã hoàn chỉnh (phiên 2026-06-27 và 2026-06-28). Ưu tiên bổ sung Year 3 để sinh viên năm 3 có đủ nội dung học chuyên ngành sâu.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/it-year3.js` | Tạo mới | 8 quiz scenarios I3.1–I3.8 (80 câu hỏi, đầy đủ explanation) |
+| `public/js/domains/it/modules.js` | Sửa | Kích hoạt I3.1–I3.8: bổ sung `scenarioIds` + `knowledgeQuiz`, bỏ `placeholder` |
+| `public/js/domains/it/achievements.js` | Sửa | Thêm 9 achievement Year 3 mới (8 module + 1 hoàn thành Năm 3) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `IT_YEAR3_SCENARIOS` |
+
+### Chi tiết nội dung (80 câu hỏi)
+
+**`I3.1-se-quiz`** (10 câu) — Kỹ thuật phần mềm:
+Agile Scrum Sprint, Waterfall vs Agile, Unit Testing pyramid, UML Use Case, SRS Functional/Non-Functional, SOLID Open-Closed Principle, Code Review, Git merge conflict, Continuous Integration, TDD Red-Green-Refactor.
+
+**`I3.2-sad-quiz`** (10 câu) — Phân tích & Thiết kế hệ thống:
+Microservices vs Monolithic, Singleton Pattern (GoF), REST PATCH vs PUT, Observer Pattern, Database 3NF, CAP Theorem, Load Balancer, DDD Bounded Context, Cache-Aside strategy, API Gateway.
+
+**`I3.3-ai-quiz`** (10 câu) — Trí tuệ nhân tạo:
+A* vs Dijkstra (heuristic), Minimax + Alpha-Beta, Propositional Logic implication, NLP tokenization, Expert System components, Turing Test, CSP (constraint satisfaction), STRIPS planning, Naive Bayes spam filter, RL vs Supervised Learning.
+
+**`I3.4-ml-quiz`** (10 câu) — Machine Learning:
+Overfitting/Underfitting bias-variance, K-Means unsupervised, Vanishing gradient ReLU vs Sigmoid, K-Fold Cross-Validation, Precision/Recall/F1-score, Gradient Descent formula, Transfer Learning fine-tuning, Feature Scaling, Random Forest ensemble, CNN architecture.
+
+**`I3.5-fullstack-quiz`** (10 câu) — Web Full-stack (Node + React):
+Node.js Event Loop single-thread, React useEffect hook, JWT payload security, Prop drilling + Context, SQL Injection Prepared Statements, React Virtual DOM reconciliation, Express middleware chain, WebSocket vs HTTP, Docker containers, Next.js SSR/SSG.
+
+**`I3.6-mobile-quiz`** (10 câu) — Mobile Dev (Android/iOS):
+React Native vs Native, Android Activity Lifecycle onPause, Swift Optionals nil safety, FCM push notification flow, Battery drain causes, Jetpack Compose declarative UI, Deep Links universal links, ASO vs SEO, Retrofit annotations, Monkey Testing.
+
+**`I3.7-devops-quiz`** (10 câu) — DevOps & Cloud:
+Kubernetes vs Docker Compose orchestration, Terraform IaC, AWS S3 object storage, Blue-Green Deployment, Observability 3 pillars (Logs/Metrics/Traces), GitHub Actions triggers, Serverless Lambda use cases, Rate Limiting algorithms, DR RPO/RTO, Container security least privilege.
+
+**`I3.8-security-quiz`** (10 câu) — An toàn thông tin:
+Asymmetric encryption public/private key, OWASP Top 10 Broken Access Control #1, XSS types + CSP defense, TLS Handshake ECDHE, Password hashing bcrypt/Argon2, MitM attack + HSTS defense, Pentest Reconnaissance phase, SQL Injection Union-based, MFA 3 factors, Social Engineering phishing.
+
+### Achievement mới (9)
+
+| ID | Icon | Tên | Điều kiện |
+|----|------|-----|-----------|
+| `se-architect` | 🏗️ | Software Architect | I3.1 ≥ 3 sao |
+| `system-designer` | 📐 | System Designer | I3.2 ≥ 3 sao |
+| `ai-scientist` | 🧠 | AI Scientist | I3.3 ≥ 3 sao |
+| `ai-master` | 🤖 | AI Master | I3.4 ≥ 3 sao |
+| `fullstack` | 🌐 | Full-stack Dev | I3.5 ≥ 3 sao |
+| `mobile-dev` | 📱 | Mobile Developer | I3.6 ≥ 3 sao |
+| `devops-pro` | ⚙️ | DevOps Pro | I3.7 ≥ 3 sao |
+| `hacker` | 🚩 | Hacker | I3.8 ≥ 3 sao |
+| `year3-it-complete` | 🥉 | Tốt nghiệp Năm 3 CNTT | Năm 3 hoàn chỉnh (I3.1–I3.8) |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/it-year3.js              ✅ OK
+node --check public/js/domains/it/modules.js              ✅ OK
+node --check public/js/domains/it/achievements.js         ✅ OK
+node --check public/js/scenarios/_all-content.js          ✅ OK
+```
+
+---
+
 ## 2026-06-28 — Phiên cải tiến (5) · Trường CNTT — Year 2 hoàn chỉnh
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
