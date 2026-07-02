@@ -54,6 +54,7 @@ export function attachAi(r) {
   r.post('/api/ai/pdf-quiz',          ...wrapAi('pdf-quiz',          handlePdfQuiz));
   r.post('/api/ai/practice-more',     ...wrapAi('practice-more',     handlePracticeMore));
   r.post('/api/ai/grade-sentence',    ...wrapAi('grade-sentence',    handleGradeSentence));
+  r.post('/api/ai/grade-writing',     ...wrapAi('grade-writing',     handleGradeWriting));
   r.post('/api/ai/extract-vocab',     ...wrapAi('extract-vocab',     handleExtractVocab));
   r.post('/api/ai/lesson-coach',      ...wrapAi('lesson-coach',      handleLessonCoach));
   r.get( '/api/ai/lesson-bank',       wrap(handleLessonBank));   // đọc kho — không gọi AI, không quota
@@ -991,6 +992,79 @@ Chấm câu trên theo rubric. CHỈ trả JSON.`;
     corrected: String(parsed.corrected || sent).slice(0, 400),
     betterExample: String(parsed.betterExample || '').slice(0, 300),
     source: 'ai',
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// GRADE WRITING (req #38) — chấm bài viết đoạn văn / email / essay.
+// SV chọn loại bài + chủ đề (lấy từ chủ đề từ vựng), viết theo dàn ý,
+// AI chấm điểm + nhận xét + liệt kê lỗi & cách sửa + gợi ý bản hay hơn.
+// ─────────────────────────────────────────────────────────────
+
+const WRITING_SYSTEM = `Bạn là giáo viên tiếng Anh chấm bài viết cho sinh viên Việt Nam, công tâm và mang tính xây dựng.
+Chấm theo 4 tiêu chí: (1) Bám đề & đủ ý (task), (2) Ngữ pháp, (3) Từ vựng (ưu tiên dùng đúng thuật ngữ chuyên ngành), (4) Mạch lạc & bố cục.
+Trả về JSON DUY NHẤT, KHÔNG viết gì ngoài JSON:
+{
+  "score": <0-100>,
+  "level": "<CEFR ước lượng: A1/A2/B1/B2/C1>",
+  "feedback": "<nhận xét tổng quan 2-3 câu, tiếng Việt, nêu điểm mạnh + điểm cần cải thiện>",
+  "corrections": [ { "original": "<đoạn sai trong bài>", "fixed": "<sửa lại>", "why": "<lý do ngắn, tiếng Việt>" } ],
+  "improved": "<viết lại toàn bài hay hơn, giữ ý của SV, đúng ngữ pháp & tự nhiên>",
+  "strengths": "<1-2 điểm làm tốt, tiếng Việt>"
+}
+QUY TẮC: tối đa 6 mục corrections (chọn lỗi quan trọng nhất). Nếu bài quá ngắn/lạc đề thì điểm thấp và nói rõ. Bản "improved" phải bằng tiếng Anh.`;
+
+async function handleGradeWriting({ type = 'paragraph', topicLabel = '', prompt = '', text = '', targetWords = '' }) {
+  const essay = String(text || '').trim();
+  if (!essay) throw new Error('text required');
+  const clipped = essay.slice(0, 3500);
+  const wordCount = essay.split(/\s+/).filter(Boolean).length;
+  const typeLabel = { paragraph: 'đoạn văn (paragraph)', email: 'email', essay: 'bài luận (essay)' }[type] || 'đoạn văn';
+
+  const userPrompt = `<LOẠI BÀI>${typeLabel}</LOẠI BÀI>
+<CHỦ ĐỀ>${String(topicLabel).slice(0, 120)}</CHỦ ĐỀ>
+<ĐỀ BÀI>${String(prompt).slice(0, 400)}</ĐỀ BÀI>
+<YÊU CẦU ĐỘ DÀI>${String(targetWords).slice(0, 40)}</YÊU CẦU ĐỘ DÀI>
+
+<BÀI VIẾT CỦA SINH VIÊN (${wordCount} từ)>
+${clipped}
+</BÀI VIẾT CỦA SINH VIÊN>
+
+Chấm bài trên theo rubric. CHỈ trả JSON.`;
+
+  let parsed = null;
+  try {
+    const raw = await ollamaGenerate({ prompt: userPrompt, system: WRITING_SYSTEM, temperature: 0.3, json: true, maxTokens: 1400 });
+    parsed = safeParseJson(raw);
+  } catch (e) {
+    console.warn('[grade-writing] AI failed:', e?.message || e);
+  }
+
+  // Fallback heuristic khi AI lỗi — vẫn cho SV phản hồi cơ bản.
+  if (!parsed || typeof parsed !== 'object' || parsed.score == null) {
+    const tips = [];
+    if (wordCount < 30) tips.push('bài còn ngắn, hãy triển khai đủ các ý trong dàn ý');
+    if (!/[.!?]$/.test(essay.trim())) tips.push('kết bài nên có dấu câu đầy đủ');
+    if (!/^[A-Z]/.test(essay.trim())) tips.push('viết hoa chữ đầu câu/đoạn');
+    return {
+      score: wordCount >= 40 ? 60 : 40, level: 'A2',
+      feedback: 'AI chấm chi tiết tạm offline — đây là kiểm tra cơ bản. ' + (tips.length ? 'Gợi ý: ' + tips.join('; ') + '.' : 'Bài có độ dài hợp lý, tiếp tục luyện thêm nhé!'),
+      corrections: [], improved: '', strengths: wordCount >= 40 ? 'Bài đủ độ dài, có cố gắng triển khai ý.' : '',
+      wordCount, source: 'heuristic',
+    };
+  }
+
+  const corrections = (Array.isArray(parsed.corrections) ? parsed.corrections : []).slice(0, 6)
+    .map(c => ({ original: String(c?.original || '').slice(0, 300), fixed: String(c?.fixed || '').slice(0, 300), why: String(c?.why || '').slice(0, 200) }))
+    .filter(c => c.original || c.fixed);
+  return {
+    score: Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0))),
+    level: String(parsed.level || '').slice(0, 8),
+    feedback: String(parsed.feedback || '').slice(0, 800),
+    corrections,
+    improved: String(parsed.improved || '').slice(0, 2500),
+    strengths: String(parsed.strengths || '').slice(0, 400),
+    wordCount, source: 'ai',
   };
 }
 
