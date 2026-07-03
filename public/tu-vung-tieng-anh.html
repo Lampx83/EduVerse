@@ -166,6 +166,10 @@
     border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
+  /* Hoạt ảnh pháo giấy chúc mừng (req #43) */
+  #confetti { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:60; display:none; }
+  #confetti.show { display:block; }
+
   /* Viết bài: đoạn văn / email / essay (req #38) */
   #essay { display:none; flex-direction:column; align-items:center; gap:14px; width:100%; }
   .etypes { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
@@ -399,6 +403,9 @@
     </div>
   </div>
 </div>
+
+<!-- Hoạt ảnh pháo giấy chúc mừng (req #43) -->
+<canvas id="confetti"></canvas>
 
 <!-- ───── Congrats modal ───── -->
 <div class="overlay" id="overlay">
@@ -809,6 +816,7 @@
       ? 'Bạn trả lời đúng <b>' + pct + '%</b>. Chuỗi học: 🔥 <b>' + streakValid() + ' ngày</b>. Các từ trả lời đúng đã được dời lịch ôn xa hơn.'
       : 'Đúng <b>' + pct + '%</b> — ôn lại các từ sai rồi thử lại nhé. Những từ sai sẽ xuất hiện sớm trong phần Học thẻ.';
     el('overlay').classList.add('show');
+    if (pass) fireConfetti(pct === 100 ? 1.6 : 1);   // req #43: pháo giấy khi đạt
   }
 
   // ── Review (xem lại) ──
@@ -982,6 +990,42 @@
     el('mReview').style.display = 'none';
     el('mAgain').onclick = () => { el('overlay').classList.remove('show'); retry(); };
     el('overlay').classList.add('show');
+    if (pass) fireConfetti(pct === 100 ? 1.6 : 1);   // req #43: pháo giấy khi đạt
+  }
+
+  // ─────────────── 🎉 Pháo giấy chúc mừng (req #43) ───────────────
+  let _confettiRaf = 0;
+  function fireConfetti(intensity = 1) {
+    const cv = el('confetti'); if (!cv) return;
+    const W = innerWidth || document.documentElement.clientWidth || 360;
+    const H = innerHeight || document.documentElement.clientHeight || 640;
+    const ctx = cv.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cv.classList.add('show');
+    const colors = ['#22d3ee', '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#e879f9', '#fbbf24'];
+    const N = Math.round(150 * intensity), parts = [];
+    for (let i = 0; i < N; i++) parts.push({
+      x: W / 2 + (Math.random() - .5) * 140, y: H / 3,
+      vx: (Math.random() - .5) * 11, vy: Math.random() * -13 - 4, g: .28 + Math.random() * .14,
+      w: 6 + Math.random() * 6, h: 4 + Math.random() * 5, rot: Math.random() * Math.PI,
+      vr: (Math.random() - .5) * .32, c: colors[i % colors.length], life: 0, max: 130 + Math.random() * 70,
+    });
+    cancelAnimationFrame(_confettiRaf);
+    (function tick() {
+      ctx.clearRect(0, 0, W, H);
+      let alive = 0;
+      for (const p of parts) {
+        if (p.life > p.max) continue;
+        alive++; p.life++; p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vx *= .99;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.globalAlpha = Math.max(0, 1 - p.life / p.max); ctx.fillStyle = p.c;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      }
+      if (alive > 0) _confettiRaf = requestAnimationFrame(tick);
+      else { cv.classList.remove('show'); ctx.clearRect(0, 0, W, H); }
+    })();
   }
 
   // ─────────────── ✒️ VIẾT BÀI (đoạn/email/essay) — req #38 ───────────────
