@@ -24,13 +24,13 @@ export const MODULES = [
   { category: 'curriculum', id: 'E2.5', title: 'Marketing căn bản',        yearLevel: 2, subject: 'marketing',       scenarioIds: ['E2.5-marketing-quiz'],  knowledgeQuiz: 'E2.5-marketing-quiz',  minStarsToUnlock: 5 },
 
   // ──────────── NĂM 3 — CHUYÊN NGÀNH ────────────
-  { category: 'curriculum', id: 'E3.1', title: 'Kinh tế lượng',            yearLevel: 3, subject: 'kinh-te-luong',   scenarioIds: [], minStarsToUnlock: 12, prerequisites: ['E2.2'] },
-  { category: 'curriculum', id: 'E3.2', title: 'Tài chính doanh nghiệp',   yearLevel: 3, subject: 'tai-chinh-doanh-nghiep', scenarioIds: [], minStarsToUnlock: 12, prerequisites: ['E2.3'] },
-  { category: 'curriculum', id: 'E3.3', title: 'Kế toán quản trị',         yearLevel: 3, subject: 'ke-toan-quan-tri', scenarioIds: [], minStarsToUnlock: 12, prerequisites: ['E1.3'] },
-  { category: 'curriculum', id: 'E3.4', title: 'Phân tích tài chính',      yearLevel: 3, subject: 'phan-tich-tai-chinh', scenarioIds: [], minStarsToUnlock: 12, prerequisites: ['E3.2'] },
-  { category: 'curriculum', id: 'E3.5', title: 'Marketing số + E-commerce', yearLevel: 3, subject: 'thuong-mai-dt',   scenarioIds: [], minStarsToUnlock: 12, prerequisites: ['E2.5'] },
-  { category: 'curriculum', id: 'E3.6', title: 'Quản trị chuỗi cung ứng',  yearLevel: 3, subject: 'chuoi-cung-ung',  scenarioIds: [], minStarsToUnlock: 12 },
-  { category: 'curriculum', id: 'E3.7', title: 'Kinh doanh quốc tế',       yearLevel: 3, subject: 'kinh-doanh-quoc-te', scenarioIds: [], minStarsToUnlock: 12 },
+  { category: 'curriculum', id: 'E3.1', title: 'Kinh tế lượng',            yearLevel: 3, subject: 'kinh-te-luong',   scenarioIds: ['E3.1-econometrics-quiz'],       knowledgeQuiz: 'E3.1-econometrics-quiz',       minStarsToUnlock: 12, prerequisites: ['E2.2'] },
+  { category: 'curriculum', id: 'E3.2', title: 'Tài chính doanh nghiệp',   yearLevel: 3, subject: 'tai-chinh-doanh-nghiep', scenarioIds: ['E3.2-corporate-finance-quiz'],  knowledgeQuiz: 'E3.2-corporate-finance-quiz',  minStarsToUnlock: 12, prerequisites: ['E2.3'] },
+  { category: 'curriculum', id: 'E3.3', title: 'Kế toán quản trị',         yearLevel: 3, subject: 'ke-toan-quan-tri', scenarioIds: ['E3.3-management-accounting-quiz'], knowledgeQuiz: 'E3.3-management-accounting-quiz', minStarsToUnlock: 12, prerequisites: ['E1.3'] },
+  { category: 'curriculum', id: 'E3.4', title: 'Phân tích tài chính',      yearLevel: 3, subject: 'phan-tich-tai-chinh', scenarioIds: ['E3.4-financial-analysis-quiz'], knowledgeQuiz: 'E3.4-financial-analysis-quiz', minStarsToUnlock: 12, prerequisites: ['E3.2'] },
+  { category: 'curriculum', id: 'E3.5', title: 'Marketing số + E-commerce', yearLevel: 3, subject: 'thuong-mai-dt',   scenarioIds: ['E3.5-digital-marketing-quiz'],  knowledgeQuiz: 'E3.5-digital-marketing-quiz',  minStarsToUnlock: 12, prerequisites: ['E2.5'] },
+  { category: 'curriculum', id: 'E3.6', title: 'Quản trị chuỗi cung ứng',  yearLevel: 3, subject: 'chuoi-cung-ung',  scenarioIds: ['E3.6-supply-chain-quiz'],       knowledgeQuiz: 'E3.6-supply-chain-quiz',       minStarsToUnlock: 12 },
+  { category: 'curriculum', id: 'E3.7', title: 'Kinh doanh quốc tế',       yearLevel: 3, subject: 'kinh-doanh-quoc-te', scenarioIds: ['E3.7-international-business-quiz'], knowledgeQuiz: 'E3.7-international-business-quiz', minStarsToUnlock: 12 },
 
   // ──────────── NĂM 4 — TÍCH HỢP ────────────
   { category: 'curriculum', id: 'E4.1', title: 'Quản trị chiến lược',      yearLevel: 4, subject: 'quan-tri-chien-luoc', scenarioIds: [], minStarsToUnlock: 20, prerequisites: ['E2.4'] },

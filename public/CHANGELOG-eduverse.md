@@ -4,6 +4,72 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-03 — Phiên cải tiến (7) · Trường Kinh tế — Year 3 hoàn chỉnh
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
+
+**Trường:** Trường Kinh tế (`economics`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox. Quét codebase phát hiện 7 module Năm 3 Trường Kinh tế (E3.1–E3.7) đều là skeleton với `scenarioIds: []` và không có `knowledgeQuiz`. Năm 1 & Năm 2 đã hoàn chỉnh (phiên 2026-06-27 và 2026-06-28). Ưu tiên bổ sung Year 3 để sinh viên năm 3 ngành Kinh tế có đủ nội dung học chuyên ngành sâu.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/economics-year3.js` | Tạo mới | 7 quiz scenarios E3.1–E3.7 (70 câu hỏi, đầy đủ explanation) |
+| `public/js/domains/economics/modules.js` | Sửa | Kích hoạt E3.1–E3.7: bổ sung `scenarioIds` + `knowledgeQuiz` |
+| `public/js/domains/economics/achievements.js` | Sửa | Thêm 8 achievement Year 3 mới (7 module + 1 hoàn thành Năm 3) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `ECONOMICS_YEAR3_SCENARIOS` |
+
+### Chi tiết nội dung (70 câu hỏi)
+
+**`E3.1-econometrics-quiz`** (10 câu) — Kinh tế lượng:
+OLS và tối thiểu hoá bình phương phần dư, hệ số R², đa cộng tuyến (VIF), kiểm định Breusch-Pagan (heteroscedasticity), Durbin-Watson (autocorrelation), biến giả (dummy variable), ưu điểm panel data, biến công cụ (IV/2SLS), kiểm định t-statistic, nhân quả Granger.
+
+**`E3.2-corporate-finance-quiz`** (10 câu) — Tài chính doanh nghiệp:
+Quyết định NPV, công thức WACC, định lý Modigliani-Miller, beta CAPM, chính sách cổ tức không liên quan, đòn bẩy tài chính, so sánh IRR vs NPV, định giá DCF, tấm chắn thuế lãi vay, Pecking Order Theory.
+
+**`E3.3-management-accounting-quiz`** (10 câu) — Kế toán quản trị:
+Break-even point, ABC costing, phân tích biến động (variance analysis), chi phí chìm (sunk cost), standard costing, contribution margin, transfer pricing, Balanced Scorecard (4 perspectives), chi phí cơ hội, flexible vs static budget.
+
+**`E3.4-financial-analysis-quiz`** (10 câu) — Phân tích tài chính:
+Quick ratio, phân tích DuPont (3 nhân tố), inventory turnover, P/E ratio, EBITDA và ứng dụng, Altman Z-score, FCFF, D/E ratio, EVA (Economic Value Added), comparable company analysis (trading multiples).
+
+**`E3.5-digital-marketing-quiz`** (10 câu) — Marketing số & E-commerce:
+SEO vs SEM, conversion rate, phễu AIDA, CLV, A/B testing, email marketing ROI, marketplace pros/cons, Google Analytics 4 event-based, retargeting, CTR và các chỉ số Google Ads.
+
+**`E3.6-supply-chain-quiz`** (10 câu) — Quản trị chuỗi cung ứng:
+EOQ formula, bullwhip effect, JIT (Just-In-Time), VMI (Vendor Managed Inventory), Incoterms 2020, S&OP process, Lean manufacturing (7 wastes), 3PL vs 4PL, moving average forecasting, OTIF KPI.
+
+**`E3.7-international-business-quiz`** (10 câu) — Kinh doanh quốc tế:
+Lợi thế so sánh Ricardo, FDI vs portfolio investment, Kim cương Porter, rủi ro tỷ giá (3 loại), phương thức thâm nhập thị trường (entry modes), nguyên tắc WTO, OLI theory (Dunning), EVFTA, J-curve effect, Power Distance Hofstede.
+
+### Achievement mới (8)
+
+| ID | Icon | Tên | Điều kiện |
+|----|------|-----|-----------|
+| `econometrics-pro` | 📐 | Kinh tế lượng Pro | E3.1 ≥ 3 sao |
+| `corp-finance-ace` | 🏛️ | Tài chính DN Ace | E3.2 ≥ 3 sao |
+| `mgmt-accountant` | 🗂️ | Kế toán Quản trị | E3.3 ≥ 3 sao |
+| `financial-analyst` | 🔍 | Financial Analyst | E3.4 ≥ 3 sao |
+| `digital-marketer` | 📲 | Digital Marketer | E3.5 ≥ 3 sao |
+| `supply-chain-pro` | 🚚 | Supply Chain Pro | E3.6 ≥ 3 sao |
+| `global-business` | 🌏 | Global Business | E3.7 ≥ 3 sao |
+| `all-year-3-econ` | 🥉 | Tốt nghiệp Năm 3 Kinh tế | Năm 3 hoàn chỉnh (E3.1–E3.7) |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/economics-year3.js           ✅ OK
+node --check public/js/domains/economics/modules.js           ✅ OK
+node --check public/js/domains/economics/achievements.js      ✅ OK
+node --check public/js/scenarios/_all-content.js              ✅ OK
+```
+
+---
+
 ## 2026-07-02 — Phiên cải tiến (6) · Trường CNTT — Year 3 hoàn chỉnh
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
