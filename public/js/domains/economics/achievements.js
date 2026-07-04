@@ -80,4 +80,37 @@ export const ACHIEVEMENTS = [
   { id: 'all-year-2-econ', icon: '🥈', title: 'Tốt nghiệp Năm 2 Kinh tế',
     desc: 'Hoàn thành toàn bộ module Năm 2 Kinh tế',
     trigger: { yearComplete: 2 } },
+
+  // ── Năm 3 ──────────────────────────────────────────────────
+  { id: 'econometrics-pro',  icon: '📐', title: 'Kinh tế lượng Pro',
+    desc: 'Hoàn thành module Kinh tế lượng (E3.1) với 3 sao',
+    trigger: { moduleStars: { 'E3.1': 3 } } },
+
+  { id: 'corp-finance-star', icon: '💼', title: 'Tài chính doanh nghiệp',
+    desc: 'Hoàn thành module Tài chính doanh nghiệp (E3.2) với 3 sao',
+    trigger: { moduleStars: { 'E3.2': 3 } } },
+
+  { id: 'mgmt-accounting',   icon: '📋', title: 'Kế toán quản trị Master',
+    desc: 'Hoàn thành module Kế toán quản trị (E3.3) với 3 sao',
+    trigger: { moduleStars: { 'E3.3': 3 } } },
+
+  { id: 'financial-analyst', icon: '🔍', title: 'Nhà phân tích tài chính',
+    desc: 'Hoàn thành module Phân tích tài chính (E3.4) với 3 sao',
+    trigger: { moduleStars: { 'E3.4': 3 } } },
+
+  { id: 'digital-marketer',  icon: '📲', title: 'Digital Marketer',
+    desc: 'Hoàn thành module Marketing số & E-commerce (E3.5) với 3 sao',
+    trigger: { moduleStars: { 'E3.5': 3 } } },
+
+  { id: 'supply-chain-boss', icon: '🔗', title: 'Chuỗi cung ứng chuyên gia',
+    desc: 'Hoàn thành module Quản trị chuỗi cung ứng (E3.6) với 3 sao',
+    trigger: { moduleStars: { 'E3.6': 3 } } },
+
+  { id: 'global-trader',     icon: '🌏', title: 'Nhà kinh doanh quốc tế',
+    desc: 'Hoàn thành module Kinh doanh quốc tế (E3.7) với 3 sao',
+    trigger: { moduleStars: { 'E3.7': 3 } } },
+
+  { id: 'all-year-3-econ',   icon: '🎖️', title: 'Tốt nghiệp Năm 3 Kinh tế',
+    desc: 'Hoàn thành toàn bộ module Năm 3 Kinh tế',
+    trigger: { yearComplete: 3 } },
 ];

@@ -15,6 +15,7 @@ import { YEAR12_SCENARIOS } from './year1-2.js';
 import { ECONOMICS_YEAR1_SCENARIOS } from './economics-year1.js';
 import { ECONOMICS_YEAR1B_SCENARIOS } from './economics-year1b.js';
 import { ECONOMICS_YEAR2_SCENARIOS } from './economics-year2.js';
+import { ECONOMICS_YEAR3_SCENARIOS } from './economics-year3.js';
 import { IT_YEAR1_SCENARIOS } from './it-year1.js';
 import { IT_YEAR2_SCENARIOS } from './it-year2.js';
 import { IT_YEAR3_SCENARIOS } from './it-year3.js';
@@ -55,6 +56,7 @@ export const ALL_SCENARIOS = {
   ...ECONOMICS_YEAR1_SCENARIOS,
   ...ECONOMICS_YEAR1B_SCENARIOS,
   ...ECONOMICS_YEAR2_SCENARIOS,
+  ...ECONOMICS_YEAR3_SCENARIOS,
   ...IT_YEAR1_SCENARIOS,
   ...IT_YEAR2_SCENARIOS,
   ...IT_YEAR3_SCENARIOS,
