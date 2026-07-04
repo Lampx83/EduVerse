@@ -4,15 +4,81 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
-## 2026-07-02 — Phiên cải tiến (6) · Trường CNTT — Year 3 hoàn chỉnh
+## 2026-07-04 — Phiên cải tiến (7) · TrưỜng Kinh tế — Year 3 hoàn chỉnh
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
 
-**Trường:** Trường CNTT (`it`)
+**TrưỜng:** TrưỜng Kinh tế (`economics`)
 
 ### Yêu cầu xử lý
 
-Không có yêu cầu từ inbox. Quét codebase phát hiện 8 module Năm 3 Trường CNTT (I3.1–I3.8) đều là skeleton với `scenarioIds: []` + `placeholder: true`. Năm 1 & Năm 2 đã hoàn chỉnh (phiên 2026-06-27 và 2026-06-28). Ưu tiên bổ sung Year 3 để sinh viên năm 3 có đủ nội dung học chuyên ngành sâu.
+Không có yêu cầu từ inbox. Quét codebase phát hiện 7 module Năm 3 TrưỜng Kinh tế (E3.1–E3.7) đều là skeleton với `scenarioIds: []`. Năm 1 & Năm 2 đã hoàn chỉnh (phiên 2026-06-27 và 2026-06-28). Ưu tiên bổ sung Year 3 để sinh viên năm 3 có đủ nội dung học chuyên ngành sâu.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/economics-year3.js` | Tạo mới | 7 quiz scenarios E3.1–E3.7 (70 câu hỏi, đầy đủ explanation) |
+| `public/js/domains/economics/modules.js` | Sửa | Kích hoạt E3.1–E3.7: bổ sung `scenarioIds` + `knowledgeQuiz` |
+| `public/js/domains/economics/achievements.js` | Sửa | Thêm 8 achievement Year 3 mới (7 module + 1 hoàn thành Năm 3) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `ECONOMICS_YEAR3_SCENARIOS` |
+
+### Chi tiết nội dung (70 câu hỏi)
+
+**`E3.1-econometrics-quiz`** (10 câu) — Kinh tế lượng:
+OLS Gauss-Markov assumption, giải thích hệ số β, đa cộng tuyến (VIF), heteroskedasticity (Breusch-Pagan), Durbin-Watson autocorrelation, F-test tổng thể, R² interpretation, biến nội sinh & IV/2SLS, Hausman test Fixed vs Random Effects, hồi quy giả tạo & cointegration.
+
+**`E3.2-corporate-finance-quiz`** (10 câu) — Tài chính doanh nghiệp:
+NPV vs IRR quyết định đầu tư, WACC công thức, Modigliani-Miller capital structure irrelevance, CAPM và beta, Free Cash Flow to Firm (FCFF), đòn bẩy tài chính (DFL), Cash Conversion Cycle, phương pháp so sánh vòng đời khác nhau (EAC), Pecking Order Theory, Payback Period nhược điểm.
+
+**`E3.3-management-accounting-quiz`** (10 câu) — Kế toán quản trị:
+Chi phí biến đổi vs cố định, Contribution Margin, Break-Even Point, CVP assumptions, Material Price Variance, ABC vs Traditional Costing, Balanced Scorecard 4 viễn cảnh, Transfer Pricing cost-plus nhược điểm, Make or Buy relevant costs, Flexible vs Static Budget.
+
+**`E3.4-financial-analysis-quiz`** (10 câu) — Phân tích tài chính:
+Current Ratio, DuPont 3 nhân tố (ROE = Margin × TAT × Leverage), P/E ratio, Total Asset Turnover, DCF Valuation (FCFF + Terminal Value), Altman Z-Score, D/E Ratio, Interest Coverage Ratio (ICR), Diluted EPS vs Basic EPS, OCF vs Net Income.
+
+**`E3.5-digital-marketing-quiz`** (10 câu) — Marketing số & E-commerce:
+SEO vs SEM, CTR calculation, LTV/CAC ratio, C2C vs B2B/B2C models, A/B Testing, Bounce Rate, Mobile-First strategy, TOFU–MOFU–BOFU funnel, Email Marketing ROI, Marketplace revenue model.
+
+**`E3.6-supply-chain-quiz`** (10 câu) — Quản trị chuỗi cung ứng:
+Định nghĩa supply chain & 3 dòng chảy, Just-In-Time (JIT) nguyên tắc, EOQ công thức, Bullwhip Effect, SCOR model (Plan-Source-Make-Deliver-Return), Lean vs Agile SCM, Vendor Managed Inventory (VMI), Total Cost of Ownership (TCO), Reverse Logistics, Lead Time.
+
+**`E3.7-international-business-quiz`** (10 câu) — Kinh doanh quốc tế:
+Comparative Advantage (Ricardo), FDI Greenfield vs M&A vs JV, Porter's Diamond 4 yếu tố, Tariff vs Non-Tariff Barriers, depreciation & J-Curve effect, WTO MFN principle, Hofstede Power Distance, Incoterms CIF vs FOB, Transfer Pricing in MNCs & BEPS, Contract Manufacturing vs FDI.
+
+### Achievement mới (8)
+
+| ID | Icon | Tên | Điều kiện |
+|----|------|-----|----------|
+| `econometrics-pro` | 📐 | Kinh tế lượng Pro | E3.1 ≥ 3 sao |
+| `corp-finance-star` | 💼 | Tài chính doanh nghiệp | E3.2 ≥ 3 sao |
+| `mgmt-accounting` | 📋 | Kế toán quản trị Master | E3.3 ≥ 3 sao |
+| `financial-analyst` | 🔍 | Nhà phân tích tài chính | E3.4 ≥ 3 sao |
+| `digital-marketer` | 📲 | Digital Marketer | E3.5 ≥ 3 sao |
+| `supply-chain-boss` | 🔗 | Chuỗi cung ứng chuyên gia | E3.6 ≥ 3 sao |
+| `global-trader` | 🌏 | Nhà kinh doanh quốc tế | E3.7 ≥ 3 sao |
+| `all-year-3-econ` | 🎖️ | Tốt nghiệp Năm 3 Kinh tế | Năm 3 hoàn chỉnh (E3.1–E3.7) |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/economics-year3.js              ✅ OK
+node --check public/js/domains/economics/modules.js              ✅ OK
+node --check public/js/domains/economics/achievements.js         ✅ OK
+node --check public/js/scenarios/_all-content.js                 ✅ OK
+```
+
+---
+
+## 2026-07-02 — Phiên cải tiến (6) · TrưỜng CNTT — Year 3 hoàn chỉnh
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
+
+**TrưỜng:** TrưỜng CNTT (`it`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox. Quét codebase phát hiện 8 module Năm 3 TrưỜng CNTT (I3.1–I3.8) đều là skeleton với `scenarioIds: []` + `placeholder: true`. Năm 1 & Năm 2 đã hoàn chỉnh (phiên 2026-06-27 và 2026-06-28). Ưu tiên bổ sung Year 3 để sinh viên năm 3 có đủ nội dung học chuyên ngành sâu.
 
 ### Thay đổi
 
@@ -52,7 +118,7 @@ Asymmetric encryption public/private key, OWASP Top 10 Broken Access Control #1,
 ### Achievement mới (9)
 
 | ID | Icon | Tên | Điều kiện |
-|----|------|-----|-----------|
+|----|------|-----|----------|
 | `se-architect` | 🏗️ | Software Architect | I3.1 ≥ 3 sao |
 | `system-designer` | 📐 | System Designer | I3.2 ≥ 3 sao |
 | `ai-scientist` | 🧠 | AI Scientist | I3.3 ≥ 3 sao |
@@ -74,15 +140,15 @@ node --check public/js/scenarios/_all-content.js          ✅ OK
 
 ---
 
-## 2026-06-28 — Phiên cải tiến (5) · Trường CNTT — Year 2 hoàn chỉnh
+## 2026-06-28 — Phiên cải tiến (5) · TrưỜng CNTT — Year 2 hoàn chỉnh
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
 
-**Trường:** Trường CNTT (`it`)
+**TrưỜng:** TrưỜng CNTT (`it`)
 
 ### Yêu cầu xử lý
 
-Không có yêu cầu từ inbox. Quét codebase phát hiện 32/37 module Trường CNTT còn là skeleton. Năm 1 đã hoàn chỉnh (phiên 2026-06-27). Ưu tiên bổ sung Year 2 (5 module cơ sở ngành) để sinh viên năm 2 có nội dung học: Cấu trúc dữ liệu & Giải thuật, OOP Java, SQL, Mạng máy tính, Thiết kế Web.
+Không có yêu cầu từ inbox. Quét codebase phát hiện 32/37 module TrưỜng CNTT còn là skeleton. Năm 1 đã hoàn chỉnh (phiên 2026-06-27). Ưu tiên bổ sung Year 2 (5 module cơ sở ngành) để sinh viên năm 2 có nội dung học: Cấu trúc dữ liệu & Giải thuật, OOP Java, SQL, Mạng máy tính, Thiết kế Web.
 
 ### Thay đổi
 
@@ -113,7 +179,7 @@ HTML5 Semantic tags, CSS Box Model, Flexbox justify-content, Media Query (max-wi
 ### Achievement mới (6)
 
 | ID | Icon | Tên | Điều kiện |
-|----|------|-----|-----------|
+|----|------|-----|----------|
 | `java-ninja` | ☕ | Java Ninja | I2.2 ≥ 3 sao |
 | `sql-hero` | 🗄️ | SQL Hero | I2.3 ≥ 3 sao |
 | `network-engineer` | 🌐 | Network Engineer | I2.4 ≥ 3 sao |
@@ -132,15 +198,15 @@ node --check public/js/scenarios/_all-content.js          ✅ OK
 
 ---
 
-## 2026-06-28 — Phiên cải tiến (4) · Trường Kinh tế — Year 2 hoàn chỉnh
+## 2026-06-28 — Phiên cải tiến (4) · TrưỜng Kinh tế — Year 2 hoàn chỉnh
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa kết nối trong môi trường này).
 
-**Trường:** Trường Kinh tế (`economics`)
+**TrưỜng:** TrưỜng Kinh tế (`economics`)
 
 ### Yêu cầu xử lý
 
-Không có yêu cầu từ inbox. Quét codebase phát hiện 22/27 module Trường Kinh tế vẫn là skeleton với `scenarioIds: []`. Năm 1 đã hoàn chỉnh (phiên 1+2 ngày 2026-06-27). Ưu tiên bổ sung Year 2 (5 module cơ sở ngành) để sinh viên năm 2 có nội dung học ngay.
+Không có yêu cầu từ inbox. Quét codebase phát hiện 22/27 module TrưỜng Kinh tế vẫn là skeleton với `scenarioIds: []`. Năm 1 đã hoàn chỉnh (phiên 1+2 ngày 2026-06-27). Ưu tiên bổ sung Year 2 (5 module cơ sở ngành) để sinh viên năm 2 có nội dung học ngay.
 
 ### Thay đổi
 
@@ -171,7 +237,7 @@ Marketing mix 4P, quy trình STP, phân khúc nhân khẩu học, chu kỳ sốn
 ### Achievement mới (6)
 
 | ID | Icon | Tên | Điều kiện |
-|----|------|-----|-----------|
+|----|------|-----|----------|
 | `macro-master` | 🏦 | Macro Master | E2.1 ≥ 3 sao |
 | `stats-pro` | 📊 | Chuyên gia Thống kê | E2.2 ≥ 3 sao |
 | `finance-guru` | 💰 | Tài chính – Tiền tệ Pro | E2.3 ≥ 3 sao |
@@ -190,15 +256,15 @@ node --check public/js/scenarios/_all-content.js                 ✅ OK
 
 ---
 
-## 2026-06-27 — Phiên cải tiến (3) · Trường CNTT — Year 1 hoàn chỉnh
+## 2026-06-27 — Phiên cải tiến (3) · TrưỜng CNTT — Year 1 hoàn chỉnh
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending).
 
-**Trường:** Trường CNTT (`it`)
+**TrưỜng:** TrưỜng CNTT (`it`)
 
 ### Yêu cầu xử lý
 
-Không có yêu cầu từ inbox. Quét codebase phát hiện toàn bộ 23 module curriculum Trường CNTT đều là skeleton với `scenarioIds: []`. Ưu tiên bổ sung Year 1 (5 module đại cương) để sinh viên năm 1 có nội dung học ngay.
+Không có yêu cầu từ inbox. Quét codebase phát hiện toàn bộ 23 module curriculum TrưỜng CNTT đều là skeleton với `scenarioIds: []`. Ưu tiên bổ sung Year 1 (5 module đại cương) để sinh viên năm 1 có nội dung học ngay.
 
 ### Thay đổi
 
