@@ -15,6 +15,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveDatabaseUrl, currentDbLabel } from './db-config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -24,8 +25,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 pg.types.setTypeParser(20, (v) => (v === null ? null : Number(v)));   // int8
 pg.types.setTypeParser(1700, (v) => (v === null ? null : Number(v))); // numeric
 
+const _dbUrl = resolveDatabaseUrl();
+console.log(`[db] target = ${currentDbLabel()}`);
 export const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: _dbUrl,
   max: Number(process.env.PG_POOL_MAX) || 10,
 });
 pool.on('error', (e) => console.error('[pg] idle client error', e.message));
