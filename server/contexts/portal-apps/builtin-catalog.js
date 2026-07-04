@@ -14,7 +14,7 @@
  * Nếu thêm/sửa entry, bump CATALOG_VERSION để force re-seed.
  */
 
-export const CATALOG_VERSION = '2026-06-08-v2-language-driving';
+export const CATALOG_VERSION = '2026-07-04-v3-lop2-apps';
 
 export const BUILTIN_APPS = [
   // ─────── Mầm non / Lớp 2 ───────
@@ -44,6 +44,31 @@ export const BUILTIN_APPS = [
   { alias: 'lop2-curriculum', name: 'Giáo trình Lớp 2', icon: '🎒',
     description: '9 môn × 36 tuần theo CT GDPT 2018 (KNTT/CTST/CD). Lý thuyết + quiz hằng tuần.',
     target_url: '/lop2.html', category: 'curriculum', domain: 'primary' },
+  // Lớp 2 — mini-game theo môn (GDPT 2018)
+  { alias: 'lop2-the-thao', name: 'Phản Xạ Cầu Thủ (GDTC)', icon: '⚽',
+    description: 'Trò phản xạ nhanh — luyện Giáo dục Thể chất Lớp 2 vui nhộn.',
+    target_url: '/lop2-the-thao.html', category: 'game', domain: 'primary' },
+  { alias: 'lop2-anh-memory', name: 'Memory Match Tiếng Anh', icon: '🎴',
+    description: 'Lật thẻ tìm cặp từ vựng — luyện Tiếng Anh Lớp 2.',
+    target_url: '/lop2-anh-memory.html', category: 'game', domain: 'primary' },
+  { alias: 'lop2-dao-duc', name: 'Đúng hay Sai? (Đạo đức)', icon: '🤝',
+    description: 'Tình huống Đạo đức Lớp 2 — chọn Đúng/Sai, học ứng xử tốt.',
+    target_url: '/lop2-dao-duc.html', category: 'game', domain: 'primary' },
+  { alias: 'lop2-phan-loai-rac', name: 'Phân Loại Rác (HĐTN)', icon: '♻️',
+    description: 'Kéo rác vào đúng thùng — Hoạt động trải nghiệm Lớp 2 về môi trường.',
+    target_url: '/lop2-phan-loai-rac.html', category: 'game', domain: 'primary' },
+  { alias: 'lop2-am-nhac', name: 'Đô-Rê-Mi Bay (Âm nhạc)', icon: '🎵',
+    description: 'Chạm nốt nhạc đúng nhịp — luyện tai nghe Âm nhạc Lớp 2.',
+    target_url: '/lop2-am-nhac.html', category: 'game', domain: 'primary' },
+  { alias: 'lop2-ghep-van', name: 'Ghép vần Tiếng Việt', icon: '🔤',
+    description: 'Ghép vần thành tiếng — luyện đọc viết Tiếng Việt Lớp 2.',
+    target_url: '/lop2-ghep-van.html', category: 'game', domain: 'primary' },
+  { alias: 'math-fun', name: 'Toán vui', icon: '🧮',
+    description: 'Các trò chơi toán tương tác — luyện tính toán tiểu học vui nhộn.',
+    target_url: '/math-fun.html', category: 'game', domain: 'primary' },
+  { alias: 'pixel-art-studio', name: 'Pixel Art Studio', icon: '🎨',
+    description: 'Vẽ tranh pixel sáng tạo — công cụ nghệ thuật số cho học sinh.',
+    target_url: '/pixel-art-studio.html', category: 'playground', domain: 'general' },
 
   // ─────── Trung học ───────
   { alias: 'ban-do-vn', name: 'Bản đồ Việt Nam Tri Thức', icon: '🗺️',

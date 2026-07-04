@@ -418,4 +418,32 @@ export function attachPortalApps(r, { requireAuth, requireAdmin, basePath = '' }
     await setPortalAppPublic(id, isPublic);
     res.json({ ok: true, isPublic });
   });
+
+  // ── LIBRARY (admin): thêm app vào THƯ VIỆN dùng chung (kind='builtin') ──
+  // "DB-managed library": admin đăng ký 1 trang/URL thành app mà KHÔNG cần sửa
+  // builtin-catalog.js + restart. Trỏ target_url (nội bộ /x.html hoặc http ngoài),
+  // gắn domain = cấp học để trường lọc/dùng. Quy mọi tính năng thành app qua đây.
+  r.post('/api/portal-apps/library', requireAuth, requireAdmin, async (req, res) => {
+    const b = req.body || {};
+    const alias = String(b.alias || '').trim().toLowerCase();
+    const name = String(b.name || '').trim();
+    const targetUrl = String(b.targetUrl || b.target_url || '').trim();
+    if (!ALIAS_RE.test(alias)) return res.status(400).json({ error: 'bad_alias', message: 'alias cần [a-z0-9-], 2-41 ký tự.' });
+    if (!name) return res.status(400).json({ error: 'bad_name', message: 'Cần tên app.' });
+    if (!(targetUrl.startsWith('/') || /^https?:\/\//i.test(targetUrl))) {
+      return res.status(400).json({ error: 'bad_target', message: 'target_url phải là /trang.html nội bộ hoặc http(s)://…' });
+    }
+    const sysOwner = await getSystemOwnerId();
+    if (!sysOwner) return res.status(503).json({ error: 'no_system_owner', message: 'Chưa có admin để sở hữu app thư viện.' });
+    const r2 = await upsertBuiltinApp(sysOwner, {
+      alias, name,
+      description: b.description ? String(b.description).slice(0, 500) : null,
+      icon: b.icon ? String(b.icon).slice(0, 60) : '🧩',
+      version: '1.0.0',
+      target_url: targetUrl,
+      category: b.category ? String(b.category).slice(0, 40) : 'tool',
+      domain: b.domain ? String(b.domain).slice(0, 40) : null,
+    });
+    res.json({ ok: true, action: r2.action, alias });
+  });
 }
