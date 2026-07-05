@@ -43,6 +43,10 @@ const REGISTRY = [
   { collection: 'space-sets',        file: 'space-sets.js',        export: 'SPACE_SETS_ITEMS' },
   { collection: 'driving-600',        file: 'driving-bank.js',        export: 'ITEMS' },
   { collection: 'exam-sets',          file: 'exam-sets.js',          export: 'EXAM_SETS' },
+  // 2026-07-05: content còn hardcode khi migrate Next → đưa vào DB.
+  { collection: 'traffic-signs',      file: 'bien-bao-giao-thong.js', export: 'TRAFFIC_SIGNS' },
+  { collection: 'code-quest-levels',  file: 'code-quest.js',          export: 'CODE_QUEST_LEVELS' },
+  { collection: 'lop2-dao-duc',       file: 'lop2-dao-duc.js',        export: 'POOL' },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');
@@ -67,8 +71,8 @@ for (const r of REGISTRY) {
     grand += arr.length;
     continue;
   }
-  const n = seedCollection(r.collection, arr);
-  console.log(`[seed-content] ✓ ${r.collection}: ${n} item (DB có ${collectionCount(r.collection)})`);
+  const n = await seedCollection(r.collection, arr);
+  console.log(`[seed-content] ✓ ${r.collection}: ${n} item (DB có ${await collectionCount(r.collection)})`);
   grand += n;
 }
 console.log(`[seed-content] tổng ${grand} item.`);
