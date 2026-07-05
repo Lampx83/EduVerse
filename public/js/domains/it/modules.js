@@ -47,10 +47,10 @@ export const MODULES = [
   { category: 'curriculum', id: 'I3.8', title: 'An toàn thông tin',           yearLevel: 3, subject: 'an-toan-thong-tin', scenarioIds: ['I3.8-security-quiz'], knowledgeQuiz: 'I3.8-security-quiz',  minStarsToUnlock: 12, prerequisites: ['I2.4'] },
 
   // ──────────── NĂM 4 — TÍCH HỢP ────────────
-  { category: 'curriculum', id: 'I4.1', title: 'Kiến trúc phần mềm + Patterns', yearLevel: 4, subject: 'kien-truc-phan-mem', scenarioIds: [], knowledgeQuiz: 'quiz-stub-I4.1', placeholder: true, minStarsToUnlock: 20, prerequisites: ['I3.1'] },
-  { category: 'curriculum', id: 'I4.2', title: 'Điện toán đám mây (AWS/GCP)',   yearLevel: 4, subject: 'dam-may',         scenarioIds: [], knowledgeQuiz: 'quiz-stub-I4.2', placeholder: true, minStarsToUnlock: 20, prerequisites: ['I3.7'] },
-  { category: 'curriculum', id: 'I4.3', title: 'Khoa học dữ liệu',              yearLevel: 4, subject: 'data-science',    scenarioIds: [], knowledgeQuiz: 'quiz-stub-I4.3', placeholder: true, minStarsToUnlock: 20, prerequisites: ['I3.4'] },
-  { category: 'curriculum', id: 'I4.4', title: 'Blockchain & Web3',             yearLevel: 4, subject: 'block-chain',     scenarioIds: [], knowledgeQuiz: 'quiz-stub-I4.4', placeholder: true, minStarsToUnlock: 20 },
+  { category: 'curriculum', id: 'I4.1', title: 'Kiến trúc phần mềm + Patterns', yearLevel: 4, subject: 'kien-truc-phan-mem', scenarioIds: ['I4.1-se-arch-quiz'],     knowledgeQuiz: 'I4.1-se-arch-quiz',     minStarsToUnlock: 20, prerequisites: ['I3.1'] },
+  { category: 'curriculum', id: 'I4.2', title: 'Điện toán đám mây (AWS/GCP)',   yearLevel: 4, subject: 'dam-may',         scenarioIds: ['I4.2-cloud-quiz'],        knowledgeQuiz: 'I4.2-cloud-quiz',        minStarsToUnlock: 20, prerequisites: ['I3.7'] },
+  { category: 'curriculum', id: 'I4.3', title: 'Khoa học dữ liệu',              yearLevel: 4, subject: 'data-science',    scenarioIds: ['I4.3-data-science-quiz'], knowledgeQuiz: 'I4.3-data-science-quiz', minStarsToUnlock: 20, prerequisites: ['I3.4'] },
+  { category: 'curriculum', id: 'I4.4', title: 'Blockchain & Web3',             yearLevel: 4, subject: 'block-chain',     scenarioIds: ['I4.4-blockchain-quiz'],   knowledgeQuiz: 'I4.4-blockchain-quiz',   minStarsToUnlock: 20 },
   { category: 'curriculum', id: 'I4.5', title: 'Khoá luận CNTT',                yearLevel: 4, subject: 'khoa-luan-it',    scenarioIds: [], knowledgeQuiz: 'quiz-stub-I4.5', placeholder: true, minStarsToUnlock: 24, prerequisites: ['I3.1', 'I3.4'], hasCertificate: true },
 
   // ──────────── PRACTICE / SKILL ────────────

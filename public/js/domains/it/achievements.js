@@ -98,9 +98,25 @@ export const ACHIEVEMENTS = [
     desc: 'Pass toàn bộ 8 module Năm 3 (I3.1–I3.8)',
     trigger: { yearComplete: 3 } },
 
+  { id: 'architect',    icon: '🏛️', title: 'Software Architect',
+    desc: 'Pass Kiến trúc phần mềm & Design Patterns (I4.1) với 3 sao',
+    trigger: { moduleStars: { 'I4.1': 3 } } },
+
   { id: 'cloud-pro',   icon: '☁️', title: 'Cloud Pro',
-    desc: 'Pass Cloud (I4.2) với 3 sao',
+    desc: 'Pass Điện toán đám mây (I4.2) với 3 sao',
     trigger: { moduleStars: { 'I4.2': 3 } } },
+
+  { id: 'data-scientist', icon: '📊', title: 'Data Scientist',
+    desc: 'Pass Khoa học dữ liệu (I4.3) với 3 sao',
+    trigger: { moduleStars: { 'I4.3': 3 } } },
+
+  { id: 'blockchain-dev', icon: '⛓️', title: 'Blockchain Developer',
+    desc: 'Pass Blockchain & Web3 (I4.4) với 3 sao',
+    trigger: { moduleStars: { 'I4.4': 3 } } },
+
+  { id: 'year4-it-complete', icon: '🥇', title: 'Tốt nghiệp Năm 4 CNTT',
+    desc: 'Pass toàn bộ module Năm 4 (I4.1–I4.4)',
+    trigger: { yearComplete: 4 } },
 
   { id: 'thesis-it',   icon: '🎓', title: 'Khoá luận xuất sắc',
     desc: 'Pass khoá luận I4.5',
