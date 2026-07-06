@@ -33,12 +33,12 @@ export const MODULES = [
   { category: 'curriculum', id: 'E3.7', title: 'Kinh doanh quốc tế',       yearLevel: 3, subject: 'kinh-doanh-quoc-te', scenarioIds: ['E3.7-international-business-quiz'], knowledgeQuiz: 'E3.7-international-business-quiz', minStarsToUnlock: 12 },
 
   // ──────────── NĂM 4 — TÍCH HỢP ────────────
-  { category: 'curriculum', id: 'E4.1', title: 'Quản trị chiến lược',      yearLevel: 4, subject: 'quan-tri-chien-luoc', scenarioIds: [], minStarsToUnlock: 20, prerequisites: ['E2.4'] },
-  { category: 'curriculum', id: 'E4.2', title: 'Khởi nghiệp – Lean canvas', yearLevel: 4, subject: 'khoi-nghiep',     scenarioIds: [], minStarsToUnlock: 20 },
-  { category: 'curriculum', id: 'E4.3', title: 'Kiểm toán',                yearLevel: 4, subject: 'kiem-toan',       scenarioIds: [], minStarsToUnlock: 20, prerequisites: ['E1.3'] },
-  { category: 'curriculum', id: 'E4.4', title: 'Thuế Việt Nam',            yearLevel: 4, subject: 'thue',            scenarioIds: [], minStarsToUnlock: 20 },
-  { category: 'curriculum', id: 'E4.5', title: 'Đạo đức kinh doanh',       yearLevel: 4, subject: 'dao-duc-kd',      scenarioIds: [], minStarsToUnlock: 20 },
-  { category: 'curriculum', id: 'E4.6', title: 'Khoá luận kinh tế',        yearLevel: 4, subject: 'khoa-luan-kt',    scenarioIds: [], minStarsToUnlock: 24, prerequisites: ['E3.1', 'E3.4'], hasCertificate: true },
+  { category: 'curriculum', id: 'E4.1', title: 'Quản trị chiến lược',      yearLevel: 4, subject: 'quan-tri-chien-luoc', scenarioIds: ['E4.1-strategy-quiz'],           knowledgeQuiz: 'E4.1-strategy-quiz',           minStarsToUnlock: 20, prerequisites: ['E2.4'] },
+  { category: 'curriculum', id: 'E4.2', title: 'Khởi nghiệp – Lean canvas', yearLevel: 4, subject: 'khoi-nghiep',     scenarioIds: ['E4.2-entrepreneurship-quiz'],   knowledgeQuiz: 'E4.2-entrepreneurship-quiz',   minStarsToUnlock: 20 },
+  { category: 'curriculum', id: 'E4.3', title: 'Kiểm toán',                yearLevel: 4, subject: 'kiem-toan',       scenarioIds: ['E4.3-auditing-quiz'],           knowledgeQuiz: 'E4.3-auditing-quiz',           minStarsToUnlock: 20, prerequisites: ['E1.3'] },
+  { category: 'curriculum', id: 'E4.4', title: 'Thuế Việt Nam',            yearLevel: 4, subject: 'thue',            scenarioIds: ['E4.4-tax-quiz'],                knowledgeQuiz: 'E4.4-tax-quiz',                minStarsToUnlock: 20 },
+  { category: 'curriculum', id: 'E4.5', title: 'Đạo đức kinh doanh',       yearLevel: 4, subject: 'dao-duc-kd',      scenarioIds: ['E4.5-business-ethics-quiz'],    knowledgeQuiz: 'E4.5-business-ethics-quiz',    minStarsToUnlock: 20 },
+  { category: 'curriculum', id: 'E4.6', title: 'Khoá luận kinh tế',        yearLevel: 4, subject: 'khoa-luan-kt',    scenarioIds: ['E4.6-capstone-quiz'],           knowledgeQuiz: 'E4.6-capstone-quiz',           minStarsToUnlock: 24, prerequisites: ['E3.1', 'E3.4'], hasCertificate: true },
 
   // ──────────── PRACTICE / SKILL ────────────
   { category: 'practice', id: 'EP01', title: 'Mô phỏng doanh nghiệp — Vận hành', subject: 'doanh-nghiep-ao', scenarioIds: [], minStarsToUnlock: 18, icon: '🏢' },
