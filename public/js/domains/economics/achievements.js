@@ -113,4 +113,29 @@ export const ACHIEVEMENTS = [
   { id: 'all-year-3-econ',   icon: '🎖️', title: 'Tốt nghiệp Năm 3 Kinh tế',
     desc: 'Hoàn thành toàn bộ module Năm 3 Kinh tế',
     trigger: { yearComplete: 3 } },
+
+  // ── Năm 4 ──────────────────────────────────────────────────
+  { id: 'strategist',        icon: '♟️', title: 'Chiến lược gia',
+    desc: 'Hoàn thành module Quản trị chiến lược (E4.1) với 3 sao',
+    trigger: { moduleStars: { 'E4.1': 3 } } },
+
+  { id: 'lean-founder',      icon: '🌱', title: 'Lean Founder',
+    desc: 'Hoàn thành module Khởi nghiệp – Lean Canvas (E4.2) với 3 sao',
+    trigger: { moduleStars: { 'E4.2': 3 } } },
+
+  { id: 'auditor-pro',       icon: '🔎', title: 'Kiểm toán viên xuất sắc',
+    desc: 'Hoàn thành module Kiểm toán (E4.3) với 3 sao',
+    trigger: { moduleStars: { 'E4.3': 3 } } },
+
+  { id: 'tax-expert',        icon: '📑', title: 'Chuyên gia Thuế',
+    desc: 'Hoàn thành module Thuế Việt Nam (E4.4) với 3 sao',
+    trigger: { moduleStars: { 'E4.4': 3 } } },
+
+  { id: 'ethics-champion',   icon: '⚖️', title: 'Nhà kinh doanh Chính trực',
+    desc: 'Hoàn thành module Đạo đức kinh doanh (E4.5) với 3 sao',
+    trigger: { moduleStars: { 'E4.5': 3 } } },
+
+  { id: 'year4-econ-complete', icon: '🏅', title: 'Tốt nghiệp Năm 4 Kinh tế',
+    desc: 'Hoàn thành toàn bộ module Năm 4 Kinh tế — kết thúc lộ trình Cử nhân Kinh tế',
+    trigger: { yearComplete: 4 } },
 ];

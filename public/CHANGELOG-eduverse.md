@@ -4,6 +4,67 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-06 — Phiên cải tiến (9) · Trường Kinh tế — Year 4 hoàn chỉnh (E4.1–E4.6)
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa có dữ liệu; không có GitHub Issues mở).
+
+**Trường:** Trường Kinh tế (`economics`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Quét codebase phát hiện 6 module Năm 4 Kinh tế (E4.1–E4.6) vẫn là skeleton (`scenarioIds: []`). Năm 1, 2 & 3 đã hoàn chỉnh (các phiên trước). Ưu tiên bổ sung Year 4 để sinh viên năm 4 có đủ nội dung tổng hợp chuyên sâu, hoàn chỉnh lộ trình Cử nhân Kinh tế 4 năm.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/economics-year4.js` | Tạo mới | 6 quiz scenarios E4.1–E4.6 (60 câu hỏi, đầy đủ explanation) |
+| `public/js/domains/economics/modules.js` | Sửa | Kích hoạt E4.1–E4.6: bổ sung `scenarioIds` + `knowledgeQuiz`, bỏ skeleton rỗng |
+| `public/js/domains/economics/achievements.js` | Sửa | Thêm 6 achievement Năm 4 mới (5 module + 1 tốt nghiệp Năm 4) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `ECONOMICS_YEAR4_SCENARIOS` |
+
+### Chi tiết nội dung (60 câu hỏi)
+
+**`E4.1-strategy-quiz`** (10 câu) — Quản trị chiến lược:
+5 lực Porter, SWOT-SO strategy, Cost Leadership, Ma trận BCG (Cash Cow), Blue Ocean Strategy, Backward Vertical Integration, Value Chain Analysis, Balanced Scorecard (4 góc nhìn), M&A Synergy, Ma trận Ansoff (Market Penetration).
+
+**`E4.2-entrepreneurship-quiz`** (10 câu) — Khởi nghiệp – Lean Canvas:
+Lean Canvas vs BMC (Problem ô thay thế), Build-Measure-Learn loop, Product-Market Fit (PMF), Pivot vs Persevere, Venture Capital vs vay ngân hàng, Unfair Advantage, Freemium model, Burn Rate & Runway, Customer Discovery (get out of building), Net Promoter Score (NPS).
+
+**`E4.3-auditing-quiz`** (10 câu) — Kiểm toán độc lập:
+Mục tiêu kiểm toán BCTC, Mô hình AR = IR×CR×DR, Trọng yếu (Materiality), Ý kiến kiểm toán unmodified vs modified, COSO 2013 (5 thành phần), Thủ tục phân tích, Độc lập KTV, Bằng chứng kiểm toán (Sufficiency & Appropriateness), External Confirmation, Internal vs External Audit.
+
+**`E4.4-tax-quiz`** (10 câu) — Thuế Việt Nam:
+Thuế TNDN 20%, Phương pháp khấu trừ VAT, Điều kiện chi phí được trừ, Biểu thuế TNCN lũy tiến 7 bậc, Hóa đơn điện tử (NĐ 123/2020), Transfer Pricing (chuyển giá), Foreign Contractor Withholding Tax, Thuế TTĐB, Kỳ kê khai VAT (tháng/quý), Tax Shield.
+
+**`E4.5-business-ethics-quiz`** (10 câu) — Đạo đức kinh doanh & CSR:
+Friedman vs Stakeholder Theory, Carroll's CSR Pyramid, Tham nhũng & hối lộ, Văn hóa tổ chức & Tone at the Top, ESG (Environmental-Social-Governance), Conflict of Interest, Agency Theory, Whistleblowing, Arm's Length Principle, Lean Canvas Unfair Advantage (bonus).
+
+**`E4.6-capstone-quiz`** (10 câu) — Khoá luận kinh tế:
+Quantitative vs Qualitative Research, Endogeneity & IV, Plagiarism, R² và Adjusted R², Difference-in-Differences (DiD), Cấu trúc IMRaD, Policy Implications, Correlation ≠ Causation, Kỹ năng trình bày Hội đồng, Tính đại diện mẫu (Sample Representativeness).
+
+### Achievement mới (6)
+
+| ID | Icon | Tên | Điều kiện |
+|----|------|-----|-----------|
+| `strategist` | ♟️ | Chiến lược gia | E4.1 ≥ 3 sao |
+| `lean-founder` | 🌱 | Lean Founder | E4.2 ≥ 3 sao |
+| `auditor-pro` | 🔎 | Kiểm toán viên xuất sắc | E4.3 ≥ 3 sao |
+| `tax-expert` | 📑 | Chuyên gia Thuế | E4.4 ≥ 3 sao |
+| `ethics-champion` | ⚖️ | Nhà kinh doanh Chính trực | E4.5 ≥ 3 sao |
+| `year4-econ-complete` | 🏅 | Tốt nghiệp Năm 4 Kinh tế | yearComplete: 4 |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/economics-year4.js          ✅ OK
+node --check public/js/domains/economics/modules.js          ✅ OK
+node --check public/js/domains/economics/achievements.js     ✅ OK
+node --check public/js/scenarios/_all-content.js             ✅ OK
+```
+
+---
+
 ## 2026-07-05 — Phiên cải tiến (8) · Trường CNTT — Year 4 (I4.1–I4.4)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
