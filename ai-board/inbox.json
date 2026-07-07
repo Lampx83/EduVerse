@@ -1,4 +1,6 @@
 {
   "_doc": "Hộp thư yêu cầu của Ban điều hành AI. Thêm item vào mảng items[] để AI board xử lý trong phiên tiếp theo. Sau khi xử lý, AI board cập nhật status → 'done' và ghi pr_url.",
+  "_synced_at": "2026-07-06T23:11:28.578Z",
+  "_source": "/home/user/EduVerse/data/tizia.db",
   "items": []
 }
