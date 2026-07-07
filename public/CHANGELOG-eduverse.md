@@ -4,6 +4,53 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-07 — Phiên cải tiến (10) · Trường THPT — Dọn sạch mô tả module lỗi thời
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
+
+**Trường:** Trường THPT (`highschool`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Quét codebase phát hiện **18 mô tả module** trong `public/js/domains/highschool/modules.js` còn ghi chú lỗi thời "(Scenarios đang biên soạn)" — trong khi tất cả 18 file scenario tương ứng đã tồn tại đầy đủ (`lop10/`, `lop11/`, `lop12/`). Ghi chú này gây hiểu nhầm cho học sinh rằng môn học chưa có nội dung, dù thực tế đã sẵn sàng. Ưu tiên dọn sạch để thông tin hiển thị đúng thực tế.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/highschool/modules.js` | Sửa | Xoá "(Scenarios đang biên soạn)" khỏi 18 mô tả module; cập nhật 3 comment section lỗi thời |
+
+### Chi tiết module đã cập nhật (18 module)
+
+| Module | Môn | Lớp | File scenario xác nhận |
+|--------|-----|-----|------------------------|
+| H11SINH | Sinh học 11 | 11 | `lop11/sinh-hoc.js` (329 dòng) ✅ |
+| H12SINH | Sinh học 12 | 12 | `lop12/sinh-hoc.js` (329 dòng) ✅ |
+| H11SU | Lịch sử 11 | 11 | `lop11/lich-su.js` (336 dòng) ✅ |
+| H12SU | Lịch sử 12 | 12 | `lop12/lich-su.js` (329 dòng) ✅ |
+| H11DIA | Địa lí 11 | 11 | `lop11/dia-ly.js` (342 dòng) ✅ |
+| H12DIA | Địa lí 12 | 12 | `lop12/dia-ly.js` (329 dòng) ✅ |
+| H11GDCD | GD Kinh tế & PL 11 | 11 | `lop11/gdcd.js` (330 dòng) ✅ |
+| H12GDCD | GD Kinh tế & PL 12 | 12 | `lop12/gdcd.js` (329 dòng) ✅ |
+| H11TIN | Tin học 11 | 11 | `lop11/tin-hoc.js` (329 dòng) ✅ |
+| H12TIN | Tin học 12 | 12 | `lop12/tin-hoc.js` (330 dòng) ✅ |
+| H10CN | Công nghệ 10 | 10 | `lop10/cong-nghe.js` (329 dòng) ✅ |
+| H11CN | Công nghệ 11 | 11 | `lop11/cong-nghe.js` (329 dòng) ✅ |
+| H12CN | Công nghệ 12 | 12 | `lop12/cong-nghe.js` (329 dòng) ✅ |
+| H11GDQP | GDQP 11 | 11 | `lop11/gdqp.js` (329 dòng) ✅ |
+| H12GDQP | GDQP 12 | 12 | `lop12/gdqp.js` (330 dòng) ✅ |
+| H10HDTN | HĐ Trải nghiệm 10 | 10 | `lop10/hdtn.js` (294 dòng) ✅ |
+| H11HDTN | HĐ Trải nghiệm 11 | 11 | `lop11/hdtn.js` (296 dòng) ✅ |
+| H12HDTN | HĐ Trải nghiệm 12 | 12 | `lop12/hdtn.js` (296 dòng) ✅ |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/highschool/modules.js     ✅ OK
+```
+
+---
+
 ## 2026-07-06 — Phiên cải tiến (9) · Trường Kinh tế — Year 4 hoàn chỉnh (E4.1–E4.6)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; DB production chưa có dữ liệu; không có GitHub Issues mở).
