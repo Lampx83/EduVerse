@@ -35,6 +35,8 @@ const REGISTRY = [
   // là object map → wrap 1 doc.
   { collection: 'lab-recipes',        file: '../../lab-recipes.js',     export: 'RECIPES' },
   { collection: 'lab-reagents',       file: '../../lab-recipes.js',     export: 'REAGENTS', wrap: true },
+  // baoche-lessons: 12 bài Thực hành Bào chế theo giáo trình DUOC 04 (schema v2).
+  { collection: 'baoche-lessons',     file: '../../baoche-curriculum.js', export: 'BAOCHE_LESSONS' },
   { collection: 'provinces',          file: 'provinces.js',          export: 'PROVINCES' },
   { collection: 'pronunciation',      file: 'pronunciation.js',      export: 'SENTENCES', wrap: true },
   { collection: 'pet-quiz-banks',    file: 'pet-quiz-banks.js',    export: 'QUIZ_BANKS', wrap: true },
