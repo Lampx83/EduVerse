@@ -306,7 +306,7 @@ export default function HocThongMinhClient() {
   const answers = question ? question.answers || question.options || [] : [];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
+    <div className="w-full space-y-4">
       {/* Level card */}
       <div className="flex flex-wrap items-center gap-5 rounded-2xl border border-violet-400/35 bg-gradient-to-br from-violet-500/20 to-blue-500/10 p-6">
         <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 text-4xl shadow-lg shadow-indigo-500/40">
@@ -479,7 +479,7 @@ function SectionTitle({ ic, children }: { ic: string; children: React.ReactNode 
 
 function LandingView({ landing }: { landing: Landing }) {
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="w-full">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-bold">{landing.title}</h1>
         {landing.back && (

@@ -11,7 +11,7 @@
 // ============================================================
 
 import { db, getUserWallet, upsertUserWallet, getUserState, putUserState } from '../../db.js';
-import { requireAuth } from '../identity/auth.js';
+import { requireAuth, isStreakEnabledForDomain } from '../identity/auth.js';
 
 // ─── Battle Pass ─────────────────────────────────────────────
 const SEASON_DAYS = 60;
@@ -318,9 +318,15 @@ export function attachEconomy(router) {
 
   // Daily Login
   router.get('/api/daily/me', requireAuth, async (req, res) => {
-    res.json({ ok: true, ...(await getDailyState(req.user.id)) });
+    // Thưởng đăng nhập streak CHỈ cho phổ thông. Trường ĐH/nghề → tắt (FE không
+    // popup, và claim cũng chặn ở dưới).
+    const st = await getDailyState(req.user.id);
+    if (!isStreakEnabledForDomain(req.user.enrolled_domain)) { st.reward_off = true; st.can_claim = false; }
+    res.json({ ok: true, ...st });
   });
   router.post('/api/daily/claim', requireAuth, async (req, res) => {
+    if (!isStreakEnabledForDomain(req.user.enrolled_domain))
+      return res.status(403).json({ ok: false, error: 'streak_reward_off' });
     const result = await claimDaily(req.user.id);
     if (!result.ok) return res.status(400).json(result);
     res.json(result);

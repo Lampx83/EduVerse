@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0702';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0702';
-import { createCharacter } from './character.js?v=ph0702';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0711';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0711';
+import { createCharacter } from './character.js?v=ph0711';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -3364,6 +3364,18 @@ export function buildScene(canvas, opts = {}) {
   // không có callback → direct pick (backward compat).
   // Click TRONG TRAY (sub đã `picked`) → unpick chính hộp đó.
   function pickDrug(drugIdOrSub) {
+    // ĐƠN VỊ ra lẻ trong khay (isUnit) → mở inspector để xem/dán nhãn/xoá (trả kệ =
+    // gỡ khỏi khay). KHÔNG áp logic "hộp trên kệ" (đơn vị không có ô kệ gốc).
+    if (drugIdOrSub && typeof drugIdOrSub !== 'string' && drugIdOrSub.userData?.isUnit) {
+      const uSub = drugIdOrSub;
+      if (typeof opts.onInspectDrug === 'function') {
+        opts.onInspectDrug({
+          drug: uSub.userData.drug, meta: getDrugMeta(uSub.userData.drug),
+          fromTray: true, confirmToTray: () => {}, returnToShelf: () => unpickSub(uSub),
+        });
+      } else unpickSub(uSub);
+      return true;
+    }
     // Chuẩn hoá về 1 hộp `sub` của thuốc (string → hộp ngoài cùng).
     let sub = drugIdOrSub;
     if (typeof drugIdOrSub === 'string') {
@@ -3438,14 +3450,60 @@ export function buildScene(canvas, opts = {}) {
     opts.onAction?.('pick_box', { drugId: sub.userData.drugId, boxIndex: sub.userData.boxIndex });
     return true;
   }
+  // Hiệu ứng BÓC nhãn HDSD khỏi hộp trước khi hộp trở lại kệ (yêu cầu UX): tách
+  // nhãn ra scene (giữ world transform), cong vênh + trượt ra + mờ dần rồi xoá.
+  function peelStickerOff(sticker) {
+    scene.attach(sticker);                 // giữ đúng vị trí world khi tách khỏi hộp
+    const mat = sticker.material;
+    if (mat) { mat.transparent = true; mat.depthWrite = false; }
+    const p0 = sticker.position.clone();
+    const rz0 = sticker.rotation.z, rx0 = sticker.rotation.x;
+    const t0 = performance.now(), dur = 480;
+    let done = false;
+    const cleanup = () => {
+      if (done) return; done = true;
+      sticker.parent?.remove(sticker);
+      mat?.map?.dispose?.(); mat?.dispose?.(); sticker.geometry?.dispose?.();
+    };
+    const tick = (now) => {
+      const k = Math.min(1, (now - t0) / dur);
+      const e = k * k;                     // easeIn — bóc dần rồi bay ra
+      sticker.rotation.z = rz0 + e * 1.1;
+      sticker.rotation.x = rx0 - e * 0.6;
+      sticker.position.set(p0.x + e * 0.06, p0.y + e * 0.05, p0.z + e * 0.05);
+      if (mat) mat.opacity = 1 - e;
+      if (k < 1) requestAnimationFrame(tick);
+      else cleanup();
+    };
+    requestAnimationFrame(tick);
+    // An toàn: tab ẩn → rAF bị treo, vẫn dọn mesh sau khi animation lẽ ra kết thúc.
+    setTimeout(cleanup, dur + 400);
+  }
+
   function unpickSub(sub) {
+    // ĐƠN VỊ ra lẻ (isUnit): không có "kệ gốc" để trả → gỡ khỏi khay + xoá hẳn mesh.
+    if (sub.userData.isUnit) {
+      sub.userData.picked = false;
+      const i = picked.indexOf(sub); if (i >= 0) picked.splice(i, 1);
+      const old = sub.getObjectByName('hdsd-sticker');
+      if (old) { peelStickerOff(old); labelsByDrug.delete(sub.userData.drugId); }
+      sub.traverse(o => {
+        if (o === sub) return;
+        o.geometry?.dispose?.();
+        const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(mm => { mm.map?.dispose?.(); mm.dispose?.(); });
+      });
+      scene.remove(sub);
+      picked.forEach((s, k) => { s.userData.targetPosition = pickSlotPos(k, s.userData?.style?.h || 0.1); });
+      opts.onAction?.('unpick_unit', { drugId: sub.userData.drugId, unitKind: sub.userData.unitKind });
+      return true;
+    }
     sub.userData.picked = false;
     const idx = picked.indexOf(sub);
     if (idx >= 0) picked.splice(idx, 1);
-    // Yêu cầu thầy #10: trả hộp về kệ → HỦY nhãn HDSD đã dán, trả về trạng thái
-    // ban đầu (gỡ mesh sticker + xoá bản ghi nhãn của thuốc này).
+    // Yêu cầu 4: trả hộp về kệ → HỦY nhãn HDSD đã dán, trả về trạng thái ban đầu
+    // (BÓC mesh sticker có hiệu ứng + xoá bản ghi nhãn của thuốc này).
     const oldSticker = sub.getObjectByName('hdsd-sticker');
-    if (oldSticker) { sub.remove(oldSticker); oldSticker.material?.map?.dispose?.(); oldSticker.material?.dispose?.(); oldSticker.geometry?.dispose?.(); }
+    if (oldSticker) peelStickerOff(oldSticker);
     labelsByDrug.delete(sub.userData.drugId);
     // Đưa về kệ gốc: reparent lại cabGroup + dùng homePosition LOCAL gốc.
     if (sub.userData.originalParent) {
@@ -3563,12 +3621,9 @@ export function buildScene(canvas, opts = {}) {
     y += 18;
     ctx.setLineDash([7, 4]); ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(22, y); ctx.lineTo(HDSD_W - 22, y); ctx.stroke(); ctx.setLineDash([]);
-    y += 28;
-    // BN
-    ctx.fillStyle = '#422006'; ctx.font = `15px ${FONT}`;
-    ctx.fillText(`BN: ${(label.patient || 'Khách vãng lai').slice(0, 28)}`, 24, y);
     y += 30;
-    // Tên thuốc (đậm, lớn)
+    // Tên thuốc (đậm, lớn) — đã bỏ trường "Bệnh nhân" khỏi mẫu nhãn (yêu cầu 3)
+    ctx.fillStyle = '#422006';
     ctx.font = `800 24px ${FONT}`;
     ctx.fillText((label.brand || '').slice(0, 22), 24, y);
     y += 26;
@@ -3642,9 +3697,10 @@ export function buildScene(canvas, opts = {}) {
       sticker.position.set(0, cy, 0);
     } else {
       // HỘP GIẤY: nhãn phẳng dán mặt trước +Z, tỉ lệ PORTRAIT 360:480.
-      // Nhãn NHỎ lại (yêu cầu thầy #10: nhãn đang quá to so với hộp).
+      // Nhãn NHỎ lại so với hộp (yêu cầu 1: nhãn đang che gần hết mặt hộp) → chỉ
+      // chiếm ~1/3 bề ngang & ~nửa chiều cao mặt hộp, chừa chỗ trống thực tế.
       const faceW = style.w * 0.92, faceH = style.h * 0.88;
-      const sw = Math.min(faceW * 0.42, faceH * 0.62 * (HDSD_W / HDSD_H));
+      const sw = Math.min(faceW * 0.33, faceH * 0.48 * (HDSD_W / HDSD_H));
       const sh = sw * (HDSD_H / HDSD_W);
       let cx = (u - 0.5) * faceW, cy = (0.5 - v) * faceH;
       cx = Math.max(-faceW / 2 + sw / 2, Math.min(faceW / 2 - sw / 2, cx));
@@ -3828,6 +3884,13 @@ export function buildScene(canvas, opts = {}) {
     getAvatarHair: () => _hairColor,
     getAvatarShirt: () => _shirtColor,
     getPickedIds: () => picked.map(s => s.userData.drugId),
+    // Món trong khay kèm dạng bán: 'box' = nguyên hộp, 'unit' = đơn vị ra lẻ
+    // (vỉ/gói/ống…) → POS tính tiền + đếm theo đúng đơn vị.
+    getPickedItems: () => picked.map(s => ({
+      drugId: s.userData.drugId,
+      mode: s.userData.isUnit ? 'unit' : 'box',
+      unit: s.userData.unitKind || null,
+    })),
     getLabels: () => Object.fromEntries(labelsByDrug.entries()),
     setPendingLabel: (l) => { pendingLabel = l; if (!l) labelTargetSub = null; },
     pickDrug,
@@ -3840,6 +3903,40 @@ export function buildScene(canvas, opts = {}) {
       if (!boxes.length) return false;
       triggerBarcodeScan();
       return pickSub(boxes[0]);
+    },
+    // Đưa ĐƠN VỊ ra lẻ (vỉ/gói/ống/lọ/viên…) vào KHAY BÁN HÀNG dưới dạng mesh 3D
+    // ĐÚNG hình dạng (không phải hộp). Mỗi đơn vị = 1 vật, track trong `picked` như
+    // hộp → bán ở POS, click mở inspector, trả kệ/xoá được. `build` là factory dựng
+    // mesh (gọi từ simulation.js — makeUnit). Trả về SỐ đơn vị đã thêm.
+    pickUnitToTray: ({ drugId, drug, unitKind, qty = 1, build }) => {
+      if (typeof build !== 'function') return 0;
+      triggerBarcodeScan();
+      let added = 0;
+      const n = Math.max(1, Math.floor(qty) || 1);
+      for (let i = 0; i < n; i++) {
+        if (picked.length >= 8) break;                 // khay tối đa 8 món
+        const mesh = build();
+        if (!mesh) break;
+        const sub = new THREE.Group();
+        sub.add(mesh);
+        const size = new THREE.Box3().setFromObject(sub).getSize(new THREE.Vector3());
+        const style = { w: size.x || 0.08, h: size.y || 0.05, d: size.z || 0.06 };
+        sub.userData = {
+          drugId, drug, picked: true, isUnit: true, unitKind,
+          boxIndex: -1 - i, style, homePosition: new THREE.Vector3(),
+        };
+        const pos = pickSlotPos(picked.length, style.h);
+        sub.position.copy(pos);
+        sub.userData.targetPosition = pos.clone();
+        sub.traverse(o => { if (o.isMesh) o.castShadow = true; });
+        picked.push(sub);
+        scene.add(sub);
+        added++;
+      }
+      // Sắp lại toàn bộ món trong khay cho gọn theo slot.
+      picked.forEach((s, idx) => { s.userData.targetPosition = pickSlotPos(idx, s.userData?.style?.h || 0.1); });
+      if (added) opts.onAction?.('pick_unit', { drugId, unitKind, qty: added });
+      return added;
     },
     attachLabelToPickedDrug,
     getDrugFace,

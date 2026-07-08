@@ -205,7 +205,7 @@ export default function AiQuizGenClient() {
   }
 
   return (
-    <div className="mx-auto max-w-[880px] space-y-4">
+    <div className="w-full space-y-4">
       <div className="flex items-center gap-3.5">
         <a
           href="/ugc/index.html"

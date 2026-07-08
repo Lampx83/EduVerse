@@ -211,7 +211,7 @@ export default function AgentChat() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       <div>
         <h1 className="text-xl font-bold">
           Trợ lý AI <span className="text-sm font-semibold text-muted-foreground">· Agent kiểu AI Portal</span>

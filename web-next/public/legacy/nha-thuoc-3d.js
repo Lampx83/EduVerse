@@ -11,7 +11,7 @@
 //    `/js/pharmacy/simulation.js` vì file này serve ở /legacy/ (proxy Next
 //    fallback sang Express giữ nguyên asset). simulation.js lại import các sibling
 //    bằng `./…` — vẫn resolve đúng vì nó nằm ở /js/pharmacy/. KHÔNG copy asset.
-import { startSimulation } from '/js/pharmacy/simulation.js?v=ph0702';
+import { startSimulation } from '/js/pharmacy/simulation.js?v=ph0711';
 const params = new URLSearchParams(location.search);
 const moduleId = params.get('module') || 'gpp';
 document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;

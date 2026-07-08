@@ -16,7 +16,7 @@ export default async function Marketplace() {
   const initialItems = res.data?.items ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="bg-gradient-to-br from-white via-primary to-orange-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
           📚 Chợ bài giảng cộng đồng

@@ -586,6 +586,19 @@
     outline: 2px solid rgba(13,148,136,0.9); outline-offset: -1px;
   }
   .sp-sticker:active { cursor: grabbing; }
+  /* Phản hồi vùng dán (yêu cầu 2): viền xanh = hợp lệ, đỏ = che thông tin thuốc. */
+  .sp-sticker { transition: outline-color .12s ease, box-shadow .15s ease; }
+  .sp-sticker-bad { outline-color: rgba(239,68,68,0.95) !important; }
+  .sp-sticker-flash-ok {
+    outline-color: rgba(34,197,94,1) !important;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.55), 0 3px 12px rgba(0,0,0,0.45) !important;
+  }
+  .sp-sticker-flash-bad {
+    outline-color: rgba(239,68,68,1) !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.55), 0 3px 12px rgba(0,0,0,0.45) !important;
+    animation: sp-shake .3s ease;
+  }
+  @keyframes sp-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
   /* Toast nhắc thao tác (vd phải đưa thuốc vào khay trước khi dán nhãn). */
   .pharm-toast {
     position: fixed; top: 92px; left: 50%;
@@ -1060,7 +1073,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0702';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0711';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;

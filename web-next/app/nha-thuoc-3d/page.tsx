@@ -596,6 +596,19 @@ const LEGACY_CSS = `
     outline: 2px solid rgba(13,148,136,0.9); outline-offset: -1px;
   }
   .sp-sticker:active { cursor: grabbing; }
+  /* Phản hồi vùng dán (yêu cầu 2): viền xanh = hợp lệ, đỏ = che thông tin thuốc. */
+  .sp-sticker { transition: outline-color .12s ease, box-shadow .15s ease; }
+  .sp-sticker-bad { outline-color: rgba(239,68,68,0.95) !important; }
+  .sp-sticker-flash-ok {
+    outline-color: rgba(34,197,94,1) !important;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.55), 0 3px 12px rgba(0,0,0,0.45) !important;
+  }
+  .sp-sticker-flash-bad {
+    outline-color: rgba(239,68,68,1) !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.55), 0 3px 12px rgba(0,0,0,0.45) !important;
+    animation: sp-shake .3s ease;
+  }
+  @keyframes sp-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
   /* Toast nhắc thao tác (vd phải đưa thuốc vào khay trước khi dán nhãn). */
   .pharm-toast {
     position: fixed; top: 92px; left: 50%;
@@ -1008,6 +1021,31 @@ export default function NhaThuoc3DPage() {
     style.textContent = LEGACY_CSS;
     document.head.appendChild(style);
 
+    // 1b) Override FULLSCREEN. Bản Next bọc MỌI trang trong <main class="container
+    //     py-8"> (cap 1100px + padding) kèm thanh nav sticky → .app bị bó ~1100px,
+    //     khu 3D chỉ còn ~700px. Cho riêng trang nhà thuốc thoát container để tràn
+    //     viền như bản gốc TRƯỚC khi chuyển Next.js. Style này chỉ tồn tại khi trang
+    //     mounted (gỡ ở cleanup) nên KHÔNG ảnh hưởng trang khác. `:has(.app)` giới
+    //     hạn đúng <main> đang chứa nhà thuốc.
+    const fs = document.createElement('style');
+    fs.dataset.pharmFullscreen = '1';
+    fs.textContent = [
+      'body:has(.app) main{max-width:none!important;padding:0!important;margin:0!important;width:100%!important}',
+      'body:has(.app){overflow:hidden}',
+      '.app{height:calc(100vh - var(--pharm-header-h,48px))!important}',
+    ].join('');
+    document.head.appendChild(fs);
+
+    // Đo chiều cao thanh nav Next (sticky, có thể đổi khi responsive) → set biến CSS
+    // để .app fill khít phần viewport còn lại, không hở đáy / không tràn.
+    const setHeaderH = () => {
+      const h = document.querySelector('body > header');
+      if (h) document.documentElement.style.setProperty(
+        '--pharm-header-h', Math.round(h.getBoundingClientRect().height) + 'px');
+    };
+    setHeaderH();
+    window.addEventListener('resize', setHeaderH);
+
     // 2) importmap — chỉ 1 importmap/tài liệu, phải có trước khi module resolve.
     //    Guard theo id để không thêm trùng khi client-navigate quay lại.
     if (!document.getElementById('pharm-importmap')) {
@@ -1027,6 +1065,9 @@ export default function NhaThuoc3DPage() {
     return () => {
       s.remove();
       style.remove();
+      fs.remove();
+      window.removeEventListener('resize', setHeaderH);
+      document.documentElement.style.removeProperty('--pharm-header-h');
       // importmap KHÔNG gỡ: đã dùng để resolve module; giữ lại vô hại.
     };
   }, []);

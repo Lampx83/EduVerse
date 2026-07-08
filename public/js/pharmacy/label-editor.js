@@ -2,7 +2,7 @@
 //   • openHdsdEditor   — Nhãn HƯỚNG DẪN SỬ DỤNG dán lên HỘP thuốc (liều + thời điểm + số phút trước/sau ăn)
 //   • openPackageEditor — Nhãn BAO BÌ RA LẺ (trắng/vàng/hồng) theo mẫu phong bì; túi zip chỉ đựng kín khí
 // Giữ semantic field cũ để backend chấm điểm + render in/dán nhãn vẫn work.
-import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0702';
+import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0711';
 import { TIMING_LABEL, totalPerDay } from './labels.js';
 
 const QUICK_NOTES = [
@@ -61,10 +61,6 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
             <input class="le2-drug-search" type="search" placeholder="🔎 Gõ tên thuốc để tìm nhanh…" autocomplete="off"/>
             <select class="le2-drug" size="1"></select>
           </label>
-          <label class="le2-field">
-            <span class="le2-lbl">Bệnh nhân</span>
-            <input class="le2-patient" placeholder="Khách vãng lai" value="Khách vãng lai"/>
-          </label>
           <fieldset class="le2-doses-box">
             <legend>Số viên mỗi cữ</legend>
             <div class="le2-doses-grid">
@@ -108,7 +104,6 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
           <div class="le2-sticker">
             <div class="le2-sk-pharm">${PHARMACY_INFO.name} · ${PHARMACY_INFO.address} · ĐT ${PHARMACY_INFO.phone}</div>
             <div class="le2-sk-head">HƯỚNG DẪN SỬ DỤNG</div>
-            <div class="le2-sk-bn">BN: <b class="le2-sk-patient">Khách vãng lai</b></div>
             <div class="le2-sk-drug"><b class="le2-sk-brand">—</b></div>
             <div class="le2-sk-strength">—</div>
             <div class="le2-sk-doses-grid">
@@ -200,7 +195,6 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
 
   // Inputs
   $('.le2-drug').addEventListener('change', renderPreview);
-  $('.le2-patient').addEventListener('input', renderPreview);
   $('.le2-notes').addEventListener('input', renderPreview);
 
   function readLabel() {
@@ -212,7 +206,6 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
       generic: d?.generic || '',
       strength: d?.strength || '',
       exp: d?.expDate || '',
-      patient: $('.le2-patient').value || 'Khách vãng lai',
       morning: getDose('morning'),
       noon: getDose('noon'),
       afternoon: getDose('afternoon'),
@@ -226,7 +219,6 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
 
   function renderPreview() {
     const l = readLabel();
-    $('.le2-sk-patient').textContent = l.patient || '—';
     $('.le2-sk-brand').textContent = l.brand || '—';
     $('.le2-sk-strength').textContent = l.strength || (l.generic || '—');
     ['morning','noon','afternoon','evening'].forEach((k, i) => {
@@ -250,7 +242,6 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
   $('.le2-create').addEventListener('click', () => {
     const l = readLabel();
     if (!l.drugId)            { alert('Chọn thuốc.'); return; }
-    if (!l.patient.trim())    { alert('Nhập tên bệnh nhân.'); return; }
     if (totalPerDay(l) === 0) { alert('Liều phải > 0.'); return; }
     onCreate?.(l);
     close();

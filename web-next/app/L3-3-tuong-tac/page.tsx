@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 // nằm trong ScenarioMount ('use client'), tái dùng engine vanilla qua /js/*.
 export default function L33TuongTac() {
   return (
-    <div className="mx-auto max-w-[920px] text-white">
+    <div className="w-full text-white">
       <div className="mb-6 flex items-center gap-3 text-sm">
         <Link href="/" className="text-white/70 hover:text-white">
           ← Trang chủ

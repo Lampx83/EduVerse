@@ -190,7 +190,7 @@ export default function PortalAppsClient({
     activeDomain === 'all' ? builtin : builtin.filter((a) => a.domain === activeDomain);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 py-8">
+    <div className="w-full space-y-5 py-8">
       <div>
         <h1 className="text-xl font-extrabold tracking-tight">
           🧩 Portal Apps{' '}

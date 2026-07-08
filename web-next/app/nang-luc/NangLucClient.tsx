@@ -202,7 +202,7 @@ export default function NangLucClient({
   const enrollMeta = me.enrolled_domain ? DOMAIN_META[me.enrolled_domain] : null;
 
   return (
-    <div className="mx-auto max-w-[1080px] space-y-4 pb-16">
+    <div className="w-full space-y-4 pb-16">
       <div>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">🎯 Năng lực của em</h1>

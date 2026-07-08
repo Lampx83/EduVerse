@@ -198,6 +198,26 @@ const CSS = `
   .ev-header .ev-anon { font-size: 13px; opacity: 0.8; }
   .ev-header .ev-anon a { color: #fbbf24; text-decoration: none; font-weight: 700; }
 
+  /* Banner impersonate — admin đang xem với tư cách user khác. Nằm trên cùng, đè
+     mọi trang. Khi hiện banner, huỷ margin âm phía trên của header (syncEdgeMargins
+     kéo header lên bằng inline style → cần !important để thắng). */
+  #ev-imp-banner {
+    position: sticky; top: 0; z-index: 400;
+    display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
+    padding: 7px 16px; font-size: 13px; line-height: 1.35;
+    background: linear-gradient(135deg, #b45309, #f59e0b); color: #1c1917;
+    font-family: 'Inter', system-ui, sans-serif; text-align: center;
+  }
+  #ev-imp-banner b { font-weight: 800; }
+  #ev-imp-banner button {
+    border: 1px solid rgba(0,0,0,0.35); background: rgba(0,0,0,0.14); color: #1c1917;
+    font-weight: 800; font-size: 12px; padding: 5px 13px; border-radius: 999px;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+    transition: background 0.15s, transform 0.12s;
+  }
+  #ev-imp-banner button:hover { background: rgba(0,0,0,0.26); transform: translateY(-1px); }
+  body.ev-impersonating #auth-header { margin-top: 0 !important; }
+
   /* Plan badge (Free/Plus/Pro) — hiển thị cạnh tên trong chip user và trong dialog */
   .ev-plan-pill {
     display: inline-flex; align-items: center; gap: 4px;
@@ -380,7 +400,37 @@ function brandHtml() {
   return `<div class="ev-brand-stack"><a class="ev-brand" href="./"><span class="logo">🌌</span><span class="name">Tizia</span></a>${tagline}</div>`;
 }
 
+// Banner "đang xem với tư cách …" — chỉ hiện khi /api/auth/me trả impersonated_by
+// (admin đã bấm nút impersonate ở /admin). Nút "Quay lại admin" gọi stop rồi về /admin.
+function renderImpersonationBanner(user) {
+  const imp = user && user.impersonated_by;
+  const existing = document.getElementById('ev-imp-banner');
+  if (!imp) {
+    existing?.remove();
+    document.body.classList.remove('ev-impersonating');
+    return;
+  }
+  document.body.classList.add('ev-impersonating');
+  let bar = existing;
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'ev-imp-banner';
+    document.body.prepend(bar);
+  }
+  bar.innerHTML = `
+    <span>🕵️ Bạn (admin <b>${esc(imp.display_name)}</b>) đang xem với tư cách <b>${esc(user.display_name)}</b> (@${esc(user.username)})</span>
+    <button id="ev-imp-stop" type="button">↩ Quay lại admin</button>`;
+  bar.querySelector('#ev-imp-stop').addEventListener('click', async () => {
+    try {
+      const r = await fetch('/api/auth/impersonate/stop', { method: 'POST', credentials: 'same-origin' });
+      const d = await r.json().catch(() => ({}));
+      location.href = d.redirectTo || '/admin';
+    } catch { location.href = '/admin'; }
+  });
+}
+
 function render(host, user) {
+  renderImpersonationBanner(user);
   if (!user) {
     host.innerHTML = `
       ${brandHtml()}

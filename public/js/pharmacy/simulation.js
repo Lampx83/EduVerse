@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0702';
-import { loadDrugs } from './catalog.js?v=ph0702';
+import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0711';
+import { loadDrugs } from './catalog.js?v=ph0711';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,8 +29,8 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0702';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0702';
+import { openPosTerminal } from './pos.js?v=ph0711';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0711';
 import { STAGE_LABEL } from './rubric.js';
 
 const $ = (id) => document.getElementById(id);
@@ -267,6 +267,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     const hasRx = !!$('rx-toggle').checked;
     openPosTerminal({
       pickedIds: sim.getPickedIds(),
+      pickedItems: sim.getPickedItems?.(),   // kèm dạng bán (hộp/vỉ/gói/ống…)
       hasValidPrescription: hasRx,
       onCheckout: (payload) => postAction('pos_checkout', payload),
       onClose: () => {}
@@ -333,41 +334,113 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       sticker.getContext('2d').drawImage(stickerTex.image, 0, 0);
       stickerTex.dispose?.();
     }
-    const SK_W = Math.round(FACE_W * 0.42);   // nhãn NHỎ lại so với hộp (yêu cầu #10), khớp tỉ lệ dán thật
+    const SK_W = Math.round(FACE_W * 0.33);   // nhãn NHỎ lại so với hộp (yêu cầu 1), khớp tỉ lệ dán thật ở scene.js
     sticker.style.width = SK_W + 'px';
     sticker.style.height = Math.round(SK_W * skRatio) + 'px';
-    // Sticker vị trí ban đầu: góc dưới (chỗ thường trống)
-    let u = 0.5, v = 0.78;
-    function place() {
+    // ── Vùng bảo vệ mặt hộp (yêu cầu 2) ──────────────────────────────────────
+    // getDrugFace3D render nền TRONG SUỐT (alpha) → dùng alpha khoanh ĐÚNG khung
+    // hộp trong ảnh, rồi coi ~48% TRÊN của hộp (tên thuốc + hoạt chất + logo/Rx +
+    // số ĐK) là "vùng thông tin" KHÔNG được che. Nhãn HDSD chỉ hợp lệ khi mép trên
+    // nằm DƯỚI vạch bảo vệ và không tràn khỏi đáy hộp. (Nhãn HDSD tự IN LẠI tên +
+    // hàm lượng nên dán đè phần dưới bao bì là đúng thực tế nhà thuốc.)
+    const bounds = boxBoundsFromAlpha(cv);      // {x0,y0,x1,y1} theo tỉ lệ 0..1 của ảnh
+    const PROT = 0.48;                          // 48% trên của hộp = vùng bảo vệ
+    const protBottom = bounds.y0 + PROT * (bounds.y1 - bounds.y0);
+    const TOL = 0.02;
+    const rectAt = (x, y, bw, bh, sw, sh) => [x / bw, y / bh, (x + sw) / bw, (y + sh) / bh];
+    // Hợp lệ khi: nằm trong bề ngang hộp, MÉP TRÊN nhãn dưới vạch bảo vệ, đáy không tràn.
+    const isValidRect = (fx0, fy0, fx1, fy1) =>
+      fx0 >= bounds.x0 - TOL && fx1 <= bounds.x1 + TOL &&
+      fy0 >= protBottom - TOL && fy1 <= bounds.y1 + TOL;
+
+    let u = 0.5, v = 0.82;               // vị trí đầu: đáy hộp (chỗ hợp lệ)
+    let lastValid = true;
+    function markValidity(valid) {
+      lastValid = valid;
+      sticker.style.outlineColor = valid ? 'rgba(34,197,94,0.95)' : 'rgba(239,68,68,0.95)';
+      sticker.classList.toggle('sp-sticker-bad', !valid);
+      const apply = overlay.querySelector('.sp-apply');
+      if (apply) { apply.disabled = !valid; apply.style.opacity = valid ? '' : '0.5'; apply.style.cursor = valid ? '' : 'not-allowed'; }
+    }
+    // Đặt nhãn tại (x,y) px trong khung, clamp, cập nhật u/v + validity.
+    function setPos(x, y) {
       const bw = box.offsetWidth || FACE_W, bh = box.offsetHeight || FACE_H;
       const sw = sticker.offsetWidth, sh = sticker.offsetHeight;
-      let x = u * bw - sw / 2, y = v * bh - sh / 2;
       x = Math.max(0, Math.min(bw - sw, x));
       y = Math.max(0, Math.min(bh - sh, y));
       sticker.style.left = x + 'px'; sticker.style.top = y + 'px';
       u = (x + sw / 2) / bw; v = (y + sh / 2) / bh;
+      markValidity(isValidRect(...rectAt(x, y, bw, bh, sw, sh)));
+    }
+    function place() {
+      const bw = box.offsetWidth || FACE_W, bh = box.offsetHeight || FACE_H;
+      const sw = sticker.offsetWidth, sh = sticker.offsetHeight;
+      setPos(u * bw - sw / 2, v * bh - sh / 2);
+      snapToValid(true);                 // hút vào dải dưới hợp lệ ngay từ đầu
+    }
+    // Căn nhãn vào vùng hợp lệ gần nhất (giữ x trong bề ngang hộp, kẹp y vào dải
+    // dưới) → hiệu ứng "hút". Trả false nếu nhãn cao hơn dải trống (không đủ chỗ).
+    function snapToValid(silent) {
+      const bw = box.offsetWidth || FACE_W, bh = box.offsetHeight || FACE_H;
+      const sw = sticker.offsetWidth, sh = sticker.offsetHeight;
+      const curX = parseFloat(sticker.style.left) || 0;
+      const curY = parseFloat(sticker.style.top) || 0;
+      const tx = Math.max(bounds.x0 * bw, Math.min(bounds.x1 * bw - sw, curX));
+      const yMin = protBottom * bh, yMax = bounds.y1 * bh - sh;
+      let ty, ok;
+      if (yMax >= yMin) { ty = Math.max(yMin, Math.min(yMax, curY)); ok = true; }
+      else { ty = Math.max(0, yMax); ok = false; }
+      animateTo(tx, ty);
+      if (!ok && !silent) toastInvalid();
+      return ok;
+    }
+    // Animate trượt nhãn tới (tx,ty) trong ~180ms rồi cập nhật validity.
+    function animateTo(tx, ty) {
+      const sx = parseFloat(sticker.style.left) || 0;
+      const sy = parseFloat(sticker.style.top) || 0;
+      const t0 = performance.now(), dur = 180;
+      sticker.classList.add('sp-sticker-snap');
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / dur);
+        const e = 1 - Math.pow(1 - k, 3);   // easeOutCubic (cảm giác hút)
+        setPos(sx + (tx - sx) * e, sy + (ty - sy) * e);
+        if (k < 1) requestAnimationFrame(step);
+        else sticker.classList.remove('sp-sticker-snap');
+      };
+      requestAnimationFrame(step);
+    }
+    function toastInvalid() {
+      sticker.classList.remove('sp-sticker-flash-ok');
+      sticker.classList.add('sp-sticker-flash-bad');
+      setTimeout(() => sticker.classList.remove('sp-sticker-flash-bad'), 600);
+      showToast?.('Không thể dán nhãn tại vị trí này — nhãn phải nằm ở vùng trống, không che tên/hàm lượng/logo/số ĐK.');
+    }
+    function flashOk() {
+      sticker.classList.add('sp-sticker-flash-ok');
+      setTimeout(() => sticker.classList.remove('sp-sticker-flash-ok'), 520);
     }
     place();                       // đặt ngay (đọc offsetWidth ép reflow)
     setTimeout(place, 60);         // chạy lại sau layout cho chắc
+
     // Kéo-thả (pointer)
     let drag = false, offX = 0, offY = 0;
     sticker.addEventListener('pointerdown', (e) => {
       drag = true; sticker.setPointerCapture(e.pointerId);
-      const r = box.getBoundingClientRect(), sr = sticker.getBoundingClientRect();
+      const sr = sticker.getBoundingClientRect();
       offX = e.clientX - sr.left; offY = e.clientY - sr.top;
     });
     sticker.addEventListener('pointermove', (e) => {
       if (!drag) return;
       const r = box.getBoundingClientRect();
-      const bw = box.offsetWidth, bh = box.offsetHeight;
-      const sw = sticker.offsetWidth, sh = sticker.offsetHeight;
-      let x = e.clientX - r.left - offX, y = e.clientY - r.top - offY;
-      x = Math.max(0, Math.min(bw - sw, x));
-      y = Math.max(0, Math.min(bh - sh, y));
-      sticker.style.left = x + 'px'; sticker.style.top = y + 'px';
-      u = (x + sw / 2) / bw; v = (y + sh / 2) / bh;
+      setPos(e.clientX - r.left - offX, e.clientY - r.top - offY);
     });
-    sticker.addEventListener('pointerup', () => { drag = false; });
+    sticker.addEventListener('pointerup', () => {
+      if (!drag) return;
+      drag = false;
+      // Thả tay → hút vào vùng trống hợp lệ gần nhất; báo đỏ nếu không có chỗ.
+      const ok = snapToValid(false);
+      if (ok) flashOk();
+    });
     const close = () => { document.removeEventListener('keydown', esc); overlay.remove(); };
     const esc = (e) => { if (e.key === 'Escape') close(); };
     document.addEventListener('keydown', esc);
@@ -375,9 +448,36 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     overlay.querySelector('.sp-cancel').addEventListener('click', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     overlay.querySelector('.sp-apply').addEventListener('click', () => {
-      sim.applyHdsdSticker?.(drugId, label, { u, v });
+      if (!lastValid) { toastInvalid(); return; }   // chặn dán vào vùng không hợp lệ
+      // u,v đang theo TOÀN ẢNH (gồm lề trong suốt) → quy về toạ độ MẶT HỘP để
+      // applyHdsdSticker (dùng hệ mặt hộp) dán đúng chỗ người dùng thả.
+      const c01 = (t) => Math.max(0, Math.min(1, t));
+      const ub = c01((u - bounds.x0) / Math.max(1e-3, bounds.x1 - bounds.x0));
+      const vb = c01((v - bounds.y0) / Math.max(1e-3, bounds.y1 - bounds.y0));
+      sim.applyHdsdSticker?.(drugId, label, { u: ub, v: vb });
       close();
     });
+  }
+
+  // Khoanh KHUNG hộp trong ảnh mặt hộp bằng ALPHA (nền render trong suốt):
+  // trả về {x0,y0,x1,y1} theo tỉ lệ 0..1. Đọc pixel lỗi (taint) → khung mặc định.
+  function boxBoundsFromAlpha(faceCanvas) {
+    const w = faceCanvas.width, h = faceCanvas.height;
+    let data;
+    try { data = faceCanvas.getContext('2d').getImageData(0, 0, w, h).data; }
+    catch { return { x0: 0.06, y0: 0.05, x1: 0.94, y1: 0.95 }; }
+    let x0 = w, y0 = h, x1 = 0, y1 = 0, any = false;
+    for (let y = 0; y < h; y += 2) {
+      for (let x = 0; x < w; x += 2) {
+        if (data[(y * w + x) * 4 + 3] > 128) {
+          any = true;
+          if (x < x0) x0 = x; if (x > x1) x1 = x;
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+      }
+    }
+    if (!any) return { x0: 0.06, y0: 0.05, x1: 0.94, y1: 0.95 };
+    return { x0: x0 / w, y0: y0 / h, x1: x1 / w, y1: y1 / h };
   }
 
   // Bao bì ra lẻ: chọn đơn vị từ GIỎ RA LẺ + dạng (vỉ/gói/viên/ống) → ghi nhãn phong bì.
@@ -1026,7 +1126,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       else deviceKind = 'generic';
     }
     const unitWordVN = { vi: 'vỉ', goi: 'gói', lo: 'lọ', ong: 'ống', device: 'thiết bị' }[unitKind];
-    const unit = (() => {
+    // Dựng mesh 3D 1 ĐƠN VỊ ra lẻ (vỉ/gói/lọ/ống/thiết bị) theo dạng đóng gói thật.
+    // Tách thành hàm (w,h,d) để DÙNG LẠI: vừa hiện trong inspector (dims scale),
+    // vừa đưa vào KHAY BÁN HÀNG (dims thật của hộp) — yêu cầu 2 (khay đa dạng).
+    function makeUnit(w, h, d) {
       const g = new THREE.Group();
       const foil = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.6, roughness: 0.35 });
       const acc = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.5 });
@@ -1216,19 +1319,20 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       const bb = new THREE.Box3().setFromObject(g);
       const ctr = bb.getCenter(new THREE.Vector3());
       g.children.forEach(ch => ch.position.sub(ctr));
+      // Ưu tiên MODEL .glb cho đơn vị có model thật (hạn chế vẽ tay). Vỉ/gói/ống
+      // chưa có glb phù hợp → giữ procedural.
+      const unitGlbFile =
+        (unitKind === 'device' && deviceKind === 'thermometer') ? 'thermometer.glb' :
+        (unitKind === 'device' && /bông/.test(hay)) ? 'cotton.glb' :
+        (unitKind === 'device' && deviceKind === 'gauze') ? 'gauze.glb' :
+        (unitKind === 'lo' && /kem|gel|mỡ|tuýp|tuyp|cao xoa|\bbôi\b/.test(formStr)) ? 'tube.glb' :
+        // Chỉ lọ ĐỰNG VIÊN dùng model nhựa pillbottle; lọ DỊCH (siro/hỗn dịch/dung
+        // dịch/nhỏ) giữ chai thuỷ tinh procedural (model pillbottle trông sai dạng).
+        (unitKind === 'lo' && !/siro|sirô|hỗn dịch|huyền dịch|dung dịch|dầu|nhỏ|xịt|nước/.test(formStr)) ? 'pillbottle.glb' : null;
+      if (unitGlbFile) swapUnitToGlb(g, unitGlbFile, Math.max(w, h) * 0.9);
       return g;
-    })();
-    // Ưu tiên MODEL .glb cho đơn vị có model thật (hạn chế vẽ tay). Vỉ/gói/ống
-    // chưa có glb phù hợp → giữ procedural.
-    const unitGlbFile =
-      (unitKind === 'device' && deviceKind === 'thermometer') ? 'thermometer.glb' :
-      (unitKind === 'device' && /bông/.test(hay)) ? 'cotton.glb' :
-      (unitKind === 'device' && deviceKind === 'gauze') ? 'gauze.glb' :
-      (unitKind === 'lo' && /kem|gel|mỡ|tuýp|tuyp|cao xoa|\bbôi\b/.test(formStr)) ? 'tube.glb' :
-      // Chỉ lọ ĐỰNG VIÊN dùng model nhựa pillbottle; lọ DỊCH (siro/hỗn dịch/dung
-      // dịch/nhỏ) giữ chai thuỷ tinh procedural (model pillbottle trông sai dạng).
-      (unitKind === 'lo' && !/siro|sirô|hỗn dịch|huyền dịch|dung dịch|dầu|nhỏ|xịt|nước/.test(formStr)) ? 'pillbottle.glb' : null;
-    if (unitGlbFile) swapUnitToGlb(unit, unitGlbFile, Math.max(w, h) * 0.9);
+    }
+    const unit = makeUnit(w, h, d);
     unit.visible = false;
     scene2.add(unit);
     // extractTarget: 0 = trong hộp, 1 = đã lấy ra. extractT lerp dần tới target →
@@ -1343,11 +1447,18 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     greenBtn?.addEventListener('click', () => {
       if (extractTarget === 1) {
         const word = curUnitWord();
-        addRetailUnit(drug, word, retailQty);
-        postAction('retail_split', { drugId: drug.id, unit: word, qty: retailQty });
+        // Đưa ĐƠN VỊ ra lẻ THẲNG vào KHAY BÁN HÀNG dưới dạng mesh 3D đúng hình
+        // (vỉ/gói/ống/lọ… — KHÔNG phải hộp) — mỗi đơn vị 1 vật trong khay, bán ở
+        // POS + trả kệ/xoá được như hộp. (yêu cầu 2 phần khay bán hàng)
+        const n = sim.pickUnitToTray?.({
+          drugId: drug.id, drug, unitKind, qty: retailQty,
+          build: () => makeUnit(style.w, style.h, style.d),
+        }) || 0;
+        postAction('retail_split', { drugId: drug.id, unit: word, qty: n });
         close();
-        // Yêu cầu thầy: cho vào khay LUÔN, không hiện dialog/alert — chỉ toast nhẹ.
-        showToast(`Đã cho ${retailQty} ${word} "${drug.brand}" vào khay bán hàng.`);
+        showToast(n
+          ? `Đã cho ${n} ${word} "${drug.brand}" vào khay bán hàng.`
+          : 'Khay bán hàng đã đầy (tối đa 8 món) — thanh toán bớt rồi thêm tiếp.');
       } else {
         confirmToTray?.();
         close();

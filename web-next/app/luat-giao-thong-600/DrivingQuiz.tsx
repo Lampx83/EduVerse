@@ -11,6 +11,8 @@ export type DrivingQuestion = {
   o: string[]; // các đáp án
   a: number; // index đáp án đúng
   ex: string; // giải thích
+  img?: string; // ảnh minh hoạ (ký hiệu đèn báo / biển) — req #54
+  imgTodo?: boolean; // câu tham chiếu hình nhưng chưa có ảnh — hiện nhãn "đang bổ sung"
 };
 
 type ExamClass = {
@@ -24,25 +26,20 @@ type ExamClass = {
   up?: number;
 };
 
-// Gộp 17 sub-category của bộ câu → 6 nhóm chủ đề cho dropdown (yêu cầu SV #16).
+// Map chủ đề (t) → nhóm dropdown. Taxonomy chuẩn bộ 600 câu (req #47/#48/#50/#51 Thì Dũng):
+// 1 Khái niệm & quy tắc · 2 Văn hoá & đạo đức · 3 Kỹ thuật lái xe · 4 Cấu tạo & sửa chữa
+// 5 Biển Báo (chờ ảnh) · 6 Tình huống giao thông.
 const GROUP: Record<string, string> = {
-  'Khái niệm': 'kn',
-  'Quy tắc giao thông': 'kn',
-  'Tốc độ - khoảng cách': 'kn',
-  'Nồng độ cồn - chất cấm': 'vh',
-  'Trách nhiệm khi tai nạn': 'vh',
-  'Đạo đức nghề nghiệp': 'vh',
+  'Khái niệm & quy tắc': 'kn',
   'Văn hoá giao thông': 'vh',
-  'Khởi hành - dừng xe': 'kt',
-  'Số - côn - phanh': 'kt',
+  'Kỹ thuật lái xe': 'kt',
+  'Cấu tạo & sửa chữa': 'ct',
+  // 5 Biển Báo (th): chưa có câu (chờ SV gửi ảnh biển báo)
+  'Xử lý tình huống': 'nv', // 6 Tình huống giao thông
+  // giữ tương thích key cũ nếu còn dữ liệu seed cũ
+  'Khái niệm': 'kn',
   'Lái xe đường đặc biệt': 'kt',
   'Động cơ - hệ thống': 'ct',
-  'Hệ thống an toàn': 'ct',
-  'Bảo dưỡng - kiểm tra': 'ct',
-  'Xử lý tình huống': 'th',
-  'Kinh doanh vận tải': 'nv',
-  'Hàng hoá - hành khách': 'nv',
-  'Quyền - nghĩa vụ': 'nv',
 };
 const groupOf = (t: string) => GROUP[t] || 'kn';
 
@@ -97,8 +94,8 @@ const CATEGORIES = [
   { value: 'vh', label: '🤝 2. Văn hoá & đạo đức' },
   { value: 'kt', label: '🛠️ 3. Kỹ thuật lái xe' },
   { value: 'ct', label: '⚙️ 4. Cấu tạo & sửa chữa' },
-  { value: 'th', label: '⚠️ 5. Tình huống giao thông' },
-  { value: 'nv', label: '🚚 6. Nghiệp vụ vận tải' },
+  { value: 'th', label: '🚸 5. Biển Báo' },
+  { value: 'nv', label: '⚠️ 6. Tình huống giao thông' },
   { value: 'critical', label: '🔥 Câu điểm liệt' },
 ];
 
@@ -114,6 +111,7 @@ export default function DrivingQuiz({ items }: { items: DrivingQuestion[] }) {
   const [list, setList] = useState<DrivingQuestion[]>([]);
   const [idx, setIdx] = useState(0);
   const [answered, setAnswered] = useState<Record<number, number>>({});
+  const [search, setSearch] = useState(''); // ô tìm kiếm câu (req #52/#53)
 
   // exam timer
   const [examStart, setExamStart] = useState<number | null>(null);
@@ -400,7 +398,48 @@ export default function DrivingQuiz({ items }: { items: DrivingQuestion[] }) {
               » hiện chưa có câu hỏi.
             </div>
           ) : (
-            <>
+            <div className="lgt-practiceWrap">
+              {mode !== 'exam' && (
+                <aside className="lgt-sidebar">
+                  <div className="lgt-sbTitle">🔍 Tìm kiếm câu hỏi</div>
+                  <input
+                    className="lgt-search"
+                    placeholder="Nhập nội dung câu hỏi…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <div className="lgt-sbHead">
+                    <span className="lgt-sbTitle">Danh sách câu hỏi</span>
+                    <button className="lgt-sbReset" onClick={() => setAnswered({})}>
+                      Xoá điểm
+                    </button>
+                  </div>
+                  <div className="lgt-qGrid">
+                    {list.map((qq, i) => {
+                      const term = search.trim().toLowerCase();
+                      if (term && !qq.q.toLowerCase().includes(term)) return null;
+                      const c =
+                        'lgt-qn' +
+                        (i === idx ? ' cur' : '') +
+                        (answered[i] !== undefined ? ' done' : '');
+                      return (
+                        <button key={i} className={c} onClick={() => setIdx(i)}>
+                          {i + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {search.trim() &&
+                    !list.some((qq) =>
+                      qq.q.toLowerCase().includes(search.trim().toLowerCase()),
+                    ) && <div className="lgt-sbEmpty">Không thấy câu khớp.</div>}
+                  <button className="lgt-sbExam" onClick={() => enterExamPicker()}>
+                    🕐 Thi thử theo hạng
+                  </button>
+                </aside>
+              )}
+              <div className="lgt-mainCol">
               <div style={S.stats}>
                 <span>
                   Câu <b style={S.statB}>{idx + 1}</b>/<b style={S.statB}>{list.length}</b>
@@ -425,6 +464,16 @@ export default function DrivingQuiz({ items }: { items: DrivingQuestion[] }) {
                     {current.c && <span className="badge">⚠️ CÂU LIỆT</span>}
                   </div>
                   <div className="lgt-qtext">{current.q}</div>
+                  {current.img ? (
+                    <div className="lgt-qimg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={current.img} alt="Hình minh hoạ câu hỏi" loading="lazy" />
+                    </div>
+                  ) : current.imgTodo ? (
+                    <div className="lgt-qimg">
+                      <span className="todo">🖼️ Hình minh hoạ đang được bổ sung</span>
+                    </div>
+                  ) : null}
                   <div className="lgt-opts">
                     {current.o.map((opt, i) => {
                       let cls = 'lgt-opt';
@@ -474,7 +523,8 @@ export default function DrivingQuiz({ items }: { items: DrivingQuestion[] }) {
                   </button>
                 )}
               </div>
-            </>
+              </div>
+            </div>
           )}
         </>
       )}
@@ -654,4 +704,37 @@ const scopedCss = `
   .lgt-lnkbtn { font-family:inherit; background:var(--lgt-card); color:var(--lgt-text); border:1px solid var(--lgt-border);
     padding:10px 22px; border-radius:10px; font-size:13px; cursor:pointer; }
   .lgt-lnkbtn.primary { background:var(--lgt-red); border:0; color:#fff; font-weight:700; }
+
+  /* Ảnh minh hoạ câu hỏi (req #54) */
+  .lgt-qimg { margin:0 0 16px; }
+  .lgt-qimg img { max-width:min(320px,80%); border-radius:10px; background:#fff; padding:8px; display:block; }
+  .lgt-qimg .todo { font-size:12.5px; color:#fbbf24; background:rgba(251,191,36,.1);
+    border:1px dashed rgba(251,191,36,.4); border-radius:9px; padding:8px 12px; display:inline-block; }
+
+  /* Sidebar: tìm kiếm + danh sách câu (req #52/#53) */
+  .lgt-practiceWrap { display:flex; gap:18px; width:100%; max-width:1120px; justify-content:center; align-items:flex-start; }
+  .lgt-mainCol { flex:1 1 760px; max-width:760px; min-width:0; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .lgt-sidebar { flex:0 0 250px; width:250px; background:var(--lgt-card); border:1px solid var(--lgt-border);
+    border-radius:14px; padding:16px; position:sticky; top:18px; align-self:flex-start; }
+  .lgt-sidebar .lgt-sbTitle { font-size:13.5px; font-weight:700; color:var(--lgt-text); }
+  .lgt-search { width:100%; margin-top:9px; font-family:inherit; background:rgba(0,0,0,.25);
+    border:1px solid var(--lgt-border); color:var(--lgt-text); border-radius:9px; padding:9px 11px; font-size:13px; }
+  .lgt-search::placeholder { color:var(--lgt-muted); }
+  .lgt-sbHead { display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px; }
+  .lgt-sbReset { font-family:inherit; font-size:11px; font-weight:700; color:#fca5a5; background:rgba(220,38,38,.14);
+    border:1px solid rgba(220,38,38,.3); border-radius:7px; padding:4px 9px; cursor:pointer; }
+  .lgt-qGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; max-height:340px; overflow-y:auto; padding-right:2px; }
+  .lgt-qn { font-family:inherit; aspect-ratio:1; border:1px solid var(--lgt-border); background:rgba(0,0,0,.2);
+    color:var(--lgt-text); border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:600; padding:0; transition:.12s; }
+  .lgt-qn:hover { border-color:var(--lgt-red); }
+  .lgt-qn.cur { background:#fbbf24; color:#1a1a2e; border-color:#fbbf24; font-weight:800; }
+  .lgt-qn.done { border-color:rgba(16,185,129,.55); color:#6ee7b7; }
+  .lgt-sbEmpty { color:var(--lgt-muted); font-size:12.5px; text-align:center; padding:14px 4px; }
+  .lgt-sbExam { width:100%; margin-top:14px; font-family:inherit; background:var(--lgt-red); color:#fff; border:0;
+    border-radius:10px; padding:11px; font-weight:700; font-size:13px; cursor:pointer; }
+  @media (max-width:860px) {
+    .lgt-practiceWrap { flex-direction:column; align-items:center; }
+    .lgt-sidebar { width:100%; max-width:760px; position:static; order:2; }
+    .lgt-qGrid { max-height:200px; grid-template-columns:repeat(8,1fr); }
+  }
 `;

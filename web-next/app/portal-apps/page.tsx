@@ -16,7 +16,7 @@ export default async function PortalAppsPage() {
 
   if (res.status === 401 || !res.ok || !res.data) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6 py-8">
+      <div className="w-full space-y-6 py-8">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight">
             🧩 Portal Apps{' '}

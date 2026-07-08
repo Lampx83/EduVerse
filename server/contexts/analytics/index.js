@@ -175,7 +175,8 @@ const pvByRoleStmt = db.prepare(`
   FROM analytics_events ae
   LEFT JOIN users u ON u.id = ae.user_id
   WHERE ae.name = 'page_view' AND ae.ts >= ?
-  GROUP BY role ORDER BY count DESC
+  GROUP BY CASE WHEN ae.user_id IS NULL THEN 'guest' ELSE COALESCE(u.role, 'unknown') END
+  ORDER BY count DESC
 `);
 
 export async function getPageviewStats(days = 30, topPathsLimit = 15) {

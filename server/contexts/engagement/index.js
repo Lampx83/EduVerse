@@ -8,7 +8,7 @@
 // ============================================================
 
 import { db, upsertUserWallet, getUserWallet } from '../../db.js';
-import { requireAuth } from '../identity/auth.js';
+import { requireAuth, isStreakEnabledForDomain } from '../identity/auth.js';
 import { attachLeague, addLeagueWeekXp, initLeague } from './league.js';
 import { attachParentDashboard } from './parent.js';
 import { attachPet, addPetXp } from './pet.js';
@@ -209,8 +209,9 @@ export async function getEngagementReadOnly(userId) {
   };
 }
 
-// Trả ảnh chụp state đầy đủ cho FE (state + quests hôm nay)
-async function snapshot(userId) {
+// Trả ảnh chụp state đầy đủ cho FE (state + quests hôm nay). `enrolledDomain` để
+// tính cờ streak_hidden — HUD ẩn streak nếu user học trường ngoài phổ thông.
+async function snapshot(userId, enrolledDomain = '') {
   let row = await ensureState(userId);
   row = bumpStreak(row);
   row = refillHearts(row);
@@ -219,6 +220,8 @@ async function snapshot(userId) {
   const today = vnToday();
   const quests = await genDailyQuests(userId, today);
   return {
+    // true → streak không áp cho trường của user (ĐH/nghề) → FE ẩn 🔥 + không thưởng.
+    streak_hidden: !isStreakEnabledForDomain(enrolledDomain),
     streak: row.streak,
     longestStreak: row.longest_streak,
     lastActiveDate: row.last_active_date,
@@ -294,7 +297,7 @@ export function attachEngagement(app) {
   // Snapshot — gọi mỗi khi vào app/page chính. Idempotent.
   app.get('/api/engagement/state', requireAuth, async (req, res) => {
     try {
-      const data = await snapshot(req.user.id);
+      const data = await snapshot(req.user.id, req.user.enrolled_domain);
       res.json({ ok: true, ...data });
     } catch (e) {
       console.error('[engagement] state error', e);
@@ -305,7 +308,7 @@ export function attachEngagement(app) {
   // Alias rõ ràng cho FE để "đánh dấu hoạt động hôm nay" — cùng logic snapshot.
   app.post('/api/engagement/ping', requireAuth, async (req, res) => {
     try {
-      const data = await snapshot(req.user.id);
+      const data = await snapshot(req.user.id, req.user.enrolled_domain);
       res.json({ ok: true, ...data });
     } catch (e) {
       console.error('[engagement] ping error', e);
@@ -345,6 +348,6 @@ export function attachEngagement(app) {
     const result = await claimQuest(req.user.id, slot, req.user.enrolled_domain || '');
     if (!result.ok) return res.status(400).json(result);
     // Sau khi claim, trả luôn snapshot để FE đỡ phải fetch lại.
-    res.json({ ok: true, ...result, state: await snapshot(req.user.id) });
+    res.json({ ok: true, ...result, state: await snapshot(req.user.id, req.user.enrolled_domain) });
   });
 }

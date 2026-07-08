@@ -26,7 +26,7 @@ export default async function SubjectPage({
   // Hiện tại chỉ có lộ trình Toán 6 — giống trang gốc.
   if (!(subject === 'toan' && grade === '6')) {
     return (
-      <div className="mx-auto max-w-[1000px] space-y-4">
+      <div className="w-full space-y-4">
         <TopNav backSchool={backSchool} />
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
           <h2 className="text-xl font-semibold">⏳ Lộ trình đang được xây dựng</h2>
@@ -48,7 +48,7 @@ export default async function SubjectPage({
   const chapters: Chapter[] = res.data?.items || [];
 
   return (
-    <div className="mx-auto max-w-[1000px]">
+    <div className="w-full">
       <TopNav backSchool={backSchool} />
       <SubjectPath chapters={chapters} />
     </div>

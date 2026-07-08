@@ -225,7 +225,7 @@ export default function IvInfusion() {
   }, [qIn]);
 
   return (
-    <div className="mx-auto max-w-[880px]">
+    <div className="w-full">
       <div className="mb-4 flex items-center gap-3 text-sm">
         <Link
           href="/space?b=clinic&domain=pharmacy"

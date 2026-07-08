@@ -206,7 +206,7 @@ export default function PediatricDose() {
         )}
       </div>
 
-      <div className="mx-auto flex max-w-[920px] flex-wrap items-start gap-6">
+      <div className="flex w-full flex-wrap items-start gap-6">
         {/* left: canvas */}
         <div className="flex flex-[0_0_240px] flex-col items-center">
           <canvas ref={canvasRef} width={220} height={440} className="block" />

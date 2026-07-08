@@ -29,7 +29,7 @@ export default async function FamilyPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[760px] space-y-4 py-2">
+    <div className="w-full space-y-4 py-2">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">👨‍👩‍👧 Gia đình</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">

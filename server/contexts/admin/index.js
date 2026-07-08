@@ -497,7 +497,8 @@ export function attachAdmin(r) {
     const rows = await db.prepare(`SELECT model, provider,
         SUM(prompt_tokens) AS pin, SUM(completion_tokens) AS pout,
         COUNT(*) AS calls, SUM(cost_usd_micros) AS cost_micros
-      FROM ai_token_usage WHERE created_at >= ? GROUP BY model, provider ORDER BY (pin+pout) DESC`).all(startMs);
+      FROM ai_token_usage WHERE created_at >= ? GROUP BY model, provider
+      ORDER BY (SUM(prompt_tokens) + SUM(completion_tokens)) DESC`).all(startMs);
     res.json({ days, models: rows });
   });
 

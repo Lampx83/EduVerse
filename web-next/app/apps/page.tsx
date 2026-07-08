@@ -83,11 +83,11 @@ export default async function AppsPage() {
       : [...(res.data.own || []), ...(res.data.public || []), ...(res.data.builtin || [])];
 
   return (
-    <div className="mx-auto max-w-5xl py-8">
+    <div className="w-full py-8">
       <h1 className="text-2xl font-bold tracking-tight">
         🔌 Ứng dụng tích hợp <span className="font-semibold text-muted-foreground">· Tizia</span>
       </h1>
-      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+      <p className="mt-3 w-full text-sm leading-relaxed text-muted-foreground">
         Các hệ thống đồng hành được nhúng thẳng vào Tizia qua cùng một origin. Mỗi ứng dụng mở trong
         khung nhúng có thanh điều hướng quay lại. Nếu một ứng dụng chưa chạy, bạn sẽ thấy hướng dẫn
         khởi động ngay trong khung.

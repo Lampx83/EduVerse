@@ -147,7 +147,7 @@ const OSCE_CSS = `
     linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
 }
 .osce-root * { box-sizing: border-box; }
-.osce-container { max-width: 980px; margin: 0 auto; }
+.osce-container { width: 100%; margin: 0 auto; }
 .osce-top-nav { display: flex; gap: 12px; margin-bottom: 20px; opacity: 0.85; font-size: 14px; }
 .osce-top-nav a { color: rgba(255,255,255,0.7); text-decoration: none; }
 .osce-top-nav a:hover { color: white; }

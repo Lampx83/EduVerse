@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function ModulePage() {
   return (
-    <div className="mx-auto max-w-[920px]">
+    <div className="w-full">
       <ScenarioMount />
     </div>
   );

@@ -92,7 +92,7 @@ const STATUS_CLASS: Record<Device['status'], string> = {
 export default function DevicesPage() {
   return (
     <div
-      className="mx-auto max-w-[1100px] text-white"
+      className="w-full text-white"
       style={{
         // Nền gradient thương hiệu riêng của trang gốc devices.html.
         background:

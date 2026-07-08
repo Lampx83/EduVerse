@@ -33,11 +33,15 @@ const FEATURES = {
   'school-tieuhoc':{ tier: 0, name: 'Trường Tiểu học', scope: 'global' },
 
   // ───── Tier 1: Vào học lần đầu ─────
+  // Streak + thưởng đăng nhập: CHỈ trường phổ thông (mầm non + tiểu học + THCS +
+  // THPT). Trường ĐH/nghề khác → ẩn (lọc theo enrolled_domain ở /api/features/me).
   'hud-streak':    { tier: 1, name: 'Streak hằng ngày 🔥', scope: 'global',
+                     domains: ['preschool', 'primary', 'secondary', 'highschool'],
                      unlock_text: 'Làm 1 câu quiz để mở' },
   'daily-quest':   { tier: 1, name: 'Nhiệm vụ hôm nay 📋', scope: 'school',
                      unlock_text: 'Làm 1 câu quiz để mở' },
   'daily-bonus':   { tier: 1, name: 'Thưởng đăng nhập 🎁', scope: 'global',
+                     domains: ['preschool', 'primary', 'secondary', 'highschool'],
                      unlock_text: 'Mở khi giữ streak 2 ngày' },
 
   // ───── Tier 2: Bắt đầu kiên trì ─────
@@ -181,6 +185,9 @@ export function attachFeatureGate(router) {
     for (const [key, def] of Object.entries(FEATURES)) {
       if (scope && def.scope && def.scope !== scope) continue;
       if (domain && !isFeatureRelevantToDomain(def, domain)) continue;
+      // Lọc theo TRƯỜNG ĐÃ CHỌN của user: feature gắn `domains` (vd streak chỉ
+      // dành cho phổ thông) sẽ ẩn nếu user đang học trường ngoài danh sách đó.
+      if (!isFeatureRelevantToDomain(def, req.user.enrolled_domain)) continue;
       const unlocked = isFeatureUnlocked(key, req.user, progress, userTier);
       out[key] = {
         unlocked,

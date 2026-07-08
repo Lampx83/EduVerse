@@ -74,7 +74,7 @@ export default function LuyenDePage() {
   }
 
   return (
-    <div className="mx-auto max-w-[820px]">
+    <div className="w-full">
       <header className="mb-4 flex items-center gap-3">
         <h1 className="text-lg font-semibold">📝 Luyện đề thi</h1>
         <Link href="/" className="ml-auto text-sm text-muted-foreground hover:underline">

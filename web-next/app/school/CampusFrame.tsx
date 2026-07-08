@@ -81,6 +81,10 @@ export default function CampusFrame({ domain }: { domain: string }) {
           width: '100%',
           height: '82vh',
           minHeight: 520,
+          // Trang full-width nhưng map giữ tỷ lệ: cap bề ngang ≤ 1.6× chiều cao
+          // (khớp tỉ lệ iso ~16:10) rồi căn giữa — tránh bị kéo bẹt trên màn rộng.
+          maxWidth: 'calc(82vh * 1.6)',
+          margin: '0 auto',
           borderRadius: 16,
           overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.12)',

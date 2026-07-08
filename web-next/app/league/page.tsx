@@ -66,7 +66,7 @@ export default async function League() {
   const board = d.board;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 py-2">
+    <div className="w-full space-y-4 py-2">
       <div className="flex items-center gap-3">
         <h1 className="text-xl font-semibold">🏆 League tuần</h1>
       </div>

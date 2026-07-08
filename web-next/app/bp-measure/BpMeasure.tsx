@@ -275,7 +275,7 @@ export default function BpMeasure() {
         )}
       </div>
 
-      <div className="mx-auto flex max-w-[880px] flex-wrap items-start justify-center gap-[26px]">
+      <div className="flex w-full flex-wrap items-start justify-center gap-[26px]">
         <div className="flex flex-[0_0_320px] flex-col items-center gap-3">
           <canvas ref={canvasRef} width={300} height={300} className="block" />
           <div

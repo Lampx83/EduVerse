@@ -367,6 +367,14 @@ export const ENROLLABLE_DOMAINS = new Set([
   ...VALID_STUDENT_MAJORS,
 ]);
 
+// Streak + thưởng đăng nhập (daily) CHỈ áp cho học sinh phổ thông: mầm non +
+// tiểu học + THCS + THPT. User đã chọn trường ĐH/nghề khác (it, pharmacy,
+// driving…) → KHÔNG có streak. Chưa chọn trường (null) → mặc định vẫn cho.
+export const STREAK_DOMAINS = new Set(['preschool', 'primary', 'secondary', 'highschool']);
+export function isStreakEnabledForDomain(domain) {
+  return !domain || STREAK_DOMAINS.has(domain);
+}
+
 /** Profile đã đủ thông tin để vào app chưa? Teacher luôn đủ; pupil cần grade;
  *  student cần major. school_name + cohort là tuỳ chọn (không chặn). */
 export function isProfileComplete(user) {

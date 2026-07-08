@@ -44,7 +44,7 @@ export default function BossArena() {
 
   return (
     <>
-      <div className="mx-auto grid max-w-[960px] grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 px-4">
+      <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 px-4">
         {BOSSES.map((b, i) => (
           <button
             key={i}

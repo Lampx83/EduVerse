@@ -164,15 +164,19 @@ export default function DilutionPage() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-start justify-center gap-6">
-        {/* Minh hoạ canvas */}
-        <div className="flex flex-col items-center" style={{ flex: '0 0 300px' }}>
+      {/* Full-width: 3 cột co giãn (canvas | máy tính | quiz) trải hết bề ngang,
+          căn giữa phần dư trên màn siêu rộng. Canvas là raster tỷ lệ cố định 300×340
+          → shrink-0 + flex-basis cố định, không kéo giãn méo hình. Các thẻ nhập liệu
+          giữ max-width vừa đọc để nhãn/ô nhập không dàn quá xa nhau. */}
+      <div className="flex w-full flex-wrap items-start justify-center gap-6">
+        {/* Minh hoạ canvas — tỷ lệ cố định, không giãn */}
+        <div className="flex shrink-0 flex-col items-center" style={{ flexBasis: 300 }}>
           <canvas ref={canvasRef} width={300} height={340} className="block" />
         </div>
 
-        {/* Bảng điều khiển + quiz */}
-        <div className="min-w-[280px] max-w-[420px] flex-1">
-          <div className="mb-3.5 rounded-2xl border border-white/12 bg-white/5 p-4">
+        {/* Bảng điều khiển (máy tính pha loãng) */}
+        <div className="min-w-[280px] max-w-[560px] flex-1">
+          <div className="rounded-2xl border border-white/12 bg-white/5 p-4">
             <div className="my-0.5 mb-3 text-center text-xl font-bold text-sky-400">C₁·V₁ = C₂·V₂</div>
 
             <div className="my-2 flex items-center justify-between gap-2.5 text-sm">
@@ -203,9 +207,12 @@ export default function DilutionPage() {
               <div className="mt-2 min-h-[18px] text-[13px] text-red-300">{warn}</div>
             </div>
           </div>
+        </div>
 
+        {/* Quiz tự kiểm + ghi chú (cột thứ 3, kề bên trên màn rộng) */}
+        <div className="min-w-[280px] max-w-[560px] flex-1">
           {/* Quiz tự kiểm */}
-          <div className="mt-3.5 rounded-xl border border-sky-500/30 bg-sky-500/[0.08] p-4">
+          <div className="rounded-xl border border-sky-500/30 bg-sky-500/[0.08] p-4">
             <div className="mb-2.5 text-sm leading-relaxed">{qText}</div>
             <div className="flex flex-wrap items-center gap-2">
               {qShowInput && (

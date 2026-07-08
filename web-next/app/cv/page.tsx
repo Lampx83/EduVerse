@@ -65,7 +65,7 @@ export default async function CvPage() {
   // Gate role: chỉ SV + GV. HS (pupil…) không có trang CV.
   if (me.role !== 'student' && me.role !== 'teacher') {
     return (
-      <div className="mx-auto max-w-[820px] rounded-xl bg-card p-10 text-center shadow-sm">
+      <div className="w-full rounded-xl bg-card p-10 text-center shadow-sm">
         <h2 className="text-xl font-semibold">📋 Trang này dành cho Sinh viên</h2>
         <p className="mt-2 text-muted-foreground">
           Học sinh có hệ thống huy hiệu vui ở{' '}
@@ -120,7 +120,7 @@ export default async function CvPage() {
     <div>
       <Toolbar />
 
-      <div className="mx-auto max-w-[820px] rounded-xl bg-card p-8 text-card-foreground shadow-sm sm:p-10">
+      <div className="w-full rounded-xl bg-card p-8 text-card-foreground shadow-sm sm:p-10">
         {/* Head */}
         <div className="flex items-center gap-6 border-b-2 border-primary pb-6">
           <div className="flex h-[90px] w-[90px] shrink-0 items-center justify-center rounded-full bg-primary text-4xl font-extrabold text-primary-foreground">

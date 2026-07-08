@@ -168,7 +168,7 @@ export default function CuaHang() {
   }
 
   return (
-    <div className="mx-auto max-w-[1080px]">
+    <div className="w-full">
       <div className="mb-5 flex items-center gap-3.5">
         <Link
           href="/"

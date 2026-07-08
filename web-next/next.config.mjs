@@ -17,10 +17,31 @@ const nextConfig = {
   images: { unoptimized: true },
   ...(hasBasePath && { basePath: BASE_PATH, assetPrefix: BASE_PATH }),
   env: { ...(hasBasePath && { NEXT_PUBLIC_BASE_PATH: BASE_PATH }) },
+  async redirects() {
+    // URL .html cũ → URL SẠCH (308, giữ query). Ai vào /school.html?domain=x sẽ tự
+    // nhảy sang /school?domain=x. CHỈ áp cho trang đã migrate — KHÔNG đụng .html của
+    // asset nhúng (campus-proto iframe…) vì chúng vẫn do Express phục vụ qua fallback.
+    return MIGRATED.map((p) => ({
+      source: `/${p}.html`,
+      destination: `/${p}`,
+      permanent: true,
+    }));
+  },
   async rewrites() {
-    // Trang đã MIGRATE sang Next: map URL .html cũ → route Next (để link/redirect
-    // cũ tới `/x.html` trúng bản React `/x`). Mỗi lần migrate 1 trang, thêm 1 dòng.
-    const MIGRATED = [
+    return {
+      beforeFiles: [
+        // LUÔN đẩy /api sang Express (kể cả khi có page trùng tên).
+        { source: '/api/:path*', destination: `${LEGACY}/api/:path*` },
+      ],
+      afterFiles: [],
+      // fallback: path Next KHÔNG có route/file → phục vụ tạm bằng app vanilla.
+      fallback: [{ source: '/:path*', destination: `${LEGACY}/:path*` }],
+    };
+  },
+};
+
+// Trang đã MIGRATE sang Next (dùng cho redirects .html→URL sạch ở trên).
+const MIGRATED = [
       'login', 'register', 'complete-profile', 'kham-pha',
       // batch 1 (SSR content)
       'league', 'marketplace', 'cv', 'apps', 'battle-pass', 'ban-do-vn',
@@ -47,19 +68,6 @@ const nextConfig = {
       'lab-hoa-ao', 'lap-trinh-game', 'lesson', 'lop2-am-nhac', 'lop2-phan-loai-rac',
       'lop2-the-thao', 'math-fun', 'metaverse', 'nha-thuoc-3d', 'sac-ky-2d',
       'sac-ky-3d', 'sac-ky-meta', 'sac-ky-vr-web', 'time-attack',
-    ];
-    return {
-      beforeFiles: [
-        // LUÔN đẩy /api sang Express (kể cả khi có page trùng tên).
-        { source: '/api/:path*', destination: `${LEGACY}/api/:path*` },
-        // .html cũ → route Next tương ứng.
-        ...MIGRATED.map((p) => ({ source: `/${p}.html`, destination: `/${p}` })),
-      ],
-      afterFiles: [],
-      // fallback: path Next KHÔNG có route/file → phục vụ tạm bằng app vanilla.
-      fallback: [{ source: '/:path*', destination: `${LEGACY}/:path*` }],
-    };
-  },
-};
+];
 
 export default nextConfig;

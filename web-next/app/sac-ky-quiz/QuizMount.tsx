@@ -76,7 +76,7 @@ export default function QuizMount() {
           color: #fff;
         }
         .skq * { box-sizing: border-box; }
-        .skq .container { max-width: 700px; margin: 0 auto; }
+        .skq .container { width: 100%; }
         .skq .topbar {
           display: flex; gap: 12px; align-items: center; padding: 8px 14px;
           background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
