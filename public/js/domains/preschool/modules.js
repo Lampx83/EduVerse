@@ -1,27 +1,15 @@
 // ============================================================
 // Trường Mầm non — Module list (Mầm/Chồi/Lá) theo TT 51/2020
 // ============================================================
-// 5 LĨNH VỰC PHÁT TRIỂN × 3 độ tuổi = 15 module track. Mỗi track phủ 35 tuần
-// hoạt động theo chủ đề năm học (trường mầm non, bản thân, gia đình, nghề,
-// động vật, Tết, thực vật, giao thông, nước, quê hương …).
-//
-// Module gốc N1/N2/N3 GIỮ NGUYÊN — đã có scenarios N{1,2,3}-w01…w36 tích hợp
-// Toán + Nhận biết + Vận động cơ bản. Các module mới của các lĩnh vực còn
-// thiếu đặt scenarios `…đang biên soạn`, sẽ migrate sang ScoreUp Phase 1 sau.
+// 5 LĨNH VỰC PHÁT TRIỂN × 3 độ tuổi = 15 module track.
+// Lĩnh vực 2 (Nhận thức / N1-N3) GIỮ NGUYÊN — đã có scenarios đầy đủ.
+// Lĩnh vực 1,3,4,5 (TC/NN/TX/TM) — quiz content bổ sung phiên 11 (2026-07-08).
 // ============================================================
-
-const _stub = (id, title, yl, subject, stars, prereq, description) => ({
-  category: 'curriculum', id, title, yearLevel: yl, subject,
-  scenarioIds: [`${id}-w01`], knowledgeQuiz: `${id}-quiz`,
-  minStarsToUnlock: stars, ...(prereq ? { prerequisites: [prereq] } : {}),
-  description, status: 'in-progress',
-});
 
 /** @type {import('../../engine/types.js').CourseModule[]} */
 export const MODULES = [
-  // ───────── Lĩnh vực 2 — Phát triển nhận thức (đã có content) ─────────
-  // N1/N2/N3 hiện tại đang gom tổng "36 tuần + Làm quen Toán" — vẫn để dưới
-  // môn `lam-quen-toan` (alias) để mọi scenario N{1,2,3}-w01…w36 hoạt động.
+  // ───────── Lĩnh vực 2 — Phát triển nhận thức (đã có content đầy đủ) ─────────
+  // N1/N2/N3 gom tổng "36 tuần + Làm quen Toán" theo môn `lam-quen-toan`.
   { category: 'curriculum', id: 'N1', title: 'Mầm (3 tuổi) · 36 tuần + Làm quen Toán', yearLevel: 1, subject: 'lam-quen-toan',
     scenarioIds: ['N1-quiz', 'N1-match', 'N1-w01'], knowledgeQuiz: 'N1-quiz', minStarsToUnlock: 0,
     description: '36 tuần chủ đề (trường mầm non, bản thân, gia đình, nghề, động vật, Tết, thực vật, giao thông, nước, quê hương) + Đếm 1–5, nhận biết màu.' },
@@ -33,34 +21,46 @@ export const MODULES = [
     description: '36 tuần chủ đề + So sánh nhiều/ít, đếm tới 20, cộng-trừ trong 5, hình khối 3D đơn giản.' },
 
   // ───────── Lĩnh vực 1 — Phát triển thể chất ─────────
-  _stub('N1-TC', 'Mầm · Phát triển thể chất', 1, 'the-chat', 0, null,
-    'Vận động thô (chạy, bật, bò, leo) · vận động tinh (xé/dán, xếp khối) · ăn ngủ vệ sinh đúng giờ · phòng chống tai nạn cơ bản. (Đang biên soạn).'),
-  _stub('N2-TC', 'Chồi · Phát triển thể chất', 2, 'the-chat', 0, 'N1-TC',
-    'Đi thăng bằng · ném trúng đích · phối hợp tay-mắt · tự phục vụ bản thân · nhận biết nhóm thực phẩm tốt. (Đang biên soạn).'),
-  _stub('N3-TC', 'Lá · Phát triển thể chất', 3, 'the-chat', 0, 'N2-TC',
-    'Đi/chạy có đổi hướng · nhảy dây · bóng đá mini · cầm bút đúng cách (chuẩn bị viết) · an toàn giao thông cơ bản. (Đang biên soạn).'),
+  { category: 'curriculum', id: 'N1-TC', title: 'Mầm · Phát triển thể chất', yearLevel: 1, subject: 'the-chat',
+    scenarioIds: ['N1-TC-quiz'], knowledgeQuiz: 'N1-TC-quiz', minStarsToUnlock: 0,
+    description: 'Vận động thô (chạy, bật, bò, leo) · vận động tinh (xé/dán, xếp khối) · ăn ngủ vệ sinh đúng giờ · phòng chống tai nạn cơ bản.' },
+  { category: 'curriculum', id: 'N2-TC', title: 'Chồi · Phát triển thể chất', yearLevel: 2, subject: 'the-chat',
+    scenarioIds: ['N2-TC-quiz'], knowledgeQuiz: 'N2-TC-quiz', minStarsToUnlock: 0, prerequisites: ['N1-TC'],
+    description: 'Đi thăng bằng · ném trúng đích · phối hợp tay-mắt · tự phục vụ bản thân · nhận biết nhóm thực phẩm tốt.' },
+  { category: 'curriculum', id: 'N3-TC', title: 'Lá · Phát triển thể chất', yearLevel: 3, subject: 'the-chat',
+    scenarioIds: ['N3-TC-quiz'], knowledgeQuiz: 'N3-TC-quiz', minStarsToUnlock: 0, prerequisites: ['N2-TC'],
+    description: 'Đi/chạy có đổi hướng · nhảy dây · cầm bút đúng cách (chuẩn bị viết) · an toàn giao thông cơ bản.' },
 
   // ───────── Lĩnh vực 3 — Phát triển ngôn ngữ ─────────
-  _stub('N1-NN', 'Mầm · Phát triển ngôn ngữ', 1, 'ngon-ngu', 0, null,
-    'Nghe – nói (đọc thơ, kể chuyện theo tranh) · từ vựng đồ vật quen thuộc · giao tiếp gia đình. (Đang biên soạn).'),
-  _stub('N2-NN', 'Chồi · Phát triển ngôn ngữ', 2, 'ngon-ngu', 0, 'N1-NN',
-    'Kể chuyện sáng tạo · đặt câu hỏi · đoán nội dung qua tranh · làm quen âm chữ cái. (Đang biên soạn).'),
-  _stub('N3-NN', 'Lá · Phát triển ngôn ngữ', 3, 'ngon-ngu', 0, 'N2-NN',
-    'Làm quen 29 chữ cái Tiếng Việt · viết chữ rỗng · đọc thuộc thơ ngắn · kể lại chuyện theo nhân vật. (Đang biên soạn).'),
+  { category: 'curriculum', id: 'N1-NN', title: 'Mầm · Phát triển ngôn ngữ', yearLevel: 1, subject: 'ngon-ngu',
+    scenarioIds: ['N1-NN-quiz'], knowledgeQuiz: 'N1-NN-quiz', minStarsToUnlock: 0,
+    description: 'Nghe – nói (đọc thơ, kể chuyện theo tranh) · từ vựng đồ vật và con vật quen thuộc · giao tiếp trong gia đình.' },
+  { category: 'curriculum', id: 'N2-NN', title: 'Chồi · Phát triển ngôn ngữ', yearLevel: 2, subject: 'ngon-ngu',
+    scenarioIds: ['N2-NN-quiz'], knowledgeQuiz: 'N2-NN-quiz', minStarsToUnlock: 0, prerequisites: ['N1-NN'],
+    description: 'Kể chuyện sáng tạo · đặt câu hỏi · đoán nội dung qua tranh · làm quen âm chữ cái tiếng Việt.' },
+  { category: 'curriculum', id: 'N3-NN', title: 'Lá · Phát triển ngôn ngữ', yearLevel: 3, subject: 'ngon-ngu',
+    scenarioIds: ['N3-NN-quiz'], knowledgeQuiz: 'N3-NN-quiz', minStarsToUnlock: 0, prerequisites: ['N2-NN'],
+    description: 'Làm quen 29 chữ cái Tiếng Việt · viết chữ rỗng · đọc thuộc thơ ngắn · kể lại chuyện theo nhân vật.' },
 
-  // ───────── Lĩnh vực 4 — Phát triển TC-XH ─────────
-  _stub('N1-TX', 'Mầm · Phát triển tình cảm – xã hội', 1, 'tinh-cam-xh', 0, null,
-    'Nhận biết cảm xúc cơ bản · chào hỏi người lớn · chơi cùng bạn · cảm ơn – xin lỗi. (Đang biên soạn).'),
-  _stub('N2-TX', 'Chồi · Phát triển tình cảm – xã hội', 2, 'tinh-cam-xh', 0, 'N1-TX',
-    'Chia sẻ đồ chơi · hợp tác nhóm nhỏ · thể hiện tình cảm với gia đình · tự kiềm chế khi giận. (Đang biên soạn).'),
-  _stub('N3-TX', 'Lá · Phát triển tình cảm – xã hội', 3, 'tinh-cam-xh', 0, 'N2-TX',
-    'Làm việc theo nhóm · giải quyết xung đột đơn giản · biết tự hào về văn hoá VN · sẵn sàng đi lớp 1. (Đang biên soạn).'),
+  // ───────── Lĩnh vực 4 — Phát triển tình cảm–xã hội ─────────
+  { category: 'curriculum', id: 'N1-TX', title: 'Mầm · Phát triển tình cảm – xã hội', yearLevel: 1, subject: 'tinh-cam-xh',
+    scenarioIds: ['N1-TX-quiz'], knowledgeQuiz: 'N1-TX-quiz', minStarsToUnlock: 0,
+    description: 'Nhận biết cảm xúc cơ bản · chào hỏi người lớn lễ phép · chơi cùng bạn · biết nói cảm ơn và xin lỗi.' },
+  { category: 'curriculum', id: 'N2-TX', title: 'Chồi · Phát triển tình cảm – xã hội', yearLevel: 2, subject: 'tinh-cam-xh',
+    scenarioIds: ['N2-TX-quiz'], knowledgeQuiz: 'N2-TX-quiz', minStarsToUnlock: 0, prerequisites: ['N1-TX'],
+    description: 'Chia sẻ đồ chơi · hợp tác nhóm nhỏ · thể hiện tình cảm với gia đình · tự kiềm chế cảm xúc khi tức giận.' },
+  { category: 'curriculum', id: 'N3-TX', title: 'Lá · Phát triển tình cảm – xã hội', yearLevel: 3, subject: 'tinh-cam-xh',
+    scenarioIds: ['N3-TX-quiz'], knowledgeQuiz: 'N3-TX-quiz', minStarsToUnlock: 0, prerequisites: ['N2-TX'],
+    description: 'Làm việc theo nhóm · giải quyết xung đột đơn giản bằng lời nói · biết tự hào về văn hoá VN · sẵn sàng đi lớp 1.' },
 
   // ───────── Lĩnh vực 5 — Phát triển thẩm mỹ ─────────
-  _stub('N1-TM', 'Mầm · Phát triển thẩm mỹ', 1, 'tham-my', 0, null,
-    'Hát theo nhạc · nhảy theo nhịp đơn giản · tô màu lớn · nặn đất nặn theo mẫu. (Đang biên soạn).'),
-  _stub('N2-TM', 'Chồi · Phát triển thẩm mỹ', 2, 'tham-my', 0, 'N1-TM',
-    'Vẽ tự do theo chủ đề · gấp giấy đơn giản · hát solo và đồng thanh · phân biệt nhanh-chậm-vui-buồn. (Đang biên soạn).'),
-  _stub('N3-TM', 'Lá · Phát triển thẩm mỹ', 3, 'tham-my', 0, 'N2-TM',
-    'Vẽ – cắt – xé – dán theo ý tưởng riêng · biểu diễn văn nghệ · cảm nhận âm nhạc dân ca VN. (Đang biên soạn).'),
+  { category: 'curriculum', id: 'N1-TM', title: 'Mầm · Phát triển thẩm mỹ', yearLevel: 1, subject: 'tham-my',
+    scenarioIds: ['N1-TM-quiz'], knowledgeQuiz: 'N1-TM-quiz', minStarsToUnlock: 0,
+    description: 'Hát theo nhạc · nhảy theo nhịp đơn giản · tô màu lớn · nặn đất nặn · nhận biết âm sắc nhạc cụ.' },
+  { category: 'curriculum', id: 'N2-TM', title: 'Chồi · Phát triển thẩm mỹ', yearLevel: 2, subject: 'tham-my',
+    scenarioIds: ['N2-TM-quiz'], knowledgeQuiz: 'N2-TM-quiz', minStarsToUnlock: 0, prerequisites: ['N1-TM'],
+    description: 'Vẽ tự do theo chủ đề · gấp giấy origami đơn giản · hát solo và đồng thanh · phân biệt nhanh-chậm-vui-buồn trong âm nhạc.' },
+  { category: 'curriculum', id: 'N3-TM', title: 'Lá · Phát triển thẩm mỹ', yearLevel: 3, subject: 'tham-my',
+    scenarioIds: ['N3-TM-quiz'], knowledgeQuiz: 'N3-TM-quiz', minStarsToUnlock: 0, prerequisites: ['N2-TM'],
+    description: 'Vẽ – cắt – xé – dán theo ý tưởng riêng · biểu diễn văn nghệ · cảm nhận âm nhạc và tranh dân gian VN (Đông Hồ, Quan họ).' },
 ];

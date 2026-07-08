@@ -4,6 +4,94 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-08 — Phiên cải tiến (11) · Trường Mầm non — 4 lĩnh vực phát triển hoàn chỉnh
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
+
+**Trường:** Trường Mầm non (`preschool`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Quét codebase phát hiện **12 module stub** cho 4 lĩnh vực phát triển Mầm non (Thể chất, Ngôn ngữ, Tình cảm–Xã hội, Thẩm mỹ × 3 lứa tuổi Mầm/Chồi/Lá) đều là skeleton có `(Đang biên soạn)` và `status: 'in-progress'`. Lĩnh vực 2 (Nhận thức / N1–N3) đã đầy đủ nội dung từ đầu. Ưu tiên bổ sung 4 lĩnh vực còn lại để hoàn chỉnh chương trình Mầm non theo TT 51/2020 (Bộ GD&ĐT), đảm bảo bé 3–5 tuổi có đủ nội dung ôn luyện theo 5 lĩnh vực phát triển.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/preschool-physical.js` | Tạo mới | 3 quiz scenarios N1-TC/N2-TC/N3-TC (15 câu — Thể chất) |
+| `public/js/scenarios/preschool-language.js` | Tạo mới | 3 quiz scenarios N1-NN/N2-NN/N3-NN (15 câu — Ngôn ngữ) |
+| `public/js/scenarios/preschool-social.js`   | Tạo mới | 3 quiz scenarios N1-TX/N2-TX/N3-TX (15 câu — Tình cảm–XH) |
+| `public/js/scenarios/preschool-arts.js`     | Tạo mới | 3 quiz scenarios N1-TM/N2-TM/N3-TM (15 câu — Thẩm mỹ) |
+| `public/js/domains/preschool/modules.js`    | Sửa | Thay 12 `_stub()` bằng module đầy đủ; xoá `status: 'in-progress'` và "(Đang biên soạn)" |
+| `public/js/domains/preschool/achievements.js` | Sửa | Thêm 13 achievement mới (12 module + 1 tổng kết) |
+| `public/js/scenarios/_all-content.js`       | Sửa | Import + spread 4 bộ scenario Mầm non mới |
+
+### Chi tiết nội dung (60 câu hỏi)
+
+**Lĩnh vực 1 — Phát triển thể chất (`the-chat`)**
+
+| Scenario | Lứa tuổi | Nội dung |
+|----------|----------|---------|
+| `N1-TC-quiz` (5 câu) | Mầm (3t) | Rửa tay, vận động thô/tinh, phòng ngã, vệ sinh sáng, nghỉ ngơi khi mệt |
+| `N2-TC-quiz` (5 câu) | Chồi (4t) | Thăng bằng, phối hợp tay-mắt, 4 nhóm thực phẩm, rau tươi tốt hơn, xử lý xước da |
+| `N3-TC-quiz` (5 câu) | Lá (5t) | ATGT vỉa hè, đèn đỏ, cầm bút đúng cách, nhảy dây toàn thân, rửa tay 2 lần |
+
+**Lĩnh vực 3 — Phát triển ngôn ngữ (`ngon-ngu`)**
+
+| Scenario | Lứa tuổi | Nội dung |
+|----------|----------|---------|
+| `N1-NN-quiz` (5 câu) | Mầm (3t) | Tiếng kêu con vật, đồ vật ăn cơm, chào hỏi, xin phép, tên gọi "Bà" |
+| `N2-NN-quiz` (5 câu) | Chồi (4t) | 29 chữ cái TV, kể chuyện theo tranh, từ để hỏi, chữ A đứng đầu, lắng nghe chủ động |
+| `N3-NN-quiz` (5 câu) | Lá (5t) | Đ vs D, thơ thiếu nhi, hướng viết TV, từ loại câu, kỹ năng đọc giải mã |
+
+**Lĩnh vực 4 — Phát triển tình cảm–xã hội (`tinh-cam-xh`)**
+
+| Scenario | Lứa tuổi | Nội dung |
+|----------|----------|---------|
+| `N1-TX-quiz` (5 câu) | Mầm (3t) | Cảm xúc vui, nói cảm ơn, xin lỗi, chào thầy/cô, chia sẻ cảm xúc buồn |
+| `N2-TX-quiz` (5 câu) | Chồi (4t) | Chia sẻ kẹo, hợp tác nhóm, kiềm chế tức giận, yêu thương gia đình, chờ đến lượt |
+| `N3-TX-quiz` (5 câu) | Lá (5t) | Tết Nguyên Đán, giải quyết xung đột, Quốc kỳ VN, kỹ năng lớp 1, tự hào lành mạnh |
+
+**Lĩnh vực 5 — Phát triển thẩm mỹ (`tham-my`)**
+
+| Scenario | Lứa tuổi | Nội dung |
+|----------|----------|---------|
+| `N1-TM-quiz` (5 câu) | Mầm (3t) | Pha màu đỏ+vàng=cam, nhạc vui-nhảy, cọ vẽ, nặn đất, trống vs kèn |
+| `N2-TM-quiz` (5 câu) | Chồi (4t) | Vẽ tranh gia đình, origami 1 tờ giấy, nhạc múa vui, collage dán lá, vẽ đường thẳng |
+| `N3-TM-quiz` (5 câu) | Lá (5t) | Tranh Đông Hồ Bắc Ninh, biểu diễn bài hát, múa rối nước mặt nước, vẽ tự do, Quan họ UNESCO |
+
+### Achievement mới (13)
+
+| ID | Icon | Tên | Điều kiện |
+|----|------|-----|-----------|
+| `active-mam` | 🏃 | Bé năng động | N1-TC ≥ 3 sao |
+| `agile-choi` | 🤸 | Bé khéo léo | N2-TC ≥ 3 sao |
+| `strong-la` | 💪 | Bé cường tráng | N3-TC ≥ 3 sao |
+| `talk-mam` | 💬 | Bé bi bô | N1-NN ≥ 3 sao |
+| `story-choi` | 📖 | Bé kể chuyện | N2-NN ≥ 3 sao |
+| `read-la` | 🔤 | Bé đọc chữ | N3-NN ≥ 3 sao |
+| `happy-mam` | 😊 | Bé vui vẻ | N1-TX ≥ 3 sao |
+| `kind-choi` | 🤝 | Bé thân thiện | N2-TX ≥ 3 sao |
+| `good-la` | 🌟 | Bé tốt bụng | N3-TX ≥ 3 sao |
+| `artist-mam` | 🎨 | Bé nghệ sĩ nhỏ | N1-TM ≥ 3 sao |
+| `talent-choi` | 🎭 | Bé tài năng | N2-TM ≥ 3 sao |
+| `creative-la` | ✨ | Bé sáng tạo | N3-TM ≥ 3 sao |
+| `all-round` | 🏅 | Phát triển toàn diện | Hoàn thành 15 quiz |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/preschool-physical.js       ✅ OK
+node --check public/js/scenarios/preschool-language.js       ✅ OK
+node --check public/js/scenarios/preschool-social.js         ✅ OK
+node --check public/js/scenarios/preschool-arts.js           ✅ OK
+node --check public/js/domains/preschool/modules.js          ✅ OK
+node --check public/js/domains/preschool/achievements.js     ✅ OK
+node --check public/js/scenarios/_all-content.js             ✅ OK
+```
+
+---
+
 ## 2026-07-07 — Phiên cải tiến (10) · Trường THPT — Dọn sạch mô tả module lỗi thời
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).

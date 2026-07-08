@@ -36,6 +36,10 @@ import { SECONDARY_MATH_SCENARIOS } from './secondary-math.js';
 import { SECONDARY_LIT_SCENARIOS } from './secondary-literature.js';
 import { MATH6_LESSON_SCENARIOS } from './secondary-math6-lessons.js';
 import { PRESCHOOL_SCENARIOS } from './preschool-basics.js';
+import { PRESCHOOL_PHYSICAL_SCENARIOS } from './preschool-physical.js';
+import { PRESCHOOL_LANGUAGE_SCENARIOS } from './preschool-language.js';
+import { PRESCHOOL_SOCIAL_SCENARIOS } from './preschool-social.js';
+import { PRESCHOOL_ARTS_SCENARIOS } from './preschool-arts.js';
 import { PRIMARY_LOP1_SCENARIOS } from './lop1/_index.js';
 let PRIMARY_LOP3_SCENARIOS = {}, PRIMARY_LOP4_SCENARIOS = {}, PRIMARY_LOP5_SCENARIOS = {};
 let SECONDARY_LOP7_SCENARIOS = {}, SECONDARY_LOP8_SCENARIOS = {}, SECONDARY_LOP9_SCENARIOS = {};
@@ -89,5 +93,9 @@ export const ALL_SCENARIOS = {
   ...SECONDARY_LIT_SCENARIOS,
   ...MATH6_LESSON_SCENARIOS,
   ...PRESCHOOL_SCENARIOS,
+  ...PRESCHOOL_PHYSICAL_SCENARIOS,
+  ...PRESCHOOL_LANGUAGE_SCENARIOS,
+  ...PRESCHOOL_SOCIAL_SCENARIOS,
+  ...PRESCHOOL_ARTS_SCENARIOS,
   ...PRESCHOOL_WEEKS_SCENARIOS,
 };
