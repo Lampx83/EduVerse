@@ -10,7 +10,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { submitAttempt, getPlayerName } from '../../api.js';
 import { sfx } from '../../sfx.js';
 import { showWelcomeCard } from '../../welcome-card.js';
-import { STATIONS, buildApparatus, buildLabRoom } from './stations.js?v=5';
+import { STATIONS, buildApparatus, buildLabRoom } from './stations.js?v=6';
 
 const $ = (s) => document.querySelector(s);
 const modalRoot = $('#modal-root');
@@ -150,12 +150,22 @@ function currentStation() {
   return STATIONS[s.action] || STATIONS._default;
 }
 
+function renderRail() {
+  const rail = $('#step-rail');
+  rail.innerHTML = recipe.steps.map((s, i) => {
+    const cls = state.stepDone[i] ? 'done' : (i === state.stepIdx ? 'cur' : '');
+    const label = (STATIONS[s.action] || STATIONS._default).icon;
+    return `<div class="sdot ${cls}" title="Bước ${i + 1}: ${(s.label || '').replace(/"/g, '&quot;')}">${state.stepDone[i] ? '✓' : (i + 1)}</div>`;
+  }).join('');
+}
+
 function renderStep() {
   const i = state.stepIdx;
   const submitBtn = $('#submit-btn');
   const actBtn = $('#act-btn');
   if (i >= recipe.steps.length) {
     // all steps done → quality check gate
+    renderRail();
     $('#step-num').textContent = 'HOÀN TẤT QUY TRÌNH';
     $('#step-title').textContent = '🎉 Đã thực hiện xong các bước!';
     $('#step-why').textContent = 'Kiểm tra chất lượng thành phẩm rồi nộp bài.';
@@ -172,6 +182,7 @@ function renderStep() {
   const s = recipe.steps[i];
   const st = currentStation();
   state.clicks = 0;
+  renderRail();
   $('#step-num').textContent = `BƯỚC ${i + 1} / ${recipe.steps.length}`;
   $('#step-title').textContent = s.label;
   $('#step-why').textContent = s.purpose ? `Ý nghĩa: ${s.purpose}` : '';
@@ -388,24 +399,35 @@ function nextRecipe() {
 // Lesson picker
 // ============================================================
 function openPicker() {
+  const done = getDone();
   const byLesson = {};
   for (const r of LESSONS) (byLesson[r.lesson] ??= []).push(r);
+  const lessonTitles = {};
+  for (const r of LESSONS) lessonTitles[r.lesson] = r.lessonTitle || '';
+  const doneCount = LESSONS.filter(r => done.has(r.id)).length;
   let h = `<div class="modal"><div class="card">
     <h2>🧪 Phòng Bào chế — chọn bài thực hành</h2>
-    <div class="desc">12 bài theo giáo trình <b>Thực hành Bào chế</b> (DUOC 04). Mỗi bài mô phỏng đúng quy trình + phân tích công thức + kiểm chất lượng.</div>
-    <div class="lgrid" id="pgrid"></div></div></div>`;
+    <div class="desc">12 bài theo giáo trình <b>Thực hành Bào chế</b> (DUOC 04). Mỗi bài: phân tích công thức → thao tác 3D đúng quy trình → kiểm chất lượng. <b>Đã hoàn thành ${doneCount}/${LESSONS.length}.</b></div>
+    <div id="pbody"></div></div></div>`;
   modalRoot.innerHTML = h;
-  const grid = $('#pgrid');
-  const done = getDone();
-  LESSONS.forEach(r => {
-    const el = document.createElement('div'); el.className = 'lcard';
-    const check = done.has(r.id) ? '<span style="float:right;color:var(--accent2)">✓</span>' : '';
-    el.innerHTML = `<div class="ic">${r.icon || '🧪'}${check}</div><div class="nm">${r.name}</div>
-      <div class="mt">Bài ${r.lesson} · ${r.steps.length} bước</div>
-      <span class="badge">${r.methodName || r.method}</span>`;
-    el.onclick = () => { modalRoot.innerHTML = ''; startRecipe(r); };
-    grid.appendChild(el);
-  });
+  const body = $('#pbody');
+  for (const L of Object.keys(byLesson).sort((a, b) => a - b)) {
+    const head = document.createElement('div');
+    head.style.cssText = 'font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px';
+    head.textContent = `Bài ${L} — ${lessonTitles[L]}`;
+    body.appendChild(head);
+    const grid = document.createElement('div'); grid.className = 'lgrid'; grid.id = L === '1' ? 'pgrid' : '';
+    for (const r of byLesson[L]) {
+      const el = document.createElement('div'); el.className = 'lcard';
+      const check = done.has(r.id) ? '<span style="float:right;color:var(--accent2)">✓ đã xong</span>' : '';
+      el.innerHTML = `<div class="ic">${r.icon || '🧪'}${check}</div><div class="nm">${r.name}</div>
+        <div class="mt">${r.steps.length} bước · ${(r.components || []).length} thành phần</div>
+        <span class="badge">${r.methodName || r.method}</span>`;
+      el.onclick = () => { modalRoot.innerHTML = ''; startRecipe(r); };
+      grid.appendChild(el);
+    }
+    body.appendChild(grid);
+  }
 }
 
 // ---------- mobile panel toggles ----------

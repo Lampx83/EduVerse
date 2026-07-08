@@ -42,6 +42,11 @@
   /* Step panel (bottom center) */
   #step{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(680px,94vw);
     background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px 18px;z-index:15;backdrop-filter:blur(10px)}
+  #step-rail{display:flex;gap:5px;margin-bottom:9px;overflow-x:auto;padding-bottom:2px}
+  #step-rail .sdot{flex:0 0 auto;min-width:22px;height:22px;border-radius:6px;border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ink);opacity:.5;background:rgba(255,255,255,.04)}
+  #step-rail .sdot.done{opacity:1;background:rgba(34,197,94,.22);border-color:var(--accent2);color:#bbf7d0}
+  #step-rail .sdot.cur{opacity:1;background:rgba(20,184,166,.28);border-color:var(--accent);color:#fff;box-shadow:0 0 0 2px rgba(20,184,166,.25)}
   #step .num{font-size:11px;letter-spacing:.6px;font-weight:800;color:var(--accent);text-transform:uppercase}
   #step .title{font-size:16px;font-weight:700;margin:3px 0 2px}
   #step .why{font-size:12px;opacity:.75}
@@ -156,6 +161,7 @@
 <div id="equip-hint" class="hidden"></div>
 
 <div id="step" class="hidden">
+  <div id="step-rail"></div>
   <div class="num" id="step-num"></div>
   <div class="title" id="step-title"></div>
   <div class="why" id="step-why"></div>
@@ -169,6 +175,6 @@
 <div id="toast"></div>
 <div id="modal-root"></div>
 
-<script type="module" src="./js/pharmacy/baoche/lab.js?v=5"></script>
+<script type="module" src="./js/pharmacy/baoche/lab.js?v=6"></script>
 </body>
 </html>
