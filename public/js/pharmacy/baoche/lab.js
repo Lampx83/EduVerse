@@ -6,8 +6,11 @@
 // ============================================================
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { submitAttempt, getPlayerName } from '../../api.js';
-import { STATIONS, buildApparatus } from './stations.js';
+import { sfx } from '../../sfx.js';
+import { showWelcomeCard } from '../../welcome-card.js';
+import { STATIONS, buildApparatus, buildLabRoom } from './stations.js?v=5';
 
 const $ = (s) => document.querySelector(s);
 const modalRoot = $('#modal-root');
@@ -28,10 +31,15 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0c1424);
-scene.fog = new THREE.Fog(0x0c1424, 6, 16);
+scene.background = new THREE.Color(0x0e1626);
+scene.fog = new THREE.Fog(0x0e1626, 7, 18);
+// PBR reflections cho thuỷ tinh/kim loại
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, 0.05, 100);
 camera.position.set(0, 1.15, 2.35);
@@ -45,39 +53,24 @@ controls.maxPolarAngle = Math.PI * 0.52;
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 
-// Lights
-scene.add(new THREE.HemisphereLight(0xbcd4ff, 0x202838, 0.9));
-const key = new THREE.DirectionalLight(0xffffff, 1.15);
-key.position.set(3, 6, 4); key.castShadow = true;
-key.shadow.mapSize.set(1024, 1024);
+// Lights — key ấm + fill lạnh + rim
+scene.add(new THREE.HemisphereLight(0xc8dbff, 0x1a2130, 0.75));
+const key = new THREE.DirectionalLight(0xfff2e0, 1.2);
+key.position.set(2.6, 5.5, 3.4); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
 key.shadow.camera.near = 1; key.shadow.camera.far = 20;
+key.shadow.camera.left = -3; key.shadow.camera.right = 3; key.shadow.camera.top = 3; key.shadow.camera.bottom = -3;
+key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
 scene.add(key);
-const heroSpot = new THREE.SpotLight(0xffffff, 0, 8, Math.PI / 5, 0.4, 1.2);
-heroSpot.position.set(0, 3.4, 1.2); heroSpot.target.position.set(0, 0.8, 0);
+const fill = new THREE.DirectionalLight(0x9fc0ff, 0.35); fill.position.set(-3, 3, 2); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xbfe0ff, 0.5); rim.position.set(-1.5, 2.5, -3); scene.add(rim);
+const heroSpot = new THREE.SpotLight(0xffffff, 0, 8, Math.PI / 5, 0.45, 1.3);
+heroSpot.position.set(0.3, 3.2, 1.1); heroSpot.target.position.set(0, 0.85, 0);
+heroSpot.castShadow = true; heroSpot.shadow.mapSize.set(1024, 1024); heroSpot.shadow.bias = -0.0005;
 scene.add(heroSpot); scene.add(heroSpot.target);
 
-// Bench
-const bench = new THREE.Mesh(
-  new THREE.BoxGeometry(4.2, 0.12, 1.7),
-  new THREE.MeshStandardMaterial({ color: 0x2a3346, roughness: 0.75, metalness: 0.05 })
-);
-bench.position.y = 0.66; bench.receiveShadow = true; scene.add(bench);
-const benchTop = new THREE.Mesh(
-  new THREE.BoxGeometry(4.2, 0.02, 1.7),
-  new THREE.MeshStandardMaterial({ color: 0x3b465e, roughness: 0.4, metalness: 0.2 })
-);
-benchTop.position.y = 0.73; benchTop.receiveShadow = true; scene.add(benchTop);
-// back wall
-const wall = new THREE.Mesh(
-  new THREE.PlaneGeometry(12, 6),
-  new THREE.MeshStandardMaterial({ color: 0x121b2e, roughness: 1 })
-);
-wall.position.set(0, 2.5, -1.4); scene.add(wall);
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(20, 20),
-  new THREE.MeshStandardMaterial({ color: 0x0a1120, roughness: 1 })
-);
-floor.rotation.x = -Math.PI / 2; floor.position.y = 0; floor.receiveShadow = true; scene.add(floor);
+// Phòng lab (kệ hoá chất, tủ, sàn gạch) — dựng trong stations.js để tách bạch
+buildLabRoom(THREE, scene);
 
 // ---------- Runtime state ----------
 let recipe = null;
@@ -219,10 +212,12 @@ function doAction() {
   $('#meter-bar').style.width = (p * 100).toFixed(0) + '%';
   if (heroTick) heroTick(0, p, true);
   st.onClick && st.onClick(s, state, toast);
+  try { sfx.tick(); } catch {}
   if (state.clicks >= need) {
     state.stepDone[i] = true;
     state.advancing = true;
     $('#act-btn').disabled = true;
+    try { sfx.correct(); } catch {}
     toast(`✅ ${s.standard ? s.standard.split('.')[0] : 'Đạt bước ' + (i + 1)}`, 'ok', 1600);
     setTimeout(() => { state.advancing = false; $('#act-btn').disabled = false; advance(); }, 550);
   } else {
@@ -242,9 +237,9 @@ function advance() {
 // ============================================================
 function openRoleMatch() {
   const comps = recipe.components || [];
-  // shuffle roles deterministically-ish (by index rotation to avoid Math.random dependency)
-  const roles = comps.map((c, idx) => ({ role: c.role, characteristic: c.characteristic, name: c.name }));
-  const shuffled = roles.map((r, i) => roles[(i * 7 + 3) % roles.length]);
+  // xáo vai trò bằng Fisher–Yates (đảm bảo hoán vị, không trùng)
+  const shuffled = comps.map(c => ({ role: c.role, characteristic: c.characteristic, name: c.name }));
+  for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
   let selName = null;
   const matched = {};
   const html = `
@@ -342,6 +337,7 @@ function computeScore() {
 
 async function finishAndSubmit() {
   const score = computeScore();
+  markDone(recipe.id);
   const durationSec = Math.round((Date.now() - state.startedAt) / 1000);
   const res = await submitAttempt({
     subject: 'bao-che',
@@ -359,6 +355,7 @@ async function finishAndSubmit() {
 }
 
 function showResult(score, res) {
+  try { sfx.perfect(); } catch {}
   const saved = res ? '✅ Đã lưu điểm' : '⚠️ Chưa đăng nhập — điểm không được lưu';
   const stepsDone = state.stepDone.filter(Boolean).length;
   modalRoot.innerHTML = `<div class="modal"><div class="card" style="max-width:460px;text-align:center">
@@ -371,13 +368,20 @@ function showResult(score, res) {
       <div>Kiểm tra chất lượng: <b>${state.qualityScore}/${state.qualityMax}</b></div>
       <div>Lỗi thao tác: <b>${state.errors}</b></div>
     </div>
-    <div class="row-btns" style="justify-content:center;margin-top:18px">
+    <div class="row-btns" style="justify-content:center;margin-top:18px;flex-wrap:wrap">
       <button class="btn ghost" id="r-again">Làm lại</button>
-      <button class="btn" id="r-pick">Chọn bài khác</button>
+      <button class="btn ghost" id="r-pick">Chọn bài khác</button>
+      ${nextRecipe() ? `<button class="btn" id="r-next">Bài tiếp: ${nextRecipe().name} →</button>` : ''}
     </div>
   </div></div>`;
   $('#r-again').onclick = () => { modalRoot.innerHTML = ''; startRecipe(recipe); };
   $('#r-pick').onclick = openPicker;
+  const nx = $('#r-next'); if (nx) nx.onclick = () => { modalRoot.innerHTML = ''; startRecipe(nextRecipe()); };
+}
+
+function nextRecipe() {
+  const idx = LESSONS.findIndex(r => r.id === recipe.id);
+  return idx >= 0 && idx < LESSONS.length - 1 ? LESSONS[idx + 1] : null;
 }
 
 // ============================================================
@@ -392,9 +396,11 @@ function openPicker() {
     <div class="lgrid" id="pgrid"></div></div></div>`;
   modalRoot.innerHTML = h;
   const grid = $('#pgrid');
+  const done = getDone();
   LESSONS.forEach(r => {
     const el = document.createElement('div'); el.className = 'lcard';
-    el.innerHTML = `<div class="ic">${r.icon || '🧪'}</div><div class="nm">${r.name}</div>
+    const check = done.has(r.id) ? '<span style="float:right;color:var(--accent2)">✓</span>' : '';
+    el.innerHTML = `<div class="ic">${r.icon || '🧪'}${check}</div><div class="nm">${r.name}</div>
       <div class="mt">Bài ${r.lesson} · ${r.steps.length} bước</div>
       <span class="badge">${r.methodName || r.method}</span>`;
     el.onclick = () => { modalRoot.innerHTML = ''; startRecipe(r); };
@@ -402,10 +408,61 @@ function openPicker() {
   });
 }
 
+// ---------- mobile panel toggles ----------
+$('#tg-recipe')?.addEventListener('click', () => { $('#recipe').classList.toggle('show'); $('#equip-hint').classList.remove('show'); });
+$('#tg-equip')?.addEventListener('click', () => { $('#equip-hint').classList.toggle('show'); $('#recipe').classList.remove('show'); });
+
+// ---------- tiến độ hoàn thành (localStorage) ----------
+const DONE_KEY = 'tizia:baoche:done';
+function getDone() { try { return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]')); } catch { return new Set(); } }
+function markDone(id) { const s = getDone(); s.add(id); try { localStorage.setItem(DONE_KEY, JSON.stringify([...s])); } catch {} }
+
+// ---------- welcome card (1 lần) ----------
+showWelcomeCard({
+  icon: '🧪',
+  title: 'Phòng Bào chế — thực hành theo giáo trình',
+  intro: 'Mỗi bài mô phỏng đúng quy trình bào chế: phân tích công thức → thao tác 3D từng bước → kiểm tra chất lượng thành phẩm.',
+  bullets: [
+    'Đọc công thức + yêu cầu chất lượng (bảng bên trái) trước khi làm.',
+    'Mỗi bước có một thiết bị 3D — bấm nút thao tác (hoặc bấm thẳng vào thiết bị) đến khi đủ tiến độ.',
+    'Ghép đúng vai trò thành phần (đầu bài) và đánh dấu tiêu chuẩn đạt (cuối bài) để được điểm cao.',
+    'Kéo chuột để xoay · cuộn để phóng to.',
+  ],
+  tip: 'Điểm = quy trình 60% + phân tích thành phần 20% + kiểm chất lượng 20%.',
+  persistKey: 'tizia:welcome:bao-che-lab',
+  dismissLabel: 'Bắt đầu',
+});
+
 // ---------- init selection ----------
 const urlId = new URLSearchParams(location.search).get('recipe');
 if (urlId && LESSONS.find(r => r.id === urlId)) startRecipe(LESSONS.find(r => r.id === urlId));
 else if (LESSONS.length) openPicker();
+
+// ---------- click / hover trực tiếp lên thiết bị 3D ----------
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let heroHover = false;
+function hitHero(e) {
+  if (!heroGroup) return false;
+  pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  return raycaster.intersectObject(heroGroup, true).length > 0;
+}
+let downXY = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { downXY = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!downXY) return;
+  const moved = Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]);
+  downXY = null;
+  if (moved > 6) return;                 // kéo xoay camera → bỏ qua
+  if (!state || state.stepIdx >= (recipe?.steps.length ?? 0)) return;
+  const act = $('#act-btn');
+  if (act && !act.disabled && hitHero(e)) doAction();
+});
+renderer.domElement.addEventListener('pointermove', (e) => {
+  heroHover = hitHero(e);
+  renderer.domElement.style.cursor = heroHover ? 'pointer' : 'default';
+});
 
 // ---------- render loop ----------
 const clock = new THREE.Clock();
@@ -417,6 +474,12 @@ function animate() {
     const need = state ? stepClicksNeeded(currentStation(), recipe.steps[state.stepIdx]) : 1;
     const p = state ? Math.min(1, state.clicks / need) : 0;
     heroTick(dt, p, false);
+  }
+  if (heroGroup) {
+    const targetS = heroHover ? 1.05 : 1;
+    heroGroup.scale.x += (targetS - heroGroup.scale.x) * 0.15;
+    heroGroup.scale.y = heroGroup.scale.z = heroGroup.scale.x;
+    heroGroup.rotation.y = Math.sin(clock.elapsedTime * 0.4) * 0.1; // đung đưa nhẹ để lộ khối 3D, giữ mặt trước
   }
   renderer.render(scene, camera);
 }

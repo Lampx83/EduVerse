@@ -812,7 +812,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 5,
-        "action": "measure",
+        "action": "adjust-ph",
         "label": "Đo pH và điều chỉnh pH bằng dung dịch: NaOH 1M hoặc HCl 1M.",
         "purpose": "Tạo pH phù hợp.",
         "standard": "pH dung dịch có giá trị từ 5,0 -7,0.",
@@ -989,7 +989,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 2,
-        "action": "mix",
+        "action": "degas",
         "label": "Sục N₂ vào nước pha tiêm 15 phút để đuổi oxy hòa tan.",
         "purpose": "Loại bỏ oxy hòa tan trong nước pha tiêm.",
         "standard": "Nước pha tiêm đã loại bỏ khí oxy.",
@@ -1037,7 +1037,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 8,
-        "action": "measure",
+        "action": "adjust-ph",
         "label": "Đo pH và điều chỉnh pH bằng dung dịch: NaOH 1M hoặc HCl 1M (nếu cần).",
         "purpose": "Tạo pH phù hợp.",
         "standard": "pH dung dịch có giá trị từ 5,0 -6,5",
@@ -1264,7 +1264,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 8,
-        "action": "measure",
+        "action": "adjust-ph",
         "label": "Đo pH và điều chỉnh pH bằng dung dịch: NaOH 1M hoặc HCl 1M (nếu cần).",
         "purpose": "Tạo pH phù hợp.",
         "standard": "pH dung dịch có giá trị từ 5,0 -7,",
@@ -1477,7 +1477,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 7,
-        "action": "measure",
+        "action": "adjust-ph",
         "label": "Đo pH và điều chỉnh pH bằng dung dịch: NaOH 1M hoặc HCl 1M (nếu cần).",
         "purpose": "Tạo pH phù hợp.",
         "standard": "pH dung dịch có giá trị từ 7,0-8,0.",
@@ -2023,7 +2023,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 9,
-        "action": "dry",
+        "action": "cool",
         "label": "Để khuôn thuốc ở nhiệt độ 5-10⁰C trong 15 phút cho thuốc đông rắn.",
         "purpose": "Tạo hình dạng cho viên thuốc.",
         "standard": "Thuốc trong khuôn đông rắn.",
@@ -2207,7 +2207,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 9,
-        "action": "dry",
+        "action": "cool",
         "label": "Để khuôn thuốc ở nhiệt độ 5-10⁰C trong 15 phút cho thuốc đông rắn.",
         "purpose": "Tạo hình dạng cho viên thuốc.",
         "standard": "Thuốc trong khuôn đông rắn",
@@ -2389,7 +2389,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 7,
-        "action": "measure",
+        "action": "adjust-ph",
         "label": "Đo và điều chỉnh pH dung dịch bằng dung dịch: NaOH 10% hoặc HCl 10%.",
         "purpose": "Tạo pH thích hợp.",
         "standard": "pH dung dịch có giá trị từ 4,0 -4,5.",
@@ -2754,7 +2754,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 6,
-        "action": "measure",
+        "action": "adjust-ph",
         "label": "Đo và điều chỉnh pH dung dịch trên bằng dung dịch: NaOH 10% hoặc HCl 10%.",
         "purpose": "Tạo pH thích hợp.",
         "standard": "pH dung dịch có giá trị từ 4,5 - 5,5.",
@@ -2947,7 +2947,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 5,
-        "action": "mix",
+        "action": "cool",
         "label": "Làm lạnh nhanh trong nước đá, khuấy trộn trong quá trình làm lạnh.",
         "purpose": "Chuyển sáp nhũ hóa sang thể mềm.",
         "standard": "Sáp thu được có thể chất mềm, mịn, đồng nhất.",
@@ -3120,7 +3120,7 @@ export const BAOCHE_LESSONS = [
       },
       {
         "n": 4,
-        "action": "mix",
+        "action": "cool",
         "label": "Hỗn hợp tá dược được để nguội trở lại trong điều kiện vô khuẩn.",
         "purpose": "Hạ nhiệt độ của tá dược.",
         "standard": "Nhiệt độ đạt 50-60°C.",

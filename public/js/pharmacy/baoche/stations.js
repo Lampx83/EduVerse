@@ -7,8 +7,8 @@
 // ---- material helpers (nhận THREE để không import trùng) ----
 function mats(T) {
   return {
-    glass: () => new T.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.28, roughness: 0.05, metalness: 0, side: T.DoubleSide }),
-    metal: (c = 0xb8c0cc) => new T.MeshStandardMaterial({ color: c, roughness: 0.35, metalness: 0.85 }),
+    glass: () => new T.MeshPhysicalMaterial({ color: 0xeaf4ff, transparent: true, opacity: 0.45, roughness: 0.03, metalness: 0, transmission: 0.9, thickness: 0.4, ior: 1.45, side: T.DoubleSide, envMapIntensity: 1.2 }),
+    metal: (c = 0xb8c0cc) => new T.MeshStandardMaterial({ color: c, roughness: 0.3, metalness: 0.9, envMapIntensity: 1.0 }),
     dark: (c = 0x2b3446) => new T.MeshStandardMaterial({ color: c, roughness: 0.6, metalness: 0.3 }),
     plastic: (c = 0xdfe6ef) => new T.MeshStandardMaterial({ color: c, roughness: 0.5, metalness: 0.05 }),
     liquid: (c = 0xd8e8ff) => new T.MeshStandardMaterial({ color: c, transparent: true, opacity: 0.85, roughness: 0.15, metalness: 0.1 }),
@@ -313,6 +313,19 @@ const BUILDERS = {
     const bk = beaker(T, M, { r: 0.04, h: 0.08, liquidColor: 0xdff0ff }); bk.grp.position.set(0.02, 0.09, 0.02); g.add(bk.grp);
     return { group: g, tick(dt, p) { water.update(dt, 0.8); } };
   },
+  // ---- SỤC KHÍ TRƠ (đuổi oxy) ----
+  degas(T, M, step) {
+    const g = new T.Group();
+    const bk = beaker(T, M, { r: 0.06, h: 0.15, liquidColor: 0xbfe0ff }); g.add(bk.grp); bk.setFill(0.6, 0xbfe0ff);
+    // cylinder khí N2 + ống dẫn
+    const cyl = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.2, 20), M.metal(0x2f7d55)); cyl.position.set(-0.16, 0.1, -0.02); g.add(cyl);
+    const cap = new T.Mesh(new T.CylinderGeometry(0.014, 0.014, 0.03, 12), M.metal(0xb8c0cc)); cap.position.set(-0.16, 0.215, -0.02); g.add(cap);
+    const tube = new T.Mesh(new T.CylinderGeometry(0.004, 0.004, 0.16, 10), M.plastic(0xdfe6ef)); tube.position.set(-0.05, 0.13, 0); tube.rotation.z = 0.9; g.add(tube);
+    const dip = new T.Mesh(new T.CylinderGeometry(0.004, 0.004, 0.1, 10), M.plastic(0xdfe6ef)); dip.position.set(0, 0.07, 0); g.add(dip);
+    // bọt khí bên trong dung dịch
+    const bub = particles(T, g, { color: 0xffffff, y0: 0.02, rise: 0.11, spread: 0.028, count: 26, size: 0.008 });
+    return { group: g, tick(dt, p) { bub.update(dt, 0.4 + p * 0.6); const c = lerpHex(T, 0xbfe0ff, 0xd8ecff, p); bk.setFill(0.6, c); } };
+  },
   // ---- default ----
   _default(T, M, step, recipe) {
     return BUILDERS['beaker-stir'](T, M, step, recipe);
@@ -338,6 +351,7 @@ export const STATIONS = {
   sieve:        { key: 'sieve',       icon: '🕸️', equipName: 'Rây',              verb: s => `Rây${s.params?.mesh ? ` (rây ${s.params.mesh})` : ''}`, hint: () => 'Bấm để rây bột qua lưới', clicks: () => 5 },
   filter:       { key: 'funnel',      icon: '🌬️', equipName: 'Phễu lọc + màng',  verb: s => `Lọc${s.params?.pore ? ` (${s.params.pore})` : ''}`, hint: () => 'Bấm để lọc trong dung dịch', clicks: () => 4 },
   'adjust-ph':  { key: 'phmeter',     icon: '🧫', equipName: 'Máy đo pH',         verb: () => 'Đo & chỉnh pH', hint: () => 'Bấm để chỉnh pH vào khoảng yêu cầu', clicks: () => 4 },
+  degas:        { key: 'degas',       icon: '🫧', equipName: 'Sục khí trơ (N₂)',  verb: () => 'Sục khí trơ đuổi oxy', hint: () => 'Bấm để sục N₂ đuổi oxy hòa tan', clicks: () => 5 },
   granulate:    { key: 'granulator',  icon: '🌾', equipName: 'Khay xát hạt',      verb: () => 'Xát hạt', hint: () => 'Bấm để nhào và xát tạo hạt', clicks: () => 5 },
   dry:          { key: 'oven',        icon: '♨️', equipName: 'Tủ sấy',            verb: s => `Sấy${s.params?.tempMax ? ` (${s.params.tempMax}°C)` : ''}`, hint: () => 'Bấm để sấy đến độ ẩm đạt', clicks: () => 5 },
   cool:         { key: 'oven',        icon: '❄️', equipName: 'Làm nguội/lạnh',    verb: () => 'Làm nguội', hint: () => 'Bấm để làm nguội đông rắn', clicks: () => 4 },
@@ -359,4 +373,73 @@ export function buildApparatus(key, T, step, recipe) {
   const M = mats(T);
   const fn = BUILDERS[key] || BUILDERS._default;
   return fn(T, M, step, recipe);
+}
+
+// ============================================================
+// PHÒNG LAB — môi trường (sàn, bàn có tủ, kệ hoá chất, tủ tường, cửa sổ)
+// ============================================================
+export function buildLabRoom(T, scene) {
+  const M = mats(T);
+  const room = new T.Group(); scene.add(room);
+  const add = (m) => { room.add(m); return m; };
+
+  // Sàn gạch bóng nhẹ
+  const floor = new T.Mesh(new T.PlaneGeometry(24, 24),
+    new T.MeshStandardMaterial({ color: 0x223049, roughness: 0.35, metalness: 0.1 }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; add(floor);
+  // đường ron gạch
+  const grid = new T.GridHelper(24, 40, 0x2c3d5a, 0x2c3d5a);
+  grid.position.y = 0.002; grid.material.opacity = 0.35; grid.material.transparent = true; add(grid);
+
+  // Tường sau + tường bên
+  const wallMat = new T.MeshStandardMaterial({ color: 0x1a2740, roughness: 0.95 });
+  const wallBack = new T.Mesh(new T.PlaneGeometry(24, 8), wallMat); wallBack.position.set(0, 4, -1.5); add(wallBack);
+  const wallL = new T.Mesh(new T.PlaneGeometry(12, 8), wallMat); wallL.position.set(-4.2, 4, 3); wallL.rotation.y = Math.PI / 2; add(wallL);
+  const wallR = wallL.clone(); wallR.position.x = 4.2; wallR.rotation.y = -Math.PI / 2; add(wallR);
+
+  // Cửa sổ sáng (gradient) trên tường sau
+  const win = new T.Mesh(new T.PlaneGeometry(2.6, 1.7),
+    new T.MeshBasicMaterial({ color: 0x9fc7e8 }));
+  win.position.set(-2.4, 2.4, -1.47); add(win);
+  const winFrame = new T.Mesh(new T.PlaneGeometry(2.8, 1.9), new T.MeshStandardMaterial({ color: 0x0e1626, roughness: 1 }));
+  winFrame.position.set(-2.4, 2.4, -1.48); add(winFrame);
+
+  // Bàn thí nghiệm (mặt bàn + thân tủ + cánh)
+  const topMat = new T.MeshStandardMaterial({ color: 0x33507a, roughness: 0.25, metalness: 0.25 });
+  const bench = new T.Mesh(new T.BoxGeometry(4.6, 0.05, 1.6), topMat); bench.position.set(0, 0.72, 0.1); bench.receiveShadow = true; bench.castShadow = true; add(bench);
+  const cab = new T.Mesh(new T.BoxGeometry(4.5, 0.66, 1.4), new T.MeshStandardMaterial({ color: 0x24344f, roughness: 0.7 }));
+  cab.position.set(0, 0.37, 0.1); cab.receiveShadow = true; add(cab);
+  for (let i = -2; i <= 2; i++) {
+    const door = new T.Mesh(new T.BoxGeometry(0.78, 0.56, 0.02), new T.MeshStandardMaterial({ color: 0x2b3d5c, roughness: 0.55, metalness: 0.1 }));
+    door.position.set(i * 0.85, 0.37, 0.81); add(door);
+    const knob = new T.Mesh(new T.SphereGeometry(0.015, 10, 10), M.metal(0xcfd6df)); knob.position.set(i * 0.85 + 0.3, 0.37, 0.83); add(knob);
+  }
+
+  // Kệ hoá chất trên tường (2 tầng, nhiều chai màu)
+  const shelfMat = new T.MeshStandardMaterial({ color: 0x2a3a58, roughness: 0.6, metalness: 0.15 });
+  const bottleCols = [0x8ecae6, 0xffb703, 0xfb8500, 0x90be6d, 0xe07a5f, 0xcdb4db, 0xffd6a5, 0xa0c4ff, 0xbde0fe, 0xf28482];
+  for (let sh = 0; sh < 2; sh++) {
+    const y = 2.0 + sh * 0.95;
+    const shelf = new T.Mesh(new T.BoxGeometry(7.2, 0.04, 0.28), shelfMat); shelf.position.set(0.6, y, -1.32); shelf.castShadow = true; add(shelf);
+    for (let b = 0; b < 22; b++) {
+      const x = -2.8 + b * 0.32;
+      const h = 0.16 + (b % 3) * 0.05;
+      const col = bottleCols[(b + sh * 3) % bottleCols.length];
+      const bo = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, h, 14),
+        new T.MeshStandardMaterial({ color: col, roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.9 }));
+      bo.position.set(x, y + 0.02 + h / 2, -1.3); add(bo);
+      const capb = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.03, 12), M.dark(0x11182a)); capb.position.set(x, y + 0.02 + h + 0.015, -1.3); add(capb);
+    }
+  }
+
+  // Poster "bảng tuần hoàn" đơn giản (ô màu) trên tường phải
+  const poster = new T.Group(); poster.position.set(4.15, 2.3, 0.4); poster.rotation.y = -Math.PI / 2;
+  const pbg = new T.Mesh(new T.PlaneGeometry(2.2, 1.3), new T.MeshStandardMaterial({ color: 0xf4f6fb, roughness: 1 })); poster.add(pbg);
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 9; c++) {
+    const cell = new T.Mesh(new T.PlaneGeometry(0.2, 0.2), new T.MeshBasicMaterial({ color: new T.Color().setHSL((r * 9 + c) / 45, 0.55, 0.6) }));
+    cell.position.set(-0.9 + c * 0.22, 0.5 - r * 0.24, 0.001); poster.add(cell);
+  }
+  add(poster);
+
+  return room;
 }
