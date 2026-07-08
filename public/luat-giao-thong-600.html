@@ -33,6 +33,10 @@
     padding:3px 9px; border-radius:5px; font-size:11px; font-weight:700; letter-spacing:.4px; }
   .qhead .badge.normal { background: rgba(255,255,255,.06); border-color: var(--border); color: var(--muted); }
   .qtext { font-size:17px; line-height:1.55; margin-bottom:18px; font-weight:600; }
+  .qimg { margin:0 0 16px; }
+  .qimg img { max-width:min(320px,80%); border-radius:10px; background:#fff; padding:8px; display:block; }
+  .qimg .todo { font-size:12.5px; color:var(--yellow); background:rgba(251,191,36,.1);
+    border:1px dashed rgba(251,191,36,.4); border-radius:9px; padding:8px 12px; display:inline-block; }
   .opts { display:grid; gap:10px; }
   .opt { display:flex; gap:12px; padding:14px 16px; background:rgba(0,0,0,.2); border:1px solid var(--border);
     border-radius:10px; cursor:pointer; transition:background .15s, border-color .15s; }
@@ -81,6 +85,33 @@
   .de:hover { border-color:var(--red); transform:translateY(-2px); background:rgba(220,38,38,.06); }
   .de .dn { font-weight:800; font-size:16px; } .de .dm { color:var(--muted); font-size:11.5px; margin-top:4px; }
   .lnkbtn { font-family:inherit; background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 16px; border-radius:9px; font-size:13px; cursor:pointer; }
+
+  /* Sidebar: tìm kiếm + danh sách câu hỏi (req #52/#53 Thì Dũng) */
+  #practiceWrap { display:flex; gap:18px; width:100%; max-width:1120px; justify-content:center; align-items:flex-start; }
+  #mainCol { flex:1 1 760px; max-width:760px; min-width:0; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  #qsidebar { flex:0 0 250px; width:250px; background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:16px; position:sticky; top:18px; align-self:flex-start; }
+  #qsidebar .sbTitle { font-size:13.5px; font-weight:700; color:var(--text); }
+  #qSearch { width:100%; margin-top:9px; font-family:inherit; background:rgba(0,0,0,.25);
+    border:1px solid var(--border); color:var(--text); border-radius:9px; padding:9px 11px; font-size:13px; }
+  #qSearch::placeholder { color:var(--muted); }
+  .sbHead { display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px; }
+  .sbReset { font-family:inherit; font-size:11px; font-weight:700; color:#fca5a5; background:rgba(220,38,38,.14);
+    border:1px solid rgba(220,38,38,.3); border-radius:7px; padding:4px 9px; cursor:pointer; }
+  #qGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; max-height:340px; overflow-y:auto; padding-right:2px; }
+  .qn { font-family:inherit; aspect-ratio:1; border:1px solid var(--border); background:rgba(0,0,0,.2);
+    color:var(--text); border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:600; padding:0; transition:.12s; }
+  .qn:hover { border-color:var(--red); }
+  .qn.cur { background:var(--yellow); color:#1a1a2e; border-color:var(--yellow); font-weight:800; }
+  .qn.done { border-color:rgba(16,185,129,.55); color:#6ee7b7; }
+  .sbEmpty { color:var(--muted); font-size:12.5px; text-align:center; padding:14px 4px; }
+  .sbExam { width:100%; margin-top:14px; font-family:inherit; background:var(--red); color:#fff; border:0;
+    border-radius:10px; padding:11px; font-weight:700; font-size:13px; cursor:pointer; }
+  @media (max-width:860px) {
+    #practiceWrap { flex-direction:column; align-items:center; }
+    #qsidebar { width:100%; max-width:760px; position:static; order:2; }
+    #qGrid { max-height:200px; grid-template-columns:repeat(8,1fr); }
+  }
 </style>
 </head>
 <body>
@@ -100,8 +131,8 @@
     <option value="vh">🤝 2. Văn hoá &amp; đạo đức</option>
     <option value="kt">🛠️ 3. Kỹ thuật lái xe</option>
     <option value="ct">⚙️ 4. Cấu tạo &amp; sửa chữa</option>
-    <option value="th">⚠️ 5. Tình huống giao thông</option>
-    <option value="nv">🚚 6. Nghiệp vụ vận tải</option>
+    <option value="th">🚸 5. Biển Báo</option>
+    <option value="nv">⚠️ 6. Tình huống giao thông</option>
     <option value="critical">🔥 Câu điểm liệt</option>
   </select>
 </div>
@@ -126,6 +157,20 @@
   </div>
 </div>
 
+<div id="practiceWrap">
+<aside id="qsidebar">
+  <div class="sbTitle">🔍 Tìm kiếm câu hỏi</div>
+  <input id="qSearch" placeholder="Nhập nội dung câu hỏi…" autocomplete="off" />
+  <div class="sbHead">
+    <span class="sbTitle">Danh sách câu hỏi</span>
+    <button id="resetBtn" class="sbReset">Xoá điểm</button>
+  </div>
+  <div id="qGrid"></div>
+  <div id="qGridEmpty" class="sbEmpty" style="display:none">Không thấy câu khớp.</div>
+  <button id="sbExam" class="sbExam">🕐 Thi thử theo hạng</button>
+</aside>
+<div id="mainCol">
+
 <div class="stats" id="stats">
   <span>Câu <b id="curIdx">1</b>/<b id="totalQ">—</b></span>
   <span>Đúng: <b id="rightCount">0</b></span>
@@ -139,6 +184,7 @@
     <span id="critBadge"></span>
   </div>
   <div class="qtext" id="qtext">…</div>
+  <div class="qimg" id="qimg"></div>
   <div class="opts" id="opts"></div>
   <div class="feedback" id="feedback"></div>
 </div>
@@ -150,6 +196,9 @@
   <button class="primary" id="nextBtn">Câu sau →</button>
   <button id="endBtn" style="display:none">🏁 Nộp bài</button>
 </div>
+
+</div><!-- /#mainCol -->
+</div><!-- /#practiceWrap -->
 
 <div class="summary" id="summary">
   <h2 style="margin:0 0 4px;" id="sumTitle">Kết quả</h2>
@@ -169,14 +218,18 @@
 
   const el = id => document.getElementById(id);
   const STATE_KEY = 'tizia:driving-600:state';
-  // Gộp 17 sub-category của bộ 244 câu → 6 nhóm chủ đề cho dropdown (yêu cầu SV #16).
+  // Map chủ đề (t) → nhóm dropdown. Taxonomy chuẩn bộ 600 câu (req #47/#48/#50/#51 Thì Dũng):
+  // 1 Khái niệm & quy tắc · 2 Văn hoá & đạo đức · 3 Kỹ thuật lái xe · 4 Cấu tạo & sửa chữa
+  // 5 Biển Báo (chờ ảnh) · 6 Tình huống giao thông.
   const GROUP = {
-    'Khái niệm':'kn', 'Quy tắc giao thông':'kn', 'Tốc độ - khoảng cách':'kn',
-    'Nồng độ cồn - chất cấm':'vh', 'Trách nhiệm khi tai nạn':'vh', 'Đạo đức nghề nghiệp':'vh', 'Văn hoá giao thông':'vh',
-    'Khởi hành - dừng xe':'kt', 'Số - côn - phanh':'kt', 'Lái xe đường đặc biệt':'kt',
-    'Động cơ - hệ thống':'ct', 'Hệ thống an toàn':'ct', 'Bảo dưỡng - kiểm tra':'ct',
-    'Xử lý tình huống':'th',
-    'Kinh doanh vận tải':'nv', 'Hàng hoá - hành khách':'nv', 'Quyền - nghĩa vụ':'nv',
+    'Khái niệm & quy tắc':'kn',
+    'Văn hoá giao thông':'vh',
+    'Kỹ thuật lái xe':'kt',
+    'Cấu tạo & sửa chữa':'ct',
+    // 5 Biển Báo (th): chưa có câu (chờ SV gửi ảnh biển báo)
+    'Xử lý tình huống':'nv',   // 6 Tình huống giao thông
+    // giữ tương thích key cũ nếu còn dữ liệu seed cũ
+    'Khái niệm':'kn', 'Lái xe đường đặc biệt':'kt', 'Động cơ - hệ thống':'ct',
   };
   const groupOf = t => GROUP[t] || 'kn';
   // Cấu hình thi theo hạng GPLX (req #21): n câu · min phút · pass đạt · crit câu liệt.
@@ -244,6 +297,7 @@
       el('qcard').style.display = 'none';
       document.querySelector('.nav').style.display = 'none';
       el('stats').style.display = 'none';
+      el('qsidebar').style.display = 'none';
       return;
     }
     el('emptyMsg').style.display = 'none';
@@ -317,6 +371,9 @@
     el('topicBadge').className = 'badge normal';
     el('critBadge').innerHTML = q.c ? '<span class="badge">⚠️ CÂU LIỆT</span>' : '';
     el('qtext').textContent = q.q;
+    el('qimg').innerHTML = q.img
+      ? `<img src="${q.img}" alt="Hình minh hoạ câu hỏi" loading="lazy" />`
+      : (q.imgTodo ? '<span class="todo">🖼️ Hình minh hoạ đang được bổ sung</span>' : '');
     el('opts').innerHTML = q.o.map((opt, i) => `
       <label class="opt" data-idx="${i}">
         <input type="radio" name="ans" value="${i}" ${answered[idx] === i ? 'checked' : ''} />
@@ -325,12 +382,14 @@
     if (answered[idx] !== undefined && mode !== 'exam') showFeedback();
     else el('feedback').classList.remove('show');
     updateStats();
+    renderSidebar();
 
     document.querySelectorAll('.opt input').forEach(inp => {
       inp.addEventListener('change', () => {
         answered[idx] = +inp.value;
         if (mode !== 'exam') showFeedback();
         updateStats();
+        renderSidebar();
       });
     });
   }
@@ -357,11 +416,32 @@
     el('wrongCount').textContent = w;
   }
 
+  // Sidebar: ô tìm kiếm + lưới số câu để nhảy nhanh (req #52/#53 Thì Dũng)
+  function renderSidebar() {
+    const show = (mode === 'learn' || mode === 'critical') && list.length > 0;
+    el('qsidebar').style.display = show ? '' : 'none';
+    if (!show) return;
+    const term = (el('qSearch').value || '').trim().toLowerCase();
+    let visible = 0;
+    el('qGrid').innerHTML = list.map((q, i) => {
+      const match = !term || q.q.toLowerCase().includes(term);
+      if (match) visible++;
+      const cls = ['qn', i === idx ? 'cur' : '', (answered[i] !== undefined ? 'done' : '')].filter(Boolean).join(' ');
+      return `<button class="${cls}" data-i="${i}" ${match ? '' : 'style="display:none"'}>${i + 1}</button>`;
+    }).join('');
+    el('qGridEmpty').style.display = visible ? 'none' : '';
+    el('qGrid').querySelectorAll('.qn').forEach(b => b.onclick = () => { idx = +b.dataset.i; render(); });
+  }
+  el('qSearch').addEventListener('input', renderSidebar);
+  el('resetBtn').onclick = () => { answered = {}; el('feedback').classList.remove('show'); render(); };
+  el('sbExam').onclick = () => { el('catSelect').value = 'all'; category = 'all'; enterExamPicker(); };
+
   // Ẩn mọi màn thi/luyện để hiện 1 màn chọn (hạng bằng hoặc đề).
   function hideAllExamViews() {
     el('catBar').style.display = 'none'; el('qcard').style.display = 'none'; el('stats').style.display = 'none';
     el('emptyMsg').style.display = 'none'; el('summary').classList.remove('show');
     el('timerBox').style.display = 'none'; exam = null;
+    el('qsidebar').style.display = 'none';
     document.querySelector('.nav').style.display = 'none';
   }
 
