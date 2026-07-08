@@ -217,12 +217,20 @@
     const j = await fetch('/api/content/baoche-lessons', { credentials: 'same-origin' }).then(r => r.json());
     const items = (j.items || []).slice().sort((a, b) => a.lesson - b.lesson);
     if (items.length) {
-      grid.innerHTML = items.map(r => `
-        <a class="recipe" href="bao-che-lab.html?recipe=${encodeURIComponent(r.id)}" title="${(r.name||'').replace(/"/g,'&quot;')}">
-          <div class="icon">${r.icon || '🧪'}</div>
-          <div class="lvl-num">Bài ${r.lesson}</div>
-          <div class="rname">${r.name || ''}</div>
-        </a>`).join('');
+      const byLesson = {};
+      for (const r of items) (byLesson[r.lesson] ??= []).push(r);
+      let html = '';
+      for (const L of Object.keys(byLesson).sort((a, b) => a - b)) {
+        const title = byLesson[L][0].lessonTitle || '';
+        html += `<div style="grid-column:1/-1;font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:10px 2px 2px">Bài ${L} — ${title}</div>`;
+        html += byLesson[L].map(r => `
+          <a class="recipe" href="bao-che-lab.html?recipe=${encodeURIComponent(r.id)}" title="${(r.name||'').replace(/"/g,'&quot;')}">
+            <div class="icon">${r.icon || '🧪'}</div>
+            <div class="lvl-num">${r.steps.length} bước</div>
+            <div class="rname">${r.name || ''}</div>
+          </a>`).join('');
+      }
+      grid.innerHTML = html;
     } else {
       grid.innerHTML = '<div style="grid-column:1/-1;opacity:.6;padding:14px;text-align:center">Chưa có dữ liệu bài học.</div>';
     }

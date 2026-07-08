@@ -10,7 +10,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { submitAttempt, getPlayerName } from '../../api.js';
 import { sfx } from '../../sfx.js';
 import { showWelcomeCard } from '../../welcome-card.js';
-import { STATIONS, buildApparatus, buildLabRoom } from './stations.js?v=6';
+import { STATIONS, buildApparatus, buildLabRoom } from './stations.js?v=7';
 
 const $ = (s) => document.querySelector(s);
 const modalRoot = $('#modal-root');
@@ -379,6 +379,14 @@ function showResult(score, res) {
       <div>Kiểm tra chất lượng: <b>${state.qualityScore}/${state.qualityMax}</b></div>
       <div>Lỗi thao tác: <b>${state.errors}</b></div>
     </div>
+    <details style="margin-top:14px;text-align:left">
+      <summary style="cursor:pointer;font-size:13px;opacity:.85;font-weight:700">📋 Xem lại quy trình (${recipe.steps.length} bước)</summary>
+      <div style="margin-top:8px;font-size:12px;line-height:1.5;max-height:220px;overflow:auto">
+        ${recipe.steps.map((s, i) => `<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+          <b style="color:var(--accent2)">${state.stepDone[i] ? '✓' : '○'} B${i + 1}.</b> ${s.label}
+          ${s.standard ? `<div style="opacity:.6;padding-left:20px">→ ${s.standard}</div>` : ''}</div>`).join('')}
+      </div>
+    </details>
     <div class="row-btns" style="justify-content:center;margin-top:18px;flex-wrap:wrap">
       <button class="btn ghost" id="r-again">Làm lại</button>
       <button class="btn ghost" id="r-pick">Chọn bài khác</button>
@@ -484,6 +492,15 @@ renderer.domElement.addEventListener('pointerup', (e) => {
 renderer.domElement.addEventListener('pointermove', (e) => {
   heroHover = hitHero(e);
   renderer.domElement.style.cursor = heroHover ? 'pointer' : 'default';
+});
+
+// ---------- bàn phím: Enter/Space thao tác bước hiện tại ----------
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  if (/input|textarea/i.test(document.activeElement?.tagName || '')) return;
+  if (modalRoot.querySelector('.modal')) return;      // đang mở modal → nhường
+  const act = $('#act-btn');
+  if (act && !act.disabled && state && state.stepIdx < (recipe?.steps.length ?? 0)) { e.preventDefault(); doAction(); }
 });
 
 // ---------- render loop ----------
