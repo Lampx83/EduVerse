@@ -2941,6 +2941,8 @@ const _liftFwd = new THREE.Vector3();
 const _liftRight = new THREE.Vector3();
 const _liftUp = new THREE.Vector3(0, 1, 0);
 const _liftHand = new THREE.Vector3();
+const _hsNdc = new THREE.Vector2();
+const _hsRay = new THREE.Raycaster();
 
 // World-space target position for an object held "in hand". Default is a
 // fixed camera-relative slot at front-right (the "sáng" behaviour the
@@ -2950,11 +2952,19 @@ function computeHandSlot(obj) {
   const bb = new THREE.Box3().setFromObject(obj);
   const size = bb.getSize(new THREE.Vector3());
 
-  // MediaPipe: vật đi theo CHÍNH tay đang cầm (carryHand); fallback tay phải.
+  // MediaPipe: vật đi theo CHÍNH tay đang cầm (carryHand). Vị trí = dọc TIA NHÌN
+  // qua bàn tay, KHOẢNG CÁCH theo "sải tay": tay lại gần (to) → vật lại gần; ra
+  // xa (nhỏ) → vật ra xa. Nhờ vậy đưa tay gần/xa thì vật đi theo gần/xa.
   const ch = handState.carryHand >= 0 ? handState.carryHand : 1;
-  if (handState.running && handState.hands[ch]?.active && handCursors[ch]?.visible) {
-    _liftHand.copy(handCursors[ch].position);
-    _liftHand.y -= size.y * 0.4;
+  const chand = handState.hands[ch];
+  if (handState.running && chand?.active && handCursors[ch]?.visible) {
+    const span = chand.sspan || 0.18;
+    const tDepth = Math.min(1, Math.max(0, (span - 0.12) / (0.30 - 0.12))); // 0 = xa, 1 = gần
+    const dist = 1.35 - tDepth * (1.35 - 0.42);                             // 1.35m (xa) → 0.42m (gần)
+    _hsNdc.set(chand.sx || 0, chand.sy || 0);
+    _hsRay.setFromCamera(_hsNdc, camera);
+    _liftHand.copy(_hsRay.ray.origin).addScaledVector(_hsRay.ray.direction, dist);
+    _liftHand.y -= size.y * 0.30;
     return _liftHand;
   }
 
@@ -3715,6 +3725,11 @@ function updateHand(time) {
       }
       if (ok) { handCursors[slot].position.copy(_handHit); handCursors[slot].visible = true; }
     }
+    // "Sải tay" (cổ tay ↔ khớp giữa) làm THƯỚC ĐỘ SÂU: tay lại gần camera → to hơn.
+    const wrist = lm[0], midMcp = lm[9];
+    const span = Math.hypot(wrist.x - midMcp.x, wrist.y - midMcp.y);
+    if (hand.sspan === undefined) hand.sspan = span;
+    hand.sspan += (span - hand.sspan) * 0.3;
     // Pinch detection (hysteresis)
     const pinchDist = Math.hypot(t.x - idx.x, t.y - idx.y);
     const wasPinching = hand.pinching;
@@ -3748,6 +3763,14 @@ function updateHand(time) {
         }
         handState.carryHand = -1;
       }
+    }
+    // Khi đang CẦM bằng tay này → con trỏ nổi cùng độ sâu với vật (theo sải tay),
+    // để tay + vật đi liền nhau khi đưa gần/xa.
+    if (handState.carryHand === slot && selectedTool) {
+      const tD = Math.min(1, Math.max(0, ((hand.sspan || 0.18) - 0.12) / (0.30 - 0.12)));
+      const dist = 1.35 - tD * (1.35 - 0.42);
+      handCursors[slot].position.copy(raycaster.ray.origin).addScaledVector(raycaster.ray.direction, dist);
+      handCursors[slot].visible = true;
     }
     // Send cursor to multiplayer (using whichever hand is more "active")
     if (slot === 1 && ws && ws.readyState === 1) sendCursor(_handHit.x, _handHit.y, _handHit.z);
