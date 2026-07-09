@@ -3677,17 +3677,33 @@ function updateHand(time) {
     camCtx.moveTo(t.x * camPreviewEl.width, t.y * camPreviewEl.height);
     camCtx.lineTo(idx.x * camPreviewEl.width, idx.y * camPreviewEl.height);
     camCtx.stroke();
-    // NDC (mirror x)
+    // NDC (mirror x) + LÀM MƯỢT (EMA) để giảm rung tay.
     const px = (t.x + idx.x) / 2, py = (t.y + idx.y) / 2;
-    _handRay.x = (1 - px) * 2 - 1;
-    _handRay.y = -(py * 2 - 1);
+    let nx = (1 - px) * 2 - 1, ny = -(py * 2 - 1);
+    if (hand.sx === undefined) { hand.sx = nx; hand.sy = ny; }
+    hand.sx += (nx - hand.sx) * 0.4; hand.sy += (ny - hand.sy) * 0.4;
+    _handRay.x = hand.sx; _handRay.y = hand.sy;
     hand.x = _handRay.x; hand.y = _handRay.y;
     raycaster.setFromCamera(_handRay, camera);
-    camera.getWorldDirection(_handPlaneN);
-    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(_handPlaneN, new THREE.Vector3(0, 1.0, 0));
-    if (raycaster.ray.intersectPlane(plane, _handHit)) {
+    // ĐỘ SÂU THẬT (gần/xa): con trỏ BÁM vào hình học — trúng dụng cụ/chai thì đặt
+    // ngay lên vật đó (đúng gần/xa); trống thì rơi xuống MẶT BÀN (y≈0.95); vẫn
+    // trống (trỏ lên cao) thì dùng mặt phẳng đối diện camera.
+    hand.hoverGrp = null;
+    const chits = raycaster.intersectObjects(getClickable(), true);
+    if (chits.length) {
+      _handHit.copy(chits[0].point);
+      hand.hoverGrp = pickTopGroup(chits[0].object);
       handCursors[slot].position.copy(_handHit);
       handCursors[slot].visible = true;
+    } else {
+      const benchPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.95); // mặt bàn y=0.95
+      let ok = raycaster.ray.intersectPlane(benchPlane, _handHit) && _handHit.z > -1.0 && _handHit.z < 1.7 && Math.abs(_handHit.x) < 2.2;
+      if (!ok) {
+        camera.getWorldDirection(_handPlaneN);
+        const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(_handPlaneN, new THREE.Vector3(0, 1.0, 0));
+        ok = raycaster.ray.intersectPlane(plane, _handHit);
+      }
+      if (ok) { handCursors[slot].position.copy(_handHit); handCursors[slot].visible = true; }
     }
     // Pinch detection (hysteresis)
     const pinchDist = Math.hypot(t.x - idx.x, t.y - idx.y);
@@ -3719,9 +3735,17 @@ function updateHand(time) {
     if (slot === 1 && ws && ws.readyState === 1) sendCursor(_handHit.x, _handHit.y, _handHit.z);
   }
 
-  // Hide any unused cursors this frame.
+  // Highlight vật con trỏ tay đang trỏ (ưu tiên tay đang pinch, rồi tay 0) — để
+  // SV thấy rõ sẽ chạm/cầm vật nào, bù cho cảm giác chiều sâu.
+  const hg = (handState.hands[0].pinching && handState.hands[0].hoverGrp)
+          || (handState.hands[1].pinching && handState.hands[1].hoverGrp)
+          || (handState.hands[0].active && handState.hands[0].hoverGrp)
+          || (handState.hands[1].active && handState.hands[1].hoverGrp) || null;
+  setHoverTarget(hg);
+
+  // Hide any unused cursors this frame + reset EMA để lần sau vào không bị nhảy.
   for (let i = 0; i < handState.hands.length; i++) {
-    if (!handState.hands[i].active) { handCursors[i].visible = false; handState.hands[i].pinching = false; }
+    if (!handState.hands[i].active) { handCursors[i].visible = false; handState.hands[i].pinching = false; handState.hands[i].sx = undefined; handState.hands[i].hoverGrp = null; }
   }
 
   // Show two-hand combo badge while both hands are pinching.
