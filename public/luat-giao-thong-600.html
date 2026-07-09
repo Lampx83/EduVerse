@@ -218,18 +218,18 @@
 
   const el = id => document.getElementById(id);
   const STATE_KEY = 'tizia:driving-600:state';
-  // Map chủ đề (t) → nhóm dropdown. Taxonomy chuẩn bộ 600 câu (req #47/#48/#50/#51 Thì Dũng):
-  // 1 Khái niệm & quy tắc · 2 Văn hoá & đạo đức · 3 Kỹ thuật lái xe · 4 Cấu tạo & sửa chữa
-  // 5 Biển Báo (chờ ảnh) · 6 Tình huống giao thông.
+  // Map chủ đề (t) → nhóm dropdown. Taxonomy chuẩn bộ 600 câu (req #47/#56/#57 Thì Dũng):
+  // 1 Khái niệm & quy tắc (180) · 2 Văn hoá & đạo đức (25) · 3 Kỹ thuật lái xe (58)
+  // 4 Cấu tạo & sửa chữa (37) · 5 Biển báo (185, có ảnh) · 6 Tình huống giao thông (115, có ảnh).
   const GROUP = {
     'Khái niệm & quy tắc':'kn',
     'Văn hoá giao thông':'vh',
     'Kỹ thuật lái xe':'kt',
     'Cấu tạo & sửa chữa':'ct',
-    // 5 Biển Báo (th): chưa có câu (chờ SV gửi ảnh biển báo)
-    'Xử lý tình huống':'nv',   // 6 Tình huống giao thông
+    'Biển báo':'th',                 // 5 Biển báo (#56) — mỗi câu 1 ảnh ghép các biển
+    'Tình huống giao thông':'nv',    // 6 Tình huống giao thông (#57) — mỗi câu 1 ảnh
     // giữ tương thích key cũ nếu còn dữ liệu seed cũ
-    'Khái niệm':'kn', 'Lái xe đường đặc biệt':'kt', 'Động cơ - hệ thống':'ct',
+    'Xử lý tình huống':'nv', 'Khái niệm':'kn', 'Lái xe đường đặc biệt':'kt', 'Động cơ - hệ thống':'ct',
   };
   const groupOf = t => GROUP[t] || 'kn';
   // Cấu hình thi theo hạng GPLX (req #21): n câu · min phút · pass đạt · crit câu liệt.
