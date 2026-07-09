@@ -149,7 +149,7 @@
 <div id="dePicker">
   <h2>📑 Chọn đề thi — Hạng <span id="deClsName">B</span></h2>
   <p style="text-align:center;color:var(--muted);font-size:12.5px;max-width:680px;margin:0 auto 14px;line-height:1.5">
-    <b>15 đề thi ngẫu nhiên</b> được tạo cố định cho hạng này — mỗi đề <span id="deMeta">30 câu · 20 phút</span>, có câu điểm liệt. Bấm vào một đề để vào thi.
+    <b>20 đề thi ngẫu nhiên</b> được tạo cố định cho hạng này — mỗi đề <span id="deMeta">30 câu · 20 phút</span>, có câu điểm liệt. Hoặc chọn <b>🔀 Câu hỏi ngẫu nhiên</b> để mỗi lần bốc một đề mới. Bấm để vào thi.
   </p>
   <div id="deGrid"></div>
   <div style="text-align:center;margin-top:16px">
@@ -246,8 +246,8 @@
     {id:'D1E',ic:'🚐', n:45, min:26, pass:41, crit:1, desc:'Hạng D1 + rơ moóc trên 750kg', up:1},
     {id:'DE', ic:'🚍', n:45, min:26, pass:41, crit:1, desc:'Hạng D + rơ moóc trên 750kg', up:1},
   ];
-  let examClass = null, examDe = null;       // examDe = số đề 1..15 (null = bốc ngẫu nhiên tự do)
-  const NUM_DE = 15;                          // số đề ngẫu nhiên cố định cho mỗi hạng (req #35)
+  let examClass = null, examDe = null;       // examDe = số đề 1..20 (null = bốc ngẫu nhiên tự do)
+  const NUM_DE = 20;                          // số đề ngẫu nhiên cố định cho mỗi hạng (req #35, tăng 15→20 #59)
   let mode = 'learn', list = [...Q], idx = 0, category = 'all';
   let answered = {}, exam = null;
 
@@ -355,6 +355,13 @@
         '<button id="sumRetry" class="lnkbtn" style="background:var(--red);border:0;color:#fff;font-weight:700;padding:10px 22px;border-radius:10px">🔄 Thi lại Đề ' + examDe + '</button>' +
         '<button id="sumOtherDe" class="lnkbtn" style="padding:10px 22px;border-radius:10px">📑 Đề khác</button>';
       el('sumRetry').onclick = () => setMode('exam');
+      el('sumOtherDe').onclick = enterDePicker;
+    } else if (examClass) {
+      // Đề ngẫu nhiên (req #59): thi đề ngẫu nhiên khác / quay lại chọn đề.
+      el('sumBtns').innerHTML =
+        '<button id="sumRandAgain" class="lnkbtn" style="background:var(--red);border:0;color:#fff;font-weight:700;padding:10px 22px;border-radius:10px">🔀 Đề ngẫu nhiên khác</button>' +
+        '<button id="sumOtherDe" class="lnkbtn" style="padding:10px 22px;border-radius:10px">📑 Chọn đề</button>';
+      el('sumRandAgain').onclick = () => setMode('exam');
       el('sumOtherDe').onclick = enterDePicker;
     } else {
       el('sumBtns').innerHTML = '<button class="lnkbtn" onclick="location.reload()" style="background:var(--red);border:0;color:#fff;font-weight:700;padding:10px 22px;border-radius:10px">Làm lại</button>';
@@ -473,12 +480,21 @@
     el('dePicker').style.display = 'block';
     el('deClsName').textContent = examClass.id;
     el('deMeta').textContent = `${examClass.n} câu · ${examClass.min} phút · đậu ${examClass.pass}/${examClass.n}`;
-    el('deGrid').innerHTML = Array.from({ length: NUM_DE }, (_, i) => i + 1).map(n => `
+    // Thẻ đầu: bốc câu hỏi ngẫu nhiên (mỗi lần vào 1 đề khác) — req #59.
+    const randomCard = `
+      <button class="de" data-de="random" style="border-style:dashed">
+        <div class="dn">🔀 Câu hỏi ngẫu nhiên</div>
+        <div class="dm">${examClass.n} câu · ${examClass.min}'</div>
+      </button>`;
+    el('deGrid').innerHTML = randomCard + Array.from({ length: NUM_DE }, (_, i) => i + 1).map(n => `
       <button class="de" data-de="${n}">
-        <div class="dn">Đề số ${n}</div>
+        <div class="dn">Đề ${examClass.id}-${String(n).padStart(2, '0')}</div>
         <div class="dm">${examClass.n} câu · ${examClass.min}'</div>
       </button>`).join('');
-    el('deGrid').querySelectorAll('.de').forEach(b => b.onclick = () => { examDe = +b.dataset.de; setMode('exam'); });
+    el('deGrid').querySelectorAll('.de').forEach(b => b.onclick = () => {
+      examDe = b.dataset.de === 'random' ? null : +b.dataset.de;   // null = bốc ngẫu nhiên tự do
+      setMode('exam');
+    });
   }
   el('deBack').onclick = enterExamPicker;
 
