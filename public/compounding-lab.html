@@ -329,6 +329,19 @@
     transform: scaleX(-1); display: none;
   }
   #cam-preview.shown { display: block; }
+  #cam-dist {
+    position: absolute; bottom: 52px; right: 12px; z-index: 10;
+    width: 200px; text-align: center; display: none;
+    font-size: 11px; font-weight: 700; color: #fff;
+    padding: 3px 6px; border-radius: 6px; box-sizing: border-box;
+    background: rgba(0,0,0,0.55); transition: background .2s;
+    pointer-events: none;
+  }
+  #cam-dist.shown { display: block; }
+  #cam-dist.d-near { background: rgba(239,68,68,0.85); }
+  #cam-dist.d-ok   { background: rgba(34,197,94,0.9); }
+  #cam-dist.d-far  { background: rgba(59,130,246,0.85); }
+  #cam-dist.d-none { background: rgba(107,114,128,0.85); }
   #crosshair {
     position: absolute; top: 50%; left: 50%; margin: -8px 0 0 -8px;
     width: 16px; height: 16px; border: 2px solid #fff;
@@ -445,6 +458,7 @@
 </div>
 <div id="action-fab" title="Cài đặt nhanh">⚙️</div>
 <canvas id="cam-preview" width="200" height="150"></canvas>
+<div id="cam-dist"><span id="cam-dist-txt">Đưa tay vào khung</span></div>
 <div id="crosshair"></div>
 <div id="walk-hint">🚶 WASD đi · chuột nhìn · Click thao tác · <kbd>Esc</kbd> thoát</div>
 
@@ -3545,6 +3559,15 @@ function isGrabbable(grp) {
 const handBtn = document.getElementById('hand-btn');
 const camPreviewEl = document.getElementById('cam-preview');
 const camCtx = camPreviewEl.getContext('2d');
+const camDistEl = document.getElementById('cam-dist');
+const camDistTxtEl = document.getElementById('cam-dist-txt');
+// Quy đổi "sải tay" (chuẩn hoá) → cự ly tay–webcam ≈ 8.2cm·độ-rộng-khung / span.
+// (lòng bàn tay ~9.5cm, FOV ngang ~60° → d ≈ 0.082 / span, mét)
+function spanToCm(span) { return span > 0.02 ? Math.round(0.082 / span * 100) : null; }
+function setCamDist(cls, txt) {
+  camDistEl.className = 'shown ' + cls;
+  camDistTxtEl.textContent = txt;
+}
 // Two cursor spheres in 3D — one per hand.
 const handCursors = [
   new THREE.Mesh(new THREE.SphereGeometry(0.020, 16, 16), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.92, depthTest: false })),
@@ -3621,8 +3644,9 @@ async function initHandTracking() {
     handBtn.textContent = '✋ Tắt hand tracking (2 tay)';
     handBtn.disabled = false;
     camPreviewEl.classList.add('shown');
+    setCamDist('d-none', 'Đưa tay vào khung');
     for (const c of handCursors) c.visible = true;
-    showToast('🤲 Hai tay: chụm cái+trỏ để cầm/đặt. Cầm chai + chụm tay kia vào cốc để rót ổn định.', 4500, 'ok');
+    showToast('📏 Ngồi cách webcam ~60–70 cm. Bàn tay đưa trong tầm 30–70 cm: lại gần → vật tiến, ra xa → vật lùi.', 5500, 'ok');
   } catch (err) {
     handBtn.disabled = false; handBtn.textContent = '🖐️ Bật điều khiển tay';
     showToast('❌ Hand tracking lỗi: ' + (err.message || err.name), 3000, 'err');
@@ -3636,6 +3660,7 @@ function stopHandTracking() {
   handBtn.classList.remove('active');
   handBtn.textContent = '🖐️ Bật điều khiển tay';
   camPreviewEl.classList.remove('shown');
+  camDistEl.className = '';
   for (const c of handCursors) c.visible = false;
   for (const h of handState.hands) { h.active = false; h.pinching = false; }
   twoHandBadgeEl.style.display = 'none';
@@ -3668,6 +3693,7 @@ function updateHand(time) {
       handCursors[i].visible = false;
     }
     twoHandBadgeEl.style.display = 'none';
+    setCamDist('d-none', 'Đưa tay vào khung');
     return;
   }
 
@@ -3783,6 +3809,19 @@ function updateHand(time) {
           || (handState.hands[0].active && handState.hands[0].hoverGrp)
           || (handState.hands[1].active && handState.hands[1].hoverGrp) || null;
   setHoverTarget(hg);
+
+  // Chỉ báo cự ly: quy sải tay của tay đại diện (đang cầm > đang pinch > tay 0)
+  // ra cm và phân loại quá gần / tốt / hơi xa để SV tự chỉnh chỗ ngồi.
+  const rep = (handState.carryHand >= 0 && handState.hands[handState.carryHand].active) ? handState.hands[handState.carryHand]
+            : handState.hands[0].active ? handState.hands[0]
+            : handState.hands[1].active ? handState.hands[1] : null;
+  if (rep) {
+    const cm = spanToCm(rep.sspan || 0.18);
+    if (cm == null) setCamDist('d-none', 'Đưa tay vào khung');
+    else if (cm < 28) setCamDist('d-near', `Hơi gần · ${cm} cm — lùi tay ra`);
+    else if (cm > 72) setCamDist('d-far', `Hơi xa · ${cm} cm — đưa tay lại`);
+    else setCamDist('d-ok', `Cự ly tốt · ${cm} cm`);
+  }
 
   // Hide any unused cursors this frame + reset EMA để lần sau vào không bị nhảy.
   for (let i = 0; i < handState.hands.length; i++) {
