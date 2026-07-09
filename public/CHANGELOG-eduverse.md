@@ -4,6 +4,53 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-09 — Phiên cải tiến (12) · Trường CNTT — 4 Game modules IG01–IG04
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
+
+**Trường:** Trường CNTT (`it`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Quét codebase phát hiện **4 game module** (IG01–IG04) trong Trường CNTT đều có `placeholder: true` và `scenarioIds: []` — hiển thị badge "Coming soon" với sinh viên. Đây là nhóm thay đổi thấp rủi ro nhất (category `game`, không ảnh hưởng lộ trình học chính), có thể bổ sung quiz ngay từ nội dung curriculum đã có. Ưu tiên kích hoạt để sinh viên CNTT có thêm nội dung thực hành dạng gamification.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/it-games.js` | Tạo mới | 4 quiz game scenarios IG01–IG04 (40 câu hỏi có explanation) |
+| `public/js/domains/it/modules.js` | Sửa | Kích hoạt IG01–IG04: thay `scenarioIds: []` + `placeholder: true` bằng scenarioId thực tế |
+| `public/js/domains/it/achievements.js` | Sửa | Thêm 5 achievement mới (4 game + 1 IT Game Master tổng hợp) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `IT_GAMES_SCENARIOS` |
+
+### Chi tiết nội dung (40 câu hỏi)
+
+| Game | ID Scenario | Chủ đề | Câu |
+|------|------------|--------|-----|
+| Code Race — Giải thuật 5 phút | `IG01-code-race-quiz` | Big-O, Two Pointers, Sliding Window, Greedy, DP, HashMap | 10 |
+| Bug Hunt — Debug speed | `IG02-bug-hunt-quiz` | Off-by-one, type coercion, Python gotchas, NULL SQL, race condition | 10 |
+| SQL Detective | `IG03-sql-detective-quiz` | JOIN, Index, Window Function, N+1, ACID, EXPLAIN | 10 |
+| Kafka — System Design battle | `IG04-system-design-quiz` | Kafka, CAP theorem, Circuit Breaker, CQRS, Service Mesh, distributed tracing | 10 |
+
+### Achievement mới
+
+- `code-racer` ⚡ — Pass IG01
+- `bug-hunter` 🐛 — Pass IG02
+- `sql-detective` 🔎 — Pass IG03
+- `system-designer` ⚔️ — Pass IG04
+- `it-game-master` 🏆 — Pass cả 4 game (IG01–IG04)
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/it-games.js              ✅ OK
+node --check public/js/domains/it/modules.js              ✅ OK
+node --check public/js/domains/it/achievements.js         ✅ OK
+node --check public/js/scenarios/_all-content.js          ✅ OK
+```
+
+---
+
 ## 2026-07-08 — Phiên cải tiến (11) · Trường Mầm non — 4 lĩnh vực phát triển hoàn chỉnh
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
