@@ -1416,16 +1416,18 @@ r.get('/api/export.csv', async (_req, res) => {
 // Page muốn opt-out: thêm thuộc tính tương ứng vào <body>:
 //   data-no-auth-header, data-no-notifications-bell, data-no-suggestion-fab.
 // Tránh phải sửa thủ công 59+ file.
-const HEADER_TAG = `<script type="module" src="js/auth-header.js"></script>`;
-// ?v=attach2 — cache-bust khi nâng UX đính kèm (preview thumbnail, kéo-thả, dán
-// ảnh, lọc loại, chống trùng + siết whitelist bỏ SVG). Bump mỗi lần đổi UX FAB.
-const SGF_TAG = `<script type="module" src="js/suggestion-fab.js?v=data-files"></script>\n<script type="module" src="js/notifications-bell.js"></script>`;
+// Đường dẫn TUYỆT ĐỐI (kèm BASE_PATH) — KHÔNG dùng relative "js/...": trang nằm
+// trong thư mục con (vd /campus-proto/b-iso-canvas.html) sẽ phân giải relative
+// thành /campus-proto/js/... → 404. Absolute /js/... đúng cho mọi độ sâu.
+const HEADER_TAG = `<script type="module" src="${BASE_PATH}/js/auth-header.js"></script>`;
+// suggestion-fab.js (?v=data-files cache-bust) + notifications-bell.js được
+// dựng inline trong middleware để áp opt-out per-page (xem bên dưới).
 // Analytics: chỉ gtag loader (analytics.js). Consent banner đã được bỏ theo
 // yêu cầu user (jun 2026) — gây phiền và che nội dung. Analytics vẫn hoạt
 // động theo mặc định "denied" (xem analytics.js) cho đến khi có cơ chế consent
 // khác. `analytics.js` phải là script thường (không module) để global
 // window.tiziaTrack/gtag khả dụng cho mọi inline script + module sau này.
-const ANALYTICS_TAG = `<script src="js/analytics.js"></script>`;
+const ANALYTICS_TAG = `<script src="${BASE_PATH}/js/analytics.js"></script>`;
 r.get(/.*/, async (req, res, next) => {
   const u = req.path;
   if (u.startsWith('/api/') || u.startsWith('/vendor/')) return next();
@@ -1442,10 +1444,25 @@ r.get(/.*/, async (req, res, next) => {
     // Tránh nhúng trùng nếu trang đã include sẵn auth-header.js / analytics.js.
     const hasHeader = /auth-header\.js/i.test(html);
     const hasAnalytics = /\banalytics\.js/i.test(html);
+    // Opt-out (đúng như phần chú thích trên): trang tự tắt widget global qua
+    //   <body data-no-auth-header|data-no-suggestion-fab|data-no-notifications-bell|data-no-analytics>.
+    // KHÔNG chỉ tự-vô-hiệu ở runtime — phải BỎ HẲN thẻ, vì các script này gọi
+    // fetch('api/...') tương đối; trang ở thư mục con (vd /campus-proto/*) sẽ
+    // phân giải thành /campus-proto/api/... → 404. Ngoài ra ?embed=1 (canvas
+    // nhúng trong iframe) không cần bất kỳ chrome global nào → bỏ tất cả.
+    const bodyOpen = (html.match(/<body[^>]*>/i) || [''])[0];
+    const embed = req.query.embed != null || /\bdata-embed\b/i.test(bodyOpen);
+    const noHeader = embed || /\bdata-no-auth-header\b/i.test(bodyOpen);
+    const noSgf    = embed || /\bdata-no-suggestion-fab\b/i.test(bodyOpen);
+    const noBell   = embed || /\bdata-no-notifications-bell\b/i.test(bodyOpen);
+    const noAnalytics = embed || /\bdata-no-analytics\b/i.test(bodyOpen);
+    const sgfTag =
+      (noSgf ? '' : `<script type="module" src="${BASE_PATH}/js/suggestion-fab.js?v=data-files"></script>\n`)
+      + (noBell ? '' : `<script type="module" src="${BASE_PATH}/js/notifications-bell.js"></script>`);
     const tags =
-      (hasAnalytics ? '' : ANALYTICS_TAG + '\n')
-      + (hasHeader ? '' : HEADER_TAG + '\n')
-      + SGF_TAG;
+      ((hasAnalytics || noAnalytics) ? '' : ANALYTICS_TAG + '\n')
+      + ((hasHeader || noHeader) ? '' : HEADER_TAG + '\n')
+      + sgfTag;
     const idx = html.lastIndexOf('</body>');
     let out = idx >= 0 ? html.slice(0, idx) + tags + '\n' + html.slice(idx) : html + tags;
     // SEO: bổ sung default meta (favicon, og:image, canonical, twitter card, robots)

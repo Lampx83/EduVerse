@@ -47,7 +47,11 @@
 } }
 </script>
 </head>
-<body>
+<body data-embed>
+<!-- data-embed: trang này LUÔN là canvas 3D nhúng trong iframe (school.html ?embed=1,
+     admin/campus-editor.html ?edit=1) — KHÔNG bao giờ mở trực tiếp. Báo middleware
+     bỏ toàn bộ widget global (auth-header/analytics/FAB/bell) vì chúng gọi fetch
+     'api/...' tương đối → phân giải thành /campus-proto/api/... → 404. -->
 <canvas id="c"></canvas>
 <div id="legend"><h4 id="legend-toggle" role="button" tabindex="0" aria-expanded="false"><span>📍 CHÚ GIẢI</span><span class="count" id="legend-count">0</span><span class="caret">▾</span></h4><div id="legend-rows"></div></div>
 <a class="back" href="/">← Tizia</a>

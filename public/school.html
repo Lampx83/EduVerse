@@ -125,19 +125,17 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
   try { window.tiziaTrack?.('school_enter', { domain: dom }); } catch {}
   window.addEventListener('message', function(e){
     const d = e.data; if(!d || d.type !== 'campus-enter') return;
-    // Bấm vào toà nhà trong khuôn viên.
+    // Bấm vào toà nhà trong khuôn viên — chỉ log GA. Toà có trải nghiệm tự điều
+    // hướng trong iframe (b-iso-canvas.html: location.href=/space.html?b=…);
+    // toà chưa có nội dung → noop (không còn danh sách "Khám phá" để cuộn tới).
     try { window.tiziaTrack?.('campus_building_click', { domain: dom, building: String(d.building || d.id || '').slice(0,40) }); } catch {}
-    const path = document.getElementById('school-explore-host');   // cuộn xuống khu khám phá thêm
-    if(path) path.scrollIntoView({ block:'start' });
   });
 })();
 </script>
 
-<!-- ============ KHÁM PHÁ THÊM TRONG TRƯỜNG ============ -->
-<div id="school-explore-host"></div>
-<script type="module" src="./js/school-explore.js?v=2026-06-05"></script>
-
-<!-- Ban điều hành AI đã chuyển VÀO toà nhà "Hành chính – Hiệu bộ" (bấm toà nhà trên bản đồ) -->
+<!-- Khu "Khám phá thêm" đã bỏ (2026-07-09): mọi hoạt động trong trường vào qua
+     việc BẤM toà nhà trên campus map ở trên. Không còn danh sách song song bên dưới.
+     Ban điều hành AI, thư viện, lab… đều nằm trong các toà nhà tương ứng. -->
 
 <!-- Load domain + render path (curriculum + các cụm thực hành/kỹ năng/…) -->
 <script type="module">
