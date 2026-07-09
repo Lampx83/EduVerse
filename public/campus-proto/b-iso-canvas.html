@@ -904,8 +904,13 @@ window.__rerenderBuilding = function(idx){
 };
 
 (async function build(){
+  // Nạp model toà nhà SONG SONG (dedup theo URL). Trước đây tải tuần tự — `await`
+  // trong vòng for — nên thời gian dựng = TỔNG thời gian mọi model; giờ chỉ còn
+  // bằng model LÂU NHẤT (các fetch chạy đồng thời, tận dụng HTTP/2 multiplex).
+  const urls=[...new Set(BUILDINGS.map(b=>b.url))];
+  await Promise.all(urls.map(async u=>{ if(!modelCache[u]){ try{ modelCache[u]=await load(u); }catch(e){} } }));
   const items=[];
-  for(const b of BUILDINGS){ try{ if(!modelCache[b.url]) modelCache[b.url]=await load(b.url); items.push({b, sc:modelCache[b.url].clone(true)}); }catch(e){} }
+  for(const b of BUILDINGS){ const base=modelCache[b.url]; if(base) items.push({b, sc:base.clone(true)}); }
   let maxFoot=0; for(const it of items) maxFoot=Math.max(maxFoot, footOf(it.sc));
   const GS = maxFoot? 4/maxFoot : 1;
   __GS = GS;
@@ -914,13 +919,25 @@ window.__rerenderBuilding = function(idx){
   rcam.left=-FH; rcam.right=FH; rcam.top=FH; rcam.bottom=-FH; rcam.lookAt(0, maxDim*0.34, 0); rcam.updateProjectionMatrix(); rcam.updateMatrixWorld(true);
   const o=new THREE.Vector3(0,0,0).project(rcam); ANCHOR={x:(o.x*0.5+0.5)*rt.domElement.width, y:(-o.y*0.5+0.5)*rt.domElement.height};
   let i=0; for(const it of items){ it.sc.rotation.y=(it.b.rot||0)*Math.PI/180; const spr=renderSprite(it.sc); bsprite[it.b.id]={spr, tint:tint(spr,idCol(i)), idx:i}; i++; }
-  for(const [k,url] of Object.entries(EXTRAS)){ try{ const m=await load(url); prep(m,GS*(PREP[k]||1.0)); m.rotation.y=(ROT[k]||0)*Math.PI/180; esprite[k]=renderSprite(m); }catch(e){} }
-  // Pre-render sprite ô tô ở 4 hướng để TRAFFIC chọn theo chiều chạy
-  if(!IS_EDIT){ for(const rot of [0,90,180,270]){ try{ await getDecorSprite('car', rot); }catch(e){} } }
+  // Toà nhà xong → HIỆN campus NGAY, không chờ cây/hàng rào/ô tô (draw() tự bỏ
+  // qua decor/traffic chưa có sprite — xem check esprite ở draw()). Trải nghiệm:
+  // thấy trường ngay, chi tiết phụ "pop-in" sau vài trăm ms.
   buildLegend();
   document.getElementById('loading').style.display='none';
   draw();
-  startTraffic();
+  // Nền phụ (EXTRAS: cây, hàng rào…) + ô tô nạp SONG SONG ở nền rồi vẽ lại.
+  (async ()=>{
+    await Promise.all(Object.entries(EXTRAS).map(async ([k,url])=>{
+      try{ const m=await load(url); prep(m,GS*(PREP[k]||1.0)); m.rotation.y=(ROT[k]||0)*Math.PI/180; esprite[k]=renderSprite(m); }catch(e){}
+    }));
+    draw();
+    // Pre-render sprite ô tô ở 4 hướng để TRAFFIC chọn theo chiều chạy.
+    if(!IS_EDIT){
+      await Promise.all([0,90,180,270].map(rot=>getDecorSprite('car', rot).catch(()=>{})));
+      draw();
+      startTraffic();
+    }
+  })();
 })();
 
 // ====== VẼ MẶT ĐẤT ======
