@@ -558,11 +558,65 @@ const getRecipeFromUrl = () => {
   return id ? getRecipeById(id) : null;
 };
 
-const sessionStartedAt = Date.now();
-
-// Chế độ GIÁO TRÌNH (?src=baoche): dùng lại phòng/đồ hoạ này nhưng chạy
-// engine 12 bài (curriculum.js). Bỏ qua game free-form bên dưới.
+// ============================================================
+// CHẾ ĐỘ GIÁO TRÌNH (?src=baoche): nạp 12 bài (baoche-lessons) vào
+// RECIPES/REAGENTS để chạy CÙNG engine thật — sinh viên nhấc chai reagent
+// trên giá → đổ vào cốc/ống đong, cân đúng khối lượng ±tolerance, q.s., đóng chai.
+// Bước định lượng sinh từ CÔNG THỨC (mỗi hoạt chất 1 chai trên giá).
+// ============================================================
 const CURRICULUM = new URLSearchParams(location.search).get('src') === 'baoche';
+window.__BAOCHE = null;
+if (CURRICULUM) {
+  const LESSONS = await fetch('/api/content/baoche-lessons', { credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : { items: [] }).then(j => j.items || []).catch(() => []);
+  window.__BAOCHE = {}; for (const r of LESSONS) window.__BAOCHE[r.id] = r;
+  const slug = (s) => 'bc_' + String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 26);
+  const num = (s) => { const m = String(s || '').replace(',', '.').match(/[\d.]+/); return m ? parseFloat(m[0]) : NaN; };
+  const isQs = (s) => /vđ|vd|vừa đủ|q\.?s/i.test(String(s || ''));
+  const LIQ = /nước|dầu|ethanol|cồn|glycerin|glycol|dung dịch|sorbitol|siro|acid acetic|triethanolamin|tinh dầu|lecithin|nipagin|nipasol/i;
+  const powCol = [0xf2ede0, 0xfff7e0, 0xf5f5f5, 0xfff9c4, 0xefe6d2, 0xfafaf0, 0xffffff, 0xf0e9d8];
+  const liqCol = [0xd8e8ff, 0xffe0a3, 0xe6e6fa, 0xfff7d6, 0xdff0ff, 0xf7cfb5, 0xcfe0f0, 0xe0f2ff];
+  let ci = 0;
+  const curReagents = { water: REAGENTS.water || { name: 'Nước cất', color: 0xd1f5ff, liquid: 0xe0f2ff, isPowder: false, category: 'Dung môi' } };
+  const converted = [];
+  for (const r of LESSONS) {
+    const steps = [{ reagentId: 'beaker', action: 'place-on-balance', label: 'Đặt cốc lên cân điện tử để tare 0' }];
+    const ings = (r.formula || []).map(f => ({ name: f.name, amount: num(f.amount), unit: (f.unit || '').toLowerCase(), qs: isQs(f.amount) })).filter(x => x.name);
+    for (const ing of ings) {
+      const id = slug(ing.name);
+      if (!curReagents[id]) {
+        const liquid = ing.unit === 'ml' || LIQ.test(ing.name);
+        const col = (liquid ? liqCol : powCol)[ci % 8];
+        curReagents[id] = { name: ing.name, color: col, liquid: col, isPowder: !liquid, category: 'Thành phần công thức' };
+        ci++;
+      }
+      if (ing.qs || !isFinite(ing.amount) || ing.amount <= 0) continue;
+      const unit = ing.unit === 'ml' ? 'mL' : 'g';
+      const amount = ing.unit === 'mg' ? ing.amount / 1000 : ing.amount;
+      const tol = +Math.max(unit === 'g' ? 0.02 : 0.5, amount * 0.03).toFixed(unit === 'g' ? 3 : 2);
+      if (unit === 'mL') {
+        steps.push({ reagentId: id, action: 'pour', target: amount, unit: 'mL', tolerance: tol, container: 'cylinder', label: `Đong ${ing.name} ${amount} mL vào ống đong` });
+        steps.push({ reagentId: id, action: 'transfer', container: 'beaker-from-cylinder', label: `Đổ ${ing.name} từ ống đong vào cốc` });
+      } else {
+        steps.push({ reagentId: id, action: 'pour', target: amount, unit: 'g', tolerance: tol, container: 'beaker', label: `Cân ${ing.name} ${amount} g vào cốc` });
+      }
+    }
+    if (ings.find(x => x.qs) && (r.finalUnit === 'mL' || !r.finalUnit)) {
+      steps.push({ reagentId: 'water', action: 'pour', target: r.finalVolume || 100, unit: 'mL', tolerance: 1.5, container: 'beaker', label: `Thêm nước cất vừa đủ ${r.finalVolume || 100} mL (q.s.)` });
+    }
+    steps.push({ reagentId: 'beaker', action: 'bottle', label: 'Đổ thành phẩm vào lọ/chai, dán nhãn đúng quy chế' });
+    converted.push({
+      id: r.id, name: r.name, icon: r.icon || '🧪', level: r.lesson,
+      short: r.methodName || r.short || '', desc: `Bài ${r.lesson} — ${r.lessonTitle || ''}. ${r.methodName || ''}`,
+      finalVolume: r.finalVolume || 100, finalUnit: r.finalUnit || 'mL', finalColor: r.finalColor || 0xcbb26b,
+      finalBottleLabel: r.name, indication: r.indication || '', steps, distractors: [], _baoche: r,
+    });
+  }
+  Object.assign(REAGENTS, curReagents);
+  RECIPES.length = 0; RECIPES.push(...converted);
+}
+
+const sessionStartedAt = Date.now();
 
 if (!CURRICULUM) showWelcomeCard({
   icon: '🧪',
@@ -4454,11 +4508,10 @@ addEventListener('resize', () => {
 });
 
 const clock = new THREE.Clock();
-// Kick off: chế độ GIÁO TRÌNH → giao cho curriculum.js; ngược lại chạy game free-form.
-if (CURRICULUM) {
-  const { initCurriculum } = await import('./js/pharmacy/baoche/curriculum.js?v=7');
-  initCurriculum({ THREE, scene, camera, controls, renderer, submitAttempt, sfx });
-} else if (currentRecipe) {
+// Kick off: either go straight into recipe (URL param) or show modal.
+// Chế độ GIÁO TRÌNH đã nạp 12 bài vào RECIPES/REAGENTS phía trên → chạy CÙNG
+// engine thật (nhấc chai reagent, đổ, cân ±sai số).
+if (currentRecipe) {
   startGame();
 } else {
   renderLevelModal();
