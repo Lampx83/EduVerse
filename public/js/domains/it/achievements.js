@@ -129,4 +129,25 @@ export const ACHIEVEMENTS = [
   { id: 'all-year-1',  icon: '🥇', title: 'Tốt nghiệp Năm 1',
     desc: 'Hoàn thành mọi module Năm 1',
     trigger: { yearComplete: 1 } },
+
+  // ── Game Achievements ──
+  { id: 'code-racer',   icon: '⚡', title: 'Code Racer',
+    desc: 'Pass Code Race — Giải thuật 5 phút (IG01)',
+    trigger: { moduleStars: { 'IG01': 2 } } },
+
+  { id: 'bug-hunter',   icon: '🐛', title: 'Bug Hunter',
+    desc: 'Pass Bug Hunt Debug speed (IG02)',
+    trigger: { moduleStars: { 'IG02': 2 } } },
+
+  { id: 'sql-detective', icon: '🔎', title: 'SQL Detective',
+    desc: 'Pass SQL Detective (IG03)',
+    trigger: { moduleStars: { 'IG03': 2 } } },
+
+  { id: 'system-designer', icon: '⚔️', title: 'System Designer',
+    desc: 'Pass Kafka & System Design battle (IG04)',
+    trigger: { moduleStars: { 'IG04': 2 } } },
+
+  { id: 'it-game-master', icon: '🏆', title: 'IT Game Master',
+    desc: 'Pass tất cả 4 game CNTT (IG01–IG04)',
+    trigger: { allModuleStars: { ids: ['IG01', 'IG02', 'IG03', 'IG04'], minStars: 2 } } },
 ];

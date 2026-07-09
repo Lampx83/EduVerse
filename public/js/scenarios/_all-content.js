@@ -21,6 +21,7 @@ import { IT_YEAR1_SCENARIOS } from './it-year1.js';
 import { IT_YEAR2_SCENARIOS } from './it-year2.js';
 import { IT_YEAR3_SCENARIOS } from './it-year3.js';
 import { IT_YEAR4_SCENARIOS } from './it-year4.js';
+import { IT_GAMES_SCENARIOS } from './it-games.js';
 import { L33_SCENARIOS, SCENARIO_L33_QUIZ, SCENARIO_L33_DRAG }
   from './L3.3-tuong-tac-warfarin-clarithromycin.js';
 import { YEAR34_SCENARIOS } from './year3-4.js';
@@ -68,6 +69,7 @@ export const ALL_SCENARIOS = {
   ...IT_YEAR2_SCENARIOS,
   ...IT_YEAR3_SCENARIOS,
   ...IT_YEAR4_SCENARIOS,
+  ...IT_GAMES_SCENARIOS,
   [SCENARIO_L33_QUIZ.id]: SCENARIO_L33_QUIZ,
   [SCENARIO_L33_DRAG.id]: SCENARIO_L33_DRAG,
   ...YEAR34_SCENARIOS,

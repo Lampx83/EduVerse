@@ -68,8 +68,8 @@ export const MODULES = [
   { category: 'career', id: 'IC06', title: 'AI / ML Engineer',                  subject: 'career', scenarioIds: [], directHref: '/it-algo-viz.html',         minStarsToUnlock: 24, icon: '🤖' },
 
   // ──────────── GAMES ────────────
-  { category: 'game', id: 'IG01', title: 'Code Race — Giải thuật 5 phút',       subject: 'game', scenarioIds: [], knowledgeQuiz: 'quiz-stub-IG01', placeholder: true, minStarsToUnlock: 6, icon: '⚡' },
-  { category: 'game', id: 'IG02', title: 'Bug Hunt — Debug speed',              subject: 'game', scenarioIds: [], knowledgeQuiz: 'quiz-stub-IG02', placeholder: true, minStarsToUnlock: 6, icon: '🐛' },
-  { category: 'game', id: 'IG03', title: 'SQL Detective',                       subject: 'game', scenarioIds: [], knowledgeQuiz: 'quiz-stub-IG03', placeholder: true, minStarsToUnlock: 12, icon: '🔎' },
-  { category: 'game', id: 'IG04', title: 'Kafka — System Design battle',        subject: 'game', scenarioIds: [], knowledgeQuiz: 'quiz-stub-IG04', placeholder: true, minStarsToUnlock: 18, icon: '⚔️' },
+  { category: 'game', id: 'IG01', title: 'Code Race — Giải thuật 5 phút',  subject: 'game', scenarioIds: ['IG01-code-race-quiz'],      knowledgeQuiz: 'IG01-code-race-quiz',      minStarsToUnlock: 6,  icon: '⚡' },
+  { category: 'game', id: 'IG02', title: 'Bug Hunt — Debug speed',         subject: 'game', scenarioIds: ['IG02-bug-hunt-quiz'],       knowledgeQuiz: 'IG02-bug-hunt-quiz',       minStarsToUnlock: 6,  icon: '🐛' },
+  { category: 'game', id: 'IG03', title: 'SQL Detective',                   subject: 'game', scenarioIds: ['IG03-sql-detective-quiz'],  knowledgeQuiz: 'IG03-sql-detective-quiz',  minStarsToUnlock: 12, icon: '🔎' },
+  { category: 'game', id: 'IG04', title: 'Kafka — System Design battle',   subject: 'game', scenarioIds: ['IG04-system-design-quiz'],  knowledgeQuiz: 'IG04-system-design-quiz',  minStarsToUnlock: 18, icon: '⚔️' },
 ];
