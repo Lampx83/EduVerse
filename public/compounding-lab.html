@@ -544,6 +544,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { submitAttempt, getPlayerName, ensurePlayerName } from './js/api.js';
 import { sfx } from './js/sfx.js';
 import { showWelcomeCard } from './js/welcome-card.js';
+import { buildApparatus } from './js/pharmacy/baoche/stations.js?v=8';
 // Công thức pha chế + hoá chất từ DB (/api/content/lab-recipes, lab-reagents)
 // — không bundle nữa. REAGENTS lưu dạng 1 doc (object map).
 const [RECIPES, REAGENTS] = await Promise.all([
@@ -2111,6 +2112,53 @@ function setupReagents(recipe) {
 }
 
 // ============================================================
+// CHẾ ĐỘ GIÁO TRÌNH — bày TRỌN BỘ DỤNG CỤ đặc thù của bài lên bàn để SV lấy.
+// Nguồn: _baoche.equipment[] + suy từ action các bước gốc. Hình dạng lấy từ
+// stations.js (buildApparatus). Hover hiện tên; click hiện gợi ý dùng ở bước nào.
+// ============================================================
+const curriculumEquip = [];
+function clearEquipment() { for (const g of curriculumEquip) { scene.remove(g); g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); }); } curriculumEquip.length = 0; }
+const ACT_EQUIP = {
+  heat: ['waterbath', 'Nồi đun cách thủy'], melt: ['hotplate', 'Bếp đun chảy'],
+  emulsify: ['homogenizer', 'Máy đồng nhất hóa'], sieve: ['sieve', 'Rây'],
+  filter: ['funnel', 'Bộ lọc màng / hút chân không'], autoclave: ['autoclave', 'Nồi hấp tiệt trùng'],
+  sterilize: ['autoclave', 'Nồi hấp tiệt trùng'], 'fill-capsule': ['capsule', 'Máy đóng nang'],
+  press: ['press', 'Máy dập viên'], mold: ['mold', 'Khuôn thuốc đặt'], demold: ['mold', 'Khuôn thuốc đặt'],
+  'adjust-ph': ['phmeter', 'Máy đo pH'], dry: ['oven', 'Tủ sấy'], cool: ['oven', 'Tủ làm lạnh'],
+  'seal-ampoule': ['burner', 'Máy hàn ống tiêm'], degas: ['degas', 'Bình sục khí trơ (N₂)'],
+};
+const EQUIP_NAME_KEY = [
+  [/cách thủy|đun cách/i, 'waterbath', 'Nồi đun cách thủy'], [/đồng nhất/i, 'homogenizer', 'Máy đồng nhất hóa'],
+  [/bếp|đun chảy|bát sứ/i, 'hotplate', 'Bếp / bát sứ đun chảy'], [/rây/i, 'sieve', 'Rây'],
+  [/lọc|màng|chân không/i, 'funnel', 'Bộ lọc màng'], [/hấp|autoclave|tiệt trùng/i, 'autoclave', 'Nồi hấp tiệt trùng'],
+  [/đóng nang/i, 'capsule', 'Máy đóng nang'], [/dập viên/i, 'press', 'Máy dập viên'],
+  [/khuôn/i, 'mold', 'Khuôn thuốc đặt'], [/đo ph|máy ph/i, 'phmeter', 'Máy đo pH'],
+  [/sấy/i, 'oven', 'Tủ sấy'], [/đóng thuốc tiêm|hàn/i, 'burner', 'Máy đóng/hàn ống tiêm'],
+];
+function spawnEquipment(recipe) {
+  clearEquipment();
+  const b = recipe && recipe._baoche; if (!b) return;
+  const wanted = new Map(); // key -> tên hiển thị
+  for (const s of (b.steps || [])) { const m = ACT_EQUIP[s.action]; if (m) wanted.set(m[0], m[1]); }
+  for (const e of (b.equipment || [])) { for (const [re, key, label] of EQUIP_NAME_KEY) if (re.test(e)) wanted.set(key, label); }
+  wanted.delete('mortar'); // cối chày đã có sẵn trên bàn
+  const keys = [...wanted.keys()];
+  const N = keys.length; if (!N) return;
+  const xL = -1.55, xR = 1.55;
+  keys.forEach((key, i) => {
+    let built; try { built = buildApparatus(key, THREE, { params: { tempMin: 60, tempMax: 70, mesh: 350, pore: '0.2µm', phMin: 5, phMax: 7 }, action: '', label: '' }, recipe); } catch { return; }
+    const g = built.group;
+    const x = N === 1 ? 0 : xL + i * ((xR - xL) / (N - 1));
+    g.position.set(x, 0.945, -0.34);
+    g.scale.setScalar(0.9);
+    try { built.tick(0, 0.0, false); } catch {}
+    g.userData = { kind: 'equipment', id: 'equip-' + key, name: wanted.get(key), label: 'Dụng cụ bài thực hành' };
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    scene.add(g); curriculumEquip.push(g);
+  });
+}
+
+// ============================================================
 // LAB TOOLS — balance, beaker, cylinder, mortar, final bottle
 // ============================================================
 
@@ -3654,7 +3702,7 @@ function ndcFromEvent(e) {
 }
 
 function getClickable() {
-  return [beaker, cylinder, finalBottle, balance, mortar, pestleGrp, pipetGrp, stirrerGrp, ...reagents];
+  return [beaker, cylinder, finalBottle, balance, mortar, pestleGrp, pipetGrp, stirrerGrp, ...reagents, ...curriculumEquip];
 }
 
 function pickTopGroup(object) {
@@ -3725,6 +3773,13 @@ function findMatchingStepIdx(action, su, tu) {
 function handleClickOn(target) {
   if (!target) { setSelectedTool(null); return; }
   const tu = target.userData;
+
+  // Dụng cụ giáo trình: hiện tên + gợi ý (mô phỏng — thao tác đặc thù sẽ bổ sung).
+  if (tu.kind === 'equipment') {
+    showToast(`🔧 ${tu.name} — dụng cụ của bài (dùng cho đun/nghiền/lọc/đổ khuôn/dập viên…)`, 2600);
+    setSelectedTool(null);
+    return;
+  }
 
   // FIRST CLICK: pick up any tool / reagent.
   const isPickup = !selectedTool || (tu.kind === 'reagent' && selectedTool.userData?.kind === 'reagent');
@@ -4150,6 +4205,7 @@ startGameImpl = function () {
   resetLift();
   // Setup reagents for this recipe
   setupReagents(currentRecipe);
+  if (CURRICULUM) spawnEquipment(currentRecipe);   // bày trọn bộ dụng cụ đặc thù của bài
   setFinalLabel(currentRecipe.finalBottleLabel);
 
   // Reset scene state
