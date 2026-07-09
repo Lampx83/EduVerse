@@ -2950,11 +2950,11 @@ function computeHandSlot(obj) {
   const bb = new THREE.Box3().setFromObject(obj);
   const size = bb.getSize(new THREE.Vector3());
 
-  // MediaPipe right-hand cursor — live tracking
-  if (handState.running && handState.hands[1].active && handCursors[1].visible) {
-    _liftHand.copy(handCursors[1].position);
+  // MediaPipe: vật đi theo CHÍNH tay đang cầm (carryHand); fallback tay phải.
+  const ch = handState.carryHand >= 0 ? handState.carryHand : 1;
+  if (handState.running && handState.hands[ch]?.active && handCursors[ch]?.visible) {
+    _liftHand.copy(handCursors[ch].position);
     _liftHand.y -= size.y * 0.4;
-    _liftHand.y += Math.sin(performance.now() * 0.0024) * LIFT_BOB_AMP;
     return _liftHand;
   }
 
@@ -3030,11 +3030,14 @@ function updateLift() {
     obj.position.lerpVectors(liftState.fromPos, target, e);
     if (t >= 1) liftState.phase = 'held';
   } else if (liftState.phase === 'held') {
-    // Chase the camera-relative target every frame + idle rotate + tilt
     const target = computeHandSlot(obj);
-    obj.position.lerp(target, 0.22);
-    obj.rotation.y += 0.006;
-    obj.rotation.z = Math.sin(performance.now() * 0.0018) * 0.08;
+    if (handState.running && handState.carryHand >= 0) {
+      obj.position.lerp(target, 0.5);   // cầm bằng tay: bám chặt, không tự xoay (VR)
+    } else {
+      obj.position.lerp(target, 0.22);
+      obj.rotation.y += 0.006;
+      obj.rotation.z = Math.sin(performance.now() * 0.0018) * 0.08;
+    }
   } else if (liftState.phase === 'lowering') {
     const t = Math.min(1, elapsed / LIFT_MS);
     const e = 1 - Math.pow(1 - t, 3);
@@ -3521,7 +3524,14 @@ const handState = {
     { active: false, x: 0, y: 0, pinching: false, label: 'Right', color: 0xfb923c, ringHex: '#fb923c' },
   ],
   bothPinchAt: 0,           // timestamp the most recent both-pinch combo was detected
+  carryHand: -1,            // slot của tay đang cầm vật (để vật đi theo đúng tay đó)
 };
+// Vật CẦM ĐƯỢC bằng tay (nhấc–mang): reagent + cốc/ống đong/pipet/đũa/chày.
+function isGrabbable(grp) {
+  const u = grp?.userData; if (!u) return false;
+  if (u.kind === 'reagent') return true;
+  return ['beaker', 'cylinder', 'pipet', 'stirrer', 'pestle'].includes(u.id);
+}
 const handBtn = document.getElementById('hand-btn');
 const camPreviewEl = document.getElementById('cam-preview');
 const camCtx = camPreviewEl.getContext('2d');
@@ -3712,23 +3722,31 @@ function updateHand(time) {
     else if (hand.pinching && pinchDist > 0.08) hand.pinching = false;
     handCursors[slot].material.color.setHex(hand.pinching ? 0xef4444 : hand.color);
     handCursors[slot].scale.setScalar(hand.pinching ? 1.25 : 1.0);
-    // On pinch START → click on hovered object (per-hand click).
+    // ===== CẦM – MANG – THẢ kiểu VR =====
+    const grp = hand.hoverGrp;   // vật con trỏ tay đang trỏ (đã raycast ở trên)
     if (hand.pinching && !wasPinching) {
-      const hits = raycaster.intersectObjects(getClickable(), true);
-      if (hits.length) {
-        const grp = pickTopGroup(hits[0].object);
-        if (grp) {
-          // Flag two-hand bonus if the OTHER hand is also pinching.
-          const otherIdx = 1 - slot;
-          const other = handState.hands[otherIdx];
-          if (other.active && other.pinching) {
-            state.twoHandBonus = true;
-            handState.bothPinchAt = performance.now();
-            sfx.grab();
-          }
-          handleClickOn(grp);
-          state.twoHandBonus = false;     // consume the flag immediately
+      // PINCH XUỐNG
+      if (!selectedTool && grp) {
+        if (isGrabbable(grp)) {
+          handState.carryHand = slot;     // vật sẽ ĐI THEO chính tay này
+          setSelectedTool(grp);           // → startLift → vật bay lên theo tay
+        } else {
+          handleClickOn(grp);             // vật cố định (cân/dụng cụ) → tác động ngay
         }
+      }
+    } else if (!hand.pinching && wasPinching) {
+      // NHẢ PINCH
+      if (selectedTool && handState.carryHand === slot) {
+        const tgt = grp;                  // rót/đặt vào vật đang trỏ dưới tay
+        if (tgt && tgt !== selectedTool) {
+          const other = handState.hands[1 - slot];
+          state.twoHandBonus = !!(other && other.active && other.pinching);
+          handleClickOn(tgt);             // dùng selectedTool → rót/đặt → setSelectedTool(null)→endLift
+          state.twoHandBonus = false;
+        } else {
+          setSelectedTool(null);          // thả về chỗ cũ
+        }
+        handState.carryHand = -1;
       }
     }
     // Send cursor to multiplayer (using whichever hand is more "active")
