@@ -2094,7 +2094,10 @@ function setupReagents(recipe) {
   }
   const ids = [...needed, ...(recipe.distractors || [])];
   const N = ids.length;
-  const xStart = -1.3, xStep = 2.5 / Math.max(N - 1, 1);
+  // Curriculum: dồn nguyên liệu về NỬA TRÁI giá (để dụng cụ vào nửa phải).
+  const xStart = CURRICULUM ? -1.65 : -1.3;
+  const xSpan = CURRICULUM ? 1.95 : 2.5;
+  const xStep = xSpan / Math.max(N - 1, 1);
   ids.forEach((id, i) => {
     const r = REAGENTS[id];
     if (!r) return;
@@ -2144,13 +2147,14 @@ function spawnEquipment(recipe) {
   wanted.delete('mortar'); // cối chày đã có sẵn trên bàn
   const keys = [...wanted.keys()];
   const N = keys.length; if (!N) return;
-  const xL = -1.55, xR = 1.55;
+  // Đặt dụng cụ lên NỬA PHẢI của giá phía trên (không để trên bàn cho gọn).
+  const xL = 0.55, xR = 1.65;
   keys.forEach((key, i) => {
     let built; try { built = buildApparatus(key, THREE, { params: { tempMin: 60, tempMax: 70, mesh: 350, pore: '0.2µm', phMin: 5, phMax: 7 }, action: '', label: '' }, recipe); } catch { return; }
     const g = built.group;
-    const x = N === 1 ? 0 : xL + i * ((xR - xL) / (N - 1));
-    g.position.set(x, 0.945, -0.34);
-    g.scale.setScalar(0.9);
+    const x = N === 1 ? 1.1 : xL + i * ((xR - xL) / (N - 1));
+    g.position.set(x, 1.69, -0.55);
+    g.scale.setScalar(0.62);
     try { built.tick(0, 0.0, false); } catch {}
     g.userData = { kind: 'equipment', id: 'equip-' + key, name: wanted.get(key), label: 'Dụng cụ bài thực hành' };
     g.traverse(o => { if (o.isMesh) o.castShadow = true; });
