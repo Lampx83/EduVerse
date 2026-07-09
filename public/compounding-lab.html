@@ -560,7 +560,11 @@ const getRecipeFromUrl = () => {
 
 const sessionStartedAt = Date.now();
 
-showWelcomeCard({
+// Chế độ GIÁO TRÌNH (?src=baoche): dùng lại phòng/đồ hoạ này nhưng chạy
+// engine 12 bài (curriculum.js). Bỏ qua game free-form bên dưới.
+const CURRICULUM = new URLSearchParams(location.search).get('src') === 'baoche';
+
+if (!CURRICULUM) showWelcomeCard({
   icon: '🧪',
   title: 'Phòng bào chế thuốc — Hướng dẫn',
   intro: 'Thực hiện đơn pha chế theo đúng quy trình GMP rút gọn. 5 bài từ dễ đến khó.',
@@ -4450,8 +4454,11 @@ addEventListener('resize', () => {
 });
 
 const clock = new THREE.Clock();
-// Kick off: either go straight into recipe (URL param) or show modal
-if (currentRecipe) {
+// Kick off: chế độ GIÁO TRÌNH → giao cho curriculum.js; ngược lại chạy game free-form.
+if (CURRICULUM) {
+  const { initCurriculum } = await import('./js/pharmacy/baoche/curriculum.js?v=7');
+  initCurriculum({ THREE, scene, camera, controls, renderer, submitAttempt, sfx });
+} else if (currentRecipe) {
   startGame();
 } else {
   renderLevelModal();

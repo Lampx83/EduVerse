@@ -224,7 +224,7 @@
         const title = byLesson[L][0].lessonTitle || '';
         html += `<div style="grid-column:1/-1;font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin:10px 2px 2px">Bài ${L} — ${title}</div>`;
         html += byLesson[L].map(r => `
-          <a class="recipe" href="bao-che-lab.html?recipe=${encodeURIComponent(r.id)}" title="${(r.name||'').replace(/"/g,'&quot;')}">
+          <a class="recipe" href="compounding-lab.html?src=baoche&recipe=${encodeURIComponent(r.id)}" title="${(r.name||'').replace(/"/g,'&quot;')}">
             <div class="icon">${r.icon || '🧪'}</div>
             <div class="lvl-num">${r.steps.length} bước</div>
             <div class="rname">${r.name || ''}</div>
