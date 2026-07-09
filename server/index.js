@@ -1294,8 +1294,12 @@ r.post('/api/requests/:id/vote', async (req, res) => {
   res.json({ ok });
 });
 
-// Admin (AI board) — đổi trạng thái khi đã xử lý. Để mở; sau có thể gate teacher.
-r.post('/api/requests/:id/status', async (req, res) => {
+// Đổi trạng thái request — CHỈ admin. Trước đây endpoint này để MỞ (không auth)
+// nên bất kỳ ai cũng đổi được status của mọi request, không để lại audit → đã
+// từng khiến request đã đóng bị lật ngược "loạn". Nay gate requireAuth+requireAdmin.
+// Đường chuẩn để đóng + phản hồi HS là POST /api/admin/requests/:id/reply
+// (kèm audit ai_decisions + thông báo); endpoint này chỉ để đổi status nhanh.
+r.post('/api/requests/:id/status', requireAuth, requireAdmin, async (req, res) => {
   const b = req.body ?? {};
   const ok = await setRequestStatus(req.params.id, String(b.status || ''), b.note);
   res.json({ ok });
