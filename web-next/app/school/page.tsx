@@ -81,6 +81,26 @@ export default async function School({ searchParams }: { searchParams: SearchPar
         <h1 className="text-[22px] font-bold" id="campus-title">
           {meta.icon} {meta.name}
         </h1>
+        {/* Nhãn "Đang học" — cạnh tiêu đề, KHÔNG floating để tránh đè avatar/tên
+            tài khoản trong header. */}
+        {atOwnSchool && (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 12px',
+              borderRadius: 20,
+              fontSize: 12,
+              fontWeight: 800,
+              background: '#16a34a',
+              color: '#fff',
+              boxShadow: '0 4px 12px rgba(22,163,74,.35)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🎓 Trường bạn đang học
+          </span>
+        )}
       </div>
 
       <div className="relative">
@@ -111,27 +131,6 @@ export default async function School({ searchParams }: { searchParams: SearchPar
           </a>
         )}
       </div>
-
-      {/* Banner "Trường bạn đang học" — fixed góc trên-phải. */}
-      {atOwnSchool && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 12,
-            right: 12,
-            zIndex: 9000,
-            padding: '7px 14px',
-            borderRadius: 20,
-            fontSize: 12.5,
-            fontWeight: 800,
-            boxShadow: '0 6px 18px rgba(0,0,0,.35)',
-            background: '#16a34a',
-            color: '#fff',
-          }}
-        >
-          🎓 Trường bạn đang học
-        </div>
-      )}
 
       {/* Neo cuộn cho postMessage 'campus-enter' (khu "Khám phá thêm" là module
           legacy js/school-explore.js — chưa migrate; giữ neo để hành vi cuộn khớp). */}

@@ -169,14 +169,15 @@ if (!window.isSecureContext && location.hostname !== 'localhost' && location.hos
     }
   }
 
-  // Banner "Đang học" ở góc trên — chỉ hiện khi đang ở trường của mình.
-  // (Banner "Tham quan" đã bỏ theo yêu cầu — đỡ vướng campus map; nút disable
-  // ở Phase 4 đã tự ám chỉ trạng thái không tương tác được rồi.)
+  // Nhãn "Đang học" — chỉ hiện khi đang ở trường của mình.
+  // Đặt CẠNH tiêu đề trường (không floating top-right) để không đè avatar/tên
+  // tài khoản trong #auth-header. (Banner "Tham quan" đã bỏ theo yêu cầu.)
   if (me && me.role !== 'admin' && me.enrolled_domain && me.enrolled_domain === activeId) {
-    const banner = document.createElement('div');
-    banner.style.cssText = `position:fixed; top:12px; right:12px; z-index:9000; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:800; box-shadow:0 6px 18px rgba(0,0,0,.35); background:#16a34a; color:#fff`;
-    banner.textContent = '🎓 Trường bạn đang học';
-    document.body.appendChild(banner);
+    const badge = document.createElement('span');
+    badge.style.cssText = `display:inline-flex; align-items:center; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:800; background:#16a34a; color:#fff; box-shadow:0 4px 12px rgba(22,163,74,.35); white-space:nowrap`;
+    badge.textContent = '🎓 Trường bạn đang học';
+    const titleRow = document.querySelector('#campus-hero .section-title');
+    (titleRow || document.body).appendChild(badge);
   }
 
   // Admin → nút "✏️ Sửa campus" đặt góc trên-phải BÊN TRONG khung campus (không đè auth-header).
