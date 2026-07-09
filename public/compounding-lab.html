@@ -3552,6 +3552,20 @@ if (!SECURE_FOR_CAMERA) {
   handBtn.addEventListener('click', () => handState.running ? stopHandTracking() : initHandTracking());
 }
 
+// Chế độ GIÁO TRÌNH: đưa nút điều khiển tay RA NGOÀI menu ⚙️ thành nút nổi độc
+// lập (luôn thấy) để SV bật MediaPipe dễ dàng.
+if (CURRICULUM && handBtn) {
+  document.body.appendChild(handBtn);
+  handBtn.style.position = 'fixed';
+  handBtn.style.right = '12px';
+  handBtn.style.bottom = '150px';
+  handBtn.style.zIndex = '35';
+  handBtn.style.padding = '10px 14px';
+  handBtn.style.borderRadius = '12px';
+  handBtn.style.fontSize = '13px';
+  handBtn.style.boxShadow = '0 6px 18px rgba(0,0,0,0.35)';
+}
+
 async function initHandTracking() {
   handBtn.disabled = true; handBtn.textContent = '⏳ Đang tải MediaPipe...';
   try {
