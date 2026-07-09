@@ -3566,15 +3566,30 @@ if (CURRICULUM && handBtn) {
   handBtn.style.boxShadow = '0 6px 18px rgba(0,0,0,0.35)';
 }
 
-async function initHandTracking() {
-  handBtn.disabled = true; handBtn.textContent = '⏳ Đang tải MediaPipe...';
-  try {
+// Preload MediaPipe (module + WASM + model + tạo landmarker) TRƯỚC, ở nền —
+// để khi bấm chỉ cần xin webcam là chạy ngay, không phải chờ tải.
+let handPreloadPromise = null;
+let handPreloaded = false;
+function preloadHand() {
+  if (handPreloadPromise) return handPreloadPromise;
+  handPreloadPromise = (async () => {
     const { HandLandmarker, FilesetResolver } = await import('./vendor/mediapipe/vision_bundle.mjs');
     const fileset = await FilesetResolver.forVisionTasks('./vendor/mediapipe/wasm');
     handState.landmarker = await HandLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: './models/hand_landmarker.task', delegate: 'GPU' },
       runningMode: 'VIDEO', numHands: 2,
     });
+    handPreloaded = true;
+    if (!handState.running) handBtn.textContent = '🖐️ Điều khiển tay (sẵn sàng)';
+  })();
+  return handPreloadPromise;
+}
+
+async function initHandTracking() {
+  handBtn.disabled = true;
+  handBtn.textContent = handPreloaded ? '📷 Đang mở webcam...' : '⏳ Đang tải MediaPipe...';
+  try {
+    await preloadHand();   // đã preload thì trả về ngay
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 }, audio: false });
     handState.video = document.createElement('video');
     handState.video.srcObject = stream;
@@ -3604,6 +3619,13 @@ function stopHandTracking() {
   for (const c of handCursors) c.visible = false;
   for (const h of handState.hands) { h.active = false; h.pinching = false; }
   twoHandBadgeEl.style.display = 'none';
+}
+
+// Chế độ giáo trình: preload MediaPipe ở nền ngay khi mở trang (khi đủ điều kiện
+// camera) để bấm nút là bật webcam chạy ngay, không phải chờ tải.
+if (CURRICULUM && SECURE_FOR_CAMERA) {
+  handBtn.textContent = '🖐️ Điều khiển tay (đang chuẩn bị…)';
+  (window.requestIdleCallback || ((f) => setTimeout(f, 1200)))(() => { preloadHand().catch(() => { handBtn.textContent = '🖐️ Bật điều khiển tay'; }); });
 }
 
 const _handPlaneN = new THREE.Vector3();
