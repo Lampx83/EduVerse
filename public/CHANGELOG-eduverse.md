@@ -4,6 +4,70 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-10 — Phiên cải tiến (13) · Tiểu học · THCS · THPT — Enrichment Achievements
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
+
+**Trường:** Tiểu học (`primary`) · THCS (`secondary`) · THPT (`highschool`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **3 lỗ hổng về gamification**:
+1. **Trường Tiểu học**: Chỉ có 6 achievements cho toàn bộ 5 năm học × 9+ môn — quá ít để tạo động lực cho học sinh.
+2. **Trường THCS**: Nhiều achievements tham chiếu ID module kiểu cũ (`S6-so-nguyen-4`, `S6-phan-so-5`...) không tồn tại trong hệ thống 36-tuần mới — không bao giờ kích hoạt được.
+3. **Trường THPT**: Tất cả 4 achievements có `moduleStars` đều tham chiếu ID sai (`H-T10`, `H-L10`, `H-S10`, `H-T12`) — trong khi ID đúng là `H10TOAN`, `H10LY`, `H10SU`, `H12TOAN`.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Cải tiến chủ động theo chế độ tự cải tiến hàng ngày.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/primary/achievements.js` | Mở rộng | 6 → 24 achievements: thêm per-grade Toán (P2/P3/P4), Tiếng Việt (L1/L3/L5), Tiếng Anh (L3/L5), Khoa học, Lịch sử-ĐL, Tin học, streak, star milestones, tốt nghiệp lớp |
+| `public/js/domains/secondary/achievements.js` | Mở rộng + fix | 11 → 25 achievements: thêm achievements dùng ID 36-tuần đúng (S6TOAN, S7NV, S6TA...), yearComplete, star milestones; giữ legacy Boss achievements có chú thích |
+| `public/js/domains/highschool/achievements.js` | Fix + mở rộng | 6 → 22 achievements: **SỬA** 4 ID sai (H-T10→H10TOAN, H-L10→H10LY, H-S10→H10SU, H-T12→H12TOAN); thêm Văn/Anh/Lí/Hoá/Sinh/Sử/Địa/Tin, tam giác KHTN, yearComplete, star milestones |
+
+### Chi tiết achievements mới
+
+**Tiểu học** (thêm 18 achievements):
+- Toán: P2 (🔢), P3 (🧮), P4 (📐) — bổ sung 3 lớp còn thiếu
+- Tiếng Việt: P1TV (📖), P3TV (✏️), P5TV (📝)
+- Tiếng Anh: P3TA (🌍 "Hello World!"), P5TA (🗣️ "Junior English Speaker")
+- Khoa học: P4KH (🔭), Lịch sử & ĐL: P5LSDL (🗺️)
+- Tin học: P3TIN (💻), P5TIN (🤖 "Scratch Master")
+- Streak 7 ngày (🌈 "Tuần vàng"), star-30 (💫), star-60 (🌠)
+- Tốt nghiệp lớp 1 (🥇), lớp 3 (🥈), lớp 5 (🎓)
+- Fix trigger `all-primary-math`: từ `{totalStars:5}` → `{moduleStars:{P1:1,P2:1,P3:1,P4:1,P5:1}}`
+
+**THCS** (thêm 14 achievements với ID đúng):
+- Toán 36-tuần: S6TOAN (🔢), S7TOAN (📊), S8TOAN (📐), S9TOAN (🏅)
+- Ngữ văn: S6NV (📖), S9NV (✒️); Tiếng Anh: S6TA (🌍), S9TA (🗣️)
+- KHTN 6 (🔬), Lịch Sử-ĐL 9 (🗺️), Tin học 6 (💻), Tin học 9 (⌨️)
+- Streak 10 ngày (⚡), star-50 (💫), yearComplete 1 (lớp 6) + 4 (lớp 9 = tốt nghiệp THCS)
+- all-secondary-math: trigger đúng `{S6TOAN:1,S7TOAN:1,S8TOAN:1,S9TOAN:1}`
+
+**THPT** (sửa 4 + thêm 16 achievements):
+- **SỬA**: H-T10→H10TOAN, H-L10→H10LY, H-S10→H10SU, H-T12→H12TOAN
+- Toán: H11TOAN (📈 "Đạo hàm master"); Văn: H10NV (📜), H12NV (✒️)
+- Tiếng Anh: H10TA (🌍), H12TA (🗣️)
+- KHTN: H10HOA (🧪), H10SINH (🧬), tam giác KHTN (🔬 "Lí+Hoá+Sinh lớp 10")
+- KHXH: H10SU (🏛️), H10DIA (🗺️); Tin học: H10TIN (💻)
+- Streak 14 ngày (⚡), star-20 (✨), star-50 (💫)
+- yearComplete 1/2/3 (lớp 10/11/12 = tốt nghiệp THPT)
+- all-hs-math: `{H10TOAN:1,H11TOAN:1,H12TOAN:1}` (🏆 "Thủ khoa Toán THPT")
+
+### Kiểm thử
+
+```
+node --check public/js/domains/primary/achievements.js     ✅ OK
+node --check public/js/domains/secondary/achievements.js   ✅ OK
+node --check public/js/domains/highschool/achievements.js  ✅ OK
+```
+
+---
+
 ## 2026-07-09 — Phiên cải tiến (12) · Trường CNTT — 4 Game modules IG01–IG04
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
