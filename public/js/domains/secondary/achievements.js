@@ -24,24 +24,48 @@ export const ACHIEVEMENTS = [
   // ── Ngữ văn (hệ 36-tuần) ──
   { id: 'nv6-weekly', icon: '📖', title: 'Yêu Văn học dân gian',
     desc: 'Đạt 3 sao Ngữ văn lớp 6 (36 tuần)', trigger: { moduleStars: { 'S6NV': 3 } } },
+  { id: 'nv7-weekly', icon: '📝', title: 'Văn học dân tộc lớp 7',
+    desc: 'Đạt 3 sao Ngữ văn lớp 7', trigger: { moduleStars: { 'S7NV': 3 } } },
+  { id: 'nv8-weekly', icon: '📰', title: 'Nhà văn trẻ lớp 8',
+    desc: 'Đạt 3 sao Ngữ văn lớp 8', trigger: { moduleStars: { 'S8NV': 3 } } },
   { id: 'nv9-weekly', icon: '✒️', title: 'Thi Văn vào lớp 10',
     desc: 'Đạt 3 sao Ngữ văn lớp 9', trigger: { moduleStars: { 'S9NV': 3 } } },
 
   // ── Tiếng Anh (hệ 36-tuần) ──
   { id: 'ta6-weekly', icon: '🌍', title: 'English Explorer THCS',
     desc: 'Đạt 3 sao Tiếng Anh lớp 6', trigger: { moduleStars: { 'S6TA': 3 } } },
+  { id: 'ta7-weekly', icon: '🗺️', title: 'Global Citizen lớp 7',
+    desc: 'Đạt 3 sao Tiếng Anh lớp 7', trigger: { moduleStars: { 'S7TA': 3 } } },
+  { id: 'ta8-weekly', icon: '🌐', title: 'Confident Speaker lớp 8',
+    desc: 'Đạt 3 sao Tiếng Anh lớp 8', trigger: { moduleStars: { 'S8TA': 3 } } },
   { id: 'ta9-weekly', icon: '🗣️', title: 'Ready for High School English',
     desc: 'Đạt 3 sao Tiếng Anh lớp 9', trigger: { moduleStars: { 'S9TA': 3 } } },
 
-  // ── KHTN & Lịch sử ──
+  // ── KHTN & Lịch sử – Địa lý ──
   { id: 'khtn6-weekly', icon: '🔬', title: 'Nhà khoa học THCS',
     desc: 'Đạt 3 sao KHTN lớp 6', trigger: { moduleStars: { 'S6KHTN': 3 } } },
+  { id: 'khtn7-weekly', icon: '⚗️', title: 'Khám phá KHTN lớp 7',
+    desc: 'Đạt 3 sao KHTN lớp 7', trigger: { moduleStars: { 'S7KHTN': 3 } } },
+  { id: 'khtn8-weekly', icon: '🧲', title: 'Thí nghiệm KHTN lớp 8',
+    desc: 'Đạt 3 sao KHTN lớp 8', trigger: { moduleStars: { 'S8KHTN': 3 } } },
+  { id: 'khtn9-weekly', icon: '🌿', title: 'Sẵn sàng thi KHTN lớp 10',
+    desc: 'Đạt 3 sao KHTN lớp 9', trigger: { moduleStars: { 'S9KHTN': 3 } } },
+  { id: 'lsdia6-weekly', icon: '🏛️', title: 'Sử-Địa thế giới lớp 6',
+    desc: 'Đạt 3 sao Lịch sử & Địa lý lớp 6', trigger: { moduleStars: { 'S6LSDL': 3 } } },
+  { id: 'lsdia7-weekly', icon: '🧭', title: 'Khám phá Sử-Địa lớp 7',
+    desc: 'Đạt 3 sao Lịch sử & Địa lý lớp 7', trigger: { moduleStars: { 'S7LSDL': 3 } } },
+  { id: 'lsdia8-weekly', icon: '🌏', title: 'Thám hiểm Sử-Địa lớp 8',
+    desc: 'Đạt 3 sao Lịch sử & Địa lý lớp 8', trigger: { moduleStars: { 'S8LSDL': 3 } } },
   { id: 'lsdia9-weekly', icon: '🗺️', title: 'Sử-Địa lớp 9',
     desc: 'Đạt 3 sao Lịch sử & Địa lý lớp 9', trigger: { moduleStars: { 'S9LSDL': 3 } } },
 
   // ── Tin học ──
   { id: 'tin6-weekly', icon: '💻', title: 'Digital Citizen',
     desc: 'Đạt 3 sao Tin học lớp 6', trigger: { moduleStars: { 'S6TH': 3 } } },
+  { id: 'tin7-weekly', icon: '🖥️', title: 'Coder nhỏ lớp 7',
+    desc: 'Đạt 3 sao Tin học lớp 7', trigger: { moduleStars: { 'S7TIN': 3 } } },
+  { id: 'tin8-weekly', icon: '📱', title: 'Lập trình viên tương lai lớp 8',
+    desc: 'Đạt 3 sao Tin học lớp 8', trigger: { moduleStars: { 'S8TIN': 3 } } },
   { id: 'tin9-weekly', icon: '⌨️', title: 'Coder THCS',
     desc: 'Đạt 3 sao Tin học lớp 9', trigger: { moduleStars: { 'S9TIN': 3 } } },
 
@@ -54,6 +78,10 @@ export const ACHIEVEMENTS = [
   // ── Tốt nghiệp lớp ──
   { id: 'year1-sec-complete', icon: '🥇', title: 'Lên lớp 7 tự tin!',
     desc: 'Hoàn thành toàn bộ chương trình lớp 6', trigger: { yearComplete: 1 } },
+  { id: 'year2-sec-complete', icon: '🥈', title: 'Lên lớp 8 vững vàng!',
+    desc: 'Hoàn thành toàn bộ chương trình lớp 7', trigger: { yearComplete: 2 } },
+  { id: 'year3-sec-complete', icon: '🏅', title: 'Lên lớp 9 xuất sắc!',
+    desc: 'Hoàn thành toàn bộ chương trình lớp 8', trigger: { yearComplete: 3 } },
   { id: 'year4-sec-grad', icon: '🎓', title: 'Tốt nghiệp THCS',
     desc: 'Hoàn thành toàn bộ chương trình lớp 9', trigger: { yearComplete: 4 } },
 

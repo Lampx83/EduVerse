@@ -4,6 +4,83 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-11 — Phiên cải tiến (14) · THCS & THPT — Bổ sung 29 Achievements còn thiếu
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
+
+**Trường:** THCS (`secondary`) · THPT (`highschool`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **2 lỗ hổng gamification lớn** trong hệ thống achievements:
+
+1. **Trường THCS**: Các môn Ngữ văn, Tiếng Anh, KHTN, Lịch sử-Địa lý, Tin học chỉ có achievements cho lớp đầu (6) và lớp cuối (9), bỏ trống hoàn toàn lớp 7 và 8. Ngoài ra thiếu yearComplete cho lớp 7 và lớp 8 — học sinh hoàn thành trọn năm học nhưng không nhận được huy chương.
+2. **Trường THPT**: Ngữ văn và Tiếng Anh thiếu lớp 11; toàn bộ Vật lí/Hoá học/Sinh học/Lịch sử/Địa lý/Tin học chỉ có achievements cho lớp 10, thiếu lớp 11 và lớp 12 — sinh viên học hết 3 năm THPT nhưng chỉ nhận được thưởng ở lớp 10.
+
+Tất cả scenario và module tương ứng đã tồn tại đầy đủ trong hệ thống (lop7–lop9, lop10–lop12). Đây là cải tiến thấp rủi ro nhất: chỉ bổ sung achievements vào file catalog, không thay đổi logic hay scenario.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Cải tiến chủ động theo chế độ tự cải tiến hàng ngày.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/secondary/achievements.js` | Mở rộng | 25 → 39 achievements: thêm 14 achievement cho THCS |
+| `public/js/domains/highschool/achievements.js` | Mở rộng | 22 → 37 achievements: thêm 15 achievement cho THPT |
+
+### Chi tiết achievements mới
+
+**Trường THCS** (thêm 14 achievements):
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `nv7-weekly` | 📝 | Văn học dân tộc lớp 7 | S7NV ≥ 3 sao |
+| `nv8-weekly` | 📰 | Nhà văn trẻ lớp 8 | S8NV ≥ 3 sao |
+| `ta7-weekly` | 🗺️ | Global Citizen lớp 7 | S7TA ≥ 3 sao |
+| `ta8-weekly` | 🌐 | Confident Speaker lớp 8 | S8TA ≥ 3 sao |
+| `khtn7-weekly` | ⚗️ | Khám phá KHTN lớp 7 | S7KHTN ≥ 3 sao |
+| `khtn8-weekly` | 🧲 | Thí nghiệm KHTN lớp 8 | S8KHTN ≥ 3 sao |
+| `khtn9-weekly` | 🌿 | Sẵn sàng thi KHTN lớp 10 | S9KHTN ≥ 3 sao |
+| `lsdia6-weekly` | 🏛️ | Sử-Địa thế giới lớp 6 | S6LSDL ≥ 3 sao |
+| `lsdia7-weekly` | 🧭 | Khám phá Sử-Địa lớp 7 | S7LSDL ≥ 3 sao |
+| `lsdia8-weekly` | 🌏 | Thám hiểm Sử-Địa lớp 8 | S8LSDL ≥ 3 sao |
+| `tin7-weekly` | 🖥️ | Coder nhỏ lớp 7 | S7TIN ≥ 3 sao |
+| `tin8-weekly` | 📱 | Lập trình viên tương lai lớp 8 | S8TIN ≥ 3 sao |
+| `year2-sec-complete` | 🥈 | Lên lớp 8 vững vàng! | yearComplete: 2 |
+| `year3-sec-complete` | 🏅 | Lên lớp 9 xuất sắc! | yearComplete: 3 |
+
+**Trường THPT** (thêm 15 achievements):
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `nv11` | 📖 | Nhà văn trẻ tài năng | H11NV ≥ 3 sao |
+| `ta11` | 🌐 | Advanced English lớp 11 | H11TA ≥ 3 sao |
+| `ly11` | 🔊 | Sóng & dao động lớp 11 | H11LY ≥ 3 sao |
+| `ly12` | ☢️ | Sẵn sàng thi Vật lí | H12LY ≥ 3 sao |
+| `hoa11` | ⚗️ | Hoá hữu cơ lớp 11 | H11HOA ≥ 3 sao |
+| `hoa12` | 🏭 | Sẵn sàng thi Hoá học | H12HOA ≥ 3 sao |
+| `sinh11` | 🌱 | Cơ thể sống lớp 11 | H11SINH ≥ 3 sao |
+| `sinh12` | 🦠 | Sẵn sàng thi Sinh học | H12SINH ≥ 3 sao |
+| `su11` | 🗿 | Lịch sử hiện đại lớp 11 | H11SU ≥ 3 sao |
+| `su12` | 🏵️ | Sẵn sàng thi Lịch sử | H12SU ≥ 3 sao |
+| `dia11` | 🌏 | Địa lý thế giới lớp 11 | H11DIA ≥ 3 sao |
+| `dia12` | 🇻🇳 | Sẵn sàng thi Địa lý | H12DIA ≥ 3 sao |
+| `tin11` | 🗄️ | Cơ sở dữ liệu lớp 11 | H11TIN ≥ 3 sao |
+| `tin12` | 🤖 | AI & Lập trình lớp 12 | H12TIN ≥ 3 sao |
+
+(+ `khtn-triple` của THPT giữ nguyên — đã đúng từ phiên 13)
+
+### Kiểm thử
+
+```
+node --check public/js/domains/secondary/achievements.js   ✅ OK
+node --check public/js/domains/highschool/achievements.js  ✅ OK
+```
+
+---
+
 ## 2026-07-10 — Phiên cải tiến (13) · Tiểu học · THCS · THPT — Enrichment Achievements
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).

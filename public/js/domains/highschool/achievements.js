@@ -24,22 +24,38 @@ export const ACHIEVEMENTS = [
   // ── Ngữ văn ──
   { id: 'nv10', icon: '📜', title: 'Văn học dân tộc',
     desc: 'Đạt 3 sao Ngữ văn lớp 10', trigger: { moduleStars: { 'H10NV': 3 } } },
+  { id: 'nv11', icon: '📖', title: 'Nhà văn trẻ tài năng',
+    desc: 'Đạt 3 sao Ngữ văn lớp 11', trigger: { moduleStars: { 'H11NV': 3 } } },
   { id: 'nv12', icon: '✒️', title: 'Sẵn sàng thi Văn',
     desc: 'Đạt 3 sao Ngữ văn lớp 12', trigger: { moduleStars: { 'H12NV': 3 } } },
 
   // ── Tiếng Anh ──
   { id: 'ta10', icon: '🌍', title: 'English Rising Star',
     desc: 'Đạt 3 sao Tiếng Anh lớp 10', trigger: { moduleStars: { 'H10TA': 3 } } },
+  { id: 'ta11', icon: '🌐', title: 'Advanced English lớp 11',
+    desc: 'Đạt 3 sao Tiếng Anh lớp 11', trigger: { moduleStars: { 'H11TA': 3 } } },
   { id: 'ta12', icon: '🗣️', title: 'Ready for University English',
     desc: 'Đạt 3 sao Tiếng Anh lớp 12', trigger: { moduleStars: { 'H12TA': 3 } } },
 
   // ── Ban KHTN ──
   { id: 'ly10', icon: '⚛️', title: 'Vật lí gia trẻ',
     desc: 'Đạt 3 sao Vật lí lớp 10', trigger: { moduleStars: { 'H10LY': 3 } } },
+  { id: 'ly11', icon: '🔊', title: 'Sóng & dao động lớp 11',
+    desc: 'Đạt 3 sao Vật lí lớp 11', trigger: { moduleStars: { 'H11LY': 3 } } },
+  { id: 'ly12', icon: '☢️', title: 'Sẵn sàng thi Vật lí',
+    desc: 'Đạt 3 sao Vật lí lớp 12', trigger: { moduleStars: { 'H12LY': 3 } } },
   { id: 'hoa10', icon: '🧪', title: 'Hoá học yêu thích',
     desc: 'Đạt 3 sao Hoá học lớp 10', trigger: { moduleStars: { 'H10HOA': 3 } } },
+  { id: 'hoa11', icon: '⚗️', title: 'Hoá hữu cơ lớp 11',
+    desc: 'Đạt 3 sao Hoá học lớp 11', trigger: { moduleStars: { 'H11HOA': 3 } } },
+  { id: 'hoa12', icon: '🏭', title: 'Sẵn sàng thi Hoá học',
+    desc: 'Đạt 3 sao Hoá học lớp 12', trigger: { moduleStars: { 'H12HOA': 3 } } },
   { id: 'sinh10', icon: '🧬', title: 'Nhà sinh học nhỏ',
     desc: 'Đạt 3 sao Sinh học lớp 10', trigger: { moduleStars: { 'H10SINH': 3 } } },
+  { id: 'sinh11', icon: '🌱', title: 'Cơ thể sống lớp 11',
+    desc: 'Đạt 3 sao Sinh học lớp 11', trigger: { moduleStars: { 'H11SINH': 3 } } },
+  { id: 'sinh12', icon: '🦠', title: 'Sẵn sàng thi Sinh học',
+    desc: 'Đạt 3 sao Sinh học lớp 12', trigger: { moduleStars: { 'H12SINH': 3 } } },
   { id: 'khtn-triple', icon: '🔬', title: 'Tam giác KHTN',
     desc: 'Đạt sao Lí + Hoá + Sinh lớp 10',
     trigger: { moduleStars: { 'H10LY': 1, 'H10HOA': 1, 'H10SINH': 1 } } },
@@ -47,12 +63,24 @@ export const ACHIEVEMENTS = [
   // ── Ban KHXH ──
   { id: 'su10', icon: '🏛️', title: 'Yêu lịch sử dân tộc',
     desc: 'Đạt 3 sao Lịch sử lớp 10', trigger: { moduleStars: { 'H10SU': 3 } } },
+  { id: 'su11', icon: '🗿', title: 'Lịch sử hiện đại lớp 11',
+    desc: 'Đạt 3 sao Lịch sử lớp 11', trigger: { moduleStars: { 'H11SU': 3 } } },
+  { id: 'su12', icon: '🏵️', title: 'Sẵn sàng thi Lịch sử',
+    desc: 'Đạt 3 sao Lịch sử lớp 12', trigger: { moduleStars: { 'H12SU': 3 } } },
   { id: 'dia10', icon: '🗺️', title: 'Nhà địa lý học',
     desc: 'Đạt 3 sao Địa lý lớp 10', trigger: { moduleStars: { 'H10DIA': 3 } } },
+  { id: 'dia11', icon: '🌏', title: 'Địa lý thế giới lớp 11',
+    desc: 'Đạt 3 sao Địa lý lớp 11', trigger: { moduleStars: { 'H11DIA': 3 } } },
+  { id: 'dia12', icon: '🇻🇳', title: 'Sẵn sàng thi Địa lý',
+    desc: 'Đạt 3 sao Địa lý lớp 12', trigger: { moduleStars: { 'H12DIA': 3 } } },
 
   // ── Tin học ──
   { id: 'tin10', icon: '💻', title: 'Digital THPT',
     desc: 'Đạt 3 sao Tin học lớp 10', trigger: { moduleStars: { 'H10TIN': 3 } } },
+  { id: 'tin11', icon: '🗄️', title: 'Cơ sở dữ liệu lớp 11',
+    desc: 'Đạt 3 sao Tin học lớp 11', trigger: { moduleStars: { 'H11TIN': 3 } } },
+  { id: 'tin12', icon: '🤖', title: 'AI & Lập trình lớp 12',
+    desc: 'Đạt 3 sao Tin học lớp 12', trigger: { moduleStars: { 'H12TIN': 3 } } },
 
   // ── Sao tích luỹ ──
   { id: 'star-20', icon: '✨', title: 'Sưu tầm 20 sao',
