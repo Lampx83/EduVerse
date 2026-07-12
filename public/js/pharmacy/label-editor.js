@@ -2,7 +2,7 @@
 //   • openHdsdEditor   — Nhãn HƯỚNG DẪN SỬ DỤNG dán lên HỘP thuốc (liều + thời điểm + số phút trước/sau ăn)
 //   • openPackageEditor — Nhãn BAO BÌ RA LẺ (trắng/vàng/hồng) theo mẫu phong bì; túi zip chỉ đựng kín khí
 // Giữ semantic field cũ để backend chấm điểm + render in/dán nhãn vẫn work.
-import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0711';
+import { ALL_DRUGS, getDrug, PHARMACY_INFO } from './catalog.js?v=ph0712';
 import { TIMING_LABEL, totalPerDay } from './labels.js';
 
 const QUICK_NOTES = [
@@ -103,9 +103,7 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
           <div class="le2-preview-title">Xem trước nhãn dán (kích thước thật)</div>
           <div class="le2-sticker">
             <div class="le2-sk-pharm">${PHARMACY_INFO.name} · ${PHARMACY_INFO.address} · ĐT ${PHARMACY_INFO.phone}</div>
-            <div class="le2-sk-head">HƯỚNG DẪN SỬ DỤNG</div>
-            <div class="le2-sk-drug"><b class="le2-sk-brand">—</b></div>
-            <div class="le2-sk-strength">—</div>
+            <div class="le2-sk-drug"><b class="le2-sk-brand">—</b> <span class="le2-sk-strength"></span></div>
             <div class="le2-sk-doses-grid">
               ${['Sáng','Trưa','Chiều','Tối'].map((t, i) => `
                 <div class="le2-sk-cell">
@@ -220,7 +218,11 @@ export function openHdsdEditor({ pickedIds = [], onCreate, onClose }) {
   function renderPreview() {
     const l = readLabel();
     $('.le2-sk-brand').textContent = l.brand || '—';
-    $('.le2-sk-strength').textContent = l.strength || (l.generic || '—');
+    // Hàm lượng GỘP cùng hàng với tên thuốc ("Aleucin 500mg") — rỗng khi không có
+    // hoặc khi tên thuốc đã chứa sẵn hàm lượng (tránh lặp "500mg 500mg").
+    const _str = String(l.strength || l.generic || '').trim();
+    const _hasStr = _str && String(l.brand || '').toLowerCase().includes(_str.toLowerCase());
+    $('.le2-sk-strength').textContent = _hasStr ? '' : _str;
     ['morning','noon','afternoon','evening'].forEach((k, i) => {
       $(`.le2-sk-num[data-cell="${i}"]`).textContent = l[k];
     });

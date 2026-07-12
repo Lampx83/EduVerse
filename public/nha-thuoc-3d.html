@@ -513,13 +513,11 @@
     box-shadow: 0 4px 14px rgba(180, 83, 9, 0.25);
     display: flex; flex-direction: column; gap: 4px;
   }
-  .le2-sk-head {
-    font-weight: 800; letter-spacing: 1.5px; font-size: 14px;
-    text-align: left; padding-bottom: 4px; border-bottom: 2px dashed #b45309;
-    margin-bottom: 4px;
-  }
-  .le2-sk-bn, .le2-sk-drug, .le2-sk-strength { padding: 2px 0; }
+  .le2-sk-bn, .le2-sk-drug { padding: 2px 0; }
+  /* Tên thuốc + hàm lượng CÙNG 1 HÀNG ("Aleucin 500mg") — yêu cầu CBS 12/07 #2 */
+  .le2-sk-drug { font-size: 16px; }
   .le2-sk-brand { font-size: 16px; }
+  .le2-sk-strength { font-size: 14px; color: #7c2d12; }
   .le2-sk-doses-grid {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 6px 0;
   }
@@ -1073,7 +1071,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0711';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0712';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;

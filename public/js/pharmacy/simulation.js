@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0711';
-import { loadDrugs } from './catalog.js?v=ph0711';
+import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0712';
+import { loadDrugs } from './catalog.js?v=ph0712';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,8 +29,8 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0711';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0711';
+import { openPosTerminal } from './pos.js?v=ph0712';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0712';
 import { STAGE_LABEL } from './rubric.js';
 
 const $ = (id) => document.getElementById(id);
@@ -482,22 +482,18 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
 
   // Bao bì ra lẻ: chọn đơn vị từ GIỎ RA LẺ + dạng (vỉ/gói/viên/ống) → ghi nhãn phong bì.
   const UNIT_TO_FORM = { 'vỉ': 'vi', 'gói': 'goi', 'viên': 'vien', 'ống': 'ong' };
+  const RETAIL_FORM_VN = { vi: 'Vỉ', goi: 'Gói', vien: 'Viên', ong: 'Ống', lo: 'Lọ' };
   function openPackageFlow(packageType) {
     if (document.querySelector('.pkgflow-overlay')) return;
     const pkg = PACKAGE_TYPES[packageType] || PACKAGE_TYPES.white;
-    const catMap = {};
-    (sim.getCatalog?.() || []).forEach(it => { catMap[it.drug.id] = it.drug; });
-    // Nguồn: ưu tiên GIỎ RA LẺ (đơn vị đã tách). Giỏ trống → khay bán hàng / catalog.
-    const fromBasket = retailBasket.length > 0;
-    let choices; // [{ value, label, drug, unit }]
-    if (fromBasket) {
-      choices = retailBasket.map((it, i) => ({ value: String(i), label: `${it.brand}${it.strength ? ' · ' + it.strength : ''} (${it.unit})`, drug: it.drug, unit: it.unit }));
-    } else {
-      const picked = sim.getPickedIds();
-      const base = picked.length ? picked.map(id => catMap[id]).filter(Boolean)
-                                 : (sim.getCatalog?.() || []).slice(0, 40).map(it => it.drug);
-      choices = base.map(d => ({ value: d.id, label: `${d.brand || d.name} ${d.strength || ''}`, drug: d, unit: null }));
-    }
+    // Nguồn: các ĐƠN VỊ RỜI (vỉ/gói/ống/lọ/viên) đang nằm TRONG KHAY BÁN HÀNG —
+    // đóng gói ĐÚNG số lượng đã lấy vào bao bì ra lẻ (yêu cầu CBS 12/07 #2).
+    const units = sim.getRetailUnitsInTray?.() || [];
+    // [{ value=drugId, drug, unit=unitKind, qty, label }]
+    const choices = units.map(u => ({
+      value: u.drugId, drug: u.drug, unit: u.unitKind, qty: u.count,
+      label: `${u.drug.brand || u.drug.name}${u.drug.strength ? ' · ' + u.drug.strength : ''} (${u.count} ${RETAIL_FORM_VN[u.unitKind] || u.unitKind})`
+    }));
     const overlay = document.createElement('div');
     overlay.className = 'pkgflow-overlay';
     overlay.innerHTML = `
@@ -506,40 +502,25 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
           <span>✉️ Đóng gói ra lẻ — <b>${pkg.label}</b></span>
           <button class="pkgflow-close" type="button" aria-label="Đóng">✕</button>
         </div>
-        <div class="sp-hint">${pkg.airtight
-          ? 'Túi zip kín khí — chọn đơn vị từ giỏ ra lẻ để đựng (không in nhãn).'
-          : (fromBasket ? 'Chọn đơn vị từ <b>GIỎ RA LẺ</b> và dạng đóng gói, rồi ghi nhãn theo mẫu.'
-                        : 'Giỏ ra lẻ đang trống — chọn tạm từ catalog. (Nên ra lẻ thuốc vào giỏ trước.)')}</div>
+        <div class="sp-hint">${choices.length
+          ? (pkg.airtight
+              ? 'Túi zip kín khí — chọn đơn vị rời trong khay để đựng (không in nhãn).'
+              : 'Chọn đơn vị rời <b>trong khay bán hàng</b> để đóng vào bao bì. Số lượng đóng đúng bằng số đã lấy; đơn vị rời sẽ được thay bằng bao bì.')
+          : 'Chưa có đơn vị rời trong khay. Hãy mở 1 hộp → <b>“Cho … vào khay”</b> để tách vỉ/gói/ống trước.'}</div>
         <label class="le2-field">
-          <span class="le2-lbl">${fromBasket ? 'Đơn vị trong giỏ ra lẻ' : 'Chọn thuốc'}</span>
+          <span class="le2-lbl">Đơn vị rời trong khay bán hàng</span>
           <select class="pkgflow-drug">
             ${choices.length ? choices.map(c => `<option value="${c.value}">${c.label}</option>`).join('')
-                             : '<option value="">— Giỏ ra lẻ trống —</option>'}
+                             : '<option value="">— Khay chưa có đơn vị rời —</option>'}
           </select>
         </label>
-        <div class="le2-lbl" style="margin-top:8px">Dạng đóng gói</div>
-        <div class="le2-chips pkgflow-forms">
-          ${RETAIL_FORMS.map(f => `<button class="le2-chip pkgflow-form" data-v="${f.value}" type="button">${f.label}</button>`).join('')}
-        </div>
         <div class="sp-foot">
           <button class="pkgflow-cancel" type="button">Huỷ</button>
-          <button class="pkgflow-next" type="button">${pkg.airtight ? '📦 Cho vào túi zip' : '➡️ Cho vào bao bì & ghi nhãn'}</button>
+          <button class="pkgflow-next" type="button" ${choices.length ? '' : 'disabled'}>${pkg.airtight ? '📦 Cho vào túi zip' : '➡️ Ghi nhãn & đóng gói'}</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
     const sel = overlay.querySelector('.pkgflow-drug');
-    let formType = RETAIL_FORMS[0].value;
-    const setForm = (v) => {
-      formType = v;
-      overlay.querySelectorAll('.pkgflow-form').forEach(x => x.classList.toggle('le2-chip-active', x.dataset.v === v));
-    };
-    const syncFormToSelection = () => {
-      const c = choices.find(x => x.value === sel.value);
-      setForm((c && UNIT_TO_FORM[c.unit]) || formType);
-    };
-    overlay.querySelectorAll('.pkgflow-form').forEach(b => b.addEventListener('click', () => setForm(b.dataset.v)));
-    sel.addEventListener('change', syncFormToSelection);
-    setForm(RETAIL_FORMS[0].value); syncFormToSelection();
     const close = () => { document.removeEventListener('keydown', esc); overlay.remove(); };
     const esc = (e) => { if (e.key === 'Escape') close(); };
     document.addEventListener('keydown', esc);
@@ -548,22 +529,27 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     overlay.querySelector('.pkgflow-next').addEventListener('click', () => {
       const chosen = choices.find(c => c.value === sel.value);
-      if (!chosen) { alert('Giỏ ra lẻ trống. Mở 1 hộp thuốc → "Mở hộp lấy vỉ/gói…" để gom đơn vị vào giỏ trước.'); return; }
+      if (!chosen) { alert('Khay chưa có đơn vị rời. Mở 1 hộp → “Cho vỉ/gói/ống… vào khay” trước.'); return; }
       const drug = chosen.drug;
-      postAction('pack_retail', { drugId: drug.id, packageType, formType });
-      if (fromBasket) retailBasket.splice(+chosen.value, 1); // đã đóng gói → bỏ khỏi giỏ
+      const formType = chosen.unit;
+      const qty = chosen.qty;
+      const formVN = RETAIL_FORM_VN[formType] || formType;
+      postAction('pack_retail', { drugId: drug.id, packageType, formType, qty });
       close();
       if (pkg.airtight) {
-        sim.pickToTray?.(drug.id);   // hiện trong KHAY BÁN HÀNG như các thuốc khác
-        alert(`Đã cho ${RETAIL_FORMS.find(f => f.value === formType)?.label || ''} "${drug?.brand || ''}" vào túi zip kín khí.\n→ Món hàng đã vào KHAY BÁN HÀNG, mở POS để tính tiền.`);
+        // Túi zip cũng là bao bì ra lẻ → thay đơn vị rời bằng phong bì trong khay.
+        const n = sim.packRetailUnitsInTray?.({ drugId: drug.id, packageType, formType, label: { packageType, drugText: `${drug?.brand || drug?.name || ''}${drug?.strength ? ' ' + drug.strength : ''}` } }) || 0;
+        alert(`Đã đóng ${n} ${formVN} "${drug?.brand || ''}" vào túi zip kín khí.\n→ Bao bì đã vào KHAY BÁN HÀNG, mở POS để tính tiền.`);
         return;
       }
       openPackageEditor({
         drug, formType, packageType,
         onCreate: (lbl) => {
-          postAction('pack_label', lbl);
-          sim.pickToTray?.(drug.id);   // đóng gói xong → hiện trong KHAY BÁN HÀNG
-          showToast?.(`Đã đóng gói "${drug.brand || ''}" vào ${pkg.label} → đã vào KHAY BÁN HÀNG.`);
+          postAction('pack_label', { ...lbl, qty });
+          // Đóng gói xong → thay N đơn vị rời trong khay bằng 1 BAO BÌ RA LẺ có nhãn
+          // (đúng số lượng); đơn vị rời biến mất — yêu cầu CBS 12/07 #2.
+          const n = sim.packRetailUnitsInTray?.({ drugId: drug.id, packageType, formType, label: lbl }) || 0;
+          showToast?.(`Đã đóng gói ${n} ${formVN} "${drug.brand || ''}" vào ${pkg.label} → bao bì đã vào KHAY BÁN HÀNG.`);
         }
       });
     });
@@ -1264,30 +1250,29 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
         const neck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.44, r * 0.44, h * 0.05, 20), glass); neck.position.y = bodyH + h * 0.07 + h * 0.025; g.add(neck);
         const cap = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.52, r * 0.52, h * 0.10, 24), acc); cap.position.y = bodyH + h * 0.095 + h * 0.05; g.add(cap);
       } else {
-        // Ống: TIÊM → thuỷ tinh trong, cổ thắt + chỏm nhọn + vạch bẻ màu. UỐNG →
-        // ống nhựa thân màu dịch (nâu) + vai tròn + nắp vặn/bẻ màu nhóm (mẫu ống uống).
+        // Ống: TIÊM → thuỷ tinh trong, cổ thắt + chỏm nhọn + vạch bẻ màu.
+        // UỐNG → ỐNG NHỰA TRONG (thành trắng trong mờ) có DUNG DỊCH màu bên trong,
+        // nắp vặn trắng. KHÔNG còn đế/vỉ nhựa cam phía sau (yêu cầu CBS 12/07 #3).
         const isInject = /tiêm/.test(formStr);
-        // Ống uống: thân dịch ĐẬM (gần đen) + nắp vặn VÀNG KIM bầu tròn + nằm
-        // trong vỉ nhựa CAM (mẫu Thủy Đình Thanh thầy gửi). Ống tiêm: thuỷ tinh trong.
-        const r = isInject ? w * 0.10 : Math.max(w, d) * 0.16, bodyH = h * (isInject ? 0.50 : 0.46);
-        const liqCol = isInject ? '#eaf2fb' : '#1c0f06';
-        const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(liqCol), roughness: isInject ? 0.15 : 0.4, metalness: 0, transparent: isInject, opacity: isInject ? 0.55 : 1 });
-        if (!isInject) {
-          // Vỉ nhựa cam (1 hốc) phía sau ống.
-          const bl = new THREE.Mesh(new THREE.BoxGeometry(r * 3.0, bodyH * 1.5, 0.005),
-            new THREE.MeshStandardMaterial({ color: 0xe8722c, roughness: 0.6, side: THREE.DoubleSide }));
-          bl.position.set(0, bodyH * 0.5, -r * 1.2); g.add(bl);
-        }
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, bodyH, 22), mat); body.position.y = bodyH / 2; g.add(body);
+        const r = isInject ? w * 0.10 : Math.max(w, d) * 0.16, bodyH = h * (isInject ? 0.50 : 0.52);
         if (isInject) {
+          const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#eaf2fb'), roughness: 0.15, metalness: 0, transparent: true, opacity: 0.55 });
+          const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, bodyH, 22), mat); body.position.y = bodyH / 2; g.add(body);
           const neck = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.45, r, h * 0.06, 16), mat); neck.position.y = bodyH + h * 0.03; g.add(neck);
           const tip = new THREE.Mesh(new THREE.ConeGeometry(r * 0.45, h * 0.10, 16), mat); tip.position.y = bodyH + h * 0.06 + h * 0.05; g.add(tip);
           const ring = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.05, r * 1.05, h * 0.02, 16), acc); ring.position.y = bodyH * 0.66; g.add(ring);
         } else {
-          // Nắp vặn vàng kim: cổ thắt + bầu tròn vàng ánh kim.
-          const gold = new THREE.MeshStandardMaterial({ color: 0xcf9b2e, metalness: 0.75, roughness: 0.3 });
-          const collar = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.85, r, h * 0.045, 18), gold); collar.position.y = bodyH + h * 0.022; g.add(collar);
-          const bulb = new THREE.Mesh(new THREE.SphereGeometry(r * 0.92, 18, 14), gold); bulb.scale.set(1, 1.2, 1); bulb.position.y = bodyH + h * 0.045 + r * 0.85; g.add(bulb);
+          // Nhựa trong: thành ống trắng mờ (opacity thấp) để thấy dung dịch bên trong.
+          const wallMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, metalness: 0, transparent: true, opacity: 0.26 });
+          // Dung dịch màu (nâu hổ phách nhạt) — trụ nhỏ hơn thành, chừa khoảng trống miệng ống.
+          const liqMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#c07f28'), roughness: 0.25, metalness: 0, transparent: true, opacity: 0.9 });
+          const fillH = bodyH * 0.8;
+          const liq = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.88, r * 0.88, fillH, 22), liqMat); liq.position.y = fillH / 2; g.add(liq);
+          const body = new THREE.Mesh(new THREE.CylinderGeometry(r, r, bodyH, 22), wallMat); body.position.y = bodyH / 2; g.add(body);
+          // Vai bo + nắp vặn TRẮNG (nhựa) thay cho nắp vàng kim cũ.
+          const shoulder = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.52, r, h * 0.05, 22), wallMat); shoulder.position.y = bodyH + h * 0.025; g.add(shoulder);
+          const capMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4, metalness: 0.05 });
+          const cap = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.56, r * 0.56, h * 0.10, 20), capMat); cap.position.y = bodyH + h * 0.05 + h * 0.05; g.add(cap);
         }
       }
       // IN nhãn tiếp xúc trực tiếp LÊN đơn vị ra lẻ. VỈ đã in thẳng lên màng nhôm

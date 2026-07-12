@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0711';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0711';
-import { createCharacter } from './character.js?v=ph0711';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0712';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0712';
+import { createCharacter } from './character.js?v=ph0712';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -422,7 +422,7 @@ export function makeDrugSideLabelTex(drug) {
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
+  tex.anisotropy = 16;
   return tex;
 }
 
@@ -470,6 +470,17 @@ function drugRegulatoryLines(drug) {
   return lines;
 }
 
+// Gộp tên thuốc + hàm lượng thành 1 chuỗi ("Aleucin" + "500mg" → "Aleucin 500mg"),
+// KHÔNG lặp khi tên thuốc đã chứa sẵn hàm lượng (vd brand "Tanganil 500mg").
+export function joinNameStrength(brand, strength) {
+  const b = String(brand || '').trim();
+  const s = String(strength || '').trim();
+  if (!s) return b || '—';
+  if (!b) return s;
+  if (b.toLowerCase().includes(s.toLowerCase())) return b;
+  return `${b} ${s}`;
+}
+
 export function makeDrugLabelTex(drug) {
   const c = document.createElement('canvas');
   const MAIN_H = 320, REG_H = 150;
@@ -512,7 +523,7 @@ export function makeDrugLabelTex(drug) {
     ctx.fillStyle = accent;
     ctx.fillRect(0, 0, 256, 36);
     ctx.fillRect(0, 44, 256, 4);
-    ctx.fillStyle = darkText; ctx.font = `bold 40px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 46px ${brandFont}`;
     fitText(ctx, brand, 128, 100, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = '22px Inter, sans-serif';
     fitText(ctx, generic, 128, 160, MAX_TEXT_W);
@@ -522,7 +533,7 @@ export function makeDrugLabelTex(drug) {
     fitText(ctx, form, 128, 262, MAX_TEXT_W);
   } else if (variant === 'sideStripe') {
     ctx.fillStyle = accent; ctx.fillRect(0, 0, 22, 320);
-    ctx.fillStyle = darkText; ctx.font = `bold 36px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 42px ${brandFont}`;
     fitText(ctx, brand, 140, 80, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = 'italic 22px Inter, sans-serif';
     fitText(ctx, generic, 140, 130, MAX_TEXT_W);
@@ -535,7 +546,7 @@ export function makeDrugLabelTex(drug) {
   } else if (variant === 'frame') {
     ctx.strokeStyle = accent; ctx.lineWidth = 4;
     ctx.strokeRect(18, 28, 220, 78);
-    ctx.fillStyle = darkText; ctx.font = `bold 34px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 40px ${brandFont}`;
     fitText(ctx, brand, 128, 67, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = '22px Inter, sans-serif';
     fitText(ctx, generic, 128, 142, MAX_TEXT_W);
@@ -548,7 +559,7 @@ export function makeDrugLabelTex(drug) {
     ctx.fillStyle = accent;
     ctx.fillRect(0, 0, 256, 10);
     ctx.fillRect(0, 16, 256, 4);
-    ctx.fillStyle = darkText; ctx.font = `bold 42px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 48px ${brandFont}`;
     fitText(ctx, brand, 128, 75, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = '22px Inter, sans-serif';
     fitText(ctx, generic, 128, 125, MAX_TEXT_W);
@@ -562,7 +573,7 @@ export function makeDrugLabelTex(drug) {
     ctx.beginPath();
     ctx.moveTo(0, 0); ctx.lineTo(256, 0); ctx.lineTo(256, 32); ctx.lineTo(0, 72); ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = darkText; ctx.font = `bold 40px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 46px ${brandFont}`;
     fitText(ctx, brand, 128, 115, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = '22px Inter, sans-serif';
     fitText(ctx, generic, 128, 165, MAX_TEXT_W);
@@ -571,7 +582,7 @@ export function makeDrugLabelTex(drug) {
     ctx.fillStyle = mutedText; ctx.font = '20px Inter, sans-serif';
     fitText(ctx, form, 128, 263, MAX_TEXT_W);
   } else if (variant === 'ribbon') {
-    ctx.fillStyle = darkText; ctx.font = `bold 36px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 42px ${brandFont}`;
     fitText(ctx, brand, 128, 58, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = 'italic 20px Inter, sans-serif';
     fitText(ctx, generic, 128, 102, MAX_TEXT_W);
@@ -594,7 +605,7 @@ export function makeDrugLabelTex(drug) {
     ctx.lineTo(px - pw/2 + ph/2, py + ph/2);
     ctx.arc(px - pw/2 + ph/2, py, ph/2, Math.PI/2, -Math.PI/2);
     ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.font = `bold 28px ${brandFont}`;
+    ctx.fillStyle = '#ffffff'; ctx.font = `bold 34px ${brandFont}`;
     fitText(ctx, brand, 128, 50, MAX_TEXT_W);
     ctx.fillStyle = darkText; ctx.font = '22px Inter, sans-serif';
     fitText(ctx, generic, 128, 130, MAX_TEXT_W);
@@ -607,7 +618,7 @@ export function makeDrugLabelTex(drug) {
     ctx.globalAlpha = 0.18; ctx.fillStyle = accent;
     ctx.fillRect(16, 36, 224, 78);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = darkText; ctx.font = `bold 38px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 44px ${brandFont}`;
     fitText(ctx, brand, 128, 75, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = '22px Inter, sans-serif';
     fitText(ctx, generic, 128, 145, MAX_TEXT_W);
@@ -619,7 +630,7 @@ export function makeDrugLabelTex(drug) {
     // 40% trên đầy màu accent chứa brand trắng, có dải hologram phía dưới
     ctx.fillStyle = accent; ctx.fillRect(0, 0, 256, 110);
     drawHoloGradient(ctx, 0, 110, 256, 8);
-    ctx.fillStyle = '#ffffff'; ctx.font = `bold 42px ${brandFont}`;
+    ctx.fillStyle = '#ffffff'; ctx.font = `bold 48px ${brandFont}`;
     fitText(ctx, brand, 128, 60, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = '22px Inter, sans-serif';
     fitText(ctx, generic, 128, 150, MAX_TEXT_W);
@@ -633,12 +644,12 @@ export function makeDrugLabelTex(drug) {
     ctx.save();
     ctx.translate(48, 160);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = '#ffffff'; ctx.font = `bold 34px ${brandFont}`;
+    ctx.fillStyle = '#ffffff'; ctx.font = `bold 40px ${brandFont}`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     fitText(ctx, brand, 0, 0, MAX_TEXT_W);
     ctx.restore();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = darkText; ctx.font = `bold 26px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 32px ${brandFont}`;
     fitText(ctx, (drug.brand || '').slice(0, 12), 176, 75, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = '20px Inter, sans-serif';
     fitText(ctx, generic.slice(0, 16), 176, 135, MAX_TEXT_W);
@@ -648,7 +659,7 @@ export function makeDrugLabelTex(drug) {
     fitText(ctx, form.slice(0, 18), 176, 245, MAX_TEXT_W);
   } else { // 'medallion'
     // Huy chương tròn lớn chứa strength + brand quanh nó
-    ctx.fillStyle = darkText; ctx.font = `bold 38px ${brandFont}`;
+    ctx.fillStyle = darkText; ctx.font = `bold 44px ${brandFont}`;
     fitText(ctx, brand, 128, 50, MAX_TEXT_W);
     ctx.fillStyle = subText; ctx.font = 'italic 20px Inter, sans-serif';
     fitText(ctx, generic, 128, 90, MAX_TEXT_W);
@@ -728,7 +739,7 @@ export function makeDrugLabelTex(drug) {
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
+  tex.anisotropy = 16;
   return tex;
 }
 
@@ -798,7 +809,7 @@ export function makeDrugBackLabelTex(drug) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('Dữ liệu mô phỏng CBS – Chỉ dùng cho đào tạo dược', W / 2, H - 11);
   const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 16;
   return tex;
 }
 
@@ -1136,13 +1147,13 @@ const CAMERA_PRESETS = {
   // Góc nhìn tủ SONG SONG MẶT ĐẤT (vuông góc tường) — yêu cầu thầy: pos.y = target.y
   // → camera ngang tầm, không cúi xuống. Lùi xa (z=1.25) để thấy nhiều ngăn; user
   // có thể kéo dọc (pan) lên/xuống xem ngăn trên/dưới.
-  cab_rx_1:       { label: 'Kê đơn 1',                 pos: [-2.82, 1.30, 1.25], target: [-2.82, 1.30, -2.125],  minDist: 1.2, maxDist: 6 },
-  cab_rx_2:       { label: 'Kê đơn 2',                 pos: [-0.94, 1.30, 1.25], target: [-0.94, 1.30, -2.125],  minDist: 1.2, maxDist: 6 },
-  cab_otc_1:      { label: 'OTC 1',                    pos: [ 0.94, 1.30, 1.25], target: [ 0.94, 1.30, -2.125],  minDist: 1.2, maxDist: 6 },
-  cab_otc_2:      { label: 'OTC 2',                    pos: [ 2.82, 1.30, 1.25], target: [ 2.82, 1.30, -2.125],  minDist: 1.2, maxDist: 6 },
-  cab_special:    { label: 'Kiểm soát đặc biệt',       pos: [ 1.20, 1.6, -1.18], target: [ 4.10, 0.90, -1.18],   minDist: 1.0, maxDist: 6 },
-  cab_supp_1:     { label: 'Không phải thuốc 1',       pos: [ 1.20, 2.0,  0.45], target: [ 4.10, 1.20,  0.45],   minDist: 1.2, maxDist: 6 },
-  cab_supp_2:     { label: 'Không phải thuốc 2',       pos: [ 1.20, 2.0,  2.23], target: [ 4.10, 1.20,  2.23],   minDist: 1.2, maxDist: 6 },
+  cab_rx_1:       { label: 'Kê đơn 1',                 pos: [-2.82, 1.30, 1.25], target: [-2.82, 1.30, -2.125],  minDist: 0.55, maxDist: 6 },
+  cab_rx_2:       { label: 'Kê đơn 2',                 pos: [-0.94, 1.30, 1.25], target: [-0.94, 1.30, -2.125],  minDist: 0.55, maxDist: 6 },
+  cab_otc_1:      { label: 'OTC 1',                    pos: [ 0.94, 1.30, 1.25], target: [ 0.94, 1.30, -2.125],  minDist: 0.55, maxDist: 6 },
+  cab_otc_2:      { label: 'OTC 2',                    pos: [ 2.82, 1.30, 1.25], target: [ 2.82, 1.30, -2.125],  minDist: 0.55, maxDist: 6 },
+  cab_special:    { label: 'Kiểm soát đặc biệt',       pos: [ 1.20, 1.6, -1.18], target: [ 4.10, 0.90, -1.18],   minDist: 0.55, maxDist: 6 },
+  cab_supp_1:     { label: 'Không phải thuốc 1',       pos: [ 1.20, 2.0,  0.45], target: [ 4.10, 1.20,  0.45],   minDist: 0.55, maxDist: 6 },
+  cab_supp_2:     { label: 'Không phải thuốc 2',       pos: [ 1.20, 2.0,  2.23], target: [ 4.10, 1.20,  2.23],   minDist: 0.55, maxDist: 6 },
   front_drawers:  { label: 'Tủ quầy trước',            pos: [ 0.0,  2.2,  4.8],  target: [ 0.0, 0.6,  1.2],      minDist: 1.5, maxDist: 8 },
   // Dược sĩ POV — đứng SÁT mép sau quầy (Z ≈ 0.4, lùi ra sau counter back-edge
   // 0.95 khoảng 55cm), mắt 1.7m, target NẰM TRÊN mặt quầy (z=1.45, y=1.06) để
@@ -2333,7 +2344,7 @@ export function buildScene(canvas, opts = {}) {
       ctx.fillStyle = '#fce7f0'; ctx.fillRect(20, 348, 320, 116);
       ctx.fillStyle = '#9d174d'; ctx.font = 'italic 13px Arial, sans-serif'; ctx.fillText('Ấn phẩm tra cứu nhà thuốc thực hành', 180, 412);
     }
-    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 16;
     return tex;
   }
   function buildBook(opts) {
@@ -2727,7 +2738,7 @@ export function buildScene(canvas, opts = {}) {
     ctx.fillText('LOT  ' + stock.id.slice(-6).toUpperCase() + '   EXP 12/26', 128, 155);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
+    tex.anisotropy = 16;
     return tex;
   }
   const fridgeItems = [];
@@ -3096,7 +3107,7 @@ export function buildScene(canvas, opts = {}) {
       colliders: _charColliders,
       bounds: _charBounds,
       interactables: _charInteractables,
-      spawn: { x: 0, z: 3.0, heading: Math.PI },
+      spawn: { x: 1.15, z: 3.25, heading: Math.PI }, // CBS 12/07 #4: dịch phải về POS, không che khay
       avatarUrl: url || opts.avatarUrl || null,
       heightScale: _avatarHeight,
       skinTone: _skinTone,
@@ -3130,7 +3141,7 @@ export function buildScene(canvas, opts = {}) {
   // phải). _panVel là vận tốc pan còn lại, render loop ease & áp dụng mỗi frame.
   const _panVel = new THREE.Vector3();
   const _panRight = new THREE.Vector3();
-  const VPAN_STEP = 0.34, VPAN_MIN_Y = 0.22, VPAN_MAX_Y = 2.15;
+  const VPAN_STEP = 0.34, VPAN_MIN_Y = 0.10, VPAN_MAX_Y = 2.55; // CBS 12/07 #5: xem hết ngăn trên/dưới
   function _panBy(x, y, z) { presetStartedAt = null; _panVel.x += x; _panVel.y += y; _panVel.z += z; }
   function nudgeVertical(dir) { _panBy(0, dir * VPAN_STEP, 0); }
   function nudgeHorizontal(dir) {
@@ -3349,6 +3360,8 @@ export function buildScene(canvas, opts = {}) {
       if (ud.labelClick) return { kind: 'label' };
       if (ud.notepadClick) return { kind: 'notepad' };
       if (ud.salesTrayClick) return { kind: 'sales_tray' };
+      const rpk = findRetailPackage(h.object);
+      if (rpk) return { kind: 'retail_package', group: rpk };
       const book = findBookAncestor(h.object);
       if (book) return { kind: 'book', book };
       const drugGroup = findDrugAncestor(h.object);
@@ -3520,6 +3533,113 @@ export function buildScene(canvas, opts = {}) {
     opts.onAction?.('unpick_box', { drugId: sub.userData.drugId, boxIndex: sub.userData.boxIndex });
     return true;
   }
+  // ── BAO BÌ RA LẺ đã hoàn thiện (yêu cầu CBS 12/07 #2) ───────────────────────
+  // Đóng gói các ĐƠN VỊ rời của 1 thuốc đang nằm trong khay → 1 PHONG BÌ ra lẻ
+  // (trắng/vàng/hồng) có nhãn + ĐÚNG số lượng; đơn vị rời biến mất khỏi khay.
+  const RETAIL_PACK_COLORS = {
+    white:  { body: 0xf8fafc, edge: 0xcbd5e1 },
+    yellow: { body: 0xfde68a, edge: 0xd97706 },
+    pink:   { body: 0xfbcfe8, edge: 0xbe185d },
+    zip:    { body: 0xcffafe, edge: 0x0891b2 }
+  };
+  const RETAIL_PACK_SPECIAL = { yellow: 'THUỐC DÙNG NGOÀI', pink: 'KIỂM SOÁT ĐẶC BIỆT' };
+  const RETAIL_FORM_VN = { vi: 'Vỉ', goi: 'Gói', vien: 'Viên', ong: 'Ống', lo: 'Lọ' };
+  function reflowTray() {
+    picked.forEach((s, idx) => {
+      const slot = pickSlotPos(idx, s.userData?.style?.h || 0.12);
+      if (s.userData?.isUnit || s.userData?.isRetailPackage) { s.position.copy(slot); s.userData.targetPosition = slot.clone(); }
+      else s.userData.targetPosition = slot;
+    });
+  }
+  function findRetailPackage(o) {
+    let cur = o;
+    while (cur) { if (cur.userData && cur.userData.retailPackageRef) return cur.userData.retailPackageRef; cur = cur.parent; }
+    return null;
+  }
+  function makeRetailPackLabelTex(drug, formType, label, qty) {
+    const c = document.createElement('canvas'); c.width = 300; c.height = 220;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 300, 220);
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 4; ctx.strokeRect(5, 5, 290, 210);
+    const FONT = "'Courier New', monospace";
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#7c2d12'; ctx.font = `bold 15px ${FONT}`;
+    ctx.fillText(`${PHARMACY_INFO.name} · ĐT ${PHARMACY_INFO.phone}`, 150, 24);
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(16, 38); ctx.lineTo(284, 38); ctx.stroke();
+    let y = 56;
+    const special = RETAIL_PACK_SPECIAL[label?.packageType];
+    if (special) { ctx.fillStyle = '#b91c1c'; ctx.font = `bold 14px ${FONT}`; ctx.fillText(special, 150, y); y += 24; }
+    const nameLine = (label?.drugText || joinNameStrength(drug.brand || drug.name, drug.strength)).trim();
+    let fs = 22; ctx.fillStyle = '#0f172a'; ctx.font = `800 ${fs}px ${FONT}`;
+    while (ctx.measureText(nameLine).width > 268 && fs > 12) { fs -= 1; ctx.font = `800 ${fs}px ${FONT}`; }
+    ctx.fillText(nameLine || '—', 150, y); y += 26;
+    ctx.textAlign = 'left'; ctx.fillStyle = '#334155'; ctx.font = `14px ${FONT}`;
+    if (label?.dose) { ctx.fillText(('Cách dùng: ' + label.dose).slice(0, 34), 18, y); y += 20; }
+    if (label?.exp)  { ctx.fillText('HD: ' + String(label.exp).slice(0, 24), 18, y); y += 20; }
+    ctx.fillStyle = '#0d9488'; ctx.font = `bold 14px ${FONT}`;
+    ctx.fillText(`Ra lẻ: ${Math.max(1, qty)} ${RETAIL_FORM_VN[formType] || formType || ''}`, 18, 198);
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 16;
+    return tex;
+  }
+  function addRetailPackageMesh({ drug, packageType = 'white', formType = 'vi', label = null, qty = 1 }) {
+    if (!drug || picked.length >= 8) return false;
+    const col = RETAIL_PACK_COLORS[packageType] || RETAIL_PACK_COLORS.white;
+    const pk = new THREE.Group();
+    const W = 0.095, H = 0.125, T = 0.028;               // phong bì dẹt đứng
+    const env = new THREE.Mesh(new THREE.BoxGeometry(W, H, T),
+      new THREE.MeshStandardMaterial({ color: col.body, roughness: 0.85, metalness: 0.0 }));
+    env.castShadow = env.receiveShadow = true; pk.add(env);
+    const flap = new THREE.Mesh(new THREE.BoxGeometry(W, H * 0.34, 0.002),
+      new THREE.MeshStandardMaterial({ color: col.edge, roughness: 0.7 }));
+    flap.position.set(0, H * 0.33, -T / 2 - 0.001); pk.add(flap);
+    const lab = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.86, H * 0.8),
+      new THREE.MeshStandardMaterial({ map: makeRetailPackLabelTex(drug, formType, label, qty), roughness: 0.6,
+        polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+    lab.position.set(0, -H * 0.02, T / 2 + 0.001); pk.add(lab);
+    pk.userData = { drugId: drug.id, drug, isRetailPackage: true, packageType, formType, qty, style: { h: H } };
+    pk.traverse(o => { o.userData.retailPackageRef = pk; });
+    pk.userData.retailPackageRef = pk;
+    pk.position.copy(pickSlotPos(picked.length, H));
+    scene.add(pk); picked.push(pk);
+    return true;
+  }
+  // Danh sách ĐƠN VỊ rời (isUnit) đang trong khay, gộp theo thuốc.
+  function getRetailUnitsInTray() {
+    const map = new Map();
+    picked.forEach(s => {
+      if (!s.userData?.isUnit) return;
+      const k = s.userData.drugId;
+      if (!map.has(k)) map.set(k, { drugId: k, drug: s.userData.drug, unitKind: s.userData.unitKind, count: 0 });
+      map.get(k).count++;
+    });
+    return [...map.values()];
+  }
+  // Đóng gói đơn vị rời của 1 thuốc trong khay → phong bì (xoá đơn vị, thêm phong bì).
+  function packRetailUnitsInTray({ drugId, packageType = 'white', formType = 'vi', label = null }) {
+    const units = picked.filter(s => s.userData?.isUnit && s.userData.drugId === drugId);
+    if (!units.length) return 0;
+    const qty = units.length;
+    const drug = units[0].userData.drug;
+    units.forEach(u => {
+      const idx = picked.indexOf(u); if (idx >= 0) picked.splice(idx, 1);
+      scene.remove(u);
+      u.traverse(o => { if (o === u) return; o.geometry?.dispose?.(); const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(mm => { mm.map?.dispose?.(); mm.dispose?.(); }); });
+    });
+    const ok = addRetailPackageMesh({ drug, packageType, formType: formType || units[0].userData.unitKind, label, qty });
+    reflowTray();
+    triggerBarcodeScan();
+    if (ok) opts.onAction?.('pack_retail_tray', { drugId, packageType, formType, qty });
+    return ok ? qty : 0;
+  }
+  function removeRetailPackage(pk) {
+    const idx = picked.indexOf(pk); if (idx >= 0) picked.splice(idx, 1);
+    scene.remove(pk);
+    pk.traverse(o => { o.material?.map?.dispose?.(); o.material?.dispose?.(); o.geometry?.dispose?.(); });
+    reflowTray();
+    opts.onAction?.('remove_retail_pack', { drugId: pk.userData?.drugId });
+    return true;
+  }
   function attachLabelToPickedDrug(drugId, label) {
     labelsByDrug.set(drugId, label);
     opts.onAction?.('label_dose', { drugId, label });
@@ -3593,10 +3713,13 @@ export function buildScene(canvas, opts = {}) {
     if ((l.timing === 'before_meal' || l.timing === 'after_meal') && l.mealOffsetMin > 0) return `${base} ${l.mealOffsetMin}'`;
     return base;
   }
-  // Tỉ lệ nhãn HDSD = PORTRAIT 360×480, tông VÀNG KEM giống HỆT bản xem trước
-  // trong trình soạn nhãn (.le2-sticker): nền #fef3c7, viền cam #d97706, ô liều
-  // vàng #fde68a, chữ nâu — để "soạn" và "dán lên" GIỐNG NHAU (màu + shape).
-  const HDSD_W = 360, HDSD_H = 480;
+  // Nhãn HDSD (dán lên hộp) — tông VÀNG KEM giống bản xem trước (.le2-sticker).
+  // Yêu cầu CBS 12/07 #1-2:
+  //  • BỎ tiêu đề "HƯỚNG DẪN SỬ DỤNG" + gạch đứt.
+  //  • Tên thuốc + hàm lượng GỘP CÙNG 1 HÀNG ("Aleucin 500mg").
+  //  • Canvas THẤP lại (bỏ khoảng trống dưới) → dán lên hộp cũng NHỎ (½) so với cũ.
+  //  • Giữ việc đã bỏ trường "Bệnh nhân" khỏi mẫu nhãn (yêu cầu trước đó).
+  const HDSD_W = 360, HDSD_H = 250;
   function makeHdsdStickerTex(label) {
     const c = document.createElement('canvas');
     c.width = HDSD_W; c.height = HDSD_H;
@@ -3607,37 +3730,22 @@ export function buildScene(canvas, opts = {}) {
     ctx.fillStyle = '#fef3c7'; rr(4, 4, HDSD_W - 8, HDSD_H - 8, 18); ctx.fill();
     ctx.strokeStyle = '#d97706'; ctx.lineWidth = 4; ctx.stroke();
     ctx.textBaseline = 'middle';
-    let y = 30;
+    let y = 28;
     // Header nhà thuốc — căn giữa, gạch dưới cam
     ctx.fillStyle = '#7c2d12'; ctx.font = `bold 14px ${FONT}`; ctx.textAlign = 'center';
     ctx.fillText(`${PHARMACY_INFO.name} · ĐT ${PHARMACY_INFO.phone}`, HDSD_W / 2, y);
-    y += 16;
+    y += 15;
     ctx.strokeStyle = '#d97706'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(22, y); ctx.lineTo(HDSD_W - 22, y); ctx.stroke();
     y += 26;
-    // Tiêu đề + gạch đứt
-    ctx.fillStyle = '#422006'; ctx.font = `800 22px ${FONT}`; ctx.textAlign = 'left';
-    ctx.fillText('HƯỚNG DẪN SỬ DỤNG', 24, y);
-    y += 18;
-    ctx.setLineDash([7, 4]); ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(22, y); ctx.lineTo(HDSD_W - 22, y); ctx.stroke(); ctx.setLineDash([]);
+    // Tên thuốc + hàm lượng GỘP 1 HÀNG (đậm, lớn) — tự co nếu quá rộng, không lặp.
+    const nameLine = joinNameStrength(label.brand, label.strength || label.generic);
+    ctx.fillStyle = '#422006'; ctx.textAlign = 'left';
+    let nameFs = 26;
+    ctx.font = `800 ${nameFs}px ${FONT}`;
+    while (ctx.measureText(nameLine).width > HDSD_W - 48 && nameFs > 14) { nameFs -= 1; ctx.font = `800 ${nameFs}px ${FONT}`; }
+    ctx.fillText(nameLine || '—', 24, y);
     y += 30;
-    // Tên thuốc (đậm, lớn) — đã bỏ trường "Bệnh nhân" khỏi mẫu nhãn (yêu cầu 3)
-    ctx.fillStyle = '#422006';
-    ctx.font = `800 24px ${FONT}`;
-    ctx.fillText((label.brand || '').slice(0, 22), 24, y);
-    y += 26;
-    // Hoạt chất / hàm lượng — tự xuống dòng theo bề ngang
-    ctx.fillStyle = '#5b3a1a'; ctx.font = `15px ${FONT}`;
-    const words = String(label.strength || label.generic || '').split(' ');
-    let line = '';
-    for (const w of words) {
-      const test = line ? line + ' ' + w : w;
-      if (ctx.measureText(test).width > HDSD_W - 48 && line) { ctx.fillText(line, 24, y); y += 19; line = w; }
-      else line = test;
-    }
-    if (line) { ctx.fillText(line, 24, y); y += 19; }
-    y += 10;
     // Lưới liều S/T/C/T — ô vàng, số nâu đậm
     const cells = [['Sáng', label.morning], ['Trưa', label.noon], ['Chiều', label.afternoon], ['Tối', label.evening]];
     const gx0 = 24, gap = 8, cw = (HDSD_W - 48 - 3 * gap) / 4, ch = 58;
@@ -3649,13 +3757,13 @@ export function buildScene(canvas, opts = {}) {
       ctx.fillStyle = '#422006'; ctx.font = `800 26px ${FONT}`;
       ctx.fillText(String(n ?? 0), x + cw / 2, y + 38);
     });
-    y += ch + 26;
+    y += ch + 22;
     // Thời điểm + tổng liều/ngày
     const total = (label.morning || 0) + (label.noon || 0) + (label.afternoon || 0) + (label.evening || 0);
     ctx.textAlign = 'left'; ctx.fillStyle = '#78350f'; ctx.font = `bold 15px ${FONT}`;
     ctx.fillText(`🕒 ${_timingTextScene(label)} · ${total} viên/ngày`, 24, y);
-    y += 26;
     if (label.notes) {
+      y += 22;
       ctx.fillStyle = '#7c2d12'; ctx.font = `13px ${FONT}`;
       ctx.fillText(('📝 ' + label.notes).slice(0, 40), 24, y);
     }
@@ -3687,7 +3795,8 @@ export function buildScene(canvas, opts = {}) {
       // không phẳng. v điều khiển độ cao dọc thân.
       const r = Math.min(style.w, style.d) * 0.5;
       const bodyH = style.h * 0.74, baseY = -style.h / 2;
-      const sh = Math.min(bodyH * 0.6, r * 2.0 * (HDSD_H / HDSD_W));
+      // Nhãn NHỎ lại ½ (yêu cầu CBS 12/07 #1): 0.6→0.3, 2.0→1.0.
+      const sh = Math.min(bodyH * 0.3, r * 1.0 * (HDSD_H / HDSD_W));
       const sw = sh * (HDSD_W / HDSD_H);
       const arc = Math.min(Math.PI * 0.72, sw / r);
       sticker = new THREE.Mesh(
@@ -3696,11 +3805,10 @@ export function buildScene(canvas, opts = {}) {
       cy = Math.max(baseY + sh / 2, Math.min(baseY + bodyH - sh / 2, cy));
       sticker.position.set(0, cy, 0);
     } else {
-      // HỘP GIẤY: nhãn phẳng dán mặt trước +Z, tỉ lệ PORTRAIT 360:480.
-      // Nhãn NHỎ lại so với hộp (yêu cầu 1: nhãn đang che gần hết mặt hộp) → chỉ
-      // chiếm ~1/3 bề ngang & ~nửa chiều cao mặt hộp, chừa chỗ trống thực tế.
+      // HỘP GIẤY: nhãn phẳng dán mặt trước +Z.
+      // Nhãn NHỎ lại còn ½ so với trước (yêu cầu CBS 12/07 #1: 0.33→0.21, 0.48→0.31).
       const faceW = style.w * 0.92, faceH = style.h * 0.88;
-      const sw = Math.min(faceW * 0.33, faceH * 0.48 * (HDSD_W / HDSD_H));
+      const sw = Math.min(faceW * 0.21, faceH * 0.31 * (HDSD_W / HDSD_H));
       const sh = sw * (HDSD_H / HDSD_W);
       let cx = (u - 0.5) * faceW, cy = (0.5 - v) * faceH;
       cx = Math.max(-faceW / 2 + sw / 2, Math.min(faceW / 2 - sw / 2, cx));
@@ -3737,6 +3845,10 @@ export function buildScene(canvas, opts = {}) {
       else if (hit.kind === 'label') opts.onLabelOpen?.();
       else if (hit.kind === 'notepad') opts.onNotepadOpen?.();
       else if (hit.kind === 'sales_tray') opts.onSalesTrayOpen?.();
+      else if (hit.kind === 'retail_package') {
+        // Click BAO BÌ RA LẺ trong khay → hỏi rồi gỡ khỏi khay.
+        if (confirm(`Gỡ bao bì ra lẻ "${hit.group.userData?.drug?.brand || hit.group.userData?.drug?.name || ''}" khỏi khay bán hàng?`)) removeRetailPackage(hit.group);
+      }
       else if (hit.kind === 'book') opts.onBookOpen?.(hit.book.userData.bookId);
       else if (hit.kind === 'door') hit.door.userData.isOpen = !hit.door.userData.isOpen;
       else if (hit.kind === 'drug') {
@@ -3883,7 +3995,12 @@ export function buildScene(canvas, opts = {}) {
     setAvatarHair: (h) => { _hairColor = h || null; character?.setHairColor(_hairColor); },
     getAvatarHair: () => _hairColor,
     getAvatarShirt: () => _shirtColor,
-    getPickedIds: () => picked.map(s => s.userData.drugId),
+    // Phong bì ra lẻ tính tiền theo SỐ đơn vị đã đóng (qty), để POS không hụt tiền.
+    getPickedIds: () => picked.flatMap(s => s.userData.isRetailPackage
+      ? Array(Math.max(1, s.userData.qty || 1)).fill(s.userData.drugId)
+      : [s.userData.drugId]),
+    getRetailUnitsInTray,
+    packRetailUnitsInTray,
     // Món trong khay kèm dạng bán: 'box' = nguyên hộp, 'unit' = đơn vị ra lẻ
     // (vỉ/gói/ống…) → POS tính tiền + đếm theo đúng đơn vị.
     getPickedItems: () => picked.map(s => ({
