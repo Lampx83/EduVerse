@@ -143,7 +143,7 @@ export const ACHIEVEMENTS = [
     desc: 'Pass SQL Detective (IG03)',
     trigger: { moduleStars: { 'IG03': 2 } } },
 
-  { id: 'system-designer', icon: '⚔️', title: 'System Designer',
+  { id: 'kafka-designer', icon: '⚔️', title: 'Kafka & System Design',
     desc: 'Pass Kafka & System Design battle (IG04)',
     trigger: { moduleStars: { 'IG04': 2 } } },
 

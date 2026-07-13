@@ -56,4 +56,20 @@ export const ACHIEVEMENTS = [
   { id: 'all-year-1',  icon: '🎓', title: 'Tốt nghiệp Năm 1',
     desc: 'Hoàn thành mọi module Năm 1',
     trigger: { yearComplete: 1 } },
+
+  { id: 'all-year-2',  icon: '⚗️', title: 'Tốt nghiệp Năm 2',
+    desc: 'Hoàn thành mọi module Năm 2 — nắm vững phân tích & dược liệu',
+    trigger: { yearComplete: 2 } },
+
+  { id: 'all-year-3',  icon: '💊', title: 'Tốt nghiệp Năm 3',
+    desc: 'Hoàn thành mọi module Năm 3 — thành thạo dược lý & bào chế',
+    trigger: { yearComplete: 3 } },
+
+  { id: 'all-year-4',  icon: '🏥', title: 'Tốt nghiệp Năm 4',
+    desc: 'Hoàn thành mọi module Năm 4 — sẵn sàng thực hành lâm sàng',
+    trigger: { yearComplete: 4 } },
+
+  { id: 'all-year-5',  icon: '🏅', title: 'Dược sĩ tốt nghiệp',
+    desc: 'Hoàn thành toàn bộ 5 năm — sẵn sàng hành nghề Dược',
+    trigger: { yearComplete: 5 } },
 ];
