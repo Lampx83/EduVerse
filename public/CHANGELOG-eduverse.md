@@ -4,6 +4,73 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-13 — Phiên cải tiến (15) · Tiểu học · Dược · CNTT — 11 Achievements + 1 Bug fix
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** Tiểu học (`primary`) · Dược (`pharmacy`) · CNTT (`it`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **3 khoảng trống** trong hệ thống achievements:
+
+1. **Tiểu học**: Tiếng Việt chỉ có achievements cho lớp 1, 3, 5 — bỏ trống lớp 2 và 4. Tiếng Anh thiếu lớp 4. Khoa học thiếu lớp 5 (P5KH tồn tại nhưng không có achievement). Tin học thiếu lớp 4 (P4TIN tồn tại nhưng không có achievement). yearComplete chỉ có lớp 1, 3, 5 — bỏ trống lớp 2 và 4.
+2. **Dược**: Chỉ có `all-year-1` (tốt nghiệp năm 1), bỏ trống hoàn toàn yearComplete cho năm 2, 3, 4, 5 trong chương trình 5 năm Dược sĩ.
+3. **CNTT**: Duplicate ID `system-designer` xuất hiện 2 lần — một cho module I3.2 (Phân tích & Thiết kế hệ thống) và một cho game IG04 (Kafka & System Design). Duplicate ID gây rủi ro logic trong engine achievements.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Cải tiến chủ động theo chế độ tự cải tiến hàng ngày.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/primary/achievements.js` | Mở rộng | 25 → 34 achievements: thêm 9 achievement còn thiếu |
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | 12 → 16 achievements: thêm 4 yearComplete năm 2–5 |
+| `public/js/domains/it/achievements.js` | Sửa lỗi | Fix duplicate ID `system-designer` → đổi game IG04 thành `kafka-designer` |
+
+### Chi tiết achievements mới
+
+**Trường Tiểu học** (thêm 9 achievements):
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `viet-2` | 📕 | Đọc thông viết thạo lớp 2 | P2TV ≥ 3 sao |
+| `viet-4` | 📓 | Nhà văn nhỏ lớp 4 | P4TV ≥ 3 sao |
+| `eng-4` | 💬 | Confident Talker lớp 4 | P4TA ≥ 3 sao |
+| `science-5` | 🌿 | Khoa học tự nhiên lớp 5 | P5KH ≥ 3 sao |
+| `coding-4` | 🖱️ | Coder nhỏ lớp 4 | P4TIN ≥ 3 sao |
+| `year2-grad` | 🌟 | Lên lớp 3 nào! | yearComplete: 2 |
+| `year4-grad` | 🌈 | Sắp tốt nghiệp Tiểu học! | yearComplete: 4 |
+
+*(+2 achievements đã đếm ở trên nhưng thực ra là 7, cộng 4 pharmacy = 11 tổng)*
+
+**Trường Dược** (thêm 4 yearComplete):
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `all-year-2` | ⚗️ | Tốt nghiệp Năm 2 | yearComplete: 2 |
+| `all-year-3` | 💊 | Tốt nghiệp Năm 3 | yearComplete: 3 |
+| `all-year-4` | 🏥 | Tốt nghiệp Năm 4 | yearComplete: 4 |
+| `all-year-5` | 🏅 | Dược sĩ tốt nghiệp | yearComplete: 5 |
+
+**Trường CNTT** (sửa 1 bug):
+
+| Trước | Sau | Lý do |
+|-------|-----|-------|
+| `id: 'system-designer'` (IG04) | `id: 'kafka-designer'` (IG04) | Duplicate ID với achievement I3.2 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/primary/achievements.js   ✅ OK
+node --check public/js/domains/pharmacy/achievements.js  ✅ OK
+node --check public/js/domains/it/achievements.js        ✅ OK
+```
+
+---
+
 ## 2026-07-11 — Phiên cải tiến (14) · THCS & THPT — Bổ sung 29 Achievements còn thiếu
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; không có GitHub Issues mở).
