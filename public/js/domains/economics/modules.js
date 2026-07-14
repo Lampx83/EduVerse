@@ -53,7 +53,7 @@ export const MODULES = [
   { category: 'career', id: 'EC04', title: 'Khởi nghiệp – Founder',         subject: 'career', scenarioIds: [], minStarsToUnlock: 24, icon: '🚀' },
 
   // ──────────── GAMES ────────────
-  { category: 'game', id: 'EG01', title: 'Bull vs Bear — Stock race',       subject: 'game', scenarioIds: [], minStarsToUnlock: 6, icon: '🐂' },
-  { category: 'game', id: 'EG02', title: 'Pitch Battle — Demo Day',         subject: 'game', scenarioIds: [], minStarsToUnlock: 12, icon: '🎤' },
-  { category: 'game', id: 'EG03', title: 'Tycoon — Quản lý công ty',        subject: 'game', scenarioIds: [], minStarsToUnlock: 12, icon: '🏭' },
+  { category: 'game', id: 'EG01', title: 'Bull vs Bear — Stock race',       subject: 'game', scenarioIds: ['EG01-bull-bear-quiz'],   knowledgeQuiz: 'EG01-bull-bear-quiz',   minStarsToUnlock: 6,  icon: '🐂' },
+  { category: 'game', id: 'EG02', title: 'Pitch Battle — Demo Day',         subject: 'game', scenarioIds: ['EG02-pitch-battle-quiz'], knowledgeQuiz: 'EG02-pitch-battle-quiz', minStarsToUnlock: 12, icon: '🎤' },
+  { category: 'game', id: 'EG03', title: 'Tycoon — Quản lý công ty',        subject: 'game', scenarioIds: ['EG03-tycoon-quiz'],       knowledgeQuiz: 'EG03-tycoon-quiz',       minStarsToUnlock: 12, icon: '🏭' },
 ];

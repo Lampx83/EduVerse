@@ -138,4 +138,21 @@ export const ACHIEVEMENTS = [
   { id: 'year4-econ-complete', icon: '🏅', title: 'Tốt nghiệp Năm 4 Kinh tế',
     desc: 'Hoàn thành toàn bộ module Năm 4 Kinh tế — kết thúc lộ trình Cử nhân Kinh tế',
     trigger: { yearComplete: 4 } },
+
+  // ── Game achievements ───────────────────────────────────────
+  { id: 'bull-bear-trader',  icon: '🐂', title: 'Bull & Bear Trader',
+    desc: 'Chinh phục quiz thị trường chứng khoán (EG01) — biết mua bán đúng thời điểm',
+    trigger: { moduleStars: { 'EG01': 3 } } },
+
+  { id: 'pitch-master',      icon: '🎤', title: 'Pitch Master',
+    desc: 'Chinh phục Pitch Battle (EG02) — thuyết phục được nhà đầu tư tại Demo Day',
+    trigger: { moduleStars: { 'EG02': 3 } } },
+
+  { id: 'tycoon-ceo',        icon: '🏭', title: 'Tycoon CEO',
+    desc: 'Chinh phục quiz Quản lý công ty (EG03) — điều hành doanh nghiệp xuất sắc',
+    trigger: { moduleStars: { 'EG03': 3 } } },
+
+  { id: 'econ-game-master',  icon: '🏆', title: 'Kinh tế Game Master',
+    desc: 'Hoàn thành cả 3 game Kinh tế (EG01 + EG02 + EG03) với 3 sao',
+    trigger: { moduleStars: { 'EG01': 3, 'EG02': 3, 'EG03': 3 } } },
 ];

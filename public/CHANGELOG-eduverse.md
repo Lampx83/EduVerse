@@ -4,6 +4,84 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-14 — Phiên cải tiến (16) · Kinh tế · Lái xe · Ngoại ngữ — 3 Game + 15 Achievements mới
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; không có production DB).
+
+**Trường:** Kinh tế (`economics`) · Lái xe (`driving`) · Ngoại ngữ (`language`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Quét codebase phát hiện **3 khoảng trống**:
+
+1. **Kinh tế**: 3 game module (EG01–EG03) có `scenarioIds: []` — hiển thị "Coming soon", trong khi IT games (IG01–IG04) đã được kích hoạt ở phiên 12. Sinh viên Kinh tế không có nội dung gamification.
+2. **Lái xe**: `ACHIEVEMENTS = []` — 3 module (D01–D03) đã có nội dung và experiences nhưng không có achievement nào → không có động lực gamification.
+3. **Ngoại ngữ**: `ACHIEVEMENTS = []` — 4 module (L01–L04) đã có nội dung nhưng không có achievement nào → cùng vấn đề.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/economics-games.js` | Tạo mới | 3 quiz game scenarios EG01–EG03 (30 câu hỏi có explanation) |
+| `public/js/domains/economics/modules.js` | Sửa | Kích hoạt EG01–EG03: thay `scenarioIds: []` bằng scenarioId thực tế |
+| `public/js/domains/economics/achievements.js` | Mở rộng | Thêm 4 achievements game mới (3 module + 1 Kinh tế Game Master) |
+| `public/js/domains/driving/index.js` | Mở rộng | `ACHIEVEMENTS = []` → 5 achievements (D01, D02, D03, all-round) |
+| `public/js/domains/language/index.js` | Mở rộng | `ACHIEVEMENTS = []` → 6 achievements (L01, L02, L03, L04, multilingual) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `ECONOMICS_GAMES_SCENARIOS` |
+
+### Chi tiết nội dung (30 câu hỏi)
+
+| Game | ID Scenario | Chủ đề | Câu |
+|------|------------|--------|-----|
+| Bull vs Bear — Stock Race | `EG01-bull-bear-quiz` | Bull/Bear market, P/E, Market Cap, Stop-Loss, EPS, DCA, ROE, Kháng cự, Đa dạng hóa, IPO | 10 |
+| Pitch Battle — Demo Day | `EG02-pitch-battle-quiz` | Elevator pitch, Pre-money valuation, Traction, Seed vs Series A, Burn rate/Runway, Freemium, LTV/CAC, Unfair Advantage, Accelerator vs Incubator, Pivot | 10 |
+| Tycoon — Quản lý công ty | `EG03-tycoon-quiz` | Porter's 5 forces, OCF vs Net Income, eNPS, Cost Leadership, KPI vs OKR, CPM, JIT, Balanced Scorecard, SWOT, Pareto 80/20 | 10 |
+
+### Achievement mới (15 tổng)
+
+**Trường Kinh tế** (4 achievements — EG01–EG03):
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `bull-bear-trader` | 🐂 | Bull & Bear Trader | EG01 ≥ 3 sao |
+| `pitch-master` | 🎤 | Pitch Master | EG02 ≥ 3 sao |
+| `tycoon-ceo` | 🏭 | Tycoon CEO | EG03 ≥ 3 sao |
+| `econ-game-master` | 🏆 | Kinh tế Game Master | EG01+EG02+EG03 ≥ 3 sao |
+
+**Trường Lái xe** (5 achievements):
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `first-lesson` | 🚦 | Bước đầu học lái | quizzesPassed: 1 |
+| `theory-master` | 📖 | Thông thuộc lý thuyết | D01 ≥ 3 sao |
+| `sign-reader` | 🚸 | Đọc vanh biển báo | D02 ≥ 3 sao |
+| `road-thinker` | 🧠 | Tư duy tình huống | D03 ≥ 3 sao |
+| `license-ready` | 🏅 | Sẵn sàng thi sát hạch | D01+D02+D03 ≥ 2 sao |
+
+**Trường Ngoại ngữ** (6 achievements):
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `first-word` | 🔤 | Từ đầu tiên | quizzesPassed: 1 |
+| `vocab-builder` | 📚 | Xây dựng vốn từ | L01 ≥ 3 sao |
+| `pronunciation-ace` | 🎤 | Phát âm chuẩn | L02 ≥ 3 sao |
+| `flashcard-pro` | 🃏 | Flashcard Master | L03 ≥ 3 sao |
+| `ai-learner` | 🤖 | Học cùng AI | L04 ≥ 3 sao |
+| `multilingual` | 🌐 | Đa ngôn ngữ | L01+L02+L03+L04 ≥ 2 sao |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/economics-games.js          ✅ OK
+node --check public/js/domains/economics/modules.js          ✅ OK
+node --check public/js/domains/economics/achievements.js     ✅ OK
+node --check public/js/domains/driving/index.js              ✅ OK
+node --check public/js/domains/language/index.js             ✅ OK
+node --check public/js/scenarios/_all-content.js             ✅ OK
+```
+
+---
+
 ## 2026-07-13 — Phiên cải tiến (15) · Tiểu học · Dược · CNTT — 11 Achievements + 1 Bug fix
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
