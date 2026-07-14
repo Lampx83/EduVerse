@@ -44,7 +44,31 @@ export const SUBJECTS = [
   { id: 'all',        name: 'Tổng quát', icon: '🌐' },
 ];
 export const getSubject = (id) => SUBJECTS.find(s => s.id === id) || null;
-export const ACHIEVEMENTS = [];
+export const ACHIEVEMENTS = [
+  { id: 'first-word',      icon: '🔤', title: 'Từ đầu tiên',
+    desc: 'Hoàn thành bài học đầu tiên tại Trường Ngoại ngữ',
+    trigger: { quizzesPassed: 1 } },
+
+  { id: 'vocab-builder',   icon: '📚', title: 'Xây dựng vốn từ',
+    desc: 'Hoàn thành module Từ vựng đa cấp độ (L01) đạt 3 sao',
+    trigger: { moduleStars: { 'lang-vocab': 3 } } },
+
+  { id: 'pronunciation-ace', icon: '🎤', title: 'Phát âm chuẩn',
+    desc: 'Hoàn thành module Luyện phát âm với AI (L02) đạt 3 sao',
+    trigger: { moduleStars: { 'lang-pronunciation': 3 } } },
+
+  { id: 'flashcard-pro',   icon: '🃏', title: 'Flashcard Master',
+    desc: 'Hoàn thành module Flashcards tự tạo (L03) đạt 3 sao',
+    trigger: { moduleStars: { 'lang-flashcards': 3 } } },
+
+  { id: 'ai-learner',      icon: '🤖', title: 'Học cùng AI',
+    desc: 'Hoàn thành module AI Tutor Ngoại ngữ (L04) đạt 3 sao',
+    trigger: { moduleStars: { 'lang-tutor': 3 } } },
+
+  { id: 'multilingual',    icon: '🌐', title: 'Đa ngôn ngữ',
+    desc: 'Hoàn thành cả 4 module Ngoại ngữ (L01–L04) — thành thạo ngoại ngữ toàn diện',
+    trigger: { moduleStars: { 'lang-vocab': 2, 'lang-pronunciation': 2, 'lang-flashcards': 2, 'lang-tutor': 2 } } },
+];
 export const getExperiencesFor = (mid) => MODULES.find(m => m.id === mid)?.experiences || [];
 export const listModulesWithExperiences = () => MODULES.filter(m => m.experiences?.length);
 

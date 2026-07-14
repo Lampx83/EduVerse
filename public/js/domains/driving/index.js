@@ -35,7 +35,27 @@ export const SUBJECTS = [
   { id: 'sahinh',    name: 'Sa hình',    icon: '🚗' },
 ];
 export const getSubject = (id) => SUBJECTS.find(s => s.id === id) || null;
-export const ACHIEVEMENTS = [];
+export const ACHIEVEMENTS = [
+  { id: 'first-lesson',   icon: '🚦', title: 'Bước đầu học lái',
+    desc: 'Hoàn thành quiz đầu tiên tại Trường Lái xe',
+    trigger: { quizzesPassed: 1 } },
+
+  { id: 'theory-master',  icon: '📖', title: 'Thông thuộc lý thuyết',
+    desc: 'Hoàn thành module 600 câu lý thuyết B1/B2 (D01) đạt 3 sao',
+    trigger: { moduleStars: { 'driving-theory': 3 } } },
+
+  { id: 'sign-reader',    icon: '🚸', title: 'Đọc vanh biển báo',
+    desc: 'Hoàn thành module Biển báo Giao thông (D02) đạt 3 sao',
+    trigger: { moduleStars: { 'driving-signs': 3 } } },
+
+  { id: 'road-thinker',   icon: '🧠', title: 'Tư duy tình huống',
+    desc: 'Hoàn thành module AI Quiz tình huống (D03) đạt 3 sao',
+    trigger: { moduleStars: { 'driving-quiz': 3 } } },
+
+  { id: 'license-ready',  icon: '🏅', title: 'Sẵn sàng thi sát hạch',
+    desc: 'Hoàn thành cả 3 module lý thuyết, biển báo và tình huống',
+    trigger: { moduleStars: { 'driving-theory': 2, 'driving-signs': 2, 'driving-quiz': 2 } } },
+];
 export const getExperiencesFor = (mid) => MODULES.find(m => m.id === mid)?.experiences || [];
 export const listModulesWithExperiences = () => MODULES.filter(m => m.experiences?.length);
 
