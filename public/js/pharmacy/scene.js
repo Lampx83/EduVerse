@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0712';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0712';
-import { createCharacter } from './character.js?v=ph0712';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0713';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0713';
+import { createCharacter } from './character.js?v=ph0713';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -3831,11 +3831,17 @@ export function buildScene(canvas, opts = {}) {
   // pointerup → reset trạng thái xoay. Mở modal HOÃN 1 nhịp (setTimeout 0) để
   // controls xử lý xong pointerup TRƯỚC, tránh lỗi camera tự xoay sau khi đóng
   // modal (pointerup bị overlay nuốt mất → controls kẹt state ROTATE).
-  let _pdX = 0, _pdY = 0, _pdBtn = -1;
-  canvas.addEventListener('pointerdown', (e) => { _pdX = e.clientX; _pdY = e.clientY; _pdBtn = e.button; });
+  let _pdX = 0, _pdY = 0, _pdBtn = -1, _pdTouch = false;
+  canvas.addEventListener('pointerdown', (e) => {
+    _pdX = e.clientX; _pdY = e.clientY; _pdBtn = e.button;
+    _pdTouch = (e.pointerType === 'touch' || e.pointerType === 'pen');
+  });
   canvas.addEventListener('pointerup', (e) => {
-    if (_pdBtn !== 0 || e.button !== 0) return;                       // chỉ chuột trái
-    if (Math.abs(e.clientX - _pdX) > 6 || Math.abs(e.clientY - _pdY) > 6) return; // đã kéo → bỏ qua
+    if (_pdBtn !== 0 || e.button !== 0) return;                       // chỉ chuột trái / 1 ngón
+    // Ngưỡng "chạm" vs "kéo": ngón tay luôn rê vài px khi nhấc lên → ngưỡng 6px của
+    // chuột làm ĐIỆN THOẠI gần như không bấm được thuốc. Touch/pen nới lên 14px.
+    const TAP_SLOP = _pdTouch ? 14 : 6;
+    if (Math.abs(e.clientX - _pdX) > TAP_SLOP || Math.abs(e.clientY - _pdY) > TAP_SLOP) return; // đã kéo → bỏ qua
     const hit = clickAt(e.clientX, e.clientY);
     if (!hit) return;
     const act = () => {
