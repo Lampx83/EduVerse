@@ -11,7 +11,10 @@
 //    `/js/pharmacy/simulation.js` vì file này serve ở /legacy/ (proxy Next
 //    fallback sang Express giữ nguyên asset). simulation.js lại import các sibling
 //    bằng `./…` — vẫn resolve đúng vì nó nằm ở /js/pharmacy/. KHÔNG copy asset.
-import { startSimulation } from '/js/pharmacy/simulation.js?v=ph0711';
+// ?v= phải BUMP mỗi lần sửa js/pharmacy/* — trình duyệt cache module theo URL này;
+// để nguyên version cũ thì máy đã ghé sẽ chạy JS cũ mãi. Giữ khớp với
+// public/nha-thuoc-3d.html (bản Express).
+import { startSimulation } from '/js/pharmacy/simulation.js?v=ph0713';
 const params = new URLSearchParams(location.search);
 const moduleId = params.get('module') || 'gpp';
 document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;
