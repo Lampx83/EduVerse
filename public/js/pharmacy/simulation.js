@@ -1,8 +1,8 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0715';
-import { loadDrugs } from './catalog.js?v=ph0715';
-import { initMobileUI } from './mobile-ui.js?v=ph0715';
+import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0716';
+import { loadDrugs } from './catalog.js?v=ph0716';
+import { initMobileUI } from './mobile-ui.js?v=ph0716';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -30,8 +30,8 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0715';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0715';
+import { openPosTerminal } from './pos.js?v=ph0716';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0716';
 import { STAGE_LABEL } from './rubric.js';
 
 const $ = (id) => document.getElementById(id);
@@ -85,6 +85,16 @@ function hideSceneLoading() {
   (window.__sceneLoadingTimers || []).forEach(clearTimeout);   // tắt nhắc "mạng chậm"/lỗi
   el.classList.add('is-hidden');
   setTimeout(() => el.remove(), 400);                          // gỡ sau khi fade xong
+}
+// Ẩn overlay SAU khung hình 3D đầu tiên (2×rAF) để không loé mảng trắng. NHƯNG khi
+// tab đang ẩn (mở link ở tab nền) trình duyệt NGƯNG rAF → overlay treo tới mốc 45s
+// rồi báo "không tải được" SAI dù scene đã dựng xong. Nên chốt thêm timeout: cái
+// nào tới trước thì ẩn (tab ẩn thì chẳng có gì để loé).
+function scheduleHideSceneLoading() {
+  let done = false;
+  const go = () => { if (done) return; done = true; hideSceneLoading(); };
+  requestAnimationFrame(() => requestAnimationFrame(go));
+  setTimeout(go, 800);
 }
 
 export async function startSimulation({ moduleId = 'gpp' } = {}) {
@@ -145,6 +155,9 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   const _avatarExpr = (() => { try { return localStorage.getItem(AVATAR_EXPR_KEY) || 'none'; } catch { return 'none'; } })();
   const _avatarHair = (() => { try { return localStorage.getItem(AVATAR_HAIR_KEY) || null; } catch { return null; } })();
   setLoadingStep('Đang dựng nhà thuốc 3D…');
+  // Khai báo TRƯỚC buildScene vì opts.onNearbyDrugs (callback dưới) tham chiếu tới;
+  // callback chỉ chạy sau khi initMobileUI đã gán nên không TDZ.
+  let mobileUI = null;
   const sim = buildScene($('scene-canvas'), {
     avatarUrl: _avatarUrl,
     avatarHeight: _avatarHeight,
@@ -172,17 +185,19 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
       el.textContent = txt || '';
       el.hidden = !txt;
     },
-    onToast: (msg) => showToast(msg)
+    onToast: (msg) => showToast(msg),
+    // Ngón tay chạm vùng kệ → liệt kê thuốc quanh đó. CHỈ có ở vỏ mobile (≤820px);
+    // nơi khác trả false để scene xử lý chạm như thường.
+    onNearbyDrugs: (list) => mobileUI ? (mobileUI.showNear(list), true) : false
   });
   window.__sim = sim;
-  // buildScene đã set animation loop → đợi 2 khung hình để renderer VẼ XONG khung
-  // đầu rồi mới ẩn overlay (ẩn ngay sẽ loé mảng trắng 1 nhịp). Không chờ avatar
-  // (.glb) vì nếu model lỗi thì overlay sẽ treo mãi.
-  requestAnimationFrame(() => requestAnimationFrame(hideSceneLoading));
+  // buildScene đã set animation loop → đợi khung hình đầu rồi mới ẩn overlay (ẩn
+  // ngay sẽ loé mảng trắng 1 nhịp). Không chờ avatar (.glb) vì model lỗi là treo mãi.
+  scheduleHideSceneLoading();
   // Vỏ mobile (≤820px): ngăn kéo "Chọn thuốc" + panel hội thoại thành tab dưới.
   // Trên màn hẹp hộp thuốc chỉ ~6.6px nên KHÔNG chạm trúng được — ngăn kéo là
   // đường đi thay thế (chạm dòng 48px → focus camera + mở thẳng cửa sổ thuốc).
-  initMobileUI({ sim, openDrug: (id) => sim.pickDrug(id) });
+  mobileUI = initMobileUI({ sim, openDrug: (id) => sim.pickDrug(id) });
 
   // GIỎ RA LẺ — gom các ĐƠN VỊ ra lẻ (vỉ/gói/viên/ống) đã tách khỏi hộp, chờ cho
   // vào bao bì ra lẻ. KHÁC với KHAY BÁN HÀNG (hộp nguyên đem tính tiền).

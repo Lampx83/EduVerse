@@ -1165,6 +1165,8 @@ export default function NhaThuoc3DPage() {
     const deadT = window.setTimeout(() => {
       const wrap = document.getElementById('scene-loading');
       if (!wrap) return;
+      // Scene đã dựng (tab nền: rAF ngủ nên overlay chưa kịp ẩn) → KHÔNG báo lỗi sai.
+      if ((window as any).__sim) { wrap.remove(); return; }
       const step = document.getElementById('scene-loading-step');
       const slowEl = document.getElementById('scene-loading-slow');
       const spin = wrap.querySelector('.scene-loading-spin') as HTMLElement | null;

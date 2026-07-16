@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0715';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0715';
-import { createCharacter } from './character.js?v=ph0715';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0716';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0716';
+import { createCharacter } from './character.js?v=ph0716';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -3836,6 +3836,39 @@ export function buildScene(canvas, opts = {}) {
     _pdX = e.clientX; _pdY = e.clientY; _pdBtn = e.button;
     _pdTouch = (e.pointerType === 'touch' || e.pointerType === 'pen');
   });
+  // getDrugsNear — gom các thuốc quanh 1 điểm trên màn (bán kính px), gần → xa.
+  // Dùng cho CẢM ỨNG: hộp thuốc chỉ ~6.6px nên ngón tay (~44px) trùm ~7 hộp, chạm
+  // "trúng" là may rủi → thay vì đoán, liệt kê các ứng viên quanh chỗ chạm.
+  // Cách làm: CHIẾU tâm hộp ra toạ độ màn (rẻ, ~350 phép tính) rồi chỉ raycast lại
+  // vài ứng viên gần nhất để loại hộp bị che. Quét raycast dày (~80 tia) thì đúng
+  // nhưng mất cả trăm ms mỗi lần chạm.
+  function getDrugsNear(cx, cy, radius = 30, maxN = 8) {
+    const rect = canvas.getBoundingClientRect();
+    const v = new THREE.Vector3();
+    const cands = [];
+    for (const m of drugMeshes) {
+      if ((m.userData.boxIndex || 0) !== 0) continue;      // chỉ hộp ngoài cùng mỗi thuốc
+      if (!m.userData.drug) continue;
+      m.getWorldPosition(v);
+      v.project(camera);
+      if (v.z > 1) continue;                               // sau lưng camera
+      const sx = rect.left + (v.x * 0.5 + 0.5) * rect.width;
+      const sy = rect.top + (-v.y * 0.5 + 0.5) * rect.height;
+      const d = Math.hypot(sx - cx, sy - cy);
+      if (d <= radius) cands.push({ m, sx, sy, d });
+    }
+    cands.sort((a, b) => a.d - b.d);
+    const out = [];
+    for (const c of cands) {
+      if (out.length >= maxN) break;
+      if (out.some(o => o.drug.id === c.m.userData.drugId)) continue;
+      const seen = getDrugAtPointer(c.sx, c.sy);           // hộp có THỰC SỰ nhìn thấy không
+      if (!seen || seen.drug.id !== c.m.userData.drugId) continue;   // bị tủ/hộp khác che
+      out.push({ drug: seen.drug, meta: seen.meta, dist: Math.round(c.d) });
+    }
+    return out;
+  }
+
   canvas.addEventListener('pointerup', (e) => {
     if (_pdBtn !== 0 || e.button !== 0) return;                       // chỉ chuột trái / 1 ngón
     // Ngưỡng "chạm" vs "kéo": ngón tay luôn rê vài px khi nhấc lên → ngưỡng 6px của
@@ -3843,6 +3876,16 @@ export function buildScene(canvas, opts = {}) {
     const TAP_SLOP = _pdTouch ? 14 : 6;
     if (Math.abs(e.clientX - _pdX) > TAP_SLOP || Math.abs(e.clientY - _pdY) > TAP_SLOP) return; // đã kéo → bỏ qua
     const hit = clickAt(e.clientX, e.clientY);
+    // CHẠM (ngón tay) vào vùng thuốc → KHÔNG đoán hộp nào, mà đưa danh sách thuốc
+    // quanh đó cho người dùng chọn (opts.onNearbyDrugs). Bỏ qua khi đang dán nhãn
+    // (cần chạm đúng hộp trong khay) hoặc khi chạm vào POS/bao bì/sách/cửa…
+    // onNearbyDrugs PHẢI trả true nếu đã hiện danh sách. Thiết bị cảm ứng màn RỘNG
+    // (>820px: tablet ngang, laptop cảm ứng) không có vỏ mobile → trả false → rơi
+    // xuống xử lý thường. Nếu cứ return sớm thì chạm sẽ CHẲNG có phản ứng gì.
+    if (_pdTouch && !pendingLabel && (!hit || hit.kind === 'drug') && opts.onNearbyDrugs) {
+      const near = getDrugsNear(e.clientX, e.clientY);
+      if (near.length > 1 && opts.onNearbyDrugs(near, { x: e.clientX, y: e.clientY }) === true) return;
+    }
     if (!hit) return;
     const act = () => {
       if (hit.kind === 'pos') opts.onPosOpen?.();
@@ -4067,6 +4110,7 @@ export function buildScene(canvas, opts = {}) {
     applyHdsdSticker,
     makeHdsdStickerTex,
     getDrugAtPointer,
+    getDrugsNear,
     getCatalog,
     focusDrug,
     triggerBarcodeScan,

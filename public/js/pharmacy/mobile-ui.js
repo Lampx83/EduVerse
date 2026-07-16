@@ -111,6 +111,21 @@ function injectStyle() {
     .mb-row-stock { flex: 0 0 auto; font-size: 11px; color: #64748b; text-align: right; }
     .mb-empty { padding: 26px 14px; text-align: center; color: #94a3b8; font-size: 13px; }
 
+    /* ── Bảng "thuốc quanh chỗ chạm" ── cao theo nội dung, thấp hơn ngăn kéo */
+    .mb-near-sheet { height: auto !important; max-height: 56vh !important; }
+    .mb-near-head {
+      flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+      padding: 18px 12px 9px 14px; border-bottom: 1px solid #1e293b;
+      font-size: 13px; font-weight: 700; color: #e2e8f0;
+    }
+    .mb-near-head small { font-weight: 400; color: #94a3b8; font-size: 11.5px; }
+    .mb-near-close {
+      margin-left: auto; flex: 0 0 auto; width: 34px; height: 34px; border-radius: 8px;
+      background: rgba(255,255,255,0.06); border: 1px solid #334155; color: #cbd5e1;
+      font-size: 14px; cursor: pointer; font-family: inherit;
+    }
+    .mb-near-list { flex: 1 1 auto; overflow-y: auto; }
+
     /* Thanh điều khiển nổi phải nhường chỗ cho tab bar */
     .cam-bar { bottom: ${TABS_H + 8}px !important; }
     /* Ô tìm nổi trên canvas thành thừa (đã có ngăn kéo tìm tốt hơn) */
@@ -129,6 +144,20 @@ function fitApp() {
   const h = Math.max(280, window.innerHeight - top - TABS_H - 4);
   app.style.height = h + 'px';
   window.dispatchEvent(new Event('resize'));   // renderer three.js đọc lại kích thước
+}
+
+// Dòng thuốc dùng chung cho ngăn kéo "Chọn thuốc" và bảng "quanh chỗ chạm".
+function rowHTML({ drug, meta }) {
+  const sub = [drug.strength, drug.sku].filter(Boolean).join(' · ');
+  return `<button class="mb-row" type="button" data-id="${esc(drug.id)}">
+    <span class="mb-row-acc" style="background:${esc(drug.groupAccent || '#334155')}"></span>
+    <span class="mb-row-main">
+      <span class="mb-row-name">${esc(drug.brand || drug.name)}</span>
+      <span class="mb-row-sub">${esc(sub)}</span>
+    </span>
+    ${drug.isRx ? '<span class="mb-row-rx">Rx</span>' : ''}
+    <span class="mb-row-stock">Tồn ${esc(meta?.stock ?? '—')}<br>HD ${esc(meta?.expiry ?? '—')}</span>
+  </button>`;
 }
 
 function buildDrugSheet(sim, onPick) {
@@ -157,19 +186,10 @@ function buildDrugSheet(sim, onPick) {
     count.textContent = qn ? `${hits.length} kết quả` : `${hits.length} thuốc · cuộn hoặc gõ để tìm`;
     if (!hits.length) { list.innerHTML = '<div class="mb-empty">Không tìm thấy thuốc nào.</div>'; return; }
     let html = '', grp = null;
-    for (const { drug, meta } of hits) {
-      const g = drug.groupLabel || drug.category || 'Khác';
+    for (const it of hits) {
+      const g = it.drug.groupLabel || it.drug.category || 'Khác';
       if (g !== grp) { grp = g; html += `<div class="mb-grp">${esc(g)}</div>`; }
-      const sub = [drug.strength, drug.sku].filter(Boolean).join(' · ');
-      html += `<button class="mb-row" type="button" data-id="${esc(drug.id)}">
-        <span class="mb-row-acc" style="background:${esc(drug.groupAccent || '#334155')}"></span>
-        <span class="mb-row-main">
-          <span class="mb-row-name">${esc(drug.brand || drug.name)}</span>
-          <span class="mb-row-sub">${esc(sub)}</span>
-        </span>
-        ${drug.isRx ? '<span class="mb-row-rx">Rx</span>' : ''}
-        <span class="mb-row-stock">Tồn ${esc(meta?.stock ?? '—')}<br>HD ${esc(meta?.expiry ?? '—')}</span>
-      </button>`;
+      html += rowHTML(it);
     }
     list.innerHTML = html;
   }
@@ -201,14 +221,33 @@ export function initMobileUI({ sim, openDrug }) {
     <button class="mb-tab" data-sheet="side" type="button"><span class="mb-tab-ico">💬</span>Hội thoại<i class="mb-dot" hidden></i></button>`;
   document.body.appendChild(tabs);
 
-  const drugSheet = buildDrugSheet(sim, (id) => {
-    close();                       // đóng ngăn kéo để thấy camera bay + cửa sổ thuốc
+  // Chạm 1 dòng ở bất kỳ bảng nào → đóng bảng, bay camera tới, mở cửa sổ thuốc.
+  const pick = (id) => {
+    close();                       // đóng bảng để thấy camera bay + cửa sổ thuốc
     sim.focusDrug?.(id);           // 6.6px → ~37px: đóng cửa sổ ra là hộp đã to, chạm được
     openDrug?.(id);                // mở thẳng cửa sổ thuốc — không phải chạm hộp 3D lần nào
-  });
+  };
+
+  const drugSheet = buildDrugSheet(sim, pick);
   document.body.appendChild(drugSheet);
 
-  const sheets = { drug: drugSheet, side };
+  // Bảng "thuốc quanh chỗ bạn chạm" — chạm đại lên kệ, không phải chạm trúng hộp 6px.
+  const nearSheet = document.createElement('div');
+  nearSheet.className = 'mb-sheet mb-near-sheet';
+  nearSheet.id = 'mb-near-sheet';
+  nearSheet.innerHTML = `
+    <div class="mb-near-head">👆 Thuốc quanh chỗ bạn chạm <small class="mb-near-n"></small>
+      <button class="mb-near-close" type="button" aria-label="Đóng">✕</button>
+    </div>
+    <div class="mb-drug-list mb-near-list"></div>`;
+  document.body.appendChild(nearSheet);
+  nearSheet.querySelector('.mb-near-close').addEventListener('click', () => close());
+  nearSheet.querySelector('.mb-near-list').addEventListener('click', (e) => {
+    const row = e.target.closest('.mb-row');
+    if (row) pick(row.dataset.id);
+  });
+
+  const sheets = { drug: drugSheet, side, near: nearSheet };
   let open = null;
   function close() {
     if (!open) return;
@@ -242,8 +281,17 @@ export function initMobileUI({ sim, openDrug }) {
     }).observe(chat, { childList: true });
   }
 
+  // scene.js gọi khi ngón tay chạm vào vùng kệ: đưa danh sách ứng viên quanh đó
+  // thay vì đoán bừa 1 hộp trong ~7 hộp mà ngón tay đang trùm lên.
+  function showNear(list) {
+    if (!list?.length) return;
+    nearSheet.querySelector('.mb-near-n').textContent = `(${list.length} thuốc)`;
+    nearSheet.querySelector('.mb-near-list').innerHTML = list.map(rowHTML).join('');
+    show('near');
+  }
+
   fitApp();
   window.addEventListener('resize', fitApp);
   window.addEventListener('orientationchange', () => setTimeout(fitApp, 250));
-  return { show, close };
+  return { show, close, showNear };
 }

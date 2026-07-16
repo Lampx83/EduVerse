@@ -1173,6 +1173,8 @@
     var dead = setTimeout(function () {
       var wrap = document.getElementById('scene-loading');
       if (!wrap) return;                       // đã tải xong → thôi
+      // Scene đã dựng (tab nền: rAF ngủ nên overlay chưa kịp ẩn) → KHÔNG báo lỗi sai.
+      if (window.__sim) { wrap.remove(); return; }
       var step = document.getElementById('scene-loading-step');
       var slowEl = document.getElementById('scene-loading-slow');
       var spin = wrap.querySelector('.scene-loading-spin');
@@ -1197,7 +1199,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0715';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0716';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;
