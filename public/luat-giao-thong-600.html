@@ -29,6 +29,11 @@
   .qcard { width:100%; max-width:760px; background:var(--card); border:1px solid var(--border);
     border-radius:14px; padding:22px; }
   .qhead { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:13px; color: var(--muted); }
+  /* Gợi ý phím tắt (req #72) — ẩn trên máy cảm ứng vì không có bàn phím. */
+  .kbdHint { margin-left:auto; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:4px; }
+  .kbdHint kbd { font-family:inherit; font-size:11px; font-weight:700; background:rgba(255,255,255,.08);
+    border:1px solid var(--border); border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--text); }
+  @media (hover:none), (max-width:860px) { .kbdHint { display:none; } }
   .qhead .badge { background: rgba(220,38,38,.18); border:1px solid var(--red); color:#fca5a5;
     padding:3px 9px; border-radius:5px; font-size:11px; font-weight:700; letter-spacing:.4px; }
   .qhead .badge.normal { background: rgba(255,255,255,.06); border-color: var(--border); color: var(--muted); }
@@ -84,7 +89,37 @@
   .de { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 10px; cursor:pointer; text-align:center; transition:.15s; }
   .de:hover { border-color:var(--red); transform:translateY(-2px); background:rgba(220,38,38,.06); }
   .de .dn { font-weight:800; font-size:16px; } .de .dm { color:var(--muted); font-size:11.5px; margin-top:4px; }
+  /* Trạng thái từng đề: Chưa làm / Đạt / Rớt (req #74 Thì Dũng) */
+  .de .deSt { margin-top:8px; font-size:11.5px; font-weight:700; border-radius:99px; padding:3px 8px; display:inline-block; }
+  .de .deSt.none { color:var(--muted); background:rgba(148,163,184,.16); }
+  .de .deSt.pass { color:var(--green); background:rgba(16,185,129,.16); }
+  .de .deSt.fail { color:var(--red); background:rgba(239,68,68,.16); }
+  .de.dePass { border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.06); }
+  .de.deFail { border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.06); }
   .lnkbtn { font-family:inherit; background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 16px; border-radius:9px; font-size:13px; cursor:pointer; }
+
+  /* Bảng tiến độ theo chủ đề (req #75). Giữ tông tối của trang — ảnh mẫu SV gửi nền
+     xanh là của trang khác, bê nguyên vào đây sẽ chọi với phần còn lại. */
+  #progBox { width:100%; max-width:1120px; margin:22px auto 0; }
+  #progBox:empty { display:none; }
+  .progHead { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .progChip { background:var(--card); border:1px solid var(--border); border-radius:99px;
+    padding:6px 14px; font-size:12.5px; color:var(--muted); }
+  .progChip b { color:var(--text); font-size:13.5px; }
+  .progReset { margin-left:auto; font-family:inherit; font-size:12px; padding:6px 12px; cursor:pointer;
+    background:transparent; color:var(--muted); border:1px solid var(--border); border-radius:8px; }
+  .progReset:hover { color:var(--red); border-color:var(--red); }
+  .progTable { width:100%; border-collapse:separate; border-spacing:0; background:var(--card);
+    border:1px solid var(--border); border-radius:12px; overflow:hidden; font-size:13.5px; }
+  .progTable th { text-align:left; font-size:12px; color:var(--muted); font-weight:700;
+    padding:10px 14px; background:rgba(255,255,255,.03); border-bottom:1px solid var(--border); }
+  .progTable td { padding:10px 14px; border-bottom:1px solid var(--border); }
+  .progTable tr:last-child td { border-bottom:0; }
+  .progBar { position:relative; height:20px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; min-width:120px; }
+  .progFill { height:100%; background:linear-gradient(90deg, var(--red), #f59e0b); border-radius:99px; transition:width .3s; }
+  .progPct { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:var(--text); }
+  @media (max-width:860px) { .progTable { font-size:12.5px; } .progTable th:nth-child(2), .progTable td:nth-child(2) { min-width:90px; } }
 
   /* Sidebar: tìm kiếm + danh sách câu hỏi (req #52/#53 Thì Dũng) */
   #practiceWrap { display:flex; gap:18px; width:100%; max-width:1120px; justify-content:center; align-items:flex-start; }
@@ -92,6 +127,10 @@
   #qsidebar { flex:0 0 250px; width:250px; background:var(--card); border:1px solid var(--border);
     border-radius:14px; padding:16px; position:sticky; top:18px; align-self:flex-start; }
   #qsidebar .sbTitle { font-size:13.5px; font-weight:700; color:var(--text); }
+  /* catBar nay nằm trong cột trái (req #71): xếp dọc, full width thay vì flex ngang căn giữa. */
+  #qsidebar #catBar { flex-direction:column; align-items:stretch; gap:6px; margin-bottom:4px; }
+  #qsidebar #catBar label { align-self:flex-start; }
+  #qsidebar #catBar select { width:100%; }
   #qSearch { width:100%; margin-top:9px; font-family:inherit; background:rgba(0,0,0,.25);
     border:1px solid var(--border); color:var(--text); border-radius:9px; padding:9px 11px; font-size:13px; }
   #qSearch::placeholder { color:var(--muted); }
@@ -107,6 +146,21 @@
   .qn.right { background:#16a34a; color:#fff; border-color:#16a34a; font-weight:700; }
   .qn.wrong { background:#dc2626; color:#fff; border-color:#dc2626; font-weight:700; }
   .qn.cur.right, .qn.cur.wrong { box-shadow:0 0 0 2px var(--yellow) inset; }
+  /* Khi THI: chỉ đánh dấu "đã chọn" (xanh dương), KHÔNG lộ đúng/sai trước lúc nộp (req #73). */
+  .qn.picked { background:#2563eb; color:#fff; border-color:#2563eb; font-weight:700; }
+  .qn.cur.picked { box-shadow:0 0 0 2px var(--yellow) inset; }
+  .sbSubmit { width:100%; margin-top:10px; font-family:inherit; font-size:13.5px; font-weight:700;
+    padding:10px; border-radius:10px; border:0; background:var(--red); color:#fff; cursor:pointer; }
+  .sbSubmit:hover { filter:brightness(1.1); }
+  /* Thanh thời gian khi thi (req #73) */
+  #examBarBox { width:100%; max-width:1120px; margin:0 auto 4px; }
+  .examBarTrack { position:relative; height:26px; background:rgba(255,255,255,.06);
+    border:1px solid var(--border); border-radius:99px; overflow:hidden; }
+  .examBarFill { height:100%; width:100%; background:linear-gradient(90deg,#059669,#10b981); transition:width 1s linear; }
+  .examBarFill.warn { background:linear-gradient(90deg,#d97706,#f59e0b); }
+  .examBarFill.danger { background:linear-gradient(90deg,#b91c1c,#ef4444); }
+  .examBarText { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:700; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4); }
   .sbEmpty { color:var(--muted); font-size:12.5px; text-align:center; padding:14px 4px; }
   .sbExam { width:100%; margin-top:14px; font-family:inherit; background:var(--red); color:#fff; border:0;
     border-radius:10px; padding:11px; font-weight:700; font-size:13px; cursor:pointer; }
@@ -125,20 +179,6 @@
   <button data-mode="exam">📝 Thi sát hạch theo hạng</button>
   <!-- Nút "Chỉ câu liệt" đã bỏ theo góp ý SV #58 (gây rối); câu điểm liệt vẫn
        nằm trong bộ đề bình thường, và ?mode=critical qua URL vẫn dùng được. -->
-</div>
-
-<div class="toolbar" id="catBar">
-  <label for="catSelect">📂 Chủ đề:</label>
-  <select id="catSelect">
-    <option value="all">📚 Tất cả các câu</option>
-    <option value="kn">📖 1. Khái niệm &amp; quy tắc lý thuyết</option>
-    <option value="vh">🤝 2. Văn hoá &amp; đạo đức</option>
-    <option value="kt">🛠️ 3. Kỹ thuật lái xe</option>
-    <option value="ct">⚙️ 4. Cấu tạo &amp; sửa chữa</option>
-    <option value="th">🚸 5. Biển Báo</option>
-    <option value="nv">⚠️ 6. Tình huống giao thông</option>
-    <option value="critical">🔥 Câu điểm liệt</option>
-  </select>
 </div>
 
 <div id="classPicker">
@@ -165,6 +205,21 @@
 
 <div id="practiceWrap">
 <aside id="qsidebar">
+  <!-- Chủ đề nằm ĐẦU cột trái (req #71): trước đây ở giữa trang, tách rời khỏi
+       tìm kiếm + danh sách câu tuy cùng là bộ lọc. Gom lại một chỗ cho dễ nhìn. -->
+  <div class="toolbar" id="catBar">
+    <label for="catSelect">📂 Chủ đề:</label>
+    <select id="catSelect">
+      <option value="all">📚 Tất cả các câu</option>
+      <option value="kn">📖 1. Khái niệm &amp; quy tắc lý thuyết</option>
+      <option value="vh">🤝 2. Văn hoá &amp; đạo đức</option>
+      <option value="kt">🛠️ 3. Kỹ thuật lái xe</option>
+      <option value="ct">⚙️ 4. Cấu tạo &amp; sửa chữa</option>
+      <option value="th">🚸 5. Biển Báo</option>
+      <option value="nv">⚠️ 6. Tình huống giao thông</option>
+      <option value="critical">🔥 Câu điểm liệt</option>
+    </select>
+  </div>
   <div class="sbTitle">🔍 Tìm kiếm câu hỏi</div>
   <input id="qSearch" placeholder="Nhập nội dung câu hỏi…" autocomplete="off" />
   <div class="sbHead">
@@ -174,20 +229,28 @@
   <div id="qGrid"></div>
   <div id="qGridEmpty" class="sbEmpty" style="display:none">Không thấy câu khớp.</div>
   <button id="sbExam" class="sbExam">🕐 Thi thử theo hạng</button>
+  <!-- Nộp bài ngay trong cột trái khi đang thi (req #73) -->
+  <button id="sbSubmit" class="sbSubmit" style="display:none">🏁 Nộp bài</button>
 </aside>
 <div id="mainCol">
 
 <div class="stats" id="stats">
   <span>Câu <b id="curIdx">1</b>/<b id="totalQ">—</b></span>
-  <span>Đúng: <b id="rightCount">0</b></span>
-  <span>Sai: <b id="wrongCount">0</b></span>
+  <span><span id="statRight">Đúng:</span> <b id="rightCount">0</b></span>
+  <span id="statWrong">Sai: <b id="wrongCount">0</b></span>
   <span id="timerBox" style="display:none">⏱ <b id="timer">22:00</b></span>
+</div>
+
+<!-- Thanh tiến trình thời gian khi thi (req #73) -->
+<div id="examBarBox" style="display:none">
+  <div class="examBarTrack"><div class="examBarFill" id="examBar"></div><span id="examBarText" class="examBarText"></span></div>
 </div>
 
 <div class="qcard" id="qcard">
   <div class="qhead">
     <span class="badge normal" id="topicBadge">Khái niệm</span>
     <span id="critBadge"></span>
+    <span class="kbdHint">⌨️ Dùng phím <kbd>←</kbd> <kbd>→</kbd> để đổi câu, <kbd>1</kbd>–<kbd>4</kbd> để chọn đáp án</span>
   </div>
   <div class="qtext" id="qtext">…</div>
   <div class="qimg" id="qimg"></div>
@@ -205,6 +268,9 @@
 
 </div><!-- /#mainCol -->
 </div><!-- /#practiceWrap -->
+
+<!-- Bảng theo dõi tiến độ theo chủ đề (req #75 Thì Dũng) -->
+<div id="progBox"></div>
 
 <div class="summary" id="summary">
   <h2 style="margin:0 0 4px;" id="sumTitle">Kết quả</h2>
@@ -259,6 +325,21 @@
   let mode = 'learn', list = [...Q], idx = 0, category = 'all';
   let answered = {}, exam = null;
 
+  // ===== Tiến độ theo chủ đề, bền qua các lần vào trang (req #75 Thì Dũng) =====
+  // Lưu theo ID CÂU (không theo chỉ số trong `list`): `list` đổi mỗi lần lọc chủ đề
+  // hay bốc đề, nên chỉ số không có ý nghĩa lâu dài.
+  // progress[qid] = ĐÁP ÁN ĐÃ CHỌN (số), không phải true/false: chỉ lưu đúng/sai thì khi
+  // dựng lại `answered` không biết người học đã chọn ý nào → mở lại câu cũ sẽ không ô nào
+  // được tick mà vẫn hiện feedback, tức bày đáp án cho người chưa từng thấy lựa chọn của mình.
+  const loadProg = () => { try { return JSON.parse(localStorage.getItem(STATE_KEY)) || {}; } catch { return {}; } };
+  let progress = loadProg();
+  const saveProg = () => { try { localStorage.setItem(STATE_KEY, JSON.stringify(progress)); } catch {} };
+  function markProgress(q, pickedIdx) {
+    if (!q || !q.id) return;
+    progress[q.id] = pickedIdx;
+    saveProg();
+  }
+
   // RNG có seed → mỗi "Đề số N" của một hạng luôn cho ra CÙNG bộ câu (như app thi thật).
   const hashSeed = s => { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
   const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -294,9 +375,19 @@
     el('classPicker').style.display = 'none';
     el('dePicker').style.display = 'none';
     list = pickQuestions(m);
-    idx = 0; answered = {};
+    idx = 0;
+    // Luyện tập: dựng lại `answered` từ tiến độ ĐÃ LƯU để sidebar tô đúng câu từng làm,
+    // khỏi cảnh tải lại trang thì bảng #75 báo "đã làm" mà ô số vẫn trắng. Thi thì KHÔNG
+    // khôi phục — mỗi lần thi phải làm lại từ đầu.
+    answered = {};
+    if (m !== 'exam') {
+      list.forEach((q, i) => {
+        if (q.id && progress[q.id] !== undefined) answered[i] = progress[q.id];
+      });
+    }
     document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
     el('catBar').style.display = m === 'exam' ? 'none' : '';
+    renderProgress();   // ẩn khi vào thi, hiện lại khi về luyện tập (req #75)
     el('summary').classList.remove('show');
     el('endBtn').style.display = m === 'exam' ? '' : 'none';
     if (!list.length) {
@@ -315,10 +406,12 @@
     if (m === 'exam') {
       exam = { start: Date.now(), duration: (examClass ? examClass.min : 22) * 60 * 1000 };
       el('timerBox').style.display = '';
+      el('examBarBox').style.display = '';
       tickTimer();
     } else {
       exam = null;
       el('timerBox').style.display = 'none';
+      el('examBarBox').style.display = 'none';
     }
     render();
   }
@@ -329,6 +422,15 @@
     const m = String(Math.floor(remain / 60000)).padStart(2, '0');
     const s = String(Math.floor((remain % 60000) / 1000)).padStart(2, '0');
     el('timer').textContent = `${m}:${s}`;
+    // Thanh tiến trình thời gian (req #73): bám luôn `remain` ở trên, không tự đếm lại.
+    const bar = el('examBar');
+    if (bar) {
+      const pct = Math.max(0, Math.min(100, remain / exam.duration * 100));
+      bar.style.width = pct + '%';
+      // Sắp hết giờ thì đổi màu cảnh báo (dưới 20% và dưới 10%).
+      bar.className = 'examBarFill' + (pct <= 10 ? ' danger' : (pct <= 20 ? ' warn' : ''));
+      el('examBarText').textContent = `Thời gian còn lại: ${m}:${s}`;
+    }
     setTimeout(tickTimer, 1000);
   }
   function submitExam() {
@@ -416,6 +518,58 @@
       }).join('');
   }
   function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+
+  // ===== Bảng tiến độ theo chủ đề (req #75 Thì Dũng) =====
+  // Đếm từ Q (toàn bộ ngân hàng) chứ không từ `list` (đang lọc), và số câu mỗi chủ đề
+  // lấy từ dữ liệu thật — không hardcode, để thêm/bớt câu là bảng tự đúng.
+  const PROG_ROWS = [
+    { g: 'kn', ic: '📖', name: 'Khái niệm & quy tắc' },
+    { g: 'vh', ic: '🤝', name: 'Văn hoá & đạo đức' },
+    { g: 'kt', ic: '🛠️', name: 'Kỹ thuật lái xe' },
+    { g: 'ct', ic: '⚙️', name: 'Cấu tạo & sửa chữa' },
+    { g: 'th', ic: '🚸', name: 'Biển báo' },
+    { g: 'nv', ic: '⚠️', name: 'Tình huống giao thông' },
+  ];
+  function renderProgress() {
+    const box = el('progBox');
+    if (!box || !Q.length) return;
+    // Chỉ hiện ở chế độ luyện tập — trong lúc thi mà bày tiến độ thì vừa rối vừa lộ đáp án.
+    if (mode === 'exam') { box.innerHTML = ''; return; }
+
+    const rows = PROG_ROWS.map(r => {
+      const qs = Q.filter(q => groupOf(q.t) === r.g);
+      const done = qs.filter(q => progress[q.id] !== undefined).length;
+      const right = qs.filter(q => progress[q.id] === q.a).length;
+      const pct = qs.length ? Math.round(done / qs.length * 100) : 0;
+      return { ...r, total: qs.length, done, right, pct };
+    }).filter(r => r.total > 0);
+
+    const allDone = rows.reduce((s, r) => s + r.done, 0);
+    const allRight = rows.reduce((s, r) => s + r.right, 0);
+
+    box.innerHTML = `
+      <div class="progHead">
+        <span class="progChip">📘 <b>${Q.length}</b> câu</span>
+        <span class="progChip">✅ <b>${allDone}</b> đã làm</span>
+        <span class="progChip">🏆 <b>${allRight}</b> đúng</span>
+        <button id="progReset" class="progReset">🗑 Xoá tiến độ</button>
+      </div>
+      <table class="progTable">
+        <thead><tr><th>Hạng mục</th><th>Tiến độ</th><th style="text-align:right">Số câu</th></tr></thead>
+        <tbody>${rows.map(r => `
+          <tr>
+            <td>${r.ic} ${esc(r.name)}</td>
+            <td><div class="progBar"><div class="progFill" style="width:${r.pct}%"></div><span class="progPct">${r.pct}%</span></div></td>
+            <td style="text-align:right;font-weight:700">${r.done}/${r.total}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+    el('progReset').onclick = () => {
+      if (!confirm('Xoá toàn bộ tiến độ đã làm?')) return;
+      progress = {}; saveProg(); answered = {};
+      render(); renderProgress();
+    };
+  }
   function renderHistory() {
     const h = loadHist(), box = el('examHist');
     if (!box) return;
@@ -462,9 +616,16 @@
     document.querySelectorAll('.opt input').forEach(inp => {
       inp.addEventListener('change', () => {
         answered[idx] = +inp.value;
+        // Nhả focus khỏi radio (kể cả khi chọn bằng chuột): focus nằm trên radio thì
+        // trình duyệt nuốt ←/→ để đổi lựa chọn trong nhóm, làm phím đổi câu chết (req #72).
+        inp.blur();
+        // Chỉ ghi tiến độ khi LUYỆN TẬP: câu trong đề thi trùng câu đã luyện, ghi lúc thi
+        // sẽ đè kết quả luyện tập và làm bảng #75 nhảy số giữa lúc đang thi.
+        if (mode !== 'exam') markProgress(list[idx], +inp.value);
         if (mode !== 'exam') showFeedback();
         updateStats();
         renderSidebar();
+        renderProgress();
       });
     });
   }
@@ -487,37 +648,65 @@
     for (const [i, ans] of Object.entries(answered)) {
       if (ans === list[i].a) r++; else w++;
     }
-    el('rightCount').textContent = r;
-    el('wrongCount').textContent = w;
+    // ĐANG THI thì KHÔNG khoe đúng/sai — thi thật chưa nộp là chưa biết kết quả. Đổi sang
+    // đếm "đã làm" như ảnh mẫu SV gửi (req #73). Lộ ở đây thì lưới ô câu giấu cũng vô nghĩa.
+    if (mode === 'exam') {
+      el('statRight').textContent = 'Đã làm:';
+      el('rightCount').textContent = r + w;
+      el('statWrong').style.display = 'none';
+    } else {
+      el('statRight').textContent = 'Đúng:';
+      el('rightCount').textContent = r;
+      el('statWrong').style.display = '';
+      el('wrongCount').textContent = w;
+    }
   }
 
   // Sidebar: ô tìm kiếm + lưới số câu để nhảy nhanh (req #52/#53 Thì Dũng)
+  // Hiện CẢ khi thi (req #73): đang thi mà không nhảy nhanh giữa các câu thì rất bí.
   function renderSidebar() {
-    const show = (mode === 'learn' || mode === 'critical') && list.length > 0;
+    const isExam = mode === 'exam';
+    const show = list.length > 0 && (mode === 'learn' || mode === 'critical' || isExam);
     el('qsidebar').style.display = show ? '' : 'none';
     if (!show) return;
-    const term = (el('qSearch').value || '').trim().toLowerCase();
+    // Lúc thi: giấu tìm kiếm + xoá điểm (không hợp), hiện nút Nộp bài trong cột.
+    el('catBar').style.display = isExam ? 'none' : '';
+    el('qSearch').style.display = isExam ? 'none' : '';
+    document.querySelector('#qsidebar .sbTitle').style.display = isExam ? 'none' : '';
+    el('resetBtn').style.display = isExam ? 'none' : '';
+    el('sbExam').style.display = isExam ? 'none' : '';
+    el('sbSubmit').style.display = isExam ? '' : 'none';
+
+    const term = isExam ? '' : (el('qSearch').value || '').trim().toLowerCase();
     let visible = 0;
     el('qGrid').innerHTML = list.map((q, i) => {
       const match = !term || q.q.toLowerCase().includes(term);
       if (match) visible++;
-      const state = answered[i] === undefined ? '' : (answered[i] === q.a ? 'right' : 'wrong');
+      // Khi THI chỉ đánh dấu "đã chọn" — lộ đúng/sai trước lúc nộp là hỏng bài thi.
+      const state = answered[i] === undefined ? ''
+        : (isExam ? 'picked' : (answered[i] === q.a ? 'right' : 'wrong'));
       const cls = ['qn', i === idx ? 'cur' : '', state].filter(Boolean).join(' ');
-      return `<button class="${cls}" data-i="${i}" ${match ? '' : 'style="display:none"'}>${i + 1}</button>`;
+      const crit = isExam && q.c ? '*' : '';
+      return `<button class="${cls}" data-i="${i}" ${match ? '' : 'style="display:none"'}>${i + 1}${crit}</button>`;
     }).join('');
     el('qGridEmpty').style.display = visible ? 'none' : '';
     el('qGrid').querySelectorAll('.qn').forEach(b => b.onclick = () => { idx = +b.dataset.i; render(); });
   }
   el('qSearch').addEventListener('input', renderSidebar);
-  el('resetBtn').onclick = () => { answered = {}; el('feedback').classList.remove('show'); render(); };
+  // Xoá điểm: xoá cả tiến độ đã lưu, không thì sidebar sạch mà bảng #75 vẫn báo "đã làm".
+  el('resetBtn').onclick = () => {
+    answered = {}; progress = {}; saveProg();
+    el('feedback').classList.remove('show'); render(); renderProgress();
+  };
   el('sbExam').onclick = () => { el('catSelect').value = 'all'; category = 'all'; enterExamPicker(); };
 
   // Ẩn mọi màn thi/luyện để hiện 1 màn chọn (hạng bằng hoặc đề).
   function hideAllExamViews() {
     el('catBar').style.display = 'none'; el('qcard').style.display = 'none'; el('stats').style.display = 'none';
     el('emptyMsg').style.display = 'none'; el('summary').classList.remove('show');
-    el('timerBox').style.display = 'none'; exam = null;
+    el('timerBox').style.display = 'none'; el('examBarBox').style.display = 'none'; exam = null;
     el('qsidebar').style.display = 'none';
+    el('progBox').innerHTML = '';   // bảng tiến độ chỉ thuộc màn luyện tập (req #75)
     document.querySelector('.nav').style.display = 'none';
   }
 
@@ -550,17 +739,30 @@
     el('dePicker').style.display = 'block';
     el('deClsName').textContent = examClass.id;
     el('deMeta').textContent = `${examClass.n} câu · ${examClass.min} phút · đậu ${examClass.pass}/${examClass.n}`;
+    // Trạng thái từng đề lấy từ chính lịch sử thi đã lưu (req #74) — lần thi GẦN
+    // NHẤT quyết định, vì thi lại đạt thì phải hết "Rớt".
+    const hist = loadHist();
+    const lastOf = (deLabel) => hist.find(a => a.cls === examClass.id && a.de === deLabel);
+    const badge = (a) => a
+      ? `<div class="deSt ${a.pass ? 'pass' : 'fail'}">${a.pass ? '✓ Đạt' : '✕ Rớt'} · ${a.right}/${a.total}</div>`
+      : '<div class="deSt none">● Chưa làm</div>';
+
     // Thẻ đầu: bốc câu hỏi ngẫu nhiên (mỗi lần vào 1 đề khác) — req #59.
     const randomCard = `
       <button class="de" data-de="random" style="border-style:dashed">
         <div class="dn">🔀 Câu hỏi ngẫu nhiên</div>
         <div class="dm">${examClass.n} câu · ${examClass.min}'</div>
       </button>`;
-    el('deGrid').innerHTML = randomCard + Array.from({ length: NUM_DE }, (_, i) => i + 1).map(n => `
-      <button class="de" data-de="${n}">
+    el('deGrid').innerHTML = randomCard + Array.from({ length: NUM_DE }, (_, i) => i + 1).map(n => {
+      const label = 'Đề ' + examClass.id + '-' + String(n).padStart(2, '0');
+      const a = lastOf(label);
+      return `
+      <button class="de ${a ? (a.pass ? 'dePass' : 'deFail') : ''}" data-de="${n}">
         <div class="dn">Đề ${examClass.id}-${String(n).padStart(2, '0')}</div>
         <div class="dm">${examClass.n} câu · ${examClass.min}'</div>
-      </button>`).join('');
+        ${badge(a)}
+      </button>`;
+    }).join('');
     el('deGrid').querySelectorAll('.de').forEach(b => b.onclick = () => {
       examDe = b.dataset.de === 'random' ? null : +b.dataset.de;   // null = bốc ngẫu nhiên tự do
       setMode('exam');
@@ -580,7 +782,36 @@
   };
   el('nextBtn').onclick = () => { if (idx < list.length - 1) { idx++; render(); } };
   el('prevBtn').onclick = () => { if (idx > 0) { idx--; render(); } };
+
+  // ===== Phím tắt: ←/→ đổi câu, 1-4 chọn đáp án (req #72 Thì Dũng) =====
+  // Chọn đáp án bằng cách CLICK chính input đang render, không tự set answered[]:
+  // để nguyên listener 'change' lo chấm điểm + feedback + sidebar — một đường đi,
+  // không nhân bản logic (và không lệch khi logic kia đổi).
+  document.addEventListener('keydown', (e) => {
+    // Không cướp phím khi đang gõ tìm kiếm / chọn dropdown.
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' && t.type !== 'radio' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // Chỉ khi đang thực sự làm bài (màn chọn hạng/đề, tổng kết thì bỏ qua).
+    if (el('practiceWrap').style.display === 'none' || !list.length) return;
+
+    if (e.key === 'ArrowRight') { if (idx < list.length - 1) { idx++; render(); } e.preventDefault(); return; }
+    if (e.key === 'ArrowLeft')  { if (idx > 0) { idx--; render(); } e.preventDefault(); return; }
+    if (/^[1-9]$/.test(e.key)) {
+      const inputs = document.querySelectorAll('.opt input');
+      const i = +e.key - 1;
+      if (i < inputs.length) {
+        inputs[i].click();
+        // Nhả focus khỏi radio: nếu để focus ở đó, trình duyệt nuốt ←/→ để chuyển
+        // lựa chọn TRONG nhóm radio → bấm 1 lần rồi mũi tên là chết, không đổi câu
+        // được nữa. Nhả ra thì cả hai phím cùng sống.
+        inputs[i].blur();
+        e.preventDefault();
+      }
+    }
+  });
   el('endBtn').onclick = submitExam;
+  el('sbSubmit').onclick = submitExam;   // nút Nộp bài trong cột trái (req #73) — cùng một hàm
 
   // Mở thẳng chế độ qua URL: ?mode=exam (chọn hạng) | ?mode=critical
   const _m = new URLSearchParams(location.search).get('mode');
