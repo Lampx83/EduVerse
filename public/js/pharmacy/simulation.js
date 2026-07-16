@@ -1,7 +1,8 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0714';
-import { loadDrugs } from './catalog.js?v=ph0714';
+import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0715';
+import { loadDrugs } from './catalog.js?v=ph0715';
+import { initMobileUI } from './mobile-ui.js?v=ph0715';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,8 +30,8 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0714';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0714';
+import { openPosTerminal } from './pos.js?v=ph0715';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0715';
 import { STAGE_LABEL } from './rubric.js';
 
 const $ = (id) => document.getElementById(id);
@@ -178,6 +179,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   // đầu rồi mới ẩn overlay (ẩn ngay sẽ loé mảng trắng 1 nhịp). Không chờ avatar
   // (.glb) vì nếu model lỗi thì overlay sẽ treo mãi.
   requestAnimationFrame(() => requestAnimationFrame(hideSceneLoading));
+  // Vỏ mobile (≤820px): ngăn kéo "Chọn thuốc" + panel hội thoại thành tab dưới.
+  // Trên màn hẹp hộp thuốc chỉ ~6.6px nên KHÔNG chạm trúng được — ngăn kéo là
+  // đường đi thay thế (chạm dòng 48px → focus camera + mở thẳng cửa sổ thuốc).
+  initMobileUI({ sim, openDrug: (id) => sim.pickDrug(id) });
 
   // GIỎ RA LẺ — gom các ĐƠN VỊ ra lẻ (vỉ/gói/viên/ống) đã tách khỏi hộp, chờ cho
   // vào bao bì ra lẻ. KHÁC với KHAY BÁN HÀNG (hộp nguyên đem tính tiền).
