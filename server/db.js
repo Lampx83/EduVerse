@@ -222,7 +222,11 @@ export async function unlockAchievement(player, badge) {
 // → returns { categories: [...], matrix: { actualCat: { placedCat: count } } }
 // --- Requests ("Ban điều hành AI" inbox) ---
 const VALID_REQ_TYPES = new Set(['game', 'theory', 'lab', 'skill', 'other']);
-const VALID_REQ_STATUS = new Set(['pending', 'reviewing', 'done', 'rejected']);
+// 'awaiting_user' = ta chờ HS gửi thêm (ảnh/file/mô tả). setRequestStatus TỪ CHỐI IM
+// LẶNG status lạ (return false, không throw) → quên set này thì mọi nơi gọi vẫn báo
+// thành công mà DB không đổi. Thêm status mới phải sửa CẢ: set này, getRequestStats,
+// 2 whitelist ở admin/index.js, reopenRequestStmt, 3 map STATUS phía client.
+const VALID_REQ_STATUS = new Set(['pending', 'reviewing', 'awaiting_user', 'done', 'rejected']);
 
 const insertRequestStmt = db.prepare(`
   INSERT INTO requests (domain, type, title, detail, student, status, votes, created_at, updated_at, attachments)
@@ -296,7 +300,7 @@ export async function setRequestStatus(id, status, note) {
 }
 export async function getRequestStats(domain) {
   const rows = await requestStatsStmt.all({ domain: String(domain || '') });
-  const out = { pending: 0, reviewing: 0, done: 0, rejected: 0 };
+  const out = { pending: 0, reviewing: 0, awaiting_user: 0, done: 0, rejected: 0 };
   for (const r of rows) out[r.status] = r.n;
   return out;
 }

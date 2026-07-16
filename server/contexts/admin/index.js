@@ -344,7 +344,7 @@ export function attachAdmin(r) {
   });
   r.post('/api/admin/requests/:id/status', requireAdmin, async (req, res) => {
     const status = String(req.body?.status || '');
-    if (!['pending', 'reviewing', 'done', 'rejected'].includes(status)) return res.status(400).json({ error: 'invalid_status' });
+    if (!['pending', 'reviewing', 'awaiting_user', 'done', 'rejected'].includes(status)) return res.status(400).json({ error: 'invalid_status' });
     await Q.setRequestStatus.run({ id: Number(req.params.id), status, note: req.body?.note ? String(req.body.note).slice(0, 500) : null, t: Date.now() });
     res.json({ ok: true });
   });
