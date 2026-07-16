@@ -359,12 +359,12 @@ export function attachAdmin(r) {
     INSERT INTO ai_decisions (request_id, decided_by, action, status_applied, reason, public_note, priority_score, confidence, created_at)
     VALUES (@request_id, 'human', @action, @status, @reason, @public_note, 100, 1.0, @t)
   `);
-  const ACTION_BY_STATUS = { done: 'approve', rejected: 'reject', reviewing: 'approve' };
+  const ACTION_BY_STATUS = { done: 'approve', rejected: 'reject', reviewing: 'approve', awaiting_user: 'defer' };
 
   r.post('/api/admin/requests/:id/reply', requireAdmin, async (req, res) => {
     const id = Number(req.params.id);
     const status = String(req.body?.status || 'done');
-    if (!['done', 'rejected', 'reviewing'].includes(status)) return res.status(400).json({ error: 'invalid_status' });
+    if (!['done', 'rejected', 'reviewing', 'awaiting_user'].includes(status)) return res.status(400).json({ error: 'invalid_status' });
     const message = String(req.body?.message || '').trim();
     if (message.length < 4) return res.status(400).json({ error: 'message_too_short' });
 
@@ -390,6 +390,7 @@ export function attachAdmin(r) {
       done:      'Yêu cầu của bạn đã hoàn thành ✓',
       rejected:  'Phản hồi về yêu cầu của bạn',
       reviewing: 'Yêu cầu của bạn đang được xử lý',
+      awaiting_user: 'Yêu cầu của bạn cần bạn bổ sung thêm ⏳',
     };
     const notif = await createNotification({
       user_display_name: reqRow.student,

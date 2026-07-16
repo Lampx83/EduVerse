@@ -455,6 +455,7 @@ function renderRequests() {
         <option value="all">Tất cả (${reqCache.length})</option>
         <option value="pending">Chờ xử lý (${counts.pending||0})</option>
         <option value="reviewing">Đang xử lý (${counts.reviewing||0})</option>
+        <option value="awaiting_user">Chờ HS bổ sung (${counts.awaiting_user||0})</option>
         <option value="done">Hoàn thành (${counts.done||0})</option>
         <option value="rejected">Từ chối (${counts.rejected||0})</option>
       </select>

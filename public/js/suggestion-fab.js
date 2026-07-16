@@ -24,6 +24,7 @@ const TYPES = [
 const STATUS = {
   pending:   { label: 'Chờ duyệt',    cls: 'pending' },
   reviewing: { label: 'Đang làm',     cls: 'reviewing' },
+  awaiting_user: { label: '⏳ Chờ bạn bổ sung', cls: 'awaiting' },
   done:      { label: '✓ Hoàn thành', cls: 'done' },
   rejected:  { label: 'Chưa thực hiện', cls: 'rejected' },
 };
@@ -612,6 +613,7 @@ function injectStyles() {
     .sgf-it-st { font-size: 11px; padding: 2px 8px; border-radius: 7px; font-weight: 700; white-space: nowrap; }
     .sgf-it-st.pending   { background: #e2e8f0; color: #475569; }
     .sgf-it-st.reviewing { background: #fde68a; color: #92400e; }
+    .sgf-it-st.awaiting  { background: #bfdbfe; color: #1e40af; }
     .sgf-it-st.done      { background: #bbf7d0; color: #065f46; }
     .sgf-it-st.rejected  { background: #fecaca; color: #991b1b; }
     .sgf-it-note {

@@ -383,9 +383,12 @@ const listReqMsgStmt = db.prepare(`
 `);
 const touchRequestStmt = db.prepare(`UPDATE requests SET updated_at = @t WHERE id = @id`);
 // Mở lại yêu cầu đã đóng (done/rejected) → 'reviewing' khi HS gửi thêm tin nhắn.
+// 'awaiting_user' cũng phải nằm đây: đó là trạng thái ta CHỜ HS gửi thêm, nên HS
+// nhắn lại = bóng về sân ta. Thiếu vế này thì gửi ảnh xong vẫn thấy "Chờ bạn bổ
+// sung" → kẹt ngược, đúng lỗi mà nhãn này sinh ra để chữa.
 const reopenRequestStmt = db.prepare(`
   UPDATE requests SET status = 'reviewing', updated_at = @t
-  WHERE id = @id AND status IN ('done', 'rejected')
+  WHERE id = @id AND status IN ('done', 'rejected', 'awaiting_user')
 `);
 
 function safeParseAtts(s) {

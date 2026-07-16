@@ -23,6 +23,10 @@ const TYPE_META = {
 const STATUS_META = {
   pending:   { label: 'Chờ duyệt',   cls: 'pending' },
   reviewing: { label: 'Đang làm',    cls: 'reviewing' },
+  // Bóng ở sân HS: ta đã xem nhưng cần HS gửi thêm (ảnh, file, mô tả rõ hơn) mới đi
+  // tiếp được. Thiếu nhãn này thì việc chờ HS phải đội lốt 'Đang làm' → HS ngồi đợi
+  // ta, ta ngồi đợi HS (req #60 kẹt 7 ngày y vậy).
+  awaiting_user: { label: '⏳ Chờ bạn bổ sung', cls: 'awaiting' },
   done:      { label: '✓ Hoàn thành', cls: 'done' },
   rejected:  { label: 'Từ chối',     cls: 'rejected' },
 };
@@ -271,6 +275,7 @@ function injectStylesOnce() {
     .rb-status { padding: 2px 8px; border-radius: 7px; font-weight: 700; }
     .rb-status.pending   { background: rgba(148,163,184,0.25); }
     .rb-status.reviewing { background: rgba(251,191,36,0.25); }
+    .rb-status.awaiting  { background: rgba(59,130,246,0.25); }
     .rb-status.done      { background: rgba(16,185,129,0.25); }
     .rb-status.rejected  { background: rgba(239,68,68,0.22); opacity: 0.8; }
     .rb-by { opacity: 0.6; }

@@ -15,6 +15,7 @@
 const STATUS = {
   pending:   { label: 'Chờ duyệt',    cls: 'pending' },
   reviewing: { label: 'Đang trao đổi', cls: 'reviewing' },
+  awaiting_user: { label: '⏳ Chờ bạn bổ sung', cls: 'awaiting' },
   done:      { label: '✓ Hoàn thành',  cls: 'done' },
   rejected:  { label: 'Chưa thực hiện', cls: 'rejected' },
 };
@@ -176,6 +177,7 @@ function injectStylesOnce() {
     .rt-status { font-size: 11px; padding: 2px 8px; border-radius: 7px; font-weight: 700; }
     .rt-status.pending   { background: #e2e8f0; color: #475569; }
     .rt-status.reviewing { background: #fde68a; color: #92400e; }
+    .rt-status.awaiting  { background: #bfdbfe; color: #1e40af; }
     .rt-status.done      { background: #bbf7d0; color: #065f46; }
     .rt-status.rejected  { background: #fecaca; color: #991b1b; }
     .rt-count { font-size: 11px; opacity: .6; }

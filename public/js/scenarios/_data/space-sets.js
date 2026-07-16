@@ -1748,7 +1748,6 @@ const SPACES_DRIVING = {
     intro:'Nơi học 600 câu lý thuyết Luật giao thông đường bộ theo Bộ GTVT. Có chế độ luyện + thi thử.',
     rooms:[
       {ic:'📖',name:'600 câu lý thuyết B1/B2',rd:'Luyện theo chương: khái niệm, văn hoá, kỹ thuật, biển báo, sa hình, cấu tạo. Đánh dấu CÂU LIỆT.',href:'/luat-giao-thong-600.html'},
-      {ic:'🧠',name:'AI Quiz tình huống',rd:'AI sinh tình huống thực tế: đi đường mưa, qua đường sắt, gặp xe ưu tiên… Giải thích lý do.',href:'/ai-quiz-gen.html?topic=driving'},
       {ic:'🎓',name:'Học Lái xe thông minh',rd:'Cổng vào nhanh các hoạt động học lý thuyết + biển báo + tình huống.',href:'/hoc-thong-minh.html?subject=driving'},
     ],
     skills:['Hiểu khái niệm cơ bản','Quy tắc nhường đường','Văn hoá lái xe an toàn'],
