@@ -4,6 +4,45 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-16 — Phiên cải tiến (17) · Kinh tế — Sửa lỗi duplicate achievements + typo
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** Kinh tế (`economics`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Quét codebase phát hiện **2 lỗi** trong `public/js/domains/economics/achievements.js`:
+
+1. **Duplicate trigger E4.1**: Achievement `tycoon` (legacy placeholder, icon 🏭) và `strategist` (phiên 9, icon ♟️) cùng trigger `moduleStars: { 'E4.1': 3 }`. Engine sẽ trao **2 huy hiệu** khi sinh viên hoàn thành **1 module** Quản trị chiến lược.
+2. **Duplicate trigger E4.2**: Achievement `founder` (legacy placeholder, icon 🚀) và `lean-founder` (phiên 9, icon 🌱) cùng trigger `moduleStars: { 'E4.2': 3 }`. Cùng vấn đề: 2 huy hiệu cho 1 hành động.
+3. **Typo**: `desc: 'Hoàn thành mọy module Năm 1'` → `mọy` phải là `mọi`.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/economics/achievements.js` | Sửa lỗi | Xóa 2 legacy achievements trùng trigger (tycoon→E4.1, founder→E4.2); sửa typo "mọy"→"mọi" |
+
+### Chi tiết thay đổi
+
+| Achievement bị xóa | ID | Trigger (trùng) | Thay thế bởi |
+|---|---|---|---|
+| Tycoon 🏭 | `tycoon` | `moduleStars: { 'E4.1': 3 }` | `strategist` ♟️ (Chiến lược gia) |
+| Người sáng lập 🚀 | `founder` | `moduleStars: { 'E4.2': 3 }` | `lean-founder` 🌱 (Lean Founder) |
+
+**Typo sửa:** Achievement `all-year-1` (id): `desc` thay `'Hoàn thành mọy module Năm 1'` → `'Hoàn thành mọi module Năm 1'`
+
+**Lý do giữ nguyên `strategist` / `lean-founder`:** Hai achievements này có tên, icon và mô tả phù hợp hơn với module, được thêm vào phiên 9 như một phần của cấu trúc chính thức Năm 4 Kinh tế.
+
+### Kiểm tra
+
+| File | Kết quả `node --check` |
+|------|----------------------|
+| `public/js/domains/economics/achievements.js` | ✅ Pass |
+
+---
+
 ## 2026-07-14 — Phiên cải tiến (16) · Kinh tế · Lái xe · Ngoại ngữ — 3 Game + 15 Achievements mới
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; không có production DB).
