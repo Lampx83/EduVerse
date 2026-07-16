@@ -1,7 +1,7 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0713';
-import { loadDrugs } from './catalog.js?v=ph0713';
+import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0714';
+import { loadDrugs } from './catalog.js?v=ph0714';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -29,8 +29,8 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0713';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0713';
+import { openPosTerminal } from './pos.js?v=ph0714';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0714';
 import { STAGE_LABEL } from './rubric.js';
 
 const $ = (id) => document.getElementById(id);
@@ -71,12 +71,29 @@ function detectUnitKind(drug) {
   return 'vi';
 }
 
+// ── Overlay tải (#scene-loading trong markup trang) ─────────────────────────
+// Trước đây vào trang trên điện thoại là MẢNG TRẮNG vài giây không báo gì. Overlay
+// hiện sẵn từ HTML; ở đây chỉ cập nhật BƯỚC rồi ẩn khi khung 3D đầu tiên đã vẽ.
+function setLoadingStep(text) {
+  const el = document.getElementById('scene-loading-step');
+  if (el) el.textContent = text;
+}
+function hideSceneLoading() {
+  const el = document.getElementById('scene-loading');
+  if (!el) return;
+  (window.__sceneLoadingTimers || []).forEach(clearTimeout);   // tắt nhắc "mạng chậm"/lỗi
+  el.classList.add('is-hidden');
+  setTimeout(() => el.remove(), 400);                          // gỡ sau khi fade xong
+}
+
 export async function startSimulation({ moduleId = 'gpp' } = {}) {
   // 0. Nạp danh mục thuốc từ DB (content_datasets) TRƯỚC khi buildScene — scene.js
   //    đọc ALL_DRUGS/CABINETS lúc dựng kệ. loadDrugs() fill ALL_DRUGS bằng push.
+  setLoadingStep('Đang tải danh mục thuốc…');
   await loadDrugs();
 
   // 1. Create session on server
+  setLoadingStep('Đang tạo phiên thực hành…');
   let session, scenario;
   try {
     const r = await fetch('/api/pharmacy/session', {
@@ -87,6 +104,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     if (!r.ok) throw new Error(data.error || 'session create failed');
     session = data.session; scenario = data.scenario;
   } catch (e) {
+    hideSceneLoading();   // KHÔNG để overlay đứng mãi khi lỗi phiên
     alert('Không khởi tạo được phiên: ' + e.message + '\nKiểm tra đăng nhập?');
     return;
   }
@@ -125,6 +143,7 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   const _avatarCond = (() => { try { return localStorage.getItem(AVATAR_COND_KEY) || 'none'; } catch { return 'none'; } })();
   const _avatarExpr = (() => { try { return localStorage.getItem(AVATAR_EXPR_KEY) || 'none'; } catch { return 'none'; } })();
   const _avatarHair = (() => { try { return localStorage.getItem(AVATAR_HAIR_KEY) || null; } catch { return null; } })();
+  setLoadingStep('Đang dựng nhà thuốc 3D…');
   const sim = buildScene($('scene-canvas'), {
     avatarUrl: _avatarUrl,
     avatarHeight: _avatarHeight,
@@ -155,6 +174,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     onToast: (msg) => showToast(msg)
   });
   window.__sim = sim;
+  // buildScene đã set animation loop → đợi 2 khung hình để renderer VẼ XONG khung
+  // đầu rồi mới ẩn overlay (ẩn ngay sẽ loé mảng trắng 1 nhịp). Không chờ avatar
+  // (.glb) vì nếu model lỗi thì overlay sẽ treo mãi.
+  requestAnimationFrame(() => requestAnimationFrame(hideSceneLoading));
 
   // GIỎ RA LẺ — gom các ĐƠN VỊ ra lẻ (vỉ/gói/viên/ống) đã tách khỏi hộp, chờ cho
   // vào bao bì ra lẻ. KHÁC với KHAY BÁN HÀNG (hộp nguyên đem tính tiền).

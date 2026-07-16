@@ -128,6 +128,28 @@ const LEGACY_CSS = `
     border: 1px solid var(--border);
   }
   #scene-canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  /* Overlay TẢI — che vùng canvas từ khung hình ĐẦU TIÊN tới khi scene 3D dựng xong.
+     Trước đây .scene-wrap nền #e8eef5 → trên điện thoại người dùng nhìn MẢNG TRẮNG
+     vài giây (tải three.js từ CDN + catalog 165 thuốc + dựng scene) mà không biết
+     có gì đang chạy. GIỮ ĐỒNG BỘ với public/nha-thuoc-3d.html. */
+  .scene-loading {
+    position: absolute; inset: 0; z-index: 120;
+    background: linear-gradient(180deg, #0f172a, #1e293b);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 20px; text-align: center;
+    transition: opacity 0.35s ease;
+  }
+  .scene-loading.is-hidden { opacity: 0; pointer-events: none; }
+  .scene-loading-spin {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 3px solid rgba(56,189,248,0.25); border-top-color: #38bdf8;
+    animation: scene-spin 0.9s linear infinite;
+  }
+  @keyframes scene-spin { to { transform: rotate(360deg); } }
+  .scene-loading-title { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+  .scene-loading-step { font-size: 12.5px; color: #94a3b8; min-height: 16px; }
+  .scene-loading-slow { font-size: 12px; color: #fbbf24; max-width: 300px; line-height: 1.55; }
+  @media (prefers-reduced-motion: reduce) { .scene-loading-spin { animation-duration: 3s; } }
   .scene-overlay {
     position: absolute; top: 10px; left: 10px; right: 10px;
     display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
@@ -1132,7 +1154,32 @@ export default function NhaThuoc3DPage() {
     s.src = `/legacy/nha-thuoc-3d.js?ts=${Date.now()}`;
     document.body.appendChild(s);
 
+    // 4) Mốc cứu overlay tải: nếu three.js/CDN hoặc simulation.js nạp LỖI thì
+    //    simulation.js không chạy → overlay đứng mãi không báo gì. 12s nhắc mạng
+    //    chậm; 45s coi như hỏng → báo lỗi + nút tải lại. simulation.js clear 2
+    //    timer này qua window.__sceneLoadingTimers khi dựng scene xong.
+    const slowT = window.setTimeout(() => {
+      const el = document.getElementById('scene-loading-slow');
+      if (el && document.getElementById('scene-loading')) el.hidden = false;
+    }, 12000);
+    const deadT = window.setTimeout(() => {
+      const wrap = document.getElementById('scene-loading');
+      if (!wrap) return;
+      const step = document.getElementById('scene-loading-step');
+      const slowEl = document.getElementById('scene-loading-slow');
+      const spin = wrap.querySelector('.scene-loading-spin') as HTMLElement | null;
+      if (spin) spin.style.display = 'none';
+      if (step) step.textContent = 'Không tải được nhà thuốc 3D.';
+      if (slowEl) {
+        slowEl.hidden = false;
+        slowEl.textContent = 'Có thể do mạng hoặc trình duyệt không hỗ trợ WebGL. Hãy tải lại trang.';
+      }
+    }, 45000);
+    (window as any).__sceneLoadingTimers = [slowT, deadT];
+
     return () => {
+      clearTimeout(slowT);
+      clearTimeout(deadT);
       s.remove();
       style.remove();
       fs.remove();
@@ -1150,6 +1197,14 @@ export default function NhaThuoc3DPage() {
     <div className="app">
       <div className="scene-wrap">
         <canvas id="scene-canvas"></canvas>
+        {/* Overlay tải: render ngay từ SSR, simulation.js cập nhật bước rồi ẩn khi
+            khung hình 3D đầu tiên đã vẽ. */}
+        <div id="scene-loading" className="scene-loading">
+          <div className="scene-loading-spin"></div>
+          <div className="scene-loading-title">Đang tải nhà thuốc 3D…</div>
+          <div id="scene-loading-step" className="scene-loading-step">Đang khởi động…</div>
+          <div id="scene-loading-slow" className="scene-loading-slow" hidden>Mạng có vẻ chậm. Nếu chờ quá lâu, hãy tải lại trang.</div>
+        </div>
         {/* scene-overlay đã bỏ theo yêu cầu (button Trang chủ + title) */}
         <h1 id="scenario-title" hidden>Nhà thuốc GPP 3D</h1>
         {/* Tooltip hover hộp thuốc: brand · strength · HD · tồn */}

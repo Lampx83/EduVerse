@@ -118,6 +118,28 @@
     border: 1px solid var(--border);
   }
   #scene-canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  /* Overlay TẢI — che vùng canvas từ khung hình ĐẦU TIÊN tới khi scene 3D dựng xong.
+     Trước đây .scene-wrap nền #e8eef5 → trên điện thoại người dùng nhìn MẢNG TRẮNG
+     vài giây (tải three.js từ CDN + catalog 165 thuốc + dựng scene) mà không biết
+     có gì đang chạy. Markup TĨNH nên hiện ngay, không phải chờ JS/module. */
+  .scene-loading {
+    position: absolute; inset: 0; z-index: 120;
+    background: linear-gradient(180deg, #0f172a, #1e293b);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 20px; text-align: center;
+    transition: opacity 0.35s ease;
+  }
+  .scene-loading.is-hidden { opacity: 0; pointer-events: none; }
+  .scene-loading-spin {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 3px solid rgba(56,189,248,0.25); border-top-color: #38bdf8;
+    animation: scene-spin 0.9s linear infinite;
+  }
+  @keyframes scene-spin { to { transform: rotate(360deg); } }
+  .scene-loading-title { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+  .scene-loading-step { font-size: 12.5px; color: #94a3b8; min-height: 16px; }
+  .scene-loading-slow { font-size: 12px; color: #fbbf24; max-width: 300px; line-height: 1.55; }
+  @media (prefers-reduced-motion: reduce) { .scene-loading-spin { animation-duration: 3s; } }
   .scene-overlay {
     position: absolute; top: 10px; left: 10px; right: 10px;
     display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
@@ -1065,6 +1087,14 @@
 <div class="app">
   <div class="scene-wrap">
     <canvas id="scene-canvas"></canvas>
+    <!-- Overlay tải: hiện NGAY (markup tĩnh), simulation.js cập nhật bước rồi ẩn
+         khi khung hình 3D đầu tiên đã vẽ. -->
+    <div id="scene-loading" class="scene-loading">
+      <div class="scene-loading-spin"></div>
+      <div class="scene-loading-title">Đang tải nhà thuốc 3D…</div>
+      <div id="scene-loading-step" class="scene-loading-step">Đang khởi động…</div>
+      <div id="scene-loading-slow" class="scene-loading-slow" hidden>Mạng có vẻ chậm. Nếu chờ quá lâu, hãy tải lại trang.</div>
+    </div>
     <!-- scene-overlay đã bỏ theo yêu cầu (button Trang chủ + title) -->
     <h1 id="scenario-title" hidden>Nhà thuốc GPP 3D</h1>
     <!-- Tooltip hover hộp thuốc: brand · strength · HD · tồn -->
@@ -1131,6 +1161,33 @@
   </aside>
 </div>
 
+<!-- Script CLASSIC (không phải module): vẫn chạy kể cả khi three.js/CDN hoặc
+     simulation.js nạp lỗi — lúc đó overlay tải sẽ đứng mãi mà không báo gì.
+     Sau 12s hiện nhắc "mạng chậm"; sau 45s coi như hỏng → báo lỗi + nút tải lại. -->
+<script>
+  (function () {
+    var slow = setTimeout(function () {
+      var el = document.getElementById('scene-loading-slow');
+      if (el && document.getElementById('scene-loading')) el.hidden = false;
+    }, 12000);
+    var dead = setTimeout(function () {
+      var wrap = document.getElementById('scene-loading');
+      if (!wrap) return;                       // đã tải xong → thôi
+      var step = document.getElementById('scene-loading-step');
+      var slowEl = document.getElementById('scene-loading-slow');
+      var spin = wrap.querySelector('.scene-loading-spin');
+      if (spin) spin.style.display = 'none';
+      if (step) step.textContent = 'Không tải được nhà thuốc 3D.';
+      if (slowEl) {
+        slowEl.hidden = false;
+        slowEl.innerHTML = 'Có thể do mạng hoặc trình duyệt không hỗ trợ WebGL. ' +
+          '<button type="button" style="margin-top:8px;padding:8px 14px;border-radius:8px;border:1px solid #38bdf8;background:rgba(56,189,248,0.15);color:#e2e8f0;font:inherit;cursor:pointer" onclick="location.reload()">Tải lại trang</button>';
+      }
+    }, 45000);
+    window.__sceneLoadingTimers = [slow, dead];   // simulation.js clear khi xong
+  })();
+</script>
+
 <script type="importmap">
 {
   "imports": {
@@ -1140,7 +1197,7 @@
 }
 </script>
 <script type="module">
-  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0713';
+  import { startSimulation } from './js/pharmacy/simulation.js?v=ph0714';
   const params = new URLSearchParams(location.search);
   const moduleId = params.get('module') || 'gpp';
   document.getElementById('scenario-subtitle').textContent = moduleId === 'gpp' ? 'Nhà thuốc Thực Hành' : moduleId;
