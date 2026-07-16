@@ -84,7 +84,7 @@ export async function renderRequestThread({ host, requestId, me = '', onChange }
 
   let data;
   try {
-    const r = await fetch(`api/requests/${requestId}/thread`);
+    const r = await fetch(`/api/requests/${requestId}/thread`);
     if (!r.ok) throw new Error('http ' + r.status);
     data = await r.json();
   } catch {
@@ -135,7 +135,7 @@ export async function renderRequestThread({ host, requestId, me = '', onChange }
     sendBtn.disabled = true;
     msgEl.textContent = 'Đang gửi…';
     try {
-      const r = await fetch(`api/requests/${requestId}/messages`, {
+      const r = await fetch(`/api/requests/${requestId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',

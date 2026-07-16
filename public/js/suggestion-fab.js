@@ -311,7 +311,7 @@ function bind(root) {
 
   // Upload 1 file/blob qua /api/requests/attachments. Trả về meta {url,name,mime,size,kind}.
   async function uploadOne(blob, name, kind) {
-    const r = await fetch('api/requests/attachments', {
+    const r = await fetch('/api/requests/attachments', {
       method: 'POST',
       headers: {
         'Content-Type': blob.type || 'application/octet-stream',
@@ -389,7 +389,7 @@ function bind(root) {
       }
 
       msg.textContent = 'Đang gửi…';
-      const r = await fetch('api/requests', {
+      const r = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -431,7 +431,7 @@ function bind(root) {
     inbox.textContent = 'Đang tải…';
     try {
       const dom = inferDomain();
-      const r = await fetch(`api/requests?domain=${encodeURIComponent(dom)}&limit=50`);
+      const r = await fetch(`/api/requests?domain=${encodeURIComponent(dom)}&limit=50`);
       const data = await r.json();
       const me = (typeof getPlayerName === 'function' && getPlayerName()) || '';
       let items = (data.items || []);
