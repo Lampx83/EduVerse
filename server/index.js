@@ -15,7 +15,7 @@ import { attachCodelabWebhook } from './contexts/integration/codelab-webhook.js'
 import * as scoreup from './integrations/scoreup.js';
 import * as codelab from './integrations/codelab.js';
 import { getContestProblemSlugs, getContestName, hasContestMapping } from './integrations/codelab-contests.js';
-import { countCodelabAcceptedProblems } from './db.js';
+import { countCodelabAcceptedProblems, DATA_DIR } from './db.js';
 import { recordQuestionAttempt, getRecentQuestionAttempts, getSrsStateByPrefix, recordSrsReview, pruneScoreUpEventsSeen } from './db.js';
 import { attachAssets } from './assets.js';
 import { attachAdaptive } from './adaptive.js';
@@ -62,7 +62,9 @@ const PUBLIC_DIR = path.resolve(ROOT_DIR, 'public');
 const MEDIAPIPE_DIR = path.resolve(ROOT_DIR, 'node_modules', '@mediapipe', 'tasks-vision');
 // Thư mục lưu ảnh/file đính kèm cho "Ban điều hành AI". Tạo lười khi cần.
 // File phục vụ qua /uploads/requests/... (mount express.static phía dưới).
-const REQUEST_UPLOADS_DIR = path.resolve(ROOT_DIR, 'data', 'uploads', 'requests');
+// Đặt dưới DATA_DIR (volume) chứ KHÔNG dưới ROOT_DIR: /app nằm trong image nên
+// mọi file SV gửi kèm sẽ bị xoá mỗi lần container recreate/rebuild.
+const REQUEST_UPLOADS_DIR = path.resolve(DATA_DIR, 'uploads', 'requests');
 const PORT = Number(process.env.PORT) || 8041;
 const HOST = process.env.HOST || '0.0.0.0';
 // Optional path prefix when deployed behind a reverse proxy at a sub-path

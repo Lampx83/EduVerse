@@ -14,11 +14,14 @@
 import { db } from '../../db.js';
 import { requireAdmin } from '../admin/index.js';
 
+// active=1: item có mặt trong file seed thì phải hiện lại. Thiếu vế này, item từng
+// bị pruneSeed tắt (vd biển báo/sa hình lọc ra khi chưa có ảnh) sẽ nằm im vĩnh viễn
+// dù đã quay lại file gốc — seed chạy xong vẫn 0 câu, rất khó lần ra.
 const upsertSeedStmt = db.prepare(`
   INSERT INTO content_datasets (collection, item_key, body, ord, source, active, updated_at)
   VALUES (@collection, @item_key, @body, @ord, 'seed', 1, @updated_at)
   ON CONFLICT(collection, item_key) DO UPDATE SET
-    body=@body, ord=@ord, updated_at=@updated_at
+    body=@body, ord=@ord, active=1, updated_at=@updated_at
   WHERE content_datasets.source <> 'admin'
 `);
 const upsertEditStmt = db.prepare(`
@@ -92,8 +95,9 @@ export async function attachContent(router) {
     res.json({ ok: true });
   });
 
+  // source='admin' để lần seed sau không bật lại item admin vừa tắt.
   router.delete('/api/content/:collection/:key', requireAdmin, async (req, res) => {
-    const info = await db.prepare(`UPDATE content_datasets SET active=0, updated_at=? WHERE collection=? AND item_key=?`)
+    const info = await db.prepare(`UPDATE content_datasets SET active=0, source='admin', updated_at=? WHERE collection=? AND item_key=?`)
       .run(Date.now(), req.params.collection, req.params.key);
     if (!info.changes) return res.status(404).json({ error: 'not_found' });
     res.json({ ok: true });
