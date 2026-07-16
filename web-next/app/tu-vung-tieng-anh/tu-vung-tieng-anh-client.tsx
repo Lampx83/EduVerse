@@ -5,12 +5,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // ─────────────────────────────────────────────────────────────────────────────
 //  TỪ VỰNG TIẾNG ANH CHUYÊN NGÀNH — bản React (Next) của trang vanilla cũ.
 //
-//  CONTENT (bộ từ vựng theo chủ đề) KHÔNG hardcode trong file này. Trang gốc
-//  hardcode object `VOCAB` trong inline <script>. CHƯA có API/collection DB phục
-//  vụ danh sách từ này, nên ta LẤY LẠI từ nguồn cũ: fetch trang HTML gốc qua
-//  fallback proxy (/tu-vung-tieng-anh.html) rồi trích object VOCAB từ inline
-//  script. Đây là tham chiếu nguồn duy nhất — không nhân bản content ra code.
-//  → risks: cần đưa VOCAB vào DB + tạo /api/content/vocab-en để bỏ phụ thuộc này.
+//  CONTENT (bộ từ vựng theo chủ đề) KHÔNG hardcode trong file này: đọc DB qua
+//  /api/content/vocab-en — mỗi row = 1 chủ đề { topic, label, words[] }. Nguồn
+//  seed: public/js/scenarios/_data/vocab-en.js (node server/scripts/seed-content.mjs).
+//
+//  LỊCH SỬ LỖI (2026-07-16): bản đầu scrape object VOCAB từ inline script của
+//  trang HTML cũ (/tu-vung-tieng-anh.html). Khi trang này vào danh sách MIGRATED
+//  thì Next 308 /tu-vung-tieng-anh.html → /tu-vung-tieng-anh, tức fetch quay về
+//  CHÍNH TRANG NÀY — không còn VOCAB để trích → mất sạch flashcard + các tác vụ.
+//  Đừng dựng lại fallback trỏ vào URL .html của trang đã migrate.
 //
 //  Chấm câu/bài viết dùng API thật: /api/ai/grade-sentence, /api/ai/grade-writing.
 //  Nhập từ file dùng /api/ai/extract-vocab. Tất cả fetch credentials:'same-origin'.
@@ -73,17 +76,24 @@ function loadCustom(): Custom {
   return { words: c.words || {}, labels: c.labels || {} };
 }
 
-// ── Trích VOCAB từ trang HTML gốc (nguồn content duy nhất; xem ghi chú đầu file) ──
-function parseVocabFromHtml(html: string): Vocab | null {
-  const m = html.match(/const\s+VOCAB\s*=\s*(\{[\s\S]*?\n\s*\};)/);
-  if (!m) return null;
-  const objText = m[1].replace(/;\s*$/, '');
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-    const fn = new Function('return (' + objText + ')');
-    const v = fn() as Vocab;
-    return v && typeof v === 'object' ? v : null;
-  } catch { return null; }
+// ── Đọc bộ từ vựng từ DB (/api/content/vocab-en) ────────────────────────────
+// Mỗi row = 1 chủ đề. Giữ thứ tự row trả về (ord trong DB) làm thứ tự hiển thị.
+type TopicRow = { topic: string; label?: string; words?: Word[] };
+type LoadedVocab = { vocab: Vocab; labels: Record<string, string>; order: string[] };
+
+async function fetchVocabFromDb(): Promise<LoadedVocab | null> {
+  const r = await fetch('/api/content/vocab-en', { credentials: 'same-origin' });
+  if (!r.ok) return null;
+  const d = await r.json();
+  const rows: TopicRow[] = Array.isArray(d?.items) ? d.items : [];
+  const out: LoadedVocab = { vocab: {}, labels: {}, order: [] };
+  for (const row of rows) {
+    if (!row?.topic || !Array.isArray(row.words) || !row.words.length) continue;
+    out.vocab[row.topic] = row.words;
+    if (row.label) out.labels[row.topic] = row.label;
+    out.order.push(row.topic);
+  }
+  return out.order.length ? out : null;
 }
 
 // ── Phát âm (Web Speech API) ────────────────────────────────────────────────
@@ -112,6 +122,7 @@ export default function TuVungTiengAnhClient() {
   const storeRef = useRef<Store>({ cards: {}, streak: { count: 0, last: null } });
   const customRef = useRef<Custom>({ words: {}, labels: {} });
   const vocabRef = useRef<Vocab>({});
+  const dbOrderRef = useRef<string[]>([]);
   const backHref = useRef('/school.html?domain=language');
 
   useEffect(() => { vocabRef.current = vocab; }, [vocab]);
@@ -125,38 +136,24 @@ export default function TuVungTiengAnhClient() {
     if (dom) backHref.current = '/school.html?domain=' + encodeURIComponent(dom);
 
     (async () => {
-      let base: Vocab | null = null;
-      // 1) thử API DB (chưa tồn tại — dự phòng cho tương lai)
-      try {
-        const r = await fetch('/api/content/vocab-en', { credentials: 'same-origin' });
-        if (r.ok) {
-          const d = await r.json();
-          if (d?.items?.length && d.items[0]?.topics) base = d.items[0].topics as Vocab;
-        }
-      } catch { /* ignore */ }
-      // 2) fallback: trích từ trang HTML gốc (nguồn hiện tại)
-      if (!base) {
-        try {
-          const r = await fetch('/tu-vung-tieng-anh.html', { credentials: 'same-origin' });
-          if (r.ok) base = parseVocabFromHtml(await r.text());
-        } catch { /* ignore */ }
-      }
-      if (!base) { setLoadErr('Không tải được bộ từ vựng. Vui lòng thử lại.'); setReady(true); return; }
+      let loaded: LoadedVocab | null = null;
+      try { loaded = await fetchVocabFromDb(); } catch { /* ignore */ }
+      if (!loaded) { setLoadErr('Không tải được bộ từ vựng. Vui lòng thử lại.'); setReady(true); return; }
 
       // gộp từ do người dùng thêm (custom, localStorage)
       const merged: Vocab = {};
-      for (const [k, arr] of Object.entries(base)) merged[k] = arr.slice();
+      for (const [k, arr] of Object.entries(loaded.vocab)) merged[k] = arr.slice();
       const cust = customRef.current;
       for (const [t, arr] of Object.entries(cust.words)) {
         if (!merged[t]) merged[t] = [];
         for (const it of arr) if (!merged[t].some((x) => x.w.toLowerCase() === it.w.toLowerCase())) merged[t].push(it);
       }
-      setLabels({ ...TOPIC_LABELS, ...cust.labels });
+      setLabels({ ...TOPIC_LABELS, ...loaded.labels, ...cust.labels });
+      dbOrderRef.current = loaded.order;
 
       const t = params.get('topic');
-      let start = 'cntt';
+      let start = loaded.order[0] || 'cntt';
       if (t && merged[t]) start = t;
-      else if (!merged[start]) start = Object.keys(merged)[0] || 'cntt';
       setTopic(start);
       setVocab(merged);
       setStreakDisp(streakValid());
@@ -653,8 +650,12 @@ export default function TuVungTiengAnhClient() {
   }, []);
   useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
-  // ── options chủ đề (theo thứ tự chuẩn + custom) ──
-  const topicOrder = [...TOPIC_ORDER, ...Object.keys(customRef.current.labels)];
+  // ── options chủ đề: thứ tự DB trước, rồi custom; Object.keys(vocab) chốt hậu
+  // để chủ đề mới thêm ở DB không bị rơi khỏi dropdown. ──
+  const topicOrder = [
+    ...dbOrderRef.current, ...TOPIC_ORDER,
+    ...Object.keys(customRef.current.labels), ...Object.keys(vocab),
+  ];
   const seen = new Set<string>();
   const topicKeys = topicOrder.filter((k) => { if (seen.has(k) || !vocab[k]) return false; seen.add(k); return true; });
   const addTopicKeys = topicKeys;

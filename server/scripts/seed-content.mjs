@@ -6,8 +6,12 @@
 //
 // Idempotent — không đè bản source='admin'.
 //
-// Dùng:  node server/scripts/seed-content.mjs [--dry]
-// Prod:  docker exec tizia node server/scripts/seed-content.mjs
+// Dùng:  node server/scripts/seed-content.mjs [--dry] [--only=a,b]
+// Prod:  docker exec tizia node server/scripts/seed-content.mjs --only=vocab-en
+//
+// --only: chỉ seed các collection nêu tên. Chạy KHÔNG --only là seed lại TẤT CẢ,
+// mà pruneSeed sẽ bật/tắt active theo file gốc → collection nào đã chỉnh tay trên
+// prod (vd driving-600) có thể đổi số item. Vá 1 collection thì luôn dùng --only.
 // ============================================================
 
 import { pathToFileURL } from 'node:url';
@@ -16,11 +20,14 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DRY = process.argv.includes('--dry');
+const ONLY = (process.argv.find((a) => a.startsWith('--only=')) || '').slice(7)
+  .split(',').map((s) => s.trim()).filter(Boolean);
 const dataUrl = (p) => pathToFileURL(resolve(__dirname, '../../public/js/scenarios/_data', p)).href;
 
 // collection → { file, export } : tên file trong _data/ + tên export mảng data.
 // file: đường dẫn từ _data/ (dùng '../x.js' để đọc file gốc còn vai seed khác).
 // wrap: data là 1 object (không phải mảng) → bọc thành 1 item.
+// key: tên field dùng làm item_key (mặc định item.id, không có thì lấy chỉ số).
 const REGISTRY = [
   { collection: 'history-characters', file: 'history-characters.js', export: 'HISTORY_CHARACTERS' },
   { collection: 'patient-cases',      file: 'patient-cases.js',      export: 'PATIENT_CASES' },
@@ -49,12 +56,16 @@ const REGISTRY = [
   { collection: 'traffic-signs',      file: 'bien-bao-giao-thong.js', export: 'TRAFFIC_SIGNS' },
   { collection: 'code-quest-levels',  file: 'code-quest.js',          export: 'CODE_QUEST_LEVELS' },
   { collection: 'lop2-dao-duc',       file: 'lop2-dao-duc.js',        export: 'POOL' },
+  // 2026-07-16: từ vựng trường Ngoại ngữ — trước kẹt trong inline script của
+  // trang HTML cũ, trang Next scrape lại nên vỡ khi .html bị 308 → nay vào DB.
+  { collection: 'vocab-en',           file: 'vocab-en.js',            export: 'VOCAB_EN_TOPICS', key: 'topic' },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');
 
 let grand = 0;
 for (const r of REGISTRY) {
+  if (ONLY.length && !ONLY.includes(r.collection)) continue;
   let arr = [];
   try {
     const mod = await import(dataUrl(r.file));
@@ -73,7 +84,7 @@ for (const r of REGISTRY) {
     grand += arr.length;
     continue;
   }
-  const n = await seedCollection(r.collection, arr);
+  const n = await seedCollection(r.collection, arr, r.key ? ((it, i) => it[r.key] ?? i) : undefined);
   console.log(`[seed-content] ✓ ${r.collection}: ${n} item (DB có ${await collectionCount(r.collection)})`);
   grand += n;
 }
