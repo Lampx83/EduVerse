@@ -16,14 +16,6 @@ export const ACHIEVEMENTS = [
     desc: '10 quiz hoàn thành',
     trigger: { quizzesPassed: 10 } },
 
-  { id: 'tycoon',       icon: '🏭', title: 'Tycoon',
-    desc: 'Pass module Quản trị chiến lược (E4.1) với 3 sao',
-    trigger: { moduleStars: { 'E4.1': 3 } } },
-
-  { id: 'founder',      icon: '🚀', title: 'Người sáng lập',
-    desc: 'Pass module Khởi nghiệp (E4.2) với 3 sao',
-    trigger: { moduleStars: { 'E4.2': 3 } } },
-
   { id: 'thesis',       icon: '🎓', title: 'Khoá luận xuất sắc',
     desc: 'Pass khoá luận E4.6',
     trigger: { moduleStars: { 'E4.6': 2 } } },
@@ -33,7 +25,7 @@ export const ACHIEVEMENTS = [
     trigger: { totalStars: 30 } },
 
   { id: 'all-year-1',   icon: '🥇', title: 'Tốt nghiệp Năm 1',
-    desc: 'Hoàn thành mọy module Năm 1',
+    desc: 'Hoàn thành mọi module Năm 1',
     trigger: { yearComplete: 1 } },
 
   { id: 'micro-star',   icon: '📉', title: 'Chuyên gia Vi mô',
