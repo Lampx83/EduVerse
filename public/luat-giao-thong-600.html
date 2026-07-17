@@ -200,7 +200,24 @@
     padding:10px; border-radius:10px; border:0; background:var(--red); color:#fff; cursor:pointer; }
   .sbSubmit:hover { filter:brightness(1.1); }
   /* Thanh thời gian khi thi (req #73) */
-  #examBarBox { width:100%; max-width:1120px; margin:0 auto 4px; }
+  /* Header màn thi (req #81) — khối riêng, full width, trên cả 2 cột. */
+  #examHead { width:100%; max-width:1120px; margin:0 auto; background:var(--card);
+    border:1px solid var(--border); border-radius:14px; padding:12px 14px; box-sizing:border-box; }
+  .ehChips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:10px; }
+  .ehChip { font-size:12.5px; color:var(--muted); background:rgba(0,0,0,.22); border:1px solid var(--border);
+    border-radius:8px; padding:6px 11px; white-space:nowrap; }
+  .ehChip b { color:var(--text); }
+  /* KHI THI: cột trái giãn cao BẰNG cột phải → hai khung cân nhau như ảnh mẫu SV gửi
+     (req #81). Bỏ sticky vì sticky + stretch đá nhau; đổi lại "Nộp bài" tụt xuống đáy
+     cột, nhìn có chủ ý thay vì lửng lơ giữa khoảng trống. Chỉ áp cho màn thi — màn
+     luyện tập giữ sticky (600 câu, cuộn dài, cần lưới số câu bám theo). */
+  #practiceWrap.exam #qsidebar { position:static; align-self:stretch; display:flex; flex-direction:column; }
+  #practiceWrap.exam #sbSubmit { margin-top:auto; }
+  /* Hàng điều hướng trên đầu thẻ khi thi (req #81) */
+  .qnavTop { display:flex; align-items:center; gap:10px; margin:-4px 0 14px; }
+  .qnavTop .lnkbtn { font-size:12.5px; padding:6px 12px; border-radius:8px; }
+  .qnavIdx { margin:0 auto; font-size:13px; color:var(--muted); }
+  .qnavIdx b { color:var(--text); }
   .examBarTrack { position:relative; height:26px; background:rgba(255,255,255,.06);
     border:1px solid var(--border); border-radius:99px; overflow:hidden; }
   .examBarFill { height:100%; width:100%; background:linear-gradient(90deg,#059669,#10b981); transition:width 1s linear; }
@@ -221,7 +238,10 @@
 <body>
 <h1>🚦 Lý thuyết Lái xe ô tô — Luật giao thông đường bộ</h1>
 
-<div class="toolbar">
+<!-- id để ẩn thanh này KHI ĐANG THI (req #80): lúc thi mà còn nút "Luyện tập" thì
+     bấm nhầm là mất bài. Vẫn hiện ở màn chọn hạng/chọn đề và màn tổng kết, nên
+     đường quay về Luyện tập không mất. -->
+<div class="toolbar" id="modeBar">
   <button data-mode="learn" class="active">📖 Luyện tập</button>
   <button data-mode="exam">📝 Thi sát hạch theo hạng</button>
   <!-- Nút "Chỉ câu liệt" đã bỏ theo góp ý SV #58 (gây rối); câu điểm liệt vẫn
@@ -255,6 +275,22 @@
   <div style="text-align:center;margin-top:16px">
     <button class="lnkbtn" id="deBack">← Quay lại chọn hạng</button>
   </div>
+</div>
+
+<!-- Header màn thi (req #81, dựng theo ảnh mẫu SV gửi): gom hạng/đề + số câu +
+     đồng hồ + đã làm thành một khối chip, kèm thanh thời gian.
+     ĐẶT NGOÀI #mainCol — trước đây stats + thanh thời gian nằm TRONG cột phải nên
+     đội chiều cao cột phải lên, hai cột lệch nhau. Tách ra chạy hết chiều ngang thì
+     hai cột bắt đầu cùng một đường, đúng như ảnh SV gửi.
+     Tiện thể lộ luôn "đang thi đề nào" — trước khi thi xong mới biết. -->
+<div id="examHead" style="display:none">
+  <div class="ehChips">
+    <span class="ehChip">🪪 Hạng <b id="ehCls">B</b><span id="ehDe"></span></span>
+    <span class="ehChip">📄 <b id="ehTotal">30</b> câu</span>
+    <span class="ehChip">⏱ <b id="ehTimer">20:00</b></span>
+    <span class="ehChip">✅ <b id="ehDone">0</b> đã làm</span>
+  </div>
+  <div class="examBarTrack"><div class="examBarFill" id="examBar"></div><span id="examBarText" class="examBarText"></span></div>
 </div>
 
 <div id="practiceWrap">
@@ -297,12 +333,15 @@
   <span id="timerBox" style="display:none">⏱ <b id="timer">22:00</b></span>
 </div>
 
-<!-- Thanh tiến trình thời gian khi thi (req #73) -->
-<div id="examBarBox" style="display:none">
-  <div class="examBarTrack"><div class="examBarFill" id="examBar"></div><span id="examBarText" class="examBarText"></span></div>
-</div>
-
 <div class="qcard" id="qcard">
+  <!-- Hàng điều hướng TRÊN ĐẦU thẻ, chỉ khi thi (req #81 — ảnh mẫu có nút ở cả trên
+       lẫn dưới). Đề 30–45 câu, câu có ảnh thì thẻ dài, cuộn xuống đáy mới bấm được
+       "Câu sau" thì mỏi. "Câu x / y" đặt giữa vì header thi không còn thanh stats. -->
+  <div class="qnavTop" id="qnavTop" style="display:none">
+    <button class="lnkbtn" id="topPrev">‹ Câu trước</button>
+    <span class="qnavIdx">Câu <b id="ehQ">1 / 30</b></span>
+    <button class="lnkbtn" id="topNext">Câu sau ›</button>
+  </div>
   <div class="qhead">
     <span class="badge normal" id="topicBadge">Khái niệm</span>
     <span id="critBadge"></span>
@@ -499,13 +538,24 @@
     el('stats').style.display = '';
     if (m === 'exam') {
       exam = { start: Date.now(), duration: (examClass ? examClass.min : 22) * 60 * 1000 };
-      el('timerBox').style.display = '';
-      el('examBarBox').style.display = '';
+      // Header thi thay cho thanh stats: gom hạng/đề + số câu + giờ + đã làm (req #81)
+      el('stats').style.display = 'none';
+      el('examHead').style.display = '';
+      el('modeBar').style.display = 'none';   // ẩn nút đổi chế độ khi đang thi (req #80)
+      el('ehCls').textContent = examClass ? examClass.id : 'B';
+      el('ehDe').textContent = examDe ? ' · Đề ' + String(examDe).padStart(2, '0') : ' · Câu hỏi ngẫu nhiên';
+      el('ehTotal').textContent = list.length;
+      el('qnavTop').style.display = '';
+      el('practiceWrap').classList.add('exam');    // 2 cột cao bằng nhau (req #81)
       tickTimer();
     } else {
       exam = null;
+      el('examHead').style.display = 'none';
+      el('modeBar').style.display = '';
+      el('qnavTop').style.display = 'none';
+      el('stats').style.display = '';
       el('timerBox').style.display = 'none';
-      el('examBarBox').style.display = 'none';
+      el('practiceWrap').classList.remove('exam');
     }
     render();
   }
@@ -516,6 +566,7 @@
     const m = String(Math.floor(remain / 60000)).padStart(2, '0');
     const s = String(Math.floor((remain % 60000) / 1000)).padStart(2, '0');
     el('timer').textContent = `${m}:${s}`;
+    el('ehTimer').textContent = `${m}:${s}`;   // đồng hồ trong header thi (req #81)
     // Thanh tiến trình thời gian (req #73): bám luôn `remain` ở trên, không tự đếm lại.
     const bar = el('examBar');
     if (bar) {
@@ -543,6 +594,14 @@
     el('qcard').style.display = 'none';
     document.querySelector('.nav').style.display = 'none';
     el('stats').style.display = 'none';
+    // Thi xong = hết thi: trả lại thanh đổi chế độ (req #80 chỉ ẩn LÚC ĐANG thi — ẩn
+    // luôn ở màn tổng kết thì không còn đường về Luyện tập, phải tải lại trang), và
+    // dẹp header thi + đồng hồ cho khỏi đếm ngược trên màn đã nộp.
+    el('modeBar').style.display = '';
+    el('examHead').style.display = 'none';
+    el('qnavTop').style.display = 'none';
+    el('practiceWrap').classList.remove('exam');
+    exam = null;
     el('sumTitle').textContent = pass ? '🎉 ĐẠT' : '❌ TRƯỢT';
     el('sumScore').textContent = `${right}/${total}`;
     el('sumScore').className = 'big ' + (pass ? 'pass' : 'fail');
@@ -748,6 +807,8 @@
       el('statRight').textContent = 'Đã làm:';
       el('rightCount').textContent = r + w;
       el('statWrong').style.display = 'none';
+      el('ehDone').textContent = r + w;        // chip "đã làm" ở header thi (req #81)
+      el('ehQ').textContent = (idx + 1) + ' / ' + list.length;
     } else {
       el('statRight').textContent = 'Đúng:';
       el('rightCount').textContent = r;
@@ -795,7 +856,10 @@
   function hideAllExamViews() {
     el('catBar').style.display = 'none'; el('qcard').style.display = 'none'; el('stats').style.display = 'none';
     el('emptyMsg').style.display = 'none'; el('summary').classList.remove('show');
-    el('timerBox').style.display = 'none'; el('examBarBox').style.display = 'none'; exam = null;
+    el('timerBox').style.display = 'none'; el('examHead').style.display = 'none'; exam = null;
+    el('modeBar').style.display = '';       // rời màn thi → hiện lại nút đổi chế độ (req #80)
+    el('qnavTop').style.display = 'none';
+    el('practiceWrap').classList.remove('exam');
     el('qsidebar').style.display = 'none';
     el('progBox').innerHTML = '';   // bảng tiến độ chỉ thuộc màn luyện tập (req #75)
     document.querySelector('.nav').style.display = 'none';
@@ -913,8 +977,13 @@
     document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === 'learn'));
     setMode('learn');
   };
-  el('nextBtn').onclick = () => { if (idx < list.length - 1) { idx++; render(); } };
-  el('prevBtn').onclick = () => { if (idx > 0) { idx--; render(); } };
+  const goNext = () => { if (idx < list.length - 1) { idx++; render(); } };
+  const goPrev = () => { if (idx > 0) { idx--; render(); } };
+  el('nextBtn').onclick = goNext;
+  el('prevBtn').onclick = goPrev;
+  // Nút trên đầu thẻ khi thi (req #81) — dùng CHUNG logic với nút dưới, không nhân bản.
+  el('topNext').onclick = goNext;
+  el('topPrev').onclick = goPrev;
 
   // ===== Phím tắt: ←/→ đổi câu, 1-4 chọn đáp án (req #72 Thì Dũng) =====
   // Chọn đáp án bằng cách CLICK chính input đang render, không tự set answered[]:
