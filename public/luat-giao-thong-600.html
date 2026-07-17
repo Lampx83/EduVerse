@@ -26,8 +26,10 @@
   .empty { width:100%; max-width:760px; background:var(--card); border:1px solid var(--border);
     border-radius:14px; padding:34px 22px; text-align:center; color:var(--muted); font-size:14px; line-height:1.7; }
 
+  /* min-height (req #77): ngoài việc cân với cột trái, nó giữ thẻ cao cố định nên
+     nút "Câu trước/Câu sau" không nhảy lên xuống mỗi lần đổi câu dài/ngắn. */
   .qcard { width:100%; max-width:760px; background:var(--card); border:1px solid var(--border);
-    border-radius:14px; padding:22px; }
+    border-radius:14px; padding:22px; min-height:430px; box-sizing:border-box; }
   .qhead { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:13px; color: var(--muted); }
   /* Gợi ý phím tắt (req #72) — ẩn trên máy cảm ứng vì không có bàn phím. */
   .kbdHint { margin-left:auto; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:4px; }
@@ -37,14 +39,16 @@
   .qhead .badge { background: rgba(220,38,38,.18); border:1px solid var(--red); color:#fca5a5;
     padding:3px 9px; border-radius:5px; font-size:11px; font-weight:700; letter-spacing:.4px; }
   .qhead .badge.normal { background: rgba(255,255,255,.06); border-color: var(--border); color: var(--muted); }
-  .qtext { font-size:17px; line-height:1.55; margin-bottom:18px; font-weight:600; }
+  /* Cỡ chữ do người học tự chỉnh trong ⚙️ Cài đặt (req #76), lưu ở localStorage.
+     Đặt trên :root để cả câu hỏi lẫn đáp án đổi ngay, không phải render lại. */
+  .qtext { font-size:var(--qsize,17px); line-height:1.55; margin-bottom:18px; font-weight:600; }
   .qimg { margin:0 0 16px; }
   .qimg img { max-width:min(320px,80%); border-radius:10px; background:#fff; padding:8px; display:block; }
   .qimg .todo { font-size:12.5px; color:var(--yellow); background:rgba(251,191,36,.1);
     border:1px dashed rgba(251,191,36,.4); border-radius:9px; padding:8px 12px; display:inline-block; }
   .opts { display:grid; gap:10px; }
   .opt { display:flex; gap:12px; padding:14px 16px; background:rgba(0,0,0,.2); border:1px solid var(--border);
-    border-radius:10px; cursor:pointer; transition:background .15s, border-color .15s; }
+    border-radius:10px; cursor:pointer; transition:background .15s, border-color .15s; font-size:var(--asize,16px); }
   .opt:hover { background:rgba(255,255,255,.04); border-color: rgba(255,255,255,.2); }
   .opt input { margin-top:3px; }
   .opt.correct { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.5); }
@@ -82,9 +86,49 @@
   .cls .pass { font-size:11px; color:#6ee7b7; background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.3); border-radius:7px; padding:3px 7px; }
   .cls .crit { font-size:11px; color:#fca5a5; background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.3); border-radius:7px; padding:3px 7px; }
   .cls .up { position:absolute; top:8px; right:8px; font-size:9px; letter-spacing:.5px; color:var(--muted); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
+  /* PHỔ BIẾN (req #78): hạng B/C1/C là hạng đa số người học thi. Trước chỉ có nhãn
+     NÂNG HẠNG nên nhìn vào lưới không biết nên bắt đầu từ đâu. Dùng vàng cho nổi,
+     khác hẳn NÂNG HẠNG (xám) — hai nhãn hai ý nghĩa, không được nhìn giống nhau. */
+  .cls .pop { position:absolute; top:8px; right:8px; font-size:9px; letter-spacing:.5px; font-weight:800;
+    color:var(--yellow); background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.45); border-radius:6px; padding:2px 6px; }
+  /* ⚙️ Cài đặt: chỉnh cỡ chữ câu hỏi + đáp án (req #76, theo ảnh mẫu SV gửi) */
+  .mdBack { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50; padding:18px; }
+  .mdBack.show { display:flex; }
+  /* Nền ĐỤC, KHÔNG dùng var(--card): --card là rgba(255,255,255,.06) — hợp cho thẻ nằm
+     trên nền trang, nhưng hộp thoại nổi mà trong suốt thì chữ câu hỏi phía dưới xuyên
+     lên, đọc không nổi. Lấy tông --bg sáng hơn một nấc cho tách khỏi lớp phủ. */
+  .mdBox { background:#242440; border:1px solid var(--border); border-radius:14px; width:100%; max-width:440px;
+    padding:18px 20px 20px; box-shadow:0 18px 50px rgba(0,0,0,.5); }
+  .mdHead { display:flex; align-items:center; margin-bottom:14px; }
+  .mdHead h3 { margin:0; font-size:17px; }
+  .mdX { margin-left:auto; background:none; border:0; color:var(--muted); font-size:22px; cursor:pointer; line-height:1; padding:0 4px; }
+  .mdX:hover { color:var(--text); }
+  .setRow { background:rgba(0,0,0,.2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  .setTop { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .setName { font-size:13.5px; font-weight:700; }
+  .setDef { margin-left:auto; font-family:inherit; font-size:11px; color:var(--muted); background:none;
+    border:1px solid var(--border); border-radius:7px; padding:4px 9px; cursor:pointer; }
+  .setDef:hover { color:var(--text); border-color:var(--muted); }
+  .setCtl { display:flex; align-items:center; justify-content:center; gap:12px; }
+  .setBtn { font-family:inherit; width:34px; height:34px; font-size:18px; font-weight:800; cursor:pointer;
+    background:var(--red); color:#fff; border:0; border-radius:8px; line-height:1; }
+  .setBtn:disabled { opacity:.35; cursor:not-allowed; }
+  .setVal { min-width:74px; text-align:center; font-weight:700; font-size:15px; background:rgba(0,0,0,.3);
+    border:1px solid var(--border); border-radius:8px; padding:6px 0; }
+  .setVal small { color:var(--muted); font-weight:600; font-size:11px; margin-left:2px; }
+  .setPrev { font-size:12px; color:var(--muted); text-align:center; margin:-2px 0 12px; }
   /* Bộ chọn 15 đề ngẫu nhiên theo hạng (req #35 Thì Dũng) */
   #dePicker { display:none; width:100%; max-width:900px; }
   #dePicker h2 { text-align:center; font-size:18px; margin:4px 0 6px; }
+  /* Hàng đầu bộ chọn đề (req #79): nút quay lại bám trái, tiêu đề vẫn giữa lưới.
+     Tiêu đề dùng position:absolute để nút không đẩy nó lệch khỏi tâm. */
+  .deTop { position:relative; display:flex; align-items:center; min-height:34px; margin-bottom:2px; }
+  .deTop h2 { position:absolute; left:0; right:0; margin:0; pointer-events:none; }
+  .deTop .lnkbtn { position:relative; z-index:1; font-size:12.5px; padding:7px 13px; border-radius:9px; }
+  @media (max-width:640px) {
+    .deTop { flex-direction:column; align-items:stretch; gap:8px; }
+    .deTop h2 { position:static; }
+  }
   #deGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:11px; }
   .de { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 10px; cursor:pointer; text-align:center; transition:.15s; }
   .de:hover { border-color:var(--red); transform:translateY(-2px); background:rgba(220,38,38,.06); }
@@ -137,7 +181,10 @@
   .sbHead { display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px; }
   .sbReset { font-family:inherit; font-size:11px; font-weight:700; color:#fca5a5; background:rgba(220,38,38,.14);
     border:1px solid rgba(220,38,38,.3); border-radius:7px; padding:4px 9px; cursor:pointer; }
-  #qGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; max-height:340px; overflow-y:auto; padding-right:2px; }
+  /* 260px (không phải 340): cột trái từng cao 600px trong khi cột phải chỉ 378px →
+     thừa ra 222px, nhìn lệch hẳn (req #77). Hạ lưới + đặt min-height cho .qcard thì
+     hai cột kết thúc cùng một đường (lệch còn ~2px). Lưới vẫn cuộn nên không mất câu. */
+  #qGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:7px; max-height:260px; overflow-y:auto; padding-right:2px; }
   .qn { font-family:inherit; aspect-ratio:1; border:1px solid var(--border); background:rgba(0,0,0,.2);
     color:var(--text); border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:600; padding:0; transition:.12s; }
   .qn:hover { border-color:var(--red); }
@@ -193,13 +240,20 @@
 </div>
 
 <div id="dePicker">
-  <h2>📑 Chọn đề thi — Hạng <span id="deClsName">B</span></h2>
+  <!-- Nút quay lại ĐẶT TRÊN ĐẦU (req #79): trước nằm dưới cùng, sau 20 thẻ đề, phải
+       cuộn hết lưới mới thấy → SV tưởng không có đường quay lại chọn hạng. -->
+  <div class="deTop">
+    <button class="lnkbtn" id="deBackTop">← Quay lại chọn hạng</button>
+    <h2>📑 Chọn đề thi — Hạng <span id="deClsName">B</span></h2>
+  </div>
   <p style="text-align:center;color:var(--muted);font-size:12.5px;max-width:680px;margin:0 auto 14px;line-height:1.5">
     <b>20 đề thi ngẫu nhiên</b> được tạo cố định cho hạng này — mỗi đề <span id="deMeta">30 câu · 20 phút</span>, có câu điểm liệt. Hoặc chọn <b>🔀 Câu hỏi ngẫu nhiên</b> để mỗi lần bốc một đề mới. Bấm để vào thi.
   </p>
   <div id="deGrid"></div>
+  <!-- Giữ nút dưới đáy: lưới 20 đề dài, cuộn xuống cuối rồi mà phải cuộn ngược lên
+       đầu để quay lại thì cũng bực. Trên + dưới, chung một handler. -->
   <div style="text-align:center;margin-top:16px">
-    <button class="lnkbtn" id="deBack">← Chọn hạng bằng khác</button>
+    <button class="lnkbtn" id="deBack">← Quay lại chọn hạng</button>
   </div>
 </div>
 
@@ -224,7 +278,9 @@
   <input id="qSearch" placeholder="Nhập nội dung câu hỏi…" autocomplete="off" />
   <div class="sbHead">
     <span class="sbTitle">Danh sách câu hỏi</span>
-    <button id="resetBtn" class="sbReset">Xoá điểm</button>
+    <!-- "Xoá điểm" → "⚙️ Cài đặt" (req #76). Xoá tiến độ KHÔNG mất: nút "🗑 Xoá tiến độ"
+         ở bảng tiến độ ngay dưới vẫn làm đúng việc đó (hai nút này vốn trùng chức năng). -->
+    <button id="setBtn" class="sbReset" style="color:var(--muted);background:rgba(255,255,255,.06);border-color:var(--border)">⚙️ Cài đặt</button>
   </div>
   <div id="qGrid"></div>
   <div id="qGridEmpty" class="sbEmpty" style="display:none">Không thấy câu khớp.</div>
@@ -283,6 +339,42 @@
   <div id="sumReview" style="margin-top:20px; text-align:left;"></div>
 </div>
 
+<!-- ⚙️ Cài đặt — chỉnh cỡ chữ câu hỏi/đáp án (req #76, dựng theo ảnh mẫu SV gửi) -->
+<div class="mdBack" id="setModal">
+  <div class="mdBox" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="mdHead">
+      <h3 id="setTitle">⚙️ Cài đặt</h3>
+      <button class="mdX" id="setX" aria-label="Đóng">×</button>
+    </div>
+    <div class="setRow">
+      <div class="setTop">
+        <span class="setName">❓ Cỡ chữ câu hỏi</span>
+        <button class="setDef" data-def="q">↺ Mặc định</button>
+      </div>
+      <div class="setCtl">
+        <button class="setBtn" data-step="-1" data-k="q" aria-label="Nhỏ hơn">−</button>
+        <div class="setVal"><b id="qsVal">17</b><small>px</small></div>
+        <button class="setBtn" data-step="1" data-k="q" aria-label="To hơn">+</button>
+      </div>
+    </div>
+    <div class="setRow">
+      <div class="setTop">
+        <span class="setName">☰ Cỡ chữ câu trả lời</span>
+        <button class="setDef" data-def="a">↺ Mặc định</button>
+      </div>
+      <div class="setCtl">
+        <button class="setBtn" data-step="-1" data-k="a" aria-label="Nhỏ hơn">−</button>
+        <div class="setVal"><b id="asVal">16</b><small>px</small></div>
+        <button class="setBtn" data-step="1" data-k="a" aria-label="To hơn">+</button>
+      </div>
+    </div>
+    <div class="setPrev">Cỡ chữ đổi ngay khi bấm, tự nhớ cho lần vào sau.</div>
+    <div style="text-align:right">
+      <button class="lnkbtn" id="setClose" style="background:var(--red);border:0;color:#fff;font-weight:700;padding:9px 20px;border-radius:10px">Đóng</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   // Bộ câu hỏi RÚT GỌN từ 600 câu lý thuyết B1/B2 (Bộ GTVT). Đại diện 6 chương,
   // có câu LIỆT (must-correct) để đúng tinh thần đề thi: thi thử 25 câu, sai 1
@@ -308,12 +400,14 @@
   const groupOf = t => GROUP[t] || 'kn';
   // Cấu hình thi theo hạng GPLX (req #21): n câu · min phút · pass đạt · crit câu liệt.
   const EXAM_CLASSES = [
-    {id:'B',  ic:'🚗', n:30, min:20, pass:27, crit:1, desc:'Ô tô đến 8 chỗ (không kể chỗ lái)'},
-    {id:'C1', ic:'🚙', n:35, min:22, pass:32, crit:1, desc:'Ô tô tải 3,5 – 7,5 tấn'},
-    {id:'C',  ic:'🚚', n:40, min:24, pass:36, crit:1, desc:'Ô tô tải trên 7,5 tấn'},
-    {id:'D1', ic:'🚐', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở 8 – 16 chỗ'},
-    {id:'D2', ic:'🚌', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở 16 – 29 chỗ'},
-    {id:'D',  ic:'🚍', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở trên 29 chỗ'},
+    // pop = hạng đa số người học thi (req #78): B/C1/C thi trực tiếp, không cần bằng
+    // nền. Các hạng D và *E đều là NÂNG HẠNG — phải có bằng thấp hơn + đủ năm kinh nghiệm.
+    {id:'B',  ic:'🚗', n:30, min:20, pass:27, crit:1, desc:'Ô tô đến 8 chỗ (không kể chỗ lái)', pop:1},
+    {id:'C1', ic:'🚙', n:35, min:22, pass:32, crit:1, desc:'Ô tô tải 3,5 – 7,5 tấn', pop:1},
+    {id:'C',  ic:'🚚', n:40, min:24, pass:36, crit:1, desc:'Ô tô tải trên 7,5 tấn', pop:1},
+    {id:'D1', ic:'🚐', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở 8 – 16 chỗ', up:1},
+    {id:'D2', ic:'🚌', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở 16 – 29 chỗ', up:1},
+    {id:'D',  ic:'🚍', n:45, min:26, pass:41, crit:1, desc:'Ô tô chở trên 29 chỗ', up:1},
     {id:'BE', ic:'🚗', n:45, min:26, pass:41, crit:1, desc:'Hạng B + kéo rơ moóc trên 750kg', up:1},
     {id:'C1E',ic:'🚙', n:45, min:26, pass:41, crit:1, desc:'Hạng C1 + rơ moóc trên 750kg', up:1},
     {id:'CE', ic:'🚚', n:45, min:26, pass:41, crit:1, desc:'Hạng C + rơ moóc trên 750kg', up:1},
@@ -673,7 +767,7 @@
     el('catBar').style.display = isExam ? 'none' : '';
     el('qSearch').style.display = isExam ? 'none' : '';
     document.querySelector('#qsidebar .sbTitle').style.display = isExam ? 'none' : '';
-    el('resetBtn').style.display = isExam ? 'none' : '';
+    el('setBtn').style.display = isExam ? 'none' : '';
     el('sbExam').style.display = isExam ? 'none' : '';
     el('sbSubmit').style.display = isExam ? '' : 'none';
 
@@ -693,11 +787,8 @@
     el('qGrid').querySelectorAll('.qn').forEach(b => b.onclick = () => { idx = +b.dataset.i; render(); });
   }
   el('qSearch').addEventListener('input', renderSidebar);
-  // Xoá điểm: xoá cả tiến độ đã lưu, không thì sidebar sạch mà bảng #75 vẫn báo "đã làm".
-  el('resetBtn').onclick = () => {
-    answered = {}; progress = {}; saveProg();
-    el('feedback').classList.remove('show'); render(); renderProgress();
-  };
+  // Nút "Xoá điểm" ở cột trái nay là "⚙️ Cài đặt" (req #76). Việc xoá tiến độ do nút
+  // "🗑 Xoá tiến độ" ở bảng tiến độ lo — nó xoá cả `answered` nên sidebar cũng sạch theo.
   el('sbExam').onclick = () => { el('catSelect').value = 'all'; category = 'all'; enterExamPicker(); };
 
   // Ẩn mọi màn thi/luyện để hiện 1 màn chọn (hạng bằng hoặc đề).
@@ -719,7 +810,7 @@
     el('classPicker').style.display = 'block';   // CSS mặc định #classPicker{display:none} → phải set 'block' (set '' sẽ về none, ẩn mất màn chọn hạng)
     el('clsGrid').innerHTML = EXAM_CLASSES.map((c, i) => `
       <button class="cls" data-cls="${i}">
-        ${c.up ? '<span class="up">NÂNG HẠNG</span>' : ''}
+        ${c.pop ? '<span class="pop">PHỔ BIẾN</span>' : c.up ? '<span class="up">NÂNG HẠNG</span>' : ''}
         <div class="ic">${c.ic}</div>
         <div class="nm">Hạng ${c.id}</div>
         <div class="meta"><span>❓ ${c.n} câu</span><span>⏱ ${c.min} phút</span></div>
@@ -769,6 +860,48 @@
     });
   }
   el('deBack').onclick = enterExamPicker;
+  el('deBackTop').onclick = enterExamPicker;   // nút trên đầu (req #79), cùng việc
+
+  // ===== ⚙️ Cài đặt cỡ chữ (req #76) =====
+  // Ghi thẳng vào :root nên câu hỏi + đáp án đổi ngay, không cần render lại.
+  const FS_KEY = 'driving600:fontsize';
+  const FS_DEF = { q: 17, a: 16 };             // đúng cỡ mặc định trong CSS
+  const FS_MIN = { q: 13, a: 12 }, FS_MAX = { q: 34, a: 30 };
+  let fs = (() => {
+    try {
+      const s = JSON.parse(localStorage.getItem(FS_KEY)) || {};
+      // Kẹp về khoảng hợp lệ: localStorage có thể còn giá trị cũ/hỏng → chữ to đùng
+      // hoặc bé tí mà người học không hiểu vì sao.
+      const cl = (v, k) => Math.min(FS_MAX[k], Math.max(FS_MIN[k], Number(v) || FS_DEF[k]));
+      return { q: cl(s.q, 'q'), a: cl(s.a, 'a') };
+    } catch { return { ...FS_DEF }; }
+  })();
+  function applyFs() {
+    document.documentElement.style.setProperty('--qsize', fs.q + 'px');
+    document.documentElement.style.setProperty('--asize', fs.a + 'px');
+    el('qsVal').textContent = fs.q;
+    el('asVal').textContent = fs.a;
+    document.querySelectorAll('.setBtn').forEach(b => {
+      const k = b.dataset.k, step = +b.dataset.step;
+      b.disabled = step < 0 ? fs[k] <= FS_MIN[k] : fs[k] >= FS_MAX[k];
+    });
+    try { localStorage.setItem(FS_KEY, JSON.stringify(fs)); } catch {}
+  }
+  document.querySelectorAll('.setBtn').forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    fs[k] = Math.min(FS_MAX[k], Math.max(FS_MIN[k], fs[k] + (+b.dataset.step)));
+    applyFs();
+  });
+  document.querySelectorAll('.setDef').forEach(b => b.onclick = () => {
+    fs[b.dataset.def] = FS_DEF[b.dataset.def]; applyFs();
+  });
+  const setOpen = v => el('setModal').classList.toggle('show', v);
+  el('setBtn').onclick = () => setOpen(true);
+  el('setX').onclick = () => setOpen(false);
+  el('setClose').onclick = () => setOpen(false);
+  // Bấm ra nền ngoài hộp thì đóng (bấm trong hộp thì không).
+  el('setModal').onclick = e => { if (e.target === el('setModal')) setOpen(false); };
+  applyFs();
 
   document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => {
     if (b.dataset.mode === 'exam') { el('catSelect').value = 'all'; category = 'all'; enterExamPicker(); return; }
@@ -792,6 +925,12 @@
     const t = e.target;
     if (t && (t.tagName === 'INPUT' && t.type !== 'radio' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // Hộp Cài đặt đang mở: Esc để đóng, và KHÔNG cho phím tắt xuyên qua nền
+    // (đang chỉnh cỡ chữ mà bấm 1–4 lại lỡ chọn đáp án sau lưng thì hỏng).
+    if (el('setModal').classList.contains('show')) {
+      if (e.key === 'Escape') { setOpen(false); e.preventDefault(); }
+      return;
+    }
     // Chỉ khi đang thực sự làm bài (màn chọn hạng/đề, tổng kết thì bỏ qua).
     if (el('practiceWrap').style.display === 'none' || !list.length) return;
 
