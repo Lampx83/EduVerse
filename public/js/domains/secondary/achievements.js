@@ -69,6 +69,66 @@ export const ACHIEVEMENTS = [
   { id: 'tin9-weekly', icon: '⌨️', title: 'Coder THCS',
     desc: 'Đạt 3 sao Tin học lớp 9', trigger: { moduleStars: { 'S9TIN': 3 } } },
 
+  // ── GDCD / Giáo dục công dân ──
+  { id: 'gdcd6-weekly', icon: '⚖️', title: 'Công dân nhí lớp 6',
+    desc: 'Đạt 3 sao GD Công dân lớp 6', trigger: { moduleStars: { 'S6GDCD': 3 } } },
+  { id: 'gdcd7-weekly', icon: '🤝', title: 'Đạo đức & Pháp luật lớp 7',
+    desc: 'Đạt 3 sao GD Công dân lớp 7', trigger: { moduleStars: { 'S7GDCD': 3 } } },
+  { id: 'gdcd8-weekly', icon: '🏛️', title: 'Hiểu pháp luật lớp 8',
+    desc: 'Đạt 3 sao GD Công dân lớp 8', trigger: { moduleStars: { 'S8GDCD': 3 } } },
+  { id: 'gdcd9-weekly', icon: '🎓', title: 'Công dân THCS',
+    desc: 'Đạt 3 sao GD Công dân lớp 9', trigger: { moduleStars: { 'S9GDCD': 3 } } },
+
+  // ── Công nghệ ──
+  { id: 'cn6-weekly', icon: '🏠', title: 'Công nghệ gia đình lớp 6',
+    desc: 'Đạt 3 sao Công nghệ lớp 6', trigger: { moduleStars: { 'S6CN': 3 } } },
+  { id: 'cn7-weekly', icon: '🌾', title: 'Nông-lâm-thủy sản lớp 7',
+    desc: 'Đạt 3 sao Công nghệ lớp 7', trigger: { moduleStars: { 'S7CN': 3 } } },
+  { id: 'cn8-weekly', icon: '🔌', title: 'Điện tử cơ bản lớp 8',
+    desc: 'Đạt 3 sao Công nghệ lớp 8', trigger: { moduleStars: { 'S8CN': 3 } } },
+  { id: 'cn9-weekly', icon: '⚙️', title: 'Kỹ thuật thực hành lớp 9',
+    desc: 'Đạt 3 sao Công nghệ lớp 9', trigger: { moduleStars: { 'S9CN': 3 } } },
+
+  // ── GD Thể chất ──
+  { id: 'gdtc6-weekly', icon: '🏃', title: 'Vận động lớp 6',
+    desc: 'Đạt 3 sao GD Thể chất lớp 6', trigger: { moduleStars: { 'S6GDTC': 3 } } },
+  { id: 'gdtc7-weekly', icon: '⚽', title: 'Thể thao lớp 7',
+    desc: 'Đạt 3 sao GD Thể chất lớp 7', trigger: { moduleStars: { 'S7GDTC': 3 } } },
+  { id: 'gdtc8-weekly', icon: '🏸', title: 'Năng động lớp 8',
+    desc: 'Đạt 3 sao GD Thể chất lớp 8', trigger: { moduleStars: { 'S8GDTC': 3 } } },
+  { id: 'gdtc9-weekly', icon: '🏅', title: 'Thể chất THCS',
+    desc: 'Đạt 3 sao GD Thể chất lớp 9', trigger: { moduleStars: { 'S9GDTC': 3 } } },
+
+  // ── Nghệ thuật ──
+  { id: 'nt6-weekly', icon: '🎨', title: 'Nghệ sĩ nhỏ lớp 6',
+    desc: 'Đạt 3 sao Nghệ thuật lớp 6', trigger: { moduleStars: { 'S6NT': 3 } } },
+  { id: 'nt7-weekly', icon: '🎵', title: 'Tâm hồn nghệ thuật lớp 7',
+    desc: 'Đạt 3 sao Nghệ thuật lớp 7', trigger: { moduleStars: { 'S7NT': 3 } } },
+  { id: 'nt8-weekly', icon: '🎭', title: 'Sáng tạo lớp 8',
+    desc: 'Đạt 3 sao Nghệ thuật lớp 8', trigger: { moduleStars: { 'S8NT': 3 } } },
+  { id: 'nt9-weekly', icon: '✨', title: 'Nghệ thuật THCS',
+    desc: 'Đạt 3 sao Nghệ thuật lớp 9', trigger: { moduleStars: { 'S9NT': 3 } } },
+
+  // ── HĐ Trải nghiệm – Hướng nghiệp ──
+  { id: 'hdtn6-weekly', icon: '🌱', title: 'Trải nghiệm lớp 6',
+    desc: 'Đạt 3 sao HĐ Trải nghiệm lớp 6', trigger: { moduleStars: { 'S6HDTN': 3 } } },
+  { id: 'hdtn7-weekly', icon: '🌍', title: 'Khám phá hướng nghiệp lớp 7',
+    desc: 'Đạt 3 sao HĐ Trải nghiệm lớp 7', trigger: { moduleStars: { 'S7HDTN': 3 } } },
+  { id: 'hdtn8-weekly', icon: '🌟', title: 'Định hướng tương lai lớp 8',
+    desc: 'Đạt 3 sao HĐ Trải nghiệm lớp 8', trigger: { moduleStars: { 'S8HDTN': 3 } } },
+  { id: 'hdtn9-weekly', icon: '🎯', title: 'Hướng nghiệp THCS',
+    desc: 'Đạt 3 sao HĐ Trải nghiệm lớp 9', trigger: { moduleStars: { 'S9HDTN': 3 } } },
+
+  // ── GD Địa phương ──
+  { id: 'gddp6-weekly', icon: '🏙️', title: 'Yêu quê hương lớp 6',
+    desc: 'Đạt 3 sao GD Địa phương lớp 6', trigger: { moduleStars: { 'S6GDDP': 3 } } },
+  { id: 'gddp7-weekly', icon: '🏘️', title: 'Văn hoá địa phương lớp 7',
+    desc: 'Đạt 3 sao GD Địa phương lớp 7', trigger: { moduleStars: { 'S7GDDP': 3 } } },
+  { id: 'gddp8-weekly', icon: '🗺️', title: 'Di sản địa phương lớp 8',
+    desc: 'Đạt 3 sao GD Địa phương lớp 8', trigger: { moduleStars: { 'S8GDDP': 3 } } },
+  { id: 'gddp9-weekly', icon: '🇻🇳', title: 'Tự hào địa phương lớp 9',
+    desc: 'Đạt 3 sao GD Địa phương lớp 9', trigger: { moduleStars: { 'S9GDDP': 3 } } },
+
   // ── Sao tích luỹ ──
   { id: 'star-20', icon: '✨', title: 'Sưu tầm 20 sao',
     desc: 'Tích luỹ 20 sao', trigger: { totalStars: 20 } },
