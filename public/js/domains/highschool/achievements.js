@@ -82,6 +82,38 @@ export const ACHIEVEMENTS = [
   { id: 'tin12', icon: '🤖', title: 'AI & Lập trình lớp 12',
     desc: 'Đạt 3 sao Tin học lớp 12', trigger: { moduleStars: { 'H12TIN': 3 } } },
 
+  // ── GDCD / GD Kinh tế & Pháp luật ──
+  { id: 'gdcd10', icon: '📜', title: 'Công dân kinh tế lớp 10',
+    desc: 'Đạt 3 sao GD Kinh tế & Pháp luật lớp 10', trigger: { moduleStars: { 'H10GDCD': 3 } } },
+  { id: 'gdcd11', icon: '⚖️', title: 'Pháp luật thực tiễn lớp 11',
+    desc: 'Đạt 3 sao GD Kinh tế & Pháp luật lớp 11', trigger: { moduleStars: { 'H11GDCD': 3 } } },
+  { id: 'gdcd12', icon: '🏛️', title: 'Sẵn sàng thi GDCD',
+    desc: 'Đạt 3 sao GD Kinh tế & Pháp luật lớp 12', trigger: { moduleStars: { 'H12GDCD': 3 } } },
+
+  // ── Công nghệ ──
+  { id: 'cn10', icon: '🔧', title: 'Cơ khí & Kỹ thuật lớp 10',
+    desc: 'Đạt 3 sao Công nghệ lớp 10', trigger: { moduleStars: { 'H10CN': 3 } } },
+  { id: 'cn11', icon: '⚙️', title: 'Công nghệ chuyên sâu lớp 11',
+    desc: 'Đạt 3 sao Công nghệ lớp 11', trigger: { moduleStars: { 'H11CN': 3 } } },
+  { id: 'cn12', icon: '🏗️', title: 'Kỹ sư tương lai lớp 12',
+    desc: 'Đạt 3 sao Công nghệ lớp 12', trigger: { moduleStars: { 'H12CN': 3 } } },
+
+  // ── GD Quốc phòng - An ninh ──
+  { id: 'gdqp10', icon: '🎖️', title: 'Truyền thống Quân đội lớp 10',
+    desc: 'Đạt 3 sao GDQP-AN lớp 10', trigger: { moduleStars: { 'H10GDQP': 3 } } },
+  { id: 'gdqp11', icon: '🛡️', title: 'An ninh quốc gia lớp 11',
+    desc: 'Đạt 3 sao GDQP-AN lớp 11', trigger: { moduleStars: { 'H11GDQP': 3 } } },
+  { id: 'gdqp12', icon: '🇻🇳', title: 'Chiến sĩ Quốc phòng',
+    desc: 'Đạt 3 sao GDQP-AN lớp 12', trigger: { moduleStars: { 'H12GDQP': 3 } } },
+
+  // ── HĐ Trải nghiệm – Hướng nghiệp ──
+  { id: 'hdtn10', icon: '🌱', title: 'Trải nghiệm THPT lớp 10',
+    desc: 'Đạt 3 sao HĐ Trải nghiệm lớp 10', trigger: { moduleStars: { 'H10HDTN': 3 } } },
+  { id: 'hdtn11', icon: '🌟', title: 'Hướng nghiệp lớp 11',
+    desc: 'Đạt 3 sao HĐ Trải nghiệm lớp 11', trigger: { moduleStars: { 'H11HDTN': 3 } } },
+  { id: 'hdtn12', icon: '🎯', title: 'Sẵn sàng vào Đại học',
+    desc: 'Đạt 3 sao HĐ Trải nghiệm lớp 12', trigger: { moduleStars: { 'H12HDTN': 3 } } },
+
   // ── Sao tích luỹ ──
   { id: 'star-20', icon: '✨', title: 'Sưu tầm 20 sao',
     desc: 'Tích luỹ 20 sao', trigger: { totalStars: 20 } },

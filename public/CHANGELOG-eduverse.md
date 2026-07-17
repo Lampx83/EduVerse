@@ -4,6 +4,61 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-17 — Phiên cải tiến (18) · THCS & THPT — 36 Achievements môn phụ còn thiếu
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** THCS (`secondary`) · THPT (`highschool`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **2 lỗ hổng gamification** ảnh hưởng đến 10 môn học có đủ scenarios nhưng thiếu hoàn toàn achievements:
+
+1. **Trường THCS**: 6 môn (GDCD, Công nghệ, GD Thể chất, Nghệ thuật, HĐ Trải nghiệm, GD Địa phương) × 4 lớp (6–9) = 24 achievements bị bỏ trống. Học sinh học đủ các môn này nhưng không nhận được ghi nhận gamification nào.
+2. **Trường THPT**: 4 môn (GDCD/GD Kinh tế & Pháp luật, Công nghệ, GDQP-AN, HĐ Trải nghiệm) × 3 lớp (10–12) = 12 achievements bị bỏ trống. Module IDs H10GDCD–H12HDTN đã tồn tại đầy đủ trong `modules.js` và scenarios lop10–lop12, nhưng không có achievement nào tương ứng.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ inbox hay GitHub Issues. Cải tiến chủ động theo chế độ tự cải tiến hàng ngày.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/secondary/achievements.js` | Mở rộng | 39 → 63 achievements: thêm 24 achievement cho 6 môn phụ THCS (lớp 6–9) |
+| `public/js/domains/highschool/achievements.js` | Mở rộng | 37 → 49 achievements: thêm 12 achievement cho 4 môn phụ THPT (lớp 10–12) |
+
+### Chi tiết achievements mới
+
+**Trường THCS** (thêm 24 achievements):
+
+| Môn | Lớp 6 | Lớp 7 | Lớp 8 | Lớp 9 |
+|-----|-------|-------|-------|-------|
+| GDCD | ⚖️ gdcd6 | 🤝 gdcd7 | 🏛️ gdcd8 | 🎓 gdcd9 |
+| Công nghệ | 🏠 cn6 | 🌾 cn7 | 🔌 cn8 | ⚙️ cn9 |
+| GD Thể chất | 🏃 gdtc6 | ⚽ gdtc7 | 🏸 gdtc8 | 🏅 gdtc9 |
+| Nghệ thuật | 🎨 nt6 | 🎵 nt7 | 🎭 nt8 | ✨ nt9 |
+| HĐ Trải nghiệm | 🌱 hdtn6 | 🌍 hdtn7 | 🌟 hdtn8 | 🎯 hdtn9 |
+| GD Địa phương | 🏙️ gddp6 | 🏘️ gddp7 | 🗺️ gddp8 | 🇻🇳 gddp9 |
+
+**Trường THPT** (thêm 12 achievements):
+
+| Môn | Lớp 10 | Lớp 11 | Lớp 12 |
+|-----|--------|--------|--------|
+| GD KT & Pháp luật | 📜 gdcd10 | ⚖️ gdcd11 | 🏛️ gdcd12 |
+| Công nghệ | 🔧 cn10 | ⚙️ cn11 | 🏗️ cn12 |
+| GDQP-AN | 🎖️ gdqp10 | 🛡️ gdqp11 | 🇻🇳 gdqp12 |
+| HĐ Trải nghiệm | 🌱 hdtn10 | 🌟 hdtn11 | 🎯 hdtn12 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/secondary/achievements.js   ✅ OK
+node --check public/js/domains/highschool/achievements.js  ✅ OK
+```
+
+---
+
 ## 2026-07-16 — Phiên cải tiến (17) · Kinh tế — Sửa lỗi duplicate achievements + typo
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
