@@ -72,7 +72,7 @@ export async function renderRequestBoard({ host, domain, domainName }) {
 
   async function load() {
     try {
-      const r = await fetch(`api/requests?domain=${encodeURIComponent(domain)}`);
+      const r = await fetch(`/api/requests?domain=${encodeURIComponent(domain)}&limit=200`);
       const data = await r.json();
       renderStats(host.querySelector('#rb-stats'), data.stats || {});
       renderList(host.querySelector('#rb-list'), data.items || [], load);
@@ -89,7 +89,7 @@ export async function renderRequestBoard({ host, domain, domainName }) {
     if (title.length < 4) { msg.textContent = '⚠️ Tiêu đề quá ngắn'; return; }
     msg.textContent = 'Đang gửi…';
     try {
-      const r = await fetch('api/requests', {
+      const r = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain, type, title, detail, student: getPlayerName() || 'Ẩn danh' }),
@@ -157,7 +157,7 @@ function renderList(host, items, reload) {
   host.querySelectorAll('[data-vote]').forEach(el => {
     el.addEventListener('click', async () => {
       el.style.pointerEvents = 'none';
-      try { await fetch(`api/requests/${el.dataset.vote}/vote`, { method: 'POST' }); reload(); }
+      try { await fetch(`/api/requests/${el.dataset.vote}/vote`, { method: 'POST' }); reload(); }
       catch { el.style.pointerEvents = ''; }
     });
   });

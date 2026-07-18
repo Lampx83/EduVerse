@@ -115,7 +115,7 @@ function autoMount() {
 
         <div class="sgf-inbox">
           <div class="sgf-inbox-head">
-            <span>Yêu cầu gần đây của bạn</span>
+            <span>Yêu cầu của bạn<span id="sgf-inbox-count"></span></span>
             <button type="button" class="sgf-reload" id="sgf-reload" title="Tải lại">↻</button>
           </div>
           <div class="sgf-inbox-list" id="sgf-inbox">Đang tải…</div>
@@ -432,14 +432,25 @@ function bind(root) {
     inbox.textContent = 'Đang tải…';
     try {
       const dom = inferDomain();
-      const r = await fetch(`/api/requests?domain=${encodeURIComponent(dom)}&limit=50`);
+      // limit=200 (không phải 50): user tích cực có thể >50 yêu cầu; xin 50 thì
+      // server tự cắt bớt, mất phần LỊCH SỬ đã xong. Server cap cứng ở 200.
+      const r = await fetch(`/api/requests?domain=${encodeURIComponent(dom)}&limit=200`);
       const data = await r.json();
       const me = (typeof getPlayerName === 'function' && getPlayerName()) || '';
       let items = (data.items || []);
       // Ưu tiên hiển thị của user; nếu chưa có gì thì hiện cái có phản hồi AI gần đây
       const mine = me ? items.filter(it => it.student === me) : [];
       const withReply = items.filter(it => it.admin_note && it.student !== me).slice(0, 3);
-      const shown = (mine.length ? mine : withReply).slice(0, 8);
+      // LỊCH SỬ: hiện HẾT yêu cầu của user (server đã lọc riêng tư theo tài khoản),
+      // sắp theo hoạt động GẦN NHẤT. Trước đây cắt còn 8 + DB đẩy 'done' xuống cuối
+      // → khi có ≥8 việc chưa xong thì mọi việc ĐÃ XONG biến mất khỏi lịch sử.
+      // Danh sách nay cuộn được (CSS max-height) nên hiện đủ không vỡ layout.
+      const shown = (mine.length ? mine : withReply)
+        .slice()
+        .sort((a, b) => (b.updated_at || b.created_at || 0) - (a.updated_at || a.created_at || 0));
+      // Đếm để đầu hộp thư ghi rõ tổng số (đỡ tưởng bị mất).
+      const cnt = root.querySelector('#sgf-inbox-count');
+      if (cnt) cnt.textContent = shown.length ? ` (${shown.length})` : '';
       if (!shown.length) {
         inbox.innerHTML = '<div class="sgf-empty">Chưa có yêu cầu nào. Hãy là người đầu tiên đề xuất cải tiến trang này! 🚀</div>';
         return;
@@ -604,7 +615,7 @@ function injectStyles() {
     .sgf-inbox { border-top: 1px solid #e5e7eb; padding: 12px 20px 18px; background: #f8fafc; border-radius: 0 0 16px 16px; }
     .sgf-inbox-head { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: #475569; font-weight: 700; margin-bottom: 8px; }
     .sgf-reload { border: 0; background: transparent; cursor: pointer; color: #6366f1; font-size: 15px; }
-    .sgf-inbox-list { display: flex; flex-direction: column; gap: 7px; }
+    .sgf-inbox-list { display: flex; flex-direction: column; gap: 7px; max-height: 340px; overflow-y: auto; padding-right: 4px; }
     .sgf-empty { font-size: 12.5px; color: #6b7280; text-align: center; padding: 10px 0; font-style: italic; }
     .sgf-it { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 9px 11px; }
     .sgf-it-line { display: flex; align-items: center; gap: 8px; }

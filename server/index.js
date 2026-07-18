@@ -1285,10 +1285,13 @@ r.get('/api/requests', async (req, res) => {
   // Quy mô nhỏ (vài chục/ trường) nên lọc trong JS sau khi lấy tối đa 200 là đủ.
   const me = String(req.user?.display_name || '').trim();
   if (!me) return res.json({ items: [], stats: {} });
-  const mine = (await listRequests(domain, 200)).filter(it => it.student === me).slice(0, limit);
+  // Lấy TOÀN BỘ yêu cầu của user trước (500 = thừa cho quy mô vài chục/trường), rồi
+  // mới cắt theo limit cho phần items. stats phải đếm trên TOÀN BỘ — nếu đếm sau khi
+  // slice thì "✓ N hoàn thành" hụt đi khi user có nhiều hơn limit yêu cầu (lịch sử dài).
+  const mine = (await listRequests(domain, 500)).filter(it => it.student === me);
   const stats = {};
   for (const it of mine) stats[it.status] = (stats[it.status] || 0) + 1;
-  res.json({ items: mine, stats });
+  res.json({ items: mine.slice(0, limit), stats });
 });
 
 r.post('/api/requests/:id/vote', async (req, res) => {
