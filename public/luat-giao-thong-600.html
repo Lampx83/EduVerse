@@ -30,9 +30,13 @@
      nút "Câu trước/Câu sau" không nhảy lên xuống mỗi lần đổi câu dài/ngắn. */
   .qcard { width:100%; max-width:760px; background:var(--card); border:1px solid var(--border);
     border-radius:14px; padding:22px; min-height:430px; box-sizing:border-box; }
-  .qhead { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:13px; color: var(--muted); }
+  .qhead { position:relative; display:flex; align-items:center; gap:10px; min-height:26px; margin-bottom:12px; font-size:13px; color: var(--muted); }
   /* Gợi ý phím tắt (req #72) — ẩn trên máy cảm ứng vì không có bàn phím. */
-  .kbdHint { margin-left:auto; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:4px; }
+  /* Căn GIỮA dòng nhắc phím (req #90): trước margin-left:auto đẩy sát phải, SV thấy
+     lệch. Đặt absolute phủ ngang cả thẻ + justify-content center → nằm chính giữa;
+     pointer-events none để không chắn click badge; badge vẫn nằm trái theo flow. */
+  .kbdHint { position:absolute; left:0; right:0; justify-content:center; margin:0; pointer-events:none;
+    font-size:12px; color:var(--muted); display:flex; align-items:center; gap:4px; }
   .kbdHint kbd { font-family:inherit; font-size:11px; font-weight:700; background:rgba(255,255,255,.08);
     border:1px solid var(--border); border-bottom-width:2px; border-radius:5px; padding:1px 6px; color:var(--text); }
   @media (hover:none), (max-width:860px) { .kbdHint { display:none; } }
@@ -72,6 +76,13 @@
   .summary .big { font-size: 56px; font-weight: 800; margin: 8px 0; }
   .summary .pass { color: var(--green); }
   .summary .fail { color: var(--red); }
+  /* Chips kết quả + option xem lại xanh/đỏ (req #91, theo ảnh mẫu SV gửi) */
+  .sumChips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .sumChip { font-size:12.5px; color:var(--muted); background:rgba(0,0,0,.22); border:1px solid var(--border);
+    border-radius:999px; padding:6px 13px; }
+  .rvOpt { font-size:13.5px; padding:8px 11px; border-radius:8px; margin:4px 0; border:1px solid transparent; color:var(--muted); }
+  .rvRight { background:rgba(16,185,129,.16); border-color:rgba(16,185,129,.5); color:#6ee7b7; font-weight:700; }
+  .rvWrong { background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.5); color:#fca5a5; font-weight:600; }
   /* Bộ chọn hạng bằng (req #21 Thì Dũng) */
   #classPicker { display:none; width:100%; max-width:900px; }
   #classPicker h2 { text-align:center; font-size:18px; margin:4px 0 14px; }
@@ -213,6 +224,11 @@
      luyện tập giữ sticky (600 câu, cuộn dài, cần lưới số câu bám theo). */
   #practiceWrap.exam #qsidebar { position:static; align-self:stretch; display:flex; flex-direction:column; }
   #practiceWrap.exam #sbSubmit { margin-top:auto; }
+  /* Khung MÀN THI nhỏ lại cho cân màn hình desktop (req #87): 1120 → 960. Chỉ áp
+     khi thi (.exam); luyện tập giữ 1120. #examHead vốn chỉ hiện lúc thi nên hẹp thẳng. */
+  #practiceWrap.exam { max-width:960px; }
+  #practiceWrap.exam #mainCol { flex-basis:640px; max-width:640px; }
+  #examHead { max-width:960px; }
   /* Hàng điều hướng trên đầu thẻ khi thi (req #81) */
   .qnavTop { display:flex; align-items:center; gap:10px; margin:-4px 0 14px; }
   .qnavTop .lnkbtn { font-size:12.5px; padding:6px 12px; border-radius:8px; }
@@ -241,12 +257,11 @@
 <!-- id để ẩn thanh này KHI ĐANG THI (req #80): lúc thi mà còn nút "Luyện tập" thì
      bấm nhầm là mất bài. Vẫn hiện ở màn chọn hạng/chọn đề và màn tổng kết, nên
      đường quay về Luyện tập không mất. -->
-<div class="toolbar" id="modeBar">
-  <button data-mode="learn" class="active">📖 Luyện tập</button>
-  <button data-mode="exam">📝 Thi sát hạch theo hạng</button>
-  <!-- Nút "Chỉ câu liệt" đã bỏ theo góp ý SV #58 (gây rối); câu điểm liệt vẫn
-       nằm trong bộ đề bình thường, và ?mode=critical qua URL vẫn dùng được. -->
-</div>
+<!-- Thanh chuyển chế độ "Luyện tập / Thi sát hạch" đã BỎ (req #84): mỗi thẻ trong
+     Trường Lái xe đã trỏ thẳng vào đúng chế độ qua ?mode= (learn mặc định, ?mode=exam),
+     nên nút toggle thừa. Từ luyện tập vẫn vào thi được qua nút "🕐 Thi thử theo hạng"
+     ở cột trái. ?mode=critical/exam qua URL vẫn chạy (xem cuối file). -->
+
 
 <div id="classPicker">
   <h2>🚗 Chọn hạng bằng để bắt đầu thi sát hạch</h2>
@@ -260,12 +275,9 @@
 </div>
 
 <div id="dePicker">
-  <!-- Nút quay lại ĐẶT TRÊN ĐẦU (req #79): trước nằm dưới cùng, sau 20 thẻ đề, phải
-       cuộn hết lưới mới thấy → SV tưởng không có đường quay lại chọn hạng. -->
-  <div class="deTop">
-    <button class="lnkbtn" id="deBackTop">← Quay lại chọn hạng</button>
-    <h2>📑 Chọn đề thi — Hạng <span id="deClsName">B</span></h2>
-  </div>
+  <!-- Nút quay lại ở TRÊN đã bỏ (req #89): SV chỉ muốn giữ 1 nút ở dưới lưới đề.
+       (Từng thêm ở #79, nay SV thấy 2 nút thừa.) -->
+  <h2 style="text-align:center">📑 Chọn đề thi — Hạng <span id="deClsName">B</span></h2>
   <p style="text-align:center;color:var(--muted);font-size:12.5px;max-width:680px;margin:0 auto 14px;line-height:1.5">
     <b>20 đề thi ngẫu nhiên</b> được tạo cố định cho hạng này — mỗi đề <span id="deMeta">30 câu · 20 phút</span>, có câu điểm liệt. Hoặc chọn <b>🔀 Câu hỏi ngẫu nhiên</b> để mỗi lần bốc một đề mới. Bấm để vào thi.
   </p>
@@ -286,11 +298,23 @@
 <div id="examHead" style="display:none">
   <div class="ehChips">
     <span class="ehChip">🪪 Hạng <b id="ehCls">B</b><span id="ehDe"></span></span>
-    <span class="ehChip">📄 <b id="ehTotal">30</b> câu</span>
+    <!-- ehQ (câu hiện tại) chuyển vào đây khi bỏ hàng nav trên (req #88): vẫn thấy
+         đang ở câu mấy / tổng bao nhiêu mà không cần hàng nút riêng phía trên thẻ. -->
+    <span class="ehChip">📄 Câu <b id="ehQ">1</b>/<b id="ehTotal">30</b></span>
     <span class="ehChip">⏱ <b id="ehTimer">20:00</b></span>
     <span class="ehChip">✅ <b id="ehDone">0</b> đã làm</span>
   </div>
   <div class="examBarTrack"><div class="examBarFill" id="examBar"></div><span id="examBarText" class="examBarText"></span></div>
+</div>
+
+<!-- Thanh stats (luyện tập) chuyển RA NGOÀI #mainCol, chạy full-width trên cả 2 cột
+     (req #85): trước nằm trong cột phải nên đẩy thẻ câu hỏi xuống thấp hơn đỉnh
+     sidebar → "2 bảng cái cao cái thấp". Nay sidebar + thẻ cùng bắt đầu một đường. -->
+<div class="stats" id="stats">
+  <span>Câu <b id="curIdx">1</b>/<b id="totalQ">—</b></span>
+  <span><span id="statRight">Đúng:</span> <b id="rightCount">0</b></span>
+  <span id="statWrong">Sai: <b id="wrongCount">0</b></span>
+  <span id="timerBox" style="display:none">⏱ <b id="timer">22:00</b></span>
 </div>
 
 <div id="practiceWrap">
@@ -316,7 +340,9 @@
     <span class="sbTitle">Danh sách câu hỏi</span>
     <!-- "Xoá điểm" → "⚙️ Cài đặt" (req #76). Xoá tiến độ KHÔNG mất: nút "🗑 Xoá tiến độ"
          ở bảng tiến độ ngay dưới vẫn làm đúng việc đó (hai nút này vốn trùng chức năng). -->
-    <button id="setBtn" class="sbReset" style="color:var(--muted);background:rgba(255,255,255,.06);border-color:var(--border)">⚙️ Cài đặt</button>
+    <!-- req #86: HOÁN nút này (trên) và nút "Xoá tiến độ" (dưới bảng tiến độ). Nút trên
+         nay là "Xóa điểm" (xoá tiến độ), nút dưới thành "Cài đặt" (mở cỡ chữ). -->
+    <button id="setBtn" class="sbReset">🗑 Xóa điểm</button>
   </div>
   <div id="qGrid"></div>
   <div id="qGridEmpty" class="sbEmpty" style="display:none">Không thấy câu khớp.</div>
@@ -326,22 +352,10 @@
 </aside>
 <div id="mainCol">
 
-<div class="stats" id="stats">
-  <span>Câu <b id="curIdx">1</b>/<b id="totalQ">—</b></span>
-  <span><span id="statRight">Đúng:</span> <b id="rightCount">0</b></span>
-  <span id="statWrong">Sai: <b id="wrongCount">0</b></span>
-  <span id="timerBox" style="display:none">⏱ <b id="timer">22:00</b></span>
-</div>
-
 <div class="qcard" id="qcard">
-  <!-- Hàng điều hướng TRÊN ĐẦU thẻ, chỉ khi thi (req #81 — ảnh mẫu có nút ở cả trên
-       lẫn dưới). Đề 30–45 câu, câu có ảnh thì thẻ dài, cuộn xuống đáy mới bấm được
-       "Câu sau" thì mỏi. "Câu x / y" đặt giữa vì header thi không còn thanh stats. -->
-  <div class="qnavTop" id="qnavTop" style="display:none">
-    <button class="lnkbtn" id="topPrev">‹ Câu trước</button>
-    <span class="qnavIdx">Câu <b id="ehQ">1 / 30</b></span>
-    <button class="lnkbtn" id="topNext">Câu sau ›</button>
-  </div>
+  <!-- Hàng nav TRÊN đầu thẻ đã BỎ (req #88): SV thấy thừa, chỉ giữ nút Câu trước/
+       Câu sau ở dưới. Chỉ số "Câu x/y" nay nằm trong header thi (examHead) khi thi,
+       và trong thanh #stats khi luyện tập. -->
   <div class="qhead">
     <span class="badge normal" id="topicBadge">Khái niệm</span>
     <span id="critBadge"></span>
@@ -358,7 +372,8 @@
 <div class="nav">
   <button id="prevBtn">← Câu trước</button>
   <button class="primary" id="nextBtn">Câu sau →</button>
-  <button id="endBtn" style="display:none">🏁 Nộp bài</button>
+  <!-- Nút "Nộp bài" ở hàng này đã BỎ (req #88): trùng với nút "🏁 Nộp bài" to màu đỏ
+       trong cột trái; giữ 1 cái cho gọn. endBtn cũ gỡ luôn phần JS. -->
 </div>
 
 </div><!-- /#mainCol -->
@@ -522,7 +537,6 @@
     el('catBar').style.display = m === 'exam' ? 'none' : '';
     renderProgress();   // ẩn khi vào thi, hiện lại khi về luyện tập (req #75)
     el('summary').classList.remove('show');
-    el('endBtn').style.display = m === 'exam' ? '' : 'none';
     if (!list.length) {
       el('emptyMsg').style.display = '';
       el('emptyMsg').innerHTML = '📭 Mục «' + (el('catSelect').selectedOptions[0]?.textContent.trim() || category) + '» hiện chưa có câu hỏi.';
@@ -541,18 +555,14 @@
       // Header thi thay cho thanh stats: gom hạng/đề + số câu + giờ + đã làm (req #81)
       el('stats').style.display = 'none';
       el('examHead').style.display = '';
-      el('modeBar').style.display = 'none';   // ẩn nút đổi chế độ khi đang thi (req #80)
       el('ehCls').textContent = examClass ? examClass.id : 'B';
       el('ehDe').textContent = examDe ? ' · Đề ' + String(examDe).padStart(2, '0') : ' · Câu hỏi ngẫu nhiên';
       el('ehTotal').textContent = list.length;
-      el('qnavTop').style.display = '';
       el('practiceWrap').classList.add('exam');    // 2 cột cao bằng nhau (req #81)
       tickTimer();
     } else {
       exam = null;
       el('examHead').style.display = 'none';
-      el('modeBar').style.display = '';
-      el('qnavTop').style.display = 'none';
       el('stats').style.display = '';
       el('timerBox').style.display = 'none';
       el('practiceWrap').classList.remove('exam');
@@ -579,6 +589,10 @@
     setTimeout(tickTimer, 1000);
   }
   function submitExam() {
+    // Thời gian đã làm (cho chip kết quả req #91) — chốt TRƯỚC khi exam=null bên dưới.
+    const elapsedMs = exam ? (Date.now() - exam.start) : 0;
+    const elapsedStr = String(Math.floor(elapsedMs / 60000)).padStart(2, '0') + ':' +
+                       String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0');
     let right = 0, critWrong = 0;
     for (const [i, ans] of Object.entries(answered)) {
       const q = list[i];
@@ -594,24 +608,28 @@
     el('qcard').style.display = 'none';
     document.querySelector('.nav').style.display = 'none';
     el('stats').style.display = 'none';
-    // Thi xong = hết thi: trả lại thanh đổi chế độ (req #80 chỉ ẩn LÚC ĐANG thi — ẩn
-    // luôn ở màn tổng kết thì không còn đường về Luyện tập, phải tải lại trang), và
-    // dẹp header thi + đồng hồ cho khỏi đếm ngược trên màn đã nộp.
-    el('modeBar').style.display = '';
+    // Nộp bài xong: dẹp header thi + đồng hồ (khỏi đếm ngược trên màn đã nộp), và
+    // ẩn luôn cột trái "Danh sách câu hỏi" — đã nộp thì lưới nhảy câu vô dụng, chỉ
+    // tổ chiếm chỗ (req #83). Cột trái hiện lại khi vào thi/luyện lượt mới.
     el('examHead').style.display = 'none';
-    el('qnavTop').style.display = 'none';
+    el('qsidebar').style.display = 'none';
     el('practiceWrap').classList.remove('exam');
     exam = null;
     el('sumTitle').textContent = pass ? '🎉 ĐẠT' : '❌ TRƯỢT';
     el('sumScore').textContent = `${right}/${total}`;
     el('sumScore').className = 'big ' + (pass ? 'pass' : 'fail');
-    el('sumDetail').innerHTML = `
-      ${examClass ? 'Hạng <b>' + examClass.id + '</b>' + (examDe ? ' · Đề số <b>' + examDe + '</b>' : '') + ' · cần đạt <b>' + need + '/' + total + '</b><br>' : ''}
-      Đúng: <b>${right}</b> · Sai: <b>${total - right}</b><br>
-      Câu liệt sai: <b style="color:${critWrong ? 'var(--red)' : 'var(--green)'}">${critWrong}</b><br>
-      ${!passByScore ? '<span style="color:var(--red)">→ Chưa đủ ' + need + '/' + total + ' câu</span><br>' : ''}
-      ${critWrong > 0 ? '<span style="color:var(--red)">→ Sai câu LIỆT — tự động trượt</span>' : ''}
-    `;
+    // Thống kê dạng CHIP như ảnh mẫu SV gửi (req #91): gọn, dễ đọc hơn mấy dòng chữ.
+    el('sumDetail').innerHTML =
+      '<div class="sumChips">' +
+        (examClass ? '<span class="sumChip">🪪 Hạng <b>' + examClass.id + '</b>' + (examDe ? ' · Đề ' + String(examDe).padStart(2, '0') : '') + '</span>' : '') +
+        '<span class="sumChip">📊 Kết quả <b>' + right + '/' + total + '</b> · ' + (pass ? '<b style="color:var(--green)">Đạt</b>' : '<b style="color:var(--red)">Chưa đạt</b>') + '</span>' +
+        '<span class="sumChip">✅ Đúng <b style="color:var(--green)">' + right + '</b></span>' +
+        '<span class="sumChip">❌ Sai <b style="color:var(--red)">' + (total - right) + '</b></span>' +
+        '<span class="sumChip">⚠️ Câu liệt sai <b style="color:' + (critWrong ? 'var(--red)' : 'var(--green)') + '">' + critWrong + '</b></span>' +
+        '<span class="sumChip">⏱ Thời gian <b>' + elapsedStr + '</b></span>' +
+      '</div>' +
+      (!passByScore ? '<div style="color:var(--red);margin-top:8px;font-size:13px">→ Chưa đủ ' + need + '/' + total + ' câu để đạt</div>' : '') +
+      (critWrong > 0 ? '<div style="color:var(--red);margin-top:4px;font-size:13px">→ Sai câu điểm liệt — tự động trượt</div>' : '');
     // Nút sau khi nộp: thi sát hạch theo đề → cho thi lại đúng đề / đổi đề khác.
     if (examDe) {
       el('sumBtns').innerHTML =
@@ -659,11 +677,13 @@
         return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">' +
           '<div style="font-weight:600;margin-bottom:8px">' + (i + 1) + '. ' + esc(q.q) + '</div>' +
           (q.img ? '<img src="' + q.img + '" alt="" style="max-width:min(280px,70%);border-radius:8px;background:#fff;padding:6px;margin-bottom:8px" loading="lazy" />' : '') +
+          // req #91: đáp án ĐÚNG tô NỀN xanh, đáp án SAI đã chọn tô NỀN đỏ (như ảnh mẫu),
+          // thay vì chỉ đổi màu chữ — nhìn rõ ngay câu đúng/sai.
           q.o.map((o, k) => {
             const isAns = k === q.a, isPick = k === picked;
-            const c = isAns ? 'color:var(--green);font-weight:700' : (isPick ? 'color:var(--red)' : 'color:var(--muted)');
+            const cls = isAns ? 'rvOpt rvRight' : (isPick ? 'rvOpt rvWrong' : 'rvOpt');
             const mark = isAns ? '✅ ' : (isPick ? '❌ ' : '');
-            return '<div style="' + c + ';font-size:13.5px;padding:2px 0">' + mark + esc(o) + '</div>';
+            return '<div class="' + cls + '">' + mark + esc(o) + '</div>';
           }).join('') +
           (picked === undefined ? '<div style="color:var(--red);font-size:12.5px;margin-top:4px">(bạn chưa chọn)</div>' : '') +
           '<div style="color:var(--muted);font-size:12.5px;margin-top:6px;line-height:1.5">💡 ' + esc(q.ex) + '</div>' +
@@ -705,7 +725,7 @@
         <span class="progChip">📘 <b>${Q.length}</b> câu</span>
         <span class="progChip">✅ <b>${allDone}</b> đã làm</span>
         <span class="progChip">🏆 <b>${allRight}</b> đúng</span>
-        <button id="progReset" class="progReset">🗑 Xoá tiến độ</button>
+        <button id="progReset" class="progReset">⚙️ Cài đặt</button>
       </div>
       <table class="progTable">
         <thead><tr><th>Hạng mục</th><th>Tiến độ</th><th style="text-align:right">Số câu</th></tr></thead>
@@ -717,11 +737,8 @@
           </tr>`).join('')}
         </tbody>
       </table>`;
-    el('progReset').onclick = () => {
-      if (!confirm('Xoá toàn bộ tiến độ đã làm?')) return;
-      progress = {}; saveProg(); answered = {};
-      render(); renderProgress();
-    };
+    // req #86: nút dưới nay MỞ CÀI ĐẶT (cỡ chữ), việc xoá điểm chuyển lên nút trên.
+    el('progReset').onclick = () => setOpen(true);
   }
   function renderHistory() {
     const h = loadHist(), box = el('examHist');
@@ -808,7 +825,7 @@
       el('rightCount').textContent = r + w;
       el('statWrong').style.display = 'none';
       el('ehDone').textContent = r + w;        // chip "đã làm" ở header thi (req #81)
-      el('ehQ').textContent = (idx + 1) + ' / ' + list.length;
+      el('ehQ').textContent = (idx + 1);   // chip đã có "/<ehTotal>" nên ehQ chỉ là số câu hiện tại
     } else {
       el('statRight').textContent = 'Đúng:';
       el('rightCount').textContent = r;
@@ -857,8 +874,6 @@
     el('catBar').style.display = 'none'; el('qcard').style.display = 'none'; el('stats').style.display = 'none';
     el('emptyMsg').style.display = 'none'; el('summary').classList.remove('show');
     el('timerBox').style.display = 'none'; el('examHead').style.display = 'none'; exam = null;
-    el('modeBar').style.display = '';       // rời màn thi → hiện lại nút đổi chế độ (req #80)
-    el('qnavTop').style.display = 'none';
     el('practiceWrap').classList.remove('exam');
     el('qsidebar').style.display = 'none';
     el('progBox').innerHTML = '';   // bảng tiến độ chỉ thuộc màn luyện tập (req #75)
@@ -923,8 +938,7 @@
       setMode('exam');
     });
   }
-  el('deBack').onclick = enterExamPicker;
-  el('deBackTop').onclick = enterExamPicker;   // nút trên đầu (req #79), cùng việc
+  el('deBack').onclick = enterExamPicker;   // nút dưới lưới đề (req #89: chỉ còn 1 nút)
 
   // ===== ⚙️ Cài đặt cỡ chữ (req #76) =====
   // Ghi thẳng vào :root nên câu hỏi + đáp án đổi ngay, không cần render lại.
@@ -960,7 +974,12 @@
     fs[b.dataset.def] = FS_DEF[b.dataset.def]; applyFs();
   });
   const setOpen = v => el('setModal').classList.toggle('show', v);
-  el('setBtn').onclick = () => setOpen(true);
+  // req #86: nút trên (setBtn) nay là "Xóa điểm" — xoá toàn bộ tiến độ đã làm.
+  el('setBtn').onclick = () => {
+    if (!confirm('Xoá toàn bộ điểm / tiến độ đã làm?')) return;
+    progress = {}; saveProg(); answered = {};
+    render(); renderProgress();
+  };
   el('setX').onclick = () => setOpen(false);
   el('setClose').onclick = () => setOpen(false);
   // Bấm ra nền ngoài hộp thì đóng (bấm trong hộp thì không).
@@ -981,9 +1000,7 @@
   const goPrev = () => { if (idx > 0) { idx--; render(); } };
   el('nextBtn').onclick = goNext;
   el('prevBtn').onclick = goPrev;
-  // Nút trên đầu thẻ khi thi (req #81) — dùng CHUNG logic với nút dưới, không nhân bản.
-  el('topNext').onclick = goNext;
-  el('topPrev').onclick = goPrev;
+  // (Hàng nav trên đầu thẻ đã bỏ theo req #88 — không còn topNext/topPrev.)
 
   // ===== Phím tắt: ←/→ đổi câu, 1-4 chọn đáp án (req #72 Thì Dũng) =====
   // Chọn đáp án bằng cách CLICK chính input đang render, không tự set answered[]:
@@ -1018,8 +1035,7 @@
       }
     }
   });
-  el('endBtn').onclick = submitExam;
-  el('sbSubmit').onclick = submitExam;   // nút Nộp bài trong cột trái (req #73) — cùng một hàm
+  el('sbSubmit').onclick = submitExam;   // nút Nộp bài trong cột trái (req #73) — nút duy nhất sau #88
 
   // Mở thẳng chế độ qua URL: ?mode=exam (chọn hạng) | ?mode=critical
   const _m = new URLSearchParams(location.search).get('mode');
