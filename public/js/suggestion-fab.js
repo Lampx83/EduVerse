@@ -29,19 +29,79 @@ const STATUS = {
   rejected:  { label: 'Chưa thực hiện', cls: 'rejected' },
 };
 
-function inferDomain() {
-  if (typeof window !== 'undefined' && window.SUGGESTION_DOMAIN) {
-    return String(window.SUGGESTION_DOMAIN);
-  }
-  // Ưu tiên ?domain= trên URL (school.html?domain=secondary…) để khớp enrolled_domain
-  try {
-    const q = new URLSearchParams(location.search).get('domain');
-    if (q) return String(q);
-  } catch {}
+// ── "Trường đang vào" (session) ──────────────────────────────────────────
+// Ban điều hành AI thuộc TỪNG trường: nút chỉ hiện khi đang ở trong một trường
+// và đề nghị gửi đi gắn đúng domain của trường đó. Vào campus (/school?domain=X)
+// sẽ nhớ X vào sessionStorage; các trang hoạt động của trường (game/lab/luyện đề…
+// mở bằng URL riêng, không kèm ?domain=) kế thừa lại. Về trang chủ/khám phá/bảng
+// giá/xếp hạng → coi như rời trường, xoá ghi nhớ và ẩn nút.
+const SCHOOL_KEY = 'tizia_school_domain';
+
+function rememberSchool(d) {
+  try { if (d) sessionStorage.setItem(SCHOOL_KEY, String(d)); } catch {}
+}
+function recallSchool() {
+  try { return sessionStorage.getItem(SCHOOL_KEY) || null; } catch { return null; }
+}
+function forgetSchool() {
+  try { sessionStorage.removeItem(SCHOOL_KEY); } catch {}
+}
+
+// Trang toàn cục (không thuộc trường nào) — ở đây phải ẩn nút và rời trường.
+const GLOBAL_PATHS = new Set([
+  '/', '/index.html',
+  '/kham-pha', '/kham-pha.html',
+  '/league', '/league.html',
+  '/leaderboard', '/leaderboard.html',
+  '/pricing', '/pricing.html',
+  '/login', '/login.html',
+  '/register', '/register.html',
+  '/complete-profile', '/complete-profile.html',
+  '/dashboard', '/dashboard.html',
+]);
+function isGlobalPage() {
+  let p = (location.pathname || '/').toLowerCase().replace(/\/+$/, '');
+  if (p === '') p = '/';
+  return GLOBAL_PATHS.has(p);
+}
+
+// Suy ra domain trường từ đường dẫn hoạt động (khi không có ?domain= và chưa nhớ).
+function domainByPath() {
   const p = (location.pathname || '').toLowerCase();
   if (/(^|\/)(it-|playground|cipher|sql|algo|code-lab|web-playground)/.test(p)) return 'it';
   if (/(pharmacy|pharma|nha-thuoc|compounding|sac-ky|dispense|antibiogram|ps\d|bao-che|herb-garden|titration|pediatric|iv-infusion|gmp|patient-sim|gc\d|calibration-curve|pk-curve|bp-measure|dilution|3d-shelf|2d-arcade|grapher|l[12]-)/.test(p)) return 'pharmacy';
-  return 'school';
+  if (/(luat-giao-thong|bien-bao-giao-thong|driving)/.test(p)) return 'driving';
+  return null;
+}
+
+// Domain trường hiện tại, hoặc null nếu KHÔNG ở trong trường nào (→ ẩn nút).
+function resolveDomain() {
+  // 1) Trang ép domain (window.SUGGESTION_DOMAIN)
+  if (typeof window !== 'undefined' && window.SUGGESTION_DOMAIN) {
+    const d = String(window.SUGGESTION_DOMAIN);
+    rememberSchool(d);
+    return d;
+  }
+  // 2) ?domain= trên URL (trang campus /school?domain=…) → vào trường, ghi nhớ
+  try {
+    const q = new URLSearchParams(location.search).get('domain');
+    if (q) { rememberSchool(q); return String(q); }
+  } catch {}
+  // 3) Trang toàn cục → rời trường, ẩn nút
+  if (isGlobalPage()) { forgetSchool(); return null; }
+  // 4) Đường dẫn hoạt động nhận diện được trường
+  const byPath = domainByPath();
+  if (byPath) { rememberSchool(byPath); return byPath; }
+  // 5) Kế thừa trường đã vào trong phiên (trang hoạt động không kèm ?domain=)
+  const remembered = recallSchool();
+  if (remembered) return remembered;
+  // 6) Không xác định được trường → ẩn nút
+  return null;
+}
+
+// Giữ tương thích tên cũ (một số chỗ khác có thể tham chiếu).
+function inferDomain() {
+  return resolveDomain() || 'school';
 }
 
 function pageContext() {
@@ -125,6 +185,37 @@ function autoMount() {
   `;
   document.body.appendChild(root);
   bind(root);
+  refreshFabVisibility();   // ẩn/hiện lần đầu theo trường đang vào
+  hookNavigation();         // theo dõi đổi trang (Next dùng client-side nav)
+}
+
+// Ẩn/hiện nút theo domain trường hiện tại. #sgf-root luôn nằm trong DOM (chèn 1
+// lần) để còn toggle được khi điều hướng nội bộ; ta chỉ đổi display.
+function refreshFabVisibility() {
+  const root = document.getElementById('sgf-root');
+  if (!root) return;
+  const dom = resolveDomain();
+  root.style.display = dom ? '' : 'none';
+}
+
+// Next.js điều hướng bằng history.pushState (không reload cả trang) nên script
+// chèn qua nginx không chạy lại → tự vá pushState/replaceState + popstate để
+// tính lại việc ẩn/hiện mỗi lần đổi URL.
+let navHooked = false;
+function hookNavigation() {
+  if (navHooked) return;
+  navHooked = true;
+  const fire = () => setTimeout(refreshFabVisibility, 0);
+  window.addEventListener('popstate', fire);
+  for (const m of ['pushState', 'replaceState']) {
+    const orig = history[m];
+    if (typeof orig !== 'function') continue;
+    history[m] = function () {
+      const ret = orig.apply(this, arguments);
+      fire();
+      return ret;
+    };
+  }
 }
 
 function bind(root) {
