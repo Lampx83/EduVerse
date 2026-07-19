@@ -126,6 +126,43 @@ function injectStyle() {
     }
     .mb-near-list { flex: 1 1 auto; overflow-y: auto; }
 
+    /* ── Chế độ NHÌN QUANH (magic window) ── */
+    .mb-vr-btn {
+      position: fixed; top: 10px; left: 10px; z-index: 160;
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 13px; min-height: 40px; border-radius: 999px;
+      background: rgba(139,92,246,0.92); color: #faf5ff; border: 1px solid #8b5cf6;
+      font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    }
+    .mb-vr {
+      position: fixed; left: 0; right: 0; top: 0; bottom: ${TABS_H}px; z-index: 170;
+      /* trong suốt để thấy cảnh 3D; chỉ bắt chạm để chọn thuốc đang ngắm */
+    }
+    .mb-vr-reticle {
+      position: absolute; left: 50%; top: 50%; width: 46px; height: 46px;
+      transform: translate(-50%, -50%); border-radius: 50%;
+      border: 2px solid rgba(56,189,248,0.9); box-shadow: 0 0 0 2px rgba(0,0,0,0.35);
+      pointer-events: none;
+    }
+    .mb-vr-reticle::after {
+      content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 5px;
+      transform: translate(-50%, -50%); border-radius: 50%; background: #38bdf8;
+    }
+    .mb-vr-exit {
+      position: absolute; top: 10px; right: 10px; z-index: 2;
+      padding: 9px 14px; min-height: 40px; border-radius: 999px;
+      background: rgba(15,23,42,0.9); color: #e2e8f0; border: 1px solid #475569;
+      font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .mb-vr-hint {
+      position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+      max-width: 88%; text-align: center; padding: 8px 14px; border-radius: 999px;
+      background: rgba(15,23,42,0.82); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.3);
+      font-size: 12.5px; pointer-events: none; transition: color .2s;
+    }
+    .mb-vr-hint.is-warn { color: #fbbf24; }
+
     /* Thanh điều khiển nổi phải nhường chỗ cho tab bar */
     .cam-bar { bottom: ${TABS_H + 8}px !important; }
     /* Ô tìm nổi trên canvas thành thừa (đã có ngăn kéo tìm tốt hơn) */
@@ -212,7 +249,15 @@ export function initMobileUI({ sim, openDrug }) {
   if (!app) return null;
 
   injectStyle();
-  side?.classList.add('mb-sheet', 'mb-sheet-side');
+  // .side đang HIỆN (transform:none) → gắn .mb-sheet mà để transition chạy thì nó
+  // "kẹt" giữa chừng ở translateY(0). Tắt transition 1 nhịp để áp thẳng trạng thái
+  // ẩn (translateY 112%), rồi bật lại cho các lần mở/đóng sau mượt.
+  if (side) {
+    side.style.transition = 'none';
+    side.classList.add('mb-sheet', 'mb-sheet-side');
+    side.getBoundingClientRect();                 // ép reflow
+    requestAnimationFrame(() => { side.style.transition = ''; });
+  }
 
   const tabs = document.createElement('nav');
   tabs.className = 'mb-tabs';
@@ -224,7 +269,9 @@ export function initMobileUI({ sim, openDrug }) {
   // Chạm 1 dòng ở bất kỳ bảng nào → đóng bảng, bay camera tới, mở cửa sổ thuốc.
   const pick = (id) => {
     close();                       // đóng bảng để thấy camera bay + cửa sổ thuốc
-    sim.focusDrug?.(id);           // 6.6px → ~37px: đóng cửa sổ ra là hộp đã to, chạm được
+    // Trong chế độ nhìn quanh, camera do CẢM BIẾN điều khiển → KHÔNG focusDrug (lệnh
+    // bay camera bị treo rồi áp sau khi thoát VR, làm camera nhảy về hộp vừa chọn).
+    if (!sim.isLookAround?.()) sim.focusDrug?.(id);
     openDrug?.(id);                // mở thẳng cửa sổ thuốc — không phải chạm hộp 3D lần nào
   };
 
@@ -288,6 +335,70 @@ export function initMobileUI({ sim, openDrug }) {
     nearSheet.querySelector('.mb-near-n').textContent = `(${list.length} thuốc)`;
     nearSheet.querySelector('.mb-near-list').innerHTML = list.map(rowHTML).join('');
     show('near');
+  }
+
+  // ── Chế độ NHÌN QUANH (magic window) ──────────────────────────────────────
+  // Chỉ dựng khi scene có hỗ trợ (enterLookAround). Xin quyền cảm biến (iOS 13+
+  // bắt buộc gọi trong cử chỉ chạm) rồi bật; chạm giữa màn (reticle) → liệt kê
+  // thuốc đang ngắm; kiểm tra 1.4s nếu không có dữ liệu cảm biến → báo & thoát.
+  let vrActive = false;
+  if (typeof sim.enterLookAround === 'function' && window.DeviceOrientationEvent) {
+    const vrBtn = document.createElement('button');
+    vrBtn.className = 'mb-vr-btn'; vrBtn.type = 'button';
+    vrBtn.innerHTML = '🥽 Nhìn quanh';
+    document.body.appendChild(vrBtn);
+
+    const vr = document.createElement('div');
+    vr.className = 'mb-vr'; vr.hidden = true;
+    vr.innerHTML = `
+      <button class="mb-vr-exit" type="button">✕ Thoát</button>
+      <div class="mb-vr-reticle"></div>
+      <div class="mb-vr-hint">Quay điện thoại để nhìn quanh · chạm để chọn thuốc đang ngắm</div>`;
+    document.body.appendChild(vr);
+    const hint = vr.querySelector('.mb-vr-hint');
+
+    const exitVR = () => {
+      vrActive = false; vr.hidden = true; vrBtn.hidden = false;
+      sim.exitLookAround?.();
+    };
+    const enterVR = async () => {
+      try {
+        const DOE = window.DeviceOrientationEvent;
+        if (DOE && typeof DOE.requestPermission === 'function') {
+          const res = await DOE.requestPermission();      // iOS: phải trong cử chỉ chạm
+          if (res !== 'granted') { alert('Cần cho phép truy cập cảm biến chuyển động để dùng chế độ nhìn quanh.'); return; }
+        }
+      } catch (e) { /* Android/desktop không có requestPermission → bỏ qua, thử tiếp */ }
+      close();                                            // đóng sheet đang mở
+      hint.classList.remove('is-warn');
+      hint.textContent = 'Quay điện thoại để nhìn quanh · chạm để chọn thuốc đang ngắm';
+      sim.enterLookAround?.();
+      vrActive = true; vr.hidden = false; vrBtn.hidden = true;
+      setTimeout(() => {
+        if (vrActive && !sim.lookHasData?.()) {           // không nhận được dữ liệu cảm biến
+          exitVR();
+          alert('Thiết bị này không có cảm biến xoay (gyroscope) hoặc trình duyệt không cấp quyền. Bạn vẫn dùng được "Chọn thuốc" và chạm vào kệ.');
+        }
+      }, 1400);
+    };
+
+    vrBtn.addEventListener('click', enterVR);
+    vr.querySelector('.mb-vr-exit').addEventListener('click', (e) => { e.stopPropagation(); exitVR(); });
+    // Chạm overlay (trừ nút thoát) → chọn thuốc ở TÂM màn (nơi reticle ngắm).
+    vr.addEventListener('click', (e) => {
+      if (e.target.closest('.mb-vr-exit')) return;
+      const c = document.getElementById('scene-canvas')?.getBoundingClientRect();
+      if (!c) return;
+      // Bán kính RỘNG (90px) cho reticle: người dùng "ngắm" cả vùng kệ trước mặt,
+      // reticle hay rơi vào khe giữa hộp → 48px hụt. 90px tóm ~vùng ngón tay ngắm.
+      const near = sim.getDrugsNear?.(c.left + c.width / 2, c.top + c.height / 2, 90, 10) || [];
+      if (near.length) { showNear(near); }
+      else {
+        hint.classList.add('is-warn');
+        hint.textContent = 'Không có thuốc ở hướng đang ngắm — quay máy về phía kệ thuốc.';
+        setTimeout(() => { hint.classList.remove('is-warn'); hint.textContent = 'Quay điện thoại để nhìn quanh · chạm để chọn thuốc đang ngắm'; }, 2200);
+      }
+    });
   }
 
   fitApp();

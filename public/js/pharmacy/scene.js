@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0716';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0716';
-import { createCharacter } from './character.js?v=ph0716';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0719';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0719';
+import { createCharacter } from './character.js?v=ph0719';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -3169,9 +3169,85 @@ export function buildScene(canvas, opts = {}) {
   // ── Render loop ──────────────────────────────────────────────────────────
   const clock = new THREE.Clock();
   const _focusMarkers = [];   // mũi tên/vòng đánh dấu thuốc tìm được (focusDrug)
+  // ── CHẾ ĐỘ NHÌN QUANH (magic window) cho điện thoại ─────────────────────────
+  // Đứng GIỮA nhà thuốc, quay điện thoại các hướng → camera nhìn quanh 360°. Vị trí
+  // đứng cố định (chỉ xoay, không đi), reticle giữa màn để chạm chọn thuốc đang nhìn.
+  // Toán: cùng cách DeviceOrientationControls (three) — dựng quaternion từ alpha/
+  // beta/gamma + hiệu chỉnh theo hướng màn hình. Yaw CANH TƯƠNG ĐỐI (lấy hướng lúc
+  // vào làm gốc = quay về kệ) vì la bàn (alpha) mỗi máy lệch khác nhau, không tin được.
+  const D2R = Math.PI / 180;
+  const _look = { active: false, alpha: 0, beta: 0, gamma: 0, orient: 0, has: false, calibrated: false, yawOffset: 0 };
+  const LOOK_POS = new THREE.Vector3(0, 1.55, 0.55);   // đứng giữa phòng, ngang tầm mắt
+  const _lz = new THREE.Vector3(0, 0, 1);
+  const _lq0 = new THREE.Quaternion();
+  const _lq1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // -π/2 quanh X: "sau lưng máy" = hướng nhìn
+  const _lEuler = new THREE.Euler();
+  const _lTmpQ = new THREE.Quaternion();
+  const _lYawQ = new THREE.Quaternion();
+  const _lUp = new THREE.Vector3(0, 1, 0);
+  const _lSaved = {};
+  function _onDeviceOrient(e) {
+    if (e.alpha == null && e.beta == null && e.gamma == null) return;
+    _look.alpha = (e.alpha || 0) * D2R;
+    _look.beta = (e.beta || 0) * D2R;
+    _look.gamma = (e.gamma || 0) * D2R;
+    _look.has = true;
+  }
+  function _readScreenOrient() {
+    const a = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+    _look.orient = a * D2R;
+  }
+  function _applyLook() {
+    _lEuler.set(_look.beta, _look.alpha, -_look.gamma, 'YXZ');
+    _lTmpQ.setFromEuler(_lEuler);
+    _lTmpQ.multiply(_lq1);                                   // máy nằm ngang, nhìn ra sau
+    _lTmpQ.multiply(_lq0.setFromAxisAngle(_lz, -_look.orient)); // xoay theo hướng màn
+    if (!_look.calibrated && _look.has) {                   // canh gốc: hướng hiện tại = nhìn về kệ (-Z)
+      _lEuler.setFromQuaternion(_lTmpQ, 'YXZ');
+      _look.yawOffset = -_lEuler.y;
+      _look.calibrated = true;
+    }
+    _lYawQ.setFromAxisAngle(_lUp, _look.yawOffset);
+    camera.quaternion.copy(_lYawQ).multiply(_lTmpQ);
+    camera.position.copy(LOOK_POS);
+  }
+  function enterLookAround() {
+    if (_look.active) return true;
+    _lSaved.pos = camera.position.clone();
+    _lSaved.quat = camera.quaternion.clone();
+    _lSaved.target = controls.target.clone();
+    _lSaved.fov = camera.fov;
+    _look.active = true; _look.has = false; _look.calibrated = false;
+    controls.enabled = false;
+    camera.fov = 72; camera.updateProjectionMatrix();       // rộng hơn cho cảm giác nhập vai
+    _readScreenOrient();
+    window.addEventListener('deviceorientation', _onDeviceOrient, true);
+    window.addEventListener('orientationchange', _readScreenOrient);
+    return true;
+  }
+  function exitLookAround() {
+    if (!_look.active) return;
+    _look.active = false;
+    window.removeEventListener('deviceorientation', _onDeviceOrient, true);
+    window.removeEventListener('orientationchange', _readScreenOrient);
+    camera.fov = _lSaved.fov; camera.updateProjectionMatrix();
+    camera.position.copy(_lSaved.pos);
+    camera.quaternion.copy(_lSaved.quat);
+    controls.target.copy(_lSaved.target);
+    controls.enabled = true;
+    controls.update();
+  }
+
   function render() {
     const dt = Math.min(clock.getDelta(), 0.05);
     const t = clock.elapsedTime;
+
+    // Nhìn quanh (magic window): xoay camera theo cảm biến, BỎ QUA OrbitControls.
+    if (_look.active) {
+      if (_look.has) _applyLook();
+      renderer.render(scene, camera);
+      return;
+    }
 
     // Marker focus: nảy nhẹ + hết hạn sau 5s.
     for (let i = _focusMarkers.length - 1; i >= 0; i--) {
@@ -4111,6 +4187,9 @@ export function buildScene(canvas, opts = {}) {
     makeHdsdStickerTex,
     getDrugAtPointer,
     getDrugsNear,
+    enterLookAround, exitLookAround,
+    isLookAround: () => _look.active,
+    lookHasData: () => _look.has,
     getCatalog,
     focusDrug,
     triggerBarcodeScan,
