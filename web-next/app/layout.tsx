@@ -9,10 +9,20 @@ export const metadata: Metadata = {
   metadataBase: new URL('http://localhost:3200'),
 };
 
+// Chạy TRƯỚC khi paint để chống nhấp nháy: đọc lựa chọn theme đã lưu
+// ('tizia-theme' = system|light|dark) và áp class `dark` lên <html> ngay.
+// Mặc định 'system' → bám prefers-color-scheme của máy. Đồng bộ với ThemeToggle.
+const themeInit = `(function(){try{var t=localStorage.getItem('tizia-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){document.documentElement.classList.add('dark');}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // class="dark" → Tizia mặc định theme tối (tokens ở globals.css .dark)
-    <html lang="vi" className="dark">
+    // Class `dark` do inline script bên dưới quyết định theo lựa chọn người dùng
+    // (sáng / tối / theo hệ thống). suppressHydrationWarning vì script đổi class
+    // trước khi React hydrate.
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
       <body className="min-h-screen bg-background text-foreground antialiased">
         <SiteHeader />
         <main className="w-full px-4 py-6 sm:px-6">{children}</main>

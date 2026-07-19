@@ -77,6 +77,14 @@ export default async function School({ searchParams }: { searchParams: SearchPar
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-4 py-5">
+      {/* Nút quay lại trang chủ — điều hướng thoát khỏi campus một trường. */}
+      <a
+        href="/"
+        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-foreground/5 px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+      >
+        <span aria-hidden>←</span> Về trang chủ
+      </a>
+
       <div className="flex items-baseline gap-3">
         <h1 className="text-[22px] font-bold" id="campus-title">
           {meta.icon} {meta.name}

@@ -7,6 +7,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import ThemeToggle from './ThemeToggle';
 
 type Me = {
   id: number;
@@ -79,7 +80,7 @@ export default function SiteHeader() {
   const plan = me?.effective_plan || me?.plan || 'free';
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-background/85 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-[1600px] items-center gap-3 px-4 sm:px-6">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
@@ -96,13 +97,16 @@ export default function SiteHeader() {
 
         {/* Khu tài khoản */}
         <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
+          {/* Bộ chọn giao diện sáng / tối / theo hệ thống — luôn hiển thị */}
+          <ThemeToggle />
+
           {me === undefined ? (
-            <div className="h-8 w-20 animate-pulse rounded-full bg-white/5" />
+            <div className="h-8 w-20 animate-pulse rounded-full bg-foreground/5" />
           ) : me ? (
             <>
               {eng && !eng.streak_hidden && typeof eng.streak === 'number' && (
                 <span
-                  className="hidden items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-sm font-medium sm:inline-flex"
+                  className="hidden items-center gap-1 rounded-full bg-foreground/5 px-2.5 py-1 text-sm font-medium sm:inline-flex"
                   title="Chuỗi ngày học liên tiếp"
                 >
                   🔥 {eng.streak}
@@ -110,7 +114,7 @@ export default function SiteHeader() {
               )}
               {typeof coins === 'number' && (
                 <span
-                  className="hidden items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-sm font-medium sm:inline-flex"
+                  className="hidden items-center gap-1 rounded-full bg-foreground/5 px-2.5 py-1 text-sm font-medium sm:inline-flex"
                   title="Xu tích luỹ"
                 >
                   🪙 {coins.toLocaleString('vi-VN')}
@@ -121,7 +125,7 @@ export default function SiteHeader() {
                 <button
                   type="button"
                   onClick={() => setOpen((o) => !o)}
-                  className="flex items-center gap-2 rounded-full bg-white/5 py-1 pl-1 pr-2.5 transition-colors hover:bg-white/10"
+                  className="flex items-center gap-2 rounded-full bg-foreground/5 py-1 pl-1 pr-2.5 transition-colors hover:bg-foreground/10"
                 >
                   <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-primary/25 text-sm font-semibold text-primary">
                     {me.avatar_url ? (
@@ -137,8 +141,8 @@ export default function SiteHeader() {
                 </button>
 
                 {open && (
-                  <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-xl border border-white/10 bg-card shadow-2xl">
-                    <div className="border-b border-white/10 px-4 py-3">
+                  <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+                    <div className="border-b border-border px-4 py-3">
                       <div className="truncate font-medium">{me.display_name}</div>
                       <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                         <span className="rounded bg-primary/15 px-1.5 py-0.5 text-primary">{PLAN_LABEL[plan] || plan}</span>
@@ -146,11 +150,11 @@ export default function SiteHeader() {
                       </div>
                     </div>
                     <nav className="p-1.5 text-sm">
-                      <Link href="/kham-pha" className="block rounded-md px-3 py-2 transition-colors hover:bg-white/5" onClick={() => setOpen(false)}>🧭 Khám phá</Link>
-                      <Link href="/nang-luc" className="block rounded-md px-3 py-2 transition-colors hover:bg-white/5" onClick={() => setOpen(false)}>🎯 Năng lực</Link>
-                      <Link href="/complete-profile" className="block rounded-md px-3 py-2 transition-colors hover:bg-white/5" onClick={() => setOpen(false)}>👤 Hồ sơ</Link>
+                      <Link href="/kham-pha" className="block rounded-md px-3 py-2 transition-colors hover:bg-foreground/5" onClick={() => setOpen(false)}>🧭 Khám phá</Link>
+                      <Link href="/nang-luc" className="block rounded-md px-3 py-2 transition-colors hover:bg-foreground/5" onClick={() => setOpen(false)}>🎯 Năng lực</Link>
+                      <Link href="/complete-profile" className="block rounded-md px-3 py-2 transition-colors hover:bg-foreground/5" onClick={() => setOpen(false)}>👤 Hồ sơ</Link>
                       {me.role === 'admin' && (
-                        <a href="/admin.html" className="block rounded-md px-3 py-2 transition-colors hover:bg-white/5">🛠️ Quản trị</a>
+                        <a href="/admin.html" className="block rounded-md px-3 py-2 transition-colors hover:bg-foreground/5">🛠️ Quản trị</a>
                       )}
                       <button
                         type="button"
