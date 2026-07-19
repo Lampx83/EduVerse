@@ -1106,7 +1106,8 @@ const SPACES_IT = {
       {q:'Chuỗi ngày học (streak) khuyến khích thói quen?',o:['Học/code đều mỗi ngày','Học 1 lần/tháng','Bỏ học','Học ngẫu nhiên'],a:0}]},
 
   museum:{emoji:'🖥️',name:'Bảo tàng Công nghệ',accent:'#9aa6b2',intro:'Lịch sử ngành máy tính và những con người đặt nền móng cho công nghệ thông tin.',
-    rooms:[{ic:'🏛️',name:'Lịch sử máy tính',rd:'Dòng thời gian các cột mốc.',panel:[
+    rooms:[{ic:'🚀',name:'Khám phá Bảo tàng đầy đủ',rd:'Trục tiến trình phát triển · thành tựu đột phá · thuật ngữ mới · case study thực tế (req #92/#93).',href:'/bao-tang-cong-nghe.html?domain=it'},
+      {ic:'🏛️',name:'Lịch sử máy tính',rd:'Dòng thời gian các cột mốc.',panel:[
         {h:'Dòng thời gian máy tính'},
         {timeline:[{t:'1843 — Ada Lovelace',d:'Thuật toán đầu tiên cho máy của Babbage.'},
           {t:'1936 — Alan Turing',d:'Máy Turing — nền tảng lý thuyết tính toán.'},

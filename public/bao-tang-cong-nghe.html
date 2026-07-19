@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🖥️ Bảo tàng Công nghệ · Tizia</title>
+<meta name="description" content="Bảo tàng Công nghệ: trục tiến trình phát triển (paradigm lập trình, hạ tầng từ máy chủ vật lý tới serverless, mạng 1G→6G), phòng thành tựu đột phá (Transformer, mật mã & blockchain, ưu thế lượng tử), từ điển thuật ngữ mới (AGI, RAG, Edge, DePIN…), và case study thực tế." />
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+<meta name="theme-color" content="#6366f1" />
+<style>
+  :root { --bg:#0a1326; --card:rgba(255,255,255,.05); --card2:#141f38; --accent:#22d3ee; --accent2:#6366f1;
+    --green:#10b981; --red:#ef4444; --amber:#fbbf24; --pink:#f472b6; --text:#e6eefb; --muted:#93a4c0; --border:rgba(255,255,255,.12); }
+  * { box-sizing:border-box; }
+  html { background:var(--bg); }
+  /* background-color TỐI làm nền chắc: các layer trên là gradient (background-image),
+     mà shorthand để background-color trong suốt → nếu gradient không phủ hết vùng cuộn,
+     nền trắng mặc định lộ ra và card (nền trắng-mờ) biến mất. Nền tối cố định chặn việc đó. */
+  body { margin:0; min-height:100vh; font-family:'Inter',system-ui,sans-serif; color:var(--text);
+    background-color:var(--bg);
+    background-image: radial-gradient(ellipse 70% 50% at 50% -5%, rgba(99,102,241,.16), transparent),
+      radial-gradient(ellipse 60% 40% at 88% 8%, rgba(34,211,238,.13), transparent),
+      linear-gradient(180deg,var(--bg),#0d1a33);
+    background-attachment: fixed; padding:0 0 60px; }
+  a.back { display:inline-flex; align-items:center; gap:6px; position:fixed; left:16px; top:14px; z-index:30;
+    background:rgba(10,19,38,.85); color:#bfe9ff; text-decoration:none; padding:7px 13px; border-radius:20px;
+    font-size:12.5px; backdrop-filter:blur(8px); border:1px solid var(--border); }
+  a.back:hover { border-color:var(--accent); }
+  .wrap { max-width:1040px; margin:0 auto; padding:60px 18px 0; }
+  header.hero { text-align:center; margin-bottom:6px; }
+  header.hero h1 { font-size:28px; margin:0 0 6px;
+    background:linear-gradient(120deg,#22d3ee,#818cf8,#f472b6); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  header.hero p { color:var(--muted); font-size:14px; max-width:640px; margin:0 auto; line-height:1.6; }
+
+  /* Thanh mục lục dính */
+  nav.toc { position:sticky; top:0; z-index:20; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+    padding:12px 0 10px; margin:16px -18px 6px; background:linear-gradient(180deg,rgba(10,19,38,.96),rgba(10,19,38,.82)); backdrop-filter:blur(6px); }
+  nav.toc a { text-decoration:none; color:var(--muted); font-size:12.5px; font-weight:700; padding:6px 13px;
+    border:1px solid var(--border); border-radius:20px; background:var(--card); transition:.15s; }
+  nav.toc a:hover, nav.toc a.on { color:var(--text); border-color:var(--accent2); background:rgba(99,102,241,.16); }
+
+  section { margin:38px 0; scroll-margin-top:64px; }
+  .sec-head { margin-bottom:6px; }
+  .sec-head .lbl { font-size:11px; letter-spacing:1.6px; text-transform:uppercase; color:var(--accent); font-weight:800; }
+  .sec-head h2 { font-size:21px; margin:4px 0 4px; }
+  .sec-head p { color:var(--muted); font-size:13px; margin:0; line-height:1.6; max-width:720px; }
+
+  /* Timeline dạng bước ngang, bấm để mở chi tiết */
+  .tl { margin:16px 0 6px; }
+  .tl-title { font-weight:800; font-size:14.5px; margin:18px 0 10px; display:flex; align-items:center; gap:8px; }
+  .tl-steps { display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; }
+  .tl-step { flex:1 1 150px; min-width:130px; background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:12px 13px; cursor:pointer; transition:.15s; position:relative; }
+  .tl-step:hover { border-color:var(--accent); transform:translateY(-3px); }
+  .tl-step .era { font-size:11px; color:var(--accent); font-weight:800; letter-spacing:.5px; }
+  .tl-step .nm { font-weight:700; font-size:14px; margin:3px 0 5px; }
+  .tl-step .dz { font-size:12px; color:var(--muted); line-height:1.5; }
+  .tl-step .more { font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.55; display:none; border-top:1px dashed var(--border); padding-top:7px; }
+  .tl-step.open .more { display:block; }
+  .tl-step .arrow { position:absolute; right:-11px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:16px; z-index:1; }
+  .tl-step:last-child .arrow { display:none; }
+  @media (max-width:640px){ .tl-step .arrow{ display:none; } }
+
+  /* Thẻ thành tựu */
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:16px; margin-top:14px; }
+  .acard { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; position:relative; overflow:hidden; }
+  .acard::before { content:''; position:absolute; inset:0 0 auto 0; height:3px; background:linear-gradient(90deg,var(--accent),var(--pink)); opacity:.85; }
+  .acard .ic { font-size:26px; }
+  .acard h3 { font-size:16px; margin:8px 0 4px; }
+  .acard .yr { font-size:11.5px; color:var(--amber); font-weight:800; letter-spacing:.5px; }
+  .acard p { font-size:13px; color:var(--muted); line-height:1.6; margin:8px 0 0; }
+  .acard .kb { margin-top:10px; font-size:12px; background:rgba(99,102,241,.12); border:1px solid rgba(99,102,241,.3);
+    border-radius:9px; padding:8px 11px; color:#c7d2fe; line-height:1.55; }
+
+  /* Từ điển thuật ngữ — nút bấm mở bảng */
+  .glossGroups { margin-top:12px; }
+  .gGroup { margin:14px 0; }
+  .gGroup h4 { font-size:13px; color:var(--muted); font-weight:800; letter-spacing:.5px; margin:0 0 8px; text-transform:uppercase; }
+  .terms { display:flex; flex-wrap:wrap; gap:8px; }
+  .term { font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; color:var(--text);
+    background:var(--card); border:1px solid var(--border); border-radius:20px; padding:8px 15px; transition:.15s; }
+  .term:hover, .term.on { border-color:var(--accent); background:rgba(34,211,238,.13); color:#a5f3fc; }
+  #termPanel { margin-top:14px; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:0; overflow:hidden;
+    max-height:0; opacity:0; transition:max-height .25s ease, opacity .2s; }
+  #termPanel.show { max-height:400px; opacity:1; padding:18px 20px; }
+  #termPanel .tp-name { font-size:16px; font-weight:800; }
+  #termPanel .tp-full { font-size:12.5px; color:var(--accent); font-weight:700; margin:2px 0 8px; }
+  #termPanel .tp-desc { font-size:13.5px; color:var(--text); line-height:1.7; }
+  #termPanel .tp-ex { margin-top:10px; font-size:12.5px; color:var(--muted); background:rgba(0,0,0,.2); border-left:3px solid var(--accent2);
+    border-radius:0 8px 8px 0; padding:9px 12px; line-height:1.6; }
+
+  /* Bạn có biết + case study */
+  .dyk { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-top:14px; }
+  .dcard { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
+  .dcard .tag { font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; }
+  .dcard.know .tag { color:var(--amber); }
+  .dcard.study .tag { color:var(--green); }
+  .dcard h3 { font-size:15px; margin:6px 0 5px; }
+  .dcard p { font-size:13px; color:var(--muted); line-height:1.65; margin:0; }
+  .dcard code { background:rgba(255,255,255,.08); border-radius:5px; padding:1px 5px; font-size:12px; color:#a5f3fc; }
+  footer.ft { text-align:center; color:var(--muted); font-size:12px; margin-top:44px; line-height:1.7; }
+</style>
+</head>
+<body>
+<a class="back" href="/school.html?domain=it">← Về Trường CNTT</a>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>🖥️ Bảo tàng Công nghệ</h1>
+    <p>Hành trình của ngành công nghệ thông tin — từ những cột mốc đặt nền móng, các phát minh đổi thay thế giới, tới những thuật ngữ mới nhất mà sách giáo khoa chưa kịp cập nhật.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#timeline">⏳ Trục tiến trình</a>
+    <a href="#gallery">🏆 Thành tựu đột phá</a>
+    <a href="#glossary">🧭 Thuật ngữ mới</a>
+    <a href="#insights">💡 Bạn có biết & Case study</a>
+  </nav>
+
+  <!-- PHẦN 1 -->
+  <section id="timeline">
+    <div class="sec-head">
+      <div class="lbl">Phần 1 · The Tech Evolution Timeline</div>
+      <h2>⏳ Trục tiến trình phát triển</h2>
+      <p>Hiểu vì sao các giải pháp hiện đại ra đời — bằng cách nhìn lại con đường công nghệ đã đi qua. Bấm vào mỗi mốc để xem giải thích.</p>
+    </div>
+
+    <div class="tl">
+      <div class="tl-title">💻 Sự tiến hóa của các mô hình lập trình (Programming Paradigms)</div>
+      <div class="tl-steps" id="tlParadigm"></div>
+    </div>
+
+    <div class="tl">
+      <div class="tl-title">🖧 Từ máy chủ vật lý đến điện toán phi máy chủ (Serverless)</div>
+      <div class="tl-steps" id="tlInfra"></div>
+    </div>
+
+    <div class="tl">
+      <div class="tl-title">📡 Lịch sử các thế hệ mạng viễn thông (1G → 6G)</div>
+      <div class="tl-steps" id="tlTelecom"></div>
+    </div>
+  </section>
+
+  <!-- PHẦN 2 -->
+  <section id="gallery">
+    <div class="sec-head">
+      <div class="lbl">Phần 2 · Breakthrough Achievements Gallery</div>
+      <h2>🏆 Phòng trưng bày thành tựu đột phá</h2>
+      <p>Những phát minh vĩ đại thay đổi thế giới CNTT — và bản chất kỹ thuật đằng sau chúng.</p>
+    </div>
+    <div class="cards" id="gallery-cards"></div>
+  </section>
+
+  <!-- PHẦN 3 -->
+  <section id="glossary">
+    <div class="sec-head">
+      <div class="lbl">Phần 3 · Emerging Tech Glossary</div>
+      <h2>🧭 Không gian thuật ngữ mới & xu hướng tương lai</h2>
+      <p>Bản đồ khái niệm tương tác — chạm vào một thuật ngữ để xem giải thích ngắn gọn kèm ví dụ thực tế.</p>
+    </div>
+    <div class="glossGroups" id="glossGroups"></div>
+    <div id="termPanel"></div>
+  </section>
+
+  <!-- PHẦN 4 -->
+  <section id="insights">
+    <div class="sec-head">
+      <div class="lbl">Phần 4 · Deep-Dive & Real-world Insights</div>
+      <h2>💡 Thông tin mở rộng & case study thực tế</h2>
+      <p>Kết nối lý thuyết với thực tế ngành công nghiệp.</p>
+    </div>
+    <div class="dyk" id="dyk"></div>
+  </section>
+
+  <footer class="ft">
+    🖥️ Bảo tàng Công nghệ — Trường Công nghệ thông tin · Tizia<br>
+    Nội dung mang tính giới thiệu, cập nhật theo xu hướng ngành. Thấy chỗ nào cần bổ sung? Dùng nút «🏛️ Đề nghị» để góp ý.
+  </footer>
+</div>
+
+<script>
+  // ===== Dữ liệu (biên soạn theo spec góp ý SV — req #92/#93) =====
+  const PARADIGM = [
+    { era:'~1950s', nm:'Tuyến tính (Linear)', dz:'Chạy tuần tự từng lệnh, dùng GOTO nhảy dòng.', more:'Chương trình là một danh sách lệnh chạy từ trên xuống. Khó tái sử dụng và bảo trì khi lớn dần — "mì spaghetti".' },
+    { era:'~1960s', nm:'Thủ tục (Procedural)', dz:'Gom lệnh thành hàm/thủ tục tái sử dụng.', more:'C, Pascal… Chia bài toán thành các hàm. Tư duy: "làm theo trình tự các bước".' },
+    { era:'~1980s', nm:'Hướng đối tượng (OOP)', dz:'Gói dữ liệu + hành vi vào đối tượng.', more:'Java, C++, C#… Đóng gói, kế thừa, đa hình. Tư duy: mô hình hoá thế giới thành các đối tượng — hợp cho dự án lớn nhiều người.' },
+    { era:'~1990s→', nm:'Hàm (Functional)', dz:'Hàm thuần, dữ liệu bất biến, ít tác dụng phụ.', more:'Haskell, Scala, và các nét hàm trong JS/Python. Dễ song song hoá, dễ kiểm thử vì kết quả chỉ phụ thuộc đầu vào.' },
+    { era:'2020s', nm:'Dựa trên AI (AI-Assisted)', dz:'Lập trình viên mô tả ý định, AI sinh mã.', more:'Copilot, Claude Code… Con người chuyển vai từ "gõ từng dòng" sang "định hướng + kiểm chứng" mã do AI tạo. Thay đổi cả cách quản lý mã nguồn.' },
+  ];
+  const INFRA = [
+    { era:'Truyền thống', nm:'Máy chủ vật lý (On-premise)', dz:'Doanh nghiệp tự mua và vận hành máy chủ.', more:'Toàn quyền kiểm soát nhưng tốn chi phí đầu tư ban đầu, tự lo điện – làm mát – bảo trì, khó co giãn khi tải tăng.' },
+    { era:'~2000s', nm:'Ảo hóa (Virtualization)', dz:'Nhiều máy ảo (VM) chạy trên một máy vật lý.', more:'VMware, Hyper-V… Tận dụng phần cứng tốt hơn, mỗi VM có HĐH riêng. Nền tảng cho điện toán đám mây.' },
+    { era:'~2010s', nm:'Điện toán đám mây (Cloud)', dz:'Thuê tài nguyên theo nhu cầu (AWS, Azure, GCP).', more:'Trả tiền theo lượng dùng, co giãn nhanh, giảm chi phí đầu tư. Trách nhiệm quản trị hạ tầng chuyển dần sang nhà cung cấp.' },
+    { era:'~2015s', nm:'Container hóa (Docker/K8s)', dz:'Đóng gói ứng dụng + phụ thuộc, chạy nhất quán mọi nơi.', more:'Nhẹ hơn VM (chia sẻ nhân HĐH). Kubernetes điều phối hàng nghìn container tự động — chuẩn triển khai microservices.' },
+    { era:'Hiện nay', nm:'Phi máy chủ (Serverless)', dz:'Chỉ viết hàm, nhà cung cấp lo toàn bộ hạ tầng.', more:'AWS Lambda… Trả tiền theo từng lần gọi, tự co giãn về 0 khi không dùng. Lập trình viên hết bận tâm máy chủ — đây là lý do doanh nghiệp dịch chuyển lên Cloud.' },
+  ];
+  const TELECOM = [
+    { era:'1980s', nm:'1G', dz:'Thoại analog.', more:'Cuộc gọi di động đầu tiên, tín hiệu tương tự, chất lượng thấp, dễ nghe lén.' },
+    { era:'1990s', nm:'2G', dz:'Thoại số + SMS.', more:'GSM — số hoá thoại, thêm tin nhắn văn bản. Bảo mật và dung lượng tốt hơn hẳn 1G.' },
+    { era:'2000s', nm:'3G', dz:'Internet di động.', more:'Duyệt web, video call, email trên điện thoại. Mở đường cho smartphone.' },
+    { era:'2010s', nm:'4G/LTE', dz:'Băng thông rộng, video HD.', more:'Tốc độ cao đủ cho streaming, mạng xã hội, ứng dụng thời gian thực — bùng nổ kinh tế di động.' },
+    { era:'2020s→', nm:'5G / 6G', dz:'Độ trễ siêu thấp, kết nối vạn vật.', more:'Băng thông rộng, độ trễ mili-giây, mật độ thiết bị cực cao — nền tảng cho IoT, xe tự hành, phẫu thuật từ xa, truyền dữ liệu thời gian thực.' },
+  ];
+
+  const GALLERY = [
+    { ic:'🧠', yr:'2017', h:'Kiến trúc Transformer — cội nguồn của GenAI',
+      p:'Bài báo lịch sử "Attention Is All You Need" giới thiệu cơ chế Tự chú ý (Self-Attention) — nền móng tạo nên các mô hình ngôn ngữ lớn (LLM) ngày nay.',
+      kb:'Vì sao vượt RNN/LSTM? Transformer xử lý SONG SONG cả câu cùng lúc (thay vì đọc tuần tự từng từ), nên huấn luyện nhanh hơn nhiều và nắm được quan hệ giữa các từ ở xa nhau trong câu.' },
+    { ic:'🔐', yr:'1977 · 2008→', h:'Mật mã học & Blockchain',
+      p:'Thuật toán mã hóa khóa công khai RSA (Rivest–Shamir–Adleman) cho phép trao đổi an toàn không cần chia sẻ khóa bí mật trước. Blockchain kế thừa mật mã học để tạo sổ cái phi tập trung.',
+      kb:'Cơ chế đồng thuận: Proof of Work (PoW) — đua giải toán tốn điện (Bitcoin); Proof of Stake (PoS) — chọn người xác thực theo lượng token đặt cọc, tiết kiệm năng lượng hơn nhiều. Nền tảng của tài chính phi tập trung (DeFi).' },
+    { ic:'⚛️', yr:'2019→', h:'Cột mốc "Ưu thế lượng tử" (Quantum Supremacy)',
+      p:'Lần đầu một máy tính lượng tử giải xong một phép toán chuyên biệt trong ít phút — điều mà siêu máy tính cổ điển được ước tính phải mất hàng nghìn năm.',
+      kb:'Máy tính lượng tử dùng qubit ở trạng thái chồng chập (vừa 0 vừa 1), khai thác song song lượng tử. Chưa thay thế máy tính thường, nhưng hứa hẹn đột phá ở mô phỏng phân tử, tối ưu hoá và mật mã.' },
+  ];
+
+  const GLOSSARY = [
+    { grp:'AI & Dữ liệu', items:[
+      { t:'AGI', full:'Artificial General Intelligence — Trí tuệ nhân tạo tổng quát', d:'AI có khả năng tự học và làm bất kỳ nhiệm vụ trí tuệ nào như con người.', ex:'Phân biệt với ANI (AI hẹp) hiện tại — thứ chỉ giỏi một việc như dịch, nhận diện ảnh hay chơi cờ.' },
+      { t:'RAG', full:'Retrieval-Augmented Generation', d:'Cho LLM truy vấn nguồn dữ liệu đáng tin bên ngoài TRƯỚC khi trả lời.', ex:'Giảm "ảo tưởng" (hallucination): thay vì bịa, AI tra tài liệu công ty rồi mới trả lời khách hàng.' },
+      { t:'Synthetic Data', full:'Dữ liệu tổng hợp', d:'Dữ liệu do thuật toán tạo ra để huấn luyện AI.', ex:'Dùng khi dữ liệu thật khan hiếm hoặc vướng bảo mật — ví dụ tạo ảnh khuôn mặt ảo để huấn luyện mà không lộ ảnh người thật.' },
+    ]},
+    { grp:'Hạ tầng & Mạng', items:[
+      { t:'Edge Computing', full:'Điện toán biên', d:'Xử lý dữ liệu ngay tại rìa mạng, gần nơi phát sinh (IoT, camera).', ex:'Camera an ninh tự phân tích tại chỗ thay vì gửi hết video về trung tâm — giảm độ trễ tối đa.' },
+      { t:'DePIN', full:'Decentralized Physical Infrastructure Networks', d:'Xây hạ tầng vật lý (mạng, lưu trữ, năng lượng) bằng cách thưởng token cho cộng đồng góp phần cứng.', ex:'Người dân cắm thiết bị phát sóng ở nhà, nhận token — hạ tầng mạng hình thành phi tập trung.' },
+      { t:'Spatial Computing', full:'Điện toán không gian', d:'Kết hợp VR/AR/XR với AI để hoà dữ liệu số vào không gian vật lý quanh ta.', ex:'Đeo kính thấy chỉ dẫn sửa máy nổi ngay trên thiết bị thật trước mắt.' },
+    ]},
+    { grp:'Quy trình & Vận hành', items:[
+      { t:'DevSecOps', full:'Development + Security + Operations', d:'Cài yếu tố bảo mật vào MỌI giai đoạn vòng đời phần mềm, không để tới bước cuối.', ex:'Quét lỗ hổng tự động ngay khi lập trình viên commit mã, thay vì kiểm tra một lần trước khi phát hành.' },
+      { t:'FinOps', full:'Cloud Financial Management', d:'Kết hợp tài chính + công nghệ để quản lý và tối ưu chi phí đám mây.', ex:'Đội kỹ thuật và tài chính cùng theo dõi hoá đơn Cloud theo thời gian thực, tắt tài nguyên rảnh để đỡ tốn.' },
+    ]},
+  ];
+
+  const DYK = [
+    { cls:'know', tag:'Bạn có biết?', h:'🐛 Vì sao lỗi phần mềm gọi là "bug"?', p:'Năm 1947, nhóm vận hành máy <code>Harvard Mark II</code> tìm ra nguyên nhân trục trặc là một con bướm đêm thật bị kẹt trong rơ-le. Họ dán con côn trùng vào nhật ký kèm dòng "first actual case of bug being found". Từ "bug" (con bọ) thành tên gọi cho lỗi từ đó.' },
+    { cls:'know', tag:'Bạn có biết?', h:'📶 Bluetooth lấy tên từ một vị vua?', p:'Bluetooth đặt theo vua <code>Harald "Bluetooth" Gormsson</code> của Đan Mạch thế kỷ 10 — người thống nhất các bộ tộc. Ý nghĩa: công nghệ này "thống nhất" nhiều thiết bị. Logo là chữ rune ghép tên ông (H + B).' },
+    { cls:'study', tag:'Case study', h:'🎬 Netflix giữ chân người xem thế nào?', p:'Hệ thống gợi ý (Recommendation System) phân tích lịch sử xem để đề xuất nội dung phù hợp từng người. Ước tính phần lớn lượt xem đến từ gợi ý — giữ chân người dùng chính là giữ doanh thu thuê bao.' },
+    { cls:'study', tag:'Case study', h:'⚡ Phố Wall đua từng mili-giây', p:'Giao dịch tần suất cao (High-Frequency Trading) tối ưu từng mili-giây độ trễ mạng — đặt máy chủ sát sàn giao dịch, dùng đường truyền ngắn nhất — để ra lệnh trước đối thủ và tạo lợi thế cạnh tranh.' },
+  ];
+
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  function renderTimeline(id, data) {
+    $(id).innerHTML = data.map(s =>
+      '<div class="tl-step" tabindex="0">' +
+        '<div class="era">' + esc(s.era) + '</div>' +
+        '<div class="nm">' + esc(s.nm) + '</div>' +
+        '<div class="dz">' + esc(s.dz) + '</div>' +
+        '<div class="more">' + esc(s.more) + '</div>' +
+        '<span class="arrow">→</span>' +
+      '</div>').join('');
+    $(id).querySelectorAll('.tl-step').forEach(st => {
+      const toggle = () => st.classList.toggle('open');
+      st.addEventListener('click', toggle);
+      st.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    });
+  }
+  renderTimeline('#tlParadigm', PARADIGM);
+  renderTimeline('#tlInfra', INFRA);
+  renderTimeline('#tlTelecom', TELECOM);
+
+  $('#gallery-cards').innerHTML = GALLERY.map(g =>
+    '<div class="acard"><div class="ic">' + g.ic + '</div>' +
+    '<div class="yr">' + esc(g.yr) + '</div>' +
+    '<h3>' + esc(g.h) + '</h3>' +
+    '<p>' + esc(g.p) + '</p>' +
+    '<div class="kb">🔎 ' + esc(g.kb) + '</div></div>').join('');
+
+  // Glossary: nút thuật ngữ + panel chi tiết
+  $('#glossGroups').innerHTML = GLOSSARY.map((g, gi) =>
+    '<div class="gGroup"><h4>' + esc(g.grp) + '</h4><div class="terms">' +
+    g.items.map((it, ii) => '<button class="term" data-g="' + gi + '" data-i="' + ii + '">' + esc(it.t) + '</button>').join('') +
+    '</div></div>').join('');
+  const panel = $('#termPanel');
+  document.querySelectorAll('.term').forEach(btn => btn.addEventListener('click', () => {
+    const it = GLOSSARY[+btn.dataset.g].items[+btn.dataset.i];
+    document.querySelectorAll('.term').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    panel.innerHTML = '<div class="tp-name">' + esc(it.t) + '</div>' +
+      '<div class="tp-full">' + esc(it.full) + '</div>' +
+      '<div class="tp-desc">' + esc(it.d) + '</div>' +
+      '<div class="tp-ex">💡 Ví dụ: ' + esc(it.ex) + '</div>';
+    panel.classList.add('show');
+    panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }));
+
+  $('#dyk').innerHTML = DYK.map(d =>
+    '<div class="dcard ' + d.cls + '"><div class="tag">' + esc(d.tag) + '</div>' +
+    '<h3>' + d.h + '</h3><p>' + d.p + '</p></div>').join('');
+
+  // TOC: highlight mục đang xem
+  const toc = document.querySelectorAll('nav.toc a');
+  const secs = [...document.querySelectorAll('section')];
+  const spy = () => {
+    let cur = secs[0].id;
+    for (const s of secs) if (s.getBoundingClientRect().top <= 90) cur = s.id;
+    toc.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + cur));
+  };
+  window.addEventListener('scroll', spy, { passive:true }); spy();
+</script>
+</body>
+</html>
