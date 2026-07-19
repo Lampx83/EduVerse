@@ -808,6 +808,7 @@ const SPACES_IT = {
         {flash:[{e:'🐞',f:'Bug',b:'Lỗi phần mềm'},{e:'🔁',f:'Loop',b:'Vòng lặp'},
           {e:'🧮',f:'Algorithm',b:'Thuật toán'},{e:'🗃️',f:'Database',b:'Cơ sở dữ liệu'},
           {e:'🔌',f:'API',b:'Giao diện lập trình ứng dụng'},{e:'☁️',f:'Deploy',b:'Triển khai (đưa lên chạy)'}]}]},
+      {ic:'📖',name:'Đọc hiểu tiếng Anh chuyên ngành',rd:'Đọc đoạn văn theo chủ đề, chọn đáp án, nộp bài rồi xem đáp án + giải thích (req #82).',href:'/doc-hieu-tieng-anh.html?domain=it'},
       {ic:'⚖️',name:'Đạo đức nghề CNTT',rd:'Tình huống đạo đức số.',panel:[
         {h:'Đạo đức nghề nghiệp'},
         {mcq:[{q:'Khi debug, bạn vô tình truy cập được dữ liệu cá nhân người dùng. Nên?',o:['Không xem/sao chép, báo nhóm & xử lý theo quy định','Lưu lại để dùng sau','Đăng lên mạng cho vui','Bán cho bên thứ ba'],a:0,fb:'Tôn trọng quyền riêng tư & bảo mật dữ liệu là nguyên tắc cốt lõi (Nghị định 13/2023, GDPR).'},

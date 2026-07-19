@@ -59,6 +59,8 @@ const REGISTRY = [
   // 2026-07-16: từ vựng trường Ngoại ngữ — trước kẹt trong inline script của
   // trang HTML cũ, trang Next scrape lại nên vỡ khi .html bị 308 → nay vào DB.
   { collection: 'vocab-en',           file: 'vocab-en.js',            export: 'VOCAB_EN_TOPICS', key: 'topic' },
+  // Đọc hiểu tiếng Anh chuyên ngành (req #82 SV Duc anh) — trang doc-hieu-tieng-anh.html.
+  { collection: 'reading-en',         file: 'reading-en.js',          export: 'READING_EN', key: 'id' },
 ];
 
 const { seedCollection, collectionCount } = DRY ? {} : await import('../contexts/content/index.js');
