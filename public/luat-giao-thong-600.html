@@ -71,11 +71,23 @@
   .stats b { color: var(--text); font-size:15px; }
 
   .summary { background:var(--card); border:1px solid var(--border); border-radius:14px;
-    padding:24px; max-width:760px; width:100%; text-align:center; display:none; }
+    max-width:760px; width:100%; text-align:center; display:none; overflow:hidden; }
   .summary.show { display:block; }
   .summary .big { font-size: 56px; font-weight: 800; margin: 8px 0; }
   .summary .pass { color: var(--green); }
   .summary .fail { color: var(--red); }
+  /* Khung KẾT QUẢ THI (req #91, theo ảnh mẫu SV gửi) — thanh tiêu đề nổi bật đầu khung */
+  .sumHeader { font-size:18px; font-weight:800; color:#fff; padding:16px 18px; letter-spacing:.3px;
+    background:linear-gradient(90deg,#2563eb,#4f46e5); }
+  .sumHeader.fail { background:linear-gradient(90deg,#dc2626,#b91c1c); }
+  .sumHeader.pass { background:linear-gradient(90deg,#059669,#10b981); }
+  .sumBody { padding:20px 22px; }
+  .sumBtns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
+  .sumBtn { font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer; padding:10px 18px; border-radius:10px;
+    background:var(--card); color:var(--text); border:1px solid var(--border); }
+  .sumBtn:hover { border-color:var(--red); }
+  .sumBtn.primary { background:var(--red); color:#fff; border:0; }
+  .sumVerdict { font-size:15px; font-weight:800; margin:14px 0 4px; }
   /* Chips kết quả + option xem lại xanh/đỏ (req #91, theo ảnh mẫu SV gửi) */
   .sumChips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
   .sumChip { font-size:12.5px; color:var(--muted); background:rgba(0,0,0,.22); border:1px solid var(--border);
@@ -222,8 +234,11 @@
      (req #81). Bỏ sticky vì sticky + stretch đá nhau; đổi lại "Nộp bài" tụt xuống đáy
      cột, nhìn có chủ ý thay vì lửng lơ giữa khoảng trống. Chỉ áp cho màn thi — màn
      luyện tập giữ sticky (600 câu, cuộn dài, cần lưới số câu bám theo). */
-  #practiceWrap.exam #qsidebar { position:static; align-self:stretch; display:flex; flex-direction:column; }
-  #practiceWrap.exam #sbSubmit { margin-top:auto; }
+  /* Khi thi: cột trái GỌN (req #94) — nút "Nộp bài" nằm ngay dưới lưới câu, không
+     kéo giãn hết chiều cao cột phải (bản #81 giãn cho cân, nhưng SV thấy trống giữa
+     lưới và nút). position:static để cuộn cùng trang, KHÔNG stretch/margin-top:auto. */
+  #practiceWrap.exam #qsidebar { position:static; align-self:flex-start; }
+  #practiceWrap.exam #sbSubmit { margin-top:10px; }
   /* Khung MÀN THI nhỏ lại cho cân màn hình desktop (req #87): 1120 → 960. Chỉ áp
      khi thi (.exam); luyện tập giữ 1120. #examHead vốn chỉ hiện lúc thi nên hẹp thẳng. */
   #practiceWrap.exam { max-width:960px; }
@@ -382,15 +397,20 @@
 <!-- Bảng theo dõi tiến độ theo chủ đề (req #75 Thì Dũng) -->
 <div id="progBox"></div>
 
+<!-- Màn kết quả dựng theo ảnh mẫu SV gửi (req #91): khung tiêu đề nổi bật + 4 nút
+     hành động + chips thống kê + dòng đạt/rớt + xem lại câu (xanh/đỏ). -->
 <div class="summary" id="summary">
-  <h2 style="margin:0 0 4px;" id="sumTitle">Kết quả</h2>
-  <div class="big" id="sumScore">—</div>
-  <div id="sumDetail" style="color:var(--muted); line-height:1.6;"></div>
-  <div id="sumBtns" style="margin-top:20px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-    <button onclick="location.reload()" style="font-family:inherit; padding:10px 22px; border-radius:10px; border:0; background:var(--red); color:white; font-weight:700; cursor:pointer;">Làm lại</button>
+  <div class="sumHeader" id="sumHeader">📋 KẾT QUẢ THI</div>
+  <div class="sumBody">
+    <div id="sumBtns" class="sumBtns"></div>
+    <div id="sumDetail"></div>
+    <div class="sumVerdict" id="sumVerdict"></div>
+    <!-- Xem lại các câu sau khi nộp (req #62/#91) -->
+    <div id="sumReview" style="text-align:left;"></div>
   </div>
-  <!-- Xem lại các câu sai sau khi nộp (req #62). -->
-  <div id="sumReview" style="margin-top:20px; text-align:left;"></div>
+  <!-- ẩn: giữ id cũ để JS không lỗi, không hiển thị -->
+  <h2 id="sumTitle" style="display:none"></h2>
+  <div class="big" id="sumScore" style="display:none"></div>
 </div>
 
 <!-- ⚙️ Cài đặt — chỉnh cỡ chữ câu hỏi/đáp án (req #76, dựng theo ảnh mẫu SV gửi) -->
@@ -615,38 +635,35 @@
     el('qsidebar').style.display = 'none';
     el('practiceWrap').classList.remove('exam');
     exam = null;
-    el('sumTitle').textContent = pass ? '🎉 ĐẠT' : '❌ TRƯỢT';
-    el('sumScore').textContent = `${right}/${total}`;
-    el('sumScore').className = 'big ' + (pass ? 'pass' : 'fail');
-    // Thống kê dạng CHIP như ảnh mẫu SV gửi (req #91): gọn, dễ đọc hơn mấy dòng chữ.
+    // Khung tiêu đề nổi bật (ảnh mẫu #91): "KẾT QUẢ THI — Hạng B · Đề 01".
+    el('sumHeader').textContent = '📋 KẾT QUẢ THI' +
+      (examClass ? ' — Hạng ' + examClass.id + (examDe ? ' · Đề ' + String(examDe).padStart(2, '0') : ' · Câu hỏi ngẫu nhiên') : '');
+    el('sumHeader').className = 'sumHeader ' + (pass ? 'pass' : 'fail');
+    // Dòng đạt/rớt (ảnh mẫu #91: "Bạn đã thi rớt").
+    el('sumVerdict').innerHTML = pass
+      ? '<span style="color:var(--green)">🎉 Chúc mừng! Bạn đã thi ĐẠT.</span>'
+      : '<span style="color:var(--red)">❌ Bạn đã thi rớt.</span>' +
+        (!passByScore ? ' <span style="color:var(--muted);font-weight:500">(chưa đủ ' + need + '/' + total + ' câu)</span>' : '') +
+        (critWrong > 0 ? ' <span style="color:var(--muted);font-weight:500">(sai câu điểm liệt)</span>' : '');
+    // Thống kê dạng CHIP (ảnh mẫu #91).
     el('sumDetail').innerHTML =
       '<div class="sumChips">' +
-        (examClass ? '<span class="sumChip">🪪 Hạng <b>' + examClass.id + '</b>' + (examDe ? ' · Đề ' + String(examDe).padStart(2, '0') : '') + '</span>' : '') +
         '<span class="sumChip">📊 Kết quả <b>' + right + '/' + total + '</b> · ' + (pass ? '<b style="color:var(--green)">Đạt</b>' : '<b style="color:var(--red)">Chưa đạt</b>') + '</span>' +
         '<span class="sumChip">✅ Đúng <b style="color:var(--green)">' + right + '</b></span>' +
         '<span class="sumChip">❌ Sai <b style="color:var(--red)">' + (total - right) + '</b></span>' +
         '<span class="sumChip">⚠️ Câu liệt sai <b style="color:' + (critWrong ? 'var(--red)' : 'var(--green)') + '">' + critWrong + '</b></span>' +
         '<span class="sumChip">⏱ Thời gian <b>' + elapsedStr + '</b></span>' +
-      '</div>' +
-      (!passByScore ? '<div style="color:var(--red);margin-top:8px;font-size:13px">→ Chưa đủ ' + need + '/' + total + ' câu để đạt</div>' : '') +
-      (critWrong > 0 ? '<div style="color:var(--red);margin-top:4px;font-size:13px">→ Sai câu điểm liệt — tự động trượt</div>' : '');
-    // Nút sau khi nộp: thi sát hạch theo đề → cho thi lại đúng đề / đổi đề khác.
-    if (examDe) {
-      el('sumBtns').innerHTML =
-        '<button id="sumRetry" class="lnkbtn" style="background:var(--red);border:0;color:#fff;font-weight:700;padding:10px 22px;border-radius:10px">🔄 Thi lại Đề ' + examDe + '</button>' +
-        '<button id="sumOtherDe" class="lnkbtn" style="padding:10px 22px;border-radius:10px">📑 Đề khác</button>';
-      el('sumRetry').onclick = () => setMode('exam');
-      el('sumOtherDe').onclick = enterDePicker;
-    } else if (examClass) {
-      // Đề ngẫu nhiên (req #59): thi đề ngẫu nhiên khác / quay lại chọn đề.
-      el('sumBtns').innerHTML =
-        '<button id="sumRandAgain" class="lnkbtn" style="background:var(--red);border:0;color:#fff;font-weight:700;padding:10px 22px;border-radius:10px">🔀 Đề ngẫu nhiên khác</button>' +
-        '<button id="sumOtherDe" class="lnkbtn" style="padding:10px 22px;border-radius:10px">📑 Chọn đề</button>';
-      el('sumRandAgain').onclick = () => setMode('exam');
-      el('sumOtherDe').onclick = enterDePicker;
-    } else {
-      el('sumBtns').innerHTML = '<button class="lnkbtn" onclick="location.reload()" style="background:var(--red);border:0;color:#fff;font-weight:700;padding:10px 22px;border-radius:10px">Làm lại</button>';
-    }
+      '</div>';
+    // 4 nút hành động như ảnh mẫu #91.
+    el('sumBtns').innerHTML =
+      '<button id="sumRetry" class="sumBtn primary">🔄 Thi lại đề này</button>' +
+      '<button id="sumOtherDe" class="sumBtn">🔀 Thi đề khác</button>' +
+      '<button id="sumReClass" class="sumBtn">🎫 Chọn lại hạng</button>' +
+      '<button id="sumLearn" class="sumBtn">📖 Ôn tập lại 600 câu</button>';
+    el('sumRetry').onclick = () => setMode('exam');           // thi lại (cùng đề nếu có examDe, hoặc bốc đề mới)
+    el('sumOtherDe').onclick = enterDePicker;                  // chọn đề khác của hạng này
+    el('sumReClass').onclick = enterExamPicker;                // chọn lại hạng bằng
+    el('sumLearn').onclick = () => { el('catSelect').value = 'all'; category = 'all'; setMode('learn'); }; // về luyện tập 600 câu
     // Xem lại câu sai (req #62): liệt kê câu trả lời sai + bỏ trống.
     renderReview();
     // Lưu lịch sử thi (req #62) — chỉ lưu khi thi theo hạng.
