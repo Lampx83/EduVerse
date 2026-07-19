@@ -55,7 +55,7 @@ export const MODULES = [
   { category: 'curriculum', id: 'L4.8', title: 'Marketing dược',              yearLevel: 4, subject: 'marketing',      scenarioIds: ['L4.8-marketing-01'], minStarsToUnlock: 18, prerequisites: ['L3.2'] },
 
   // ────────── NĂM 5 — THỰC HÀNH (OSCE / Portfolio) ──────────
-  { category: 'curriculum', id: 'L5.1', title: 'Dược lâm sàng đa khoa',       yearLevel: 5, subject: 'duoc-lam-sang',  scenarioIds: [], minStarsToUnlock: 24, prerequisites: ['L4.2'] },
+  { category: 'curriculum', id: 'L5.1', title: 'Dược lâm sàng đa khoa',       yearLevel: 5, subject: 'duoc-lam-sang',  scenarioIds: ['L5.1-soap-01-ca-004-nmct-cap-dual-antiplatelet','L5.1-soap-02-ca-005-dka-type1','L5.1-soap-03-ca-006-aecopd','L5.1-soap-04-ca-007-xhth-nsaid','L5.1-soap-05-ca-008-ckd-thieu-mau','L5.1-soap-06-ca-009-folfox-antiemetic','L5.1-soap-07-ca-010-dengue-nhi','L5.1-soap-08-ca-011-lao-polypharmacy','L5.1-soap-09-ca-012-thai-tha','L5.1-soap-10-ca-013-tram-cam-tu-sat'], minStarsToUnlock: 24, prerequisites: ['L4.2'] },
   { category: 'curriculum', id: 'L5.2', title: 'AI Patient role-play',        yearLevel: 5, subject: 'tu-van-bn',      scenarioIds: ['L5.2-roleplay-01-otc-flu'], minStarsToUnlock: 24, prerequisites: ['L4.1'], hasCertificate: true },
   { category: 'curriculum', id: 'L5.3', title: 'Nhà thuốc GPP đầy đủ',        yearLevel: 5, subject: 'quan-ly-duoc',   scenarioIds: ['L5.3-gpp-01-otc-cam-cum'], minStarsToUnlock: 24, prerequisites: ['L3.1', 'L4.7'], hasCertificate: true },
   { category: 'curriculum', id: 'L5.4', title: 'Dược bệnh viện',              yearLevel: 5, subject: 'duoc-bv',        scenarioIds: ['L5.4-bv-quiz'], minStarsToUnlock: 24, prerequisites: ['L4.5'] },
@@ -119,14 +119,14 @@ export const MODULES = [
 
   { category: 'library', id: 'LR01', title: 'Thư viện điện tử',                subject: 'library',       scenarioIds: [], minStarsToUnlock: 0, icon: '📚' },
   { category: 'library', id: 'LR02', title: 'Phòng Thống kê y học',            subject: 'stats',         scenarioIds: ['L5.6-thesis-stats'], minStarsToUnlock: 12, icon: '📊' },
-  { category: 'library', id: 'LR03', title: 'NC định tính — Phỏng vấn, FG',    subject: 'qualitative',   scenarioIds: [], minStarsToUnlock: 18, icon: '🗣️' },
-  { category: 'library', id: 'LR04', title: 'NC định lượng — RCT, Cohort',     subject: 'quantitative',  scenarioIds: [], minStarsToUnlock: 18, icon: '📈' },
-  { category: 'library', id: 'LR05', title: 'Systematic Review + Meta-analysis', subject: 'sr-ma',       scenarioIds: [], minStarsToUnlock: 24, icon: '🔍' },
-  { category: 'library', id: 'LR06', title: 'Viết khoá luận tốt nghiệp',       subject: 'thesis',        scenarioIds: [], minStarsToUnlock: 24, icon: '✏️' },
-  { category: 'library', id: 'LR07', title: 'Submit paper khoa học',           subject: 'publishing',    scenarioIds: [], minStarsToUnlock: 30, icon: '📤' },
-  { category: 'library', id: 'LR08', title: 'Tra cứu thuốc — Lexicomp/UpToDate', subject: 'drug-ref',    scenarioIds: [], minStarsToUnlock: 12, icon: '🔎' },
-  { category: 'library', id: 'LR09', title: 'EBM — Evidence-based Medicine',    subject: 'ebm',          scenarioIds: [], minStarsToUnlock: 18, icon: '🎯' },
-  { category: 'library', id: 'LR10', title: 'Pharmacoeconomics',                subject: 'pharmacoecon', scenarioIds: [], minStarsToUnlock: 24, icon: '💵' },
+  { category: 'library', id: 'LR03', title: 'NC định tính — Phỏng vấn, FG',    subject: 'qualitative',   scenarioIds: ['LR03-quiz-01'], knowledgeQuiz: 'LR03-quiz-01', minStarsToUnlock: 18, icon: '🗣️' },
+  { category: 'library', id: 'LR04', title: 'NC định lượng — RCT, Cohort',     subject: 'quantitative',  scenarioIds: ['LR04-quiz-01'], knowledgeQuiz: 'LR04-quiz-01', minStarsToUnlock: 18, icon: '📈' },
+  { category: 'library', id: 'LR05', title: 'Systematic Review + Meta-analysis', subject: 'sr-ma',       scenarioIds: ['LR05-quiz-01'], knowledgeQuiz: 'LR05-quiz-01', minStarsToUnlock: 24, icon: '🔍' },
+  { category: 'library', id: 'LR06', title: 'Viết khoá luận tốt nghiệp',       subject: 'thesis',        scenarioIds: ['LR06-quiz-01'], knowledgeQuiz: 'LR06-quiz-01', minStarsToUnlock: 24, icon: '✏️' },
+  { category: 'library', id: 'LR07', title: 'Submit paper khoa học',           subject: 'publishing',    scenarioIds: ['LR07-quiz-01'], knowledgeQuiz: 'LR07-quiz-01', minStarsToUnlock: 30, icon: '📤' },
+  { category: 'library', id: 'LR08', title: 'Tra cứu thuốc — Lexicomp/UpToDate', subject: 'drug-ref',    scenarioIds: ['LR08-quiz-01'], knowledgeQuiz: 'LR08-quiz-01', minStarsToUnlock: 12, icon: '🔎' },
+  { category: 'library', id: 'LR09', title: 'EBM — Evidence-based Medicine',    subject: 'ebm',          scenarioIds: ['LR09-quiz-01'], knowledgeQuiz: 'LR09-quiz-01', minStarsToUnlock: 18, icon: '🎯' },
+  { category: 'library', id: 'LR10', title: 'Pharmacoeconomics',                subject: 'pharmacoecon', scenarioIds: ['LR10-quiz-01'], knowledgeQuiz: 'LR10-quiz-01', minStarsToUnlock: 24, icon: '💵' },
   { category: 'library', id: 'LR11', title: 'AI/ML trong Dược',                 subject: 'pharma-ai',    scenarioIds: [], minStarsToUnlock: 18, icon: '🤖' },
   { category: 'library', id: 'LR12', title: 'Viết đề cương nghiên cứu',         subject: 'protocol',     scenarioIds: [], minStarsToUnlock: 18, icon: '📋' },
 
@@ -134,13 +134,13 @@ export const MODULES = [
   //              CỤM 5 — CAREER PATHS (10)
   // ══════════════════════════════════════════════════════════════
 
-  { category: 'career', id: 'CP01', title: 'Sự nghiệp Dược lâm sàng BV',       subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '🏥' },
-  { category: 'career', id: 'CP02', title: 'Sự nghiệp Nhà thuốc cộng đồng',    subject: 'career',        scenarioIds: [], minStarsToUnlock: 24, icon: '🏪' },
-  { category: 'career', id: 'CP03', title: 'Sự nghiệp Công nghiệp dược',       subject: 'career',        scenarioIds: [], minStarsToUnlock: 24, icon: '🏭' },
+  { category: 'career', id: 'CP01', title: 'Sự nghiệp Dược lâm sàng BV',       subject: 'career',        scenarioIds: ['CP01-quiz-01'], knowledgeQuiz: 'CP01-quiz-01', minStarsToUnlock: 30, icon: '🏥' },
+  { category: 'career', id: 'CP02', title: 'Sự nghiệp Nhà thuốc cộng đồng',    subject: 'career',        scenarioIds: ['CP02-quiz-01'], knowledgeQuiz: 'CP02-quiz-01', minStarsToUnlock: 24, icon: '🏪' },
+  { category: 'career', id: 'CP03', title: 'Sự nghiệp Công nghiệp dược',       subject: 'career',        scenarioIds: ['CP03-quiz-01'], knowledgeQuiz: 'CP03-quiz-01', minStarsToUnlock: 24, icon: '🏭' },
   { category: 'career', id: 'CP04', title: 'Sự nghiệp Học thuật — Giảng viên', subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '🎓' },
   { category: 'career', id: 'CP05', title: 'Quân y — Dược quân đội',           subject: 'career',        scenarioIds: [], minStarsToUnlock: 24, icon: '⚔️' },
-  { category: 'career', id: 'CP06', title: 'Cảnh giác dược — Pharmacovigilance', subject: 'career',      scenarioIds: [], minStarsToUnlock: 30, icon: '⚠️' },
-  { category: 'career', id: 'CP07', title: 'Regulatory Affairs — DAV',         subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '📑' },
+  { category: 'career', id: 'CP06', title: 'Cảnh giác dược — Pharmacovigilance', subject: 'career',      scenarioIds: ['CP06-quiz-01'], knowledgeQuiz: 'CP06-quiz-01', minStarsToUnlock: 30, icon: '⚠️' },
+  { category: 'career', id: 'CP07', title: 'Regulatory Affairs — DAV',         subject: 'career',        scenarioIds: ['CP07-quiz-01'], knowledgeQuiz: 'CP07-quiz-01', minStarsToUnlock: 30, icon: '📑' },
   { category: 'career', id: 'CP08', title: 'Y học cổ truyền + Đông dược',      subject: 'career',        scenarioIds: [], minStarsToUnlock: 24, icon: '🌿' },
   { category: 'career', id: 'CP09', title: 'Khởi nghiệp dược — Startup',       subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '🚀' },
   { category: 'career', id: 'CP10', title: 'Tiếp tục đào tạo — CKII, Tiến sĩ', subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '📜' },
@@ -151,9 +151,9 @@ export const MODULES = [
 
   { category: 'game', id: 'GC01', title: 'Race Xếp thuốc 1v1',                 subject: 'game',          scenarioIds: ['race'], minStarsToUnlock: 6, icon: '🎮' },
   { category: 'game', id: 'GC02', title: 'Time Attack ATC',                    subject: 'game',          scenarioIds: ['time-attack'], minStarsToUnlock: 6, icon: '⚡' },
-  { category: 'game', id: 'GC03', title: 'Drug Interaction Speed Challenge',   subject: 'game',          scenarioIds: [], minStarsToUnlock: 12, icon: '🔗' },
+  { category: 'game', id: 'GC03', title: 'Drug Interaction Speed Challenge',   subject: 'game',          scenarioIds: ['GC03-quiz-01'], knowledgeQuiz: 'GC03-quiz-01', minStarsToUnlock: 12, icon: '🔗' },
   { category: 'game', id: 'GC04', title: 'OTC Consultation Speed',             subject: 'game',          scenarioIds: [], minStarsToUnlock: 12, icon: '💊' },
-  { category: 'game', id: 'GC05', title: 'Calculator Championship',            subject: 'game',          scenarioIds: [], minStarsToUnlock: 12, icon: '🧮' },
+  { category: 'game', id: 'GC05', title: 'Calculator Championship',            subject: 'game',          scenarioIds: ['GC05-quiz-01'], knowledgeQuiz: 'GC05-quiz-01', minStarsToUnlock: 12, icon: '🧮' },
   { category: 'game', id: 'GC06', title: 'Herb ID Race',                       subject: 'game',          scenarioIds: [], minStarsToUnlock: 12, icon: '🌿' },
   { category: 'game', id: 'GC07', title: 'OSCE Championship',                  subject: 'game',          scenarioIds: [], minStarsToUnlock: 30, icon: '🏆' },
   { category: 'game', id: 'GC08', title: 'Metaverse — Phòng học chung',        subject: 'game',          scenarioIds: ['metaverse'], minStarsToUnlock: 6, icon: '🌐' },

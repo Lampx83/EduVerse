@@ -72,4 +72,72 @@ export const ACHIEVEMENTS = [
   { id: 'all-year-5',  icon: '🏅', title: 'Dược sĩ tốt nghiệp',
     desc: 'Hoàn thành toàn bộ 5 năm — sẵn sàng hành nghề Dược',
     trigger: { yearComplete: 5 } },
+
+  // ── L5.1 — Dược lâm sàng đa khoa ──
+  { id: 'clinical-generalist', icon: '🩺', title: 'Dược sĩ lâm sàng đa khoa',
+    desc: 'Hoàn thành L5.1 — thành thạo viết SOAP đa chuyên khoa',
+    trigger: { moduleStars: { 'L5.1': 2 } } },
+
+  // ── Thư viện & Nghiên cứu (LR03–LR10) ──
+  { id: 'qual-researcher',   icon: '🗣️', title: 'Nhà NC định tính',
+    desc: 'Hoàn thành LR03 — NC định tính, phỏng vấn sâu, FG',
+    trigger: { moduleStars: { 'LR03': 3 } } },
+
+  { id: 'rct-master',        icon: '📈', title: 'RCT Master',
+    desc: 'Hoàn thành LR04 — NC định lượng, RCT, Cohort, Case-control',
+    trigger: { moduleStars: { 'LR04': 3 } } },
+
+  { id: 'sr-expert',         icon: '🔍', title: 'Systematic Review Expert',
+    desc: 'Hoàn thành LR05 — Systematic Review + Meta-analysis PRISMA',
+    trigger: { moduleStars: { 'LR05': 3 } } },
+
+  { id: 'thesis-writer',     icon: '✏️', title: 'Nhà khoa học trẻ',
+    desc: 'Hoàn thành LR06 — Viết khoá luận tốt nghiệp',
+    trigger: { moduleStars: { 'LR06': 3 } } },
+
+  { id: 'publisher',         icon: '📤', title: 'Nhà xuất bản khoa học',
+    desc: 'Hoàn thành LR07 — Submit paper khoa học quốc tế',
+    trigger: { moduleStars: { 'LR07': 3 } } },
+
+  { id: 'drug-info-pro',     icon: '🔎', title: 'Drug Information Pro',
+    desc: 'Hoàn thành LR08 — Tra cứu thuốc Lexicomp/UpToDate',
+    trigger: { moduleStars: { 'LR08': 3 } } },
+
+  { id: 'ebm-champion',      icon: '🎯', title: 'EBM Champion',
+    desc: 'Hoàn thành LR09 — Evidence-based Medicine',
+    trigger: { moduleStars: { 'LR09': 3 } } },
+
+  { id: 'pharmacoecon-pro',  icon: '💵', title: 'Pharmacoeconomics Pro',
+    desc: 'Hoàn thành LR10 — Pharmacoeconomics, ICER, QALY',
+    trigger: { moduleStars: { 'LR10': 3 } } },
+
+  // ── Career Paths (CP01-07) ──
+  { id: 'hospital-pharmacist', icon: '🏥', title: 'Dược sĩ BV tương lai',
+    desc: 'Hoàn thành CP01 — Sự nghiệp Dược lâm sàng bệnh viện',
+    trigger: { moduleStars: { 'CP01': 2 } } },
+
+  { id: 'community-pharmacist', icon: '🏪', title: 'Chủ nhà thuốc',
+    desc: 'Hoàn thành CP02 — Sự nghiệp Nhà thuốc cộng đồng GPP',
+    trigger: { moduleStars: { 'CP02': 2 } } },
+
+  { id: 'industry-pro',      icon: '🏭', title: 'Dược công nghiệp',
+    desc: 'Hoàn thành CP03 — Sự nghiệp Công nghiệp dược GMP',
+    trigger: { moduleStars: { 'CP03': 2 } } },
+
+  { id: 'pv-officer',        icon: '⚠️', title: 'Cảnh giác dược viên',
+    desc: 'Hoàn thành CP06 — Pharmacovigilance, báo cáo ADR',
+    trigger: { moduleStars: { 'CP06': 2 } } },
+
+  { id: 'regulatory-expert', icon: '📑', title: 'Regulatory Affairs Expert',
+    desc: 'Hoàn thành CP07 — Regulatory Affairs, đăng ký thuốc DAV/EMA',
+    trigger: { moduleStars: { 'CP07': 2 } } },
+
+  // ── Games (GC03, GC05) ──
+  { id: 'interaction-racer', icon: '🔗', title: 'Tương tác tốc độ',
+    desc: 'Hoàn thành GC03 — Drug Interaction Speed Challenge',
+    trigger: { moduleStars: { 'GC03': 3 } } },
+
+  { id: 'calculator-champ',  icon: '🧮', title: 'Calculator Champion',
+    desc: 'Hoàn thành GC05 — Calculator Championship liều dùng',
+    trigger: { moduleStars: { 'GC05': 3 } } },
 ];

@@ -4,6 +4,80 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-19 — Phiên cải tiến (19) · Trường Dược — Kết nối 16 modules với scenarios đã có sẵn
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** Dược (`pharmacy`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **"nghịch lý content tồn tại nhưng vô hình"**: 2 file scenario đã biên soạn đầy đủ (`year5-adapted.js` + `library-career-games.js`) xuất **16 scenario** vào `ALL_SCENARIOS`, nhưng **KHÔNG CÓ MODULE nào tham chiếu chúng** trong `_modules-data.js`. Sinh viên không thể truy cập những nội dung này mặc dù chúng đã sẵn sàng.
+
+**Cụ thể:**
+1. **L5.1 — Dược lâm sàng đa khoa** (prerequisite của L5.7 OSCE): `scenarioIds: []` trong khi `year5-adapted.js` đã tạo đầy đủ **10 ca SOAP** (NMCT, DKA, AECOPD, XH tiêu hoá, CKD, hoá trị, Dengue Nhi, Lao đa thuốc, Thai phụ, Trầm cảm). Sinh viên không thể "hoàn thành" L5.1 nên bị chặn không vào được OSCE.
+2. **LR03–LR10** (8 module Thư viện & Nghiên cứu): `library-career-games.js` đã có quiz cho cả 8 module nhưng module definitions vẫn `scenarioIds: []`.
+3. **CP01, CP02, CP03, CP06, CP07** (5 sự nghiệp): quiz đã có trong `library-career-games.js`, module definitions không tham chiếu.
+4. **GC03, GC05** (2 game): `GC03-quiz-01` (tương tác thuốc) và `GC05-quiz-01` (Calculator Championship) đã có nhưng chưa wire.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/engine/_modules-data.js` | Sửa | Wire `scenarioIds` + `knowledgeQuiz` cho **16 modules**: L5.1 (10 SOAP), LR03–LR10, CP01/02/03/06/07, GC03, GC05 |
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | Thêm **17 achievement** mới: L5.1 (1), LR03–LR10 (8), CP01/02/03/06/07 (5), GC03+GC05 (2) |
+
+### Chi tiết modules được kích hoạt (16 modules)
+
+**L5.1 — Dược lâm sàng đa khoa (10 SOAP scenarios):**
+
+| Scenario ID | Ca lâm sàng |
+|-------------|-------------|
+| `L5.1-soap-01-ca-004-nmct-cap-dual-antiplatelet` | NMCT cấp — kháng tiểu cầu kép |
+| `L5.1-soap-02-ca-005-dka-type1` | DKA Type 1 |
+| `L5.1-soap-03-ca-006-aecopd` | AECOPD đợt cấp |
+| `L5.1-soap-04-ca-007-xhth-nsaid` | Xuất huyết tiêu hoá do NSAID |
+| `L5.1-soap-05-ca-008-ckd-thieu-mau` | CKD + thiếu máu |
+| `L5.1-soap-06-ca-009-folfox-antiemetic` | Hoá trị FOLFOX + chống nôn |
+| `L5.1-soap-07-ca-010-dengue-nhi` | Dengue nhi khoa |
+| `L5.1-soap-08-ca-011-lao-polypharmacy` | Lao phổi đa thuốc |
+| `L5.1-soap-09-ca-012-thai-tha` | Tiền sản giật |
+| `L5.1-soap-10-ca-013-tram-cam-tu-sat` | Trầm cảm nguy cơ tự sát |
+
+**LR03–LR10 (Thư viện & Nghiên cứu) + CP01/02/03/06/07 (Career) + GC03/GC05 (Games):**
+
+Wire `scenarioIds: ['<ID>-quiz-01']` + `knowledgeQuiz` cho 15 module còn lại từ `library-career-games.js`.
+
+### Achievements mới (17)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `clinical-generalist` | 🩺 | Dược sĩ lâm sàng đa khoa | L5.1 ≥ 2 sao |
+| `qual-researcher` | 🗣️ | Nhà NC định tính | LR03 ≥ 3 sao |
+| `rct-master` | 📈 | RCT Master | LR04 ≥ 3 sao |
+| `sr-expert` | 🔍 | Systematic Review Expert | LR05 ≥ 3 sao |
+| `thesis-writer` | ✏️ | Nhà khoa học trẻ | LR06 ≥ 3 sao |
+| `publisher` | 📤 | Nhà xuất bản khoa học | LR07 ≥ 3 sao |
+| `drug-info-pro` | 🔎 | Drug Information Pro | LR08 ≥ 3 sao |
+| `ebm-champion` | 🎯 | EBM Champion | LR09 ≥ 3 sao |
+| `pharmacoecon-pro` | 💵 | Pharmacoeconomics Pro | LR10 ≥ 3 sao |
+| `hospital-pharmacist` | 🏥 | Dược sĩ BV tương lai | CP01 ≥ 2 sao |
+| `community-pharmacist` | 🏪 | Chủ nhà thuốc | CP02 ≥ 2 sao |
+| `industry-pro` | 🏭 | Dược công nghiệp | CP03 ≥ 2 sao |
+| `pv-officer` | ⚠️ | Cảnh giác dược viên | CP06 ≥ 2 sao |
+| `regulatory-expert` | 📑 | Regulatory Affairs Expert | CP07 ≥ 2 sao |
+| `interaction-racer` | 🔗 | Tương tác tốc độ | GC03 ≥ 3 sao |
+| `calculator-champ` | 🧮 | Calculator Champion | GC05 ≥ 3 sao |
+
+### Kiểm thử
+
+```
+node --check public/js/engine/_modules-data.js              ✅ OK
+node --check public/js/domains/pharmacy/achievements.js     ✅ OK
+```
+
+---
+
 ## 2026-07-17 — Phiên cải tiến (18) · THCS & THPT — 36 Achievements môn phụ còn thiếu
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
