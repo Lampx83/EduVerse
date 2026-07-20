@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0719';
-import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0719';
-import { createCharacter } from './character.js?v=ph0719';
+import { CABINETS, ALL_DRUGS, PHARMACY_INFO } from './catalog.js?v=ph0720';
+import { DRUG_PLACEMENT } from './drug-placement.js?v=ph0720';
+import { createCharacter } from './character.js?v=ph0720';
 
 const MODELS_BASE = './models/pharmacy/';
 
@@ -1195,6 +1195,7 @@ export function buildScene(canvas, opts = {}) {
   renderer.shadowMap.type = THREE.PCFShadowMap;   // rẻ hơn PCFSoft, đỡ nặng
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.xr.enabled = true;   // WebXR (Meta Quest) — không session thì render bình thường
   // Master brightness — slider chỉnh đồng bộ exposure + cường độ TẤT CẢ đèn + environment.
   // Single-knob để tránh trường hợp giảm exposure nhưng vẫn cháy do lights cộng dồn.
   const BASE_EXPOSURE = 0.7;
@@ -3238,12 +3239,128 @@ export function buildScene(canvas, opts = {}) {
     controls.update();
   }
 
+  // ── WebXR IMMERSIVE (Meta Quest) ────────────────────────────────────────────
+  // Đeo kính: đứng GIỮA nhà thuốc (dolly), quay đầu 360° (headset lo), tia tay cầm
+  // chọn thuốc → BẢNG 3D thông tin (vì UI HTML không hiện trong immersive). Bước 1:
+  // nhìn quanh + chọn thuốc + xem thông tin. POS/soạn nhãn để đợt sau.
+  const XR_STAND = new THREE.Vector3(0, 0, 0.6);   // chỗ đứng giữa phòng (local-floor: y do headset)
+  const xrDolly = new THREE.Group(); xrDolly.name = 'xr-dolly';
+  const _xrControllers = [];
+  let _xrPanel = null, _xrHi = null, _xrEndH = null;
+  const _xrMat = new THREE.Matrix4();
+  const _xrQuat = new THREE.Quaternion();
+
+  async function isXRSupported() {
+    try { return !!(navigator.xr && await navigator.xr.isSessionSupported('immersive-vr')); }
+    catch { return false; }
+  }
+  function makeXrPanel() {
+    const g = new THREE.Group();
+    const c = document.createElement('canvas'); c.width = 512; c.height = 320;
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.2625),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, toneMapped: false }));
+    g.add(mesh); g.userData = { canvas: c, tex, mesh }; g.visible = false;
+    return g;
+  }
+  function drawXrPanel(drug, meta) {
+    const c = _xrPanel.userData.canvas, ctx = c.getContext('2d');
+    const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+    ctx.clearRect(0, 0, 512, 320);
+    ctx.fillStyle = 'rgba(15,23,42,0.96)'; rr(6, 6, 500, 308, 22); ctx.fill();
+    ctx.strokeStyle = drug.groupAccent || '#38bdf8'; ctx.lineWidth = 5; ctx.stroke();
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#fde68a'; ctx.font = '800 40px Inter, sans-serif';
+    ctx.fillText((drug.brand || drug.name || '').slice(0, 20), 28, 30);
+    ctx.fillStyle = '#94a3b8'; ctx.font = 'italic 22px Inter, sans-serif';
+    ctx.fillText([drug.generic, drug.strength].filter(Boolean).join(' · ').slice(0, 40), 28, 84);
+    let x = 28; const y = 128;
+    if (drug.isRx) { ctx.fillStyle = '#b91c1c'; rr(x, y, 116, 40, 8); ctx.fill(); ctx.fillStyle = '#fef2f2'; ctx.font = 'bold 22px Inter'; ctx.fillText('Rx · Kê đơn', x + 14, y + 8); x += 132; }
+    if (drug.isAntibiotic) { ctx.fillStyle = '#7c2d12'; rr(x, y, 120, 40, 8); ctx.fill(); ctx.fillStyle = '#fed7aa'; ctx.font = 'bold 22px Inter'; ctx.fillText('Kháng sinh', x + 12, y + 8); }
+    ctx.fillStyle = '#e2e8f0'; ctx.font = '26px Inter, sans-serif';
+    ctx.fillText(`📦 Tồn: ${meta?.stock ?? '—'} hộp`, 28, 196);
+    ctx.fillText(`⏳ HSD: ${meta?.expiry ?? '—'}`, 28, 238);
+    ctx.fillStyle = '#64748b'; ctx.font = '20px Inter, sans-serif';
+    ctx.fillText(`SKU ${drug.sku || ''} · Lô ${meta?.lot ?? '—'}`, 28, 280);
+    _xrPanel.userData.tex.needsUpdate = true;
+  }
+  function showXrDrugInfo(drug, meta, box) {
+    if (!_xrPanel) { _xrPanel = makeXrPanel(); xrDolly.add(_xrPanel); }
+    drawXrPanel(drug, meta);
+    _xrPanel.position.set(0, 1.35, -0.7);   // trước mặt, ngang tầm mắt (dolly-space)
+    _xrPanel.visible = true;
+    // Nháy sáng hộp vừa chọn
+    if (_xrHi && _xrHi.material) { _xrHi.material.emissive?.setHex(_xrHi.userData._emi ?? 0x000000); }
+    const m = box && box.getObjectByProperty?.('isMesh', true);
+    if (m && m.material && m.material.emissive) {
+      _xrHi = m; m.userData._emi = m.material.emissive.getHex();
+      m.material.emissive.setHex(0x155e75);
+    }
+  }
+  function setupXrControllers() {
+    for (let i = 0; i < 2; i++) {
+      const ctl = renderer.xr.getController(i);
+      ctl.addEventListener('selectstart', onXrSelect);
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]),
+        new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85 }));
+      line.name = 'xr-ray'; line.scale.z = 6;
+      ctl.add(line);
+      xrDolly.add(ctl);
+      _xrControllers.push(ctl);
+    }
+  }
+  function onXrSelect(e) {
+    const ctl = e.target;
+    _xrMat.identity().extractRotation(ctl.matrixWorld);
+    raycaster.ray.origin.setFromMatrixPosition(ctl.matrixWorld);
+    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(_xrMat).normalize();
+    const hits = raycaster.intersectObjects(drugMeshes, true);
+    for (const h of hits) {
+      const g = findDrugAncestor(h.object);
+      if (g && g.userData.drug) { showXrDrugInfo(g.userData.drug, getDrugMeta(g.userData.drug), g); return; }
+    }
+    if (_xrPanel) _xrPanel.visible = false;   // trượt → ẩn bảng
+  }
+  async function startXR() {
+    if (!navigator.xr) return false;
+    let session;
+    try {
+      session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'bounded-floor'] });
+    } catch (e) { console.warn('[xr] requestSession lỗi', e); return false; }
+    _look.active = false; controls.enabled = false;
+    scene.add(xrDolly); xrDolly.position.copy(XR_STAND);
+    xrDolly.add(camera);
+    renderer.xr.setReferenceSpaceType('local-floor');
+    await renderer.xr.setSession(session);
+    if (!_xrControllers.length) setupXrControllers();
+    _xrEndH = () => onXrEnd();
+    session.addEventListener('end', _xrEndH);
+    opts.onXRChange?.(true);
+    return true;
+  }
+  function onXrEnd() {
+    xrDolly.remove(camera);
+    scene.remove(xrDolly);
+    if (_xrPanel) _xrPanel.visible = false;
+    camera.position.set(...CAMERA_PRESETS.default.pos);
+    controls.target.set(...CAMERA_PRESETS.default.target);
+    controls.enabled = true; controls.update();
+    opts.onXRChange?.(false);
+  }
+  function stopXR() { const s = renderer.xr.getSession?.(); if (s) s.end(); }
+
   function render() {
     const dt = Math.min(clock.getDelta(), 0.05);
     const t = clock.elapsedTime;
+    const presenting = renderer.xr.isPresenting;
 
-    // Nhìn quanh (magic window): xoay camera theo cảm biến, BỎ QUA OrbitControls.
-    if (_look.active) {
+    // Trong VR: bảng thông tin quay MẶT TRƯỚC (+Z, có chữ) về người xem — copy hướng
+    // camera (dolly không xoay) để chữ luôn thẳng, không bị lật ngược như lookAt.
+    if (presenting && _xrPanel && _xrPanel.visible) { camera.getWorldQuaternion(_xrQuat); _xrPanel.quaternion.copy(_xrQuat); }
+
+    // Nhìn quanh (magic window, điện thoại): xoay camera theo cảm biến. (Không chạy khi VR.)
+    if (!presenting && _look.active) {
       if (_look.has) _applyLook();
       renderer.render(scene, camera);
       return;
@@ -3330,7 +3447,7 @@ export function buildScene(canvas, opts = {}) {
 
     // Camera preset lerp (within 700ms after change) — disable damping during
     // transition to prevent OrbitControls from fighting the lerp.
-    if (presetStartedAt != null) {
+    if (presetStartedAt != null && !presenting) {
       const elapsed = performance.now() - presetStartedAt;
       const p = CAMERA_PRESETS[currentPreset];
       if (elapsed > 700) {
@@ -3352,7 +3469,7 @@ export function buildScene(canvas, opts = {}) {
 
     // Pan camera — ease target + camera cùng một lượng (giữ offset). Clamp Y
     // trong khoảng kệ; X/Z tự do (như kéo chuột phải).
-    if (_panVel.x || _panVel.y || _panVel.z) {
+    if (!presenting && (_panVel.x || _panVel.y || _panVel.z)) {
       const sx = _panVel.x * 0.18, sy = _panVel.y * 0.18, sz = _panVel.z * 0.18;
       controls.target.x += sx; controls.target.y += sy; controls.target.z += sz;
       camera.position.x += sx; camera.position.y += sy; camera.position.z += sz;
@@ -3362,7 +3479,7 @@ export function buildScene(canvas, opts = {}) {
       if (Math.abs(_panVel.x) + Math.abs(_panVel.y) + Math.abs(_panVel.z) < 0.001) _panVel.set(0, 0, 0);
     }
 
-    controls.update();
+    if (!presenting) controls.update();
     renderer.render(scene, camera);
   }
   renderer.setAnimationLoop(render);
@@ -4190,6 +4307,7 @@ export function buildScene(canvas, opts = {}) {
     enterLookAround, exitLookAround,
     isLookAround: () => _look.active,
     lookHasData: () => _look.has,
+    isXRSupported, startXR, stopXR,
     getCatalog,
     focusDrug,
     triggerBarcodeScan,

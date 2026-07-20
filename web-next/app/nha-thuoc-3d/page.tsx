@@ -275,6 +275,11 @@ const LEGACY_CSS = `
     position: fixed; inset: 0; background: rgba(2,6,23,0.78); z-index: 9999;
     display: flex; align-items: center; justify-content: center; padding: 24px;
   }
+  /* Chuông thông báo bản NỔI (#nbell-root fixed z-9998 góc phải, khi không mount
+     được vào header) đè lên nút ✕ ở góc trên-phải của mọi modal nhà thuốc (z 100–300)
+     → nhìn như "cửa sổ không có nút đóng". Hạ nó xuống DƯỚI mọi overlay của trang này.
+     KHÔNG đụng chuông khi đã vào header (.nbell-root--in-header, dùng z tương đối). */
+  #nbell-root:not(.nbell-root--in-header) { z-index: 90 !important; }
   .rpm-modal {
     width: min(960px, 96vw); height: min(86vh, 760px); background: #0f172a;
     border: 1px solid rgba(148,163,184,0.35); border-radius: 14px; overflow: hidden;

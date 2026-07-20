@@ -1,8 +1,8 @@
 // SimulationClient — port từ Pharmacy-AI/src/components/SimulationClient.tsx.
 // Wire chat panel + actions → /api/pharmacy/* + scoring panel.
-import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0719';
-import { loadDrugs } from './catalog.js?v=ph0719';
-import { initMobileUI } from './mobile-ui.js?v=ph0719';
+import { buildScene, makeDrugLabelTex, makeDrugBackLabelTex, makeDrugSideLabelTex, getBoxStyle, deviceModelFor } from './scene.js?v=ph0720';
+import { loadDrugs } from './catalog.js?v=ph0720';
+import { initMobileUI } from './mobile-ui.js?v=ph0720';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -30,8 +30,8 @@ function swapUnitToGlb(group, file, sizeRef) {
     group.add(m);
   }).catch(() => { /* giữ procedural làm fallback */ });
 }
-import { openPosTerminal } from './pos.js?v=ph0719';
-import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0719';
+import { openPosTerminal } from './pos.js?v=ph0720';
+import { openHdsdEditor, openPackageEditor, PACKAGE_TYPES, RETAIL_FORMS } from './label-editor.js?v=ph0720';
 import { STAGE_LABEL } from './rubric.js';
 
 const $ = (id) => document.getElementById(id);
@@ -188,7 +188,10 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
     onToast: (msg) => showToast(msg),
     // Ngón tay chạm vùng kệ → liệt kê thuốc quanh đó. CHỈ có ở vỏ mobile (≤820px);
     // nơi khác trả false để scene xử lý chạm như thường.
-    onNearbyDrugs: (list) => mobileUI ? (mobileUI.showNear(list), true) : false
+    onNearbyDrugs: (list) => mobileUI ? (mobileUI.showNear(list), true) : false,
+    // Vào/ra immersive VR (Meta Quest) → ẩn/hiện nút trên màn phẳng (headset không
+    // thấy DOM nên nút vô nghĩa lúc đang trong VR).
+    onXRChange: (inVR) => { const b = document.getElementById('pharm-xr-btn'); if (b) b.hidden = inVR; }
   });
   window.__sim = sim;
   // buildScene đã set animation loop → đợi khung hình đầu rồi mới ẩn overlay (ẩn
@@ -198,6 +201,25 @@ export async function startSimulation({ moduleId = 'gpp' } = {}) {
   // Trên màn hẹp hộp thuốc chỉ ~6.6px nên KHÔNG chạm trúng được — ngăn kéo là
   // đường đi thay thế (chạm dòng 48px → focus camera + mở thẳng cửa sổ thuốc).
   mobileUI = initMobileUI({ sim, openDrug: (id) => sim.pickDrug(id) });
+
+  // Nút "Vào VR (kính)" — CHỈ hiện trên thiết bị hỗ trợ WebXR immersive (Meta Quest…).
+  // Máy thường trả false → không thêm nút → 0 ảnh hưởng. Đeo kính: đứng giữa nhà
+  // thuốc, quay đầu 360°, tia tay cầm chọn thuốc → bảng 3D thông tin.
+  sim.isXRSupported?.().then(ok => {
+    if (!ok) return;
+    const b = document.createElement('button');
+    b.id = 'pharm-xr-btn'; b.type = 'button';
+    b.textContent = '🥽 Vào VR (kính)';
+    b.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:210;' +
+      'padding:12px 20px;min-height:46px;border-radius:999px;border:1px solid #22d3ee;' +
+      'background:linear-gradient(180deg,#0e7490,#155e75);color:#ecfeff;font:inherit;' +
+      'font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)';
+    b.addEventListener('click', async () => {
+      const started = await sim.startXR?.();
+      if (started === false) alert('Không vào được VR. Hãy mở trang bằng trình duyệt Meta Quest và cho phép truy cập VR.');
+    });
+    document.body.appendChild(b);
+  }).catch(() => {});
 
   // GIỎ RA LẺ — gom các ĐƠN VỊ ra lẻ (vỉ/gói/viên/ống) đã tách khỏi hộp, chờ cho
   // vào bao bì ra lẻ. KHÁC với KHAY BÁN HÀNG (hộp nguyên đem tính tiền).
