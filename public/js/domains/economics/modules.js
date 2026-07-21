@@ -47,10 +47,10 @@ export const MODULES = [
   { category: 'practice', id: 'EP04', title: 'FinTech Lab — Mobile banking', subject: 'fintech-lab',    scenarioIds: [], minStarsToUnlock: 18, icon: '💳' },
 
   // ──────────── CAREER ────────────
-  { category: 'career', id: 'EC01', title: 'Kế toán – Kiểm toán',          subject: 'career', scenarioIds: [], minStarsToUnlock: 18, icon: '📒' },
-  { category: 'career', id: 'EC02', title: 'Tài chính – Ngân hàng',         subject: 'career', scenarioIds: [], minStarsToUnlock: 18, icon: '🏦' },
-  { category: 'career', id: 'EC03', title: 'Marketing & Brand manager',     subject: 'career', scenarioIds: [], minStarsToUnlock: 18, icon: '📣' },
-  { category: 'career', id: 'EC04', title: 'Khởi nghiệp – Founder',         subject: 'career', scenarioIds: [], minStarsToUnlock: 24, icon: '🚀' },
+  { category: 'career', id: 'EC01', title: 'Kế toán – Kiểm toán',          subject: 'career', scenarioIds: ['EC01-career-quiz'], knowledgeQuiz: 'EC01-career-quiz', minStarsToUnlock: 18, icon: '📒' },
+  { category: 'career', id: 'EC02', title: 'Tài chính – Ngân hàng',         subject: 'career', scenarioIds: ['EC02-career-quiz'], knowledgeQuiz: 'EC02-career-quiz', minStarsToUnlock: 18, icon: '🏦' },
+  { category: 'career', id: 'EC03', title: 'Marketing & Brand manager',     subject: 'career', scenarioIds: ['EC03-career-quiz'], knowledgeQuiz: 'EC03-career-quiz', minStarsToUnlock: 18, icon: '📣' },
+  { category: 'career', id: 'EC04', title: 'Khởi nghiệp – Founder',         subject: 'career', scenarioIds: ['EC04-career-quiz'], knowledgeQuiz: 'EC04-career-quiz', minStarsToUnlock: 24, icon: '🚀' },
 
   // ──────────── GAMES ────────────
   { category: 'game', id: 'EG01', title: 'Bull vs Bear — Stock race',       subject: 'game', scenarioIds: ['EG01-bull-bear-quiz'],   knowledgeQuiz: 'EG01-bull-bear-quiz',   minStarsToUnlock: 6,  icon: '🐂' },
