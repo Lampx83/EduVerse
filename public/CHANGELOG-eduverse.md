@@ -4,6 +4,61 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-21 — Phiên cải tiến (20) · Trường Kinh tế — 4 Career Path modules (EC01–EC04)
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** Kinh tế (`economics`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **4 career path modules** trong Trường Kinh tế (EC01–EC04) đang có `scenarioIds: []` — sinh viên thấy "Coming soon" mặc dù đây là nội dung định hướng nghề nghiệp rất có giá trị cuối khoá. Curriculum năm 1–4 và games (EG01–EG03) đã hoàn chỉnh, nhưng sinh viên không có nơi để tìm hiểu về lộ trình nghề nghiệp thực tế sau tốt nghiệp.
+
+**Cụ thể:**
+- **EC01** (Kế toán – Kiểm toán): không có quiz → không hiển thị nội dung
+- **EC02** (Tài chính – Ngân hàng): không có quiz → không hiển thị nội dung
+- **EC03** (Marketing & Brand manager): không có quiz → không hiển thị nội dung
+- **EC04** (Khởi nghiệp – Founder): không có quiz → không hiển thị nội dung
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/economics-careers.js` | Tạo mới | 4 quiz career scenarios EC01–EC04 (40 câu hỏi hướng nghiệp thực tế) |
+| `public/js/domains/economics/modules.js` | Sửa | Kích hoạt EC01–EC04: thêm `scenarioIds` + `knowledgeQuiz` |
+| `public/js/domains/economics/achievements.js` | Mở rộng | Thêm 5 achievements mới (4 career + 1 Career Explorer tổng hợp) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `ECONOMICS_CAREERS_SCENARIOS` |
+
+### Chi tiết nội dung (40 câu hỏi)
+
+| Module | ID Scenario | Chủ đề | Câu |
+|--------|------------|--------|-----|
+| EC01 — Kế toán & Kiểm toán | `EC01-career-quiz` | ACCA, Big 4, CPA VN, Internal vs External Audit, IFRS, Forensic Accounting, lương | 10 |
+| EC02 — Tài chính & Ngân hàng | `EC02-career-quiz` | CFA, IB vs CB, Credit Analysis, FRM, Fintech, Treasury, SOFR, PE vs VC, NHNN, lương | 10 |
+| EC03 — Marketing & Brand | `EC03-career-quiz` | Brand Manager FMCG, CTR, NPS, Brand Positioning, Agency vs In-house, ROAS, GA4, Influencer, lương | 10 |
+| EC04 — Khởi nghiệp & Founder | `EC04-career-quiz` | Funding stages, Term Sheet, Ecosystem VN, Lean Canvas, Dilution, PMF, ESOP, YC, lương | 10 |
+
+### Achievements mới (5)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `accounting-career` | 📒 | Nhà kế toán – kiểm toán | EC01 ≥ 3 sao |
+| `finance-career` | 🏦 | Chuyên gia Tài chính – Ngân hàng | EC02 ≥ 3 sao |
+| `marketing-career` | 📣 | Marketer & Brand Builder | EC03 ≥ 3 sao |
+| `founder-career` | 🚀 | Founder tiềm năng | EC04 ≥ 3 sao |
+| `career-explorer` | 🧭 | Nhà thám hiểm nghề nghiệp | EC01+EC02+EC03+EC04 ≥ 2 sao |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/economics-careers.js          ✅ OK
+node --check public/js/domains/economics/modules.js            ✅ OK
+node --check public/js/domains/economics/achievements.js       ✅ OK
+node --check public/js/scenarios/_all-content.js               ✅ OK
+```
+
+---
+
 ## 2026-07-19 — Phiên cải tiến (19) · Trường Dược — Kết nối 16 modules với scenarios đã có sẵn
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).

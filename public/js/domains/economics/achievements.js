@@ -131,6 +131,27 @@ export const ACHIEVEMENTS = [
     desc: 'Hoàn thành toàn bộ module Năm 4 Kinh tế — kết thúc lộ trình Cử nhân Kinh tế',
     trigger: { yearComplete: 4 } },
 
+  // ── Career achievements ─────────────────────────────────────
+  { id: 'accounting-career',  icon: '📒', title: 'Nhà kế toán – kiểm toán',
+    desc: 'Khám phá lộ trình nghề Kế toán – Kiểm toán (EC01) với 3 sao',
+    trigger: { moduleStars: { 'EC01': 3 } } },
+
+  { id: 'finance-career',     icon: '🏦', title: 'Chuyên gia Tài chính – Ngân hàng',
+    desc: 'Khám phá lộ trình nghề Tài chính – Ngân hàng (EC02) với 3 sao',
+    trigger: { moduleStars: { 'EC02': 3 } } },
+
+  { id: 'marketing-career',   icon: '📣', title: 'Marketer & Brand Builder',
+    desc: 'Khám phá lộ trình nghề Marketing & Brand manager (EC03) với 3 sao',
+    trigger: { moduleStars: { 'EC03': 3 } } },
+
+  { id: 'founder-career',     icon: '🚀', title: 'Founder tiềm năng',
+    desc: 'Khám phá lộ trình Khởi nghiệp & Founder (EC04) với 3 sao',
+    trigger: { moduleStars: { 'EC04': 3 } } },
+
+  { id: 'career-explorer',    icon: '🧭', title: 'Nhà thám hiểm nghề nghiệp',
+    desc: 'Hoàn thành cả 4 career path Kinh tế (EC01 + EC02 + EC03 + EC04)',
+    trigger: { moduleStars: { 'EC01': 2, 'EC02': 2, 'EC03': 2, 'EC04': 2 } } },
+
   // ── Game achievements ───────────────────────────────────────
   { id: 'bull-bear-trader',  icon: '🐂', title: 'Bull & Bear Trader',
     desc: 'Chinh phục quiz thị trường chứng khoán (EG01) — biết mua bán đúng thời điểm',
