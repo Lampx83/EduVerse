@@ -1669,7 +1669,14 @@ Object.entries(SPORT_TARGETS).forEach(([id,url])=>{ TARGETS[id]=url; });
 // /tech-career-center.html (req #26). Khai báo theo domain để enter()/legend/
 // hasInteractive tự nhận biết — không cần thêm vào SPACE_KEYS_BY_DOMAIN.
 const CUSTOM_TARGETS = {
-  it: { career: '/tech-career-center.html?domain=it' },
+  // museum: toà "Bảo tàng Công nghệ" (B ở dòng ~491) có TRANG RIÊNG
+  // /bao-tang-cong-nghe.html. Trước đây toà được VẼ nhưng thiếu target nên bị ẩn
+  // khỏi chú giải + click noop → SV báo "chưa thấy toà Bảo tàng hiện lên chú giải"
+  // (req #95). Khai báo ở đây để legend/hasInteractive/enter() nhận biết.
+  it: {
+    career: '/tech-career-center.html?domain=it',
+    museum: '/bao-tang-cong-nghe.html?domain=it',
+  },
 };
 Object.entries(CUSTOM_TARGETS[_dom] || {}).forEach(([id,url])=>{ TARGETS[id]=url; });
 
