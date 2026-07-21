@@ -74,13 +74,16 @@
     max-width:760px; width:100%; text-align:center; display:none; overflow:hidden; }
   .summary.show { display:block; }
   .summary .big { font-size: 56px; font-weight: 800; margin: 8px 0; }
-  .summary .pass { color: var(--green); }
-  .summary .fail { color: var(--red); }
+  /* (req #99) Bỏ 2 quy tắc .summary .pass/.fail cũ: chúng dành cho #sumScore/#sumTitle
+     (nay ẩn) nhưng vô tình thắng .sumHeader{color:#fff} vì header cũng mang class
+     .fail/.pass và nằm trong .summary → chữ đỏ trên nền đỏ, mờ không đọc được. */
   /* Khung KẾT QUẢ THI (req #91, theo ảnh mẫu SV gửi) — thanh tiêu đề nổi bật đầu khung */
+  /* color:#fff lặp cả ở .fail/.pass (specificity 0,2,0) để chắc thắng mọi quy tắc
+     .summary .* cùng cấp — chữ tiêu đề LUÔN trắng, rõ trên nền màu (req #97/#99). */
   .sumHeader { font-size:18px; font-weight:800; color:#fff; padding:16px 18px; letter-spacing:.3px;
     background:linear-gradient(90deg,#2563eb,#4f46e5); }
-  .sumHeader.fail { background:linear-gradient(90deg,#dc2626,#b91c1c); }
-  .sumHeader.pass { background:linear-gradient(90deg,#059669,#10b981); }
+  .sumHeader.fail { background:linear-gradient(90deg,#dc2626,#b91c1c); color:#fff; }
+  .sumHeader.pass { background:linear-gradient(90deg,#059669,#10b981); color:#fff; }
   .sumBody { padding:20px 22px; }
   .sumBtns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
   .sumBtn { font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer; padding:10px 18px; border-radius:10px;
@@ -90,7 +93,7 @@
   .sumVerdict { font-size:15px; font-weight:800; margin:14px 0 4px; }
   /* Chips kết quả + option xem lại xanh/đỏ (req #91, theo ảnh mẫu SV gửi) */
   .sumChips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
-  .sumChip { font-size:12.5px; color:var(--muted); background:rgba(0,0,0,.22); border:1px solid var(--border);
+  .sumChip { font-size:12.5px; color:var(--text); background:rgba(0,0,0,.22); border:1px solid var(--border);
     border-radius:999px; padding:6px 13px; }
   .rvOpt { font-size:13.5px; padding:8px 11px; border-radius:8px; margin:4px 0; border:1px solid transparent; color:var(--muted); }
   .rvRight { background:rgba(16,185,129,.16); border-color:rgba(16,185,129,.5); color:#6ee7b7; font-weight:700; }
