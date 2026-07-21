@@ -4,10 +4,14 @@
 //   • 🖥️ Theo hệ thống  → bám prefers-color-scheme của máy
 //   • ☀️ Nền sáng
 //   • 🌙 Nền tối
-// Lưu ở localStorage key 'tizia-theme'. Việc áp class `dark` lần đầu (chống nhấp
-// nháy) do inline script trong app/layout.tsx lo; component này đồng bộ khi đổi.
+// Lưu ở localStorage 'tizia-theme' rồi phát event 'tizia-theme-change'; việc
+// ÁP lớp `dark` (có xét route allowlist) do RouteThemeGuard lo — xem
+// [[theme-routes]]. Nút TỰ ẨN ở trang ngoài allowlist vì ở đó app luôn nền tối
+// nên đổi theme không có tác dụng.
 
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { pathHonorsTheme } from '@/lib/theme-routes';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 const KEY = 'tizia-theme';
@@ -18,17 +22,8 @@ const OPTIONS: { mode: ThemeMode; icon: string; label: string }[] = [
   { mode: 'dark', icon: '🌙', label: 'Nền tối' },
 ];
 
-// Áp lớp `dark` lên <html> theo chế độ đã chọn.
-function applyTheme(mode: ThemeMode) {
-  const dark =
-    mode === 'dark' ||
-    (mode === 'system' &&
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches);
-  document.documentElement.classList.toggle('dark', dark);
-}
-
 export default function ThemeToggle() {
+  const pathname = usePathname();
   const [mode, setMode] = useState<ThemeMode>('system');
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
@@ -40,15 +35,6 @@ export default function ThemeToggle() {
     setMode(saved);
     setReady(true);
   }, []);
-
-  // Khi chọn "Theo hệ thống" → nghe máy đổi sáng/tối để cập nhật ngay.
-  useEffect(() => {
-    if (mode !== 'system') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => applyTheme('system');
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, [mode]);
 
   // Đóng menu khi bấm ra ngoài.
   useEffect(() => {
@@ -62,10 +48,16 @@ export default function ThemeToggle() {
 
   function choose(next: ThemeMode) {
     setMode(next);
-    localStorage.setItem(KEY, next);
-    applyTheme(next);
+    try {
+      localStorage.setItem(KEY, next);
+    } catch {}
+    // RouteThemeGuard nghe event này để áp lại theme (có xét allowlist).
+    window.dispatchEvent(new Event('tizia-theme-change'));
     setOpen(false);
   }
+
+  // Trang ngoài allowlist → app luôn nền tối, ẩn nút cho gọn (giữ hooks phía trên).
+  if (!pathHonorsTheme(pathname)) return null;
 
   const current = OPTIONS.find((o) => o.mode === mode) ?? OPTIONS[0];
 
