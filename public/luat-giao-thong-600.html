@@ -70,8 +70,10 @@
   .stats { display:flex; gap:18px; font-size:13px; color: var(--muted); max-width:760px; width:100%; justify-content:center; }
   .stats b { color: var(--text); font-size:15px; }
 
+  /* max-width 960 khớp #practiceWrap.exam (khung 2 cột lúc thi/xem lại) để khung
+     KẾT QUẢ THI nằm DƯỚI thẳng hàng, cân đối — không thò ra/thụt vào (req #100). */
   .summary { background:var(--card); border:1px solid var(--border); border-radius:14px;
-    max-width:760px; width:100%; text-align:center; display:none; overflow:hidden; }
+    max-width:960px; width:100%; text-align:center; display:none; overflow:hidden; }
   .summary.show { display:block; }
   .summary .big { font-size: 56px; font-weight: 800; margin: 8px 0; }
   /* (req #99) Bỏ 2 quy tắc .summary .pass/.fail cũ: chúng dành cho #sumScore/#sumTitle
@@ -643,7 +645,9 @@
     // giữ qcard + nav + qsidebar hiển thị (KHÔNG ẩn như trước).
     el('stats').style.display = 'none';           // thanh đếm khi luyện — thừa lúc review
     el('examHead').style.display = 'none';         // dẹp header thi + đồng hồ đếm ngược
-    el('practiceWrap').classList.remove('exam');
+    // GIỮ class 'exam' (KHÔNG remove): giữ khung 2 cột ở 960px như lúc làm bài. Trước
+    // đây remove làm khung phình về 1120px → SV thấy "frame kết quả to phải zoom nhỏ"
+    // (req #100). reviewMode đã lo ẩn nút Nộp bài, nên giữ .exam an toàn.
     idx = 0;
     render();                                      // vẽ lại: lưới tô kết quả + câu 1 lộ đáp án
     exam = null;
