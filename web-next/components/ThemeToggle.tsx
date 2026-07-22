@@ -10,8 +10,6 @@
 // nên đổi theme không có tác dụng.
 
 import { useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { pathHonorsTheme } from '@/lib/theme-routes';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 const KEY = 'tizia-theme';
@@ -23,7 +21,6 @@ const OPTIONS: { mode: ThemeMode; icon: string; label: string }[] = [
 ];
 
 export default function ThemeToggle() {
-  const pathname = usePathname();
   const [mode, setMode] = useState<ThemeMode>('system');
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
@@ -56,9 +53,8 @@ export default function ThemeToggle() {
     setOpen(false);
   }
 
-  // Trang ngoài allowlist → app luôn nền tối, ẩn nút cho gọn (giữ hooks phía trên).
-  if (!pathHonorsTheme(pathname)) return null;
-
+  // Hiển thị ở MỌI trang để header thống nhất. Ở trang ngoài allowlist (game/
+  // lab nền tối) nút vẫn LƯU lựa chọn — có tác dụng khi quay lại trang "đọc".
   const current = OPTIONS.find((o) => o.mode === mode) ?? OPTIONS[0];
 
   return (

@@ -29,6 +29,7 @@ export const LIGHT_THEME_ROUTES: RegExp[] = [
   /^\/dashboard(\/|$)/,
   /^\/nang-luc(\/|$)/,
   /^\/marketplace(\/|$)/,
+  /^\/school(\/|$)/, // trang chọn/khuôn viên trường (chrome dùng token; campus nhiều màu)
 ];
 
 // Trang này có tôn trọng lựa chọn theme của người dùng không? (false = ép nền tối)
