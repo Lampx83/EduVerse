@@ -8,6 +8,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import ThemeToggle from './ThemeToggle';
+import NotificationsBell from './NotificationsBell';
 
 type Me = {
   id: number;
@@ -97,6 +98,9 @@ export default function SiteHeader() {
 
         {/* Khu tài khoản */}
         <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
+          {/* Chuông phản hồi Ban điều hành AI (ẩn với guest) — bản React,
+              thay vanilla notifications-bell.js chèn qua nginx. */}
+          <NotificationsBell />
           {/* Bộ chọn giao diện sáng / tối / theo hệ thống — luôn hiển thị */}
           <ThemeToggle />
 

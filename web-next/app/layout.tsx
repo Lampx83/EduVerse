@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import SiteHeader from '@/components/SiteHeader';
 import RouteThemeGuard from '@/components/RouteThemeGuard';
+import SuggestionFab from '@/components/SuggestionFab';
 import './globals.css';
+import './widgets.css';
 
 export const metadata: Metadata = {
   title: { default: 'Tizia — Vũ trụ giáo dục ảo', template: '%s · Tizia' },
@@ -30,6 +33,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <RouteThemeGuard />
         <SiteHeader />
         <main className="w-full px-4 py-6 sm:px-6">{children}</main>
+        {/* Nút 🏛️ Ban điều hành AI — bản React (thay vanilla chèn qua nginx).
+            Suspense vì component đọc useSearchParams (?domain=). */}
+        <Suspense fallback={null}>
+          <SuggestionFab />
+        </Suspense>
       </body>
     </html>
   );
