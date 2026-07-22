@@ -230,7 +230,10 @@ const roomCard=(r,idx)=> r.href
   : `<div class="room" data-room="${idx}"><div class="ri">${r.ic}</div><h3>${r.name}</h3><div class="rd">${r.rd}</div><span class="tag${r.board?'':' soon'}">${r.board?'Vào Ban điều hành →':'Khám phá →'}</span></div>`;
 
 wrap.style.setProperty('--accent', S.accent);
+// Nút quay lại về campus trường (req #102+#103 Thì Dũng): mọi không gian /space
+// đều vào từ bản đồ trường mà trước đó không có đường về → kẹt phải bấm Back trình duyệt.
 wrap.innerHTML = `
+  <a class="spaceBack" href="/school.html?domain=${dom}" style="display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;padding:8px 14px;border-radius:10px;background:var(--card);border:1px solid var(--border);color:inherit;text-decoration:none;font-size:13.5px;font-weight:600">← Quay lại</a>
   <div class="banner" style="background:linear-gradient(120deg, ${S.accent}33, rgba(255,255,255,.04));--accent:${S.accent}">
     <div class="ic">${S.emoji}</div><h1>${S.name}</h1><p>${S.intro}</p>
   </div>
