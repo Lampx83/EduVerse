@@ -67,7 +67,7 @@ export default function SpaceMount() {
   .space-root .chip { background:hsl(var(--foreground) / .1); border:1px solid var(--border); padding:6px 12px; border-radius:20px; font-size:12.5px; transition:background .15s, border-color .15s; }
   .space-root .chip b { color:var(--accent); }
   .space-root .chip.earned   { background:rgba(16,185,129,.18); border-color:rgba(16,185,129,.55); }
-  .space-root .chip.earned .chip-i { color:#34d399; }
+  .space-root .chip.earned .chip-i { color:#059669; }
   .space-root .chip.pending  { opacity:.55; }
   .space-root .chip.pending .chip-i { color:hsl(var(--foreground) / .55); }
   .space-root .chip .chip-i { font-weight:700; margin-right:4px; }
@@ -80,10 +80,10 @@ export default function SpaceMount() {
   .space-root .q { margin:0 0 14px; }
   .space-root .q .qt { font-weight:700; margin-bottom:8px; font-size:14.5px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .space-root .q .qb { font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700; line-height:1.5; white-space:nowrap; }
-  .space-root .q .qb.lapse { background:rgba(251,113,133,.18); color:#fb7185; border:1px solid rgba(251,113,133,.4); }
-  .space-root .q .qb.due   { background:rgba(34,197,94,.18);  color:#22c55e; border:1px solid rgba(34,197,94,.4); }
-  .space-root .q .qb.new   { background:rgba(56,189,248,.18); color:#38bdf8; border:1px solid rgba(56,189,248,.4); }
-  .space-root .q .qb.review-early { background:rgba(167,139,250,.18); color:#a78bfa; border:1px solid rgba(167,139,250,.4); }
+  .space-root .q .qb.lapse { background:rgba(251,113,133,.18); color:#e11d48; border:1px solid rgba(251,113,133,.4); }
+  .space-root .q .qb.due   { background:rgba(34,197,94,.18);  color:#16a34a; border:1px solid rgba(34,197,94,.4); }
+  .space-root .q .qb.new   { background:rgba(56,189,248,.18); color:#0284c7; border:1px solid rgba(56,189,248,.4); }
+  .space-root .q .qb.review-early { background:rgba(167,139,250,.18); color:#7c3aed; border:1px solid rgba(167,139,250,.4); }
   .space-root .q .opt { display:block; width:100%; text-align:left; background:hsl(var(--foreground) / .05); border:1px solid var(--border); color:hsl(var(--foreground)); padding:9px 13px; border-radius:10px; margin:6px 0; cursor:pointer; font-family:inherit; font-size:13.5px; transition:background .12s; }
   .space-root .q .opt:hover { background:hsl(var(--foreground) / .12); }
   .space-root .q .opt.correct { background:rgba(16,185,129,.35); border-color:#10b981; }
@@ -92,7 +92,7 @@ export default function SpaceMount() {
   .space-root .quiz .submit:hover { filter:brightness(1.08); }
   .space-root .result { margin-top:14px; padding:14px 16px; border-radius:12px; background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.4); display:none; }
   .space-root .result.show { display:block; }
-  .space-root .result b { color:#34d399; }
+  .space-root .result b { color:#059669; }
   .space-root #toast { position:fixed; left:50%; top:18px; transform:translateX(-50%) translateY(-10px); background:hsl(var(--card)); border:1px solid var(--border); color:hsl(var(--foreground)); padding:12px 18px; border-radius:12px; max-width:520px; opacity:0; transition:opacity .2s,transform .2s; z-index:30; box-shadow:0 10px 30px rgba(0,0,0,.4); }
   .space-root #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
   .space-root .modal { position:fixed; inset:0; background:rgba(8,11,22,.66); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
@@ -143,7 +143,7 @@ export default function SpaceMount() {
   .space-root .checklist input { margin-top:2px; width:17px; height:17px; accent-color:var(--accent); flex-shrink:0; }
   .space-root .checklist label.done { background:rgba(16,185,129,.15); border-color:rgba(16,185,129,.45); }
   .space-root .ck-prog { font-size:13px; font-weight:700; margin-top:6px; }
-  .space-root .ck-prog.full { color:#34d399; }
+  .space-root .ck-prog.full { color:#059669; }
   .space-root .goal-in { display:flex; gap:8px; margin:6px 0 4px; }
   .space-root .goal-in input { flex:1; background:hsl(var(--foreground) / .06); border:1px solid var(--border); border-radius:10px; color:hsl(var(--foreground)); padding:10px 13px; font-family:inherit; font-size:14px; }
   .space-root .goal-in button { background:var(--accent); border:none; color:#1f1147; font-weight:800; padding:0 16px; border-radius:10px; cursor:pointer; }
@@ -162,7 +162,7 @@ export default function SpaceMount() {
   .space-root .pr-badge { font-size:9.5px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; background:var(--accent); color:#1f1147; padding:2px 8px; border-radius:7px; }
   .space-root .pr-sub { font-size:12.5px; opacity:.82; margin-bottom:10px; line-height:1.5; }
   .space-root .pr-msg { font-size:13px; margin-top:10px; min-height:18px; font-weight:700; }
-  .space-root .pr-msg.ok { color:#34d399; } .space-root .pr-msg.bad { color:#fca5a5; }
+  .space-root .pr-msg.ok { color:#059669; } .space-root .pr-msg.bad { color:#dc2626; }
   .space-root .pr-btn { background:var(--accent); border:none; color:#1f1147; font-weight:800; padding:8px 15px; border-radius:9px; cursor:pointer; font-family:inherit; font-size:13px; }
   .space-root .pr-btn:hover { filter:brightness(1.08); }
   .space-root .pr-btn.ghost { background:hsl(var(--foreground) / .1); color:hsl(var(--foreground)); }
@@ -204,6 +204,16 @@ export default function SpaceMount() {
   .space-root .mt.sel { border-color:var(--accent); background:rgba(124,92,246,.2); }
   .space-root .mt.done { background:rgba(16,185,129,.2); border-color:#10b981; opacity:.65; cursor:default; pointer-events:none; }
   .space-root .mt.bad { background:rgba(239,68,68,.25); border-color:#ef4444; }
+  /* Nền TỐI: khôi phục tông màu nhạt gốc (tông đậm phía trên là cho nền sáng) */
+  .dark .space-root .q .qb.lapse { color:#fb7185; }
+  .dark .space-root .q .qb.due { color:#22c55e; }
+  .dark .space-root .q .qb.new { color:#38bdf8; }
+  .dark .space-root .q .qb.review-early { color:#a78bfa; }
+  .dark .space-root .result b { color:#34d399; }
+  .dark .space-root .chip.earned .chip-i { color:#34d399; }
+  .dark .space-root .ck-prog.full { color:#34d399; }
+  .dark .space-root .pr-msg.ok { color:#34d399; }
+  .dark .space-root .pr-msg.bad { color:#fca5a5; }
       `}</style>
     </div>
   );
