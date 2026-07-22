@@ -415,15 +415,36 @@ function bind(root) {
     });
     if (!r.ok) {
       const e = await r.json().catch(() => ({}));
-      throw new Error(e.message || e.error || 'upload_failed');
+      // 401 → báo tiếng Việt + cắm cờ needLogin để catch phía trên hiện link đăng nhập
+      // (server trả {error:'unauthorized'} trần — đừng show nguyên chữ "unauthorized").
+      const err = new Error(r.status === 401 || e.needLogin
+        ? 'Bạn chưa đăng nhập' : (e.message || e.error || 'upload_failed'));
+      if (r.status === 401 || e.needLogin) err.needLogin = true;
+      throw err;
     }
     return await r.json();
+  }
+
+  // Khách chưa đăng nhập: khoá nút gửi + báo NGAY khi mở form — đừng để điền xong
+  // form + chọn file rồi mới vỡ lở "unauthorized" lúc upload.
+  const LOGIN_MSG_HTML = '⚠️ Bạn chưa đăng nhập. <a href="/login.html" style="color:#fbbf24;text-decoration:underline;font-weight:700">Đăng nhập</a> để gửi đề nghị tới Ban điều hành.';
+  let guestLocked = false;
+  async function checkAuth() {
+    try {
+      const r = await fetch('/api/auth/me');
+      if (r.ok) {
+        if (guestLocked) { guestLocked = false; sendBtn.disabled = false; msg.textContent = ''; }
+      } else if (r.status === 401) {
+        guestLocked = true; sendBtn.disabled = true; msg.innerHTML = LOGIN_MSG_HTML;
+      }
+    } catch {} // lỗi mạng → đừng khoá nhầm; submit sẽ tự báo nếu thật sự 401
   }
 
   const open = () => {
     modal.hidden = false;
     setTimeout(() => root.querySelector('#sgf-title-in')?.focus(), 50);
     loadInbox();
+    checkAuth();
   };
   const close = () => { modal.hidden = true; msg.textContent = ''; };
 
@@ -463,7 +484,8 @@ function bind(root) {
             attachments.push(meta);
           }
         } catch (e) {
-          msg.textContent = '⚠️ Không chụp được màn hình: ' + (e.message || e);
+          if (e.needLogin) { msg.innerHTML = LOGIN_MSG_HTML; }
+          else msg.textContent = '⚠️ Không chụp được màn hình: ' + (e.message || e);
           sendBtn.disabled = false;
           return;
         }
@@ -475,7 +497,8 @@ function bind(root) {
           const meta = await uploadOne(f, f.name, 'file');
           attachments.push(meta);
         } catch (e) {
-          msg.textContent = `⚠️ Không tải được "${f.name}": ${e.message || e}`;
+          if (e.needLogin) { msg.innerHTML = LOGIN_MSG_HTML; }
+          else msg.textContent = `⚠️ Không tải được "${f.name}": ${e.message || e}`;
           sendBtn.disabled = false;
           return;
         }
@@ -495,7 +518,7 @@ function bind(root) {
         if (e2.viewOnly || e2.error === 'view_only') {
           msg.innerHTML = `⚠️ Bạn đang ở trường khác. <a href="/school.html?domain=${encodeURIComponent(e2.your_school || '')}" style="color:#fbbf24;text-decoration:underline">Về trường của bạn</a> để gửi đề nghị.`;
         } else if (e2.needLogin) {
-          msg.textContent = '⚠️ Hãy đăng nhập để gửi đề nghị.';
+          msg.innerHTML = LOGIN_MSG_HTML;
         } else if (e2.needEnroll) {
           msg.textContent = '⚠️ Hãy chọn trường để bắt đầu gửi đề nghị.';
         } else {

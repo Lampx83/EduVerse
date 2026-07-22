@@ -1466,7 +1466,7 @@ r.get(/.*/, async (req, res, next) => {
     const noBell   = embed || /\bdata-no-notifications-bell\b/i.test(bodyOpen);
     const noAnalytics = embed || /\bdata-no-analytics\b/i.test(bodyOpen);
     const sgfTag =
-      (noSgf ? '' : `<script type="module" src="${BASE_PATH}/js/suggestion-fab.js?v=data-files"></script>\n`)
+      (noSgf ? '' : `<script type="module" src="${BASE_PATH}/js/suggestion-fab.js?v=fabauth1"></script>\n`)
       + (noBell ? '' : `<script type="module" src="${BASE_PATH}/js/notifications-bell.js"></script>`);
     const tags =
       ((hasAnalytics || noAnalytics) ? '' : ANALYTICS_TAG + '\n')
