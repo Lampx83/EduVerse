@@ -15,6 +15,15 @@
     background: linear-gradient(180deg,var(--bg),#16213e); color:var(--text); padding:18px;
     display:flex; flex-direction:column; align-items:center; gap:16px; }
   h1 { margin:0; font-size: 22px; text-align:center; }
+  /* Nút quay lại góc trái (req #102 Thì Dũng): từ trung tâm lý thuyết vào đây
+     không có đường về. fixed để lúc cuộn giữa 600 câu vẫn thoát được; ẨN khi
+     ĐANG THI (cùng lý do req #80: bấm nhầm lúc thi là mất bài) — nộp xong hiện lại. */
+  .pageBack { position:fixed; top:14px; left:14px; z-index:60; display:inline-flex; align-items:center;
+    gap:6px; background:var(--card); color:var(--text); border:1px solid var(--border);
+    border-radius:9px; padding:8px 14px; font-size:13px; font-weight:600; text-decoration:none;
+    backdrop-filter:blur(6px); }
+  .pageBack:hover { background:rgba(255,255,255,.12); }
+  @media (max-width:860px) { .pageBack { position:static; display:inline-flex; margin-bottom:10px; } }
   .toolbar { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
   .toolbar button { font-family:inherit; background:var(--card); color:var(--text);
     border:1px solid var(--border); padding:8px 16px; border-radius:9px; font-size:13px; cursor:pointer; }
@@ -274,6 +283,8 @@
 </style>
 </head>
 <body>
+<!-- Nút quay lại (req #102): về Trung tâm lý thuyết trong Trường Lái xe. -->
+<a class="pageBack" id="pageBack" href="/space?b=theory-center&amp;domain=driving">← Quay lại</a>
 <h1>🚦 Lý thuyết Lái xe ô tô — Luật giao thông đường bộ</h1>
 
 <!-- id để ẩn thanh này KHI ĐANG THI (req #80): lúc thi mà còn nút "Luyện tập" thì
@@ -591,6 +602,7 @@
       el('ehDe').textContent = examDe ? ' · Đề ' + String(examDe).padStart(2, '0') : ' · Câu hỏi ngẫu nhiên';
       el('ehTotal').textContent = list.length;
       el('practiceWrap').classList.add('exam');    // 2 cột cao bằng nhau (req #81)
+      el('pageBack').style.display = 'none';       // ẩn lối thoát khi ĐANG thi (req #102, lý do như #80)
       tickTimer();
     } else {
       exam = null;
@@ -598,6 +610,7 @@
       el('stats').style.display = '';
       el('timerBox').style.display = 'none';
       el('practiceWrap').classList.remove('exam');
+      el('pageBack').style.display = '';
     }
     render();
   }
@@ -645,6 +658,7 @@
     // giữ qcard + nav + qsidebar hiển thị (KHÔNG ẩn như trước).
     el('stats').style.display = 'none';           // thanh đếm khi luyện — thừa lúc review
     el('examHead').style.display = 'none';         // dẹp header thi + đồng hồ đếm ngược
+    el('pageBack').style.display = '';             // nộp rồi → mở lại lối về (req #102)
     // GIỮ class 'exam' (KHÔNG remove): giữ khung 2 cột ở 960px như lúc làm bài. Trước
     // đây remove làm khung phình về 1120px → SV thấy "frame kết quả to phải zoom nhỏ"
     // (req #100). reviewMode đã lo ẩn nút Nộp bài, nên giữ .exam an toàn.
@@ -896,6 +910,7 @@
     el('emptyMsg').style.display = 'none'; el('summary').classList.remove('show');
     el('timerBox').style.display = 'none'; el('examHead').style.display = 'none'; exam = null;
     el('practiceWrap').classList.remove('exam');
+    el('pageBack').style.display = '';   // màn chọn hạng/đề luôn có lối về (req #102)
     el('qsidebar').style.display = 'none';
     el('progBox').innerHTML = '';   // bảng tiến độ chỉ thuộc màn luyện tập (req #75)
     document.querySelector('.nav').style.display = 'none';
