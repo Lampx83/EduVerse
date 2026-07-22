@@ -6,6 +6,7 @@
 // Giữ theme thương hiệu warm (amber/orange) của trang gốc bằng scoped CSS.
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { pickVoice } from '@/lib/tts';
 
 // ── Kiểu dữ liệu ca (khớp public/js/scenarios/_data/patient-cases.js) ──
 type Patient = {
@@ -63,8 +64,7 @@ function speak(t: string) {
   const u = new SpeechSynthesisUtterance(t);
   u.lang = 'vi-VN';
   u.rate = 1.0;
-  const voices = speechSynthesis.getVoices();
-  const v = voices.find((x) => x.lang.startsWith('vi'));
+  const v = pickVoice('vi'); // giọng chọn theo chất lượng — lib/tts.ts
   if (v) u.voice = v;
   speechSynthesis.speak(u);
 }

@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { pickVoice } from '@/lib/tts';
 
 // ── Kiểu dữ liệu kịch bản (khớp schema DB content_datasets 'negotiation') ──
 type Stage = { id: string; name: string };
@@ -145,7 +146,7 @@ export default function NegotiationPage() {
     const u = new SpeechSynthesisUtterance(t);
     u.lang = 'vi-VN';
     u.rate = 1.0;
-    const v = speechSynthesis.getVoices().find((x) => x.lang.startsWith('vi'));
+    const v = pickVoice('vi'); // giọng chọn theo chất lượng — lib/tts.ts
     if (v) u.voice = v;
     speechSynthesis.speak(u);
   }, []);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { pickVoice } from '@/lib/tts';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  TỪ VỰNG TIẾNG ANH CHUYÊN NGÀNH — bản React (Next) của trang vanilla cũ.
@@ -101,6 +102,8 @@ function speak(word: string, rate = 0.85) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   const u = new SpeechSynthesisUtterance(word);
   u.lang = 'en-US'; u.rate = rate;
+  const v = pickVoice('en'); // giọng en chọn theo chất lượng — lib/tts.ts
+  if (v) u.voice = v;
   speechSynthesis.cancel(); speechSynthesis.speak(u);
 }
 

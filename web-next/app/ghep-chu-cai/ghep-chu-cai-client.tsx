@@ -2,38 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// ── TTS: đọc to câu hỏi/feedback cho bé chưa biết chữ (Web Speech API). ──────
-// Port từ speak() ở /js/engine/preschool-ui.js — thuần tiện ích trình duyệt,
-// không phải content nghiệp vụ.
-let _voice: SpeechSynthesisVoice | null = null;
-function pickVietnameseVoice(): SpeechSynthesisVoice | null {
-  if (_voice || typeof speechSynthesis === 'undefined') return _voice;
-  const all = speechSynthesis.getVoices();
-  _voice =
-    all.find((v) => v.lang?.toLowerCase().startsWith('vi')) ||
-    all.find((v) => /vietnamese/i.test(v.name || '')) ||
-    null;
-  return _voice;
-}
-function speak(text: string, opts: { cancel?: boolean; rate?: number; pitch?: number } = {}) {
-  if (typeof speechSynthesis === 'undefined') return;
-  try {
-    const clean = String(text || '')
-      .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
-      .trim();
-    if (!clean) return;
-    if (opts.cancel !== false) speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = 'vi-VN';
-    u.rate = opts.rate ?? 0.9;
-    u.pitch = opts.pitch ?? 1.15;
-    const v = pickVietnameseVoice();
-    if (v) u.voice = v;
-    speechSynthesis.speak(u);
-  } catch {
-    /* noop */
-  }
-}
+// TTS dùng chung — chọn giọng theo chất lượng (Natural/Google trước), xem lib/tts.ts
+import { speak, pickVoice } from '@/lib/tts';
+
+// Shim giữ tương thích các effect warm-up cũ (lib tự nghe voiceschanged).
+const pickVietnameseVoice = () => pickVoice('vi');
 
 // Bảng chữ cái Tiếng Việt: 29 chữ in hoa + số 0-9. Mầm non học nhận diện chữ in
 // hoa trước. Đây là dữ liệu game tĩnh (bộ ký tự bảng chữ cái quốc gia), không phải

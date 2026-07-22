@@ -53,6 +53,8 @@ class TTSReader {
     this.attachAll();
     // Re-scan periodically for newly added content
     setInterval(() => this.attachAll(), 3000);
+    // Voice list nạp async (Chrome) — xoá cache khi danh sách đổi.
+    try { speechSynthesis.addEventListener('voiceschanged', () => { this._voices = {}; }); } catch {}
   }
   injectCss() {
     if (document.getElementById('tz-tts-css')) return;
@@ -95,6 +97,32 @@ class TTSReader {
       el.appendChild(btn);
     });
   }
+  // Chọn giọng theo CHẤT LƯỢNG (trước đây không chọn → trình duyệt dùng giọng
+  // mặc định OS, thường robot). Ưu tiên: Natural (Edge neural) > Google (Chrome)
+  // > Enhanced/Premium > thường; trừ điểm compact. Cùng thuật toán với
+  // engine/preschool-ui.js + web-next/lib/tts.ts — đổi thì đổi cả ba.
+  pickVoice(prefix) {
+    this._voices = this._voices || {};
+    if (this._voices[prefix] !== undefined) return this._voices[prefix];
+    const all = speechSynthesis.getVoices();
+    if (!all.length) return null;
+    const rank = (v) => {
+      const n = (v.name || '').toLowerCase();
+      const lang = (v.lang || '').toLowerCase().replace('_', '-');
+      if (!lang.startsWith(prefix)) return -1e9;
+      let s = 0;
+      if (/natural/.test(n)) s += 120; else if (/online/.test(n)) s += 30;
+      if (/google/.test(n)) s += 80;
+      if (/enhanced|premium/.test(n)) s += 40;
+      if (/compact|espeak|eloquence/.test(n)) s -= 60;
+      if (!v.localService) s += 10;
+      if (lang === prefix + '-vn' || lang === 'en-us') s += 15;
+      return s;
+    };
+    const best = all.map(v => [rank(v), v]).sort((a, b) => b[0] - a[0])[0];
+    this._voices[prefix] = best && best[0] > -1e9 ? best[1] : null;
+    return this._voices[prefix];
+  }
   speak(text, btn) {
     if (!('speechSynthesis' in window)) {
       alert('Trình duyệt không hỗ trợ đọc to.');
@@ -102,17 +130,33 @@ class TTSReader {
     }
     speechSynthesis.cancel();
     document.querySelectorAll('.tz-tts-btn.speaking, .tz-tts-toggle.speaking').forEach(b => b.classList.remove('speaking'));
-    const u = new SpeechSynthesisUtterance(this.cleanText(text));
-    u.lang = (document.documentElement.lang || 'vi') + '-' + (document.documentElement.lang === 'en' ? 'US' : 'VN');
-    u.rate = 0.95;
-    u.pitch = 1.05;
+    const isEn = document.documentElement.lang === 'en';
+    const voice = this.pickVoice(isEn ? 'en' : 'vi');
+    // Chia câu: né bug Chrome cắt utterance dài (~15s) + ngắt nghỉ tự nhiên hơn.
+    const clean = this.cleanText(text);
+    const chunks = clean.length <= 200
+      ? [clean]
+      : (clean.match(/[^.!?…;:\n]+[.!?…;:\n]*/g) || [clean]).reduce((acc, p) => {
+          const last = acc[acc.length - 1];
+          if (last !== undefined && (last + p).length <= 200) acc[acc.length - 1] = last + p;
+          else acc.push(p);
+          return acc;
+        }, []);
     if (btn) btn.classList.add('speaking');
     this.toggleBtn.classList.add('speaking');
-    u.onend = u.onerror = () => {
+    const done = () => {
       if (btn) btn.classList.remove('speaking');
       this.toggleBtn.classList.remove('speaking');
     };
-    speechSynthesis.speak(u);
+    chunks.forEach((c, i) => {
+      const u = new SpeechSynthesisUtterance(c.trim());
+      u.lang = isEn ? 'en-US' : 'vi-VN';
+      u.rate = 0.97;
+      u.pitch = 1.0; // ép pitch làm giọng neural méo như robot
+      if (voice) u.voice = voice;
+      if (i === chunks.length - 1) u.onend = u.onerror = done;
+      speechSynthesis.speak(u);
+    });
   }
   cleanText(text) {
     return String(text || '').replace(/[🔊🦉🐲🏆🎁🪙✨🎯📚📐🇬🇧]/g, '').replace(/\s+/g, ' ').trim();

@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { pickVoice } from '@/lib/tts';
 
 const PDFJS_SRC = '/vendor/pdfjs-4.7.76/build/pdf.mjs';
 const PDFJS_WORKER = '/vendor/pdfjs-4.7.76/build/pdf.worker.mjs';
@@ -64,8 +65,8 @@ function speak(t: string) {
   for (const c of chunks.slice(0, 12)) {
     const u = new SpeechSynthesisUtterance(c.trim());
     u.lang = 'vi-VN';
-    u.rate = 1.05;
-    const v = speechSynthesis.getVoices().find((x) => x.lang.startsWith('vi'));
+    u.rate = 1.0;
+    const v = pickVoice('vi'); // giọng chọn theo chất lượng — lib/tts.ts
     if (v) u.voice = v;
     speechSynthesis.speak(u);
   }

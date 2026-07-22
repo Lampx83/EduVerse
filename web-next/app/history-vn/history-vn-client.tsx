@@ -18,6 +18,7 @@
 // ============================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { speak as ttsSpeak } from '@/lib/tts';
 
 type Character = {
   id: string;
@@ -48,14 +49,8 @@ type Turn = {
 };
 
 function speak(t: string) {
-  if (typeof window === 'undefined' || typeof speechSynthesis === 'undefined') return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(t);
-  u.lang = 'vi-VN';
-  u.rate = 1.02;
-  const v = speechSynthesis.getVoices().find((x) => x.lang.startsWith('vi'));
-  if (v) u.voice = v;
-  speechSynthesis.speak(u);
+  // Giọng chọn theo chất lượng (Natural/Google trước) — xem lib/tts.ts
+  ttsSpeak(t, { rate: 1.0 });
 }
 
 export default function HistoryVnClient() {

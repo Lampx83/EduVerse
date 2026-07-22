@@ -8,18 +8,36 @@
 // ============================================================
 
 // Web Speech API TTS — đọc to câu hỏi/feedback cho bé chưa biết chữ.
+// CHỌN GIỌNG THEO CHẤT LƯỢNG (không lấy "giọng vi đầu tiên" — thường là giọng
+// compact robot): ưu tiên neural "Natural" (Edge HoaiMy/NamMinh) > "Google
+// Tiếng Việt" (Chrome) > Enhanced/Premium (macOS) > thường; trừ điểm compact.
+// Bản React tương ứng: web-next/lib/tts.ts — đổi thuật toán thì đổi CẢ HAI.
 let _voice = null;
+function rankViVoice(v) {
+  const n = (v.name || '').toLowerCase();
+  const lang = (v.lang || '').toLowerCase().replace('_', '-');
+  if (!lang.startsWith('vi') && !/vietnamese/i.test(v.name || '')) return -1e9;
+  let s = 0;
+  if (/natural/.test(n)) s += 120;
+  else if (/online/.test(n)) s += 30;
+  if (/google/.test(n)) s += 80;
+  if (/enhanced|premium/.test(n)) s += 40;
+  if (/compact|espeak|eloquence/.test(n)) s -= 60;
+  if (!v.localService) s += 10;
+  if (lang === 'vi-vn') s += 15;
+  return s;
+}
 function pickVietnameseVoice() {
   if (_voice || typeof speechSynthesis === 'undefined') return _voice;
   const all = speechSynthesis.getVoices();
-  _voice = all.find(v => v.lang?.toLowerCase().startsWith('vi'))
-        || all.find(v => /vietnamese/i.test(v.name || ''))
-        || null;
+  if (!all.length) return null; // chưa nạp — đừng cache null
+  const best = all.map(v => [rankViVoice(v), v]).sort((a, b) => b[0] - a[0])[0];
+  _voice = best && best[0] > -1e9 ? best[1] : null;
   return _voice;
 }
 if (typeof speechSynthesis !== 'undefined') {
   // Voice list nạp async ở Chrome — chờ event mới có giọng vi-VN.
-  try { speechSynthesis.addEventListener('voiceschanged', pickVietnameseVoice); } catch {}
+  try { speechSynthesis.addEventListener('voiceschanged', () => { _voice = null; pickVietnameseVoice(); }); } catch {}
   pickVietnameseVoice();
 }
 
@@ -32,8 +50,10 @@ export function speak(text, opts = {}) {
     if (opts.cancel !== false) speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(clean);
     u.lang = 'vi-VN';
-    u.rate = opts.rate ?? 0.9;
-    u.pitch = opts.pitch ?? 1.15;
+    // rate 0.95/pitch 1.05: chậm nhẹ thân thiện với bé nhưng không ép pitch cao
+    // (1.15 cũ làm giọng neural méo, nghe robot).
+    u.rate = opts.rate ?? 0.95;
+    u.pitch = opts.pitch ?? 1.05;
     const v = pickVietnameseVoice();
     if (v) u.voice = v;
     speechSynthesis.speak(u);

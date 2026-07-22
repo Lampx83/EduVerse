@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { pickVoice } from '@/lib/tts';
 
 // Câu luyện phát âm lấy TỪ DB qua /api/content/pronunciation (không hardcode).
 // Shape API: { ok, collection, items: [ { easy:[{en,vi}], med:[...], hard:[...] } ] }
@@ -87,6 +88,8 @@ export default function LuyenPhatAm() {
     const u = new SpeechSynthesisUtterance(current.en);
     u.lang = 'en-US';
     u.rate = 0.92;
+    const v = pickVoice('en'); // giọng en chọn theo chất lượng — lib/tts.ts
+    if (v) u.voice = v;
     speechSynthesis.cancel();
     speechSynthesis.speak(u);
   }
