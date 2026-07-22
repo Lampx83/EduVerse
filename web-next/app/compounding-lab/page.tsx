@@ -255,6 +255,7 @@ const LEGACY_CSS = `  html, body { margin: 0; height: 100%; overflow: hidden; ba
   /* ===== Level select modal ===== */
   #level-modal .lm-card {
     background: linear-gradient(180deg, #ffffff, #f3f4f6);
+    color: #1f2937; /* panel TRẮNG phải tự chốt chữ tối — không thừa kế chữ sáng của trang tối */
     border-radius: 18px; padding: 24px 28px;
     width: min(820px, 96vw); max-height: 92vh; overflow: auto;
     box-shadow: 0 28px 80px rgba(0,0,0,0.5);
