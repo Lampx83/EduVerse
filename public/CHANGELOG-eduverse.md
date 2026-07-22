@@ -4,6 +4,42 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-22 — Phiên cải tiến (21) · Trường CNTT — Sửa lỗi duplicate achievements + duplicate title
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** CNTT (`it`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **2 lỗi** trong `public/js/domains/it/achievements.js`:
+
+1. **Duplicate trigger `yearComplete: 1`**: Achievement `all-year-1` (icon 🥇, legacy placeholder) và `year1-it-complete` (icon 🥇, chính thức) cùng trigger `{ yearComplete: 1 }`. Engine sẽ trao **2 huy hiệu** khi sinh viên hoàn thành toàn bộ năm 1 CNTT.
+2. **Duplicate title "Software Architect"**: Achievement `se-architect` (I3.1 Kỹ thuật phần mềm, icon 🏗️) và `architect` (I4.1 Kiến trúc phần mềm + Patterns, icon 🏛️) cùng hiển thị title "Software Architect". I3.1 là môn *Kỹ thuật phần mềm* (Software Engineering), không phải Kiến trúc — title cần được phân biệt rõ.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/it/achievements.js` | Sửa lỗi | Xóa `all-year-1` (trùng trigger `yearComplete:1`); đổi title `se-architect` → "Software Engineer" |
+
+### Chi tiết thay đổi
+
+| Thay đổi | Trước | Sau |
+|----------|-------|-----|
+| Achievement `all-year-1` | Tồn tại, trigger `{ yearComplete: 1 }` — trùng với `year1-it-complete` | **Xóa bỏ** |
+| Achievement `se-architect` title | `'Software Architect'` — trùng với `architect` (I4.1) | `'Software Engineer'` — phù hợp với I3.1 Kỹ thuật phần mềm |
+
+**Lý do giữ nguyên `year1-it-complete` / `architect`:** Hai achievements này có ID, tên, icon phù hợp hơn với module, được thêm vào như phần của cấu trúc chính thức Trường CNTT.
+
+### Kiểm thử
+
+```
+node --check public/js/domains/it/achievements.js   ✅ OK
+```
+
+---
+
 ## 2026-07-21 — Phiên cải tiến (20) · Trường Kinh tế — 4 Career Path modules (EC01–EC04)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).

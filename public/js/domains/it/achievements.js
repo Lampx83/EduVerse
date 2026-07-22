@@ -62,7 +62,7 @@ export const ACHIEVEMENTS = [
     trigger: { yearComplete: 2 } },
 
   // ── Year 3 Achievements ──
-  { id: 'se-architect', icon: '🏗️', title: 'Software Architect',
+  { id: 'se-architect', icon: '🏗️', title: 'Software Engineer',
     desc: 'Pass Kỹ thuật phần mềm (I3.1) với 3 sao',
     trigger: { moduleStars: { 'I3.1': 3 } } },
 
@@ -125,10 +125,6 @@ export const ACHIEVEMENTS = [
   { id: 'star-30',     icon: '🌟', title: '30 sao đầu',
     desc: '30 sao tích luỹ',
     trigger: { totalStars: 30 } },
-
-  { id: 'all-year-1',  icon: '🥇', title: 'Tốt nghiệp Năm 1',
-    desc: 'Hoàn thành mọi module Năm 1',
-    trigger: { yearComplete: 1 } },
 
   // ── Game Achievements ──
   { id: 'code-racer',   icon: '⚡', title: 'Code Racer',
