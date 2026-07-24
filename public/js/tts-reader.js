@@ -75,7 +75,7 @@ class TTSReader {
     this.enabled = !this.enabled;
     localStorage.setItem(KEY_ON, this.enabled ? '1' : '0');
     this.toggleBtn.classList.toggle('on', this.enabled);
-    if (!this.enabled) speechSynthesis.cancel();
+    if (!this.enabled) this.stopAll(); // dừng cả audio server lẫn Web Speech
     this.attachAll();
   }
   attachAll() {
@@ -123,15 +123,30 @@ class TTSReader {
     this._voices[prefix] = best && best[0] > -1e9 ? best[1] : null;
     return this._voices[prefix];
   }
+  // Server TTS (FPT.AI /api/tts) có bật không? Probe 1 lần — 204 = có key.
+  probeServerTts() {
+    if (this._srvTts !== undefined) return Promise.resolve(this._srvTts);
+    if (!this._srvProbe) {
+      this._srvProbe = fetch('/api/tts?probe=1')
+        .then(r => (this._srvTts = r.status === 204))
+        .catch(() => (this._srvTts = false));
+    }
+    return this._srvProbe;
+  }
+  stopAll() {
+    this._gen = (this._gen || 0) + 1;
+    try { if (this._audio) { this._audio.pause(); this._audio = null; } } catch {}
+    try { speechSynthesis.cancel(); } catch {}
+    document.querySelectorAll('.tz-tts-btn.speaking, .tz-tts-toggle.speaking').forEach(b => b.classList.remove('speaking'));
+  }
   speak(text, btn) {
-    if (!('speechSynthesis' in window)) {
+    if (!('speechSynthesis' in window) && !window.Audio) {
       alert('Trình duyệt không hỗ trợ đọc to.');
       return;
     }
-    speechSynthesis.cancel();
-    document.querySelectorAll('.tz-tts-btn.speaking, .tz-tts-toggle.speaking').forEach(b => b.classList.remove('speaking'));
+    this.stopAll();
+    const myGen = this._gen;
     const isEn = document.documentElement.lang === 'en';
-    const voice = this.pickVoice(isEn ? 'en' : 'vi');
     // Chia câu: né bug Chrome cắt utterance dài (~15s) + ngắt nghỉ tự nhiên hơn.
     const clean = this.cleanText(text);
     const chunks = clean.length <= 200
@@ -148,14 +163,32 @@ class TTSReader {
       if (btn) btn.classList.remove('speaking');
       this.toggleBtn.classList.remove('speaking');
     };
-    chunks.forEach((c, i) => {
-      const u = new SpeechSynthesisUtterance(c.trim());
-      u.lang = isEn ? 'en-US' : 'vi-VN';
-      u.rate = 0.97;
-      u.pitch = 1.0; // ép pitch làm giọng neural méo như robot
-      if (voice) u.voice = voice;
-      if (i === chunks.length - 1) u.onend = u.onerror = done;
-      speechSynthesis.speak(u);
+    const webSpeak = (list) => {
+      const voice = this.pickVoice(isEn ? 'en' : 'vi');
+      list.forEach((c, i) => {
+        const u = new SpeechSynthesisUtterance(c.trim());
+        u.lang = isEn ? 'en-US' : 'vi-VN';
+        u.rate = 0.97;
+        u.pitch = 1.0; // ép pitch làm giọng neural méo như robot
+        if (voice) u.voice = voice;
+        if (i === list.length - 1) u.onend = u.onerror = done;
+        speechSynthesis.speak(u);
+      });
+    };
+    // Server neural trước (chỉ tiếng Việt — FPT không có en); lỗi → Web Speech đọc nốt.
+    this.probeServerTts().then((ok) => {
+      if (this._gen !== myGen) return;
+      if (!ok || isEn) { webSpeak(chunks); return; }
+      const playFrom = (i) => {
+        if (this._gen !== myGen) return;
+        if (i >= chunks.length) { done(); return; }
+        const a = new Audio('/api/tts?text=' + encodeURIComponent(chunks[i].trim()));
+        this._audio = a;
+        a.onended = () => playFrom(i + 1);
+        a.onerror = () => { if (this._gen === myGen) webSpeak(chunks.slice(i)); };
+        a.play().catch(() => { if (this._gen === myGen) webSpeak(chunks.slice(i)); });
+      };
+      playFrom(0);
     });
   }
   cleanText(text) {

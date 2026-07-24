@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { db, initDb, insertAttempt, getLeaderboard, getStats, getRecent, getAllAttempts, getHistogram, getConfusion, getAchievements, unlockAchievement, createClass, getClassByCode, listClasses, getClassMembers, getClassAttempts, getPlayerAttempts, createRequest, listRequests, voteRequest, setRequestStatus, getRequestStats, getRequestById, addRequestMessage, listRequestMessages, reopenRequestIfClosed, listNotifications, countUnreadNotifications, markNotificationRead, markAllNotificationsRead, getUserWallet, upsertUserWallet, getScenarioRunsForUser, recordScenarioRunDb, getUserState, putUserState, UserStateValueTooLargeError } from './db.js';
 import { attachRoom } from './room.js';
 import { attachAi } from './ai.js';
+import { attachTts } from './tts.js';
 import { attachPharmacy } from './pharmacy.js';
 import { acknowledgeNewRequest, getDecisionsForRequest, getRecentDecisions } from './contexts/ai-agent/decisions.js';
 import { attachAppProxies } from './app-proxy.js';
@@ -1014,6 +1015,13 @@ r.get('/api/badges', (req, res) => {
 // AI TUTOR — Claude API endpoints (grade-soap, patient-turn, evaluate-roleplay, tutor-chat)
 // ============================================================
 attachAi(r);
+
+// ============================================================
+// TTS NEURAL — /api/tts qua FPT.AI (cache /data/tts-cache). Public cho guest
+// (whitelist trong makeAuthGate); không có FPT_TTS_API_KEY → 503, client
+// fallback Web Speech. Xem server/tts.js.
+// ============================================================
+attachTts(r);
 
 // ============================================================
 // PHARMACY-AI — port từ github.com/Lampx83/Pharmacy-AI (nhà thuốc 3D GPP).

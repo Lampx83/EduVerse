@@ -41,22 +41,55 @@ if (typeof speechSynthesis !== 'undefined') {
   pickVietnameseVoice();
 }
 
-/** Đọc to text (không async, không chờ). Bỏ emoji trước khi đọc. */
-export function speak(text, opts = {}) {
+// ── Server TTS (FPT.AI qua /api/tts, cache server) — probe 1 lần ──────────
+// 204 = có key, dùng giọng neural server (mọi máy nghe như nhau);
+// 503/lỗi/autoplay chặn → fallback Web Speech với giọng đã xếp hạng ở trên.
+let _srvTts = null;
+let _srvProbe = null;
+function probeServerTts() {
+  if (_srvTts !== null) return Promise.resolve(_srvTts);
+  if (!_srvProbe) {
+    _srvProbe = fetch('/api/tts?probe=1')
+      .then(r => (_srvTts = r.status === 204))
+      .catch(() => (_srvTts = false));
+  }
+  return _srvProbe;
+}
+let _sGen = 0;      // thế hệ phát âm — tăng khi cancel để huỷ audio đang chờ
+let _curAudio = null;
+
+function webSpeak(clean, opts) {
   if (typeof speechSynthesis === 'undefined') return;
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = 'vi-VN';
+  // rate 0.95/pitch 1.05: chậm nhẹ thân thiện với bé nhưng không ép pitch cao
+  // (1.15 cũ làm giọng neural méo, nghe robot).
+  u.rate = opts.rate ?? 0.95;
+  u.pitch = opts.pitch ?? 1.05;
+  const v = pickVietnameseVoice();
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+
+/** Đọc to text (không async, không chờ). Bỏ emoji; server neural trước, fallback Web Speech. */
+export function speak(text, opts = {}) {
   try {
     const clean = String(text || '').replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
     if (!clean) return;
-    if (opts.cancel !== false) speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(clean);
-    u.lang = 'vi-VN';
-    // rate 0.95/pitch 1.05: chậm nhẹ thân thiện với bé nhưng không ép pitch cao
-    // (1.15 cũ làm giọng neural méo, nghe robot).
-    u.rate = opts.rate ?? 0.95;
-    u.pitch = opts.pitch ?? 1.05;
-    const v = pickVietnameseVoice();
-    if (v) u.voice = v;
-    speechSynthesis.speak(u);
+    if (opts.cancel !== false) {
+      _sGen += 1;
+      try { if (_curAudio) { _curAudio.pause(); _curAudio = null; } } catch {}
+      try { speechSynthesis.cancel(); } catch {}
+    }
+    const myGen = _sGen;
+    probeServerTts().then((ok) => {
+      if (_sGen !== myGen) return; // đã bị cancel trong lúc probe
+      if (!ok) { webSpeak(clean, opts); return; }
+      const a = new Audio('/api/tts?text=' + encodeURIComponent(clean));
+      _curAudio = a;
+      a.onerror = () => { if (_sGen === myGen) webSpeak(clean, opts); };
+      a.play().catch(() => { if (_sGen === myGen) webSpeak(clean, opts); });
+    });
   } catch {}
 }
 

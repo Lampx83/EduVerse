@@ -228,6 +228,10 @@ const PUBLIC_PATH_PREFIXES = [
   // top-of-funnel). Server cứng-set name='page_view' và rate-limit theo IP,
   // không tin name từ client.
   '/api/track/pageview',
+  // TTS neural (FPT.AI proxy + cache) — public vì trường Mầm non mở cho guest
+  // và bé cần nghe đọc câu hỏi. Tự rate-limit theo IP trong server/tts.js;
+  // không có API key thì trả 503 (client fallback Web Speech).
+  '/api/tts',
   // Cổng thanh toán callback (VNPay return + IPN). Xác thực bằng chữ ký HMAC,
   // KHÔNG bằng cookie — VNPay gọi server-to-server không kèm session. create-order
   // KHÔNG nằm ở đây nên vẫn yêu cầu đăng nhập.
