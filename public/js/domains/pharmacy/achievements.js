@@ -140,4 +140,86 @@ export const ACHIEVEMENTS = [
   { id: 'calculator-champ',  icon: '🧮', title: 'Calculator Champion',
     desc: 'Hoàn thành GC05 — Calculator Championship liều dùng',
     trigger: { moduleStars: { 'GC05': 3 } } },
+
+  // ── Practice Sites — Bệnh viện mô phỏng (PS01–PS09, PS15) ──
+  { id: 'er-pharmacist',       icon: '🚑', title: 'Dược sĩ Cấp cứu',
+    desc: 'Hoàn thành PS01 — Quyết định dược lâm sàng phòng cấp cứu',
+    trigger: { moduleStars: { 'PS01': 2 } } },
+
+  { id: 'icu-pharmacist',      icon: '🫁', title: 'Dược sĩ ICU',
+    desc: 'Hoàn thành PS02 — Dược lâm sàng hồi sức tích cực, vasopressor & an thần',
+    trigger: { moduleStars: { 'PS02': 2 } } },
+
+  { id: 'internal-pharmacist', icon: '🫀', title: 'Dược sĩ Nội khoa',
+    desc: 'Hoàn thành PS03 — Dược lâm sàng Tim mạch & Nội khoa',
+    trigger: { moduleStars: { 'PS03': 2 } } },
+
+  { id: 'surgical-pharmacist', icon: '✂️', title: 'Dược sĩ Ngoại khoa',
+    desc: 'Hoàn thành PS04 — Dược lâm sàng perioperative, kháng sinh dự phòng',
+    trigger: { moduleStars: { 'PS04': 2 } } },
+
+  { id: 'peds-pharmacist',     icon: '🍼', title: 'Dược sĩ Nhi khoa',
+    desc: 'Hoàn thành PS05 — Dược lâm sàng Khoa Nhi, tính liều nhi',
+    trigger: { moduleStars: { 'PS05': 2 } } },
+
+  { id: 'obgyn-pharmacist',    icon: '🤱', title: 'Dược sĩ Sản phụ khoa',
+    desc: 'Hoàn thành PS06 — Dược lâm sàng thai kỳ & phụ khoa',
+    trigger: { moduleStars: { 'PS06': 2 } } },
+
+  { id: 'onco-pharmacist',     icon: '🎀', title: 'Dược sĩ Ung bướu',
+    desc: 'Hoàn thành PS07 — Dược lâm sàng Ung bướu & hoá trị liệu',
+    trigger: { moduleStars: { 'PS07': 2 } } },
+
+  { id: 'psych-pharmacist',    icon: '💭', title: 'Dược sĩ Tâm thần',
+    desc: 'Hoàn thành PS08 — Dược lâm sàng tâm thần, antipsychotic & SSRI',
+    trigger: { moduleStars: { 'PS08': 2 } } },
+
+  { id: 'infectious-pharmacist', icon: '🦠', title: 'Dược sĩ Truyền nhiễm',
+    desc: 'Hoàn thành PS09 — Dược lâm sàng HIV, Lao & Truyền nhiễm',
+    trigger: { moduleStars: { 'PS09': 2 } } },
+
+  { id: 'gmp-pharmacist',      icon: '🔩', title: 'GMP Pharmacist',
+    desc: 'Hoàn thành PS15 — Nhà máy GMP, nắm vững quy trình sản xuất đạt chuẩn',
+    trigger: { moduleStars: { 'PS15': 2 } } },
+
+  // ── Skill Centers (SC03–SC08, SC11, SC13–SC15) ──
+  { id: 'comm-specialist',   icon: '💬', title: 'Chuyên gia Giao tiếp',
+    desc: 'Hoàn thành SC03 — Kỹ năng giao tiếp, teach-back & health literacy',
+    trigger: { moduleStars: { 'SC03': 3 } } },
+
+  { id: 'cultural-liaison',  icon: '🌍', title: 'Cầu nối Đa văn hoá',
+    desc: 'Hoàn thành SC04 — Tư vấn đa văn hoá, tránh rào cản ngôn ngữ',
+    trigger: { moduleStars: { 'SC04': 3 } } },
+
+  { id: 'lifesaver',         icon: '💓', title: 'Người cứu sống',
+    desc: 'Hoàn thành SC05 — CPR & AED, sơ cứu ngưng tim tại nhà thuốc',
+    trigger: { moduleStars: { 'SC05': 3 } } },
+
+  { id: 'vaccine-counselor', icon: '🧬', title: 'Chuyên gia Tiêm chủng',
+    desc: 'Hoàn thành SC06 — Tư vấn vaccine, lịch tiêm & phản ứng sau tiêm',
+    trigger: { moduleStars: { 'SC06': 3 } } },
+
+  { id: 'poc-master',        icon: '📊', title: 'POC Master',
+    desc: 'Hoàn thành SC07 — Đo HA, đường huyết tại điểm chăm sóc',
+    trigger: { moduleStars: { 'SC07': 3 } } },
+
+  { id: 'cessation-hero',    icon: '🚭', title: 'Anh hùng cai thuốc',
+    desc: 'Hoàn thành SC08 — Tư vấn cai thuốc lá, NRT & varenicline',
+    trigger: { moduleStars: { 'SC08': 3 } } },
+
+  { id: 'travel-pharmacist', icon: '✈️', title: 'Dược sĩ Du lịch',
+    desc: 'Hoàn thành SC11 — Tư vấn vaccine & thuốc cho người đi du lịch',
+    trigger: { moduleStars: { 'SC11': 3 } } },
+
+  { id: 'hiv-counselor',     icon: '❤️‍🩹', title: 'Chuyên gia HIV/STI',
+    desc: 'Hoàn thành SC13 — Tư vấn HIV/STI, PrEP, giảm kỳ thị',
+    trigger: { moduleStars: { 'SC13': 3 } } },
+
+  { id: 'pain-specialist',   icon: '🩹', title: 'Chuyên gia Quản lý Đau',
+    desc: 'Hoàn thành SC14 — Quản lý đau cấp & mạn, thang đau WHO',
+    trigger: { moduleStars: { 'SC14': 3 } } },
+
+  { id: 'mtm-specialist',    icon: '🗂️', title: 'MTM Specialist',
+    desc: 'Hoàn thành SC15 — Medication Therapy Management toàn diện',
+    trigger: { moduleStars: { 'SC15': 3 } } },
 ];

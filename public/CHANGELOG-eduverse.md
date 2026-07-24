@@ -4,6 +4,95 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-24 — Phiên cải tiến (22) · Trường Dược — Kết nối 20 modules BV & Kỹ năng + 20 Achievements
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** Dược (`pharmacy`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **"nghịch lý content tồn tại nhưng vô hình" (đợt 2)**: 2 file scenario đã biên soạn đầy đủ (`practice-quizzes.js` 10 quiz bệnh viện + `skill-quizzes.js` 10 quiz kỹ năng) xuất **20 scenario** vào `ALL_SCENARIOS`, nhưng **20 module** trong `_modules-data.js` vẫn để `scenarioIds: []`. Sinh viên thấy "Coming soon" mặc dù nội dung đã sẵn sàng.
+
+**Cụ thể:**
+- **PS01–PS09** (9 khoa BV): Cấp cứu, ICU, Nội, Ngoại, Nhi, Sản, Ung bướu, Tâm thần, Truyền nhiễm — đã có 12 ca/khoa nhưng không hiển thị
+- **PS15** (Nhà máy GMP): đã có 10 câu quiz quy trình GMP nhưng không hiển thị
+- **SC03–SC08** (6 Skill Centers): Giao tiếp, Đa văn hoá, CPR/AED, Tiêm chủng, ĐoHA+ĐH, Cai thuốc lá — đã có quiz nhưng không hiển thị
+- **SC11, SC13–SC15** (4 Skill Centers): Du lịch, HIV/STI, Quản lý đau, MTM — đã có quiz nhưng không hiển thị
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/engine/_modules-data.js` | Sửa | Wire `scenarioIds` cho **10 practice modules** PS01–PS09 + PS15; thêm `scenarioIds` + `knowledgeQuiz` cho **10 skill modules** SC03–SC08, SC11, SC13–SC15 |
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | Thêm **20 achievements mới**: 10 cho PS (bệnh viện) + 10 cho SC (kỹ năng) |
+
+### Chi tiết modules được kích hoạt (20 modules)
+
+**Bệnh viện mô phỏng (PS01–PS09, PS15 → `practice-quizzes.js`):**
+
+| Module | Scenario | Ca lâm sàng |
+|--------|----------|-------------|
+| PS01 Cấp cứu | `PS01-quiz-01` | 12 ca: sốc phản vệ, quá liều, ngộ độc, ngưng tim, STEMI, hạ glucose |
+| PS02 ICU | `PS02-quiz-01` | 12 ca: sepsis, thở máy, delirium, VTE, lọc máu, ARDS |
+| PS03 Nội khoa | `PS03-quiz-01` | 12 ca: suy tim, đái tháo đường, tăng HA, rung nhĩ, COPD |
+| PS04 Ngoại khoa | `PS04-quiz-01` | 12 ca: kháng sinh phòng mổ, anticoagulation bridging, hậu phẫu |
+| PS05 Nhi khoa | `PS05-quiz-01` | 12 ca: liều nhi, RSV, viêm phổi, sốt co giật, EBM nhi |
+| PS06 Sản phụ khoa | `PS06-quiz-01` | 12 ca: an toàn thuốc thai kỳ, PrEP, GDM, sinh mổ |
+| PS07 Ung bướu | `PS07-quiz-01` | 12 ca: FOLFOX, trastuzumab, phác đồ hoá trị, quản lý tác dụng phụ |
+| PS08 Tâm thần | `PS08-quiz-01` | 12 ca: antipsychotic, SSRI, lithium, tương tác, kỳ thị |
+| PS09 Truyền nhiễm | `PS09-quiz-01` | 12 ca: HIV ART, lao đa kháng, viêm gan B, ESKAPE, PrEP |
+| PS15 GMP Factory | `PS15-quiz-01` | 10 câu: GMP Annex 1, cleanroom, validation, OOS |
+
+**Skill Centers (SC03–SC08, SC11, SC13–SC15 → `skill-quizzes.js`):**
+
+| Module | Scenario | Kỹ năng |
+|--------|----------|---------|
+| SC03 Giao tiếp | `SC03-quiz-01` | teach-back, health literacy, empathy, bệnh nhân khó |
+| SC04 Đa văn hoá | `SC04-quiz-01` | rào cản ngôn ngữ, văn hoá, phiên dịch, Muslim patient |
+| SC05 CPR/AED | `SC05-quiz-01` | BLS 2020, CPR chất lượng, AED protocol, chain of survival |
+| SC06 Tiêm chủng | `SC06-quiz-01` | lịch vaccine, chống chỉ định, VIS, AEFI reporting |
+| SC07 ĐoHA+ĐH | `SC07-quiz-01` | kỹ thuật đo HA, SMBG, giải thích kết quả cho bệnh nhân |
+| SC08 Cai thuốc lá | `SC08-quiz-01` | 5A, NRT, varenicline, bupropion, hành vi thay thế |
+| SC11 Du lịch | `SC11-quiz-01` | vaccine du lịch, sốt rét, traveler's diarrhea, altitude |
+| SC13 HIV/STI | `SC13-quiz-01` | PrEP/PEP, tư vấn xét nghiệm, giảm kỳ thị, luật HIV |
+| SC14 Quản lý đau | `SC14-quiz-01` | thang WHO, opioid rational use, đau mạn, neuropathic |
+| SC15 MTM | `SC15-quiz-01` | CMR, MAP, medication-related problems, PCNE, Beers |
+
+### Achievements mới (20)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `er-pharmacist` | 🚑 | Dược sĩ Cấp cứu | PS01 ≥ 2 sao |
+| `icu-pharmacist` | 🫁 | Dược sĩ ICU | PS02 ≥ 2 sao |
+| `internal-pharmacist` | 🫀 | Dược sĩ Nội khoa | PS03 ≥ 2 sao |
+| `surgical-pharmacist` | ✂️ | Dược sĩ Ngoại khoa | PS04 ≥ 2 sao |
+| `peds-pharmacist` | 🍼 | Dược sĩ Nhi khoa | PS05 ≥ 2 sao |
+| `obgyn-pharmacist` | 🤱 | Dược sĩ Sản phụ khoa | PS06 ≥ 2 sao |
+| `onco-pharmacist` | 🎀 | Dược sĩ Ung bướu | PS07 ≥ 2 sao |
+| `psych-pharmacist` | 💭 | Dược sĩ Tâm thần | PS08 ≥ 2 sao |
+| `infectious-pharmacist` | 🦠 | Dược sĩ Truyền nhiễm | PS09 ≥ 2 sao |
+| `gmp-pharmacist` | 🔩 | GMP Pharmacist | PS15 ≥ 2 sao |
+| `comm-specialist` | 💬 | Chuyên gia Giao tiếp | SC03 ≥ 3 sao |
+| `cultural-liaison` | 🌍 | Cầu nối Đa văn hoá | SC04 ≥ 3 sao |
+| `lifesaver` | 💓 | Người cứu sống | SC05 ≥ 3 sao |
+| `vaccine-counselor` | 🧬 | Chuyên gia Tiêm chủng | SC06 ≥ 3 sao |
+| `poc-master` | 📊 | POC Master | SC07 ≥ 3 sao |
+| `cessation-hero` | 🚭 | Anh hùng cai thuốc | SC08 ≥ 3 sao |
+| `travel-pharmacist` | ✈️ | Dược sĩ Du lịch | SC11 ≥ 3 sao |
+| `hiv-counselor` | ❤️‍🩹 | Chuyên gia HIV/STI | SC13 ≥ 3 sao |
+| `pain-specialist` | 🩹 | Chuyên gia Quản lý Đau | SC14 ≥ 3 sao |
+| `mtm-specialist` | 🗂️ | MTM Specialist | SC15 ≥ 3 sao |
+
+### Kiểm thử
+
+```
+node --check public/js/engine/_modules-data.js              ✅ OK
+node --check public/js/domains/pharmacy/achievements.js     ✅ OK
+```
+
+---
+
 ## 2026-07-22 — Phiên cải tiến (21) · Trường CNTT — Sửa lỗi duplicate achievements + duplicate title
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
