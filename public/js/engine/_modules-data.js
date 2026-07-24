@@ -68,15 +68,15 @@ export const MODULES = [
   // ══════════════════════════════════════════════════════════════
 
   // ── Bệnh viện mô phỏng (10 khoa) ──
-  { category: 'practice', id: 'PS01', title: 'Phòng Cấp cứu (ER)',           subject: 'er-pharmacy',       scenarioIds: [], minStarsToUnlock: 30, icon: '🚨' },
-  { category: 'practice', id: 'PS02', title: 'ICU Dược',                     subject: 'icu-pharmacy',      scenarioIds: [], minStarsToUnlock: 30, icon: '🛏️' },
-  { category: 'practice', id: 'PS03', title: 'Khoa Nội (Tim mạch, Nội khoa)', subject: 'internal-med',     scenarioIds: [], minStarsToUnlock: 24, icon: '❤️' },
-  { category: 'practice', id: 'PS04', title: 'Khoa Ngoại (Pre/Post-op)',     subject: 'surgical-pharm',    scenarioIds: [], minStarsToUnlock: 24, icon: '🔪' },
-  { category: 'practice', id: 'PS05', title: 'Khoa Nhi',                     subject: 'pediatric-pharm',   scenarioIds: [], minStarsToUnlock: 24, icon: '👶' },
-  { category: 'practice', id: 'PS06', title: 'Khoa Sản — Phụ khoa',          subject: 'obgyn-pharm',       scenarioIds: [], minStarsToUnlock: 24, icon: '🤰' },
-  { category: 'practice', id: 'PS07', title: 'Khoa Ung bướu — Hoá trị',      subject: 'onco-pharm',        scenarioIds: [], minStarsToUnlock: 30, icon: '🎗️', hasCertificate: true },
-  { category: 'practice', id: 'PS08', title: 'Khoa Tâm thần',                subject: 'psych-pharm',       scenarioIds: [], minStarsToUnlock: 24, icon: '🧠' },
-  { category: 'practice', id: 'PS09', title: 'Khoa Truyền nhiễm (HIV/lao)',  subject: 'infectious-pharm',  scenarioIds: [], minStarsToUnlock: 24, icon: '🦠' },
+  { category: 'practice', id: 'PS01', title: 'Phòng Cấp cứu (ER)',           subject: 'er-pharmacy',       scenarioIds: ['PS01-quiz-01'], minStarsToUnlock: 30, icon: '🚨' },
+  { category: 'practice', id: 'PS02', title: 'ICU Dược',                     subject: 'icu-pharmacy',      scenarioIds: ['PS02-quiz-01'], minStarsToUnlock: 30, icon: '🛏️' },
+  { category: 'practice', id: 'PS03', title: 'Khoa Nội (Tim mạch, Nội khoa)', subject: 'internal-med',     scenarioIds: ['PS03-quiz-01'], minStarsToUnlock: 24, icon: '❤️' },
+  { category: 'practice', id: 'PS04', title: 'Khoa Ngoại (Pre/Post-op)',     subject: 'surgical-pharm',    scenarioIds: ['PS04-quiz-01'], minStarsToUnlock: 24, icon: '🔪' },
+  { category: 'practice', id: 'PS05', title: 'Khoa Nhi',                     subject: 'pediatric-pharm',   scenarioIds: ['PS05-quiz-01'], minStarsToUnlock: 24, icon: '👶' },
+  { category: 'practice', id: 'PS06', title: 'Khoa Sản — Phụ khoa',          subject: 'obgyn-pharm',       scenarioIds: ['PS06-quiz-01'], minStarsToUnlock: 24, icon: '🤰' },
+  { category: 'practice', id: 'PS07', title: 'Khoa Ung bướu — Hoá trị',      subject: 'onco-pharm',        scenarioIds: ['PS07-quiz-01'], minStarsToUnlock: 30, icon: '🎗️', hasCertificate: true },
+  { category: 'practice', id: 'PS08', title: 'Khoa Tâm thần',                subject: 'psych-pharm',       scenarioIds: ['PS08-quiz-01'], minStarsToUnlock: 24, icon: '🧠' },
+  { category: 'practice', id: 'PS09', title: 'Khoa Truyền nhiễm (HIV/lao)',  subject: 'infectious-pharm',  scenarioIds: ['PS09-quiz-01'], minStarsToUnlock: 24, icon: '🦠' },
   { category: 'practice', id: 'PS10', title: 'Phòng pha thuốc UT + TPN',     subject: 'iv-admixture',      scenarioIds: ['L5.4-wf-01-pha-hoa-tri','L5.4-wf-02-tpn-pha','L5.4-wf-03-iv-compat'], minStarsToUnlock: 30, icon: '💉', hasCertificate: true },
 
   // ── Nhà thuốc cộng đồng (4) ──
@@ -86,7 +86,7 @@ export const MODULES = [
   { category: 'practice', id: 'PS14', title: 'Nhà thuốc BV — Ngoại trú',      subject: 'community-pharm',   scenarioIds: [], minStarsToUnlock: 18, icon: '🏥' },
 
   // ── Công nghiệp dược (6) ──
-  { category: 'practice', id: 'PS15', title: 'Nhà máy GMP — Tour quy trình',  subject: 'industrial',        scenarioIds: [], minStarsToUnlock: 24, icon: '🏭' },
+  { category: 'practice', id: 'PS15', title: 'Nhà máy GMP — Tour quy trình',  subject: 'industrial',        scenarioIds: ['PS15-quiz-01'], minStarsToUnlock: 24, icon: '🏭' },
   { category: 'practice', id: 'PS16', title: 'Phòng QC — Kiểm nghiệm',        subject: 'quality-control',   scenarioIds: ['L3.7-kiemnghiem-01'], minStarsToUnlock: 18, icon: '🔬' },
   { category: 'practice', id: 'PS17', title: 'Phòng QA — Audit & SOP',        subject: 'quality-assurance', scenarioIds: [], minStarsToUnlock: 24, icon: '📋' },
   { category: 'practice', id: 'PS18', title: 'Đăng ký thuốc — Dossier CTD',   subject: 'regulatory',        scenarioIds: [], minStarsToUnlock: 24, icon: '📑' },
@@ -99,19 +99,19 @@ export const MODULES = [
 
   { category: 'skill', id: 'SC01', title: 'Trung tâm OSCE — 10 trạm',         subject: 'osce',          scenarioIds: ['L5.7-osce-info'], minStarsToUnlock: 30, icon: '🎯', hasCertificate: true },
   { category: 'skill', id: 'SC02', title: 'Phòng tư vấn AI Patient',          subject: 'roleplay',      scenarioIds: ['L5.2-roleplay-01-otc-flu','L5.2-roleplay-02-rx-dapt','L5.2-roleplay-03-opioid','L5.2-roleplay-04-side-effect','L5.2-roleplay-05-acute-pharma','L5.2-roleplay-06-emergency','L5.2-roleplay-07-discharge','L5.2-roleplay-08-pregnancy','L5.2-roleplay-09-pediatric','L5.2-roleplay-10-mental'], minStarsToUnlock: 18, icon: '🤖' },
-  { category: 'skill', id: 'SC03', title: 'Phòng kỹ năng giao tiếp',          subject: 'communication', scenarioIds: [], minStarsToUnlock: 12, icon: '💬' },
-  { category: 'skill', id: 'SC04', title: 'Phòng đa văn hoá',                 subject: 'cultural',      scenarioIds: [], minStarsToUnlock: 18, icon: '🌏' },
-  { category: 'skill', id: 'SC05', title: 'Cấp cứu sống — CPR, AED',          subject: 'emergency',     scenarioIds: [], minStarsToUnlock: 12, icon: '🆘' },
-  { category: 'skill', id: 'SC06', title: 'Phòng tiêm chủng',                 subject: 'vaccination',   scenarioIds: [], minStarsToUnlock: 18, icon: '💉' },
-  { category: 'skill', id: 'SC07', title: 'Đo HA + Đường huyết tại nhà thuốc', subject: 'poc-testing',  scenarioIds: [], minStarsToUnlock: 12, icon: '🩺' },
-  { category: 'skill', id: 'SC08', title: 'Tư vấn cai thuốc lá',              subject: 'smoking',       scenarioIds: [], minStarsToUnlock: 12, icon: '🚭' },
+  { category: 'skill', id: 'SC03', title: 'Phòng kỹ năng giao tiếp',          subject: 'communication', scenarioIds: ['SC03-quiz-01'], knowledgeQuiz: 'SC03-quiz-01', minStarsToUnlock: 12, icon: '💬' },
+  { category: 'skill', id: 'SC04', title: 'Phòng đa văn hoá',                 subject: 'cultural',      scenarioIds: ['SC04-quiz-01'], knowledgeQuiz: 'SC04-quiz-01', minStarsToUnlock: 18, icon: '🌏' },
+  { category: 'skill', id: 'SC05', title: 'Cấp cứu sống — CPR, AED',          subject: 'emergency',     scenarioIds: ['SC05-quiz-01'], knowledgeQuiz: 'SC05-quiz-01', minStarsToUnlock: 12, icon: '🆘' },
+  { category: 'skill', id: 'SC06', title: 'Phòng tiêm chủng',                 subject: 'vaccination',   scenarioIds: ['SC06-quiz-01'], knowledgeQuiz: 'SC06-quiz-01', minStarsToUnlock: 18, icon: '💉' },
+  { category: 'skill', id: 'SC07', title: 'Đo HA + Đường huyết tại nhà thuốc', subject: 'poc-testing',  scenarioIds: ['SC07-quiz-01'], knowledgeQuiz: 'SC07-quiz-01', minStarsToUnlock: 12, icon: '🩺' },
+  { category: 'skill', id: 'SC08', title: 'Tư vấn cai thuốc lá',              subject: 'smoking',       scenarioIds: ['SC08-quiz-01'], knowledgeQuiz: 'SC08-quiz-01', minStarsToUnlock: 12, icon: '🚭' },
   { category: 'skill', id: 'SC09', title: 'Tư vấn giảm cân — béo phì',        subject: 'obesity',       scenarioIds: [], minStarsToUnlock: 12, icon: '⚖️' },
   { category: 'skill', id: 'SC10', title: 'Tư vấn dinh dưỡng đặc biệt',       subject: 'nutrition',     scenarioIds: [], minStarsToUnlock: 12, icon: '🥗' },
-  { category: 'skill', id: 'SC11', title: 'Tư vấn du lịch — Vaccine + thuốc', subject: 'travel-med',    scenarioIds: [], minStarsToUnlock: 18, icon: '✈️' },
+  { category: 'skill', id: 'SC11', title: 'Tư vấn du lịch — Vaccine + thuốc', subject: 'travel-med',    scenarioIds: ['SC11-quiz-01'], knowledgeQuiz: 'SC11-quiz-01', minStarsToUnlock: 18, icon: '✈️' },
   { category: 'skill', id: 'SC12', title: 'Tư vấn tránh thai',                 subject: 'contraception', scenarioIds: [], minStarsToUnlock: 12, icon: '🌹' },
-  { category: 'skill', id: 'SC13', title: 'Tư vấn HIV/STI',                   subject: 'hiv-sti',       scenarioIds: [], minStarsToUnlock: 18, icon: '🎗️' },
-  { category: 'skill', id: 'SC14', title: 'Quản lý đau — Cấp & mạn',          subject: 'pain-mgmt',     scenarioIds: [], minStarsToUnlock: 18, icon: '💊' },
-  { category: 'skill', id: 'SC15', title: 'MTM — Medication Therapy Management', subject: 'mtm',        scenarioIds: [], minStarsToUnlock: 24, icon: '📋', hasCertificate: true },
+  { category: 'skill', id: 'SC13', title: 'Tư vấn HIV/STI',                   subject: 'hiv-sti',       scenarioIds: ['SC13-quiz-01'], knowledgeQuiz: 'SC13-quiz-01', minStarsToUnlock: 18, icon: '🎗️' },
+  { category: 'skill', id: 'SC14', title: 'Quản lý đau — Cấp & mạn',          subject: 'pain-mgmt',     scenarioIds: ['SC14-quiz-01'], knowledgeQuiz: 'SC14-quiz-01', minStarsToUnlock: 18, icon: '💊' },
+  { category: 'skill', id: 'SC15', title: 'MTM — Medication Therapy Management', subject: 'mtm',        scenarioIds: ['SC15-quiz-01'], knowledgeQuiz: 'SC15-quiz-01', minStarsToUnlock: 24, icon: '📋', hasCertificate: true },
 
   // ══════════════════════════════════════════════════════════════
   //              CỤM 4 — LIBRARY & RESEARCH (12)
