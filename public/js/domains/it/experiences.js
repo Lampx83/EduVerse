@@ -42,15 +42,23 @@ const MODULE_PAGES = {
   'I1.4': [PAGES.codelab, PAGES.scoreup],  // Linux: thực hành lệnh + luyện trắc nghiệm
   'I1.5': [PAGES.scoreup],                 // Tiếng Anh CNTT: luyện trắc nghiệm
   // ── Year 2+ ──
-  'I2.1': [PAGES.codelab],   // Cấu trúc dữ liệu & Giải thuật
-  'I2.3': [PAGES.scoreup],   // Cơ sở dữ liệu
-  'I3.1': [PAGES.smartdoc],  // Kỹ thuật phần mềm — giáo trình
-  'I3.5': [PAGES.codelab],   // Web Full-stack
-  'I3.8': [PAGES.scoreup],   // An toàn thông tin
-  'I4.5': [PAGES.feedback],  // Khoá luận CNTT — exam + phản hồi
+  'I2.1': [PAGES.codelab, PAGES.scoreup],  // Cấu trúc dữ liệu & Giải thuật
+  'I2.2': [PAGES.codelab],                 // Lập trình hướng đối tượng (Java) — thực hành code
+  'I2.3': [PAGES.scoreup],                 // Cơ sở dữ liệu
+  'I2.5': [PAGES.codelab],                 // Thiết kế Web (HTML/CSS/JS) — thực hành code
+  'I3.1': [PAGES.smartdoc],                // Kỹ thuật phần mềm — giáo trình
+  'I3.4': [PAGES.codelab],                 // Machine Learning — thực hành code Python/notebook
+  'I3.5': [PAGES.codelab, PAGES.scoreup],  // Web Full-stack
+  'I3.6': [PAGES.codelab],                 // Mobile dev — thực hành code
+  'I3.8': [PAGES.scoreup],                 // An toàn thông tin
+  'I4.2': [PAGES.codelab],                 // Điện toán đám mây — thực hành script/CLI
+  'I4.3': [PAGES.codelab],                 // Khoa học dữ liệu — thực hành code Python
+  'I4.5': [PAGES.feedback],                // Khoá luận CNTT — exam + phản hồi
   // ── Games / Practice ──
   'IG01': [PAGES.codelab],   // Code Race — Giải thuật 5 phút
   'IG02': [PAGES.codelab],   // Bug Hunt — Debug speed
+  'IG03': [PAGES.scoreup],   // SQL Detective
+  'IG04': [PAGES.codelab],   // Kafka — System Design battle
 };
 
 export function getExperiencesFor(moduleId) {

@@ -4,6 +4,59 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-25 — Phiên cải tiến (23) · Trường CNTT — Bổ sung 15 bài luyện Code Lab + Kết nối Codelab cho 8 modules mới
+
+**Chế độ:** Yêu cầu từ SV · Request #106 · Chu Thi Hue
+
+**Trường:** CNTT (`it`)
+
+### Yêu cầu xử lý
+
+| ID | Sinh viên | Tiêu đề | Domain |
+|----|-----------|---------|--------|
+| #106 | Chu Thi Hue | Thêm nội dung cho lab lập trình | it |
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/it-code-lab.html` | Mở rộng | Thêm **15 bài tập lập trình** vào FALLBACK_CHALLENGES (offline mode): 4 Chuỗi, 4 Mảng, 2 Đệ quy, 2 Tìm kiếm, 3 Số học |
+| `public/js/domains/it/experiences.js` | Cập nhật | Kết nối thêm **8 modules** với trải nghiệm Codelab (I2.2, I2.5, I3.4, I3.6, I4.2, I4.3, IG03, IG04) + nâng I2.1 và I3.5 thêm ScoreUp |
+
+### Chi tiết bài tập mới (15 bài)
+
+**Chuỗi (4 bài):**
+- Kiểm tra chuỗi đối xứng (isPalindrome)
+- Đếm số từ (countWords)
+- Viết hoa chữ đầu mỗi từ (capitalizeWords)
+- Từ dài nhất (longestWord)
+
+**Mảng (4 bài):**
+- Xoá phần tử trùng lặp (removeDuplicates)
+- Làm phẳng mảng lồng 1 cấp (flattenArray)
+- Chia mảng thành từng nhóm (chunkArray)
+- Chuyển vị ma trận (matrixTranspose)
+
+**Đệ quy (2 bài):**
+- Giai thừa đệ quy (factorial)
+- Tổng mảng lồng nhau đệ quy (sumNested)
+- Luỹ thừa đệ quy (power)
+
+**Tìm kiếm (1 bài):**
+- Tìm kiếm nhị phân (binarySearch)
+
+**Số học (3 bài):**
+- Ước chung lớn nhất GCD (gcd)
+- Tổng các chữ số (digitSum)
+- Độ dài dãy Collatz (collatzLength)
+
+### Kiểm thử
+
+- `node --check public/js/domains/it/experiences.js` → ✅ PASS
+- `node --check` JS extracted từ `public/it-code-lab.html` → ✅ PASS
+
+---
+
 ## 2026-07-24 — Phiên cải tiến (22) · Trường Dược — Kết nối 20 modules BV & Kỹ năng + 20 Achievements
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
