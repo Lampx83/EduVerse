@@ -4,6 +4,78 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-26 — Phiên cải tiến (24) · Trường Kinh tế + CNTT — Kết nối experiences cho 27 modules
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** Kinh tế (`economics`) + CNTT (`it`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **"nghịch lý content tồn tại nhưng vô hình" (đợt 3)**: nhiều module đã có quiz content đầy đủ trong `scenarioIds` nhưng chưa được gắn vào `experiences.js` — sinh viên thấy nút "Launch" trống/ẩn dù quiz đã sẵn sàng.
+
+**Cụ thể:**
+- **Trường Kinh tế**: 21 modules (E2.1–E2.5, E3.1–E3.7, E4.1–E4.5, EC01–EC04, EG01–EG03) có quiz nhưng không có experience
+- **Trường CNTT**: 6 modules (I2.4, I3.2, I3.3, I3.7, I4.1, I4.4) có quiz nhưng không có experience
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/economics/experiences.js` | Mở rộng | Thêm **21 entries** vào MODULE_PAGES: E2.1–E2.5 (năm 2), E3.1–E3.7 (năm 3), E4.1–E4.5 (năm 4), EC01–EC04 (career), EG01–EG03 (games) |
+| `public/js/domains/it/experiences.js` | Mở rộng | Thêm **6 entries** vào MODULE_PAGES: I2.4 (Mạng máy tính), I3.2 (Phân tích & TKHT), I3.3 (Trí tuệ nhân tạo), I3.7 (DevOps & Cloud), I4.1 (Kiến trúc phần mềm), I4.4 (Blockchain & Web3) |
+
+### Chi tiết modules được kết nối
+
+**Trường Kinh tế (21 modules → ScoreUp):**
+
+| Module | Tên | Loại |
+|--------|-----|------|
+| E2.1 | Kinh tế Vĩ mô 1 | Năm 2 |
+| E2.2 | Thống kê cho kinh tế | Năm 2 |
+| E2.3 | Tài chính – Tiền tệ | Năm 2 |
+| E2.4 | Quản trị học đại cương | Năm 2 |
+| E2.5 | Marketing căn bản | Năm 2 |
+| E3.1 | Kinh tế lượng | Năm 3 |
+| E3.2 | Tài chính doanh nghiệp | Năm 3 |
+| E3.3 | Kế toán quản trị | Năm 3 |
+| E3.4 | Phân tích tài chính | Năm 3 |
+| E3.5 | Marketing số + E-commerce | Năm 3 |
+| E3.6 | Quản trị chuỗi cung ứng | Năm 3 |
+| E3.7 | Kinh doanh quốc tế | Năm 3 |
+| E4.1 | Quản trị chiến lược | Năm 4 |
+| E4.2 | Khởi nghiệp – Lean canvas | Năm 4 |
+| E4.3 | Kiểm toán | Năm 4 |
+| E4.4 | Thuế Việt Nam | Năm 4 |
+| E4.5 | Đạo đức kinh doanh | Năm 4 |
+| EC01 | Kế toán – Kiểm toán | Career |
+| EC02 | Tài chính – Ngân hàng | Career |
+| EC03 | Marketing & Brand manager | Career |
+| EC04 | Khởi nghiệp – Founder | Career |
+| EG01 | Bull vs Bear — Stock race | Game |
+| EG02 | Pitch Battle — Demo Day | Game |
+| EG03 | Tycoon — Quản lý công ty | Game |
+
+**Trường CNTT (6 modules):**
+
+| Module | Tên | Experience |
+|--------|-----|------------|
+| I2.4 | Mạng máy tính | ScoreUp |
+| I3.2 | Phân tích & Thiết kế hệ thống | ScoreUp |
+| I3.3 | Trí tuệ nhân tạo | ScoreUp |
+| I3.7 | DevOps & Cloud | Codelab + ScoreUp |
+| I4.1 | Kiến trúc phần mềm + Patterns | ScoreUp |
+| I4.4 | Blockchain & Web3 | ScoreUp |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/it/experiences.js       ✅ PASS
+node --check public/js/domains/economics/experiences.js ✅ PASS
+```
+
+---
+
 ## 2026-07-25 — Phiên cải tiến (23) · Trường CNTT — Bổ sung 15 bài luyện Code Lab + Kết nối Codelab cho 8 modules mới
 
 **Chế độ:** Yêu cầu từ SV · Request #106 · Chu Thi Hue
