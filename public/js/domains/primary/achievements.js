@@ -83,4 +83,90 @@ export const ACHIEVEMENTS = [
   { id: 'all-primary-math', icon: '🏆', title: 'Hoàn thành Toán Tiểu học',
     desc: 'Đạt sao ở cả 5 lớp Toán (P1→P5)',
     trigger: { moduleStars: { 'P1': 1, 'P2': 1, 'P3': 1, 'P4': 1, 'P5': 1 } } },
+
+  // ── Tiếng Anh lớp 1–2 (tự chọn) ──
+  { id: 'ta1', icon: '🔤', title: 'ABC của bé',
+    desc: 'Đạt 3 sao Tiếng Anh lớp 1', trigger: { moduleStars: { 'P1TA': 3 } } },
+  { id: 'ta2', icon: '🌈', title: 'Hello World lớp 2',
+    desc: 'Đạt 3 sao Tiếng Anh lớp 2', trigger: { moduleStars: { 'P2TA': 3 } } },
+
+  // ── TN-XH (grades 1–3) ──
+  { id: 'tnxh1', icon: '🌿', title: 'Khám phá thiên nhiên lớp 1',
+    desc: 'Đạt 3 sao TN-XH lớp 1', trigger: { moduleStars: { 'P1TNXH': 3 } } },
+  { id: 'tnxh2', icon: '🐝', title: 'Bạn của thiên nhiên lớp 2',
+    desc: 'Đạt 3 sao TN-XH lớp 2', trigger: { moduleStars: { 'P2TNXH': 3 } } },
+  { id: 'tnxh3', icon: '🌎', title: 'Nhà tự nhiên học lớp 3',
+    desc: 'Đạt 3 sao TN-XH lớp 3', trigger: { moduleStars: { 'P3TNXH': 3 } } },
+
+  // ── Đạo đức (grades 1–5) ──
+  { id: 'dd1', icon: '❤️', title: 'Bé học đạo đức lớp 1',
+    desc: 'Đạt 3 sao Đạo đức lớp 1', trigger: { moduleStars: { 'P1DD': 3 } } },
+  { id: 'dd2', icon: '🤲', title: 'Biết yêu thương lớp 2',
+    desc: 'Đạt 3 sao Đạo đức lớp 2', trigger: { moduleStars: { 'P2DD': 3 } } },
+  { id: 'dd3', icon: '🌸', title: 'Học sinh ngoan lớp 3',
+    desc: 'Đạt 3 sao Đạo đức lớp 3', trigger: { moduleStars: { 'P3DD': 3 } } },
+  { id: 'dd4', icon: '🤝', title: 'Công dân nhỏ lớp 4',
+    desc: 'Đạt 3 sao Đạo đức lớp 4', trigger: { moduleStars: { 'P4DD': 3 } } },
+  { id: 'dd5', icon: '🎖️', title: 'Tấm gương đạo đức lớp 5',
+    desc: 'Đạt 3 sao Đạo đức lớp 5', trigger: { moduleStars: { 'P5DD': 3 } } },
+
+  // ── Âm nhạc (grades 1–5) ──
+  { id: 'an1', icon: '🎵', title: 'Bé hát hay lớp 1',
+    desc: 'Đạt 3 sao Âm nhạc lớp 1', trigger: { moduleStars: { 'P1AN': 3 } } },
+  { id: 'an2', icon: '🎶', title: 'Giai điệu vui lớp 2',
+    desc: 'Đạt 3 sao Âm nhạc lớp 2', trigger: { moduleStars: { 'P2AN': 3 } } },
+  { id: 'an3', icon: '🎸', title: 'Nhạc sĩ nhí lớp 3',
+    desc: 'Đạt 3 sao Âm nhạc lớp 3', trigger: { moduleStars: { 'P3AN': 3 } } },
+  { id: 'an4', icon: '🎹', title: 'Tiếng đàn lớp 4',
+    desc: 'Đạt 3 sao Âm nhạc lớp 4', trigger: { moduleStars: { 'P4AN': 3 } } },
+  { id: 'an5', icon: '🎼', title: 'Tài năng âm nhạc lớp 5',
+    desc: 'Đạt 3 sao Âm nhạc lớp 5', trigger: { moduleStars: { 'P5AN': 3 } } },
+
+  // ── Mĩ thuật (grades 1–5) ──
+  { id: 'mt1', icon: '🎨', title: 'Bé vẽ đẹp lớp 1',
+    desc: 'Đạt 3 sao Mĩ thuật lớp 1', trigger: { moduleStars: { 'P1MT': 3 } } },
+  { id: 'mt2', icon: '🖌️', title: 'Hoạ sĩ tí hon lớp 2',
+    desc: 'Đạt 3 sao Mĩ thuật lớp 2', trigger: { moduleStars: { 'P2MT': 3 } } },
+  { id: 'mt3', icon: '🖼️', title: 'Sáng tạo nghệ thuật lớp 3',
+    desc: 'Đạt 3 sao Mĩ thuật lớp 3', trigger: { moduleStars: { 'P3MT': 3 } } },
+  { id: 'mt4', icon: '🎭', title: 'Nghệ sĩ nhí lớp 4',
+    desc: 'Đạt 3 sao Mĩ thuật lớp 4', trigger: { moduleStars: { 'P4MT': 3 } } },
+  { id: 'mt5', icon: '✨', title: 'Nhà thiết kế trẻ lớp 5',
+    desc: 'Đạt 3 sao Mĩ thuật lớp 5', trigger: { moduleStars: { 'P5MT': 3 } } },
+
+  // ── GD Thể chất (grades 1–5) ──
+  { id: 'gdtc1', icon: '🏃', title: 'Bé khỏe mạnh lớp 1',
+    desc: 'Đạt 3 sao GDTC lớp 1', trigger: { moduleStars: { 'P1GDTC': 3 } } },
+  { id: 'gdtc2', icon: '⚽', title: 'Thể lực lớp 2',
+    desc: 'Đạt 3 sao GDTC lớp 2', trigger: { moduleStars: { 'P2GDTC': 3 } } },
+  { id: 'gdtc3', icon: '🏸', title: 'Vận động viên nhí lớp 3',
+    desc: 'Đạt 3 sao GDTC lớp 3', trigger: { moduleStars: { 'P3GDTC': 3 } } },
+  { id: 'gdtc4', icon: '🤸', title: 'Thể thao lớp 4',
+    desc: 'Đạt 3 sao GDTC lớp 4', trigger: { moduleStars: { 'P4GDTC': 3 } } },
+  { id: 'gdtc5', icon: '🥇', title: 'Thể chất xuất sắc lớp 5',
+    desc: 'Đạt 3 sao GDTC lớp 5', trigger: { moduleStars: { 'P5GDTC': 3 } } },
+
+  // ── HĐ Trải nghiệm (grades 1–5) ──
+  { id: 'hdtn1', icon: '🌱', title: 'Khám phá thế giới lớp 1',
+    desc: 'Đạt 3 sao HĐTN lớp 1', trigger: { moduleStars: { 'P1HDTN': 3 } } },
+  { id: 'hdtn2', icon: '🌍', title: 'Trải nghiệm vui lớp 2',
+    desc: 'Đạt 3 sao HĐTN lớp 2', trigger: { moduleStars: { 'P2HDTN': 3 } } },
+  { id: 'hdtn3', icon: '🌟', title: 'Cùng khám phá lớp 3',
+    desc: 'Đạt 3 sao HĐTN lớp 3', trigger: { moduleStars: { 'P3HDTN': 3 } } },
+  { id: 'hdtn4', icon: '🎯', title: 'Hướng nghiệp sớm lớp 4',
+    desc: 'Đạt 3 sao HĐTN lớp 4', trigger: { moduleStars: { 'P4HDTN': 3 } } },
+  { id: 'hdtn5', icon: '🚀', title: 'Tự tin bước vào THCS',
+    desc: 'Đạt 3 sao HĐTN lớp 5', trigger: { moduleStars: { 'P5HDTN': 3 } } },
+
+  // ── Công nghệ (grades 3–5) ──
+  { id: 'cn3', icon: '🔨', title: 'Thủ công nhí lớp 3',
+    desc: 'Đạt 3 sao Công nghệ lớp 3', trigger: { moduleStars: { 'P3CN': 3 } } },
+  { id: 'cn4', icon: '⚙️', title: 'Kỹ thuật nhí lớp 4',
+    desc: 'Đạt 3 sao Công nghệ lớp 4', trigger: { moduleStars: { 'P4CN': 3 } } },
+  { id: 'cn5', icon: '🔧', title: 'Nhà kỹ thuật lớp 5',
+    desc: 'Đạt 3 sao Công nghệ lớp 5', trigger: { moduleStars: { 'P5CN': 3 } } },
+
+  // ── Lịch sử & Địa lý lớp 4 ──
+  { id: 'lsdl4', icon: '🗺️', title: 'Khám phá Lịch sử & ĐL lớp 4',
+    desc: 'Đạt 3 sao Lịch sử & Địa lý lớp 4', trigger: { moduleStars: { 'P4LSDL': 3 } } },
 ];
