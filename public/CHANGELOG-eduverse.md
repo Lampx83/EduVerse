@@ -4,6 +4,69 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-27 — Phiên cải tiến (25) · Trường Tiểu học — 34 Achievements môn phụ còn thiếu
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** Tiểu học (`primary`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **34 môn học Tiểu học** có đầy đủ nội dung quiz (scenarios 36 tuần) nhưng **thiếu hoàn toàn achievements** trong `achievements.js`. Các môn được bổ sung: Tiếng Anh lớp 1-2, TN-XH lớp 1-3, Đạo đức lớp 1-5, Âm nhạc lớp 1-5, Mĩ thuật lớp 1-5, GD Thể chất lớp 1-5, HĐTN lớp 1-5, Công nghệ lớp 3-5, Lịch sử & Địa lý lớp 4.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/primary/achievements.js` | Mở rộng | Thêm **34 achievements** cho 9 nhóm môn phụ Tiểu học |
+
+### Chi tiết achievements mới (34 huy hiệu)
+
+| Nhóm | Lớp | ID | Icon | Tên |
+|------|-----|----|------|-----|
+| Tiếng Anh (tự chọn) | 1 | `ta1` | 🔤 | ABC của bé |
+| Tiếng Anh (tự chọn) | 2 | `ta2` | 🌈 | Hello World lớp 2 |
+| TN-XH | 1 | `tnxh1` | 🌿 | Khám phá thiên nhiên lớp 1 |
+| TN-XH | 2 | `tnxh2` | 🐝 | Bạn của thiên nhiên lớp 2 |
+| TN-XH | 3 | `tnxh3` | 🌎 | Nhà tự nhiên học lớp 3 |
+| Đạo đức | 1 | `dd1` | ❤️ | Bé học đạo đức lớp 1 |
+| Đạo đức | 2 | `dd2` | 🤲 | Biết yêu thương lớp 2 |
+| Đạo đức | 3 | `dd3` | 🌸 | Học sinh ngoan lớp 3 |
+| Đạo đức | 4 | `dd4` | 🤝 | Công dân nhỏ lớp 4 |
+| Đạo đức | 5 | `dd5` | 🎖️ | Tấm gương đạo đức lớp 5 |
+| Âm nhạc | 1 | `an1` | 🎵 | Bé hát hay lớp 1 |
+| Âm nhạc | 2 | `an2` | 🎶 | Giai điệu vui lớp 2 |
+| Âm nhạc | 3 | `an3` | 🎸 | Nhạc sĩ nhí lớp 3 |
+| Âm nhạc | 4 | `an4` | 🎹 | Tiếng đàn lớp 4 |
+| Âm nhạc | 5 | `an5` | 🎼 | Tài năng âm nhạc lớp 5 |
+| Mĩ thuật | 1 | `mt1` | 🎨 | Bé vẽ đẹp lớp 1 |
+| Mĩ thuật | 2 | `mt2` | 🖌️ | Hoạ sĩ tí hon lớp 2 |
+| Mĩ thuật | 3 | `mt3` | 🖼️ | Sáng tạo nghệ thuật lớp 3 |
+| Mĩ thuật | 4 | `mt4` | 🎭 | Nghệ sĩ nhí lớp 4 |
+| Mĩ thuật | 5 | `mt5` | ✨ | Nhà thiết kế trẻ lớp 5 |
+| GD Thể chất | 1 | `gdtc1` | 🏃 | Bé khỏe mạnh lớp 1 |
+| GD Thể chất | 2 | `gdtc2` | ⚽ | Thể lực lớp 2 |
+| GD Thể chất | 3 | `gdtc3` | 🏸 | Vận động viên nhí lớp 3 |
+| GD Thể chất | 4 | `gdtc4` | 🤸 | Thể thao lớp 4 |
+| GD Thể chất | 5 | `gdtc5` | 🥇 | Thể chất xuất sắc lớp 5 |
+| HĐ Trải nghiệm | 1 | `hdtn1` | 🌱 | Khám phá thế giới lớp 1 |
+| HĐ Trải nghiệm | 2 | `hdtn2` | 🌍 | Trải nghiệm vui lớp 2 |
+| HĐ Trải nghiệm | 3 | `hdtn3` | 🌟 | Cùng khám phá lớp 3 |
+| HĐ Trải nghiệm | 4 | `hdtn4` | 🎯 | Hướng nghiệp sớm lớp 4 |
+| HĐ Trải nghiệm | 5 | `hdtn5` | 🚀 | Tự tin bước vào THCS |
+| Công nghệ | 3 | `cn3` | 🔨 | Thủ công nhí lớp 3 |
+| Công nghệ | 4 | `cn4` | ⚙️ | Kỹ thuật nhí lớp 4 |
+| Công nghệ | 5 | `cn5` | 🔧 | Nhà kỹ thuật lớp 5 |
+| Lịch sử & ĐL | 4 | `lsdl4` | 🗺️ | Khám phá Lịch sử & ĐL lớp 4 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/primary/achievements.js   ✅ PASS
+```
+
+---
+
 ## 2026-07-26 — Phiên cải tiến (24) · Trường Kinh tế + CNTT — Kết nối experiences cho 27 modules
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
