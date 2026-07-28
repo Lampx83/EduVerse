@@ -22,6 +22,7 @@ import { IT_YEAR2_SCENARIOS } from './it-year2.js';
 import { IT_YEAR3_SCENARIOS } from './it-year3.js';
 import { IT_YEAR4_SCENARIOS } from './it-year4.js';
 import { IT_GAMES_SCENARIOS } from './it-games.js';
+import { IT_CAREERS_SCENARIOS } from './it-careers.js';
 import { ECONOMICS_GAMES_SCENARIOS } from './economics-games.js';
 import { ECONOMICS_CAREERS_SCENARIOS } from './economics-careers.js';
 import { L33_SCENARIOS, SCENARIO_L33_QUIZ, SCENARIO_L33_DRAG }
@@ -72,6 +73,7 @@ export const ALL_SCENARIOS = {
   ...IT_YEAR3_SCENARIOS,
   ...IT_YEAR4_SCENARIOS,
   ...IT_GAMES_SCENARIOS,
+  ...IT_CAREERS_SCENARIOS,
   ...ECONOMICS_GAMES_SCENARIOS,
   ...ECONOMICS_CAREERS_SCENARIOS,
   [SCENARIO_L33_QUIZ.id]: SCENARIO_L33_QUIZ,

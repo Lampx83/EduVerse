@@ -4,6 +4,67 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-28 — Phiên cải tiến (26) · Trường CNTT — 6 Career Path Quizzes (IC01–IC06) + 7 Achievements
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Trường:** CNTT (`it`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **6 career path modules** trong Trường CNTT (IC01–IC06) đang có `scenarioIds: []` — sinh viên thấy "Coming soon" mặc dù đây là nội dung định hướng nghề nghiệp rất có giá trị cuối khoá. Curriculum năm 1–4 và games (IG01–IG04) đã hoàn chỉnh, nhưng sinh viên CNTT chưa có quiz để tìm hiểu về lộ trình nghề nghiệp thực tế sau tốt nghiệp.
+
+**Cụ thể:**
+- **IC01** (Software Engineer): không có quiz → không hiển thị nội dung
+- **IC02** (Data Scientist): không có quiz → không hiển thị nội dung
+- **IC03** (DevOps Engineer): không có quiz → không hiển thị nội dung
+- **IC04** (Security Engineer): không có quiz → không hiển thị nội dung
+- **IC05** (Mobile Developer): không có quiz → không hiển thị nội dung
+- **IC06** (AI / ML Engineer): không có quiz → không hiển thị nội dung
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/it-careers.js` | Tạo mới | 6 quiz career scenarios IC01–IC06 (60 câu hỏi hướng nghiệp thực tế) |
+| `public/js/domains/it/modules.js` | Sửa | Kích hoạt IC01–IC06: thêm `scenarioIds` + `knowledgeQuiz` |
+| `public/js/domains/it/achievements.js` | Mở rộng | Thêm 7 achievements mới (6 career + 1 IT Career Explorer tổng hợp) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `IT_CAREERS_SCENARIOS` |
+
+### Chi tiết nội dung (60 câu hỏi)
+
+| Module | ID Scenario | Chủ đề | Câu |
+|--------|------------|--------|-----|
+| IC01 — Software Engineer | `IC01-career-quiz` | Lộ trình, chứng chỉ, lương, SOLID, System Design, Git, Code Review, LeetCode DSA, Scrum, công ty VN | 10 |
+| IC02 — Data Scientist | `IC02-career-quiz` | Kỹ năng Python/SQL, overfitting, A/B testing, pandas, certifications, feature engineering, BI tools, VinAI | 10 |
+| IC03 — DevOps Engineer | `IC03-career-quiz` | CI/CD, Docker vs VM, Kubernetes, IaC, monitoring, cloud models, GitOps, DORA metrics, lương | 10 |
+| IC04 — Security Engineer | `IC04-career-quiz` | OWASP Top 10, SQL Injection, OSCP/certifications, XSS, HTTPS/TLS, Bug Bounty, Zero Trust, Incident Response | 10 |
+| IC05 — Mobile Developer | `IC05-career-quiz` | Android/iOS, Flutter vs React Native, Google Play, state management, Jank, FCM, REST error handling, MVP | 10 |
+| IC06 — AI/ML Engineer | `IC06-career-quiz` | AI vs DS, PyTorch/TF, Transformer/LLM, MLOps, fine-tuning, prompt engineering, YOLO, RAG, lương VinAI | 10 |
+
+### Achievements mới (7)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `swe-career` | 👨‍💻 | Software Engineer Pro | IC01 ≥ 3 sao |
+| `ds-career` | 📊 | Data Scientist Pro | IC02 ≥ 3 sao |
+| `devops-career` | ⚙️ | DevOps Pro | IC03 ≥ 3 sao |
+| `security-career` | 🔒 | Security Engineer Pro | IC04 ≥ 3 sao |
+| `mobile-career` | 📱 | Mobile Developer Pro | IC05 ≥ 3 sao |
+| `aiml-career` | 🤖 | AI/ML Engineer Pro | IC06 ≥ 3 sao |
+| `it-career-explorer` | 🧭 | IT Career Explorer | IC01+IC02+IC03 ≥ 2 sao |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/it-careers.js          ✅ PASS
+node --check public/js/domains/it/modules.js            ✅ PASS
+node --check public/js/domains/it/achievements.js       ✅ PASS
+node --check public/js/scenarios/_all-content.js        ✅ PASS
+```
+
+---
+
 ## 2026-07-27 — Phiên cải tiến (25) · Trường Tiểu học — 34 Achievements môn phụ còn thiếu
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).

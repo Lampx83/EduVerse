@@ -146,4 +146,33 @@ export const ACHIEVEMENTS = [
   { id: 'it-game-master', icon: '🏆', title: 'IT Game Master',
     desc: 'Pass tất cả 4 game CNTT (IG01–IG04)',
     trigger: { allModuleStars: { ids: ['IG01', 'IG02', 'IG03', 'IG04'], minStars: 2 } } },
+
+  // ── Career Achievements (IC01–IC06) ──
+  { id: 'swe-career',      icon: '👨‍💻', title: 'Software Engineer Pro',
+    desc: 'Hoàn thành quiz lộ trình Software Engineer (IC01) với 3 sao',
+    trigger: { moduleStars: { 'IC01': 3 } } },
+
+  { id: 'ds-career',       icon: '📊', title: 'Data Scientist Pro',
+    desc: 'Hoàn thành quiz lộ trình Data Scientist (IC02) với 3 sao',
+    trigger: { moduleStars: { 'IC02': 3 } } },
+
+  { id: 'devops-career',   icon: '⚙️', title: 'DevOps Pro',
+    desc: 'Hoàn thành quiz lộ trình DevOps Engineer (IC03) với 3 sao',
+    trigger: { moduleStars: { 'IC03': 3 } } },
+
+  { id: 'security-career', icon: '🔒', title: 'Security Engineer Pro',
+    desc: 'Hoàn thành quiz lộ trình Security Engineer (IC04) với 3 sao',
+    trigger: { moduleStars: { 'IC04': 3 } } },
+
+  { id: 'mobile-career',   icon: '📱', title: 'Mobile Developer Pro',
+    desc: 'Hoàn thành quiz lộ trình Mobile Developer (IC05) với 3 sao',
+    trigger: { moduleStars: { 'IC05': 3 } } },
+
+  { id: 'aiml-career',     icon: '🤖', title: 'AI/ML Engineer Pro',
+    desc: 'Hoàn thành quiz lộ trình AI/ML Engineer (IC06) với 3 sao',
+    trigger: { moduleStars: { 'IC06': 3 } } },
+
+  { id: 'it-career-explorer', icon: '🧭', title: 'IT Career Explorer',
+    desc: 'Khám phá ≥ 3 lộ trình nghề nghiệp CNTT (IC01–IC06, mỗi cái ≥ 2 sao)',
+    trigger: { moduleStars: { 'IC01': 2, 'IC02': 2, 'IC03': 2 } } },
 ];

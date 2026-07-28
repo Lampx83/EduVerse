@@ -60,12 +60,12 @@ export const MODULES = [
   { category: 'practice', id: 'IP04', title: 'Open Source Contribution Lab',  subject: 'open-source',   scenarioIds: [], directHref: '/it-code-lab.html?contest=325049',  minStarsToUnlock: 12, icon: '🐙' },
 
   // ──────────── CAREER ────────────
-  { category: 'career', id: 'IC01', title: 'Software Engineer',                 subject: 'career', scenarioIds: [], directHref: '/it-code-lab.html?contest=255760', minStarsToUnlock: 18, icon: '👨‍💻' },
-  { category: 'career', id: 'IC02', title: 'Data Scientist',                    subject: 'career', scenarioIds: [], directHref: '/it-sql-playground.html',          minStarsToUnlock: 18, icon: '📊' },
-  { category: 'career', id: 'IC03', title: 'DevOps Engineer',                   subject: 'career', scenarioIds: [], directHref: '/it-code-lab.html?contest=325049', minStarsToUnlock: 18, icon: '☁️' },
-  { category: 'career', id: 'IC04', title: 'Security Engineer',                 subject: 'career', scenarioIds: [], directHref: '/it-cipher-ctf.html',       minStarsToUnlock: 24, icon: '🔒' },
-  { category: 'career', id: 'IC05', title: 'Mobile Developer',                  subject: 'career', scenarioIds: [], directHref: '/it-web-playground.html',   minStarsToUnlock: 18, icon: '📱' },
-  { category: 'career', id: 'IC06', title: 'AI / ML Engineer',                  subject: 'career', scenarioIds: [], directHref: '/it-algo-viz.html',         minStarsToUnlock: 24, icon: '🤖' },
+  { category: 'career', id: 'IC01', title: 'Software Engineer',    subject: 'career', scenarioIds: ['IC01-career-quiz'], knowledgeQuiz: 'IC01-career-quiz', directHref: '/it-code-lab.html?contest=255760', minStarsToUnlock: 18, icon: '👨‍💻' },
+  { category: 'career', id: 'IC02', title: 'Data Scientist',       subject: 'career', scenarioIds: ['IC02-career-quiz'], knowledgeQuiz: 'IC02-career-quiz', directHref: '/it-sql-playground.html',          minStarsToUnlock: 18, icon: '📊' },
+  { category: 'career', id: 'IC03', title: 'DevOps Engineer',      subject: 'career', scenarioIds: ['IC03-career-quiz'], knowledgeQuiz: 'IC03-career-quiz', directHref: '/it-code-lab.html?contest=325049', minStarsToUnlock: 18, icon: '☁️' },
+  { category: 'career', id: 'IC04', title: 'Security Engineer',    subject: 'career', scenarioIds: ['IC04-career-quiz'], knowledgeQuiz: 'IC04-career-quiz', directHref: '/it-cipher-ctf.html',       minStarsToUnlock: 24, icon: '🔒' },
+  { category: 'career', id: 'IC05', title: 'Mobile Developer',     subject: 'career', scenarioIds: ['IC05-career-quiz'], knowledgeQuiz: 'IC05-career-quiz', directHref: '/it-web-playground.html',   minStarsToUnlock: 18, icon: '📱' },
+  { category: 'career', id: 'IC06', title: 'AI / ML Engineer',     subject: 'career', scenarioIds: ['IC06-career-quiz'], knowledgeQuiz: 'IC06-career-quiz', directHref: '/it-algo-viz.html',         minStarsToUnlock: 24, icon: '🤖' },
 
   // ──────────── GAMES ────────────
   { category: 'game', id: 'IG01', title: 'Code Race — Giải thuật 5 phút',  subject: 'game', scenarioIds: ['IG01-code-race-quiz'],      knowledgeQuiz: 'IG01-code-race-quiz',      minStarsToUnlock: 6,  icon: '⚡' },
