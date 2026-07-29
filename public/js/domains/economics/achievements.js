@@ -131,6 +131,27 @@ export const ACHIEVEMENTS = [
     desc: 'Hoàn thành toàn bộ module Năm 4 Kinh tế — kết thúc lộ trình Cử nhân Kinh tế',
     trigger: { yearComplete: 4 } },
 
+  // ── Practice achievements ───────────────────────────────────
+  { id: 'biz-ops-master',    icon: '🏢', title: 'Chuyên gia Vận hành Doanh nghiệp',
+    desc: 'Hoàn thành mô phỏng doanh nghiệp (EP01) với 3 sao — thành thạo OEE, Lean, KPI',
+    trigger: { moduleStars: { 'EP01': 3 } } },
+
+  { id: 'stock-trader',      icon: '📈', title: 'Nhà giao dịch chứng khoán',
+    desc: 'Chinh phục Stock Sim (EP02) với 3 sao — nắm vững MPT, RSI, CAPM, Short Selling',
+    trigger: { moduleStars: { 'EP02': 3 } } },
+
+  { id: 'startup-founder',   icon: '🌱', title: 'Startup Founder',
+    desc: 'Tốt nghiệp Vườn ươm khởi nghiệp (EP03) với 3 sao — PMF, Lean Canvas, Fundraising',
+    trigger: { moduleStars: { 'EP03': 3 } } },
+
+  { id: 'fintech-expert',    icon: '💳', title: 'FinTech Expert',
+    desc: 'Chinh phục FinTech Lab (EP04) với 3 sao — Open Banking, BNPL, KYC, Blockchain',
+    trigger: { moduleStars: { 'EP04': 3 } } },
+
+  { id: 'practice-champion', icon: '🏅', title: 'Practice Champion',
+    desc: 'Hoàn thành cả 4 module thực hành (EP01 + EP02 + EP03 + EP04) với ít nhất 2 sao',
+    trigger: { moduleStars: { 'EP01': 2, 'EP02': 2, 'EP03': 2, 'EP04': 2 } } },
+
   // ── Career achievements ─────────────────────────────────────
   { id: 'accounting-career',  icon: '📒', title: 'Nhà kế toán – kiểm toán',
     desc: 'Khám phá lộ trình nghề Kế toán – Kiểm toán (EC01) với 3 sao',

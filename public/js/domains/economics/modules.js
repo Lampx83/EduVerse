@@ -41,10 +41,10 @@ export const MODULES = [
   { category: 'curriculum', id: 'E4.6', title: 'Khoá luận kinh tế',        yearLevel: 4, subject: 'khoa-luan-kt',    scenarioIds: ['E4.6-capstone-quiz'],           knowledgeQuiz: 'E4.6-capstone-quiz',           minStarsToUnlock: 24, prerequisites: ['E3.1', 'E3.4'], hasCertificate: true },
 
   // ──────────── PRACTICE / SKILL ────────────
-  { category: 'practice', id: 'EP01', title: 'Mô phỏng doanh nghiệp — Vận hành', subject: 'doanh-nghiep-ao', scenarioIds: [], minStarsToUnlock: 18, icon: '🏢' },
-  { category: 'practice', id: 'EP02', title: 'Mô phỏng TTCK — Stock sim',   subject: 'stock-sim',       scenarioIds: [], minStarsToUnlock: 12, icon: '📈' },
-  { category: 'practice', id: 'EP03', title: 'Vườn ươm khởi nghiệp',        subject: 'startup-incubator', scenarioIds: [], minStarsToUnlock: 18, icon: '🌱' },
-  { category: 'practice', id: 'EP04', title: 'FinTech Lab — Mobile banking', subject: 'fintech-lab',    scenarioIds: [], minStarsToUnlock: 18, icon: '💳' },
+  { category: 'practice', id: 'EP01', title: 'Mô phỏng doanh nghiệp — Vận hành', subject: 'doanh-nghiep-ao', scenarioIds: ['EP01-biz-ops-quiz'],  knowledgeQuiz: 'EP01-biz-ops-quiz',  minStarsToUnlock: 18, icon: '🏢' },
+  { category: 'practice', id: 'EP02', title: 'Mô phỏng TTCK — Stock sim',   subject: 'stock-sim',         scenarioIds: ['EP02-stock-sim-quiz'], knowledgeQuiz: 'EP02-stock-sim-quiz', minStarsToUnlock: 12, icon: '📈' },
+  { category: 'practice', id: 'EP03', title: 'Vườn ươm khởi nghiệp',        subject: 'startup-incubator', scenarioIds: ['EP03-startup-quiz'],   knowledgeQuiz: 'EP03-startup-quiz',   minStarsToUnlock: 18, icon: '🌱' },
+  { category: 'practice', id: 'EP04', title: 'FinTech Lab — Mobile banking', subject: 'fintech-lab',       scenarioIds: ['EP04-fintech-quiz'],   knowledgeQuiz: 'EP04-fintech-quiz',   minStarsToUnlock: 18, icon: '💳' },
 
   // ──────────── CAREER ────────────
   { category: 'career', id: 'EC01', title: 'Kế toán – Kiểm toán',          subject: 'career', scenarioIds: ['EC01-career-quiz'], knowledgeQuiz: 'EC01-career-quiz', minStarsToUnlock: 18, icon: '📒' },
