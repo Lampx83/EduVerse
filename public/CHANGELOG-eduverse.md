@@ -4,6 +4,63 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-29 — Phiên cải tiến (27) · Trường Kinh tế — 4 Practice Modules (EP01–EP04) + 5 Achievements
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; DB production không truy cập được trong môi trường này).
+
+**Trường:** Kinh tế (`economics`)
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **4 module Practice Trường Kinh tế (EP01–EP04)** đang có `scenarioIds: []` — sinh viên đã tích lũy đủ sao để mở khoá nhưng chỉ thấy "Coming soon". Đây là 4 module thực hành ứng dụng quan trọng bậc nhất ở giai đoạn Năm 3–4: mô phỏng vận hành doanh nghiệp, giao dịch chứng khoán, vườn ươm khởi nghiệp và FinTech Lab.
+
+**Cụ thể:**
+- **EP01** (Mô phỏng doanh nghiệp — Vận hành): không có quiz → không hiển thị nội dung
+- **EP02** (Mô phỏng TTCK — Stock sim): không có quiz → không hiển thị nội dung
+- **EP03** (Vườn ươm khởi nghiệp): không có quiz → không hiển thị nội dung
+- **EP04** (FinTech Lab — Mobile banking): không có quiz → không hiển thị nội dung
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/economics-practice.js` | Tạo mới | 4 quiz practice scenarios EP01–EP04 (40 câu hỏi chuyên sâu, độ khó cao) |
+| `public/js/domains/economics/modules.js` | Sửa | Kích hoạt EP01–EP04: thêm `scenarioIds` + `knowledgeQuiz` |
+| `public/js/domains/economics/experiences.js` | Sửa | Thêm section Practice (EP01–EP04) → ScoreUp |
+| `public/js/domains/economics/achievements.js` | Mở rộng | Thêm 5 achievements mới (4 practice + 1 Practice Champion) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `ECONOMICS_PRACTICE_SCENARIOS` |
+
+### Chi tiết nội dung (40 câu hỏi)
+
+| Module | ID Scenario | Chủ đề | Câu |
+|--------|------------|--------|-----|
+| EP01 — Mô phỏng doanh nghiệp | `EP01-biz-ops-quiz` | OEE, JIT, SWOT, KPI vs KGI, Lean Manufacturing, Business Model Canvas, Agile/Scrum, LTV/CAC, Last-Mile Delivery, Balanced Scorecard | 10 |
+| EP02 — Mô phỏng TTCK | `EP02-stock-sim-quiz` | Modern Portfolio Theory, RSI, DCA, Put Option, ROE/DuPont, CAPM, Short Selling, VIX, EMH, Diluted EPS | 10 |
+| EP03 — Vườn ươm khởi nghiệp | `EP03-startup-quiz` | Product-Market Fit, Lean Canvas vs BMC, vòng gọi vốn, MVP, Term Sheet, Freemium, Cap Table, Customer Development, Burn Rate/Runway, GTM Strategy | 10 |
+| EP04 — FinTech Lab | `EP04-fintech-quiz` | Open Banking, NAPAS, BNPL, KYC/eKYC, Ví điện tử vs Neobank, Blockchain FinTech, API Embedded Finance, RegTech, Embedded Insurance, NPS | 10 |
+
+### Achievements mới (5)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `biz-ops-master` | 🏢 | Chuyên gia Vận hành Doanh nghiệp | EP01 ≥ 3 sao |
+| `stock-trader` | 📈 | Nhà giao dịch chứng khoán | EP02 ≥ 3 sao |
+| `startup-founder` | 🌱 | Startup Founder | EP03 ≥ 3 sao |
+| `fintech-expert` | 💳 | FinTech Expert | EP04 ≥ 3 sao |
+| `practice-champion` | 🏅 | Practice Champion | EP01+EP02+EP03+EP04 ≥ 2 sao |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/economics-practice.js       ✅ PASS
+node --check public/js/domains/economics/modules.js          ✅ PASS
+node --check public/js/domains/economics/experiences.js      ✅ PASS
+node --check public/js/domains/economics/achievements.js     ✅ PASS
+node --check public/js/scenarios/_all-content.js             ✅ PASS
+```
+
+---
+
 ## 2026-07-28 — Phiên cải tiến (26) · Trường CNTT — 6 Career Path Quizzes (IC01–IC06) + 7 Achievements
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).

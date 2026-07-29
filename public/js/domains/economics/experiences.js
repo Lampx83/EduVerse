@@ -46,6 +46,11 @@ const MODULE_PAGES = {
   'E4.4': [PAGES.scoreup],   // Thuế Việt Nam
   'E4.5': [PAGES.scoreup],   // Đạo đức kinh doanh
   'E4.6': [PAGES.smartdoc],  // Khoá luận kinh tế — giáo trình
+  // ── Practice ──
+  'EP01': [PAGES.scoreup],   // Mô phỏng doanh nghiệp — Vận hành
+  'EP02': [PAGES.scoreup],   // Mô phỏng TTCK — Stock sim
+  'EP03': [PAGES.scoreup],   // Vườn ươm khởi nghiệp
+  'EP04': [PAGES.scoreup],   // FinTech Lab — Mobile banking
   // ── Career ──
   'EC01': [PAGES.scoreup],   // Kế toán – Kiểm toán
   'EC02': [PAGES.scoreup],   // Tài chính – Ngân hàng
