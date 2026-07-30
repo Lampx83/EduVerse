@@ -81,9 +81,9 @@ export const MODULES = [
 
   // ── Nhà thuốc cộng đồng (4) ──
   { category: 'practice', id: 'PS11', title: 'Nhà thuốc GPP đầy đủ',          subject: 'community-pharm',   scenarioIds: ['L5.3-gpp-01-otc-cam-cum','L5.3-gpp-02-don-rx','L5.3-gpp-03-gay-nghien','L5.3-gpp-04-tre-em','L5.3-gpp-05-yeu-cau-thuoc-khong-don'], minStarsToUnlock: 18, icon: '🏪', hasCertificate: true },
-  { category: 'practice', id: 'PS12', title: 'Nhà thuốc 24/7 — Cấp cứu OTC',  subject: 'community-pharm',   scenarioIds: [], minStarsToUnlock: 18, icon: '🌙' },
-  { category: 'practice', id: 'PS13', title: 'Nhà thuốc đại học',             subject: 'community-pharm',   scenarioIds: [], minStarsToUnlock: 12, icon: '🎓' },
-  { category: 'practice', id: 'PS14', title: 'Nhà thuốc BV — Ngoại trú',      subject: 'community-pharm',   scenarioIds: [], minStarsToUnlock: 18, icon: '🏥' },
+  { category: 'practice', id: 'PS12', title: 'Nhà thuốc 24/7 — Cấp cứu OTC',  subject: 'community-pharm',   scenarioIds: ['PS12-quiz-01'], knowledgeQuiz: 'PS12-quiz-01', minStarsToUnlock: 18, icon: '🌙' },
+  { category: 'practice', id: 'PS13', title: 'Nhà thuốc đại học',             subject: 'community-pharm',   scenarioIds: ['PS13-quiz-01'], knowledgeQuiz: 'PS13-quiz-01', minStarsToUnlock: 12, icon: '🎓' },
+  { category: 'practice', id: 'PS14', title: 'Nhà thuốc BV — Ngoại trú',      subject: 'community-pharm',   scenarioIds: ['PS14-quiz-01'], knowledgeQuiz: 'PS14-quiz-01', minStarsToUnlock: 18, icon: '🏥' },
 
   // ── Công nghiệp dược (6) ──
   { category: 'practice', id: 'PS15', title: 'Nhà máy GMP — Tour quy trình',  subject: 'industrial',        scenarioIds: ['PS15-quiz-01'], minStarsToUnlock: 24, icon: '🏭' },
@@ -105,10 +105,10 @@ export const MODULES = [
   { category: 'skill', id: 'SC06', title: 'Phòng tiêm chủng',                 subject: 'vaccination',   scenarioIds: ['SC06-quiz-01'], knowledgeQuiz: 'SC06-quiz-01', minStarsToUnlock: 18, icon: '💉' },
   { category: 'skill', id: 'SC07', title: 'Đo HA + Đường huyết tại nhà thuốc', subject: 'poc-testing',  scenarioIds: ['SC07-quiz-01'], knowledgeQuiz: 'SC07-quiz-01', minStarsToUnlock: 12, icon: '🩺' },
   { category: 'skill', id: 'SC08', title: 'Tư vấn cai thuốc lá',              subject: 'smoking',       scenarioIds: ['SC08-quiz-01'], knowledgeQuiz: 'SC08-quiz-01', minStarsToUnlock: 12, icon: '🚭' },
-  { category: 'skill', id: 'SC09', title: 'Tư vấn giảm cân — béo phì',        subject: 'obesity',       scenarioIds: [], minStarsToUnlock: 12, icon: '⚖️' },
-  { category: 'skill', id: 'SC10', title: 'Tư vấn dinh dưỡng đặc biệt',       subject: 'nutrition',     scenarioIds: [], minStarsToUnlock: 12, icon: '🥗' },
+  { category: 'skill', id: 'SC09', title: 'Tư vấn giảm cân — béo phì',        subject: 'obesity',       scenarioIds: ['SC09-quiz-01'], knowledgeQuiz: 'SC09-quiz-01', minStarsToUnlock: 12, icon: '⚖️' },
+  { category: 'skill', id: 'SC10', title: 'Tư vấn dinh dưỡng đặc biệt',       subject: 'nutrition',     scenarioIds: ['SC10-quiz-01'], knowledgeQuiz: 'SC10-quiz-01', minStarsToUnlock: 12, icon: '🥗' },
   { category: 'skill', id: 'SC11', title: 'Tư vấn du lịch — Vaccine + thuốc', subject: 'travel-med',    scenarioIds: ['SC11-quiz-01'], knowledgeQuiz: 'SC11-quiz-01', minStarsToUnlock: 18, icon: '✈️' },
-  { category: 'skill', id: 'SC12', title: 'Tư vấn tránh thai',                 subject: 'contraception', scenarioIds: [], minStarsToUnlock: 12, icon: '🌹' },
+  { category: 'skill', id: 'SC12', title: 'Tư vấn tránh thai',                 subject: 'contraception', scenarioIds: ['SC12-quiz-01'], knowledgeQuiz: 'SC12-quiz-01', minStarsToUnlock: 12, icon: '🌹' },
   { category: 'skill', id: 'SC13', title: 'Tư vấn HIV/STI',                   subject: 'hiv-sti',       scenarioIds: ['SC13-quiz-01'], knowledgeQuiz: 'SC13-quiz-01', minStarsToUnlock: 18, icon: '🎗️' },
   { category: 'skill', id: 'SC14', title: 'Quản lý đau — Cấp & mạn',          subject: 'pain-mgmt',     scenarioIds: ['SC14-quiz-01'], knowledgeQuiz: 'SC14-quiz-01', minStarsToUnlock: 18, icon: '💊' },
   { category: 'skill', id: 'SC15', title: 'MTM — Medication Therapy Management', subject: 'mtm',        scenarioIds: ['SC15-quiz-01'], knowledgeQuiz: 'SC15-quiz-01', minStarsToUnlock: 24, icon: '📋', hasCertificate: true },

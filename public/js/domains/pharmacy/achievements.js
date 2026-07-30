@@ -222,4 +222,30 @@ export const ACHIEVEMENTS = [
   { id: 'mtm-specialist',    icon: '🗂️', title: 'MTM Specialist',
     desc: 'Hoàn thành SC15 — Medication Therapy Management toàn diện',
     trigger: { moduleStars: { 'SC15': 3 } } },
+
+  // ── Nhà thuốc cộng đồng mở rộng (PS12–PS14) ──
+  { id: 'night-pharmacist',  icon: '🌙', title: 'Dược sĩ Trực đêm',
+    desc: 'Hoàn thành PS12 — Nhà thuốc 24/7, xử lý cấp cứu OTC ban đêm',
+    trigger: { moduleStars: { 'PS12': 2 } } },
+
+  { id: 'campus-pharmacist', icon: '🎓', title: 'Dược sĩ Đại học',
+    desc: 'Hoàn thành PS13 — Nhà thuốc đại học, tư vấn sức khoẻ sinh viên',
+    trigger: { moduleStars: { 'PS13': 2 } } },
+
+  { id: 'outpatient-expert', icon: '🏥', title: 'Chuyên gia Ngoại trú',
+    desc: 'Hoàn thành PS14 — Nhà thuốc BV Ngoại trú, tư vấn ra viện & polypharmacy',
+    trigger: { moduleStars: { 'PS14': 2 } } },
+
+  // ── Kỹ năng tư vấn đặc biệt (SC09, SC10, SC12) ──
+  { id: 'weight-counselor',  icon: '⚖️', title: 'Chuyên gia Cân nặng',
+    desc: 'Hoàn thành SC09 — Tư vấn giảm cân & béo phì, dược lý chống béo phì',
+    trigger: { moduleStars: { 'SC09': 3 } } },
+
+  { id: 'nutrition-expert',  icon: '🥗', title: 'Chuyên gia Dinh dưỡng',
+    desc: 'Hoàn thành SC10 — Tư vấn dinh dưỡng đặc biệt: CKD, xơ gan, ung thư',
+    trigger: { moduleStars: { 'SC10': 3 } } },
+
+  { id: 'family-planner',    icon: '🌹', title: 'Chuyên gia Kế hoạch hoá',
+    desc: 'Hoàn thành SC12 — Tư vấn tránh thai toàn diện, WHO MEC & tương tác thuốc',
+    trigger: { moduleStars: { 'SC12': 3 } } },
 ];

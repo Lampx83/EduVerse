@@ -4,6 +4,68 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-30 — Phiên cải tiến (28) · Trường Dược 6 modules (PS12–14, SC09–10, SC12) + Mở Trường Kinh tế
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; DB production không truy cập được trong môi trường sandbox).
+
+**Phạm vi:** Trường Dược (`pharmacy`) — 6 modules, 90 câu hỏi; Trường Kinh tế (`economics`) — unlock domain.
+
+### Vấn đề phát hiện
+
+Khảo sát codebase (explore agent) xác nhận:
+1. **6 pharmacy modules còn thiếu quiz** trong hai cụm Nhà thuốc cộng đồng & Kỹ năng tư vấn đặc biệt.
+2. **Trường Kinh tế đã xây dựng hoàn chỉnh 100%** (35 modules, 9 scenario files, 45 achievements) nhưng bị comment-out và khoá trong `domain.js` — chỉ cần 2 dòng thay đổi để mở.
+
+**Chi tiết 6 modules thiếu:**
+- **PS12** (Nhà thuốc 24/7 — Cấp cứu OTC): tình huống đêm khuya, triage khẩn cấp
+- **PS13** (Nhà thuốc đại học): sức khoẻ sinh viên, sức khoẻ tâm thần, tránh thai
+- **PS14** (Nhà thuốc BV — Ngoại trú): ra viện, polypharmacy, high-alert meds
+- **SC09** (Tư vấn giảm cân — béo phì): dược lý chống béo phì, chiến lược giảm cân
+- **SC10** (Tư vấn dinh dưỡng đặc biệt): CKD, xơ gan, ung thư, dinh dưỡng lâm sàng
+- **SC12** (Tư vấn tránh thai): WHO MEC, tương tác thuốc-tránh thai, tư vấn toàn diện
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/pharmacy-community.js` | Tạo mới | 3 quizzes PS12/PS13/PS14 (30 câu hỏi lâm sàng cao cấp) |
+| `public/js/scenarios/skill-quizzes.js` | Mở rộng | Thêm SC09_QUIZ_01, SC10_QUIZ_01, SC12_QUIZ_01 (30 câu) vào SKILL_QUIZZES |
+| `public/js/engine/_modules-data.js` | Sửa | Wire `scenarioIds` + `knowledgeQuiz` cho PS12, PS13, PS14, SC09, SC10, SC12 |
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | Thêm 6 achievements mới (night-pharmacist, campus-pharmacist, outpatient-expert, weight-counselor, nutrition-expert, family-planner) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `PHARMACY_COMMUNITY_SCENARIOS` |
+| `public/js/engine/domain.js` | Sửa | Uncomment + enable `economics` domain (status: preview, moduleCount: 35) |
+
+### Chi tiết nội dung (90 câu hỏi)
+
+| Module | ID Scenario | Chủ đề | Câu |
+|--------|------------|--------|-----|
+| PS12 — Nhà thuốc 24/7 | `PS12-quiz-01` | Triage đêm: STEMI, sốt co giật, tương tác nitrate, kháng sinh không đơn, hen cấp, warfarin-vitamin E, thai kỳ, pseudoephedrine-THA | 10 |
+| PS13 — Nhà thuốc ĐH | `PS13-quiz-01` | Tránh thai khẩn cấp, modafinil bất hợp pháp, SSRI-rượu, COC-timing, nguy cơ tự tử, lậu kháng thuốc, rifampicin-COC, isotretinoin, migraine | 10 |
+| PS14 — Nhà thuốc BV ngoại trú | `PS14-quiz-01` | Ticagrelor không ngưng đột ngột, metformin-CKD, sildenafil-doxazosin, warfarin-clarithromycin, insulin glargine, Beers 2023, MTX-TMP-SMX, empagliflozin DKA, dị ứng chéo beta-lactam, bisoprolol HF titration | 10 |
+| SC09 — Giảm cân & Béo phì | `SC09-quiz-01` | BMI châu Á, orlistat cơ chế, sibutramine thu hồi, GLP-1/SGLT2i vs béo phì, CLA bằng chứng, thâm hụt calorie, keto diet, bariatric criteria, naltrexone/bupropion, mục tiêu thực tế | 10 |
+| SC10 — Dinh dưỡng đặc biệt | `SC10-quiz-01` | CKD protein restriction, xơ gan-sarcopenia, enteral tiêu chảy, sắt thai kỳ, dumping syndrome, omega-3 ung thư, glycemic index, vitamin D cao tuổi, whey protein, PKU mang thai | 10 |
+| SC12 — Tư vấn tránh thai | `SC12-quiz-01` | COC-hút thuốc WHO MEC, IUD đồng cơ chế, topiramate-COC, sau sinh-cho bú, migraine aura CCĐ estrogen, tránh thai nam, triệt sản tư vấn, implant 3 năm, lupus-APL, acid folic preconception | 10 |
+
+### Achievements mới (6)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `night-pharmacist` | 🌙 | Dược sĩ Trực đêm | PS12 ≥ 2 sao |
+| `campus-pharmacist` | 🎓 | Dược sĩ Đại học | PS13 ≥ 2 sao |
+| `outpatient-expert` | 🏥 | Chuyên gia Ngoại trú | PS14 ≥ 2 sao |
+| `weight-counselor` | ⚖️ | Chuyên gia Cân nặng | SC09 ≥ 3 sao |
+| `nutrition-expert` | 🥗 | Chuyên gia Dinh dưỡng | SC10 ≥ 3 sao |
+| `family-planner` | 🌹 | Chuyên gia Kế hoạch hoá | SC12 ≥ 3 sao |
+
+### Kết quả
+
+- Pharmacy: 23 → **17 modules còn thiếu quiz** (giảm 6)
+- Economics: domain được kích hoạt lên `status: 'preview'` — 35 modules có thể truy cập
+- 90 câu hỏi lâm sàng mới, có nguồn dẫn (WHO MEC, ADA 2024, Beers 2023, KDIGO, ESC HF 2021, v.v.)
+- `node --check` passed: 6/6 files
+
+---
+
 ## 2026-07-29 — Phiên cải tiến (27) · Trường Kinh tế — 4 Practice Modules (EP01–EP04) + 5 Achievements
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; DB production không truy cập được trong môi trường này).

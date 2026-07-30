@@ -32,6 +32,7 @@ import { YEAR34_SCENARIOS } from './year3-4.js';
 import { YEAR5_ADAPTED_SCENARIOS } from './year5-adapted.js';
 import { PRACTICE_QUIZZES } from './practice-quizzes.js';
 import { SKILL_QUIZZES } from './skill-quizzes.js';
+import { PHARMACY_COMMUNITY_SCENARIOS } from './pharmacy-community.js';
 import { LIBRARY_CAREER_GAMES_SCENARIOS } from './library-career-games.js';
 import { BAO_CHE_LAB_SCENARIOS } from './bao-che-labs.js';
 import { PRIMARY_MATH_SCENARIOS } from './primary-math.js';
@@ -84,6 +85,7 @@ export const ALL_SCENARIOS = {
   ...YEAR5_ADAPTED_SCENARIOS,
   ...PRACTICE_QUIZZES,
   ...SKILL_QUIZZES,
+  ...PHARMACY_COMMUNITY_SCENARIOS,
   ...LIBRARY_CAREER_GAMES_SCENARIOS,
   ...BAO_CHE_LAB_SCENARIOS,
   ...PRIMARY_MATH_SCENARIOS,
