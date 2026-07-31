@@ -4,6 +4,57 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-07-31 — Phiên cải tiến (29) · Trường Dược — Công nghiệp dược 4 modules (PS17–PS20)
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; DB production không truy cập được trong môi trường sandbox).
+
+**Phạm vi:** Trường Dược (`pharmacy`) — 4 modules công nghiệp dược, 40 câu hỏi chuyên sâu.
+
+### Vấn đề phát hiện
+
+Khảo sát codebase phát hiện **4 modules Công nghiệp dược (PS17–PS20)** đang có `scenarioIds: []` trong cụm "Công nghiệp dược" (PS15–PS20). PS15 (GMP factory tour) và PS16 (QC kiểm nghiệm) đã có nội dung; PS17–PS20 là 4 pillars còn lại của nghề dược công nghiệp hiện đại mà sinh viên chưa tiếp cận được.
+
+**Chi tiết 4 modules thiếu:**
+- **PS17** (Phòng QA — Audit & SOP): QA vs QC, audit nội bộ, SOP change control, OOS investigation, data integrity ALCOA+, batch record review, risk assessment FMEA, supplier qualification, CAPA timeline, cleanroom behavior
+- **PS18** (Đăng ký thuốc — Dossier CTD): CTD M1–M5 structure, bioequivalence/BCS waiver, Module 3.2.P, stability ICH Q1A, post-approval variations, regulatory VN (TT 32/2018), IND requirements, conditional MA/accelerated pathways, drug product specifications, shelf-life data requirements
+- **PS19** (Đấu thầu BV — Bid preparation): đấu thầu tập trung cấp quốc gia (TT 15/2019), tiêu chí kỹ thuật phân nhóm (TT 14/2020), bảo lãnh dự thầu, hồ sơ thiếu tài liệu, đàm phán giá biệt dược gốc, mua sắm ngoài danh mục, tham chiếu giá, thay đổi số lô, thu hồi thuốc, phân nhóm kỹ thuật 1–5
+- **PS20** (Pharmacovigilance — Báo cáo ADR): ADR vs AE, phân loại ABCDE, WHO-UMC causality (Probable), SUSAR timeline (7/15 ngày), signal detection PRR, PSUR/PBRER, Hartwig & Siegel severity, Risk Management Plan (RMP), vai trò dược sĩ nhà thuốc báo cáo ADR, AEFI vaccine
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/pharmacy-industry.js` | Tạo mới | 4 quizzes PS17–PS20 (40 câu hỏi công nghiệp dược) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `PHARMACY_INDUSTRY_SCENARIOS` |
+| `public/js/engine/_modules-data.js` | Sửa | Wire `scenarioIds` + `knowledgeQuiz` cho PS17, PS18, PS19, PS20 |
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | Thêm 4 achievements mới (qa-auditor, regulatory-specialist, tender-expert, pharmacovigilance-officer) |
+
+### Chi tiết nội dung (40 câu hỏi)
+
+| Module | ID Scenario | Chủ đề | Câu |
+|--------|------------|--------|-----|
+| PS17 — Phòng QA | `PS17-quiz-01` | QA vs QC, internal audit, SOP change control, OOS Phase 1 vs 2, ALCOA+, BRR, FMEA, supplier qualification, CAPA timeline, Grade A/B behavior | 10 |
+| PS18 — Đăng ký thuốc | `PS18-quiz-01` | CTD 5 modules, bioequivalence BCS waiver, CTD 3.2.P structure, stability ICH Q1A Zone II, post-approval Type II variation, regulatory VN (TT 32/2018), IND, conditional MA (EMA), drug product specs, shelf-life 24 tháng | 10 |
+| PS19 — Đấu thầu BV | `PS19-quiz-01` | Đấu thầu tập trung quốc gia TT 15/2019, tiêu chí kỹ thuật phân nhóm, bảo lãnh dự thầu, hồ sơ thiếu tài liệu, đàm phán giá biệt dược, mua ngoài danh mục, tham chiếu giá, thay lô hàng, thu hồi thuốc OOS, phân nhóm 1 vs 5 | 10 |
+| PS20 — Pharmacovigilance | `PS20-quiz-01` | ADR vs AE, type B (Bizarre), WHO-UMC Probable, SUSAR 7/15 ngày, PRR signal detection, PSUR purpose, Hartwig level 7, RMP trigger EMA, dược sĩ nhà thuốc báo cáo ADR, AEFI vaccine classification | 10 |
+
+### Achievements mới (4)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `qa-auditor` | 📋 | QA Auditor | PS17 ≥ 2 sao |
+| `regulatory-specialist` | 📑 | Chuyên gia Đăng ký Thuốc | PS18 ≥ 2 sao |
+| `tender-expert` | 💰 | Chuyên gia Đấu thầu BV | PS19 ≥ 2 sao |
+| `pharmacovigilance-officer` | ⚠️ | PV Officer | PS20 ≥ 3 sao |
+
+### Kết quả
+
+- Pharmacy Industry cluster: PS15 + PS16 + **PS17 + PS18 + PS19 + PS20** → 6/6 modules công nghiệp đầy đủ nội dung
+- 40 câu hỏi chuyên sâu mới, có nguồn dẫn (ICH Q7/Q9/Q10/Q11, EU GMP Annex 1 2022, TT 15/2019, TT 14/2020, WHO-UMC, ICH E2A/E2C, EMA GVP)
+- `node --check` passed: 4/4 files
+
+---
+
 ## 2026-07-30 — Phiên cải tiến (28) · Trường Dược 6 modules (PS12–14, SC09–10, SC12) + Mở Trường Kinh tế
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; DB production không truy cập được trong môi trường sandbox).

@@ -248,4 +248,21 @@ export const ACHIEVEMENTS = [
   { id: 'family-planner',    icon: '🌹', title: 'Chuyên gia Kế hoạch hoá',
     desc: 'Hoàn thành SC12 — Tư vấn tránh thai toàn diện, WHO MEC & tương tác thuốc',
     trigger: { moduleStars: { 'SC12': 3 } } },
+
+  // ── Công nghiệp dược (PS17–PS20) ──
+  { id: 'qa-auditor',        icon: '📋', title: 'QA Auditor',
+    desc: 'Hoàn thành PS17 — Phòng QA: audit GMP, SOP, CAPA & data integrity',
+    trigger: { moduleStars: { 'PS17': 2 } } },
+
+  { id: 'regulatory-specialist', icon: '📑', title: 'Chuyên gia Đăng ký Thuốc',
+    desc: 'Hoàn thành PS18 — Đăng ký thuốc: CTD dossier, BE, stability & variations',
+    trigger: { moduleStars: { 'PS18': 2 } } },
+
+  { id: 'tender-expert',     icon: '💰', title: 'Chuyên gia Đấu thầu BV',
+    desc: 'Hoàn thành PS19 — Đấu thầu bệnh viện: hồ sơ mời thầu & phân nhóm kỹ thuật',
+    trigger: { moduleStars: { 'PS19': 2 } } },
+
+  { id: 'pharmacovigilance-officer', icon: '⚠️', title: 'PV Officer',
+    desc: 'Hoàn thành PS20 — Pharmacovigilance: báo cáo ADR, causality & signal detection',
+    trigger: { moduleStars: { 'PS20': 3 } } },
 ];
