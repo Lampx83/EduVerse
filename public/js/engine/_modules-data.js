@@ -88,10 +88,10 @@ export const MODULES = [
   // ── Công nghiệp dược (6) ──
   { category: 'practice', id: 'PS15', title: 'Nhà máy GMP — Tour quy trình',  subject: 'industrial',        scenarioIds: ['PS15-quiz-01'], minStarsToUnlock: 24, icon: '🏭' },
   { category: 'practice', id: 'PS16', title: 'Phòng QC — Kiểm nghiệm',        subject: 'quality-control',   scenarioIds: ['L3.7-kiemnghiem-01'], minStarsToUnlock: 18, icon: '🔬' },
-  { category: 'practice', id: 'PS17', title: 'Phòng QA — Audit & SOP',        subject: 'quality-assurance', scenarioIds: [], minStarsToUnlock: 24, icon: '📋' },
-  { category: 'practice', id: 'PS18', title: 'Đăng ký thuốc — Dossier CTD',   subject: 'regulatory',        scenarioIds: [], minStarsToUnlock: 24, icon: '📑' },
-  { category: 'practice', id: 'PS19', title: 'Đấu thầu BV — Bid preparation', subject: 'tender',            scenarioIds: [], minStarsToUnlock: 24, icon: '💰' },
-  { category: 'practice', id: 'PS20', title: 'Pharmacovigilance — Báo cáo ADR', subject: 'pharmacovig',     scenarioIds: [], minStarsToUnlock: 24, icon: '⚠️' },
+  { category: 'practice', id: 'PS17', title: 'Phòng QA — Audit & SOP',        subject: 'quality-assurance', scenarioIds: ['PS17-quiz-01'], knowledgeQuiz: 'PS17-quiz-01', minStarsToUnlock: 24, icon: '📋' },
+  { category: 'practice', id: 'PS18', title: 'Đăng ký thuốc — Dossier CTD',   subject: 'regulatory',        scenarioIds: ['PS18-quiz-01'], knowledgeQuiz: 'PS18-quiz-01', minStarsToUnlock: 24, icon: '📑' },
+  { category: 'practice', id: 'PS19', title: 'Đấu thầu BV — Bid preparation', subject: 'tender',            scenarioIds: ['PS19-quiz-01'], knowledgeQuiz: 'PS19-quiz-01', minStarsToUnlock: 24, icon: '💰' },
+  { category: 'practice', id: 'PS20', title: 'Pharmacovigilance — Báo cáo ADR', subject: 'pharmacovig',     scenarioIds: ['PS20-quiz-01'], knowledgeQuiz: 'PS20-quiz-01', minStarsToUnlock: 24, icon: '⚠️' },
 
   // ══════════════════════════════════════════════════════════════
   //              CỤM 3 — SKILL CENTERS (15)
