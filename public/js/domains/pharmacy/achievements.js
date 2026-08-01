@@ -265,4 +265,17 @@ export const ACHIEVEMENTS = [
   { id: 'pharmacovigilance-officer', icon: '⚠️', title: 'PV Officer',
     desc: 'Hoàn thành PS20 — Pharmacovigilance: báo cáo ADR, causality & signal detection',
     trigger: { moduleStars: { 'PS20': 3 } } },
+
+  // ── Thư viện & Games mới (LR01, GC04, GC06) ──
+  { id: 'library-explorer',  icon: '🔍', title: 'Nhà thám hiểm Thư viện',
+    desc: 'Hoàn thành LR01 — Thư viện điện tử: PubMed, MeSH, UpToDate & nguồn DI',
+    trigger: { moduleStars: { 'LR01': 2 } } },
+
+  { id: 'otc-speedster',     icon: '⚡', title: 'OTC Speed Counsellor',
+    desc: 'Hoàn thành GC04 — OTC Consultation Speed: tư vấn nhà thuốc nhanh & chính xác',
+    trigger: { moduleStars: { 'GC04': 3 } } },
+
+  { id: 'herb-master',       icon: '🌿', title: 'Herb Master',
+    desc: 'Hoàn thành GC06 — Herb ID Race: nhận dạng dược liệu Việt Nam',
+    trigger: { moduleStars: { 'GC06': 3 } } },
 ];
