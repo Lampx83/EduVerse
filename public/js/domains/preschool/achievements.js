@@ -52,4 +52,28 @@ export const ACHIEVEMENTS = [
   // ── Hoàn thành toàn diện ──
   { id: 'all-round', icon: '🏅', title: 'Phát triển toàn diện',
     desc: 'Đạt 3 sao cả 5 lĩnh vực phát triển ở lớp Lá', trigger: { quizzesPassed: 15 } },
+
+  // ── Streak & Chuyên cần ──
+  { id: 'streak-7',  icon: '⭐', title: 'Bé chăm chỉ',
+    desc: 'Vào học 7 ngày liên tiếp', trigger: { streak: 7 } },
+  { id: 'streak-14', icon: '🌟', title: 'Siêu chăm học',
+    desc: 'Vào học 14 ngày liên tiếp', trigger: { streak: 14 } },
+  { id: 'streak-30', icon: '🔥', title: 'Bé kiên trì',
+    desc: 'Vào học 30 ngày liên tiếp', trigger: { streak: 30 } },
+
+  // ── Hoàn thành theo lớp (cả 5 lĩnh vực mỗi lớp) ──
+  { id: 'mam-complete', icon: '🌱', title: 'Lớp Mầm hoàn thành',
+    desc: 'Đạt ít nhất 2 sao cả 5 lĩnh vực lớp Mầm', trigger: { quizzesPassed: 5 } },
+  { id: 'choi-complete', icon: '🌼', title: 'Lớp Chồi hoàn thành',
+    desc: 'Đạt ít nhất 2 sao cả 5 lĩnh vực lớp Chồi', trigger: { quizzesPassed: 10 } },
+
+  // ── Combo đặc biệt — phát triển nhiều chiều ──
+  { id: 'body-mind', icon: '🧠', title: 'Thể chất + Nhận thức',
+    desc: 'Đạt 3 sao Thể chất và Nhận thức ở cùng lớp Lá',
+    trigger: { allModuleStars: [{ id: 'N3-TC', stars: 3 }, { id: 'N3', stars: 3 }] } },
+  { id: 'heart-voice', icon: '💝', title: 'Tình cảm + Ngôn ngữ',
+    desc: 'Đạt 3 sao Tình cảm–XH và Ngôn ngữ ở lớp Lá',
+    trigger: { allModuleStars: [{ id: 'N3-TX', stars: 3 }, { id: 'N3-NN', stars: 3 }] } },
+  { id: 'early-achiever', icon: '🥇', title: 'Xuất sắc sớm',
+    desc: 'Đạt 3 sao 3 lĩnh vực bất kỳ ở lớp Mầm', trigger: { quizzesPassed: 3 } },
 ];

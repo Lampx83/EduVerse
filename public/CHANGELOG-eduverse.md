@@ -4,6 +4,71 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-01 — Phiên cải tiến (30) · Trường Dược + Mầm non — LR01 · GC04 · GC06 + 9 Achievements Mầm non
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Phạm vi:** Trường Dược (`pharmacy`) — 3 modules (LR01, GC04, GC06); Trường Mầm non (`preschool`) — mở rộng gamification.
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện:
+1. **LR01** (Thư viện điện tử, zero-unlock) có `scenarioIds: []` — mọi sinh viên vào Trường Dược đều thấy module này đầu tiên nhưng không có nội dung.
+2. **GC04** (OTC Consultation Speed) và **GC06** (Herb ID Race) — 2 game cùng threshold 12 sao — đã unlock được nhưng "Coming soon".
+3. **Trường Mầm non** có 18 achievements mà thiếu streak dài, completion-per-lớp, và combo đa lĩnh vực.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/library-career-games.js` | Mở rộng | Thêm LR01_QUIZ (10 câu PubMed/MeSH/UpToDate), GC04_QUIZ (10 OTC tình huống, timed 600s), GC06_QUIZ (10 dược liệu VN, timed 600s); cập nhật bundle export |
+| `public/js/engine/_modules-data.js` | Sửa | Wire `scenarioIds` + `knowledgeQuiz` cho LR01, GC04, GC06 |
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | Thêm 3 achievements mới: `library-explorer`, `otc-speedster`, `herb-master` |
+| `public/js/domains/preschool/achievements.js` | Mở rộng | Thêm 9 achievements: 3 streak (7/14/30 ngày), 2 lớp-completion (Mầm/Chồi), 2 combo (body-mind, heart-voice), 1 early-achiever |
+
+### Chi tiết nội dung
+
+**LR01 — Thư viện điện tử (10 câu, difficulty 2):**
+PubMed/NCBI tổ chức, MeSH controlled vocabulary, Boolean operators (AND/OR/NOT), truncation & wildcard, UpToDate vs PubMed, Micromedex/Lexicomp, Cochrane Library, Filters RCT, liều thuốc CKD, an toàn thai kỳ (LactMed/Briggs)
+
+**GC04 — OTC Consultation Speed (10 câu, game, 600s):**
+Đau đầu — paracetamol OTC, thai kỳ + OTC cảm, đau dạ dày elderly red flags, liều ibuprofen nhi, decongestant nasal (rhinitis medicamentosa), pseudoephedrine + THA, kháng histamine 1st vs 2nd gen, antifungal topical, loperamide CCĐ, vitamin C UL safety
+
+**GC06 — Herb ID Race (10 câu, game, 600s):**
+Curcuma longa (nghệ/curcumin), Andrographis paniculata (xuyên tâm liên), Panax ginseng, Ginkgo biloba (ginkgolides/tương tác), Glycyrrhiza (cam thảo/pseudo-hyperaldosteronism), Echinacea, Camellia sinensis (trà/EGCG), Gymnema sylvestre (dây thìa canh), Asparagus racemosus (thiên môn đông), Bergamot extract (cholesterol)
+
+### Achievements mới
+
+**Trường Dược (3):**
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `library-explorer` | 🔍 | Nhà thám hiểm Thư viện | LR01 ≥ 2 sao |
+| `otc-speedster` | ⚡ | OTC Speed Counsellor | GC04 ≥ 3 sao |
+| `herb-master` | 🌿 | Herb Master | GC06 ≥ 3 sao |
+
+**Trường Mầm non (9):**
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `streak-7` | ⭐ | Bé chăm chỉ | streak: 7 |
+| `streak-14` | 🌟 | Siêu chăm học | streak: 14 |
+| `streak-30` | 🔥 | Bé kiên trì | streak: 30 |
+| `mam-complete` | 🌱 | Lớp Mầm hoàn thành | quizzesPassed: 5 |
+| `choi-complete` | 🌼 | Lớp Chồi hoàn thành | quizzesPassed: 10 |
+| `body-mind` | 🧠 | Thể chất + Nhận thức | N3-TC ≥ 3 sao + N3 ≥ 3 sao |
+| `heart-voice` | 💝 | Tình cảm + Ngôn ngữ | N3-TX ≥ 3 sao + N3-NN ≥ 3 sao |
+| `early-achiever` | 🥇 | Xuất sắc sớm | quizzesPassed: 3 |
+
+### Kết quả
+
+- Pharmacy: LR01 từ "Coming soon" → có quiz cho mọi sinh viên vào thư viện (zero-unlock)
+- Pharmacy: GC04 + GC06 → 2 game 12-sao giờ có nội dung
+- Preschool: 18 → 26 achievements (+8 streak/combo/completion)
+- `node --check` passed: 4/4 files
+
+---
+
 ## 2026-07-31 — Phiên cải tiến (29) · Trường Dược — Công nghiệp dược 4 modules (PS17–PS20)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; DB production không truy cập được trong môi trường sandbox).

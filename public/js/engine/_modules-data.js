@@ -117,7 +117,7 @@ export const MODULES = [
   //              CỤM 4 — LIBRARY & RESEARCH (12)
   // ══════════════════════════════════════════════════════════════
 
-  { category: 'library', id: 'LR01', title: 'Thư viện điện tử',                subject: 'library',       scenarioIds: [], minStarsToUnlock: 0, icon: '📚' },
+  { category: 'library', id: 'LR01', title: 'Thư viện điện tử',                subject: 'library',       scenarioIds: ['LR01-quiz-01'], knowledgeQuiz: 'LR01-quiz-01', minStarsToUnlock: 0, icon: '📚' },
   { category: 'library', id: 'LR02', title: 'Phòng Thống kê y học',            subject: 'stats',         scenarioIds: ['L5.6-thesis-stats'], minStarsToUnlock: 12, icon: '📊' },
   { category: 'library', id: 'LR03', title: 'NC định tính — Phỏng vấn, FG',    subject: 'qualitative',   scenarioIds: ['LR03-quiz-01'], knowledgeQuiz: 'LR03-quiz-01', minStarsToUnlock: 18, icon: '🗣️' },
   { category: 'library', id: 'LR04', title: 'NC định lượng — RCT, Cohort',     subject: 'quantitative',  scenarioIds: ['LR04-quiz-01'], knowledgeQuiz: 'LR04-quiz-01', minStarsToUnlock: 18, icon: '📈' },
@@ -152,9 +152,9 @@ export const MODULES = [
   { category: 'game', id: 'GC01', title: 'Race Xếp thuốc 1v1',                 subject: 'game',          scenarioIds: ['race'], minStarsToUnlock: 6, icon: '🎮' },
   { category: 'game', id: 'GC02', title: 'Time Attack ATC',                    subject: 'game',          scenarioIds: ['time-attack'], minStarsToUnlock: 6, icon: '⚡' },
   { category: 'game', id: 'GC03', title: 'Drug Interaction Speed Challenge',   subject: 'game',          scenarioIds: ['GC03-quiz-01'], knowledgeQuiz: 'GC03-quiz-01', minStarsToUnlock: 12, icon: '🔗' },
-  { category: 'game', id: 'GC04', title: 'OTC Consultation Speed',             subject: 'game',          scenarioIds: [], minStarsToUnlock: 12, icon: '💊' },
+  { category: 'game', id: 'GC04', title: 'OTC Consultation Speed',             subject: 'game',          scenarioIds: ['GC04-quiz-01'], knowledgeQuiz: 'GC04-quiz-01', minStarsToUnlock: 12, icon: '💊' },
   { category: 'game', id: 'GC05', title: 'Calculator Championship',            subject: 'game',          scenarioIds: ['GC05-quiz-01'], knowledgeQuiz: 'GC05-quiz-01', minStarsToUnlock: 12, icon: '🧮' },
-  { category: 'game', id: 'GC06', title: 'Herb ID Race',                       subject: 'game',          scenarioIds: [], minStarsToUnlock: 12, icon: '🌿' },
+  { category: 'game', id: 'GC06', title: 'Herb ID Race',                       subject: 'game',          scenarioIds: ['GC06-quiz-01'], knowledgeQuiz: 'GC06-quiz-01', minStarsToUnlock: 12, icon: '🌿' },
   { category: 'game', id: 'GC07', title: 'OSCE Championship',                  subject: 'game',          scenarioIds: [], minStarsToUnlock: 30, icon: '🏆' },
   { category: 'game', id: 'GC08', title: 'Metaverse — Phòng học chung',        subject: 'game',          scenarioIds: ['metaverse'], minStarsToUnlock: 6, icon: '🌐' },
   { category: 'game', id: 'GC09', title: 'Pharmacy Quiz Bowl (đội)',           subject: 'game',          scenarioIds: [], minStarsToUnlock: 18, icon: '🧠' },
