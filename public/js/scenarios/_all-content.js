@@ -35,6 +35,7 @@ import { SKILL_QUIZZES } from './skill-quizzes.js';
 import { PHARMACY_COMMUNITY_SCENARIOS } from './pharmacy-community.js';
 import { PHARMACY_INDUSTRY_SCENARIOS } from './pharmacy-industry.js';
 import { LIBRARY_CAREER_GAMES_SCENARIOS } from './library-career-games.js';
+import { PHARMACY_ADVANCED_SCENARIOS } from './pharmacy-advanced.js';
 import { BAO_CHE_LAB_SCENARIOS } from './bao-che-labs.js';
 import { PRIMARY_MATH_SCENARIOS } from './primary-math.js';
 import { PRIMARY_LOP2_SCENARIOS } from './lop2/_index.js';
@@ -89,6 +90,7 @@ export const ALL_SCENARIOS = {
   ...PHARMACY_COMMUNITY_SCENARIOS,
   ...PHARMACY_INDUSTRY_SCENARIOS,
   ...LIBRARY_CAREER_GAMES_SCENARIOS,
+  ...PHARMACY_ADVANCED_SCENARIOS,
   ...BAO_CHE_LAB_SCENARIOS,
   ...PRIMARY_MATH_SCENARIOS,
   ...PRIMARY_LOP1_SCENARIOS,
