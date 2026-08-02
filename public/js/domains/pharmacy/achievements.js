@@ -278,4 +278,25 @@ export const ACHIEVEMENTS = [
   { id: 'herb-master',       icon: '🌿', title: 'Herb Master',
     desc: 'Hoàn thành GC06 — Herb ID Race: nhận dạng dược liệu Việt Nam',
     trigger: { moduleStars: { 'GC06': 3 } } },
+
+  // ── Thư viện nâng cao & Career mới (LR11, LR12, CP04, CP05, CP08) ──
+  { id: 'ai-pharmacist',     icon: '🤖', title: 'AI Pharmacist',
+    desc: 'Hoàn thành LR11 — AI/ML trong Dược: machine learning, NLP, precision medicine',
+    trigger: { moduleStars: { 'LR11': 2 } } },
+
+  { id: 'protocol-writer',   icon: '📋', title: 'Protocol Writer',
+    desc: 'Hoàn thành LR12 — Viết đề cương nghiên cứu: SMART objectives, cỡ mẫu & đạo đức',
+    trigger: { moduleStars: { 'LR12': 2 } } },
+
+  { id: 'academic-pharmacist', icon: '🎓', title: 'Nhà khoa học Dược',
+    desc: 'Hoàn thành CP04 — Sự nghiệp Học thuật: giảng viên, NCS, publish & nghiên cứu',
+    trigger: { moduleStars: { 'CP04': 3 } } },
+
+  { id: 'military-pharmacist', icon: '⚔️', title: 'Dược sĩ Quân y',
+    desc: 'Hoàn thành CP05 — Quân y: dược phẩm dã chiến, TCCC & gìn giữ hoà bình LHQ',
+    trigger: { moduleStars: { 'CP05': 2 } } },
+
+  { id: 'tcm-specialist',    icon: '🌿', title: 'Chuyên gia Đông dược',
+    desc: 'Hoàn thành CP08 — Y học cổ truyền + Đông dược: dược liệu, pháp lý & tích hợp',
+    trigger: { moduleStars: { 'CP08': 3 } } },
 ];

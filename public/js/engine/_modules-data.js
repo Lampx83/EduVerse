@@ -127,8 +127,8 @@ export const MODULES = [
   { category: 'library', id: 'LR08', title: 'Tra cứu thuốc — Lexicomp/UpToDate', subject: 'drug-ref',    scenarioIds: ['LR08-quiz-01'], knowledgeQuiz: 'LR08-quiz-01', minStarsToUnlock: 12, icon: '🔎' },
   { category: 'library', id: 'LR09', title: 'EBM — Evidence-based Medicine',    subject: 'ebm',          scenarioIds: ['LR09-quiz-01'], knowledgeQuiz: 'LR09-quiz-01', minStarsToUnlock: 18, icon: '🎯' },
   { category: 'library', id: 'LR10', title: 'Pharmacoeconomics',                subject: 'pharmacoecon', scenarioIds: ['LR10-quiz-01'], knowledgeQuiz: 'LR10-quiz-01', minStarsToUnlock: 24, icon: '💵' },
-  { category: 'library', id: 'LR11', title: 'AI/ML trong Dược',                 subject: 'pharma-ai',    scenarioIds: [], minStarsToUnlock: 18, icon: '🤖' },
-  { category: 'library', id: 'LR12', title: 'Viết đề cương nghiên cứu',         subject: 'protocol',     scenarioIds: [], minStarsToUnlock: 18, icon: '📋' },
+  { category: 'library', id: 'LR11', title: 'AI/ML trong Dược',                 subject: 'pharma-ai',    scenarioIds: ['LR11-quiz-01'], knowledgeQuiz: 'LR11-quiz-01', minStarsToUnlock: 18, icon: '🤖' },
+  { category: 'library', id: 'LR12', title: 'Viết đề cương nghiên cứu',         subject: 'protocol',     scenarioIds: ['LR12-quiz-01'], knowledgeQuiz: 'LR12-quiz-01', minStarsToUnlock: 18, icon: '📋' },
 
   // ══════════════════════════════════════════════════════════════
   //              CỤM 5 — CAREER PATHS (10)
@@ -137,11 +137,11 @@ export const MODULES = [
   { category: 'career', id: 'CP01', title: 'Sự nghiệp Dược lâm sàng BV',       subject: 'career',        scenarioIds: ['CP01-quiz-01'], knowledgeQuiz: 'CP01-quiz-01', minStarsToUnlock: 30, icon: '🏥' },
   { category: 'career', id: 'CP02', title: 'Sự nghiệp Nhà thuốc cộng đồng',    subject: 'career',        scenarioIds: ['CP02-quiz-01'], knowledgeQuiz: 'CP02-quiz-01', minStarsToUnlock: 24, icon: '🏪' },
   { category: 'career', id: 'CP03', title: 'Sự nghiệp Công nghiệp dược',       subject: 'career',        scenarioIds: ['CP03-quiz-01'], knowledgeQuiz: 'CP03-quiz-01', minStarsToUnlock: 24, icon: '🏭' },
-  { category: 'career', id: 'CP04', title: 'Sự nghiệp Học thuật — Giảng viên', subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '🎓' },
-  { category: 'career', id: 'CP05', title: 'Quân y — Dược quân đội',           subject: 'career',        scenarioIds: [], minStarsToUnlock: 24, icon: '⚔️' },
+  { category: 'career', id: 'CP04', title: 'Sự nghiệp Học thuật — Giảng viên', subject: 'career',        scenarioIds: ['CP04-quiz-01'], knowledgeQuiz: 'CP04-quiz-01', minStarsToUnlock: 30, icon: '🎓' },
+  { category: 'career', id: 'CP05', title: 'Quân y — Dược quân đội',           subject: 'career',        scenarioIds: ['CP05-quiz-01'], knowledgeQuiz: 'CP05-quiz-01', minStarsToUnlock: 24, icon: '⚔️' },
   { category: 'career', id: 'CP06', title: 'Cảnh giác dược — Pharmacovigilance', subject: 'career',      scenarioIds: ['CP06-quiz-01'], knowledgeQuiz: 'CP06-quiz-01', minStarsToUnlock: 30, icon: '⚠️' },
   { category: 'career', id: 'CP07', title: 'Regulatory Affairs — DAV',         subject: 'career',        scenarioIds: ['CP07-quiz-01'], knowledgeQuiz: 'CP07-quiz-01', minStarsToUnlock: 30, icon: '📑' },
-  { category: 'career', id: 'CP08', title: 'Y học cổ truyền + Đông dược',      subject: 'career',        scenarioIds: [], minStarsToUnlock: 24, icon: '🌿' },
+  { category: 'career', id: 'CP08', title: 'Y học cổ truyền + Đông dược',      subject: 'career',        scenarioIds: ['CP08-quiz-01'], knowledgeQuiz: 'CP08-quiz-01', minStarsToUnlock: 24, icon: '🌿' },
   { category: 'career', id: 'CP09', title: 'Khởi nghiệp dược — Startup',       subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '🚀' },
   { category: 'career', id: 'CP10', title: 'Tiếp tục đào tạo — CKII, Tiến sĩ', subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '📜' },
 

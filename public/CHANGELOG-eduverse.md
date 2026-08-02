@@ -4,6 +4,59 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-02 — Phiên cải tiến (31) · Trường Dược — LR11 · LR12 · CP04 · CP05 · CP08 + 5 Achievements
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Phạm vi:** Trường Dược (`pharmacy`) — 5 modules còn thiếu quiz, 50 câu hỏi chuyên sâu.
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **5 modules Trường Dược** đang có `scenarioIds: []` trong hai cụm Library & Research và Career Paths:
+- **LR11** (AI/ML trong Dược): công nghệ AI mới nhất trong ngành dược, sinh viên thiếu định hướng
+- **LR12** (Viết đề cương nghiên cứu): kỹ năng thiết yếu cho NCKH nhưng chưa có nội dung
+- **CP04** (Sự nghiệp Học thuật — Giảng viên): lộ trình NCS/GV dược chưa được phủ sóng
+- **CP05** (Quân y — Dược quân đội): hướng nghề đặc thù chưa có quiz
+- **CP08** (Y học cổ truyền + Đông dược): thị trường đang tăng trưởng mạnh, thiếu nội dung học thuật
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/pharmacy-advanced.js` | Tạo mới | 5 quiz scenarios LR11/LR12/CP04/CP05/CP08 (50 câu hỏi chuyên sâu) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `PHARMACY_ADVANCED_SCENARIOS` |
+| `public/js/engine/_modules-data.js` | Sửa | Wire `scenarioIds` + `knowledgeQuiz` cho LR11, LR12, CP04, CP05, CP08 |
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | Thêm 5 achievements mới (ai-pharmacist, protocol-writer, academic-pharmacist, military-pharmacist, tcm-specialist) |
+
+### Chi tiết nội dung (50 câu hỏi)
+
+| Module | ID Scenario | Chủ đề | Câu |
+|--------|------------|--------|-----|
+| LR11 — AI/ML trong Dược | `LR11-quiz-01` | AlphaFold2, NLP/EHR mining, ADME prediction ML, pharmacovigilance AI, precision medicine/PGx, XAI/SHAP, AI barrier tại VN, FDA SaMD, DS cần kỹ năng AI gì | 10 |
+| LR12 — Viết đề cương NC | `LR12-quiz-01` | SMART objectives, literature review, SAP thống kê, cỡ mẫu cross-sectional, inclusion/exclusion criteria, đạo đức IRB, budget/ngân sách, Gantt chart, protocol vs grant application | 10 |
+| CP04 — Sự nghiệp Học thuật | `CP04-quiz-01` | Yêu cầu bằng cấp GV, lộ trình NCS→TS→PGS→GS, nguồn thu nhập học thuật, active learning (TBL/PBL), h-index/IF, work-life balance, mentoring, publish strategy, Nafosted/học bổng | 10 |
+| CP05 — Quân y | `CP05-quiz-01` | Cục Quân y/BQP, vai trò DS quân đội, chuỗi cung ứng dã chiến, Combat Casualty Care drugs, HVQY, ưu đãi quân đội, thiên tai cứu nạn, UN PKO pharmacy, NC quân y | 10 |
+| CP08 — YHCT + Đông dược | `CP08-quiz-01` | Pháp lý YHCT VN, DĐVN VI đông dược, artemisinin Nobel, herb-drug interactions, chuẩn hóa dược liệu/GACP, vai trò DS trong BV YHCT, thách thức RCT thảo dược, bào chế YHCT, thị trường dược liệu, y học tích hợp | 10 |
+
+### Achievements mới (5)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `ai-pharmacist` | 🤖 | AI Pharmacist | LR11 ≥ 2 sao |
+| `protocol-writer` | 📋 | Protocol Writer | LR12 ≥ 2 sao |
+| `academic-pharmacist` | 🎓 | Nhà khoa học Dược | CP04 ≥ 3 sao |
+| `military-pharmacist` | ⚔️ | Dược sĩ Quân y | CP05 ≥ 2 sao |
+| `tcm-specialist` | 🌿 | Chuyên gia Đông dược | CP08 ≥ 3 sao |
+
+### Kết quả
+
+- Pharmacy Library: LR11 + LR12 → 2 modules AI/Research không còn "Coming soon"
+- Pharmacy Career: CP04 + CP05 + CP08 → 3 hướng nghề đặc thù có nội dung học thuật
+- 50 câu hỏi chuyên sâu, có nguồn dẫn (AlphaFold2/Nature 2021, Luật GDĐH 2018, TT 38/2021 GMP-TCM, DĐVN VI, WHO Traditional Medicine Strategy 2019-2025, Nobel 2015 Artemisinin, FDA SaMD Action Plan 2021)
+- `node --check` passed: 4/4 files
+
+---
+
 ## 2026-08-01 — Phiên cải tiến (30) · Trường Dược + Mầm non — LR01 · GC04 · GC06 + 9 Achievements Mầm non
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
