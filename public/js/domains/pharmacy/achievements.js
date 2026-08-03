@@ -299,4 +299,25 @@ export const ACHIEVEMENTS = [
   { id: 'tcm-specialist',    icon: '🌿', title: 'Chuyên gia Đông dược',
     desc: 'Hoàn thành CP08 — Y học cổ truyền + Đông dược: dược liệu, pháp lý & tích hợp',
     trigger: { moduleStars: { 'CP08': 3 } } },
+
+  // ── Career & Games mới (CP09, CP10, GC07, GC09, GC10) ──
+  { id: 'pharma-founder',    icon: '🚀', title: 'Pharma Founder',
+    desc: 'Hoàn thành CP09 — Khởi nghiệp dược: startup healthtech, vốn, pháp lý & pitch deck',
+    trigger: { moduleStars: { 'CP09': 2 } } },
+
+  { id: 'phd-pharmacist',    icon: '📜', title: 'Nhà Dược học Tiến sĩ',
+    desc: 'Hoàn thành CP10 — Tiếp tục đào tạo: CKII, NCS, postdoc & sự nghiệp học thuật',
+    trigger: { moduleStars: { 'CP10': 2 } } },
+
+  { id: 'osce-champion',     icon: '🏆', title: 'OSCE Champion',
+    desc: 'Hoàn thành GC07 — OSCE Championship: thi OSCE đỉnh cao, rubrics & bệnh nhân chuẩn',
+    trigger: { moduleStars: { 'GC07': 3 } } },
+
+  { id: 'quiz-bowl-mvp',     icon: '🧠', title: 'Quiz Bowl MVP',
+    desc: 'Hoàn thành GC09 — Pharmacy Quiz Bowl: thi đấu nhanh pharmacology & medication safety',
+    trigger: { moduleStars: { 'GC09': 3 } } },
+
+  { id: 'conference-speaker', icon: '🎤', title: 'Conference Speaker',
+    desc: 'Hoàn thành GC10 — Hội nghị Dược ảo: trình bày khoa học, CPD & networking quốc tế',
+    trigger: { moduleStars: { 'GC10': 2 } } },
 ];

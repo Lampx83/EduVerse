@@ -4,6 +4,59 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-03 — Phiên cải tiến (32) · Trường Dược — CP09 · CP10 · GC07 · GC09 · GC10 + 5 Achievements
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Phạm vi:** Trường Dược (`pharmacy`) — 5 modules cuối còn thiếu quiz (2 career paths + 3 games), 50 câu hỏi chuyên sâu.
+
+### Vấn đề phát hiện
+
+Quét codebase phát hiện **5 modules Trường Dược** cuối cùng còn có `scenarioIds: []`:
+- **CP09** (Khởi nghiệp dược — Startup): healthtech startup, vốn VC, pháp lý y tế — career path chưa có nội dung
+- **CP10** (Tiếp tục đào tạo — CKII, Tiến sĩ): lộ trình học thuật, NCS, postdoc — thiếu quiz
+- **GC07** (OSCE Championship): game OSCE cấp độ cao, yêu cầu 30 sao — chưa có nội dung
+- **GC09** (Pharmacy Quiz Bowl đội): game thi đấu nhanh pharmacology — chưa có nội dung
+- **GC10** (Hội nghị Dược ảo — Hằng năm): game hội nghị khoa học, CPD — chưa có nội dung
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/pharmacy-career-games.js` | Tạo mới | 5 quiz scenarios CP09/CP10/GC07/GC09/GC10 (50 câu hỏi) |
+| `public/js/scenarios/_all-content.js` | Sửa | Import + spread `PHARMACY_CAREER_GAMES_SCENARIOS` |
+| `public/js/engine/_modules-data.js` | Sửa | Wire `scenarioIds` + `knowledgeQuiz` cho CP09, CP10, GC07, GC09, GC10 |
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | Thêm 5 achievements mới (pharma-founder, phd-pharmacist, osce-champion, quiz-bowl-mvp, conference-speaker) |
+
+### Chi tiết nội dung (50 câu hỏi)
+
+| Module | ID Scenario | Chủ đề | Câu |
+|--------|------------|--------|-----|
+| CP09 — Khởi nghiệp dược | `CP09-quiz-01` | Telemedicine pháp lý VN, FDA 510(k)/PMA, TAM/SAM/SOM, Seed round/angel, MVP, LTV/CAC, AI SaMD rủi ro, Burn Rate/Runway, hệ sinh thái HealthTech VN, Pitch deck 10 slides | 10 |
+| CP10 — CKII/Tiến sĩ | `CP10-quiz-01` | CKII Dược 2 năm QĐ 4056, NCS TT 02/2022 B2 CEFR, công bố quốc tế ISI/Scopus, NAFOSTED, PhD by thesis vs publication, Hội đồng bảo vệ 7 thành viên, Postdoc career track, Tiêu chí PGS HĐGSNN, Grant writing, học bổng Fulbright/MEXT/DAAD | 10 |
+| GC07 — OSCE Championship | `GC07-quiz-01` | OSCE vs thi viết, medication counselling ICE, OSCE blueprinting, liều amoxicillin nhi, closed-loop communication, Standardised Patient (SP), feedback Pendleton's Rules, pass mark Angoff method, PCNE station timing 5-10 phút, prescription review warfarin INR 3.8 | 10 |
+| GC09 — Pharmacy Quiz Bowl | `GC09-quiz-01` | INN vs brand (atorvastatin/Lipitor), 5 Rights medication, rifampicin CYP3A4 induction, ATC code captopril C09AA01, LASA drugs hydroxyzine/hydralazine, sildenafil+nitrates CCĐ, high-alert medications PINCH, β1-blockade cơ chế, FDA PLLR 2015 thay A-X, NAC antidote paracetamol | 10 |
+| GC10 — Hội nghị Dược ảo | `GC10-quiz-01` | ASHP MCM hội nghị lớn nhất, abstract IMRAD 150-300 từ, poster vs oral, CPD vs CME/CPE, conflict of interest ICMJE, Journal Club EBM, Q&A Q&A strategy, networking elevator pitch, symposium/workshop/plenary, Hội nghị KH Dược VN (VIPA) | 10 |
+
+### Achievements mới (5)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `pharma-founder` | 🚀 | Pharma Founder | CP09 ≥ 2 sao |
+| `phd-pharmacist` | 📜 | Nhà Dược học Tiến sĩ | CP10 ≥ 2 sao |
+| `osce-champion` | 🏆 | OSCE Champion | GC07 ≥ 3 sao |
+| `quiz-bowl-mvp` | 🧠 | Quiz Bowl MVP | GC09 ≥ 3 sao |
+| `conference-speaker` | 🎤 | Conference Speaker | GC10 ≥ 2 sao |
+
+### Kết quả
+
+- Pharmacy Career: CP09 + CP10 → 2 career paths cuối cùng có nội dung (toàn bộ CP01–CP10 hoàn chỉnh)
+- Pharmacy Games: GC07 + GC09 + GC10 → 3 games nâng cao có nội dung (GC01–GC10, trừ GC08 metaverse)
+- 50 câu hỏi chuyên sâu, có nguồn dẫn (FDA 510(k)/PMA/SaMD, ICH, TT 02/2022/TT-BGDĐT, QĐ 4056/QĐ-BYT, ISMP High-Alert, PCNE OSCE Guidelines, FIP CPD Framework, ICMJE, WHO ATC)
+- `node --check` passed: 4/4 files
+
+---
+
 ## 2026-08-02 — Phiên cải tiến (31) · Trường Dược — LR11 · LR12 · CP04 · CP05 · CP08 + 5 Achievements
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
