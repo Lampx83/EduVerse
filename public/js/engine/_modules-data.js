@@ -142,8 +142,8 @@ export const MODULES = [
   { category: 'career', id: 'CP06', title: 'Cảnh giác dược — Pharmacovigilance', subject: 'career',      scenarioIds: ['CP06-quiz-01'], knowledgeQuiz: 'CP06-quiz-01', minStarsToUnlock: 30, icon: '⚠️' },
   { category: 'career', id: 'CP07', title: 'Regulatory Affairs — DAV',         subject: 'career',        scenarioIds: ['CP07-quiz-01'], knowledgeQuiz: 'CP07-quiz-01', minStarsToUnlock: 30, icon: '📑' },
   { category: 'career', id: 'CP08', title: 'Y học cổ truyền + Đông dược',      subject: 'career',        scenarioIds: ['CP08-quiz-01'], knowledgeQuiz: 'CP08-quiz-01', minStarsToUnlock: 24, icon: '🌿' },
-  { category: 'career', id: 'CP09', title: 'Khởi nghiệp dược — Startup',       subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '🚀' },
-  { category: 'career', id: 'CP10', title: 'Tiếp tục đào tạo — CKII, Tiến sĩ', subject: 'career',        scenarioIds: [], minStarsToUnlock: 30, icon: '📜' },
+  { category: 'career', id: 'CP09', title: 'Khởi nghiệp dược — Startup',       subject: 'career',        scenarioIds: ['CP09-quiz-01'], knowledgeQuiz: 'CP09-quiz-01', minStarsToUnlock: 30, icon: '🚀' },
+  { category: 'career', id: 'CP10', title: 'Tiếp tục đào tạo — CKII, Tiến sĩ', subject: 'career',        scenarioIds: ['CP10-quiz-01'], knowledgeQuiz: 'CP10-quiz-01', minStarsToUnlock: 30, icon: '📜' },
 
   // ══════════════════════════════════════════════════════════════
   //              CỤM 6 — GAMES & COMPETITIONS (10)
@@ -155,8 +155,8 @@ export const MODULES = [
   { category: 'game', id: 'GC04', title: 'OTC Consultation Speed',             subject: 'game',          scenarioIds: ['GC04-quiz-01'], knowledgeQuiz: 'GC04-quiz-01', minStarsToUnlock: 12, icon: '💊' },
   { category: 'game', id: 'GC05', title: 'Calculator Championship',            subject: 'game',          scenarioIds: ['GC05-quiz-01'], knowledgeQuiz: 'GC05-quiz-01', minStarsToUnlock: 12, icon: '🧮' },
   { category: 'game', id: 'GC06', title: 'Herb ID Race',                       subject: 'game',          scenarioIds: ['GC06-quiz-01'], knowledgeQuiz: 'GC06-quiz-01', minStarsToUnlock: 12, icon: '🌿' },
-  { category: 'game', id: 'GC07', title: 'OSCE Championship',                  subject: 'game',          scenarioIds: [], minStarsToUnlock: 30, icon: '🏆' },
+  { category: 'game', id: 'GC07', title: 'OSCE Championship',                  subject: 'game',          scenarioIds: ['GC07-quiz-01'], knowledgeQuiz: 'GC07-quiz-01', minStarsToUnlock: 30, icon: '🏆' },
   { category: 'game', id: 'GC08', title: 'Metaverse — Phòng học chung',        subject: 'game',          scenarioIds: ['metaverse'], minStarsToUnlock: 6, icon: '🌐' },
-  { category: 'game', id: 'GC09', title: 'Pharmacy Quiz Bowl (đội)',           subject: 'game',          scenarioIds: [], minStarsToUnlock: 18, icon: '🧠' },
-  { category: 'game', id: 'GC10', title: 'Hội nghị Dược ảo — Hằng năm',        subject: 'game',          scenarioIds: [], minStarsToUnlock: 24, icon: '🎤' },
+  { category: 'game', id: 'GC09', title: 'Pharmacy Quiz Bowl (đội)',           subject: 'game',          scenarioIds: ['GC09-quiz-01'], knowledgeQuiz: 'GC09-quiz-01', minStarsToUnlock: 18, icon: '🧠' },
+  { category: 'game', id: 'GC10', title: 'Hội nghị Dược ảo — Hằng năm',        subject: 'game',          scenarioIds: ['GC10-quiz-01'], knowledgeQuiz: 'GC10-quiz-01', minStarsToUnlock: 24, icon: '🎤' },
 ];
