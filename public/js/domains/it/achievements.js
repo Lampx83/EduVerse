@@ -11,6 +11,12 @@ export const ACHIEVEMENTS = [
   { id: 'streak-5',    icon: '🔥', title: 'Cháy 5 ngày',
     desc: 'Streak 5 ngày liên tiếp',
     trigger: { streak: 5 } },
+  { id: 'streak-14',   icon: '⚡', title: 'Hai tuần lập trình',
+    desc: 'Streak 14 ngày liên tiếp',
+    trigger: { streak: 14 } },
+  { id: 'streak-30',   icon: '🌙', title: 'Tháng vàng CNTT',
+    desc: 'Streak 30 ngày liên tiếp',
+    trigger: { streak: 30 } },
 
   // ── Year 1 Achievements (mới) ──
   { id: 'python-starter', icon: '🐍', title: 'Pythonista',
@@ -125,6 +131,12 @@ export const ACHIEVEMENTS = [
   { id: 'star-30',     icon: '🌟', title: '30 sao đầu',
     desc: '30 sao tích luỹ',
     trigger: { totalStars: 30 } },
+  { id: 'star-60',     icon: '💫', title: 'Sao CNTT',
+    desc: '60 sao tích luỹ',
+    trigger: { totalStars: 60 } },
+  { id: 'star-90',     icon: '🏅', title: 'Huyền thoại CNTT',
+    desc: '90 sao tích luỹ',
+    trigger: { totalStars: 90 } },
 
   // ── Game Achievements ──
   { id: 'code-racer',   icon: '⚡', title: 'Code Racer',
@@ -175,4 +187,7 @@ export const ACHIEVEMENTS = [
   { id: 'it-career-explorer', icon: '🧭', title: 'IT Career Explorer',
     desc: 'Khám phá ≥ 3 lộ trình nghề nghiệp CNTT (IC01–IC06, mỗi cái ≥ 2 sao)',
     trigger: { moduleStars: { 'IC01': 2, 'IC02': 2, 'IC03': 2 } } },
+  { id: 'it-all-career', icon: '🚀', title: 'All-round IT Professional',
+    desc: 'Hoàn thành cả 6 lộ trình nghề nghiệp CNTT (IC01–IC06, mỗi cái ≥ 2 sao)',
+    trigger: { moduleStars: { 'IC01': 2, 'IC02': 2, 'IC03': 2, 'IC04': 2, 'IC05': 2, 'IC06': 2 } } },
 ];

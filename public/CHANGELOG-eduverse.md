@@ -4,6 +4,76 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-04 — Phiên cải tiến (33) · Achievements — IT · Kinh tế · THPT · THCS
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có yêu cầu người dùng).
+
+**Phạm vi:** Hệ thống achievements 4 domain — bổ sung các mốc streak và sao còn thiếu.
+
+### Vấn đề phát hiện
+
+Quét hệ thống achievements toàn platform phát hiện **các mốc streak & sao bị thiếu** tại 4 domain:
+- **IT**: chỉ có `streak-5`, thiếu `streak-14`, `streak-30`; chỉ có `star-30`, thiếu `star-60`, `star-90`; career combo thiếu `it-all-career` (6 lộ trình)
+- **Kinh tế**: chỉ có `streak-5`, thiếu `streak-14`, `streak-30`; chỉ có `star-30`, thiếu `star-60`, `star-90`
+- **THPT**: có `streak-5` + `streak-14`, thiếu `streak-30`; có `star-20` + `star-50`, thiếu `star-100`; thiếu combo KHXH, Ngữ văn 10-12, Tiếng Anh 10-12
+- **THCS**: có `streak-5` + `streak-10`, thiếu `streak-14`, `streak-30`; có `star-20` + `star-50`, thiếu `star-100`
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/it/achievements.js` | Mở rộng | +5 achievements: streak-14, streak-30, star-60, star-90, it-all-career |
+| `public/js/domains/economics/achievements.js` | Mở rộng | +4 achievements: streak-14, streak-30, star-60, star-90 |
+| `public/js/domains/highschool/achievements.js` | Mở rộng | +5 achievements: streak-30, star-100, khxh-triple, all-hs-nv, all-hs-ta |
+| `public/js/domains/secondary/achievements.js` | Mở rộng | +3 achievements: streak-14, streak-30, star-100 |
+
+### Achievements mới (17 tổng)
+
+#### IT (5 mới)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `streak-14` | ⚡ | Hai tuần lập trình | streak ≥ 14 |
+| `streak-30` | 🌙 | Tháng vàng CNTT | streak ≥ 30 |
+| `star-60` | 💫 | Sao CNTT | totalStars ≥ 60 |
+| `star-90` | 🏅 | Huyền thoại CNTT | totalStars ≥ 90 |
+| `it-all-career` | 🚀 | All-round IT Professional | IC01–IC06 mỗi cái ≥ 2 sao |
+
+#### Kinh tế (4 mới)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `streak-14` | ⚡ | Hai tuần kinh tế | streak ≥ 14 |
+| `streak-30` | 🌙 | Tháng vàng Kinh tế | streak ≥ 30 |
+| `star-60` | 💫 | Sao Kinh tế | totalStars ≥ 60 |
+| `star-90` | 🏅 | Huyền thoại Kinh tế | totalStars ≥ 90 |
+
+#### THPT (5 mới)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `streak-30` | 🌙 | Tháng vàng THPT | streak ≥ 30 |
+| `star-100` | 🏆 | Huyền thoại THPT | totalStars ≥ 100 |
+| `khxh-triple` | 🗺️ | Tam giác KHXH | H10SU + H10DIA ≥ 1 sao |
+| `all-hs-nv` | 📜 | Thủ khoa Ngữ văn THPT | H10NV + H11NV + H12NV ≥ 1 sao |
+| `all-hs-ta` | 🌍 | Thủ khoa Tiếng Anh THPT | H10TA + H11TA + H12TA ≥ 1 sao |
+
+#### THCS (3 mới)
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `streak-14` | 💥 | Hai tuần bứt phá | streak ≥ 14 |
+| `streak-30` | 🌙 | Tháng vàng THCS | streak ≥ 30 |
+| `star-100` | 🏆 | Huyền thoại THCS | totalStars ≥ 100 |
+
+### Kết quả
+
+- 17 achievements mới thuần additive (không sửa code hiện có, chỉ bổ sung entries)
+- Đảm bảo tính liên tục của chuỗi milestone: 5→14→30 ngày streak và 20→30→50→60→90→100 sao
+- `node --check` passed: 4/4 files
+
+---
+
 ## 2026-08-03 — Phiên cải tiến (32) · Trường Dược — CP09 · CP10 · GC07 · GC09 · GC10 + 5 Achievements
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
