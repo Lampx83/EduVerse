@@ -10,6 +10,10 @@ export const ACHIEVEMENTS = [
     desc: 'Vào học 5 ngày liên tiếp', trigger: { streak: 5 } },
   { id: 'streak-10', icon: '⚡', title: 'Máy học liên tục',
     desc: 'Vào học 10 ngày liên tiếp', trigger: { streak: 10 } },
+  { id: 'streak-14', icon: '💥', title: 'Hai tuần bứt phá',
+    desc: 'Vào học 14 ngày liên tiếp', trigger: { streak: 14 } },
+  { id: 'streak-30', icon: '🌙', title: 'Tháng vàng THCS',
+    desc: 'Vào học 30 ngày liên tiếp', trigger: { streak: 30 } },
 
   // ── Toán (hệ 36-tuần) ──
   { id: 'toan6-weekly', icon: '🔢', title: 'Thống trị Toán 6',
@@ -134,6 +138,8 @@ export const ACHIEVEMENTS = [
     desc: 'Tích luỹ 20 sao', trigger: { totalStars: 20 } },
   { id: 'star-50', icon: '💫', title: 'Ngôi sao THCS',
     desc: 'Tích luỹ 50 sao', trigger: { totalStars: 50 } },
+  { id: 'star-100', icon: '🏆', title: 'Huyền thoại THCS',
+    desc: 'Tích luỹ 100 sao', trigger: { totalStars: 100 } },
 
   // ── Tốt nghiệp lớp ──
   { id: 'year1-sec-complete', icon: '🥇', title: 'Lên lớp 7 tự tin!',

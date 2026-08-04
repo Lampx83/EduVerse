@@ -12,6 +12,8 @@ export const ACHIEVEMENTS = [
     desc: 'Vào học 5 ngày liên tiếp', trigger: { streak: 5 } },
   { id: 'streak-14', icon: '⚡', title: 'Hai tuần bứt phá',
     desc: 'Vào học 14 ngày liên tiếp', trigger: { streak: 14 } },
+  { id: 'streak-30', icon: '🌙', title: 'Tháng vàng THPT',
+    desc: 'Vào học 30 ngày liên tiếp', trigger: { streak: 30 } },
 
   // ── Toán ──
   { id: 'toan10', icon: '🔟', title: 'Vững nền Toán 10',
@@ -119,6 +121,8 @@ export const ACHIEVEMENTS = [
     desc: 'Tích luỹ 20 sao', trigger: { totalStars: 20 } },
   { id: 'star-50', icon: '💫', title: 'Ngôi sao THPT',
     desc: 'Tích luỹ 50 sao', trigger: { totalStars: 50 } },
+  { id: 'star-100', icon: '🏆', title: 'Huyền thoại THPT',
+    desc: 'Tích luỹ 100 sao', trigger: { totalStars: 100 } },
 
   // ── Tốt nghiệp lớp ──
   { id: 'year1-hs-complete', icon: '🥇', title: 'Vượt qua lớp 10!',
@@ -132,4 +136,13 @@ export const ACHIEVEMENTS = [
   { id: 'all-hs-math', icon: '🏆', title: 'Thủ khoa Toán THPT',
     desc: 'Đạt sao Toán cả 3 lớp 10–12',
     trigger: { moduleStars: { 'H10TOAN': 1, 'H11TOAN': 1, 'H12TOAN': 1 } } },
+  { id: 'khxh-triple', icon: '🗺️', title: 'Tam giác KHXH',
+    desc: 'Đạt sao Lịch sử + Địa lý lớp 10',
+    trigger: { moduleStars: { 'H10SU': 1, 'H10DIA': 1 } } },
+  { id: 'all-hs-nv', icon: '📜', title: 'Thủ khoa Ngữ văn THPT',
+    desc: 'Đạt sao Ngữ văn cả 3 lớp 10–12',
+    trigger: { moduleStars: { 'H10NV': 1, 'H11NV': 1, 'H12NV': 1 } } },
+  { id: 'all-hs-ta', icon: '🌍', title: 'Thủ khoa Tiếng Anh THPT',
+    desc: 'Đạt sao Tiếng Anh cả 3 lớp 10–12',
+    trigger: { moduleStars: { 'H10TA': 1, 'H11TA': 1, 'H12TA': 1 } } },
 ];
