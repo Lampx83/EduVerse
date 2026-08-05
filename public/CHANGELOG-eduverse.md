@@ -4,6 +4,49 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-05 — Phiên cải tiến (33) · Trường CNTT — I4.5 Khoá luận CNTT (10 câu hỏi phương pháp nghiên cứu)
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Phạm vi:** Trường CNTT (`it`) — module I4.5 (Khoá luận CNTT), module cuối cùng còn `placeholder: true` trong toàn hệ thống.
+
+### Vấn đề phát hiện
+
+Quét toàn bộ codebase xác nhận **I4.5 — Khoá luận CNTT** là module duy nhất còn thiếu quiz content thực sự (tất cả các trường khác — Dược, Kinh tế, Mầm non, Tiểu học, THCS, THPT, Kinh tế — đã đầy đủ nội dung). Module này có `placeholder: true` và `scenarioIds: []` dù achievement `thesis-it` đã được tạo sẵn, sinh viên đạt đủ 24 sao vào được nhưng chỉ thấy "Coming soon".
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/it-year4.js` | Mở rộng | Thêm `I45_QUIZ` (10 câu hỏi phương pháp nghiên cứu khoá luận CNTT); cập nhật export `IT_YEAR4_SCENARIOS`; cập nhật comment header |
+| `public/js/domains/it/modules.js` | Sửa | Wire I4.5: thêm `scenarioIds: ['I4.5-thesis-quiz']`, `knowledgeQuiz: 'I4.5-thesis-quiz'`; xoá `placeholder: true` |
+| `public/js/domains/it/achievements.js` | Sửa | Cập nhật mô tả `year4-it-complete` từ "(I4.1–I4.4)" → "(I4.1–I4.5)" |
+
+### Chi tiết nội dung (10 câu hỏi, difficulty 4)
+
+| Câu | Chủ đề | Nguồn/Chuẩn |
+|-----|--------|-------------|
+| 1 | Câu hỏi nghiên cứu tốt: cụ thể, khả thi, đo lường được, novel | Research methodology fundamentals |
+| 2 | Nguồn tài liệu uy tín: IEEE Xplore, ACM DL, Springer LNCS, arXiv | IEEE/ACM standards |
+| 3 | Experimental Research vs Survey/Case Study/Descriptive | Research design taxonomy |
+| 4 | Ngưỡng đạo văn ≤ 30% (iThenticate/Turnitin), mỗi nguồn ≤ 5–10% | Quy định Bộ GD&ĐT VN |
+| 5 | Cấu trúc IMRaD: Intro → Lit Review → Method → Results → Conclusion | ACM/IEEE thesis structure |
+| 6 | Reproducibility: code + dataset + hyperparams + seed + environment | ML reproducibility best practices |
+| 7 | Kiểm định thống kê: t-test, Wilcoxon, McNemar, p < 0.05 | Statistical significance testing |
+| 8 | Bảo vệ khoá luận: thừa nhận hạn chế + giải thích + future work | Academic defense skills |
+| 9 | Mức đóng góp khoá luận ĐH: application/comparative/tool/incremental | Research contribution levels |
+| 10 | Lộ trình đăng bài: SOICT/RIVF → IEEE/ACM tier B/C → Scopus Q3/Q4 | CORE ranking, Scimago SJR |
+
+### Kết quả
+
+- Trường CNTT: I4.5 từ "Coming soon" → có quiz đầy đủ (10 câu chuyên sâu về research methodology)
+- Achievement `thesis-it` (đã tồn tại sẵn) giờ có thể được trigger khi sinh viên pass I4.5 ≥ 2 sao
+- Achievement `year4-it-complete`: mô tả chính xác "(I4.1–I4.5)"
+- Toàn bộ curriculum Trường CNTT (I1.1–I4.5) đã có đầy đủ nội dung — không còn module nào là placeholder
+- `node --check` passed: 3/3 files ✅
+
+---
+
 ## 2026-08-03 — Phiên cải tiến (32) · Trường Dược — CP09 · CP10 · GC07 · GC09 · GC10 + 5 Achievements
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).

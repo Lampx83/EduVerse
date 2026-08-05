@@ -115,7 +115,7 @@ export const ACHIEVEMENTS = [
     trigger: { moduleStars: { 'I4.4': 3 } } },
 
   { id: 'year4-it-complete', icon: '🥇', title: 'Tốt nghiệp Năm 4 CNTT',
-    desc: 'Pass toàn bộ module Năm 4 (I4.1–I4.4)',
+    desc: 'Pass toàn bộ module Năm 4 (I4.1–I4.5)',
     trigger: { yearComplete: 4 } },
 
   { id: 'thesis-it',   icon: '🎓', title: 'Khoá luận xuất sắc',

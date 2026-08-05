@@ -1,10 +1,9 @@
 // ============================================================
-// Trường CNTT — Scenarios Năm 4 (I4.1–I4.4)
+// Trường CNTT — Scenarios Năm 4 (I4.1–I4.5)
 // ============================================================
 // Soạn theo chương trình Cử nhân CNTT/KHMT VN (UET, HUST, FPT…).
 // Mỗi câu có explanation giải thích kỹ để sinh viên năm 4 tự học.
-// I4.5 (Khoá luận) giữ nguyên placeholder — không có quiz trắc nghiệm.
-// 4 module × 10 câu = 40 câu hỏi.
+// 5 module × 10 câu = 50 câu hỏi.
 // ============================================================
 
 // ─── I4.1 · Kiến trúc phần mềm + Patterns ──────────────────
@@ -491,9 +490,131 @@ export const I44_QUIZ = {
   ],
 };
 
+// ─── I4.5 · Khoá luận CNTT ──────────────────────────────────
+export const I45_QUIZ = {
+  id: 'I4.5-thesis-quiz',
+  title: 'I4.5 · Khoá luận CNTT — Phương pháp nghiên cứu & bảo vệ đề tài',
+  kind: 'quiz',
+  yearLevel: 4, subject: 'khoa-luan-it', difficulty: 4,
+  skillsTrained: ['research-methodology', 'academic-writing', 'thesis-defense', 'scientific-thinking', 'research-ethics'],
+  questions: [
+    {
+      stem: 'Câu hỏi nghiên cứu (Research Question) tốt trong khoá luận CNTT cần đáp ứng tiêu chí gì?',
+      choices: [
+        'Phải liên quan đến AI và Machine Learning',
+        'Phải có tính cụ thể, khả thi, có thể đo lường và chưa được giải quyết đầy đủ trong literature',
+        'Phải được phê duyệt bởi Bộ Giáo dục và Đào tạo',
+        'Phải có ít nhất 50 tài liệu tham khảo trước khi đặt câu hỏi',
+      ],
+      answer: 1,
+      explanation: 'Câu hỏi nghiên cứu tốt cần: (1) Specific — đủ hẹp để trả lời được; (2) Researchable — có thể thu thập dữ liệu/bằng chứng; (3) Feasible — trong khả năng về thời gian, kỹ năng, nguồn lực của sinh viên đại học; (4) Novel — đóng góp mới so với literature. Ví dụ tốt: "BERT có độ chính xác tốt hơn BiLSTM trong phân loại cảm xúc tiếng Việt trên dataset UIT-VSFC không?" — cụ thể, đo được, khả thi.',
+    },
+    {
+      stem: 'Trong lĩnh vực CNTT, nguồn tài liệu tham khảo học thuật UY TÍN nhất để dùng trong khoá luận là:',
+      choices: [
+        'Wikipedia, Stack Overflow, blog Medium',
+        'IEEE Xplore, ACM Digital Library, Springer LNCS, arXiv (preprint)',
+        'GitHub README, YouTube tutorials, Reddit r/programming',
+        'Tài liệu nội bộ công ty và forum Viblo',
+      ],
+      answer: 1,
+      explanation: 'Nguồn uy tín cho khoá luận CNTT: IEEE Xplore, ACM Digital Library, Springer/LNCS, Elsevier (Science Direct). arXiv là preprint server — có thể dùng nhưng cần ghi rõ "not peer-reviewed". Các nguồn như Wikipedia, blog, Stack Overflow không phải peer-reviewed nên không phù hợp làm tài liệu tham khảo học thuật chính. Scopus và Web of Science là database indexing — dùng để tìm bài, không phải publisher.',
+    },
+    {
+      stem: 'Phương pháp nghiên cứu thực nghiệm (Experimental Research) trong CNTT phù hợp nhất khi:',
+      choices: [
+        'Sinh viên muốn mô tả hiện trạng sử dụng phần mềm tại doanh nghiệp',
+        'Sinh viên cần so sánh hiệu suất hai thuật toán trên cùng tập dữ liệu benchmark',
+        'Sinh viên khảo sát ý kiến người dùng về trải nghiệm ứng dụng mobile',
+        'Sinh viên phân tích case study triển khai hệ thống ERP tại 1 công ty',
+      ],
+      answer: 1,
+      explanation: 'Experimental Research: thao túng biến độc lập và đo biến phụ thuộc trong điều kiện kiểm soát để thiết lập quan hệ nhân quả. VD: so sánh A* vs Dijkstra trên cùng graph — kiểm soát dữ liệu, đo thời gian + độ chính xác. Các phương pháp khác: Survey → ý kiến người dùng; Case study → khám phá sâu 1 trường hợp; Descriptive → mô tả hiện trạng. Khoá luận CNTT thường kết hợp thực nghiệm với baseline comparison.',
+    },
+    {
+      stem: 'Ngưỡng đạo văn (plagiarism similarity index) được nhiều trường đại học VN chấp nhận tối đa trong khoá luận là:',
+      choices: [
+        '50% — một nửa có thể sao chép',
+        'Không quá 30%, trong đó mỗi nguồn đơn lẻ không quá 5–10%',
+        '100% nếu có trích dẫn nguồn',
+        '5% — chỉ cho phép trích dẫn trực tiếp',
+      ],
+      answer: 1,
+      explanation: 'Phổ biến tại VN (UET/HUST/NEU và quy định Bộ GD&ĐT): tổng similarity index ≤ 30% (đo bằng iThenticate/Turnitin), không nguồn đơn lẻ vượt 5–10%. Phân biệt: similarity ≠ plagiarism — common phrases, bibliography, methodology thường match hợp lệ. Trích dẫn đúng (paraphrase + cite) không phải đạo văn. Sử dụng AI tạo sinh (ChatGPT) viết thay cũng vi phạm học thuật tại nhiều trường.',
+    },
+    {
+      stem: 'Cấu trúc chuẩn của một khoá luận CNTT theo định dạng IMRaD là:',
+      choices: [
+        'Abstract → Conclusion → Introduction → Literature Review → Methodology → Results',
+        'Introduction → Literature Review → Methodology → Results & Discussion → Conclusion',
+        'Methodology → Results → Introduction → Literature Review → Conclusion',
+        'Conclusion → Results → Methodology → Introduction → Literature Review',
+      ],
+      answer: 1,
+      explanation: 'IMRaD (Introduction, Methods, Results and Discussion): Introduction (tại sao, mục tiêu) → Literature Review/Background (đã có gì) → Methodology (làm như thế nào) → Results & Discussion (kết quả, phân tích, so sánh) → Conclusion (tóm tắt, hạn chế, hướng tương lai). Khoá luận CNTT thường thêm chương System Design/Implementation giữa Methodology và Results. Abstract được viết cuối nhưng đặt đầu. Appendix: code, dataset, bảng số liệu chi tiết.',
+    },
+    {
+      stem: 'Để kết quả thực nghiệm khoá luận CNTT có thể tái lập (reproducible), sinh viên cần:',
+      choices: [
+        'Chỉ báo cáo accuracy cuối cùng, không cần chi tiết khác',
+        'Công bố code, dataset, hyperparameters, random seed, phiên bản thư viện và môi trường thực nghiệm',
+        'Chạy 3 lần và lấy kết quả tốt nhất để báo cáo',
+        'Dùng dataset độc quyền để đảm bảo tính duy nhất',
+      ],
+      answer: 1,
+      explanation: 'Reproducibility checklist: (1) Code: GitHub repo public; (2) Dataset: link/mô tả preprocessing; (3) Hyperparameters: learning rate, batch size, epochs, architecture; (4) Random seed: fix seed (torch.manual_seed, numpy.random.seed) để kết quả deterministic; (5) Environment: requirements.txt, conda env.yml, Docker image; (6) Hardware: GPU/CPU, RAM. Báo cáo mean ± std qua nhiều runs (seed khác nhau) tốt hơn báo cáo 1 run tốt nhất.',
+    },
+    {
+      stem: 'Khi so sánh mô hình đề xuất với baseline, phương pháp nào kiểm định ý nghĩa thống kê của sự khác biệt?',
+      choices: [
+        'Chỉ cần báo cáo con số cao hơn là đủ',
+        'Kiểm định thống kê (t-test, Wilcoxon signed-rank, McNemar) với ngưỡng p < 0.05',
+        'Chụp màn hình kết quả đính kèm là đủ',
+        'Dùng A/B testing cho tất cả loại so sánh',
+      ],
+      answer: 1,
+      explanation: 'Statistical significance testing: "tốt hơn 2%" có thể chỉ là may mắn (noise) nếu không kiểm định. Test phổ biến: t-test (paired/independent) → so sánh means phân phối chuẩn; Wilcoxon signed-rank → không cần giả định phân phối; McNemar → so sánh 2 classifier binary. p < 0.05: bác bỏ H0 ở mức ý nghĩa 5%. Effect size (Cohen\'s d): p nhỏ không đồng nghĩa practically significant. K-fold cross-validation thay vì single split → ước lượng robust hơn.',
+    },
+    {
+      stem: 'Trong buổi bảo vệ khoá luận, hội đồng hỏi về điểm yếu nghiên cứu. Phản hồi TỐT NHẤT của sinh viên là:',
+      choices: [
+        'Nói rằng nghiên cứu của mình không có điểm yếu',
+        'Thẳng thắn thừa nhận hạn chế, giải thích lý do và đề xuất hướng khắc phục trong future work',
+        'Tấn công ngược lại câu hỏi của hội đồng',
+        'Im lặng và chờ câu hỏi tiếp theo',
+      ],
+      answer: 1,
+      explanation: 'Hội đồng đánh giá cao self-awareness và critical thinking. Cấu trúc phản hồi tốt: (1) Thừa nhận hạn chế cụ thể (VD: dataset nhỏ, thiếu real-world validation); (2) Giải thích lý do (thời gian, tài nguyên, phạm vi khoá luận đại học); (3) Đề xuất hướng mở rộng (future work). Ví dụ: "Hạn chế chính là dataset 5,000 mẫu còn nhỏ. Trong tương lai, có thể thu thập thêm dữ liệu từ X và áp dụng data augmentation." Hội đồng cũng kiểm tra: sinh viên có thực sự hiểu công trình của mình không.',
+    },
+    {
+      stem: 'Đóng góp khoa học của khoá luận CNTT cấp đại học ở mức nào là phù hợp?',
+      choices: [
+        'Phải đạt Nobel Prize hoặc Turing Award',
+        'Áp dụng/cải tiến kỹ thuật hiện có vào bài toán cụ thể, hoặc so sánh đánh giá phương pháp trên ngữ cảnh/dataset mới',
+        'Phải tạo ra ngôn ngữ lập trình hoàn toàn mới',
+        'Phải có ít nhất 10 bằng sáng chế',
+      ],
+      answer: 1,
+      explanation: 'Khoá luận đại học ≠ luận án tiến sĩ. Mức đóng góp hợp lý: (1) Application study: áp dụng Deep Learning vào bài toán VN chưa có benchmark; (2) Comparative study: so sánh 3–4 mô hình, rút ra hướng dẫn thực tiễn; (3) Tool/system: xây dựng hệ thống giải quyết nhu cầu thực; (4) Incremental improvement: cải tiến nhỏ thuật toán có baseline rõ ràng. Tiêu chí thành công: methodology rõ ràng, thực nghiệm rigorous, kết luận được justify bởi bằng chứng — không nhất thiết đạt SOTA global.',
+    },
+    {
+      stem: 'Từ khoá luận CNTT, sinh viên VN muốn đăng bài quốc tế nên hướng đến hội nghị/tạp chí nào trước tiên?',
+      choices: [
+        'Nature, Science, Cell — các tạp chí top nhất thế giới',
+        'SOICT (UET/Springer LNCS), RIVF (IEEE), hoặc hội nghị IEEE/ACM tier B/C phù hợp chuyên ngành',
+        'Chỉ nên đăng ở blog cá nhân vì chưa đủ kinh nghiệm',
+        'Bất kỳ tạp chí nào nhận bài mà không peer-review (predatory journals)',
+      ],
+      answer: 1,
+      explanation: 'Lộ trình đăng bài từ khoá luận VN: Bước 1 — Hội nghị quốc gia uy tín: SOICT (Springer LNCS), ACOMP, RIVF (IEEE) — peer-reviewed, phù hợp nghiên cứu đầu đời; Bước 2 — Hội nghị quốc tế tier B/C (CORE ranking): IEEE ICTC, ICPR, ICDM short paper; Bước 3 — Tạp chí Scopus Q3/Q4. Tránh: predatory journals (Beall\'s List) — phí cao, không peer-reviewed thực sự. Kiểm tra: Scimago Journal Ranking (SJR), CORE ranking. Nature/Science dành cho đột phá toàn cầu — không phù hợp khoá luận đại học.',
+    },
+  ],
+};
+
 export const IT_YEAR4_SCENARIOS = {
   [I41_QUIZ.id]: I41_QUIZ,
   [I42_QUIZ.id]: I42_QUIZ,
   [I43_QUIZ.id]: I43_QUIZ,
   [I44_QUIZ.id]: I44_QUIZ,
+  [I45_QUIZ.id]: I45_QUIZ,
 };
