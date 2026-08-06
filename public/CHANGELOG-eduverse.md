@@ -4,6 +4,49 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-06 — Phiên cải tiến (34) · Trường THPT — 7 Achievements mới (Streak · Sao · KHTN/KHXH combo)
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).
+
+**Phạm vi:** Trường THPT (`highschool`) — bổ sung 7 achievements còn thiếu: streak dài hạn, sao tích luỹ cao, combo ban KHTN/KHXH lớp 10-12, lộ trình ban hoàn chỉnh.
+
+### Vấn đề phát hiện
+
+Quét so sánh achievements giữa các trường phát hiện **Trường THPT bị thiếu** các loại achievements đã có ở Preschool, Primary, Secondary:
+- **Streak-30**: Preschool/Primary/Secondary đều có streak-30, THPT chỉ có streak-5 và streak-14 — học sinh ôn thi dài hạn không được ghi nhận
+- **Star-100**: Các trường khác có milestone sao cao (100+), THPT chỉ có star-20 và star-50 — không đủ động lực cho học sinh lớp 12 ôn thi
+- **Combo KHXH lớp 10**: Đã có `khtn-triple` (Lý+Hóa+Sinh lớp 10) nhưng thiếu `khxh-double` (Sử+Địa lớp 10) — mất cân xứng
+- **Combo KHTN lớp 11/12**: `khtn-triple` chỉ có cho lớp 10, không có lớp 11 và 12 — học sinh không được ghi nhận khi chinh phục KHTN toàn cấp
+- **Lộ trình ban hoàn chỉnh**: Chưa có achievement tổng hợp cho học sinh hoàn thành toàn bộ lộ trình KHTN hoặc KHXH ba năm
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/highschool/achievements.js` | Mở rộng | Thêm **7 achievements mới** cho Trường THPT |
+
+### Chi tiết 7 achievements mới
+
+| ID | Icon | Tên | Trigger | Lý do |
+|----|------|-----|---------|-------|
+| `streak-30` | 🔥 | Kiên trì 30 ngày | streak: 30 | Đồng nhất với Preschool/Primary/Secondary; khuyến khích ôn thi đều đặn |
+| `star-100` | 🌠 | Ngôi sao 100 | totalStars: 100 | Milestone thực tế khi hoàn thành nhiều môn 3 sao; tương đương star-100 của Primary |
+| `khxh-double` | 🗺️ | Đôi KHXH lớp 10 | H10SU+H10DIA ≥ 1 sao | Cân xứng với `khtn-triple` (lớp 10 Lý+Hóa+Sinh); ghi nhận ban KHXH |
+| `khtn-triple-11` | ⚗️ | Tam giác KHTN lớp 11 | H11LY+H11HOA+H11SINH ≥ 1 sao | Mở rộng combo KHTN sang lớp 11 — sóng+dao động+Hoá hữu cơ+Di truyền |
+| `khtn-triple-12` | 🔭 | Tam giác KHTN lớp 12 | H12LY+H12HOA+H12SINH ≥ 1 sao | Combo KHTN lớp 12 — gắn với ôn thi tốt nghiệp THPT |
+| `science-path` | 🔬 | Lộ trình KHTN hoàn chỉnh | H1[0-2]LY+HOA+SINH ≥ 1 sao | Tổng hợp: đạt sao toàn bộ KHTN 3 năm (9 môn) |
+| `social-path` | 🏛️ | Lộ trình KHXH hoàn chỉnh | H1[0-2]SU+DIA ≥ 1 sao | Tổng hợp: đạt sao Sử+Địa cả 3 năm (6 môn) |
+
+### Kết quả
+
+- Trường THPT: 42 → **49 achievements** (+7 mới)
+- Đồng nhất streak-30 với tất cả các trường khác
+- Học sinh ban KHTN: có 4 cột mốc mới (lớp 10+11+12 combo + lộ trình tổng thể)
+- Học sinh ban KHXH: được ghi nhận lần đầu với `khxh-double` và `social-path`
+- `node --check` passed: 1/1 files ✅
+
+---
+
 ## 2026-08-05 — Phiên cải tiến (33) · Trường CNTT — I4.5 Khoá luận CNTT (10 câu hỏi phương pháp nghiên cứu)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).

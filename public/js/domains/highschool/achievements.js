@@ -132,4 +132,41 @@ export const ACHIEVEMENTS = [
   { id: 'all-hs-math', icon: '🏆', title: 'Thủ khoa Toán THPT',
     desc: 'Đạt sao Toán cả 3 lớp 10–12',
     trigger: { moduleStars: { 'H10TOAN': 1, 'H11TOAN': 1, 'H12TOAN': 1 } } },
+
+  // ── Streak dài hạn ──
+  { id: 'streak-30', icon: '🔥', title: 'Kiên trì 30 ngày',
+    desc: 'Vào học 30 ngày liên tiếp — nghị lực đáng nể!', trigger: { streak: 30 } },
+
+  // ── Sao tích luỹ cao ──
+  { id: 'star-100', icon: '🌠', title: 'Ngôi sao 100',
+    desc: 'Tích luỹ 100 sao — chinh phục toàn bộ chương trình THPT', trigger: { totalStars: 100 } },
+
+  // ── Combo Ban KHXH lớp 10 ──
+  { id: 'khxh-double', icon: '🗺️', title: 'Đôi KHXH lớp 10',
+    desc: 'Đạt sao Lịch sử + Địa lý lớp 10 — nền tảng ban Khoa học Xã hội',
+    trigger: { moduleStars: { 'H10SU': 1, 'H10DIA': 1 } } },
+
+  // ── Combo Ban KHTN lớp 11 & 12 ──
+  { id: 'khtn-triple-11', icon: '⚗️', title: 'Tam giác KHTN lớp 11',
+    desc: 'Đạt sao Vật lý + Hoá học + Sinh học lớp 11',
+    trigger: { moduleStars: { 'H11LY': 1, 'H11HOA': 1, 'H11SINH': 1 } } },
+  { id: 'khtn-triple-12', icon: '🔭', title: 'Tam giác KHTN lớp 12',
+    desc: 'Đạt sao Vật lý + Hoá học + Sinh học lớp 12 — sẵn sàng thi tốt nghiệp',
+    trigger: { moduleStars: { 'H12LY': 1, 'H12HOA': 1, 'H12SINH': 1 } } },
+
+  // ── Lộ trình ban hoàn chỉnh ──
+  { id: 'science-path', icon: '🔬', title: 'Lộ trình KHTN hoàn chỉnh',
+    desc: 'Đạt sao Lý + Hoá + Sinh cả 3 lớp 10–12 — xứng danh chiến binh KHTN',
+    trigger: { moduleStars: {
+      'H10LY': 1, 'H10HOA': 1, 'H10SINH': 1,
+      'H11LY': 1, 'H11HOA': 1, 'H11SINH': 1,
+      'H12LY': 1, 'H12HOA': 1, 'H12SINH': 1,
+    } } },
+  { id: 'social-path', icon: '🏛️', title: 'Lộ trình KHXH hoàn chỉnh',
+    desc: 'Đạt sao Lịch sử + Địa lý cả 3 lớp 10–12 — xứng danh chiến binh KHXH',
+    trigger: { moduleStars: {
+      'H10SU': 1, 'H10DIA': 1,
+      'H11SU': 1, 'H11DIA': 1,
+      'H12SU': 1, 'H12DIA': 1,
+    } } },
 ];
