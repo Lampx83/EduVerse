@@ -12,6 +12,22 @@ export const ACHIEVEMENTS = [
     desc: 'Streak 5 ngày liên tiếp',
     trigger: { streak: 5 } },
 
+  { id: 'streak-14',   icon: '⚡', title: '2 tuần code liên tục',
+    desc: 'Streak 14 ngày liên tiếp — commit như một lập trình viên thực sự',
+    trigger: { streak: 14 } },
+
+  { id: 'streak-30',   icon: '🏆', title: '1 tháng code không ngừng',
+    desc: 'Streak 30 ngày — kỷ luật bền vững, nền tảng của mọi kỹ sư giỏi',
+    trigger: { streak: 30 } },
+
+  { id: 'star-60',     icon: '💫', title: '60 sao CNTT',
+    desc: 'Tích luỹ 60 sao — đã qua nửa hành trình Kỹ sư phần mềm',
+    trigger: { totalStars: 60 } },
+
+  { id: 'star-90',     icon: '🌠', title: '90 sao CNTT',
+    desc: 'Tích luỹ 90 sao — gần hoàn thành toàn bộ chương trình CNTT',
+    trigger: { totalStars: 90 } },
+
   // ── Year 1 Achievements (mới) ──
   { id: 'python-starter', icon: '🐍', title: 'Pythonista',
     desc: 'Pass Nhập môn lập trình Python (I1.1) với 3 sao',
