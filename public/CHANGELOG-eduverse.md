@@ -4,6 +4,52 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-07 — Phiên cải tiến (35) · Trường CNTT & Kinh tế — 8 Achievements mới (Streak 14/30 · Sao 60/90)
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có yêu cầu pending từ production).
+
+**Phạm vi:** Trường CNTT (`it`) và Trường Kinh tế (`economics`) — bổ sung 4 achievements mỗi trường: streak dài hạn (14 ngày, 30 ngày) và sao cao (60, 90).
+
+### Vấn đề phát hiện
+
+Quét so sánh achievements giữa các trường phát hiện **Trường CNTT và Trường Kinh tế bị thiếu** các mốc streak dài hạn và sao cao mà Trường THPT vừa nhận được (phiên 34, 2026-08-06):
+- **streak-14**: THPT đã có, CNTT chỉ có streak-5, Kinh tế chỉ có streak-5 — không ghi nhận sinh viên học đều đặn 2 tuần
+- **streak-30**: THPT đã có, CNTT và Kinh tế chưa có — không khuyến khích học liên tục 1 tháng
+- **star-60**: CNTT và Kinh tế chỉ có star-30 — với tối đa 90–100 sao có thể tích luỹ, cần milestone trung điểm
+- **star-90**: Chưa có ở cả hai trường — học sinh sắp hoàn thành toàn lộ trình không được ghi nhận
+
+**Tính nhất quán:** Primary (streak-3, 7, star-15, 30, 60), Secondary (streak-5, 10, star-20, 50), THPT (streak-5, 14, 30, star-20, 50, 100). CNTT và Kinh tế cần được ngang bằng.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/it/achievements.js` | Mở rộng | +4 achievements: `streak-14`, `streak-30`, `star-60`, `star-90` |
+| `public/js/domains/economics/achievements.js` | Mở rộng | +4 achievements: `streak-14`, `streak-30`, `star-60`, `star-90` |
+
+### Chi tiết 8 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| CNTT | `streak-14` | ⚡ | 2 tuần code liên tục | streak: 14 |
+| CNTT | `streak-30` | 🏆 | 1 tháng code không ngừng | streak: 30 |
+| CNTT | `star-60` | 💫 | 60 sao CNTT | totalStars: 60 |
+| CNTT | `star-90` | 🌠 | 90 sao CNTT | totalStars: 90 |
+| Kinh tế | `streak-14` | ⚡ | 2 tuần học kinh tế liên tục | streak: 14 |
+| Kinh tế | `streak-30` | 🏆 | 1 tháng học kinh tế | streak: 30 |
+| Kinh tế | `star-60` | 💫 | 60 sao Kinh tế | totalStars: 60 |
+| Kinh tế | `star-90` | 🌠 | 90 sao Kinh tế | totalStars: 90 |
+
+### Kết quả
+
+- Trường CNTT: 42 → **46 achievements** (+4 mới)
+- Trường Kinh tế: 45 → **49 achievements** (+4 mới)
+- Đồng nhất streak-14 và streak-30 với Trường THPT (phiên 34)
+- Milestone sao đủ dày: 30 → 60 → 90 cho cả hai trường (max ~90–100 sao)
+- `node --check` passed: 2/2 files ✅
+
+---
+
 ## 2026-08-06 — Phiên cải tiến (34) · Trường THPT — 7 Achievements mới (Streak · Sao · KHTN/KHXH combo)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở).

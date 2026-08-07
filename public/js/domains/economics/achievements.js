@@ -12,6 +12,22 @@ export const ACHIEVEMENTS = [
     desc: 'Streak 5 ngày liên tiếp',
     trigger: { streak: 5 } },
 
+  { id: 'streak-14',    icon: '⚡', title: '2 tuần học kinh tế liên tục',
+    desc: 'Streak 14 ngày liên tiếp — đầu tư vào bản thân mỗi ngày',
+    trigger: { streak: 14 } },
+
+  { id: 'streak-30',    icon: '🏆', title: '1 tháng học kinh tế',
+    desc: 'Streak 30 ngày — kỷ luật học tập nền tảng của mọi nhà kinh tế',
+    trigger: { streak: 30 } },
+
+  { id: 'star-60',      icon: '💫', title: '60 sao Kinh tế',
+    desc: 'Tích luỹ 60 sao — đã qua nửa hành trình Cử nhân Kinh tế',
+    trigger: { totalStars: 60 } },
+
+  { id: 'star-90',      icon: '🌠', title: '90 sao Kinh tế',
+    desc: 'Tích luỹ 90 sao — sắp hoàn thành toàn bộ chương trình Kinh tế',
+    trigger: { totalStars: 90 } },
+
   { id: 'bookworm',     icon: '📚', title: 'Mọt sách kinh tế',
     desc: '10 quiz hoàn thành',
     trigger: { quizzesPassed: 10 } },
