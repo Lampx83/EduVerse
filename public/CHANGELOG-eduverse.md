@@ -4,6 +4,52 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-08 — Phiên cải tiến (36) · Trường Lái xe & Ngoại ngữ — 8 Achievements mới (Streak 3/7/14/30)
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có yêu cầu pending từ production).
+
+**Phạm vi:** Trường Lái xe (`driving`) và Trường Ngoại ngữ (`language`) — bổ sung 4 streak achievements mỗi trường: streak-3, streak-7, streak-14, streak-30.
+
+### Vấn đề phát hiện
+
+Quét so sánh achievements giữa các trường phát hiện **Trường Lái xe và Trường Ngoại ngữ bị thiếu hoàn toàn** các streak achievements trong khi mọi trường khác đã có sau phiên 34–35:
+- **streak-3/7**: Chưa có — không ghi nhận học sinh bắt đầu hình thành thói quen học hàng ngày
+- **streak-14**: THPT, CNTT, Kinh tế đã có (phiên 34–35), nhưng Lái xe và Ngoại ngữ bị bỏ sót
+- **streak-30**: Tương tự — milestone kiên trì 30 ngày hoàn toàn vắng mặt ở 2 trường này
+
+**Nguyên nhân:** Cả hai domain dùng kiến trúc monolithic (ACHIEVEMENTS inline trong `index.js`) thay vì `achievements.js` riêng — do đó đã không được phát hiện trong các phiên quét trước (tập trung vào file `achievements.js` của 7 trường lớn).
+
+**Tính nhất quán sau phiên này:** Tất cả 9 trường EduVerse đều có ít nhất streak-14 và streak-30.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/driving/index.js` | Mở rộng | +4 achievements: `streak-3`, `streak-7`, `streak-14`, `streak-30` |
+| `public/js/domains/language/index.js` | Mở rộng | +4 achievements: `streak-3`, `streak-7`, `streak-14`, `streak-30` |
+
+### Chi tiết 8 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| Lái xe | `streak-3` | 🚦 | Học lái 3 ngày liên tiếp | streak: 3 |
+| Lái xe | `streak-7` | 📅 | Học đều cả tuần | streak: 7 |
+| Lái xe | `streak-14` | ⚡ | 2 tuần ôn luyện | streak: 14 |
+| Lái xe | `streak-30` | 🏆 | Ôn thi đúng nghĩa | streak: 30 |
+| Ngoại ngữ | `streak-3` | 🔤 | Học ngoại ngữ 3 ngày liên tiếp | streak: 3 |
+| Ngoại ngữ | `streak-7` | 📅 | Một tuần luyện tập | streak: 7 |
+| Ngoại ngữ | `streak-14` | ⚡ | 2 tuần kiên trì | streak: 14 |
+| Ngoại ngữ | `streak-30` | 🏆 | Một tháng chinh phục ngoại ngữ | streak: 30 |
+
+### Kết quả
+
+- Trường Lái xe: 5 → **9 achievements** (+4 streak mới)
+- Trường Ngoại ngữ: 6 → **10 achievements** (+4 streak mới)
+- Tất cả 9 trường EduVerse giờ đều có streak-3, streak-7, streak-14 và streak-30
+- `node --check` passed: 2/2 files ✅
+
+---
+
 ## 2026-08-07 — Phiên cải tiến (35) · Trường CNTT & Kinh tế — 8 Achievements mới (Streak 14/30 · Sao 60/90)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có yêu cầu pending từ production).
