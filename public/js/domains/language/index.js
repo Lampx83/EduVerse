@@ -68,6 +68,22 @@ export const ACHIEVEMENTS = [
   { id: 'multilingual',    icon: '🌐', title: 'Đa ngôn ngữ',
     desc: 'Hoàn thành cả 4 module Ngoại ngữ (L01–L04) — thành thạo ngoại ngữ toàn diện',
     trigger: { moduleStars: { 'lang-vocab': 2, 'lang-pronunciation': 2, 'lang-flashcards': 2, 'lang-tutor': 2 } } },
+
+  { id: 'streak-3',       icon: '🔤', title: 'Học ngoại ngữ 3 ngày liên tiếp',
+    desc: 'Luyện tập 3 ngày liên tiếp — hình thành thói quen học ngoại ngữ hàng ngày',
+    trigger: { streak: 3 } },
+
+  { id: 'streak-7',       icon: '📅', title: 'Một tuần luyện tập',
+    desc: 'Học ngoại ngữ đều đặn 7 ngày — đủ để cảm nhận sự tiến bộ rõ rệt',
+    trigger: { streak: 7 } },
+
+  { id: 'streak-14',      icon: '⚡', title: '2 tuần kiên trì',
+    desc: 'Duy trì học 14 ngày liên tiếp — vốn từ và phát âm cải thiện đáng kể',
+    trigger: { streak: 14 } },
+
+  { id: 'streak-30',      icon: '🏆', title: 'Một tháng chinh phục ngoại ngữ',
+    desc: 'Học liên tục 30 ngày tại Trường Ngoại ngữ — tư duy ngôn ngữ thực sự hình thành',
+    trigger: { streak: 30 } },
 ];
 export const getExperiencesFor = (mid) => MODULES.find(m => m.id === mid)?.experiences || [];
 export const listModulesWithExperiences = () => MODULES.filter(m => m.experiences?.length);

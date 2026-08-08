@@ -55,6 +55,22 @@ export const ACHIEVEMENTS = [
   { id: 'license-ready',  icon: '🏅', title: 'Sẵn sàng thi sát hạch',
     desc: 'Hoàn thành cả 3 module lý thuyết, biển báo và tình huống',
     trigger: { moduleStars: { 'driving-theory': 2, 'driving-signs': 2, 'driving-quiz': 2 } } },
+
+  { id: 'streak-3',       icon: '🚦', title: 'Học lái 3 ngày liên tiếp',
+    desc: 'Ôn lý thuyết hoặc biển báo liên tục 3 ngày — thói quen tốt cho kỳ thi',
+    trigger: { streak: 3 } },
+
+  { id: 'streak-7',       icon: '📅', title: 'Học đều cả tuần',
+    desc: 'Học tại Trường Lái xe 7 ngày liên tiếp — đủ để nhớ vững phần lý thuyết',
+    trigger: { streak: 7 } },
+
+  { id: 'streak-14',      icon: '⚡', title: '2 tuần ôn luyện',
+    desc: 'Duy trì học 14 ngày liên tiếp — đủ nền tảng tốt để đi thi sát hạch',
+    trigger: { streak: 14 } },
+
+  { id: 'streak-30',      icon: '🏆', title: 'Ôn thi đúng nghĩa',
+    desc: 'Học liên tục 30 ngày tại Trường Lái xe — sẵn sàng cho mọi phần thi',
+    trigger: { streak: 30 } },
 ];
 export const getExperiencesFor = (mid) => MODULES.find(m => m.id === mid)?.experiences || [];
 export const listModulesWithExperiences = () => MODULES.filter(m => m.experiences?.length);
