@@ -6,10 +6,16 @@ export const ACHIEVEMENTS = [
   // ── Khởi đầu ──
   { id: 'first-quiz', icon: '🌟', title: 'Khởi đầu THCS',
     desc: 'Hoàn thành bài quiz đầu tiên', trigger: { quizzesPassed: 1 } },
-  { id: 'streak-5', icon: '🔥', title: 'Cháy 5 ngày',
+  { id: 'streak-3', icon: '🔥', title: 'Bắt đầu đều đặn',
+    desc: 'Vào học 3 ngày liên tiếp', trigger: { streak: 3 } },
+  { id: 'streak-5', icon: '⚡', title: 'Cháy 5 ngày',
     desc: 'Vào học 5 ngày liên tiếp', trigger: { streak: 5 } },
-  { id: 'streak-10', icon: '⚡', title: 'Máy học liên tục',
+  { id: 'streak-10', icon: '💥', title: 'Máy học liên tục',
     desc: 'Vào học 10 ngày liên tiếp', trigger: { streak: 10 } },
+  { id: 'streak-14', icon: '🌟', title: 'Hai tuần không ngừng',
+    desc: 'Vào học 14 ngày liên tiếp', trigger: { streak: 14 } },
+  { id: 'streak-30', icon: '🏆', title: 'Kiên trì 30 ngày',
+    desc: 'Vào học liên tục suốt 1 tháng — học sinh THCS xuất sắc!', trigger: { streak: 30 } },
 
   // ── Toán (hệ 36-tuần) ──
   { id: 'toan6-weekly', icon: '🔢', title: 'Thống trị Toán 6',

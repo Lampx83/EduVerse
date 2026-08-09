@@ -10,6 +10,10 @@ export const ACHIEVEMENTS = [
     desc: 'Vào học 3 ngày liên tiếp', trigger: { streak: 3 } },
   { id: 'streak-7', icon: '🌈', title: 'Tuần vàng',
     desc: 'Vào học 7 ngày liên tiếp', trigger: { streak: 7 } },
+  { id: 'streak-14', icon: '🌟', title: 'Hai tuần chăm học',
+    desc: 'Vào học 14 ngày liên tiếp', trigger: { streak: 14 } },
+  { id: 'streak-30', icon: '🏆', title: 'Tháng vàng',
+    desc: 'Vào học liên tục suốt 1 tháng', trigger: { streak: 30 } },
 
   // ── Toán — mỗi lớp ──
   { id: 'math-1', icon: '➗', title: 'Bé giỏi Toán lớp 1',

@@ -4,6 +4,55 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-09 — Phiên cải tiến (37) · Trường Tiểu học & THCS — 6 Achievements mới (Streak 3/14/30)
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; không có yêu cầu pending từ production).
+
+**Phạm vi:** Trường Tiểu học (`primary`) và Trường THCS (`secondary`) — bổ sung streak achievements còn thiếu để đồng nhất với các trường khác.
+
+### Vấn đề phát hiện
+
+Quét so sánh achievements streak giữa 9 trường phát hiện khoảng trống ở **Tiểu học và THCS** — hai trường phục vụ lứa tuổi học sinh (cần khuyến khích học đều đặn nhất):
+
+**Tiểu học (Primary):** Chỉ có streak-3 và streak-7. Thiếu:
+- **streak-14**: Không ghi nhận HS học đều 2 tuần — trong khi Mầm non, THPT, CNTT, Kinh tế, Lái xe, Ngoại ngữ đều có
+- **streak-30**: Không có milestone "1 tháng kiên trì" — mọi trường khác đều có sau phiên 34–36
+
+**THCS (Secondary):** Chỉ có streak-5 và streak-10. Thiếu:
+- **streak-3**: Không có mốc "khởi đầu đều đặn" — tất cả các cấp Mầm non, Tiểu học, Lái xe, Ngoại ngữ đều có
+- **streak-14**: Mốc 2 tuần hoàn toàn vắng mặt dù THPT/CNTT/Kinh tế/Lái xe/Ngoại ngữ đều có
+- **streak-30**: Không ghi nhận HS THCS học liên tục 1 tháng — lỗ hổng lớn nhất với cấp học này
+
+**Trước phiên này:** Primary 2 streak, Secondary 2 streak — ít nhất trong toàn hệ thống.
+**Sau phiên này:** Primary 4 streak, Secondary 6 streak — đồng nhất với chuẩn 9 trường.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/primary/achievements.js` | Mở rộng | +2 achievements: `streak-14`, `streak-30` |
+| `public/js/domains/secondary/achievements.js` | Mở rộng | +4 achievements: `streak-3`, cập nhật icon streak-5/10, thêm `streak-14`, `streak-30` |
+
+### Chi tiết 6 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| Tiểu học | `streak-14` | 🌟 | Hai tuần chăm học | streak: 14 |
+| Tiểu học | `streak-30` | 🏆 | Tháng vàng | streak: 30 |
+| THCS | `streak-3` | 🔥 | Bắt đầu đều đặn | streak: 3 |
+| THCS | `streak-14` | 🌟 | Hai tuần không ngừng | streak: 14 |
+| THCS | `streak-30` | 🏆 | Kiên trì 30 ngày | streak: 30 |
+
+### Kết quả
+
+- Trường Tiểu học: streak set 2 → **4 achievements** (+streak-14, +streak-30)
+- Trường THCS: streak set 2 → **6 achievements** (+streak-3, +streak-14, +streak-30)
+- Tất cả 9 trường EduVerse đều có streak-14 và streak-30 ✅
+- Tiểu học và THCS không còn là cấp duy nhất thiếu mốc "1 tháng kiên trì"
+- `node --check` passed: 2/2 files ✅
+
+---
+
 ## 2026-08-08 — Phiên cải tiến (36) · Trường Lái xe & Ngoại ngữ — 8 Achievements mới (Streak 3/7/14/30)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có yêu cầu pending từ production).
