@@ -4,6 +4,54 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-11 — Phiên cải tiến (38) · Trường THCS Lớp 9 — Tuần 36 "Kết thúc năm học" cho 12 môn
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; không có yêu cầu pending từ production).
+
+**Phạm vi:** Trường THCS (`secondary`) — Lớp 9 — bổ sung **tuần 36** cho tất cả 12 môn học, hoàn chỉnh năm học 36 tuần theo chuẩn GDPT 2018 (đồng nhất với Lớp 6 đã có đủ 36 tuần từ trước).
+
+### Vấn đề phát hiện
+
+Quét toàn bộ file lessons phát hiện **Lớp 6 có 36 tuần** nhưng **Lớp 7, 8, 9 (THCS) và Lớp 10, 11, 12 (THPT) chỉ có 35 tuần**. Đây là khoảng trống nội dung có hệ thống — tuần 36 "Ôn tập cuối năm / Kết thúc năm học" hoàn toàn vắng mặt.
+
+**Ưu tiên xử lý Lớp 9** vì:
+- Lớp 9 là năm cuối THCS, quan trọng nhất với kì thi tuyển sinh vào lớp 10
+- Học sinh cần nội dung "Nhìn lại và tiến về phía trước" sau khi hoàn thành chương trình
+- 4 môn thi vào lớp 10 (Toán, Ngữ Văn, Tiếng Anh, KHTN) đặc biệt cần tuần tổng kết
+
+### Thay đổi
+
+| File | Loại | Nội dung tuần 36 |
+|------|------|------------------|
+| `public/js/scenarios/lop9/lessons/toan.js` | Mở rộng | "Kết thúc Toán THCS — Nhìn lại hành trình" |
+| `public/js/scenarios/lop9/lessons/ngu-van.js` | Mở rộng | "Kết thúc Ngữ Văn THCS — Hành trình của những con chữ" |
+| `public/js/scenarios/lop9/lessons/tieng-anh.js` | Mở rộng | "Kết thúc Tiếng Anh THCS — Keep Going Forward!" |
+| `public/js/scenarios/lop9/lessons/khtn.js` | Mở rộng | "Kết thúc KHTN THCS — Khoa học là hành trình, không phải đích đến" |
+| `public/js/scenarios/lop9/lessons/lich-su-dia.js` | Mở rộng | "Kết thúc Lịch sử – Địa lí THCS — Đất nước nhìn từ quá khứ và không gian" |
+| `public/js/scenarios/lop9/lessons/gdcd.js` | Mở rộng | "Kết thúc GDCD THCS — Người công dân tốt bắt đầu từ đây" |
+| `public/js/scenarios/lop9/lessons/tin-hoc.js` | Mở rộng | "Kết thúc Tin học THCS — Tư duy số cho thế kỉ 21" |
+| `public/js/scenarios/lop9/lessons/cong-nghe.js` | Mở rộng | "Kết thúc Công nghệ THCS — Đôi tay tạo nên tương lai" |
+| `public/js/scenarios/lop9/lessons/gdtc.js` | Mở rộng | "Kết thúc GDTC THCS — Sức khoẻ là nền tảng của mọi thành công" |
+| `public/js/scenarios/lop9/lessons/hdtn.js` | Mở rộng | "Kết thúc HĐTN THCS — Lễ bế giảng trong tim" |
+| `public/js/scenarios/lop9/lessons/nghe-thuat.js` | Mở rộng | "Kết thúc Nghệ thuật THCS — Hành trình của cái đẹp" |
+| `public/js/scenarios/lop9/lessons/gd-dia-phuong.js` | Mở rộng | "Kết thúc Giáo dục địa phương — Người trẻ của mảnh đất này" |
+
+### Chi tiết tuần 36
+
+Mỗi tuần 36 gồm: lý thuyết tổng kết (5–7 blocks), 3 ví dụ/câu hỏi phản ánh. Nội dung tập trung vào:
+- Nhìn lại bức tranh toàn cảnh 4 năm học môn đó
+- Kết nối kiến thức với cuộc sống và tương lai THPT
+- Động viên tinh thần trước kì thi vào 10
+- Hướng dẫn tự học sau kì thi
+
+### Kết quả
+
+- Lớp 9: từ 35 tuần → **36 tuần** cho tất cả 12 môn ✅
+- Đồng nhất với chuẩn 36 tuần của Lớp 6 ✅
+- `node --check` passed: **12/12 files** ✅
+
+---
+
 ## 2026-08-09 — Phiên cải tiến (37) · Trường Tiểu học & THCS — 6 Achievements mới (Streak 3/14/30)
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; không có yêu cầu pending từ production).
