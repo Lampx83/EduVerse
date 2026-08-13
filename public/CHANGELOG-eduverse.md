@@ -4,6 +4,73 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-13 — Phiên cải tiến (39) · Trường THPT Lớp 12 — Tuần 36 "Kết thúc THPT" cho 12 môn
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; API production yêu cầu xác thực; không có yêu cầu pending).
+
+**Phạm vi:** Trường THPT (`highschool`) — Lớp 12 — bổ sung **tuần 36** cho tất cả 12 môn học, hoàn chỉnh năm học 36 tuần theo chuẩn GDPT 2018.
+
+### Vấn đề phát hiện
+
+Tiếp nối phiên 38 (2026-08-11) đã thêm tuần 36 cho Lớp 9 (THCS), quét toàn bộ lesson files phát hiện **Lớp 12 (THPT) vẫn chỉ có 35 tuần** — khoảng trống nội dung nghiêm trọng nhất còn lại vì:
+
+- Lớp 12 là năm học quan trọng nhất của cả bậc học phổ thông — chuẩn bị cho kì thi tốt nghiệp THPT Quốc gia và xét tuyển đại học
+- Tuần 36 "Kết thúc THPT — Bước vào cánh cổng tương lai" là tổng kết cần thiết trước kì thi
+- Đồng nhất hệ thống: Lớp 6, Lớp 9 đã có 36 tuần; các lớp còn lại (7, 8, 10, 11, 12) chỉ có 35
+
+**Ưu tiên xử lý Lớp 12** vì đây là lớp cuối cấp THPT, quan trọng nhất với kì thi tốt nghiệp THPT QG.
+
+### Thay đổi
+
+| File | Loại | Nội dung tuần 36 |
+|------|------|------------------|
+| `public/js/scenarios/lop12/lessons/toan.js` | Mở rộng | "Kết thúc Toán THPT — Hành trang vào đại học" |
+| `public/js/scenarios/lop12/lessons/ngu-van.js` | Mở rộng | "Kết thúc Ngữ Văn THPT — Văn chương và hành trình trở thành người" |
+| `public/js/scenarios/lop12/lessons/tieng-anh.js` | Mở rộng | "Closing Chapter — Your English Journey Continues" |
+| `public/js/scenarios/lop12/lessons/vat-ly.js` | Mở rộng | "Kết thúc Vật Lý THPT — Khám phá vũ trụ bắt đầu từ đây" |
+| `public/js/scenarios/lop12/lessons/hoa-hoc.js` | Mở rộng | "Kết thúc Hoá Học THPT — Phân tử xây dựng thế giới" |
+| `public/js/scenarios/lop12/lessons/sinh-hoc.js` | Mở rộng | "Kết thúc Sinh Học THPT — Sự sống kỳ diệu và trách nhiệm của chúng ta" |
+| `public/js/scenarios/lop12/lessons/lich-su.js` | Mở rộng | "Kết thúc Lịch Sử THPT — Bài học từ quá khứ, hành động cho tương lai" |
+| `public/js/scenarios/lop12/lessons/dia-ly.js` | Mở rộng | "Kết thúc Địa Lý THPT — Đất nước và thế giới trong tầm tay" |
+| `public/js/scenarios/lop12/lessons/gdcd.js` | Mở rộng | "Kết thúc GD Kinh tế và Pháp luật — Công dân có trách nhiệm trong thế giới hội nhập" |
+| `public/js/scenarios/lop12/lessons/tin-hoc.js` | Mở rộng | "Kết thúc Tin Học THPT — Thế giới số và bạn" |
+| `public/js/scenarios/lop12/lessons/cong-nghe.js` | Mở rộng | "Kết thúc Công Nghệ THPT — Kỹ thuật vì cuộc sống tốt hơn" |
+| `public/js/scenarios/lop12/lessons/gdqp.js` | Mở rộng | "Kết thúc GDQP-AN — Tuổi trẻ và trách nhiệm với Tổ quốc" |
+| `public/CHANGELOG-eduverse.md` | Cập nhật | Ghi nhận phiên cải tiến (39) |
+
+### Chi tiết tuần 36
+
+Mỗi tuần 36 gồm: lý thuyết hệ thống hoá (5–7 blocks phản ánh toàn bộ 3 năm THPT), 3 câu hỏi mở/phản tư sâu. Nội dung tập trung:
+- Nhìn lại bức tranh toàn cảnh 3 năm học môn đó ở THPT
+- Kết nối kiến thức với đại học, nghề nghiệp và cuộc sống
+- Lời khuyên thực tế cho kì thi tốt nghiệp THPT Quốc gia
+- Động viên tâm thế tự tin bước vào giai đoạn mới
+
+### Kết quả
+
+- Lớp 12: từ 35 tuần → **36 tuần** cho tất cả 12 môn ✅
+- 499 dòng nội dung được bổ sung (+499 insertions)
+- Đồng nhất với chuẩn 36 tuần của Lớp 6 và Lớp 9 ✅
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/lop12/lessons/toan.js       ✅ OK
+node --check public/js/scenarios/lop12/lessons/ngu-van.js    ✅ OK
+node --check public/js/scenarios/lop12/lessons/tieng-anh.js  ✅ OK
+node --check public/js/scenarios/lop12/lessons/vat-ly.js     ✅ OK
+node --check public/js/scenarios/lop12/lessons/hoa-hoc.js    ✅ OK
+node --check public/js/scenarios/lop12/lessons/sinh-hoc.js   ✅ OK
+node --check public/js/scenarios/lop12/lessons/lich-su.js    ✅ OK
+node --check public/js/scenarios/lop12/lessons/dia-ly.js     ✅ OK
+node --check public/js/scenarios/lop12/lessons/gdcd.js       ✅ OK
+node --check public/js/scenarios/lop12/lessons/tin-hoc.js    ✅ OK
+node --check public/js/scenarios/lop12/lessons/cong-nghe.js  ✅ OK
+node --check public/js/scenarios/lop12/lessons/gdqp.js       ✅ OK
+```
+
+---
+
 ## 2026-08-11 — Phiên cải tiến (38) · Trường THCS Lớp 9 — Tuần 36 "Kết thúc năm học" cho 12 môn
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; không có GitHub Issues mở; không có yêu cầu pending từ production).
