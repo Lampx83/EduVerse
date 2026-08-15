@@ -4,6 +4,73 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-15 — Phiên cải tiến (41) · Trường THPT Lớp 10 — Tuần 36 "Kết thúc năm học" cho 12 môn
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; API production yêu cầu xác thực; không có yêu cầu pending).
+
+**Phạm vi:** Trường THPT (`highschool`) — Lớp 10 — bổ sung **tuần 36** cho tất cả 12 môn học, hoàn chỉnh năm học 36 tuần theo chuẩn GDPT 2018.
+
+### Vấn đề phát hiện
+
+Tiếp nối phiên 40 (2026-08-14) đã thêm tuần 36 cho Lớp 11, kiểm tra xác nhận **Lớp 10 (THPT năm 1) vẫn chỉ có 35 tuần** — khoảng trống nội dung cần bổ sung:
+
+- Lớp 10 là năm đầu THPT — học sinh bước vào môi trường học mới với nhiều chuyển tiếp quan trọng
+- Tuần 36 "Kết thúc năm học — Hành trang vào lớp 11" giúp học sinh nhìn lại, củng cố và định hướng hè
+- Đồng nhất hệ thống: Lớp 6, Lớp 9, Lớp 11, Lớp 12 đã có 36 tuần; Lớp 10 là lớp tiếp theo cần hoàn chỉnh
+
+**Ưu tiên xử lý Lớp 10** vì: năm đầu THPT có nhiều thay đổi về phương pháp học (từ THCS sang THPT), cần tuần tổng kết để học sinh không bị hổng kiến thức nền khi bước vào lớp 11.
+
+### Thay đổi
+
+| File | Loại | Nội dung tuần 36 |
+|------|------|------------------|
+| `public/js/scenarios/lop10/lessons/toan.js` | Mở rộng | "Kết thúc Toán 10 — Hành trang vào lớp 11" |
+| `public/js/scenarios/lop10/lessons/ngu-van.js` | Mở rộng | "Kết thúc Ngữ Văn 10 — Hành trang ngôn ngữ vào lớp 11" |
+| `public/js/scenarios/lop10/lessons/tieng-anh.js` | Mở rộng | "Closing Chapter — Grade 10 English & the Road Ahead" |
+| `public/js/scenarios/lop10/lessons/vat-ly.js` | Mở rộng | "Kết thúc Vật Lý 10 — Cơ học và Nhiệt học hành trang lên lớp 11" |
+| `public/js/scenarios/lop10/lessons/hoa-hoc.js` | Mở rộng | "Kết thúc Hoá Học 10 — Nền tảng nguyên tử và bước vào Hoá hữu cơ 11" |
+| `public/js/scenarios/lop10/lessons/sinh-hoc.js` | Mở rộng | "Kết thúc Sinh Học 10 — Tế bào và Vi sinh vật làm nền tảng cho lớp 11" |
+| `public/js/scenarios/lop10/lessons/lich-su.js` | Mở rộng | "Kết thúc Lịch Sử 10 — Thế giới và Việt Nam qua lăng kính lịch sử" |
+| `public/js/scenarios/lop10/lessons/dia-ly.js` | Mở rộng | "Kết thúc Địa Lý 10 — Bản đồ thế giới trong tâm trí" |
+| `public/js/scenarios/lop10/lessons/gdcd.js` | Mở rộng | "Kết thúc GDCD 10 — Công dân có hiểu biết trong thế giới hội nhập" |
+| `public/js/scenarios/lop10/lessons/tin-hoc.js` | Mở rộng | "Kết thúc Tin Học 10 — Lập trình và Tư duy số cho lớp 11" |
+| `public/js/scenarios/lop10/lessons/cong-nghe.js` | Mở rộng | "Kết thúc Công Nghệ 10 — Kỹ thuật và Nghề nghiệp trong tầm tay" |
+| `public/js/scenarios/lop10/lessons/gdqp.js` | Mở rộng | "Kết thúc GDQP-AN 10 — Tuổi trẻ, Tổ quốc và Trách nhiệm" |
+| `public/CHANGELOG-eduverse.md` | Cập nhật | Ghi nhận phiên cải tiến (41) |
+
+### Chi tiết tuần 36
+
+Mỗi tuần 36 gồm: hệ thống hoá kiến thức toàn năm (5–6 blocks), 2 câu hỏi phản tư sâu về định hướng học tập. Nội dung tập trung:
+- Nhìn lại bức tranh toàn cảnh cả năm học lớp 10 của môn đó
+- Kết nối kiến thức với lớp 11 (cầu nối cụ thể từng môn)
+- Gợi ý lộ trình ôn tập hè hiệu quả theo từng môn
+- Định hướng nghề nghiệp và ứng dụng thực tiễn của kiến thức
+
+### Kết quả
+
+- Lớp 10: từ 35 tuần → **36 tuần** cho tất cả 12 môn ✅
+- Đồng nhất với chuẩn 36 tuần của Lớp 6, Lớp 9, Lớp 11 và Lớp 12 ✅
+- Còn lại cần bổ sung tuần 36: Lớp 7, Lớp 8
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/lop10/lessons/toan.js       ✅ OK
+node --check public/js/scenarios/lop10/lessons/ngu-van.js    ✅ OK
+node --check public/js/scenarios/lop10/lessons/tieng-anh.js  ✅ OK
+node --check public/js/scenarios/lop10/lessons/vat-ly.js     ✅ OK
+node --check public/js/scenarios/lop10/lessons/hoa-hoc.js    ✅ OK
+node --check public/js/scenarios/lop10/lessons/sinh-hoc.js   ✅ OK
+node --check public/js/scenarios/lop10/lessons/lich-su.js    ✅ OK
+node --check public/js/scenarios/lop10/lessons/dia-ly.js     ✅ OK
+node --check public/js/scenarios/lop10/lessons/gdcd.js       ✅ OK
+node --check public/js/scenarios/lop10/lessons/tin-hoc.js    ✅ OK
+node --check public/js/scenarios/lop10/lessons/cong-nghe.js  ✅ OK
+node --check public/js/scenarios/lop10/lessons/gdqp.js       ✅ OK
+```
+
+---
+
 ## 2026-08-14 — Phiên cải tiến (40) · Trường THPT Lớp 11 — Tuần 36 "Kết thúc năm học" cho 12 môn
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; API production yêu cầu xác thực; không có yêu cầu pending).
