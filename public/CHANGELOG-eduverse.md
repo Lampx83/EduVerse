@@ -4,6 +4,51 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-16 — Phiên cải tiến (43) · Trường THCS Lớp 8 — Tuần 36 "Kết thúc năm học" cho 12 môn
+
+**Chế độ:** Chủ động (tiếp nối phiên 42 cùng ngày — hoàn thành tuần 36 cho Lớp 8).
+
+**Phạm vi:** Trường THCS (`secondary`) — Lớp 8 — bổ sung **tuần 36** cho tất cả 12 môn học, hoàn chỉnh năm học 36 tuần theo chuẩn GDPT 2018.
+
+### Vấn đề phát hiện
+
+CHANGELOG phiên 42 ghi chú: *"Còn lại cần bổ sung tuần 36: Lớp 8 (phiên tiếp theo)"*. Kiểm tra toàn bộ 12 file Lớp 8 xác nhận tất cả chỉ có 35 tuần (key cuối: `S8XXXX-w35-quiz`).
+
+### Thay đổi
+
+| File | Key thêm | Chủ đề tuần 36 |
+|------|----------|----------------|
+| `lop8/lessons/toan.js` | `S8TOAN-w36-quiz` | Kết thúc Toán 8 — Hành trang vào lớp 9 |
+| `lop8/lessons/ngu-van.js` | `S8NV-w36-quiz` | Kết thúc Ngữ Văn 8 — Ngôn ngữ và tâm hồn bước vào lớp 9 |
+| `lop8/lessons/tieng-anh.js` | `S8TA-w36-quiz` | Closing Year — Grade 8 English & the Road to Grade 9 |
+| `lop8/lessons/khtn.js` | `S8KHTN-w36-quiz` | Kết thúc KHTN 8 — Ba ngành khoa học, một hành trình |
+| `lop8/lessons/lich-su-dia.js` | `S8LSDL-w36-quiz` | Kết thúc Lịch Sử & Địa Lý 8 — Việt Nam trên hành trình lịch sử và địa lý |
+| `lop8/lessons/gdcd.js` | `S8GDCD-w36-quiz` | Kết thúc GDCD 8 — Công dân trẻ với đạo đức và pháp luật |
+| `lop8/lessons/cong-nghe.js` | `S8CN-w36-quiz` | Kết thúc Công Nghệ 8 — Từ bản vẽ đến mạch điện |
+| `lop8/lessons/tin-hoc.js` | `S8TIN-w36-quiz` | Kết thúc Tin Học 8 — Tư duy lập trình bước vào kỉ nguyên số |
+| `lop8/lessons/gdtc.js` | `S8GDTC-w36-quiz` | Kết thúc GDTC 8 — Thể chất khoẻ mạnh, tinh thần vững vàng |
+| `lop8/lessons/nghe-thuat.js` | `S8NT-w36-quiz` | Kết thúc Nghệ Thuật 8 — Âm nhạc & Mỹ thuật nuôi dưỡng tâm hồn |
+| `lop8/lessons/hdtn.js` | `S8HDTN-w36-quiz` | Kết thúc HĐTN 8 — Trưởng thành qua từng trải nghiệm, vững bước vào lớp 9 |
+| `lop8/lessons/gd-dia-phuong.js` | `S8GDDP-w36-quiz` | Kết thúc GD Địa Phương 8 — Hà Nội ngàn năm trong tim |
+
+### Định dạng file
+
+- **10 file dùng L()-format** (toan, ngu-van, tieng-anh, khtn, lich-su-dia, tin-hoc, gdtc, nghe-thuat, hdtn, gd-dia-phuong): `const L = (topic, intro, objectives, theory, examples) => ({...})`.
+- **2 file dùng static object format** (gdcd, cong-nghe): `'S8XXXX-w36-quiz': { topic, intro, objectives, theory, examples }`.
+
+### Kiểm tra cú pháp
+
+Tất cả 12 file đều pass `node --check` ✅.
+
+### Kết quả
+
+- Lớp 8 đã có đủ 36 tuần cho toàn bộ 12 môn học ✅
+- Toàn bộ THCS (Lớp 6, 7, 8, 9) đã có đủ 36 tuần ✅
+- Toàn bộ THPT (Lớp 10, 11, 12) đã có đủ 36 tuần ✅
+- **EduVerse hiện có đủ 36 tuần cho tất cả các lớp từ Lớp 6 đến Lớp 12** 🎉
+
+---
+
 ## 2026-08-16 — Phiên cải tiến (42) · Trường THCS Lớp 7 — Tuần 36 "Kết thúc năm học" cho 12 môn
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; API production yêu cầu xác thực; không có yêu cầu pending).
