@@ -4,6 +4,71 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-16 — Phiên cải tiến (42) · Trường THCS Lớp 7 — Tuần 36 "Kết thúc năm học" cho 12 môn
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; API production yêu cầu xác thực; không có yêu cầu pending).
+
+**Phạm vi:** Trường THCS (`secondary`) — Lớp 7 — bổ sung **tuần 36** cho tất cả 12 môn học, hoàn chỉnh năm học 36 tuần theo chuẩn GDPT 2018.
+
+### Vấn đề phát hiện
+
+Tiếp nối phiên 41 (2026-08-15) đã thêm tuần 36 cho Lớp 10, quét toàn bộ lesson files xác nhận **Lớp 7 (THCS năm 2) vẫn chỉ có 35 tuần** — một trong hai lớp còn thiếu được ghi nhận trong CHANGELOG phiên 41 ("Còn lại cần bổ sung tuần 36: Lớp 7, Lớp 8"):
+
+- Lớp 7 là năm học thứ hai của THCS — học sinh bắt đầu bước vào giai đoạn dậy thì và hình thành bản sắc cá nhân
+- 12 môn học của Lớp 7 theo GDPT 2018: Toán, Ngữ Văn, Tiếng Anh, KHTN, Lịch Sử & Địa Lý, GDCD, Công Nghệ, Tin Học, GDTC, Nghệ Thuật, HĐTN, GD Địa Phương
+- Tuần 36 "Kết thúc năm học — Hành trang vào lớp 8" giúp học sinh nhìn lại toàn bộ kiến thức năm, kết nối sang lớp 8 và xây dựng kế hoạch ôn hè
+
+### Thay đổi
+
+| File | Định dạng | Nội dung tuần 36 |
+|------|-----------|-----------------|
+| `public/js/scenarios/lop7/lessons/toan.js` | Static | "Kết thúc Toán 7 — Hành trang vào lớp 8" (số thực, đại số, hình học, thống kê) |
+| `public/js/scenarios/lop7/lessons/ngu-van.js` | Static | "Kết thúc Ngữ Văn 7 — Ngôn ngữ và tâm hồn bước vào lớp 8" |
+| `public/js/scenarios/lop7/lessons/tieng-anh.js` | Static | "Closing Year — Grade 7 English & the Road to Grade 8" |
+| `public/js/scenarios/lop7/lessons/khtn.js` | Static | "Kết thúc KHTN 7 — Ba khoa học, một hành trình" (Vật Lý, Hoá Học, Sinh Học) |
+| `public/js/scenarios/lop7/lessons/lich-su-dia.js` | Static | "Kết thúc Lịch Sử & Địa Lý 7 — Thế giới và Việt Nam trong tầm tay" |
+| `public/js/scenarios/lop7/lessons/gdcd.js` | Static | "Kết thúc GDCD 7 — Công dân trẻ vững bước vào lớp 8" |
+| `public/js/scenarios/lop7/lessons/cong-nghe.js` | L() | "Tổng kết Công Nghệ 7 — Nông nghiệp xanh và tương lai bền vững" |
+| `public/js/scenarios/lop7/lessons/tin-hoc.js` | L() | "Kết thúc Tin Học 7 — Tư duy số bước vào kỷ nguyên lập trình" |
+| `public/js/scenarios/lop7/lessons/gdtc.js` | L() | "Kết thúc GDTC 7 — Thể chất khoẻ mạnh, tinh thần vui tươi" |
+| `public/js/scenarios/lop7/lessons/nghe-thuat.js` | L() | "Kết thúc Nghệ Thuật 7 — Âm nhạc & Mỹ thuật nuôi dưỡng tâm hồn" |
+| `public/js/scenarios/lop7/lessons/hdtn.js` | L() | "Kết thúc HĐTN 7 — Trưởng thành qua từng trải nghiệm" |
+| `public/js/scenarios/lop7/lessons/gd-dia-phuong.js` | L() | "Kết thúc GD Địa Phương 7 — Tình yêu quê hương nuôi dưỡng tâm hồn" |
+| `public/CHANGELOG-eduverse.md` | Cập nhật | Ghi nhận phiên cải tiến (42) |
+
+### Chi tiết tuần 36
+
+Mỗi tuần 36 gồm: hệ thống hoá kiến thức toàn năm (4–6 blocks lý thuyết), 3 câu hỏi/ví dụ thực hành. Nội dung tập trung:
+- Bức tranh toàn cảnh của môn học qua cả năm lớp 7
+- Kết nối kiến thức với lớp 8 (cầu nối cụ thể từng môn)
+- Gợi ý lộ trình ôn tập hè hiệu quả
+- Câu hỏi phản tư mang tính ứng dụng thực tiễn cao
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/lop7/lessons/toan.js         ✅ OK
+node --check public/js/scenarios/lop7/lessons/ngu-van.js      ✅ OK
+node --check public/js/scenarios/lop7/lessons/tieng-anh.js    ✅ OK
+node --check public/js/scenarios/lop7/lessons/khtn.js         ✅ OK
+node --check public/js/scenarios/lop7/lessons/lich-su-dia.js  ✅ OK
+node --check public/js/scenarios/lop7/lessons/gdcd.js         ✅ OK
+node --check public/js/scenarios/lop7/lessons/cong-nghe.js    ✅ OK
+node --check public/js/scenarios/lop7/lessons/tin-hoc.js      ✅ OK
+node --check public/js/scenarios/lop7/lessons/gdtc.js         ✅ OK
+node --check public/js/scenarios/lop7/lessons/nghe-thuat.js   ✅ OK
+node --check public/js/scenarios/lop7/lessons/hdtn.js         ✅ OK
+node --check public/js/scenarios/lop7/lessons/gd-dia-phuong.js ✅ OK
+```
+
+### Kết quả
+
+- Lớp 7: từ 35 tuần → **36 tuần** cho tất cả 12 môn ✅
+- Đồng nhất với chuẩn 36 tuần của Lớp 6, Lớp 9, Lớp 10, Lớp 11 và Lớp 12 ✅
+- Còn lại cần bổ sung tuần 36: **Lớp 8** (phiên tiếp theo)
+
+---
+
 ## 2026-08-15 — Phiên cải tiến (41) · Trường THPT Lớp 10 — Tuần 36 "Kết thúc năm học" cho 12 môn
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` trống; API production yêu cầu xác thực; không có yêu cầu pending).
