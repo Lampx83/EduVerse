@@ -4,6 +4,12 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-17 — Phiên cải tiến (44) · Không có yêu cầu pending
+
+**Chế độ:** Chờ yêu cầu (inbox `ai-board/inbox.json` trống; GitHub Issues: 0; API production `ps.tizia.vn` không truy cập được từ sandbox — 502 Bad Gateway). Không có yêu cầu người dùng nào để xử lý — không tạo PR, không thực hiện thay đổi.
+
+---
+
 ## 2026-08-16 — Phiên cải tiến (43) · Trường THCS Lớp 8 — Tuần 36 "Kết thúc năm học" cho 12 môn
 
 **Chế độ:** Chủ động (tiếp nối phiên 42 cùng ngày — hoàn thành tuần 36 cho Lớp 8).
