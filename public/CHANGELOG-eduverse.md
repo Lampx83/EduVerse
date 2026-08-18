@@ -4,6 +4,50 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-18 — Phiên cải tiến (44) · Tiểu học Lớp 3 — Tuần 36 "Kết thúc năm học" cho 11 môn
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; kiểm tra trạng thái nội dung — Lớp 3 là lớp Tiểu học duy nhất còn thiếu tuần 36 cho tất cả môn học).
+
+**Trường:** Tiểu học — Lớp 3 (`lop3`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động phát hiện khoảng trống nội dung: Lớp 3 còn thiếu bài học tuần 36 "Kết thúc năm học" cho tất cả 11 môn (trong khi Lớp 2, 6, 7, 8, 9, 10, 11, 12 đã hoàn chỉnh).
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/lop3/lessons/toan.js` | Bổ sung | Tuần 36: Kết thúc Lớp 3 — Hành trang vào Lớp 4 (bảng nhân chia, hình học, đơn vị đo) |
+| `public/js/scenarios/lop3/lessons/tieng-viet.js` | Bổ sung | Tuần 36: Bốn kĩ năng TV Lớp 3, câu mẫu, so sánh & nhân hoá — chuẩn bị Lớp 4 |
+| `public/js/scenarios/lop3/lessons/tieng-anh.js` | Bổ sung | Tuần 36: End of Grade 3 English — vocabulary & structures review, Grade 4 preview |
+| `public/js/scenarios/lop3/lessons/tnxh.js` | Bổ sung | Tuần 36: Ba chủ đề TNXH (con người, xã hội, thiên nhiên) — hướng đến KH & Lịch sử lớp 4 |
+| `public/js/scenarios/lop3/lessons/dao-duc.js` | Bổ sung | Tuần 36: Năm giá trị đạo đức Lớp 3, nhìn lại hành trình trưởng thành |
+| `public/js/scenarios/lop3/lessons/am-nhac.js` | Bổ sung | Tuần 36: Bài hát & kiến thức âm nhạc Lớp 3, nhạc cụ gõ, ý nghĩa âm nhạc trong cuộc sống |
+| `public/js/scenarios/lop3/lessons/my-thuat.js` | Bổ sung | Tuần 36: Hành trình sáng tạo mỹ thuật — vẽ, in, nặn, Origami — dự án nhật ký tranh hè |
+| `public/js/scenarios/lop3/lessons/gdtc.js` | Bổ sung | Tuần 36: Kĩ năng vận động (chạy, nhảy, ném, trò chơi), kế hoạch hè 60 phút/ngày |
+| `public/js/scenarios/lop3/lessons/hdtn.js` | Bổ sung | Tuần 36: Trải nghiệm năm Lớp 3 — tự phục vụ, cộng đồng, kĩ năng xã hội, dự án hè |
+| `public/js/scenarios/lop3/lessons/tin-hoc.js` | Bổ sung | Tuần 36: Hành trình số — máy tính, gõ phím, an toàn mạng, thuật toán — chuẩn bị Scratch Lớp 4 |
+| `public/js/scenarios/lop3/lessons/cong-nghe.js` | Bổ sung | Tuần 36: Thủ công kĩ thuật, nông nghiệp gia đình, tư duy thiết kế — dự án trồng cây hè |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/lop3/lessons/toan.js          ✅ OK
+node --check public/js/scenarios/lop3/lessons/tieng-viet.js    ✅ OK
+node --check public/js/scenarios/lop3/lessons/tieng-anh.js     ✅ OK
+node --check public/js/scenarios/lop3/lessons/tnxh.js          ✅ OK
+node --check public/js/scenarios/lop3/lessons/dao-duc.js       ✅ OK
+node --check public/js/scenarios/lop3/lessons/am-nhac.js       ✅ OK
+node --check public/js/scenarios/lop3/lessons/my-thuat.js      ✅ OK
+node --check public/js/scenarios/lop3/lessons/gdtc.js          ✅ OK
+node --check public/js/scenarios/lop3/lessons/hdtn.js          ✅ OK
+node --check public/js/scenarios/lop3/lessons/tin-hoc.js       ✅ OK
+node --check public/js/scenarios/lop3/lessons/cong-nghe.js     ✅ OK
+```
+
+---
+
 ## 2026-08-16 — Phiên cải tiến (43) · Trường THCS Lớp 8 — Tuần 36 "Kết thúc năm học" cho 12 môn
 
 **Chế độ:** Chủ động (tiếp nối phiên 42 cùng ngày — hoàn thành tuần 36 cho Lớp 8).
