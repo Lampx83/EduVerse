@@ -4,6 +4,52 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-19 — Phiên cải tiến (45) · Tiểu học Lớp 4 — Tuần 36 "Kết thúc năm học" cho 12 môn
+
+**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; kiểm tra trạng thái nội dung — Lớp 4 là lớp Tiểu học tiếp theo còn thiếu tuần 36 cho tất cả môn học).
+
+**Trường:** Tiểu học — Lớp 4 (`lop4`)
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động phát hiện khoảng trống nội dung: Lớp 4 còn thiếu bài học tuần 36 "Kết thúc năm học" cho tất cả 12 môn (trong khi Lớp 2, 3, 6, 7, 8, 9, 10, 11, 12 đã hoàn chỉnh).
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/lop4/lessons/toan.js` | Bổ sung | Tuần 36: Kết thúc Lớp 4 — 5 mảng toán lớn, preview Lớp 5 (số thập phân, diện tích hình thang/tròn, tỉ số %) |
+| `public/js/scenarios/lop4/lessons/tieng-viet.js` | Bổ sung | Tuần 36: Hành trang TV Lớp 4 — 4 kỹ năng nghe/nói/đọc/viết, từ loại, câu, dấu câu, tập làm văn |
+| `public/js/scenarios/lop4/lessons/tieng-anh.js` | Bổ sung | Tuần 36: End of Grade 4 English — grammar review, Grade 5 preview, summer study tips |
+| `public/js/scenarios/lop4/lessons/khoa-hoc.js` | Bổ sung | Tuần 36: 3 mảng Khoa học (vật chất, năng lượng, sinh vật–sức khoẻ), preview Lớp 5 |
+| `public/js/scenarios/lop4/lessons/lich-su-dia-ly.js` | Bổ sung | Tuần 36: Địa lý VN (vị trí, địa hình, khí hậu, vùng kinh tế), Lịch sử (Hùng Vương → CM Tháng 8) |
+| `public/js/scenarios/lop4/lessons/dao-duc.js` | Bổ sung | Tuần 36: 10 phẩm chất Đạo đức Lớp 4, mục tiêu sống đẹp Lớp 5, kế hoạch hè |
+| `public/js/scenarios/lop4/lessons/am-nhac.js` | Bổ sung | Tuần 36: Bài hát, nhạc lý (nhịp, sắc thái, nhạc cụ), preview lý thuyết Lớp 5 |
+| `public/js/scenarios/lop4/lessons/my-thuat.js` | Bổ sung | Tuần 36: 4 lĩnh vực MT (vẽ tranh, trang trí, nặn, thường thức), lý thuyết màu sắc, kế hoạch hè |
+| `public/js/scenarios/lop4/lessons/gdtc.js` | Bổ sung | Tuần 36: Kỹ năng vận động Lớp 4, kế hoạch "60 phút mỗi ngày" trong hè |
+| `public/js/scenarios/lop4/lessons/hdtn.js` | Bổ sung | Tuần 36: 7 kỹ năng sống Lớp 4, thử thách "Học sinh Lớp 5" 8 tuần hè |
+| `public/js/scenarios/lop4/lessons/tin-hoc.js` | Bổ sung | Tuần 36: 4 mảng Tin học (HW, an toàn, thuật toán, Scratch), kế hoạch hè lập trình |
+| `public/js/scenarios/lop4/lessons/cong-nghe.js` | Bổ sung | Tuần 36: 3 lĩnh vực CN (kỹ thuật, nông nghiệp, điện), nguyên tắc an toàn, Design Thinking Lớp 5 |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/lop4/lessons/toan.js          ✅ OK
+node --check public/js/scenarios/lop4/lessons/tieng-viet.js    ✅ OK
+node --check public/js/scenarios/lop4/lessons/tieng-anh.js     ✅ OK
+node --check public/js/scenarios/lop4/lessons/khoa-hoc.js      ✅ OK
+node --check public/js/scenarios/lop4/lessons/lich-su-dia-ly.js ✅ OK
+node --check public/js/scenarios/lop4/lessons/dao-duc.js       ✅ OK
+node --check public/js/scenarios/lop4/lessons/am-nhac.js       ✅ OK
+node --check public/js/scenarios/lop4/lessons/my-thuat.js      ✅ OK
+node --check public/js/scenarios/lop4/lessons/gdtc.js          ✅ OK
+node --check public/js/scenarios/lop4/lessons/hdtn.js          ✅ OK
+node --check public/js/scenarios/lop4/lessons/tin-hoc.js       ✅ OK
+node --check public/js/scenarios/lop4/lessons/cong-nghe.js     ✅ OK
+```
+
+---
+
 ## 2026-08-18 — Phiên cải tiến (44) · Tiểu học Lớp 3 — Tuần 36 "Kết thúc năm học" cho 11 môn
 
 **Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; kiểm tra trạng thái nội dung — Lớp 3 là lớp Tiểu học duy nhất còn thiếu tuần 36 cho tất cả môn học).
