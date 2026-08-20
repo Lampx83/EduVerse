@@ -4,6 +4,85 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-20 — Phiên cải tiến (46) · Tiểu học Lớp 1 & Lớp 5 — Tuần 36 "Kết thúc năm học" cho 21 môn
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending (xem cảnh báo hạ tầng phiên 45).
+
+**Phạm vi:** Tiểu học — **Lớp 1** (9 môn) và **Lớp 5** (12 môn) — bổ sung tuần 36 "Kết thúc năm học" hoàn chỉnh năm học 36 tuần cho toàn bộ Tiểu học.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động phát hiện khoảng trống nội dung cuối cùng của Tiểu học: Lớp 1 và Lớp 5 còn thiếu tuần 36 "Kết thúc năm học" (Lớp 2, 3, 4 đã hoàn chỉnh từ phiên 43–45).
+
+### Thay đổi
+
+#### Lớp 1 (9 môn — format static object `P1XX-w36-quiz`)
+
+| File | Key | Chủ đề tuần 36 |
+|------|-----|----------------|
+| `lop1/lessons/toan.js` | `P1-w36-quiz` | Kết thúc Lớp 1 — Hành trang Toán vào Lớp 2 (đếm→100, cộng trừ, hình học, đồng hồ) |
+| `lop1/lessons/tieng-viet.js` | `P1TV-w36-quiz` | Kết thúc Lớp 1 — Hành trang TV (29 chữ cái, âm ghép, 6 dấu thanh, câu kể/hỏi) |
+| `lop1/lessons/tieng-anh.js` | `P1TA-w36-quiz` | End of Grade 1 — Ready for Grade 2 (greetings, numbers 1-10, colours, key sentences) |
+| `lop1/lessons/tnxh.js` | `P1TNXH-w36-quiz` | Kết thúc TNXH Lớp 1 — bản thân, gia đình, trường học, thiên nhiên |
+| `lop1/lessons/dao-duc.js` | `P1DD-w36-quiz` | 5 phẩm chất mang theo vào Lớp 2 (thật thà, yêu thương, chăm chỉ, sạch sẽ, an toàn) |
+| `lop1/lessons/am-nhac.js` | `P1AN-w36-quiz` | Một năm hát ca vui vẻ — 16 bài hát, nhạc cụ gõ, Quốc ca, preview Lớp 2 |
+| `lop1/lessons/my-thuat.js` | `P1MT-w36-quiz` | Nhìn lại hành trình sáng tạo — màu sắc, hình dạng, vẽ tranh, xé dán, nặn |
+| `lop1/lessons/gdtc.js` | `P1GDTC-w36-quiz` | Một năm chăm vận động — đi, chạy, nhảy, ném, trò chơi, kế hoạch hè |
+| `lop1/lessons/hdtn.js` | `P1HDTN-w36-quiz` | Hành trang trải nghiệm vào Lớp 2 — kỉ niệm, kĩ năng, lời nhắn |
+
+#### Lớp 5 (12 môn — mix static/L() format `P5XX-w36-quiz`)
+
+| File | Key | Chủ đề tuần 36 |
+|------|-----|----------------|
+| `lop5/lessons/toan.js` | `P5-w36-quiz` | Kết thúc Tiểu học — 5 trụ cột Toán (số, đo lường, hình học, thống kê, giải toán) |
+| `lop5/lessons/tieng-viet.js` | `P5TV-w36-quiz` | Hành trang TV vào Lớp 6 — 4 kĩ năng, văn miêu tả/kể chuyện, Ngữ văn THCS |
+| `lop5/lessons/tieng-anh.js` | `P5TA-w36-quiz` | End of Primary — Ready for Grade 6 (tenses, WH-questions, reading/writing skills) |
+| `lop5/lessons/khoa-hoc.js` | `P5KH-w36-quiz` | Hành trang KH vào THCS — sự sống, vật chất-năng lượng, môi trường; preview KHTN |
+| `lop5/lessons/lich-su-dia-ly.js` | `P5LSDL-w36-quiz` | Hành trang LS-ĐL — từ Hùng Vương đến Đổi mới 1986; 8 vùng kinh tế VN |
+| `lop5/lessons/dao-duc.js` | `P5DD-w36-quiz` | 5 phẩm chất học sinh THCS (yêu thương, trách nhiệm, chăm chỉ, trung thực, yêu quê hương) |
+| `lop5/lessons/am-nhac.js` | `P5AN-w36-quiz` | Âm nhạc đồng hành cả đời — hành trình 5 năm, recorder, ký xướng âm, preview THCS |
+| `lop5/lessons/my-thuat.js` | `P5MT-w36-quiz` | Hành trình sáng tạo 5 năm — 4 kĩ năng MT, màu cơ bản/thứ cấp, lên THCS |
+| `lop5/lessons/gdtc.js` | `P5GDTC-w36-quiz` | Sức khoẻ là hành trang — tổng kết vận động, kế hoạch 60 phút/ngày theo WHO |
+| `lop5/lessons/hdtn.js` | `P5HDTN-w36-quiz` | Tốt nghiệp cấp 1 — hành trình 5 năm, cấp 2 mới, lời nhắn và lời hứa |
+| `lop5/lessons/tin-hoc.js` | `P5TIN-w36-quiz` | Hành trang TH vào THCS — 5 trụ cột (thiết bị, kĩ năng, phần mềm, an toàn, thuật toán) |
+| `lop5/lessons/cong-nghe.js` | `P5CN-w36-quiz` | Hành trang CN vào THCS — thủ công, nông nghiệp, nấu ăn, an toàn, tư duy thiết kế |
+
+### Kiểm thử
+
+```
+node --check public/js/scenarios/lop1/lessons/toan.js          ✅ OK
+node --check public/js/scenarios/lop1/lessons/tieng-viet.js    ✅ OK
+node --check public/js/scenarios/lop1/lessons/tieng-anh.js     ✅ OK
+node --check public/js/scenarios/lop1/lessons/tnxh.js          ✅ OK
+node --check public/js/scenarios/lop1/lessons/dao-duc.js       ✅ OK
+node --check public/js/scenarios/lop1/lessons/am-nhac.js       ✅ OK
+node --check public/js/scenarios/lop1/lessons/my-thuat.js      ✅ OK
+node --check public/js/scenarios/lop1/lessons/gdtc.js          ✅ OK
+node --check public/js/scenarios/lop1/lessons/hdtn.js          ✅ OK
+node --check public/js/scenarios/lop5/lessons/toan.js          ✅ OK
+node --check public/js/scenarios/lop5/lessons/tieng-viet.js    ✅ OK
+node --check public/js/scenarios/lop5/lessons/tieng-anh.js     ✅ OK
+node --check public/js/scenarios/lop5/lessons/khoa-hoc.js      ✅ OK
+node --check public/js/scenarios/lop5/lessons/lich-su-dia-ly.js ✅ OK
+node --check public/js/scenarios/lop5/lessons/dao-duc.js       ✅ OK
+node --check public/js/scenarios/lop5/lessons/am-nhac.js       ✅ OK
+node --check public/js/scenarios/lop5/lessons/my-thuat.js      ✅ OK
+node --check public/js/scenarios/lop5/lessons/gdtc.js          ✅ OK
+node --check public/js/scenarios/lop5/lessons/hdtn.js          ✅ OK
+node --check public/js/scenarios/lop5/lessons/tin-hoc.js       ✅ OK
+node --check public/js/scenarios/lop5/lessons/cong-nghe.js     ✅ OK
+```
+
+### Kết quả
+
+- Lớp 1: từ 35 tuần → **36 tuần** cho tất cả 9 môn ✅
+- Lớp 5: từ 35 tuần → **36 tuần** cho tất cả 12 môn ✅
+- **Toàn bộ Tiểu học (Lớp 1–5) đã có đủ 36 tuần** 🎉
+- Cùng với THCS (Lớp 6–9) và THPT (Lớp 10–12) đã hoàn chỉnh từ phiên 38–45
+- **EduVerse hiện có đủ 36 tuần cho TẤT CẢ các lớp từ Lớp 1 đến Lớp 12** 🏫🎓
+
+---
+
 ## 2026-08-19 — Phiên cải tiến (45) · Tiểu học Lớp 4 — Tuần 36 "Kết thúc năm học" cho 12 môn
 
 **Chế độ:** Chủ động — ⚠️ **KHÔNG đọc được hộp thư production** (xem mục "Cảnh báo hạ tầng" bên dưới).
