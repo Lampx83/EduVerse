@@ -6,13 +6,49 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ## 2026-08-19 — Phiên cải tiến (45) · Tiểu học Lớp 4 — Tuần 36 "Kết thúc năm học" cho 12 môn
 
-**Chế độ:** Chủ động (inbox `ai-board/inbox.json` không có yêu cầu pending; kiểm tra trạng thái nội dung — Lớp 4 là lớp Tiểu học tiếp theo còn thiếu tuần 36 cho tất cả môn học).
+**Chế độ:** Chủ động — ⚠️ **KHÔNG đọc được hộp thư production** (xem mục "Cảnh báo hạ tầng" bên dưới).
 
 **Trường:** Tiểu học — Lớp 4 (`lop4`)
 
 ### Yêu cầu xử lý
 
-Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động phát hiện khoảng trống nội dung: Lớp 4 còn thiếu bài học tuần 36 "Kết thúc năm học" cho tất cả 12 môn (trong khi Lớp 2, 3, 6, 7, 8, 9, 10, 11, 12 đã hoàn chỉnh).
+**Không xác định được** — phiên này KHÔNG kiểm chứng được có hay không yêu cầu từ người dùng. Mọi đường đọc hộp thư production đều thất bại (chi tiết bên dưới). File `ai-board/inbox.json` trong repo là stub rỗng, **không phải** nguồn dữ liệu thật, nên "file rỗng" ≠ "không có yêu cầu".
+
+Phiên chủ động chọn khoảng trống nội dung: Lớp 4 còn thiếu bài học tuần 36 "Kết thúc năm học" cho tất cả 12 môn (trong khi Lớp 2, 3, 6, 7, 8, 9, 10, 11, 12 đã hoàn chỉnh).
+
+### ⚠️ Cảnh báo hạ tầng — hộp thư đã "mù" 22 phiên liên tiếp
+
+Cơ chế được thiết kế cho bước "đọc hộp thư" là `server/scripts/sync-inbox.mjs`
+(production DB → `ai-board/inbox.json`). Kiểm tra ngày 2026-08-19 cho thấy nó
+hỏng ở **ba lớp chồng nhau**:
+
+| # | Lỗi | Bằng chứng |
+|---|-----|-----------|
+| 1 | `node_modules` chưa cài ở môi trường clone mới | `ERR_MODULE_NOT_FOUND: Cannot find package 'better-sqlite3'` |
+| 2 | `data/tizia.db` không có trong repo (DB nằm trên volume production) | script tự thoát `exit(1)` với "DB không tồn tại" |
+| 3 | Script mồ côi — không cron/CI/doc nào gọi | `grep -rn "sync-inbox"` → 0 tham chiếu ngoài chính nó |
+
+Đường HTTP cũng bị chặn: `/api/requests`, `/api/requests/:id/thread` và
+`/api/admin/requests` đều trả `401 {"needLogin":true}` — `/api/requests` KHÔNG
+nằm trong `PUBLIC_PATH_PREFIXES` (comment ở `server/index.js` nói "inbox công
+khai" là **đã lỗi thời**, không khớp whitelist thực tế trong
+`server/contexts/identity/auth.js`).
+
+**Hệ quả:** phiên gần nhất phục vụ yêu cầu thật là **Phiên (23) · 2026-07-25 ·
+Request #106 · Chu Thi Hue**. Từ phiên (24) đến (45) — **22 phiên, ~25 ngày** —
+tất cả đều ghi "inbox trống" và chạy chế độ chủ động. Con số đó **không chứng
+minh** không có yêu cầu; nhiều khả năng yêu cầu của HS/SV đang nằm trong DB
+production mà Ban điều hành AI không nhìn thấy.
+
+**Cần người vận hành quyết định** (nằm ngoài quyền hạn phiên tự động, liên quan
+secret/hạ tầng):
+- Chạy `sync-inbox.mjs` **trên host production** (nơi có `data/tizia.db`) và commit `inbox.json`; hoặc
+- Cấp `DATA_DIR` trỏ vào volume production + `npm ci` cho môi trường routine; hoặc
+- Mở một endpoint đọc-chỉ có xác thực bằng token riêng cho Ban điều hành AI.
+
+Ngoài ra `sync-inbox.mjs` đọc **SQLite** (`better-sqlite3`) trong khi
+`.env.example` khai báo `DATABASE_URL=postgres://…` và `package.json` có `pg` —
+cần rà lại script còn khớp với DB thật hay không.
 
 ### Thay đổi
 
