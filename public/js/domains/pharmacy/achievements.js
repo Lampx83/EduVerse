@@ -21,17 +21,33 @@ export const ACHIEVEMENTS = [
     desc: '10 quiz hoàn thành',
     trigger: { quizzesPassed: 10 } },
 
+  { id: 'streak-3',    icon: '🌱', title: 'Học đều 3 ngày',
+    desc: 'Học liên tiếp 3 ngày — bước khởi đầu của thói quen',
+    trigger: { streak: 3 } },
+
   { id: 'streak-5',    icon: '🔥', title: 'Cháy 5 ngày',
     desc: 'Streak 5 ngày liên tiếp',
     trigger: { streak: 5 } },
 
-  { id: 'streak-30',   icon: '🌟', title: 'Vua streak',
+  { id: 'streak-7',    icon: '📅', title: 'Một tuần kiên trì',
+    desc: 'Học đều đặn suốt một tuần — thói quen đang hình thành',
+    trigger: { streak: 7 } },
+
+  { id: 'streak-14',   icon: '⚡', title: '2 tuần không gián đoạn',
+    desc: 'Streak 14 ngày — cam kết học nghiêm túc',
+    trigger: { streak: 14 } },
+
+  { id: 'streak-30',   icon: '🏆', title: 'Vua streak',
     desc: 'Streak 30 ngày liên tiếp — không nghỉ học',
     trigger: { streak: 30 } },
 
   { id: 'star-30',     icon: '🌟', title: 'Sao tay',
     desc: 'Đạt 30 sao tích luỹ',
     trigger: { totalStars: 30 } },
+
+  { id: 'star-60',     icon: '💫', title: 'Sao bạch kim',
+    desc: 'Đạt 60 sao — đã chinh phục hơn nửa hành trình Dược',
+    trigger: { totalStars: 60 } },
 
   { id: 'star-100',    icon: '✨', title: 'Sao bạc',
     desc: 'Đạt 100 sao — gần như nửa hành trình',
