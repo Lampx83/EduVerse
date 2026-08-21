@@ -4,6 +4,59 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-21 — Phiên cải tiến (47) · Trường Dược — 4 Achievements mới (Streak 3/7/14 · Sao 60)
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending (cơ chế sync-inbox vẫn chưa được sửa từ phiên 45).
+
+**Phạm vi:** Trường Dược (`pharmacy`) — bổ sung 4 achievements còn thiếu: streak-3, streak-7, streak-14 và star-60.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động quét so sánh achievements giữa các trường phát hiện **Trường Dược bị thiếu** các mốc streak nhỏ và sao trung gian:
+
+| Trường | Streak hiện có | Sao hiện có |
+|--------|---------------|-------------|
+| Dược (trước phiên này) | streak-5, streak-30 | star-30, star-100 |
+| Lái xe, Ngoại ngữ | streak-3, 7, 14, 30 | — |
+| CNTT, Kinh tế | streak-5, 14, 30 | star-30, 60, 90 |
+| Mầm non, Tiểu học, THCS, THPT | streak-3 (hoặc 5), 7 (hoặc 10), 14, 30 | đủ các mốc |
+
+Khoảng trống:
+- **streak-3**: Không có mốc khởi đầu "3 ngày liên tiếp" — trong khi Mầm non, Tiểu học, Lái xe, Ngoại ngữ đều có
+- **streak-7**: Không có mốc "1 tuần kiên trì" — Mầm non, Lái xe, Ngoại ngữ đều có
+- **streak-14**: Mốc 2 tuần vắng mặt — THPT, CNTT, Kinh tế, Lái xe, Ngoại ngữ đều có
+- **star-60**: Không có mốc trung gian giữa star-30 và star-100 — trong khi CNTT và Kinh tế đã có star-60 và star-90 (phiên 35)
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/pharmacy/achievements.js` | Mở rộng | +4 achievements: `streak-3`, `streak-7`, `streak-14`, `star-60` |
+
+### Chi tiết 4 achievements mới
+
+| ID | Icon | Tên | Trigger |
+|----|------|-----|---------|
+| `streak-3` | 🌱 | Học đều 3 ngày | streak: 3 |
+| `streak-7` | 📅 | Một tuần kiên trì | streak: 7 |
+| `streak-14` | ⚡ | 2 tuần không gián đoạn | streak: 14 |
+| `star-60` | 💫 | Sao bạch kim | totalStars: 60 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/pharmacy/achievements.js    ✅ OK
+```
+
+### Kết quả
+
+- Trường Dược: từ **5 streak achievements** → **8 streak achievements** (+streak-3, +streak-7, +streak-14)
+- Sao: star-30 → star-60 (mới) → star-100 — chuỗi milestone dày đủ hơn
+- Sinh viên Dược giờ được ghi nhận ngay từ ngày thứ 3 học liên tiếp (thay vì phải đạt streak-5 mới có mốc)
+- Đồng nhất chuẩn streak-3/7/14/30 với toàn bộ các trường EduVerse
+
+---
+
 ## 2026-08-20 — Phiên cải tiến (46) · Tiểu học Lớp 1 & Lớp 5 — Tuần 36 "Kết thúc năm học" cho 21 môn
 
 **Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending (xem cảnh báo hạ tầng phiên 45).
