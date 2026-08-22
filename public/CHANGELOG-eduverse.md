@@ -4,6 +4,59 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-22 — Phiên cải tiến (48) · THPT · CNTT · Kinh tế — 4 Achievements mới (Streak-3 · Star-30)
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending (cơ chế sync-inbox vẫn chưa được khắc phục, xem cảnh báo hạ tầng phiên 45).
+
+**Phạm vi:** 3 trường — THPT (`highschool`), CNTT (`it`), Kinh tế (`economics`) — bổ sung các achievements còn thiếu để đồng nhất với toàn hệ thống.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động so sánh bộ achievements streak giữa tất cả 9 trường phát hiện khoảng trống hệ thống:
+
+| Trường | streak-3 (trước) | streak-3 (sau) | Ghi chú |
+|--------|-----------------|----------------|---------|
+| THPT | ❌ (có streak-5) | ✅ | Trường duy nhất trong K-12 không có mốc "3 ngày khởi đầu" |
+| CNTT | ❌ (có streak-5) | ✅ | IT + thiếu cả star-30 |
+| Kinh tế | ❌ (có streak-5) | ✅ | Nhất quán: Economics có star-30, nay thêm streak-3 |
+
+So sánh các trường **có** streak-3 trước phiên này: Mầm non, Tiểu học, THCS, Dược, Lái xe, Ngoại ngữ — 6/9 trường. Các trường **không có** streak-3: THPT, CNTT, Kinh tế. Sau phiên này: **9/9 trường đều có streak-3** ✅.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/highschool/achievements.js` | Mở rộng | +1 achievement: `streak-3` (Bắt đầu đều đặn) |
+| `public/js/domains/it/achievements.js` | Mở rộng | +2 achievements: `streak-3` (Code 3 ngày liên tiếp) + `star-30` (30 sao CNTT) |
+| `public/js/domains/economics/achievements.js` | Mở rộng | +1 achievement: `streak-3` (Học Kinh tế 3 ngày liên tiếp) |
+
+### Chi tiết 4 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| THPT | `streak-3` | 🌱 | Bắt đầu đều đặn | streak: 3 |
+| CNTT | `streak-3` | 🌱 | Code 3 ngày liên tiếp | streak: 3 |
+| CNTT | `star-30` | 🌟 | 30 sao CNTT | totalStars: 30 |
+| Kinh tế | `streak-3` | 🌱 | Học Kinh tế 3 ngày liên tiếp | streak: 3 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/highschool/achievements.js    ✅ OK
+node --check public/js/domains/it/achievements.js            ✅ OK
+node --check public/js/domains/economics/achievements.js     ✅ OK
+```
+
+### Kết quả
+
+- Tất cả **9/9 trường EduVerse** đều có `streak-3` — milestone "3 ngày khởi đầu" đã đồng nhất toàn hệ thống ✅
+- Trường CNTT: streak set 3 achievements → **4** (+streak-3); star set 2 → **3** (+star-30)
+- Trường THPT: streak set 3 achievements → **4** (+streak-3)
+- Trường Kinh tế: streak set 3 achievements → **4** (+streak-3)
+- Bộ sao CNTT: star-30 → star-60 → star-90 (đồng nhất với Economics và Pharmacy)
+
+---
+
 ## 2026-08-21 — Phiên cải tiến (47) · Trường Dược — 4 Achievements mới (Streak 3/7/14 · Sao 60)
 
 **Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending (cơ chế sync-inbox vẫn chưa được sửa từ phiên 45).

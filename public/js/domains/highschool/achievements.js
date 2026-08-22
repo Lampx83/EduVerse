@@ -8,6 +8,8 @@ export const ACHIEVEMENTS = [
   // ── Khởi đầu ──
   { id: 'first', icon: '🏫', title: 'Học sinh THPT',
     desc: 'Hoàn thành hoạt động đầu tiên', trigger: { quizzesPassed: 1 } },
+  { id: 'streak-3', icon: '🌱', title: 'Bắt đầu đều đặn',
+    desc: 'Vào học 3 ngày liên tiếp — thói quen tốt bắt đầu từ đây', trigger: { streak: 3 } },
   { id: 'streak-5', icon: '🔥', title: 'Ôn luyện đều đặn',
     desc: 'Vào học 5 ngày liên tiếp', trigger: { streak: 5 } },
   { id: 'streak-14', icon: '⚡', title: 'Hai tuần bứt phá',
