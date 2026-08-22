@@ -8,6 +8,10 @@ export const ACHIEVEMENTS = [
     desc: 'Hoàn thành quiz đầu tiên',
     trigger: { quizzesPassed: 1 } },
 
+  { id: 'streak-3',    icon: '🌱', title: 'Code 3 ngày liên tiếp',
+    desc: 'Streak 3 ngày — thói quen lập trình hàng ngày bắt đầu từ đây',
+    trigger: { streak: 3 } },
+
   { id: 'streak-5',    icon: '🔥', title: 'Cháy 5 ngày',
     desc: 'Streak 5 ngày liên tiếp',
     trigger: { streak: 5 } },
@@ -19,6 +23,10 @@ export const ACHIEVEMENTS = [
   { id: 'streak-30',   icon: '🏆', title: '1 tháng code không ngừng',
     desc: 'Streak 30 ngày — kỷ luật bền vững, nền tảng của mọi kỹ sư giỏi',
     trigger: { streak: 30 } },
+
+  { id: 'star-30',     icon: '🌟', title: '30 sao CNTT',
+    desc: 'Tích luỹ 30 sao — đang trên đà chinh phục chương trình Kỹ sư',
+    trigger: { totalStars: 30 } },
 
   { id: 'star-60',     icon: '💫', title: '60 sao CNTT',
     desc: 'Tích luỹ 60 sao — đã qua nửa hành trình Kỹ sư phần mềm',
