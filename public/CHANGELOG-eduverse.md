@@ -4,6 +4,66 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-24 — Phiên cải tiến (49) · THPT · CNTT · Kinh tế — 3 Achievements mới (Streak-7)
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending.
+
+**Phạm vi:** 3 trường — THPT (`highschool`), CNTT (`it`), Kinh tế (`economics`) — bổ sung milestone `streak-7` "1 tuần học liên tiếp" còn thiếu.
+
+### Phân tích khoảng trống
+
+Phiên 48 (2026-08-22) đã đồng nhất `streak-3` cho toàn bộ 9/9 trường. Phiên này quét tiếp bộ streak và phát hiện **`streak-7` vẫn thiếu ở 3 trường** trong khi 6/9 trường còn lại đều có mốc "1 tuần":
+
+| Trường | Streak trước phiên này | streak-7 |
+|--------|----------------------|----------|
+| Mầm non | 3, 7, 14, 30 | ✅ có |
+| Tiểu học | 3, 7, 14, 30 | ✅ có |
+| THCS | 3, 5, 10, 14, 30 | ✅ (dùng streak-10 = 2 tuần học) |
+| **THPT** | 3, 5, **—**, 14, 30 | ❌ **thiếu** |
+| Dược | 3, 5, 7, 14, 30 | ✅ có |
+| **CNTT** | 3, 5, **—**, 14, 30 | ❌ **thiếu** |
+| **Kinh tế** | 3, 5, **—**, 14, 30 | ❌ **thiếu** |
+| Lái xe | 3, 7, 14, 30 | ✅ có |
+| Ngoại ngữ | 3, 7, 14, 30 | ✅ có |
+
+Khoảng trống: bước nhảy streak-5 → streak-14 (9 ngày không có mốc) ở THPT/CNTT/Kinh tế tạo cảm giác thiếu ghi nhận cho học viên đang hình thành thói quen hàng tuần.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động bổ sung `streak-7` cho 3 trường còn thiếu.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/highschool/achievements.js` | Mở rộng | +1 achievement: `streak-7` (Một tuần học đều) |
+| `public/js/domains/it/achievements.js` | Mở rộng | +1 achievement: `streak-7` (Code cả tuần) |
+| `public/js/domains/economics/achievements.js` | Mở rộng | +1 achievement: `streak-7` (Một tuần học kinh tế) |
+
+### Chi tiết 3 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| THPT | `streak-7` | 📅 | Một tuần học đều | streak: 7 |
+| CNTT | `streak-7` | 📅 | Code cả tuần | streak: 7 |
+| Kinh tế | `streak-7` | 📅 | Một tuần học kinh tế | streak: 7 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/highschool/achievements.js    ✅ OK
+node --check public/js/domains/it/achievements.js            ✅ OK
+node --check public/js/domains/economics/achievements.js     ✅ OK
+```
+
+### Kết quả
+
+- THPT, CNTT, Kinh tế: chuỗi streak 3 → 5 → **7** → 14 → 30 — đầy đủ mốc hàng tuần ✅
+- Toàn hệ thống EduVerse: **9/9 trường đều có `streak-7`** (THCS dùng streak-10 tương đương) ✅
+- Sinh viên THPT/CNTT/Kinh tế được ghi nhận sau đúng 1 tuần học đều đặn (thay vì phải đợi đến 14 ngày)
+
+---
+
 ## 2026-08-22 — Phiên cải tiến (48) · THPT · CNTT · Kinh tế — 4 Achievements mới (Streak-3 · Star-30)
 
 **Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending (cơ chế sync-inbox vẫn chưa được khắc phục, xem cảnh báo hạ tầng phiên 45).

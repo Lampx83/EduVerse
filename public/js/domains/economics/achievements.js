@@ -16,6 +16,10 @@ export const ACHIEVEMENTS = [
     desc: 'Streak 5 ngày liên tiếp',
     trigger: { streak: 5 } },
 
+  { id: 'streak-7',     icon: '📅', title: 'Một tuần học kinh tế',
+    desc: 'Streak 7 ngày liên tiếp — một tuần đầu tư vào tri thức kinh tế mỗi ngày',
+    trigger: { streak: 7 } },
+
   { id: 'streak-14',    icon: '⚡', title: '2 tuần học kinh tế liên tục',
     desc: 'Streak 14 ngày liên tiếp — đầu tư vào bản thân mỗi ngày',
     trigger: { streak: 14 } },

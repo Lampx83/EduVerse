@@ -12,6 +12,8 @@ export const ACHIEVEMENTS = [
     desc: 'Vào học 3 ngày liên tiếp — thói quen tốt bắt đầu từ đây', trigger: { streak: 3 } },
   { id: 'streak-5', icon: '🔥', title: 'Ôn luyện đều đặn',
     desc: 'Vào học 5 ngày liên tiếp', trigger: { streak: 5 } },
+  { id: 'streak-7', icon: '📅', title: 'Một tuần học đều',
+    desc: 'Vào học 7 ngày liên tiếp — một tuần đúng nghĩa, thói quen bền vững', trigger: { streak: 7 } },
   { id: 'streak-14', icon: '⚡', title: 'Hai tuần bứt phá',
     desc: 'Vào học 14 ngày liên tiếp', trigger: { streak: 14 } },
 
