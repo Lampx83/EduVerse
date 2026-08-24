@@ -16,6 +16,10 @@ export const ACHIEVEMENTS = [
     desc: 'Streak 5 ngày liên tiếp',
     trigger: { streak: 5 } },
 
+  { id: 'streak-7',    icon: '📅', title: 'Code cả tuần',
+    desc: 'Streak 7 ngày liên tiếp — một tuần commit mỗi ngày, lập trình viên thực thụ',
+    trigger: { streak: 7 } },
+
   { id: 'streak-14',   icon: '⚡', title: '2 tuần code liên tục',
     desc: 'Streak 14 ngày liên tiếp — commit như một lập trình viên thực sự',
     trigger: { streak: 14 } },
