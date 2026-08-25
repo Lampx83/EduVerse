@@ -4,6 +4,68 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-25 — Phiên cải tiến (50) · Mầm non · THCS — 4 Star Achievements mới
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending.
+
+**Phạm vi:** Trường Mầm non (`preschool`) và Trường THCS (`secondary`) — bổ sung star achievements còn thiếu.
+
+### Phân tích khoảng trống
+
+So sánh bộ `totalStars` achievements giữa 9 trường phát hiện hai khoảng trống:
+
+| Trường | Star achievements trước | Trạng thái |
+|--------|------------------------|------------|
+| Mầm non | _(không có)_ | ❌ **thiếu hoàn toàn** |
+| Tiểu học | star-15, star-30, star-60 | ✅ |
+| THCS | star-20, star-50 | ⚠️ thiếu mốc star-100 |
+| THPT | star-20, star-50, star-100 | ✅ |
+| Dược | star-30, star-60, star-100 | ✅ |
+| CNTT | star-30, star-60, star-90 | ✅ |
+| Kinh tế | star-30, star-60, star-90 | ✅ |
+| Lái xe | _(không áp dụng — index.js riêng)_ | — |
+| Ngoại ngữ | _(không áp dụng — index.js riêng)_ | — |
+
+**Mầm non:** 15 module × 3 sao/module = tối đa 45 sao. Tất cả 7 trường khác đều có `totalStars` achievements; Mầm non là trường DUY NHẤT thiếu hoàn toàn — học sinh mầm non cần được khích lệ bằng mốc sao nhỏ, dễ đạt, thân thiện với lứa tuổi.
+
+**THCS:** Có star-20 và star-50 nhưng thiếu star-100. THPT (tương đương số môn, số lớp) đã có cả star-100. Học sinh THCS tích cực có thể đạt 100+ sao (4 năm × 12 môn × ≥3 sao/môn = 144 sao max), thiếu mốc star-100 là khoảng trống ghi nhận.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động bổ sung star achievements còn thiếu.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/preschool/achievements.js` | Mở rộng | +3 achievements: `star-5`, `star-15`, `star-30` |
+| `public/js/domains/secondary/achievements.js` | Mở rộng | +1 achievement: `star-100` |
+
+### Chi tiết 4 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| Mầm non | `star-5` | ✨ | Bé sưu sao | totalStars: 5 |
+| Mầm non | `star-15` | 💫 | Rương kho báu nhỏ | totalStars: 15 |
+| Mầm non | `star-30` | 🌟 | Bé siêu sao | totalStars: 30 |
+| THCS | `star-100` | 🏆 | Thủ lĩnh sao THCS | totalStars: 100 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/preschool/achievements.js    ✅ OK
+node --check public/js/domains/secondary/achievements.js    ✅ OK
+```
+
+### Kết quả
+
+- Mầm non: từ **0** → **3 star achievements** — đồng nhất với chuẩn toàn hệ thống ✅
+- THCS: chuỗi star-20 → star-50 → **star-100** — cân bằng với THPT (cũng có star-100) ✅
+- Học sinh mầm non được ghi nhận sớm từ 5 sao đầu tiên (phù hợp lứa tuổi 3–6)
+- Học sinh THCS chăm chỉ nay có thêm mục tiêu star-100 để phấn đấu
+
+---
+
 ## 2026-08-24 — Phiên cải tiến (49) · THPT · CNTT · Kinh tế — 3 Achievements mới (Streak-7)
 
 **Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending.
