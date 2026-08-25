@@ -138,8 +138,10 @@ export const ACHIEVEMENTS = [
   // ── Sao tích luỹ ──
   { id: 'star-20', icon: '✨', title: 'Sưu tầm 20 sao',
     desc: 'Tích luỹ 20 sao', trigger: { totalStars: 20 } },
-  { id: 'star-50', icon: '💫', title: 'Ngôi sao THCS',
+  { id: 'star-50',  icon: '💫', title: 'Ngôi sao THCS',
     desc: 'Tích luỹ 50 sao', trigger: { totalStars: 50 } },
+  { id: 'star-100', icon: '🏆', title: 'Thủ lĩnh sao THCS',
+    desc: 'Tích luỹ 100 sao', trigger: { totalStars: 100 } },
 
   // ── Tốt nghiệp lớp ──
   { id: 'year1-sec-complete', icon: '🥇', title: 'Lên lớp 7 tự tin!',
