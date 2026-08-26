@@ -6,6 +6,8 @@ export const ACHIEVEMENTS = [
   // ── Khởi đầu ──
   { id: 'first-quiz', icon: '🌟', title: 'Khởi đầu THCS',
     desc: 'Hoàn thành bài quiz đầu tiên', trigger: { quizzesPassed: 1 } },
+  { id: 'bookworm', icon: '📚', title: 'Mọt sách THCS',
+    desc: '10 bài quiz hoàn thành — đang trên đà chinh phục chương trình THCS', trigger: { quizzesPassed: 10 } },
   { id: 'streak-3', icon: '🔥', title: 'Bắt đầu đều đặn',
     desc: 'Vào học 3 ngày liên tiếp', trigger: { streak: 3 } },
   { id: 'streak-5', icon: '⚡', title: 'Cháy 5 ngày',

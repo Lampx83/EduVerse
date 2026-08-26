@@ -150,10 +150,6 @@ export const ACHIEVEMENTS = [
     desc: 'Pass khoá luận I4.5',
     trigger: { moduleStars: { 'I4.5': 2 } } },
 
-  { id: 'star-30',     icon: '🌟', title: '30 sao đầu',
-    desc: '30 sao tích luỹ',
-    trigger: { totalStars: 30 } },
-
   // ── Game Achievements ──
   { id: 'code-racer',   icon: '⚡', title: 'Code Racer',
     desc: 'Pass Code Race — Giải thuật 5 phút (IG01)',
