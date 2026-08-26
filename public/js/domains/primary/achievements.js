@@ -6,6 +6,8 @@ export const ACHIEVEMENTS = [
   // ── Khởi đầu ──
   { id: 'first-quiz', icon: '🌟', title: 'Ngôi sao nhỏ',
     desc: 'Hoàn thành bài quiz đầu tiên', trigger: { quizzesPassed: 1 } },
+  { id: 'bookworm', icon: '📚', title: 'Mọt sách tiểu học',
+    desc: '10 bài quiz hoàn thành — em đang chăm học rất giỏi!', trigger: { quizzesPassed: 10 } },
   { id: 'streak-3', icon: '🔥', title: 'Chăm học 3 ngày',
     desc: 'Vào học 3 ngày liên tiếp', trigger: { streak: 3 } },
   { id: 'streak-7', icon: '🌈', title: 'Tuần vàng',
