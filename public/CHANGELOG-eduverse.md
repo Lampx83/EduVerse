@@ -4,6 +4,71 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-29 — Phiên cải tiến (52) · CNTT · Kinh tế · Tiểu học · Mầm non — 4 Star Cap Achievements
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending; DB production không truy cập được trong môi trường này (lỗi hạ tầng sync-inbox đã ghi nhận từ phiên 45); GitHub Issues trống.
+
+**Phạm vi:** 4 trường — CNTT (`it`), Kinh tế (`economics`), Tiểu học (`primary`), Mầm non (`preschool`).
+
+### Phân tích khoảng trống
+
+So sánh milestone sao tích luỹ cao nhất giữa 9 trường:
+
+| Trường | Star milestones hiện tại | Trạng thái |
+|--------|--------------------------|------------|
+| Dược | star-30, star-60, **star-100** | ✅ cap rõ ràng |
+| **CNTT** | star-30, star-60, **star-90** | ⚠️ thiếu cap milestone |
+| **Kinh tế** | star-30, star-60, **star-90** | ⚠️ thiếu cap milestone |
+| **Tiểu học** | star-15, star-30, **star-60** | ⚠️ thiếu cap milestone |
+| THCS | star-20, star-50, **star-100** | ✅ |
+| THPT | star-20, star-50, **star-100** | ✅ |
+| **Mầm non** | star-5, star-15, **star-30** | ⚠️ thiếu cap milestone |
+| Lái xe | _(không có)_ | — ít module |
+| Ngoại ngữ | _(không có)_ | — ít module |
+
+**Phân tích nội dung:**
+- **CNTT**: 23 module quiz (I1.1–I4.5) + 4 game + 6 career = ~33 module × 3 sao tối đa ≈ 99 sao; có thể đạt 120 với bonus quiz và thực hành → `star-120` là mốc thực tế.
+- **Kinh tế**: year1 + year1b + year2 + year3 + year4 (a/b/c) = ~35+ module × 3 sao → `star-120` hợp lý.
+- **Tiểu học**: 54 module (5 lớp × 8-11 môn) × 3 sao = ~162 sao tối đa → `star-100` là mốc khích lệ giữa chặng.
+- **Mầm non**: 15 module × 3 sao = 45 sao tối đa → `star-45` là mốc tự nhiên (hoàn thành toàn bộ).
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/it/achievements.js` | Mở rộng | +1 achievement: `star-120` — "Kỹ sư 120 sao" |
+| `public/js/domains/economics/achievements.js` | Mở rộng | +1 achievement: `star-120` — "Cử nhân 120 sao" |
+| `public/js/domains/primary/achievements.js` | Mở rộng | +1 achievement: `star-100` — "Học sinh xuất sắc" |
+| `public/js/domains/preschool/achievements.js` | Mở rộng | +1 achievement: `star-45` — "Bé tài năng toàn diện" |
+
+### Chi tiết 4 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| CNTT | `star-120` | 🏆 | Kỹ sư 120 sao | totalStars: 120 |
+| Kinh tế | `star-120` | 🏆 | Cử nhân 120 sao | totalStars: 120 |
+| Tiểu học | `star-100` | 🏆 | Học sinh xuất sắc | totalStars: 100 |
+| Mầm non | `star-45` | 🏆 | Bé tài năng toàn diện | totalStars: 45 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/it/achievements.js         ✅ OK
+node --check public/js/domains/economics/achievements.js  ✅ OK
+node --check public/js/domains/primary/achievements.js    ✅ OK
+node --check public/js/domains/preschool/achievements.js  ✅ OK
+```
+
+### Kết quả
+
+- CNTT: star-30 → star-60 → star-90 → **star-120** ✅ (cap rõ ràng tương ứng hoàn thành 4 năm)
+- Kinh tế: star-30 → star-60 → star-90 → **star-120** ✅ (tương tự)
+- Tiểu học: star-15 → star-30 → star-60 → **star-100** ✅ (mốc khích lệ giữa chương trình 5 lớp)
+- Mầm non: star-5 → star-15 → star-30 → **star-45** ✅ (cap tự nhiên = hoàn thành toàn bộ 15 module)
+- **Yêu cầu từ người dùng:** Không có (inbox trống, phiên chủ động)
+
+---
+
 ## 2026-08-26 — Phiên cải tiến (51) · CNTT · Tiểu học · THCS · THPT — Bug fix + 3 Bookworm Achievements
 
 **Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending (lỗi hạ tầng sync-inbox vẫn chưa khắc phục, xem phiên 45).

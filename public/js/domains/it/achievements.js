@@ -40,6 +40,10 @@ export const ACHIEVEMENTS = [
     desc: 'Tích luỹ 90 sao — gần hoàn thành toàn bộ chương trình CNTT',
     trigger: { totalStars: 90 } },
 
+  { id: 'star-120',    icon: '🏆', title: 'Kỹ sư 120 sao',
+    desc: 'Tích luỹ 120 sao — chinh phục toàn bộ 4 năm chương trình Kỹ sư CNTT',
+    trigger: { totalStars: 120 } },
+
   // ── Year 1 Achievements (mới) ──
   { id: 'python-starter', icon: '🐍', title: 'Pythonista',
     desc: 'Pass Nhập môn lập trình Python (I1.1) với 3 sao',

@@ -36,6 +36,10 @@ export const ACHIEVEMENTS = [
     desc: 'Tích luỹ 90 sao — sắp hoàn thành toàn bộ chương trình Kinh tế',
     trigger: { totalStars: 90 } },
 
+  { id: 'star-120',     icon: '🏆', title: 'Cử nhân 120 sao',
+    desc: 'Tích luỹ 120 sao — chinh phục toàn bộ 4 năm chương trình Cử nhân Kinh tế',
+    trigger: { totalStars: 120 } },
+
   { id: 'bookworm',     icon: '📚', title: 'Mọt sách kinh tế',
     desc: '10 quiz hoàn thành',
     trigger: { quizzesPassed: 10 } },
