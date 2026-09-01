@@ -6,6 +6,8 @@ export const ACHIEVEMENTS = [
   // ── Khởi đầu ──
   { id: 'first-quiz', icon: '🌟', title: 'Ngôi sao nhỏ',
     desc: 'Hoàn thành bài quiz đầu tiên', trigger: { quizzesPassed: 1 } },
+  { id: 'bookworm', icon: '📚', title: 'Mọt sách tiểu học',
+    desc: '10 bài quiz hoàn thành — em đang chăm học rất giỏi!', trigger: { quizzesPassed: 10 } },
   { id: 'streak-3', icon: '🔥', title: 'Chăm học 3 ngày',
     desc: 'Vào học 3 ngày liên tiếp', trigger: { streak: 3 } },
   { id: 'streak-7', icon: '🌈', title: 'Tuần vàng',
@@ -70,6 +72,9 @@ export const ACHIEVEMENTS = [
     desc: 'Tích luỹ 30 sao', trigger: { totalStars: 30 } },
   { id: 'star-60', icon: '🌠', title: 'Bầu trời sao',
     desc: 'Tích luỹ 60 sao', trigger: { totalStars: 60 } },
+  { id: 'star-100', icon: '🏆', title: 'Học sinh xuất sắc',
+    desc: 'Tích luỹ 100 sao — học sinh Tiểu học xuất sắc, sẵn sàng bước vào THCS',
+    trigger: { totalStars: 100 } },
 
   // ── Tốt nghiệp lớp ──
   { id: 'year1-grad', icon: '🥇', title: 'Lên lớp 2 rồi!',

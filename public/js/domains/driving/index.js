@@ -56,6 +56,18 @@ export const ACHIEVEMENTS = [
     desc: 'Hoàn thành cả 3 module lý thuyết, biển báo và tình huống',
     trigger: { moduleStars: { 'driving-theory': 2, 'driving-signs': 2, 'driving-quiz': 2 } } },
 
+  { id: 'star-3',          icon: '⭐', title: 'Khởi hành',
+    desc: 'Tích lũy 3 sao đầu tiên tại Trường Lái xe — đã bắt đầu hành trình học lái',
+    trigger: { totalStars: 3 } },
+
+  { id: 'star-6',          icon: '🌟', title: 'Ôn luyện nghiêm túc',
+    desc: 'Tích lũy 6 sao — đã thành thạo ít nhất 2 trong 3 module lý thuyết lái xe',
+    trigger: { totalStars: 6 } },
+
+  { id: 'star-9',          icon: '🏆', title: 'Sẵn sàng thi sát hạch',
+    desc: 'Tích lũy 9 sao — hoàn thành xuất sắc toàn bộ chương trình lý thuyết lái xe',
+    trigger: { totalStars: 9 } },
+
   { id: 'streak-3',       icon: '🚦', title: 'Học lái 3 ngày liên tiếp',
     desc: 'Ôn lý thuyết hoặc biển báo liên tục 3 ngày — thói quen tốt cho kỳ thi',
     trigger: { streak: 3 } },

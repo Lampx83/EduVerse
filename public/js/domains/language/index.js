@@ -69,6 +69,18 @@ export const ACHIEVEMENTS = [
     desc: 'Hoàn thành cả 4 module Ngoại ngữ (L01–L04) — thành thạo ngoại ngữ toàn diện',
     trigger: { moduleStars: { 'lang-vocab': 2, 'lang-pronunciation': 2, 'lang-flashcards': 2, 'lang-tutor': 2 } } },
 
+  { id: 'star-4',          icon: '⭐', title: 'Bước đầu ngoại ngữ',
+    desc: 'Tích lũy 4 sao đầu tiên tại Trường Ngoại ngữ — đã bắt đầu hành trình học ngôn ngữ',
+    trigger: { totalStars: 4 } },
+
+  { id: 'star-8',          icon: '🌟', title: 'Nửa chặng ngoại ngữ',
+    desc: 'Tích lũy 8 sao — đã thành thạo nửa chương trình, vốn từ và phát âm đang tiến bộ rõ rệt',
+    trigger: { totalStars: 8 } },
+
+  { id: 'star-12',         icon: '🏆', title: 'Thông thạo ngoại ngữ',
+    desc: 'Tích lũy 12 sao — hoàn thành xuất sắc toàn bộ 4 module Ngoại ngữ, sẵn sàng giao tiếp thực tế',
+    trigger: { totalStars: 12 } },
+
   { id: 'streak-3',       icon: '🔤', title: 'Học ngoại ngữ 3 ngày liên tiếp',
     desc: 'Luyện tập 3 ngày liên tiếp — hình thành thói quen học ngoại ngữ hàng ngày',
     trigger: { streak: 3 } },

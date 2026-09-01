@@ -67,6 +67,17 @@ export const ACHIEVEMENTS = [
   { id: 'choi-complete', icon: '🌼', title: 'Lớp Chồi hoàn thành',
     desc: 'Đạt ít nhất 2 sao cả 5 lĩnh vực lớp Chồi', trigger: { quizzesPassed: 10 } },
 
+  // ── Sao tích luỹ ──
+  { id: 'star-5',  icon: '✨', title: 'Bé sưu sao',
+    desc: 'Tích luỹ 5 sao đầu tiên', trigger: { totalStars: 5 } },
+  { id: 'star-15', icon: '💫', title: 'Rương kho báu nhỏ',
+    desc: 'Tích luỹ 15 sao', trigger: { totalStars: 15 } },
+  { id: 'star-30', icon: '🌟', title: 'Bé siêu sao',
+    desc: 'Tích luỹ 30 sao', trigger: { totalStars: 30 } },
+  { id: 'star-45', icon: '🏆', title: 'Bé tài năng toàn diện',
+    desc: 'Tích luỹ 45 sao — chinh phục toàn bộ các lĩnh vực phát triển Mầm non',
+    trigger: { totalStars: 45 } },
+
   // ── Combo đặc biệt — phát triển nhiều chiều ──
   { id: 'body-mind', icon: '🧠', title: 'Thể chất + Nhận thức',
     desc: 'Đạt 3 sao Thể chất và Nhận thức ở cùng lớp Lá',
