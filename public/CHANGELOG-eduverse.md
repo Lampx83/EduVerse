@@ -4,6 +4,288 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-31 — Phiên cải tiến (54) · THPT — HĐTN-HN Lesson Theory Files
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending; DB production không truy cập được trong môi trường này (lỗi hạ tầng sync-inbox đã ghi nhận từ phiên 45).
+
+**Phạm vi:** 3 trường THPT — Lớp 10, Lớp 11, Lớp 12.
+
+### Phân tích khoảng trống
+
+Các lớp 6–9 (THCS) đã có đầy đủ file lí thuyết tuần cho môn HĐTN-HN (`lessons/hdtn.js`). Tuy nhiên, 3 lớp THPT (lớp 10, 11, 12) **thiếu hoàn toàn** file lí thuyết này, dù scenario quiz HĐTN-HN (`hdtn.js`) đã có đủ 35 tuần cho mỗi lớp. Phiên này bổ sung để đồng bộ.
+
+| Lớp | Quiz ID mẫu | Số tuần | File thiếu |
+|-----|------------|---------|-----------|
+| 10 | `H10HDTN-w01-quiz` → `H10HDTN-w35-quiz` | 35 | `lop10/lessons/hdtn.js` |
+| 11 | `H11HDTN-w01-quiz` → `H11HDTN-w35-quiz` | 35 | `lop11/lessons/hdtn.js` |
+| 12 | `H12HDTN-w01-quiz` → `H12HDTN-w35-quiz` | 35 | `lop12/lessons/hdtn.js` |
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/lop10/lessons/hdtn.js` | Tạo mới | 35 bài lí thuyết tuần HĐTN-HN lớp 10 — từ khám phá tính cách đến định hướng nghề nghiệp cơ bản |
+| `public/js/scenarios/lop11/lessons/hdtn.js` | Tạo mới | 35 bài lí thuyết tuần HĐTN-HN lớp 11 — từ tự tin, thích ứng đến tham vấn hướng nghiệp nâng cao |
+| `public/js/scenarios/lop12/lessons/hdtn.js` | Tạo mới | 35 bài lí thuyết tuần HĐTN-HN lớp 12 — từ tự đánh giá, thi tốt nghiệp, chọn trường đến kĩ năng vào đời |
+| `public/js/scenarios/lop10/lessons/_index.js` | Mở rộng | Thêm import `H10HDTN_LESSONS` từ `hdtn.js`; spread vào `LOP10_LESSONS` |
+| `public/js/scenarios/lop11/lessons/_index.js` | Mở rộng | Thêm import `H11HDTN_LESSONS` từ `hdtn.js`; spread vào `LOP11_LESSONS` |
+| `public/js/scenarios/lop12/lessons/_index.js` | Mở rộng | Thêm import `H12HDTN_LESSONS` từ `hdtn.js`; spread vào `LOP12_LESSONS` |
+
+**Kiểm tra:** `node --check` — 0 lỗi cú pháp trên tất cả 6 file.
+
+---
+
+## 2026-08-30 — Phiên cải tiến (53) · Lái xe · Ngoại ngữ — 6 Star Milestone Achievements
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending; DB production không truy cập được trong môi trường này (lỗi hạ tầng sync-inbox đã ghi nhận từ phiên 45).
+
+**Phạm vi:** 2 trường — Lái xe (`driving`), Ngoại ngữ (`language`).
+
+### Phân tích khoảng trống
+
+Phiên 52 (2026-08-29) ghi nhận Trường Lái xe và Trường Ngoại ngữ **thiếu hoàn toàn star milestone achievements** (`totalStars`), trong khi 7 trường còn lại đã có đầy đủ. Phiên này bổ sung để đồng bộ hệ thống.
+
+| Trường | Module | Sao tối đa | Milestones thêm |
+|--------|--------|-----------|-----------------|
+| Lái xe | 3 module (D01–D03) × 3 sao = **9 sao** | 9 | star-3, star-6, star-9 |
+| Ngoại ngữ | 4 module (L01–L04) × 3 sao = **12 sao** | 12 | star-4, star-8, star-12 |
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/driving/index.js` | Mở rộng | +3 achievements: `star-3` "Khởi hành", `star-6` "Ôn luyện nghiêm túc", `star-9` "Sẵn sàng thi sát hạch" |
+| `public/js/domains/language/index.js` | Mở rộng | +3 achievements: `star-4` "Bước đầu ngoại ngữ", `star-8` "Nửa chặng ngoại ngữ", `star-12` "Thông thạo ngoại ngữ" |
+
+### Chi tiết 6 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| Lái xe | `star-3` | ⭐ | Khởi hành | totalStars: 3 |
+| Lái xe | `star-6` | 🌟 | Ôn luyện nghiêm túc | totalStars: 6 |
+| Lái xe | `star-9` | 🏆 | Sẵn sàng thi sát hạch | totalStars: 9 |
+| Ngoại ngữ | `star-4` | ⭐ | Bước đầu ngoại ngữ | totalStars: 4 |
+| Ngoại ngữ | `star-8` | 🌟 | Nửa chặng ngoại ngữ | totalStars: 8 |
+| Ngoại ngữ | `star-12` | 🏆 | Thông thạo ngoại ngữ | totalStars: 12 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/driving/index.js   ✅ OK
+node --check public/js/domains/language/index.js  ✅ OK
+```
+
+### Kết quả
+
+- Lái xe: _(không có)_ → **star-3 → star-6 → star-9** ✅ (cap tự nhiên = hoàn thành toàn bộ 3 module)
+- Ngoại ngữ: _(không có)_ → **star-4 → star-8 → star-12** ✅ (cap tự nhiên = hoàn thành toàn bộ 4 module)
+- Tất cả 9 trường EduVerse nay đều có star milestone achievements đầy đủ.
+- **Yêu cầu từ người dùng:** Không có (inbox trống, phiên chủ động)
+
+---
+
+## 2026-08-29 — Phiên cải tiến (52) · CNTT · Kinh tế · Tiểu học · Mầm non — 4 Star Cap Achievements
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending; DB production không truy cập được trong môi trường này (lỗi hạ tầng sync-inbox đã ghi nhận từ phiên 45); GitHub Issues trống.
+
+**Phạm vi:** 4 trường — CNTT (`it`), Kinh tế (`economics`), Tiểu học (`primary`), Mầm non (`preschool`).
+
+### Phân tích khoảng trống
+
+So sánh milestone sao tích luỹ cao nhất giữa 9 trường:
+
+| Trường | Star milestones hiện tại | Trạng thái |
+|--------|--------------------------|------------|
+| Dược | star-30, star-60, **star-100** | ✅ cap rõ ràng |
+| **CNTT** | star-30, star-60, **star-90** | ⚠️ thiếu cap milestone |
+| **Kinh tế** | star-30, star-60, **star-90** | ⚠️ thiếu cap milestone |
+| **Tiểu học** | star-15, star-30, **star-60** | ⚠️ thiếu cap milestone |
+| THCS | star-20, star-50, **star-100** | ✅ |
+| THPT | star-20, star-50, **star-100** | ✅ |
+| **Mầm non** | star-5, star-15, **star-30** | ⚠️ thiếu cap milestone |
+| Lái xe | _(không có)_ | — ít module |
+| Ngoại ngữ | _(không có)_ | — ít module |
+
+**Phân tích nội dung:**
+- **CNTT**: 23 module quiz (I1.1–I4.5) + 4 game + 6 career = ~33 module × 3 sao tối đa ≈ 99 sao; có thể đạt 120 với bonus quiz và thực hành → `star-120` là mốc thực tế.
+- **Kinh tế**: year1 + year1b + year2 + year3 + year4 (a/b/c) = ~35+ module × 3 sao → `star-120` hợp lý.
+- **Tiểu học**: 54 module (5 lớp × 8-11 môn) × 3 sao = ~162 sao tối đa → `star-100` là mốc khích lệ giữa chặng.
+- **Mầm non**: 15 module × 3 sao = 45 sao tối đa → `star-45` là mốc tự nhiên (hoàn thành toàn bộ).
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/it/achievements.js` | Mở rộng | +1 achievement: `star-120` — "Kỹ sư 120 sao" |
+| `public/js/domains/economics/achievements.js` | Mở rộng | +1 achievement: `star-120` — "Cử nhân 120 sao" |
+| `public/js/domains/primary/achievements.js` | Mở rộng | +1 achievement: `star-100` — "Học sinh xuất sắc" |
+| `public/js/domains/preschool/achievements.js` | Mở rộng | +1 achievement: `star-45` — "Bé tài năng toàn diện" |
+
+### Chi tiết 4 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| CNTT | `star-120` | 🏆 | Kỹ sư 120 sao | totalStars: 120 |
+| Kinh tế | `star-120` | 🏆 | Cử nhân 120 sao | totalStars: 120 |
+| Tiểu học | `star-100` | 🏆 | Học sinh xuất sắc | totalStars: 100 |
+| Mầm non | `star-45` | 🏆 | Bé tài năng toàn diện | totalStars: 45 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/it/achievements.js         ✅ OK
+node --check public/js/domains/economics/achievements.js  ✅ OK
+node --check public/js/domains/primary/achievements.js    ✅ OK
+node --check public/js/domains/preschool/achievements.js  ✅ OK
+```
+
+### Kết quả
+
+- CNTT: star-30 → star-60 → star-90 → **star-120** ✅ (cap rõ ràng tương ứng hoàn thành 4 năm)
+- Kinh tế: star-30 → star-60 → star-90 → **star-120** ✅ (tương tự)
+- Tiểu học: star-15 → star-30 → star-60 → **star-100** ✅ (mốc khích lệ giữa chương trình 5 lớp)
+- Mầm non: star-5 → star-15 → star-30 → **star-45** ✅ (cap tự nhiên = hoàn thành toàn bộ 15 module)
+- **Yêu cầu từ người dùng:** Không có (inbox trống, phiên chủ động)
+
+---
+
+## 2026-08-26 — Phiên cải tiến (51) · CNTT · Tiểu học · THCS · THPT — Bug fix + 3 Bookworm Achievements
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending (lỗi hạ tầng sync-inbox vẫn chưa khắc phục, xem phiên 45).
+
+**Phạm vi:** 4 trường — CNTT (`it`), Tiểu học (`primary`), THCS (`secondary`), THPT (`highschool`).
+
+### Phân tích khoảng trống & bug
+
+**Bug phát hiện — CNTT duplicate `star-30`:**
+
+Quét `public/js/domains/it/achievements.js` phát hiện hai entry có cùng `id: 'star-30'`:
+- Dòng 31–33: `{ id: 'star-30', title: '30 sao CNTT', desc: 'Tích luỹ 30 sao — đang trên đà chinh phục chương trình Kỹ sư' }` — entry đúng, được thêm ở phiên 48.
+- Dòng 153–155 (cũ): `{ id: 'star-30', title: '30 sao đầu', desc: '30 sao tích luỹ' }` — placeholder cũ, còn sót lại từ trước phiên 48.
+
+Duplicate ID trong achievement array có thể gây hành vi không xác định trong `wallet.js` khi engine scan qua danh sách (tùy implementation có thể trigger 2 lần hoặc bị bỏ qua).
+
+**Gap phát hiện — thiếu `bookworm` (10 quiz) ở 3 trường K-12:**
+
+So sánh achievement `quizzesPassed` giữa tất cả 9 trường:
+
+| Trường | quizzesPassed: 1 | quizzesPassed: 10 |
+|--------|-----------------|-------------------|
+| Dược | `first-step` ✅ | `bookworm` ✅ |
+| Kinh tế | `first-trade` ✅ | `bookworm` ✅ |
+| CNTT | `hello-world` ✅ | _(không có)_ ❌ |
+| Mầm non | `first` ✅ | _(không có)_ — học sinh 3–6 tuổi, bỏ qua |
+| **Tiểu học** | `first-quiz` ✅ | _(không có)_ **❌** |
+| **THCS** | `first-quiz` ✅ | _(không có)_ **❌** |
+| **THPT** | `first` ✅ | _(không có)_ **❌** |
+| Lái xe | `first-lesson` ✅ | _(không có)_ — 3 module tổng, bỏ qua |
+| Ngoại ngữ | `first-word` ✅ | _(không có)_ — 4 module tổng, bỏ qua |
+
+Pharmacy và Economics đã có `bookworm` từ đầu. CNTT, Tiểu học, THCS, THPT thiếu mốc "10 quiz" — đây là milestone khích lệ học sinh tiếp tục sau lần đầu tiên, đặc biệt quan trọng cho K-12 nơi học sinh cần nhiều động lực hơn.
+
+**Lý do chọn bổ sung cho Tiểu học, THCS, THPT mà không phải CNTT:** CNTT có `hello-world` (1 quiz) và ngay tiếp theo là các module achievements chi tiết (I1.1, I1.2…), học viên đại học dễ dàng thấy tiến độ hơn. K-12 với cấu trúc 36 tuần/môn cần cột mốc trung gian rõ ràng hơn để duy trì hứng thú học tập.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động sửa bug và bổ sung 3 achievements.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/it/achievements.js` | **Bug fix** | Xoá duplicate `star-30` (dòng 153–155 cũ) — entry trùng ID với dòng 31–33 |
+| `public/js/domains/primary/achievements.js` | Mở rộng | +1 achievement: `bookworm` (Mọt sách tiểu học — 10 quiz) |
+| `public/js/domains/secondary/achievements.js` | Mở rộng | +1 achievement: `bookworm` (Mọt sách THCS — 10 quiz) |
+| `public/js/domains/highschool/achievements.js` | Mở rộng | +1 achievement: `bookworm` (Mọt sách THPT — 10 quiz) |
+
+### Chi tiết 3 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| Tiểu học | `bookworm` | 📚 | Mọt sách tiểu học | quizzesPassed: 10 |
+| THCS | `bookworm` | 📚 | Mọt sách THCS | quizzesPassed: 10 |
+| THPT | `bookworm` | 📚 | Mọt sách THPT | quizzesPassed: 10 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/it/achievements.js         ✅ OK
+node --check public/js/domains/primary/achievements.js    ✅ OK
+node --check public/js/domains/secondary/achievements.js  ✅ OK
+node --check public/js/domains/highschool/achievements.js ✅ OK
+```
+
+### Kết quả
+
+- CNTT: xoá duplicate `star-30` — achievement catalog sạch, không còn ID trùng ✅
+- Tiểu học, THCS, THPT: chuỗi quiz 1 → **10** → (module achievements) — milestone trung gian ✅
+- **7/9 trường có `bookworm`** (Mầm non, Lái xe, Ngoại ngữ không áp dụng do số module nhỏ) ✅
+- Khuyến khích học sinh K-12 tiếp tục sau bài quiz đầu tiên với mốc 10 quiz có icon và tên hấp dẫn
+
+---
+
+## 2026-08-25 — Phiên cải tiến (50) · Mầm non · THCS — 4 Star Achievements mới
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending.
+
+**Phạm vi:** Trường Mầm non (`preschool`) và Trường THCS (`secondary`) — bổ sung star achievements còn thiếu.
+
+### Phân tích khoảng trống
+
+So sánh bộ `totalStars` achievements giữa 9 trường phát hiện hai khoảng trống:
+
+| Trường | Star achievements trước | Trạng thái |
+|--------|------------------------|------------|
+| Mầm non | _(không có)_ | ❌ **thiếu hoàn toàn** |
+| Tiểu học | star-15, star-30, star-60 | ✅ |
+| THCS | star-20, star-50 | ⚠️ thiếu mốc star-100 |
+| THPT | star-20, star-50, star-100 | ✅ |
+| Dược | star-30, star-60, star-100 | ✅ |
+| CNTT | star-30, star-60, star-90 | ✅ |
+| Kinh tế | star-30, star-60, star-90 | ✅ |
+| Lái xe | _(không áp dụng — index.js riêng)_ | — |
+| Ngoại ngữ | _(không áp dụng — index.js riêng)_ | — |
+
+**Mầm non:** 15 module × 3 sao/module = tối đa 45 sao. Tất cả 7 trường khác đều có `totalStars` achievements; Mầm non là trường DUY NHẤT thiếu hoàn toàn — học sinh mầm non cần được khích lệ bằng mốc sao nhỏ, dễ đạt, thân thiện với lứa tuổi.
+
+**THCS:** Có star-20 và star-50 nhưng thiếu star-100. THPT (tương đương số môn, số lớp) đã có cả star-100. Học sinh THCS tích cực có thể đạt 100+ sao (4 năm × 12 môn × ≥3 sao/môn = 144 sao max), thiếu mốc star-100 là khoảng trống ghi nhận.
+
+### Yêu cầu xử lý
+
+Không có yêu cầu từ người dùng trong hộp thư. Phiên chủ động bổ sung star achievements còn thiếu.
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/preschool/achievements.js` | Mở rộng | +3 achievements: `star-5`, `star-15`, `star-30` |
+| `public/js/domains/secondary/achievements.js` | Mở rộng | +1 achievement: `star-100` |
+
+### Chi tiết 4 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| Mầm non | `star-5` | ✨ | Bé sưu sao | totalStars: 5 |
+| Mầm non | `star-15` | 💫 | Rương kho báu nhỏ | totalStars: 15 |
+| Mầm non | `star-30` | 🌟 | Bé siêu sao | totalStars: 30 |
+| THCS | `star-100` | 🏆 | Thủ lĩnh sao THCS | totalStars: 100 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/preschool/achievements.js    ✅ OK
+node --check public/js/domains/secondary/achievements.js    ✅ OK
+```
+
+### Kết quả
+
+- Mầm non: từ **0** → **3 star achievements** — đồng nhất với chuẩn toàn hệ thống ✅
+- THCS: chuỗi star-20 → star-50 → **star-100** — cân bằng với THPT (cũng có star-100) ✅
+- Học sinh mầm non được ghi nhận sớm từ 5 sao đầu tiên (phù hợp lứa tuổi 3–6)
+- Học sinh THCS chăm chỉ nay có thêm mục tiêu star-100 để phấn đấu
+
+---
+
 ## 2026-08-24 — Phiên cải tiến (49) · THPT · CNTT · Kinh tế — 3 Achievements mới (Streak-7)
 
 **Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending.
