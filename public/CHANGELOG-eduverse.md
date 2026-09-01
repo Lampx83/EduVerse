@@ -4,6 +4,37 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-08-31 — Phiên cải tiến (54) · THPT — HĐTN-HN Lesson Theory Files
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending; DB production không truy cập được trong môi trường này (lỗi hạ tầng sync-inbox đã ghi nhận từ phiên 45).
+
+**Phạm vi:** 3 trường THPT — Lớp 10, Lớp 11, Lớp 12.
+
+### Phân tích khoảng trống
+
+Các lớp 6–9 (THCS) đã có đầy đủ file lí thuyết tuần cho môn HĐTN-HN (`lessons/hdtn.js`). Tuy nhiên, 3 lớp THPT (lớp 10, 11, 12) **thiếu hoàn toàn** file lí thuyết này, dù scenario quiz HĐTN-HN (`hdtn.js`) đã có đủ 35 tuần cho mỗi lớp. Phiên này bổ sung để đồng bộ.
+
+| Lớp | Quiz ID mẫu | Số tuần | File thiếu |
+|-----|------------|---------|-----------|
+| 10 | `H10HDTN-w01-quiz` → `H10HDTN-w35-quiz` | 35 | `lop10/lessons/hdtn.js` |
+| 11 | `H11HDTN-w01-quiz` → `H11HDTN-w35-quiz` | 35 | `lop11/lessons/hdtn.js` |
+| 12 | `H12HDTN-w01-quiz` → `H12HDTN-w35-quiz` | 35 | `lop12/lessons/hdtn.js` |
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/scenarios/lop10/lessons/hdtn.js` | Tạo mới | 35 bài lí thuyết tuần HĐTN-HN lớp 10 — từ khám phá tính cách đến định hướng nghề nghiệp cơ bản |
+| `public/js/scenarios/lop11/lessons/hdtn.js` | Tạo mới | 35 bài lí thuyết tuần HĐTN-HN lớp 11 — từ tự tin, thích ứng đến tham vấn hướng nghiệp nâng cao |
+| `public/js/scenarios/lop12/lessons/hdtn.js` | Tạo mới | 35 bài lí thuyết tuần HĐTN-HN lớp 12 — từ tự đánh giá, thi tốt nghiệp, chọn trường đến kĩ năng vào đời |
+| `public/js/scenarios/lop10/lessons/_index.js` | Mở rộng | Thêm import `H10HDTN_LESSONS` từ `hdtn.js`; spread vào `LOP10_LESSONS` |
+| `public/js/scenarios/lop11/lessons/_index.js` | Mở rộng | Thêm import `H11HDTN_LESSONS` từ `hdtn.js`; spread vào `LOP11_LESSONS` |
+| `public/js/scenarios/lop12/lessons/_index.js` | Mở rộng | Thêm import `H12HDTN_LESSONS` từ `hdtn.js`; spread vào `LOP12_LESSONS` |
+
+**Kiểm tra:** `node --check` — 0 lỗi cú pháp trên tất cả 6 file.
+
+---
+
 ## 2026-08-30 — Phiên cải tiến (53) · Lái xe · Ngoại ngữ — 6 Star Milestone Achievements
 
 **Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` không có yêu cầu pending; DB production không truy cập được trong môi trường này (lỗi hạ tầng sync-inbox đã ghi nhận từ phiên 45).
