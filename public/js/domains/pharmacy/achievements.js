@@ -53,6 +53,14 @@ export const ACHIEVEMENTS = [
     desc: 'Đạt 100 sao — gần như nửa hành trình',
     trigger: { totalStars: 100 } },
 
+  { id: 'star-120',    icon: '🌠', title: 'Dược sĩ 120 sao',
+    desc: 'Đạt 120 sao — ngang tầm cử nhân đại học 4 năm, sẵn sàng chuyên sâu lâm sàng',
+    trigger: { totalStars: 120 } },
+
+  { id: 'star-150',    icon: '🏆', title: 'Dược sĩ tinh hoa',
+    desc: 'Đạt 150 sao — chinh phục đỉnh cao 5 năm học Dược, xứng danh dược sĩ ưu tú',
+    trigger: { totalStars: 150 } },
+
   { id: 'compounder',  icon: '🧪', title: 'Bào chế gia',
     desc: 'Pass L3.6 (Bào chế) với 3 sao',
     trigger: { moduleStars: { 'L3.6': 3 } } },
