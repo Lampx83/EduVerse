@@ -4,9 +4,23 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
-## 2026-09-04 — Phiên điểm danh (57) — Hộp thư trống, không có yêu cầu nào để xử lý
+## 2026-09-05 — Phiên điểm danh (57) — Không đọc được hộp thư: thiếu credential, không phải lỗi hạ tầng
 
-**Chế độ:** `ai-board/inbox.json` trống (`items: []`); production API trả về 502 (không sync được DB); GitHub Issues: 0 open. Không có yêu cầu khả thi — theo rule vận hành: không tạo PR rỗng, không bịa việc.
+**Kết luận:** Không xử lý yêu cầu nào — không tạo PR rỗng, không bịa việc.
+
+**Đính chính chẩn đoán (quan trọng cho các phiên sau).** Các phiên trước ghi "DB production không truy cập được / lỗi hạ tầng sync-inbox". Kiểm tra lại hôm nay: **production hoàn toàn bình thường**. Domain đúng là `tizia.vn`; các phiên trước dường như đã thử nhầm host nên nhận 502 và quy kết thành sự cố hạ tầng.
+
+| Đường vào hộp thư | Kết quả hôm nay | Nguyên nhân |
+|---|---|---|
+| `GET tizia.vn/api/requests?domain=…` | `401 needLogin` | Cần session đăng nhập |
+| `GET tizia.vn/api/admin/requests` | `401 needLogin` | Cần user `role='admin'` |
+| `node server/scripts/sync-inbox.mjs` | Không chạy được | Không có `data/tizia.db` trong môi trường phiên |
+| `ai-board/inbox.json` | Trống (`items: []`) | Chưa từng được sync |
+| GitHub Issues | 0 open | — |
+
+**Rào cản thật sự là thiếu credential, không phải hạ tầng hỏng.** Ngoài ra `GET /api/requests` lọc riêng tư theo `display_name` nên chỉ trả về yêu cầu của chính người đăng nhập — kể cả có tài khoản thường cũng không đọc được hộp thư chung. Phiên này **không** dò ID để lách bộ lọc riêng tư (đó là vòng qua access control).
+
+**Để các phiên sau thực sự chạy được, cần một trong hai:** (a) mount volume production vào `DATA_DIR` để `sync-inbox.mjs` chạy, hoặc (b) cấp credential/token của một tài khoản `role='admin'` cho phiên Ban điều hành AI.
 
 ---
 
