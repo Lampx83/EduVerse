@@ -146,6 +146,8 @@ export const ACHIEVEMENTS = [
   // ── Sao tích luỹ cao ──
   { id: 'star-100', icon: '🌠', title: 'Ngôi sao 100',
     desc: 'Tích luỹ 100 sao — chinh phục toàn bộ chương trình THPT', trigger: { totalStars: 100 } },
+  { id: 'star-120', icon: '🏆', title: 'Thủ khoa 120 sao',
+    desc: 'Tích luỹ 120 sao — đỉnh cao 3 năm THPT, xứng danh học sinh xuất sắc toàn diện', trigger: { totalStars: 120 } },
 
   // ── Combo Ban KHXH lớp 10 ──
   { id: 'khxh-double', icon: '🗺️', title: 'Đôi KHXH lớp 10',

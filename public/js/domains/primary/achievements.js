@@ -10,6 +10,8 @@ export const ACHIEVEMENTS = [
     desc: '10 bài quiz hoàn thành — em đang chăm học rất giỏi!', trigger: { quizzesPassed: 10 } },
   { id: 'streak-3', icon: '🔥', title: 'Chăm học 3 ngày',
     desc: 'Vào học 3 ngày liên tiếp', trigger: { streak: 3 } },
+  { id: 'streak-5', icon: '⭐', title: 'Tuần học đầu',
+    desc: 'Vào học 5 ngày liên tiếp — đúng một tuần đi học! Em thật chăm chỉ', trigger: { streak: 5 } },
   { id: 'streak-7', icon: '🌈', title: 'Tuần vàng',
     desc: 'Vào học 7 ngày liên tiếp', trigger: { streak: 7 } },
   { id: 'streak-14', icon: '🌟', title: 'Hai tuần chăm học',
