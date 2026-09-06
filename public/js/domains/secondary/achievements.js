@@ -144,6 +144,8 @@ export const ACHIEVEMENTS = [
     desc: 'Tích luỹ 50 sao', trigger: { totalStars: 50 } },
   { id: 'star-100', icon: '🏆', title: 'Thủ lĩnh sao THCS',
     desc: 'Tích luỹ 100 sao', trigger: { totalStars: 100 } },
+  { id: 'star-120', icon: '🌠', title: 'Học sinh THCS 120 sao',
+    desc: 'Tích luỹ 120 sao — chinh phục phần lớn chương trình 4 năm THCS, nền tảng vững chắc vào THPT', trigger: { totalStars: 120 } },
 
   // ── Tốt nghiệp lớp ──
   { id: 'year1-sec-complete', icon: '🥇', title: 'Lên lớp 7 tự tin!',

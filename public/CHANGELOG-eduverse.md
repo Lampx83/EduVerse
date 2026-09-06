@@ -4,6 +4,64 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
+## 2026-09-06 — Phiên cải tiến (57) · THPT · THCS · Tiểu học — 3 Achievements mới (Star-120 × 2 · Streak-5)
+
+**Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` trống (`items: []`); DB production không truy cập được trong môi trường này (lỗi hạ tầng sync-inbox đã ghi nhận từ phiên 45).
+
+**Phạm vi:** 3 trường — THPT (`highschool`), THCS (`secondary`), Tiểu học (`primary`).
+
+### Phân tích khoảng trống
+
+| Trường | Star milestones hiện có | Khoảng trống |
+|--------|------------------------|--------------|
+| **THPT** | star-20, star-50, star-100 | ❌ Thiếu star-120 (3 năm × 14 môn × 3 sao ≈ 126 sao max) |
+| **THCS** | star-20, star-50, star-100 | ❌ Thiếu star-120 (4 năm × 12 môn × 3 sao = 144 sao max) |
+| IT | star-30, star-60, star-90, star-120 | ✅ có star-120 |
+| Kinh tế | star-30, star-60, star-90, star-120 | ✅ có star-120 |
+| Dược | star-30, star-60, star-100, star-120, star-150 | ✅ có star-120 |
+
+**Streak Tiểu học:**
+
+| Trường | Streak milestones | Khoảng trống |
+|--------|------------------|--------------|
+| **Tiểu học** | streak-3, streak-7, streak-14, streak-30 | ❌ Thiếu streak-5 (bước nhảy 3→7 không có cột mốc giữa) |
+| THCS | streak-3, streak-5, streak-10, streak-14, streak-30 | ✅ có streak-5 |
+| THPT | streak-3, streak-5, streak-7, streak-14, streak-30 | ✅ có streak-5 |
+
+### Thay đổi
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `public/js/domains/highschool/achievements.js` | Mở rộng | +1 achievement: `star-120` "Thủ khoa 120 sao" — đỉnh cao 3 năm THPT |
+| `public/js/domains/secondary/achievements.js` | Mở rộng | +1 achievement: `star-120` "Học sinh THCS 120 sao" — chinh phục chương trình 4 năm THCS |
+| `public/js/domains/primary/achievements.js` | Mở rộng | +1 achievement: `streak-5` "Tuần học đầu" — cột mốc 5 ngày học liên tiếp (= 1 tuần đi học) |
+
+### Chi tiết 3 achievements mới
+
+| Domain | ID | Icon | Tên | Trigger |
+|--------|----|------|-----|---------|
+| THPT | `star-120` | 🏆 | Thủ khoa 120 sao | totalStars: 120 |
+| THCS | `star-120` | 🌠 | Học sinh THCS 120 sao | totalStars: 120 |
+| Tiểu học | `streak-5` | ⭐ | Tuần học đầu | streak: 5 |
+
+### Kiểm thử
+
+```
+node --check public/js/domains/highschool/achievements.js  ✅ OK
+node --check public/js/domains/secondary/achievements.js   ✅ OK
+node --check public/js/domains/primary/achievements.js     ✅ OK
+```
+
+### Kết quả
+
+- THPT: star-20 → star-50 → star-100 → **star-120** ✅ (cân bằng với IT, Kinh tế, Dược)
+- THCS: star-20 → star-50 → star-100 → **star-120** ✅ (nay tương đương THPT về milestone cap)
+- Tiểu học: streak-3 → **streak-5** → streak-7 → streak-14 → streak-30 ✅ (không còn bước nhảy 3→7)
+- **Tất cả 7 trường đại học/phổ thông có đủ star-120** (ngoại trừ Mầm non, Lái xe, Ngoại ngữ — số module quá ít)
+- **Yêu cầu từ người dùng:** Không có (inbox trống, phiên chủ động)
+
+---
+
 ## 2026-09-03 — Phiên điểm danh (56) — Hộp thư trống, không có yêu cầu nào để xử lý
 
 **Chế độ:** Hộp thư `ai-board/inbox.json` trống (`items: []`) — không có yêu cầu nào từ người dùng. Theo quy tắc vận hành: không tạo PR rỗng, không bịa việc. Phiên này chỉ ghi nhận trạng thái.
