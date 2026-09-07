@@ -4,7 +4,94 @@ Ghi nhận các cải tiến do Ban điều hành AI thực hiện hàng ngày.
 
 ---
 
-## 2026-09-06 — Phiên cải tiến (57) · THPT · THCS · Tiểu học — 3 Achievements mới (Star-120 × 2 · Streak-5)
+## 2026-09-07 — Phiên cải tiến (58) · TOÀN HỆ THỐNG — 🚨 Phát hiện 110 bài lí thuyết là nội dung chết + công cụ kiểm tra toàn vẹn
+
+**Chế độ:** Chủ động. Hộp thư `ai-board/inbox.json` trống. Phiên này **tự kiểm chứng** đường production thay vì tin ghi chú cũ:
+
+| Đường | Kết quả đo được hôm nay |
+|-------|------------------------|
+| `https://tizia.vn/api/requests` | `401 {"error":"unauthorized","needLogin":true}` |
+| `https://tizia.vn/ps/api/requests` | `302` → `/login.html` |
+| `https://ps.tizia.vn/api/requests` | không kết nối được (502 qua proxy) |
+| `sync-inbox.mjs` | không chạy được — thiếu `data/tizia.db` **và** `node_modules` |
+
+→ Hộp thư thực sự không đọc được. Xác nhận, không phải suy đoán.
+
+### 🚨 Phát hiện chính: 110 bài lí thuyết KHÔNG BAO GIỜ đến được học sinh
+
+**Cơ chế.** Bài lí thuyết gắn vào quiz bằng cách tra cứu theo **id của quiz** (`public/js/scenarios/lop10/_index.js:32`):
+
+```js
+if (LOP10_LESSONS && LOP10_LESSONS[id]) sc.lesson = LOP10_LESSONS[id];
+```
+
+Bài lí thuyết có key không khớp id quiz nào thì **không bao giờ được đọc**. Lỗi này im lặng: không crash, không bị `node --check` bắt, file vẫn nằm trong repo trông như đã hoàn thành.
+
+**Quy mô.** Các phiên 38–46 đã bổ sung bài "Tuần 36 — Kết thúc năm học" cho hàng loạt môn, **nhưng không tạo quiz tuần 36 tương ứng**. Kết quả:
+
+| Cấp | Số bài mồ côi |
+|-----|--------------|
+| THPT (lớp 10–12) | 36 |
+| THCS (lớp 7, 8, 9) | 30 |
+| Tiểu học (lớp 1, 3, 4, 5) | 44 |
+| **Tổng** | **110** |
+
+**Bằng chứng cụ thể.** `public/js/scenarios/lop10/toan.js` khai báo đúng 35 tuần (`M(1)`…`M(35)`, header ghi *"35 tuần (HK1: 1–18 · HK2: 19–35)"*), trong khi `lop10/lessons/toan.js` có key `H10TOAN-w36-quiz` ở dòng 656 — và chính header file bài học vẫn ghi *"Lý thuyết 35 tuần"*.
+
+**Đối chứng.** Lớp 2 và lớp 6 **sạch hoàn toàn**: quiz 36 tuần + header ghi "36 tuần" + bài học 36 tuần → nhất quán, nội dung sống. Hai lớp này là bản mẫu đúng.
+
+### ⚖️ Quyết định cần người vận hành (NGOÀI thẩm quyền phiên tự động)
+
+Hệ thống đang **mâu thuẫn nội bộ**: lớp 2 và lớp 6 theo chuẩn 36 tuần, mọi lớp khác theo chuẩn 35 tuần. Có hai hướng xử lý loại trừ nhau:
+
+| Hướng | Việc phải làm | Rủi ro |
+|-------|--------------|--------|
+| **A. Chuẩn hoá 36 tuần** | Thêm quiz tuần 36 cho 110 môn (~550 câu hỏi) → kích hoạt toàn bộ bài học đã viết sẵn | Nếu CTGD 2018 quy định 35 tuần thì đang tạo nội dung sai chuẩn |
+| **B. Chuẩn hoá 35 tuần** | Gỡ 110 bài lí thuyết tuần 36 + sửa lớp 2, lớp 6 về 35 tuần | Vứt bỏ công sức nhiều phiên đã viết |
+
+Phiên này **KHÔNG tự quyết** vì đây là quyết định học thuật về khung chương trình, ảnh hưởng toàn hệ thống — đúng nguyên tắc "thay đổi lớn cần người vận hành quyết". Bài học hiện có vẫn nguyên vẹn trong repo, không mất mát gì khi chờ quyết định.
+
+### Thay đổi (an toàn, thuần bổ sung)
+
+| File | Loại | Mô tả |
+|------|------|-------|
+| `scripts/check-content-integrity.mjs` | **Tạo mới** | Công cụ kiểm tra toàn vẹn học liệu — bắt 3 loại lỗi im lặng |
+| `package.json` | Mở rộng | Thêm script `npm run check:content` |
+| `public/CHANGELOG-eduverse.md` | Cập nhật | Ghi nhận phiên 58 + đính chính 2 ghi chép sai (bên dưới) |
+
+**Ba nhóm kiểm tra của công cụ mới:**
+
+1. `ORPHAN_LESSON` — bài lí thuyết có key không khớp quiz nào (nội dung chết)
+2. `UNIMPORTED_LESSON` — file `lessons/*.js` không được import vào `_index.js`
+3. `DUP_ACHIEVEMENT` — hai achievement trùng id trong cùng domain (loại lỗi phiên 51 từng phải bắt thủ công)
+
+Thoát mã `1` khi có lỗi → cắm được vào CI/pre-commit để chặn tái diễn.
+
+### 📌 Đính chính ghi chép cũ (đã kiểm chứng lại)
+
+1. **Phiên 45 viết sai về CSDL.** Ghi chú cũ nói *"`sync-inbox.mjs` đọc SQLite trong khi `.env.example` khai báo `DATABASE_URL=postgres://` — cần rà lại script còn khớp DB thật hay không"*. Kiểm tra hôm nay: `server/db.js:1` import `better-sqlite3`, toàn bộ tầng dữ liệu (`auth.js`, `db-admin.js`) đều dùng SQLite. **`sync-inbox.mjs` đọc SQLite là ĐÚNG**; `pg` chỉ là dependency không dùng ở luồng này. Cảnh báo cũ là báo động giả, đã đeo bám 13 phiên.
+
+2. **Phiên 57 ghi sai ngày.** Mục phiên 57 ban đầu đề ngày 2026-09-06, thực tế chạy ngày 2026-09-07 (cùng ngày với phiên này). Đã sửa tiêu đề mục 57 bên dưới.
+
+### Kiểm thử
+
+```
+node --check scripts/check-content-integrity.mjs   ✅ OK
+node scripts/check-content-integrity.mjs           → phát hiện 110 vấn đề, exit code 1 ✅
+```
+
+Kết quả công cụ khớp chính xác với kiểm tra độc lập bằng shell (110 = 36 THPT + 30 THCS + 44 Tiểu học).
+
+### Kết quả
+
+- Phát hiện và ghi nhận **110 bài lí thuyết đang là nội dung chết** — tồn đọng từ phiên 38–46, không phiên nào phát hiện ra
+- Có công cụ tự động chặn tái diễn, chạy bằng `npm run check:content`
+- Đính chính 1 báo động giả về CSDL đã tồn tại 13 phiên
+- **Yêu cầu từ người dùng:** Không có (hộp thư không truy cập được — đã kiểm chứng)
+
+---
+
+## 2026-09-07 — Phiên cải tiến (57) · THPT · THCS · Tiểu học — 3 Achievements mới (Star-120 × 2 · Streak-5)
 
 **Chế độ:** Chủ động — hộp thư `ai-board/inbox.json` trống (`items: []`); DB production không truy cập được trong môi trường này (lỗi hạ tầng sync-inbox đã ghi nhận từ phiên 45).
 
